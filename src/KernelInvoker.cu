@@ -85,7 +85,7 @@ cudaError_t invokeParallelSearch(
   cudaEventRecord(start_sort, 0);
 
   calculatePhiAndSort<<<numBlocks, 64>>>(
-    (const char*) dev_input,
+    dev_input,
     dev_event_offsets,
     dev_hit_offsets,
     dev_hit_phi,
@@ -131,7 +131,7 @@ cudaError_t invokeParallelSearch(
 
       searchByTriplet<<<numBlocks, numThreads>>>(
         dev_tracks,
-        (const char*) dev_input,
+        dev_input,
         dev_tracks_to_follow,
         dev_hit_used,
         dev_atomicsStorage,

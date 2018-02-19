@@ -111,7 +111,7 @@ __device__ void weakTracksAdderShared(
 
 __global__ void searchByTriplet(
   Track* dev_tracks,
-  const char* dev_input,
+  char* dev_input,
   unsigned int* dev_tracks_to_follow,
   bool* dev_hit_used,
   int* dev_atomicsStorage,
