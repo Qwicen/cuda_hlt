@@ -48,14 +48,12 @@ __device__ void fillCandidates(
         if (first_h0_found && !last_h0_found) {
           h0_candidates[2*h1_index + 1] = m0_hitStarts + m0_hitNums;
         }
-#if DO_REPEATED_EXECUTION
         // In case of repeated execution, we need to populate
         // the candidates with -1 if not found
         else if (!first_h0_found) {
           h0_candidates[2*h1_index] = -1;
           h0_candidates[2*h1_index + 1] = -1;
         }
-#endif
 
         // Add h2 candidates
         for (int h2_index=m2_hitStarts; h2_index < m2_hitStarts + m2_hitNums; ++h2_index) {
@@ -74,12 +72,10 @@ __device__ void fillCandidates(
         if (first_h2_found && !last_h2_found) {
           h2_candidates[2*h1_index + 1] = m2_hitStarts + m2_hitNums;
         }
-#if DO_REPEATED_EXECUTION
         else if (!first_h2_found) {
           h2_candidates[2*h1_index] = -1;
           h2_candidates[2*h1_index + 1] = -1;
         }
-#endif
       }
     }
   }
