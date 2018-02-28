@@ -5,9 +5,9 @@ cudaError_t invokeParallelSearch(
   std::vector<std::vector<uint8_t>>& output
 ) {
   unsigned int eventsToProcess = input.size();
-  cudaEvent_t event_start, event_sort;
+  cudaEvent_t event_start, event_stop;
   cudaEventCreate(&event_start);
-  cudaEventCreate(&event_sort);
+  cudaEventCreate(&event_stop);
 
   // Choose which GPU to run on
   const int device_number = 0;
@@ -103,8 +103,8 @@ cudaError_t invokeParallelSearch(
   // Repeat the processing several times to average time
   unsigned int niterations = 3;
   unsigned int nexperiments = 1;
-  std::vector<std::vector<float>> times_sbt;
-  std::vector<std::vector<float>> times_fit;
+  std::vector<std::vector<float>> times_sbt (nexperiments);
+  std::vector<std::vector<float>> times_fit (nexperiments);
   std::vector<std::map<std::string, float>> mresults;
 
   DEBUG << "Now, on your " << device_properties->name
@@ -150,12 +150,14 @@ cudaError_t invokeParallelSearch(
 
       cudaEventRecord(event_start, 0);
 
-      velo_fit<<<numBlocks, numThreads>>>(
+      velo_fit<<<numBlocks, 1024>>>(
         dev_input,
         dev_tracks,
         dev_atomics_storage,
         dev_velo_states,
-        dev_hit_temp
+        dev_hit_temp,
+        dev_event_offsets,
+        dev_hit_offsets
       );
 
       cudaEventRecord(event_stop, 0);
@@ -170,6 +172,22 @@ cudaError_t invokeParallelSearch(
     }
 
     DEBUG << std::endl;
+  }
+
+  if (PRINT_VELO_FIT) {
+    std::vector<VeloState> velo_states (eventsToProcess * MAX_TRACKS * STATES_PER_TRACK);
+    cudaCheck(cudaMemcpy(velo_states.data(), dev_velo_states, eventsToProcess * MAX_TRACKS * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost));
+
+    // Print just first track fits
+    for (int i=0; i<3; ++i) {
+      const auto& state = velo_states[i];
+
+      std::cout << "At z: " << state.z << std::endl
+        << " state (x, y, tx, ty): " << state.x << ", " << state.y << ", " << state.tx << ", " << state.ty << std::endl
+        << " covariance (c00, c20, c22, c11, c31, c33): " << state.c00 << ", " << state.c20 << ", " << state.c22 << ", "
+        << state.c11 << ", " << state.c31 << ", " << state.c33 << std::endl
+        << " chi2: " << state.chi2 << std::endl << std::endl;
+    }
   }
 
   if (PRINT_FILL_CANDIDATES) {
@@ -254,22 +272,25 @@ cudaError_t invokeParallelSearch(
 
   DEBUG << std::endl << "Time averages:" << std::endl
     << " Phi + sorting throughput: " << eventsToProcess / (tsort * 0.001)
-    << " events/s, (" << tsort << " ms)" << std::endl;
+    << " events/s (" << tsort << " ms)" << std::endl;
 
   int exp = 1;
   for (auto i=0; i<nexperiments; ++i){
     const auto sbt_statistics = calcResults(times_sbt[i]);
-    DEBUG << " nthreads (" << NUMTHREADS_X << "): "
-      << eventsToProcess / (sbt_statistics[i]["mean"] * 0.001) << " events/s, "
-      << sbt_statistics[i]["mean"] << " ms (std dev " << sbt_statistics[i]["deviation"] << "), "
-      << eventsToProcess / ((sbt_statistics[i]["mean"] + tsort) * 0.001) << " events/s with sorting"
+    auto accumulated_time = sbt_statistics.at("mean") + tsort;
+    
+    DEBUG << " Search by triplet (" << NUMTHREADS_X << "): "
+      << eventsToProcess / (sbt_statistics.at("mean") * 0.001) << " events/s ("
+      << sbt_statistics.at("mean") << " ms, std dev " << sbt_statistics.at("deviation") << "), "
+      << eventsToProcess / (accumulated_time * 0.001) << " events/s integrated throughput"
       << std::endl;
 
     const auto fit_statistics = calcResults(times_fit[i]);
-    DEBUG << " nthreads (" << NUMTHREADS_X << "): "
-      << eventsToProcess / (fit_statistics[i]["mean"] * 0.001) << " fits/s, "
-      << fit_statistics[i]["mean"] << " ms (std dev " << fit_statistics[i]["deviation"] << "), "
-      // << eventsToProcess / ((fit_statistics[i]["mean"] + tsort) * 0.001) << " events/s with sorting"
+    accumulated_time += fit_statistics.at("mean");
+    DEBUG << " Fit: "
+      << eventsToProcess / (fit_statistics.at("mean") * 0.001) << " fits/s ("
+      << fit_statistics.at("mean") << " ms, std dev " << fit_statistics.at("deviation") << "), "
+      << eventsToProcess / (accumulated_time * 0.001) << " events/s integrated throughput"
       << std::endl;
 
     exp *= 2;

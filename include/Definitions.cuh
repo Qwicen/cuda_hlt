@@ -50,7 +50,7 @@
 #define NUM_ATOMICS 4
 
 // Constants for requested storage on device
-#define MAX_TRACKS 3000
+#define MAX_TRACKS 500
 #define MAX_TRACK_SIZE 26
 #define MAX_NUMHITS_IN_MODULE 256
 
@@ -72,9 +72,11 @@
 #define PRINT_FILL_CANDIDATES false
 #define PRINT_VERBOSE false
 #define PRINT_BINARY false
-#define ASSERTS_ENABLED false
+#define PRINT_VELO_FIT false
 #define RESULTS_FOLDER "results"
 
+// Asserts
+#define ASSERTS_ENABLED false
 #if ASSERTS_ENABLED == true
 #include "assert.h"
 #define ASSERT(EXPR) assert(EXPR);
@@ -129,6 +131,7 @@ struct Track { // 2 + 26 * 2 = 58 B
  *        {x, y, tx, ty, 0}
  *        
  *        associated with a simplified covariance
+ *        since we do two fits (one in X, one in Y)
  *
  *        c00 0.f c20 0.f 0.f
  *            0.f 0.f c31 0.f
@@ -136,10 +139,11 @@ struct Track { // 2 + 26 * 2 = 58 B
  *                    c33 0.f
  *                        0.f
  */
-struct VeloState {
-  float x, y, z, tx, ty;
+struct VeloState { // 48 B
+  float x, y, tx, ty;
   float c00, c20, c22, c11, c31, c33;
   float chi2;
+  float z;
 };
 
 /**

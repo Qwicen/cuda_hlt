@@ -3,6 +3,7 @@
 #include "Definitions.cuh"
 #include "SearchByTriplet.cuh"
 #include "CalculatePhiAndSort.cuh"
+#include "VeloKalmanFilter.cuh"
 #include "Tools.h"
 #include "Logger.h"
 #include "Common.h"

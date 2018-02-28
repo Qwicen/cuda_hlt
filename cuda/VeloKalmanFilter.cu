@@ -3,7 +3,7 @@
 /**
  * @brief Calculates the parameters according to a root means square fit
  */
-__device__ float means_square_fit(
+__device__ void means_square_fit(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
@@ -19,7 +19,7 @@ __device__ float means_square_fit(
   
   // Iterate over hits
   for (unsigned short h=0; h<track.hitsNum; ++h) {
-    const auto hitno = t.hits[h];
+    const auto hitno = track.hits[h];
     const auto x = hit_Xs[hitno];
     const auto y = hit_Ys[hitno];
     const auto z = hit_Zs[hitno];
@@ -87,13 +87,13 @@ __device__ float means_square_fit(
       const auto hitno = track.hits[h];
 
       const auto z = hit_Zs[hitno];
-      const auto x = state.x0 + state.tx * z;
-      const auto y = state.y0 + state.ty * z;
+      const auto x = state.x + state.tx * z;
+      const auto y = state.y + state.ty * z;
 
       const auto dx = x - hit_Xs[hitno];
       const auto dy = y - hit_Ys[hitno];
       
-      ch += dx * dx * CL_PARAM_W + dy * dy * CL_PARAM_W;
+      ch += dx * dx * PARAM_W + dy * dy * PARAM_W;
 
       // Nice :)
       // TODO: We can get rid of the X and Y read here
@@ -126,14 +126,14 @@ __device__ float velo_kalman_filter_step(
   const float xhit,
   const float whit,
   float& x,
-  float& y,
+  float& tx,
   float& covXX,
   float& covXTx,
   float& covTxTx
 ) {
   // compute the prediction
   const float dz = zhit - z;
-  const float predx = (*x) + dz * (*tx);
+  const float predx = x + dz * tx;
 
   const float dz_t_covTxTx = dz * covTxTx;
   const float predcovXTx = covXTx + dz_t_covTxTx;
@@ -176,9 +176,9 @@ __device__ void simplified_fit(
   // assume the hits are sorted,
   // but don't assume anything on the direction of sorting
   int firsthit = 0;
-  int lasthit = t.hitsNum - 1;
+  int lasthit = track.hitsNum - 1;
   int dhit = 1;
-  if ((hit_Zs[t.hits[lasthit]] - hit_Zs[t.hits[firsthit]]) * direction < 0) {
+  if ((hit_Zs[track.hits[lasthit]] - hit_Zs[track.hits[firsthit]]) * direction < 0) {
     const int temp = firsthit;
     firsthit = lasthit;
     lasthit = temp;
@@ -187,13 +187,13 @@ __device__ void simplified_fit(
 
   // We filter x and y simultaneously but take them uncorrelated.
   // filter first the first hit.
-  const auto hitno = t.hits[firsthit];
+  const auto hitno = track.hits[firsthit];
   VeloState state;
   state.x = hit_Xs[hitno];
   state.y = hit_Ys[hitno];
   state.z = hit_Zs[hitno];
-  state.tx = tp.tx;
-  state.ty = tp.ty;
+  state.tx = parameters.tx;
+  state.ty = parameters.ty;
 
   // Initialize the covariance matrix
   state.c00 = PARAM_W_INVERTED;
@@ -206,7 +206,7 @@ __device__ void simplified_fit(
   // add remaining hits
   state.chi2 = 0.0f;
   for (unsigned int i=firsthit + dhit; i!=lasthit + dhit; i+=dhit) {
-    const unsigned int hitno = t.hits[i];
+    const unsigned int hitno = track.hits[i];
     const auto hit_x = hit_Xs[hitno];
     const auto hit_y = hit_Ys[hitno];
     const auto hit_z = hit_Zs[hitno];
@@ -216,19 +216,18 @@ __device__ void simplified_fit(
     state.c33 += noise2PerLayer;
 
     // filter X and filter Y
-    state.chi2 += velo_kalman_filter_step(z, hit_z, hit_x, PARAM_W, state.x, state.tx, state.c00, state.c20, state.c22);
-    state.chi2 += velo_kalman_filter_step(z, hit_z, hit_y, PARAM_W, state.y, state.ty, state.c11, state.c31, state.c33);
+    state.chi2 += velo_kalman_filter_step(state.z, hit_z, hit_x, PARAM_W, state.x, state.tx, state.c00, state.c20, state.c22);
+    state.chi2 += velo_kalman_filter_step(state.z, hit_z, hit_y, PARAM_W, state.y, state.ty, state.c11, state.c31, state.c33);
     
     // update z (note done in the filter, since needed only once)
-    z = hit_z;
+    state.z = hit_z;
   }
 
   // add the noise at the last hit
   state.c22 += noise2PerLayer;
   state.c33 += noise2PerLayer;
 
-  // finally, fill the state z and store it
-  state.z = z;
+  // finally, store the state
   *velo_state = state;
 }
 
@@ -240,12 +239,13 @@ __global__ void velo_fit(
   Track* dev_tracks,
   int* dev_atomics_storage,
   VeloState* dev_velo_states,
-  int32_t* dev_hit_temp
+  int32_t* dev_hit_temp,
+  unsigned int* dev_event_offsets,
+  unsigned int* dev_hit_offsets
 ) {
   // Data initialization
   // Each event is treated with two blocks, one for each side.
   const unsigned int event_number = blockIdx.x;
-  const unsigned int events_under_process = gridDim.x;
   const unsigned int tracks_offset = event_number * MAX_TRACKS;
 
   // Pointers to data within the event
@@ -260,7 +260,8 @@ __global__ void velo_fit(
   int32_t* hit_temp = (int32_t*) (module_hitNums + number_of_modules);
   float* hit_Ys = (float*) (hit_temp + number_of_hits);
   float* hit_Zs = (float*) (hit_Ys + number_of_hits);
-  unsigned int* hit_IDs = (unsigned int*) (hit_Zs + number_of_hits);
+  
+  const unsigned int hit_offset = dev_hit_offsets[event_number];
   float* hit_Xs = (float*) (dev_hit_temp + hit_offset);
 
   // Reconstructed tracks
@@ -272,6 +273,9 @@ __global__ void velo_fit(
   for (unsigned int i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
     const auto element = threadIdx.x + i * blockDim.x;
     if (element < number_of_tracks) {
+      // Base pointer to velo_states for this element
+      VeloState* velo_state_base = velo_states + element * STATES_PER_TRACK;
+
       // Means square fit
       const auto track = tracks[element];
       TrackFitParameters parameters;
@@ -283,7 +287,7 @@ __global__ void velo_fit(
         hit_Zs,
         track,
         parameters,
-        velo_states
+        velo_state_base
       );
 
       // Always calculate two simplified Kalman fits and store their results to VeloState:
@@ -303,7 +307,7 @@ __global__ void velo_fit(
         hit_Zs,
         track,
         parameters,
-        velo_states + 1
+        velo_state_base + 1
       );
 
       // Upstream fit
@@ -313,7 +317,7 @@ __global__ void velo_fit(
         hit_Zs,
         track,
         parameters,
-        velo_states + 2
+        velo_state_base + 2
       );
     }
   }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <stdint.h>
 #include "cuda_runtime.h"
 
 /// For sanity check of input
