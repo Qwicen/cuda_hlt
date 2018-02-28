@@ -5,6 +5,9 @@ cudaError_t invokeParallelSearch(
   std::vector<std::vector<uint8_t>>& output
 ) {
   unsigned int eventsToProcess = input.size();
+  cudaEvent_t event_start, event_sort;
+  cudaEventCreate(&event_start);
+  cudaEventCreate(&event_sort);
 
   // Choose which GPU to run on
   const int device_number = 0;
@@ -39,7 +42,7 @@ cudaError_t invokeParallelSearch(
   char* dev_input;
   unsigned int* dev_tracks_to_follow;
   bool* dev_hit_used;
-  int* dev_atomicsStorage;
+  int* dev_atomics_storage;
   Track* dev_tracklets;
   unsigned int* dev_weak_tracks;
   unsigned int* dev_event_offsets;
@@ -50,13 +53,14 @@ cudaError_t invokeParallelSearch(
   float* dev_hit_phi;
   int32_t* dev_hit_temp;
   unsigned short* dev_hit_permutation;
+  VeloState* dev_velo_states;
 
   // Allocate GPU buffers
   cudaCheck(cudaMalloc((void**)&dev_tracks, eventsToProcess * MAX_TRACKS * sizeof(Track)));
   cudaCheck(cudaMalloc((void**)&dev_input, acc_size));
   cudaCheck(cudaMalloc((void**)&dev_tracks_to_follow, eventsToProcess * TTF_MODULO * sizeof(unsigned int)));
   cudaCheck(cudaMalloc((void**)&dev_hit_used, acc_hits * sizeof(bool)));
-  cudaCheck(cudaMalloc((void**)&dev_atomicsStorage, eventsToProcess * atomic_space * sizeof(int)));
+  cudaCheck(cudaMalloc((void**)&dev_atomics_storage, eventsToProcess * atomic_space * sizeof(int)));
   cudaCheck(cudaMalloc((void**)&dev_tracklets, acc_hits * sizeof(Track)));
   cudaCheck(cudaMalloc((void**)&dev_weak_tracks, acc_hits * sizeof(unsigned int)));
   cudaCheck(cudaMalloc((void**)&dev_event_offsets, event_offsets.size() * sizeof(unsigned int)));
@@ -67,6 +71,7 @@ cudaError_t invokeParallelSearch(
   cudaCheck(cudaMalloc((void**)&dev_hit_phi, acc_hits * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_hit_temp, acc_hits * sizeof(int32_t)));
   cudaCheck(cudaMalloc((void**)&dev_hit_permutation, acc_hits * sizeof(unsigned short)));
+  cudaCheck(cudaMalloc((void**)&dev_velo_states, eventsToProcess * MAX_TRACKS * STATES_PER_TRACK * sizeof(VeloState)));
 
   // Copy stuff from host memory to GPU buffers
   cudaCheck(cudaMemcpy(dev_event_offsets, event_offsets.data(), event_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
@@ -78,11 +83,8 @@ cudaError_t invokeParallelSearch(
   }
 
   // Sorting
-  cudaEvent_t start_sort, stop_sort;
   float tsort;
-  cudaEventCreate(&start_sort);
-  cudaEventCreate(&stop_sort);
-  cudaEventRecord(start_sort, 0);
+  cudaEventRecord(event_start, 0);
 
   calculatePhiAndSort<<<numBlocks, 64>>>(
     dev_input,
@@ -93,17 +95,17 @@ cudaError_t invokeParallelSearch(
     dev_hit_permutation
   );
 
-  cudaEventRecord(stop_sort, 0);
-  cudaEventSynchronize(stop_sort);
-  cudaEventElapsedTime(&tsort, start_sort, stop_sort);
-  cudaEventDestroy(start_sort);
-  cudaEventDestroy(stop_sort);
+  cudaEventRecord(event_stop, 0);
+  cudaEventSynchronize(event_stop);
+  cudaEventElapsedTime(&tsort, event_start, event_stop);
+  cudaCheck(cudaPeekAtLastError());
 
   // Repeat the processing several times to average time
   unsigned int niterations = 3;
   unsigned int nexperiments = 1;
-  std::vector<std::vector<float>> time_values {nexperiments};
-  std::vector<std::map<std::string, float>> mresults {nexperiments};
+  std::vector<std::vector<float>> times_sbt;
+  std::vector<std::vector<float>> times_fit;
+  std::vector<std::map<std::string, float>> mresults;
 
   DEBUG << "Now, on your " << device_properties->name
     << ": searchByTriplet with " << eventsToProcess
@@ -118,23 +120,18 @@ cudaError_t invokeParallelSearch(
     for (auto j=0; j<niterations; ++j) {
       // Initialize just what we need
       cudaCheck(cudaMemset(dev_hit_used, false, acc_hits * sizeof(bool)));
-      cudaCheck(cudaMemset(dev_atomicsStorage, 0, eventsToProcess * atomic_space * sizeof(int)));
+      cudaCheck(cudaMemset(dev_atomics_storage, 0, eventsToProcess * atomic_space * sizeof(int)));
       
       // searchByTriplet
-      cudaEvent_t start_searchByTriplet, stop_searchByTriplet;
-      float t0;
-
-      cudaEventCreate(&start_searchByTriplet);
-      cudaEventCreate(&stop_searchByTriplet);
-
-      cudaEventRecord(start_searchByTriplet, 0 );
+      float tsbt, tfit;
+      cudaEventRecord(event_start, 0);
 
       searchByTriplet<<<numBlocks, numThreads>>>(
         dev_tracks,
         dev_input,
         dev_tracks_to_follow,
         dev_hit_used,
-        dev_atomicsStorage,
+        dev_atomics_storage,
         dev_tracklets,
         dev_weak_tracks,
         dev_event_offsets,
@@ -146,19 +143,30 @@ cudaError_t invokeParallelSearch(
         dev_hit_temp
       );
 
-      cudaEventRecord( stop_searchByTriplet, 0 );
-      cudaEventSynchronize( stop_searchByTriplet );
-      cudaEventElapsedTime( &t0, start_searchByTriplet, stop_searchByTriplet );
+      cudaEventRecord(event_stop, 0);
+      cudaEventSynchronize(event_stop);
+      cudaEventElapsedTime(&tsbt, event_start, event_stop);
+      cudaCheck(cudaPeekAtLastError());
 
-      cudaEventDestroy( start_searchByTriplet );
-      cudaEventDestroy( stop_searchByTriplet );
+      cudaEventRecord(event_start, 0);
 
-      cudaCheck( cudaPeekAtLastError() );
+      velo_fit<<<numBlocks, numThreads>>>(
+        dev_input,
+        dev_tracks,
+        dev_atomics_storage,
+        dev_velo_states,
+        dev_hit_temp
+      );
 
-      time_values[i].push_back(t0);
+      cudaEventRecord(event_stop, 0);
+      cudaEventSynchronize(event_stop);
+      cudaEventElapsedTime(&tfit, event_start, event_stop);
+      cudaCheck(cudaPeekAtLastError());
+
+      times_sbt[i].push_back(tsbt);
+      times_fit[i].push_back(tfit);
 
       DEBUG << "." << std::flush;
-
     }
 
     DEBUG << std::endl;
@@ -194,7 +202,7 @@ cudaError_t invokeParallelSearch(
   // Get results
   if (PRINT_SOLUTION) DEBUG << "Number of tracks found per event:" << std::endl << " ";
   std::vector<int> atomics (eventsToProcess * atomic_space);
-  cudaCheck(cudaMemcpy(atomics.data(), dev_atomicsStorage, eventsToProcess * atomic_space * sizeof(int), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(atomics.data(), dev_atomics_storage, eventsToProcess * atomic_space * sizeof(int), cudaMemcpyDeviceToHost));
   for (unsigned int i=0; i<eventsToProcess; ++i){
     const unsigned int numberOfTracks = atomics[i];
     if (PRINT_SOLUTION) DEBUG << numberOfTracks << ", ";
@@ -250,15 +258,25 @@ cudaError_t invokeParallelSearch(
 
   int exp = 1;
   for (auto i=0; i<nexperiments; ++i){
-    mresults[i] = calcResults(time_values[i]);
+    const auto sbt_statistics = calcResults(times_sbt[i]);
     DEBUG << " nthreads (" << NUMTHREADS_X << "): "
-      << eventsToProcess / (mresults[i]["mean"] * 0.001) << " events/s, "
-      << mresults[i]["mean"] << " ms (std dev " << mresults[i]["deviation"] << "), "
-      << eventsToProcess / ((mresults[i]["mean"] + tsort) * 0.001) << " events/s with sorting"
+      << eventsToProcess / (sbt_statistics[i]["mean"] * 0.001) << " events/s, "
+      << sbt_statistics[i]["mean"] << " ms (std dev " << sbt_statistics[i]["deviation"] << "), "
+      << eventsToProcess / ((sbt_statistics[i]["mean"] + tsort) * 0.001) << " events/s with sorting"
+      << std::endl;
+
+    const auto fit_statistics = calcResults(times_fit[i]);
+    DEBUG << " nthreads (" << NUMTHREADS_X << "): "
+      << eventsToProcess / (fit_statistics[i]["mean"] * 0.001) << " fits/s, "
+      << fit_statistics[i]["mean"] << " ms (std dev " << fit_statistics[i]["deviation"] << "), "
+      // << eventsToProcess / ((fit_statistics[i]["mean"] + tsort) * 0.001) << " events/s with sorting"
       << std::endl;
 
     exp *= 2;
   }
+  
+  cudaEventDestroy(event_start);
+  cudaEventDestroy(event_stop);
 
   return cudaSuccess;
 }

@@ -57,6 +57,11 @@
 // Maximum number of tracks to follow at a time
 #define TTF_MODULO 2000
 
+// Constants for filters
+#define STATES_PER_TRACK 3
+#define PARAM_W 3966.94f
+#define PARAM_W_INVERTED 0.000252083f
+
 // Run over same data several times to stress processor
 // (ie. increase the runtime of kernels)
 #define DO_REPEATED_EXECUTION false
@@ -116,4 +121,32 @@ struct Track { // 2 + 26 * 2 = 58 B
     hits[1] = _h1;
     hits[2] = _h2;
   }
+};
+
+/**
+ * @brief A simplified state for the Velo
+ *        
+ *        {x, y, tx, ty, 0}
+ *        
+ *        associated with a simplified covariance
+ *
+ *        c00 0.f c20 0.f 0.f
+ *            0.f 0.f c31 0.f
+ *                c22 0.f 0.f
+ *                    c33 0.f
+ *                        0.f
+ */
+struct VeloState {
+  float x, y, z, tx, ty;
+  float c00, c20, c22, c11, c31, c33;
+  float chi2;
+};
+
+/**
+ * @brief Means square fit parameters
+ *        required for Kalman fit (Velo)
+ */
+struct TrackFitParameters {
+  float tx, ty;
+  bool backward;
 };
