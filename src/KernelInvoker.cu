@@ -148,8 +148,12 @@ cudaError_t invokeParallelSearch(
       cudaEventElapsedTime(&tsbt, event_start, event_stop);
       cudaCheck(cudaPeekAtLastError());
 
+      // Consolidate the data
+
+
       cudaEventRecord(event_start, 0);
 
+      // Fits
       velo_fit<<<numBlocks, 1024>>>(
         dev_input,
         dev_tracks,
