@@ -1,5 +1,5 @@
 /**
- *      CUDA Forward project
+ *      CUDA Search by Triplet project
  *      
  *      author  -   Daniel Campora
  *      email   -   dcampora@cern.ch
