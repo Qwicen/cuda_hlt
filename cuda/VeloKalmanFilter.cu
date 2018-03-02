@@ -236,7 +236,8 @@ __device__ void simplified_fit(
  */
 __global__ void velo_fit(
   const char* dev_input,
-  char* dev_consolidated_tracks,
+  const char* dev_consolidated_tracks,
+  VeloState* dev_velo_states,
   int32_t* dev_hit_temp,
   unsigned int* dev_event_offsets,
   unsigned int* dev_hit_offsets
@@ -264,10 +265,10 @@ __global__ void velo_fit(
 
   // Reconstructed tracks
   const unsigned int total_number_of_tracks = *((unsigned int*) dev_consolidated_tracks);
-  const unsigned int* track_start = (unsigned int*) (dev_consolidated_tracks + 2 * sizeof(unsigned int));
+  const unsigned int* track_start = (unsigned int*) (dev_consolidated_tracks + sizeof(unsigned int));
   const unsigned int* number_of_tracks = track_start + number_of_events;
   const Track* tracks = (Track*) (number_of_tracks + number_of_events);
-  VeloState* velo_states = (VeloState*) (tracks + total_number_of_tracks);
+  VeloState* velo_states = dev_velo_states;
 
   const unsigned int event_track_start = track_start[event_number];
   const unsigned int event_number_of_tracks = number_of_tracks[event_number];

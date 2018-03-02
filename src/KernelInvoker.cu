@@ -71,7 +71,6 @@ cudaError_t invokeParallelSearch(
   cudaCheck(cudaMalloc((void**)&dev_hit_phi, acc_hits * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_hit_temp, acc_hits * sizeof(int32_t)));
   cudaCheck(cudaMalloc((void**)&dev_hit_permutation, acc_hits * sizeof(unsigned short)));
-  cudaCheck(cudaMalloc((void**)&dev_velo_states, eventsToProcess * MAX_TRACKS * STATES_PER_TRACK * sizeof(VeloState)));
 
   // Copy stuff from host memory to GPU buffers
   cudaCheck(cudaMemcpy(dev_event_offsets, event_offsets.data(), event_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
@@ -168,9 +167,8 @@ cudaError_t invokeParallelSearch(
       // Reserve exactly the amount of memory we need for consolidated tracks and VeloStates
       char* dev_consolidated_tracks;
       VeloState* dev_velo_states;
-      const auto consolidated_tracks_size = (2 + eventsToProcess * 2) * sizeof(unsigned int)
-                                            + total_number_of_tracks * sizeof(Track)
-                                            + total_number_of_tracks * STATES_PER_TRACK * sizeof(VeloState);
+      auto consolidated_tracks_size = (1 + eventsToProcess * 2) * sizeof(unsigned int)
+                                      + total_number_of_tracks * sizeof(Track);
       cudaCheck(cudaMalloc((void**)&dev_consolidated_tracks, consolidated_tracks_size));
 
       // Copy tracks data into consolidated tracks
@@ -190,6 +188,9 @@ cudaError_t invokeParallelSearch(
         dev_consolidated_tracks_pointer += number_of_tracks[event_no] * sizeof(Track);
       }
 
+      // VeloState* dev_velo_states;
+      cudaCheck(cudaMalloc((void**)&dev_velo_states, total_number_of_tracks * STATES_PER_TRACK * sizeof(VeloState)));
+
       DEBUG << "Original tracks container (B): " << eventsToProcess * MAX_TRACKS * sizeof(Track) << std::endl
         << "Consolidated tracks container (B): " << (dev_consolidated_tracks_pointer - dev_consolidated_tracks)
         << " (" << 100.f * ((float) (dev_consolidated_tracks_pointer - dev_consolidated_tracks)) / (eventsToProcess * MAX_TRACKS * sizeof(Track)) << " %)"
@@ -205,6 +206,7 @@ cudaError_t invokeParallelSearch(
       velo_fit<<<numBlocks, 1024>>>(
         dev_input,
         dev_consolidated_tracks,
+        dev_velo_states,
         dev_hit_temp,
         dev_event_offsets,
         dev_hit_offsets
