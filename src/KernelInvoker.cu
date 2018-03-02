@@ -101,7 +101,7 @@ cudaError_t invokeParallelSearch(
   cudaCheck(cudaPeekAtLastError());
 
   // Repeat the processing several times to average time
-  unsigned int niterations = 3;
+  unsigned int niterations = 1;
   unsigned int nexperiments = 1;
   std::vector<std::vector<float>> times_sbt (nexperiments);
   std::vector<std::vector<float>> times_fit (nexperiments);
