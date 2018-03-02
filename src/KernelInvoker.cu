@@ -148,17 +148,63 @@ cudaError_t invokeParallelSearch(
       cudaEventElapsedTime(&tsbt, event_start, event_stop);
       cudaCheck(cudaPeekAtLastError());
 
-      // Consolidate the data
+      // Consolidate the data for upcoming algorithms
+      // Fetch number of tracks for all events
+      std::vector<unsigned int> track_start (eventsToProcess);
+      std::vector<unsigned int> number_of_tracks (eventsToProcess);
+      cudaCheck(cudaMemcpy(number_of_tracks.data(), dev_atomics_storage, eventsToProcess * sizeof(unsigned int), cudaMemcpyDeviceToHost));
+      
+      unsigned int total_number_of_tracks = 0;
+      for (unsigned int event_no=0; event_no<eventsToProcess; ++event_no) {
+        track_start[event_no] = total_number_of_tracks;
+        total_number_of_tracks += number_of_tracks[event_no];
+      }
+      
+      DEBUG << "Found a total of " << total_number_of_tracks << " tracks ("
+        << (total_number_of_tracks / ((float) number_of_tracks.size()))
+        << " average tracks per event)" << std::endl
+        << "Max tracks in one event: " << *(std::max_element(number_of_tracks.begin(), number_of_tracks.end())) << std::endl;
 
+      // Reserve exactly the amount of memory we need for consolidated tracks and VeloStates
+      char* dev_consolidated_tracks;
+      VeloState* dev_velo_states;
+      const auto consolidated_tracks_size = (1 + eventsToProcess * 2) * sizeof(unsigned int)
+                                            + total_number_of_tracks * sizeof(Track)
+                                            + total_number_of_tracks * STATES_PER_TRACK * sizeof(VeloState);
+      cudaCheck(cudaMalloc((void**)&dev_consolidated_tracks, consolidated_tracks_size));
+
+      // Copy tracks data into consolidated tracks
+      char* dev_consolidated_tracks_pointer = dev_consolidated_tracks;
+      cudaCheck(cudaMemcpy(dev_consolidated_tracks_pointer, (char*) &total_number_of_tracks, sizeof(unsigned int), cudaMemcpyHostToDevice));
+      dev_consolidated_tracks_pointer += sizeof(unsigned int);
+
+      cudaCheck(cudaMemcpy(dev_consolidated_tracks_pointer, track_start.data(), eventsToProcess * sizeof(unsigned int), cudaMemcpyHostToDevice));
+      dev_consolidated_tracks_pointer += eventsToProcess * sizeof(unsigned int);
+
+      cudaCheck(cudaMemcpy(dev_consolidated_tracks_pointer, (char*) dev_atomics_storage, eventsToProcess * sizeof(unsigned int), cudaMemcpyDeviceToDevice));
+      dev_consolidated_tracks_pointer += eventsToProcess * sizeof(unsigned int);
+
+      // Copy tracks for each event
+      for (unsigned int event_no=0; event_no<eventsToProcess; ++event_no) {
+        cudaCheck(cudaMemcpy(dev_consolidated_tracks_pointer, (char*) (dev_tracks + event_no * MAX_TRACKS), number_of_tracks[event_no] * sizeof(Track), cudaMemcpyDeviceToDevice));
+        dev_consolidated_tracks_pointer += number_of_tracks[event_no] * sizeof(Track);
+      }
+
+      DEBUG << "Original tracks container (B): " << eventsToProcess * MAX_TRACKS * sizeof(Track) << std::endl
+        << "Consolidated tracks container (B): " << (dev_consolidated_tracks_pointer - dev_consolidated_tracks)
+        << " (" << 100.f * ((float) (dev_consolidated_tracks_pointer - dev_consolidated_tracks)) / (eventsToProcess * MAX_TRACKS * sizeof(Track)) << " %)"
+        << std::endl;
+      
+      // TODO: Revisit free-able objects at each point in the pipeline
+      // cudaCheck(cudaFree(dev_atomics_storage));
+      // cudaCheck(cudaFree(dev_tracks));
 
       cudaEventRecord(event_start, 0);
 
       // Fits
       velo_fit<<<numBlocks, 1024>>>(
         dev_input,
-        dev_tracks,
-        dev_atomics_storage,
-        dev_velo_states,
+        dev_consolidated_tracks,
         dev_hit_temp,
         dev_event_offsets,
         dev_hit_offsets
