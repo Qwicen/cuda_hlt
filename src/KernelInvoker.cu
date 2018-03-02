@@ -168,7 +168,7 @@ cudaError_t invokeParallelSearch(
       // Reserve exactly the amount of memory we need for consolidated tracks and VeloStates
       char* dev_consolidated_tracks;
       VeloState* dev_velo_states;
-      const auto consolidated_tracks_size = (1 + eventsToProcess * 2) * sizeof(unsigned int)
+      const auto consolidated_tracks_size = (2 + eventsToProcess * 2) * sizeof(unsigned int)
                                             + total_number_of_tracks * sizeof(Track)
                                             + total_number_of_tracks * STATES_PER_TRACK * sizeof(VeloState);
       cudaCheck(cudaMalloc((void**)&dev_consolidated_tracks, consolidated_tracks_size));

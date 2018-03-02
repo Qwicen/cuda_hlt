@@ -245,7 +245,6 @@ __global__ void velo_fit(
   // Each event is treated with two blocks, one for each side.
   const unsigned int number_of_events = gridDim.x;
   const unsigned int event_number = blockIdx.x;
-  const unsigned int tracks_offset = event_number * MAX_TRACKS;
 
   // Pointers to data within the event
   const unsigned int data_offset = dev_event_offsets[event_number];
@@ -265,7 +264,7 @@ __global__ void velo_fit(
 
   // Reconstructed tracks
   const unsigned int total_number_of_tracks = *((unsigned int*) dev_consolidated_tracks);
-  const unsigned int* track_start = (unsigned int*) (dev_consolidated_tracks + sizeof(unsigned int));
+  const unsigned int* track_start = (unsigned int*) (dev_consolidated_tracks + 2 * sizeof(unsigned int));
   const unsigned int* number_of_tracks = track_start + number_of_events;
   const Track* tracks = (Track*) (number_of_tracks + number_of_events);
   VeloState* velo_states = (VeloState*) (tracks + total_number_of_tracks);
