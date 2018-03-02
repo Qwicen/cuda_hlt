@@ -267,7 +267,7 @@ __global__ void velo_fit(
   const unsigned int total_number_of_tracks = *((unsigned int*) dev_consolidated_tracks);
   const unsigned int* track_start = (unsigned int*) (dev_consolidated_tracks + sizeof(unsigned int));
   const unsigned int* number_of_tracks = track_start + number_of_events;
-  const Track* tracks = (Track*) (track_start + number_of_events);
+  const Track* tracks = (Track*) (number_of_tracks + number_of_events);
   VeloState* velo_states = (VeloState*) (tracks + total_number_of_tracks);
 
   const unsigned int event_track_start = track_start[event_number];
