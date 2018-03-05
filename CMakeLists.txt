@@ -17,4 +17,4 @@ set(CUDA_SEPARABLE_COMPILATION ON)
 
 set(CUDA_NVCC_FLAGS "-std=c++11;-O3;-g;--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=64;")
 
-cuda_add_executable(cuForward src/main.cpp src/Tools.cpp src/Logger.cpp src/KernelInvoker.cu cuda/TrackForwarding.cu cuda/TrackSeeding.cu cuda/FillCandidates.cu cuda/SearchByTriplet.cu cuda/ProcessModules.cu cuda/TrackSeedingFirst.cu cuda/WeakTracksAdder.cu cuda/CalculatePhi.cu cuda/SortByPhi.cu cuda/CalculatePhiAndSort.cu cuda/VeloKalmanFilter.cu)
+cuda_add_executable(cuForward main/src/main.cpp main/src/Tools.cpp main/src/Logger.cpp cuda/src/KernelInvoker.cu cuda/src/TrackForwarding.cu cuda/src/TrackSeeding.cu cuda/src/FillCandidates.cu cuda/src/SearchByTriplet.cu cuda/src/ProcessModules.cu cuda/src/TrackSeedingFirst.cu cuda/src/WeakTracksAdder.cu cuda/src/CalculatePhi.cu cuda/src/SortByPhi.cu cuda/src/CalculatePhiAndSort.cu cuda/src/VeloKalmanFilter.cu stream/src/Stream.cu)

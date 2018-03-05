@@ -1,10 +1,12 @@
 #pragma once
 
 #include "Measurable.cuh"
+#include "../../cuda/include/Definitions.cuh"
+#include "../../cuda/include/SearchByTriplet.cuh"
 
 struct SearchByTriplet : public Measurable {
   // Call options
-  dim3 numBlocks, numThreads;
+  dim3 num_blocks, num_threads;
 
   // Cuda stream
   cudaStream_t& stream;
@@ -25,9 +27,9 @@ struct SearchByTriplet : public Measurable {
   float* dev_hit_phi;
   int32_t* dev_hit_temp;
 
-  CalculatePhiAndSort(
-    const dim3& numBlocks,
-    const dim3& numThreads,
+  SearchByTriplet(
+    const dim3& num_blocks,
+    const dim3& num_threads,
     cudaStream_t& stream,
     Track* dev_tracks,
     char* dev_input,
@@ -43,7 +45,7 @@ struct SearchByTriplet : public Measurable {
     unsigned short* dev_rel_indices,
     float* dev_hit_phi,
     int32_t* dev_hit_temp
-  ) : numBlocks(numBlocks), numThreads(numThreads), stream(stream), dev_tracks(dev_tracks), 
+  ) : num_blocks(num_blocks), num_threads(num_threads), stream(stream), dev_tracks(dev_tracks), 
     dev_input(dev_input), dev_tracks_to_follow(dev_tracks_to_follow),
     dev_hit_used(dev_hit_used), dev_atomics_storage(dev_atomics_storage),
     dev_tracklets(dev_tracklets), dev_weak_tracks(dev_weak_tracks),
@@ -55,7 +57,7 @@ struct SearchByTriplet : public Measurable {
   }
 
   void operator()() {
-    searchByTriplet<<<numBlocks, numThreads, 0, stream>>>(
+    searchByTriplet<<<num_blocks, num_threads, 0, stream>>>(
       dev_tracks,
       dev_input,
       dev_tracks_to_follow,

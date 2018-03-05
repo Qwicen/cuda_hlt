@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include "Logger.h"
 #include "Common.h"
-#include "Definitions.cuh"
+#include "../cuda/include/Definitions.cuh"
 
 /**
  * Generic StrException launcher

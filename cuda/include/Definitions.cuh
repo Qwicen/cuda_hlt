@@ -50,7 +50,7 @@
 #define NUM_ATOMICS 4
 
 // Constants for requested storage on device
-#define MAX_TRACKS 500
+#define MAX_TRACKS 1000
 #define MAX_TRACK_SIZE 26
 #define MAX_NUMHITS_IN_MODULE 256
 

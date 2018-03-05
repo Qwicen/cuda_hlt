@@ -1,10 +1,11 @@
 #pragma once
 
 #include "Measurable.cuh"
+#include "../../cuda/include/VeloKalmanFilter.cuh"
 
 struct CalculateVeloStates : public Measurable {
   // Call options
-  dim3 numBlocks, numThreads;
+  dim3 num_blocks, num_threads;
 
   // Cuda stream
   cudaStream_t& stream;
@@ -17,9 +18,9 @@ struct CalculateVeloStates : public Measurable {
   unsigned int* dev_event_offsets;
   unsigned int* dev_hit_offsets;
 
-  CalculatePhiAndSort(
-    const dim3& numBlocks,
-    const dim3& numThreads,
+  CalculateVeloStates(
+    const dim3& num_blocks,
+    const dim3& num_threads,
     cudaStream_t& stream,
     char* dev_input,
     char* dev_consolidated_tracks,
@@ -27,7 +28,7 @@ struct CalculateVeloStates : public Measurable {
     int32_t* dev_hit_temp,
     unsigned int* dev_event_offsets,
     unsigned int* dev_hit_offsets
-  ) : numBlocks(numBlocks), numThreads(numThreads), stream(stream), dev_input(dev_input), 
+  ) : num_blocks(num_blocks), num_threads(num_threads), stream(stream), dev_input(dev_input), 
     dev_consolidated_tracks(dev_consolidated_tracks), dev_velo_states(dev_velo_states),
     dev_hit_temp(dev_hit_temp), dev_event_offsets(dev_event_offsets),
     dev_hit_offsets(dev_hit_offsets) {
@@ -35,7 +36,7 @@ struct CalculateVeloStates : public Measurable {
   }
 
   void operator()() {
-    velo_fit<<<numBlocks, numThreads, 0, stream>>>(
+    velo_fit<<<num_blocks, num_threads, 0, stream>>>(
       dev_input,
       dev_consolidated_tracks,
       dev_velo_states,

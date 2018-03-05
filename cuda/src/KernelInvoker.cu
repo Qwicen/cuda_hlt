@@ -1,5 +1,5 @@
 #include "../include/KernelInvoker.cuh"
-#include "../stream/include/Stream.cuh"
+#include "../../stream/include/Stream.cuh"
 
 cudaError_t invokeParallelSearch(
   const std::vector<std::vector<uint8_t>>& input,
