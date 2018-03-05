@@ -4,6 +4,9 @@
 #include <vector>
 #include "../../main/include/Common.h"
 #include "../../main/include/Logger.h"
+#include "../../main/include/Timer.h"
+
+class Timer;
 
 struct Stream {
   cudaStream_t stream;

@@ -1,4 +1,3 @@
-#include "../../main/include/Timer.h"
 #include "../include/Stream.cuh"
 #include "../include/CalculatePhiAndSort.cuh"
 #include "../include/SearchByTriplet.cuh"

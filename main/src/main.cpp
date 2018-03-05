@@ -17,11 +17,13 @@
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
+#include "tbb/tbb.h"
 #include "cuda_runtime.h"
 #include "../include/Common.h"
 #include "../include/Logger.h"
 #include "../include/Tools.h"
 #include "../../stream/include/Stream.cuh"
+#include "../include/Timer.h"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
@@ -33,8 +35,8 @@ int main(int argc, char *argv[])
 {
   std::string foldername;
   std::vector<std::string> folderContents;
-  std::vector<std::vector<unsigned char>> input;
   int fileNumber;
+  unsigned int tbb_threads = 4;
 
   // Get params (getopt independent - Compatible with Windows)
   if (argc < 3){
@@ -53,7 +55,7 @@ int main(int argc, char *argv[])
   }
 
   // Read folder contents
-  input = readFolder(foldername, fileNumber);
+  const std::vector<std::vector<unsigned char>> input = readFolder(foldername, fileNumber);
 
   // Call offloaded algo
   std::vector<std::vector<unsigned char>> output;
@@ -66,8 +68,19 @@ int main(int argc, char *argv[])
   statistics(input);
 
   // Attempt to execute all in one go
-  Stream s;
-  s(input, 0, input.size());
+  Timer t;
+  t.start();
+  tbb::parallel_for(
+    static_cast<unsigned int>(0),
+    static_cast<unsigned int>(tbb_threads),
+    [&] (unsigned int i) {
+      Stream s (i);
+      s(input, 0, input.size());
+    }
+  );
+  t.stop();
+
+  std::cout << (input.size() * tbb_threads / t.get()) << " events/s combined" << std::endl;
 
   // Reset device
   cudaCheck(cudaDeviceReset());
