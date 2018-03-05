@@ -27,7 +27,9 @@ struct Stream {
   }
 
   cudaError_t operator()(
-    const std::vector<std::vector<uint8_t>>& input,
+    const std::vector<char>& events,
+    const std::vector<unsigned int>& event_offsets,
+    const std::vector<unsigned int>& hit_offsets,
     unsigned int start_event,
     unsigned int number_of_events
   );

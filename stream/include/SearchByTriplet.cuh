@@ -13,7 +13,7 @@ struct SearchByTriplet : public Measurable {
 
   // Call parameters
   Track* dev_tracks;
-  char* dev_input;
+  char* dev_events;
   unsigned int* dev_tracks_to_follow;
   bool* dev_hit_used;
   int* dev_atomics_storage;
@@ -32,7 +32,7 @@ struct SearchByTriplet : public Measurable {
     const dim3& num_threads,
     cudaStream_t& stream,
     Track* dev_tracks,
-    char* dev_input,
+    char* dev_events,
     unsigned int* dev_tracks_to_follow,
     bool* dev_hit_used,
     int* dev_atomics_storage,
@@ -46,7 +46,7 @@ struct SearchByTriplet : public Measurable {
     float* dev_hit_phi,
     int32_t* dev_hit_temp
   ) : num_blocks(num_blocks), num_threads(num_threads), stream(stream), dev_tracks(dev_tracks), 
-    dev_input(dev_input), dev_tracks_to_follow(dev_tracks_to_follow),
+    dev_events(dev_events), dev_tracks_to_follow(dev_tracks_to_follow),
     dev_hit_used(dev_hit_used), dev_atomics_storage(dev_atomics_storage),
     dev_tracklets(dev_tracklets), dev_weak_tracks(dev_weak_tracks),
     dev_event_offsets(dev_event_offsets), dev_hit_offsets(dev_hit_offsets),
@@ -59,7 +59,7 @@ struct SearchByTriplet : public Measurable {
   void operator()() {
     searchByTriplet<<<num_blocks, num_threads, 0, stream>>>(
       dev_tracks,
-      dev_input,
+      dev_events,
       dev_tracks_to_follow,
       dev_hit_used,
       dev_atomics_storage,

@@ -55,7 +55,10 @@ int main(int argc, char *argv[])
   }
 
   // Read folder contents
-  const std::vector<std::vector<unsigned char>> input = readFolder(foldername, fileNumber);
+  std::vector<char> events;
+  std::vector<unsigned int> event_offsets;
+  std::vector<unsigned int> hit_offsets;
+  readFolder(foldername, fileNumber, events, event_offsets, hit_offsets);
 
   // Call offloaded algo
   std::vector<std::vector<unsigned char>> output;
@@ -65,7 +68,7 @@ int main(int argc, char *argv[])
   logger::ll.verbosityLevel = 3;
 
   // Show some statistics
-  statistics(input);
+  // statistics(events, event_offsets);
 
   // Attempt to execute all in one go
   Timer t;
@@ -75,12 +78,12 @@ int main(int argc, char *argv[])
     static_cast<unsigned int>(tbb_threads),
     [&] (unsigned int i) {
       Stream s (i);
-      s(input, 0, input.size());
+      s(events, event_offsets, hit_offsets, 0, event_offsets.size());
     }
   );
   t.stop();
 
-  std::cout << (input.size() * tbb_threads / t.get()) << " events/s combined" << std::endl;
+  std::cout << (event_offsets.size() * tbb_threads / t.get()) << " events/s combined" << std::endl;
 
   // Reset device
   cudaCheck(cudaDeviceReset());

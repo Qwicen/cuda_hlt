@@ -30,12 +30,15 @@ public:
 
 void readFileIntoVector(
   const std::string& foldername,
-  std::vector<uint8_t> & output
+  std::vector<char> & output
 );
 
-std::vector<std::vector<uint8_t>> readFolder(
+void readFolder(
   const std::string& foldername,
-  int fileNumber
+  int fileNumber,
+  std::vector<char>& events,
+  std::vector<unsigned int>& event_offsets,
+  std::vector<unsigned int>& hit_offsets
 );
 
 void statistics(

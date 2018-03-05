@@ -5,7 +5,9 @@
 #include "../include/Helper.cuh"
 
 cudaError_t Stream::operator()(
-  const std::vector<std::vector<uint8_t>>& input,
+  const std::vector<char>& events,
+  const std::vector<unsigned int>& event_offsets,
+  const std::vector<unsigned int>& hit_offsets,
   unsigned int start_event,
   unsigned int number_of_events
 ) {
@@ -17,29 +19,18 @@ cudaError_t Stream::operator()(
   // Number of defined atomics
   constexpr unsigned int atomic_space = NUM_ATOMICS + 1;
 
+  // Total number of hits
+  const auto total_number_of_hits = hit_offsets[hit_offsets.size() - 1];
+
   // Blocks and threads for each algorithm
   dim3 num_blocks (number_of_events);
   dim3 sort_num_threads (64);
   dim3 sbt_num_threads (NUMTHREADS_X);
   dim3 velo_states_num_threads (1024);
 
-  // Prepare event offset and hit offset
-  std::vector<unsigned int> event_offsets;
-  std::vector<unsigned int> hit_offsets;
-  unsigned int acc_size=0, acc_hits=0;
-  for (unsigned int i=0; i<number_of_events; ++i) {
-    const auto event_no = start_event + i;
-    auto info = EventInfo(input[event_no]);
-    const int event_size = input[event_no].size();
-    event_offsets.push_back(acc_size);
-    hit_offsets.push_back(acc_hits);
-    acc_size += event_size;
-    acc_hits += info.numberOfHits;
-  }
-
   // Datatypes
   Track* dev_tracks;
-  char* dev_input;
+  char* dev_events;
   unsigned int* dev_tracks_to_follow;
   bool* dev_hit_used;
   int* dev_atomics_storage;
@@ -61,29 +52,24 @@ cudaError_t Stream::operator()(
   /////////////////////////
 
   // Allocate buffers
-  cudaCheck(cudaMalloc((void**)&dev_input, acc_size));
+  cudaCheck(cudaMalloc((void**)&dev_events, events.size()));
   cudaCheck(cudaMalloc((void**)&dev_event_offsets, event_offsets.size() * sizeof(unsigned int)));
   cudaCheck(cudaMalloc((void**)&dev_hit_offsets, hit_offsets.size() * sizeof(unsigned int)));
-  cudaCheck(cudaMalloc((void**)&dev_hit_phi, acc_hits * sizeof(float)));
-  cudaCheck(cudaMalloc((void**)&dev_hit_temp, acc_hits * sizeof(int32_t)));
-  cudaCheck(cudaMalloc((void**)&dev_hit_permutation, acc_hits * sizeof(unsigned short)));
+  cudaCheck(cudaMalloc((void**)&dev_hit_phi, total_number_of_hits * sizeof(float)));
+  cudaCheck(cudaMalloc((void**)&dev_hit_temp, total_number_of_hits * sizeof(int32_t)));
+  cudaCheck(cudaMalloc((void**)&dev_hit_permutation, total_number_of_hits * sizeof(unsigned short)));
 
   // Copy required data
+  cudaCheck(cudaMemcpy(dev_events, events.data(), events.size(), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_event_offsets, event_offsets.data(), event_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_hit_offsets, hit_offsets.data(), hit_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
-  acc_size = 0;
-  for (unsigned int i=0; i<number_of_events; ++i){
-    const auto event_no = start_event + i;
-    cudaCheck(cudaMemcpy(&dev_input[acc_size], input[event_no].data(), input[event_no].size(), cudaMemcpyHostToDevice));
-    acc_size += input[event_no].size();
-  }
 
-  // // Invoke kernel
+  // Invoke kernel
   auto calculatePhiAndSort = CalculatePhiAndSort(
     num_blocks,
     sort_num_threads,
     stream,
-    dev_input,
+    dev_events,
     dev_event_offsets,
     dev_hit_offsets,
     dev_hit_phi,
@@ -107,16 +93,16 @@ cudaError_t Stream::operator()(
   // Allocate buffers
   cudaCheck(cudaMalloc((void**)&dev_tracks, number_of_events * MAX_TRACKS * sizeof(Track)));
   cudaCheck(cudaMalloc((void**)&dev_tracks_to_follow, number_of_events * TTF_MODULO * sizeof(unsigned int)));
-  cudaCheck(cudaMalloc((void**)&dev_hit_used, acc_hits * sizeof(bool)));
+  cudaCheck(cudaMalloc((void**)&dev_hit_used, total_number_of_hits * sizeof(bool)));
   cudaCheck(cudaMalloc((void**)&dev_atomics_storage, number_of_events * atomic_space * sizeof(int)));
-  cudaCheck(cudaMalloc((void**)&dev_tracklets, acc_hits * sizeof(Track)));
-  cudaCheck(cudaMalloc((void**)&dev_weak_tracks, acc_hits * sizeof(unsigned int)));
-  cudaCheck(cudaMalloc((void**)&dev_h0_candidates, 2 * acc_hits * sizeof(short)));
-  cudaCheck(cudaMalloc((void**)&dev_h2_candidates, 2 * acc_hits * sizeof(short)));
+  cudaCheck(cudaMalloc((void**)&dev_tracklets, total_number_of_hits * sizeof(Track)));
+  cudaCheck(cudaMalloc((void**)&dev_weak_tracks, total_number_of_hits * sizeof(unsigned int)));
+  cudaCheck(cudaMalloc((void**)&dev_h0_candidates, 2 * total_number_of_hits * sizeof(short)));
+  cudaCheck(cudaMalloc((void**)&dev_h2_candidates, 2 * total_number_of_hits * sizeof(short)));
   cudaCheck(cudaMalloc((void**)&dev_rel_indices, number_of_events * MAX_NUMHITS_IN_MODULE * sizeof(unsigned short)));
   
   // Initialize data
-  cudaCheck(cudaMemset(dev_hit_used, false, acc_hits * sizeof(bool)));
+  cudaCheck(cudaMemset(dev_hit_used, false, total_number_of_hits * sizeof(bool)));
   cudaCheck(cudaMemset(dev_atomics_storage, 0, number_of_events * atomic_space * sizeof(int)));
 
   // Invoke kernel
@@ -125,7 +111,7 @@ cudaError_t Stream::operator()(
     sbt_num_threads,
     stream,
     dev_tracks,
-    dev_input,
+    dev_events,
     dev_tracks_to_follow,
     dev_hit_used,
     dev_atomics_storage,
@@ -214,7 +200,7 @@ cudaError_t Stream::operator()(
     num_blocks,
     velo_states_num_threads,
     stream,
-    dev_input,
+    dev_events,
     dev_consolidated_tracks,
     dev_velo_states,
     dev_hit_temp,
@@ -232,7 +218,7 @@ cudaError_t Stream::operator()(
   // If the chain follows, we may not need to retrieve the data
   // in the state it is currently, but in a posterior state.
   // In principle, here we need to get back:
-  // - dev_input: Shuffled input
+  // - dev_events: Shuffled input
   // - dev_hit_temp: hit Xs
   // - dev_consolidated_tracks: Consolidated tracks
   // - dev_velo_states: VELO filtered states for each track
@@ -243,18 +229,18 @@ cudaError_t Stream::operator()(
   cudaCheck(cudaFree(dev_hit_offsets));
 
   // TODO: Fetch required data
-  // std::vector<uint8_t> output (acc_size);
-  // std::vector<float> hit_xs (acc_hits);
+  // std::vector<uint8_t> output (events.size());
+  // std::vector<float> hit_xs (total_number_of_hits);
   // std::vector<char> consolidated_tracks (consolidated_tracks_size);
   // std::vector<VeloState> velo_states (total_number_of_tracks * STATES_PER_TRACK);
 
-  // cudaCheck(cudaMemcpy(output.data(), dev_input, acc_size, cudaMemcpyDeviceToHost));
-  // cudaCheck(cudaMemcpy(hit_xs.data(), dev_hit_temp, acc_hits * sizeof(float), cudaMemcpyDeviceToHost));
+  // cudaCheck(cudaMemcpy(output.data(), dev_events, events.size(), cudaMemcpyDeviceToHost));
+  // cudaCheck(cudaMemcpy(hit_xs.data(), dev_hit_temp, total_number_of_hits * sizeof(float), cudaMemcpyDeviceToHost));
   // cudaCheck(cudaMemcpy(consolidated_tracks.data(), dev_consolidated_tracks, consolidated_tracks_size, cudaMemcpyDeviceToHost));
   // cudaCheck(cudaMemcpy(velo_states.data(), dev_velo_states, total_number_of_tracks * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost));
 
   // Free buffers
-  cudaCheck(cudaFree(dev_input));
+  cudaCheck(cudaFree(dev_events));
   cudaCheck(cudaFree(dev_hit_temp));
   cudaCheck(cudaFree(dev_consolidated_tracks));
   cudaCheck(cudaFree(dev_velo_states));

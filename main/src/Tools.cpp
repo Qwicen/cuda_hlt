@@ -3,7 +3,7 @@
 /**
  * @brief Read files into vectors.
  */
-void readFileIntoVector(const std::string& filename, std::vector<uint8_t>& output) {
+void readFileIntoVector(const std::string& filename, std::vector<char>& output) {
   std::ifstream infile(filename.c_str(), std::ifstream::binary);
   infile.seekg(0, std::ios::end);
   auto end = infile.tellg();
@@ -19,13 +19,18 @@ void readFileIntoVector(const std::string& filename, std::vector<uint8_t>& outpu
 /**
  * @brief Reads a number of events from a folder name.
  */
-std::vector<std::vector<uint8_t>> readFolder(
+void readFolder(
   const std::string& foldername,
-  int fileNumber
+  int fileNumber,
+  std::vector<char>& events,
+  std::vector<unsigned int>& event_offsets,
+  std::vector<unsigned int>& hit_offsets
 ) {
   std::vector<std::string> folderContents;
   DIR *dir;
   struct dirent *ent;
+
+  // Find out folder contents
   if ((dir = opendir(foldername.c_str())) != NULL) {
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
@@ -45,42 +50,51 @@ std::vector<std::vector<uint8_t>> readFolder(
     std::cerr << "Folder could not be opened" << std::endl;
     exit(-1);
   }
+
   std::cout << "Requested " << fileNumber << " files" << std::endl;
-  std::vector<std::vector<uint8_t>> input;
   int readFiles = 0;
+
+  // Read all requested events
+  unsigned int accumulated_size=0, accumulated_hits=0;
   for (int i=0; i<fileNumber; ++i) {
     // Read event #i in the list and add it to the inputs
     std::string readingFile = folderContents[i % folderContents.size()];
-    std::vector<uint8_t> inputContents;
-    readFileIntoVector(foldername + "/" + readingFile, inputContents);
+    std::vector<char> event_contents;
+    readFileIntoVector(foldername + "/" + readingFile, event_contents);
+
     // Check the number of modules is correct, otherwise ignore it
-    auto eventInfo = EventInfo(inputContents);
+    auto eventInfo = EventInfo(event_contents);
     if (eventInfo.numberOfModules == NUMBER_OF_SENSORS) {
-      // Make inputContents only the reported size by eventInfo
-      inputContents.resize(eventInfo.size);
-      input.push_back(inputContents);
+      // Populate contents, event offsets and hit offsets
+      events.insert(std::end(events), std::begin(event_contents), std::end(event_contents));
+      event_offsets.push_back(accumulated_size);
+      hit_offsets.push_back(accumulated_hits);
+      accumulated_size += event_contents.size();
+      accumulated_hits += eventInfo.numberOfHits;
     }
     readFiles++;
     if ((readFiles % 100) == 0) {
       std::cout << "." << std::flush;
     }
   }
-  std::cout << std::endl << input.size() << " files read" << std::endl << std::endl;
-  return input;
+  // Make last entry in hit_offsets contain total number of hits
+  hit_offsets.push_back(accumulated_hits);
+  std::cout << std::endl << event_offsets.size() << " files read" << std::endl << std::endl;
 }
 
 /**
  * @brief Print statistics from the input files
  */
 void statistics(
-  const std::vector<std::vector<uint8_t>>& input
+  const std::vector<char>& input,
+  std::vector<unsigned int>& event_offsets
 ) {
   unsigned int max_number_of_hits = 0;
   unsigned int max_number_of_hits_in_module = 0;
   unsigned int average_number_of_hits_in_module = 0;
 
-  for (size_t i=0; i<input.size(); ++i) {
-    EventInfo info (input[i]);
+  for (size_t i=0; i<event_offsets.size(); ++i) {
+    EventInfo info (&input[event_offsets[i]]);
     for (size_t j=0; j<info.numberOfModules; ++j) {
       max_number_of_hits_in_module = std::max(max_number_of_hits_in_module, info.module_hitNums[j]);
       average_number_of_hits_in_module += info.module_hitNums[j];
@@ -229,46 +243,4 @@ void printInfo(const EventInfo& info, int numberOfModules, int numberOfHits) {
       // << " hit_Z: " << info.hit_Zs[i] << std::endl
       << std::endl;
   }
-}
-
-cudaError_t checkSorting(
-  const std::vector<std::vector<uint8_t>>& input,
-  unsigned int acc_hits,
-  unsigned short* dev_hit_phi,
-  const std::vector<unsigned int>& hit_offsets
-) {
-  // Check sorting
-  std::vector<float> hit_phis (acc_hits);
-  cudaCheck(cudaMemcpy(hit_phis.data(), &dev_hit_phi[0], acc_hits * sizeof(float), cudaMemcpyDeviceToHost));
-
-  // Check sorting is correct in the resulting phi array
-  bool ordered = true;
-  for (unsigned int i=0; i<input.size(); ++i) {
-    auto info = EventInfo(input[i]);
-    // DEBUG << "Event " << i << ":" << std::endl;
-    for (unsigned int module=0; module<52; ++module) {
-      const unsigned int start_hit = info.module_hitStarts[module];
-      const unsigned int num_hits = info.module_hitNums[module];
-      float phi = -10.f;
-      // DEBUG << "Module " << module << ":";
-      for (unsigned int hit_id=start_hit; hit_id<(start_hit + num_hits); ++hit_id) {
-        const float hit_phi = hit_phis[hit_offsets[i] + hit_id];
-        // DEBUG << " " << hit_phi;
-        if (hit_phi < phi) {
-          ordered = false;
-          // DEBUG << std::endl << hit_phi << " vs " << phi << std::endl;
-          break;
-        } else {
-          phi = hit_phi;
-        }
-      }
-      // DEBUG << std::endl;
-      if (!ordered) { break; }
-    }
-    if (!ordered) { break; }
-  }
-
-  DEBUG << (ordered ? "Phi array is properly ordered" : "Phi array is not ordered") << std::endl << std::endl;
-
-  return cudaSuccess;
 }
