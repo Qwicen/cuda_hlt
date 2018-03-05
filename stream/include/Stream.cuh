@@ -4,16 +4,17 @@
 #include <vector>
 #include "../../main/include/Common.h"
 #include "../../main/include/Logger.h"
-#include "CalculatePhiAndSort.cuh"
-#include "SearchByTriplet.cuh"
-#include "CalculateVeloStates.cuh"
-#include "Helper.cuh"
 
 struct Stream {
   cudaStream_t stream;
+  unsigned int stream_number;
   bool do_print_timing;
 
-  Stream(bool do_print_timing = true) :
+  Stream(
+    unsigned int stream_number = 0,
+    bool do_print_timing = true
+  ) :
+    stream_number(stream_number),
     do_print_timing(do_print_timing) {
     cudaStreamCreate(&stream);
   }

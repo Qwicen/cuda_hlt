@@ -1,10 +1,20 @@
+#include "../../main/include/Timer.h"
 #include "../include/Stream.cuh"
+#include "../include/CalculatePhiAndSort.cuh"
+#include "../include/SearchByTriplet.cuh"
+#include "../include/CalculateVeloStates.cuh"
+#include "../include/Helper.cuh"
 
 cudaError_t Stream::operator()(
   const std::vector<std::vector<uint8_t>>& input,
   unsigned int start_event,
   unsigned int number_of_events
 ) {
+  // Timers
+  std::vector<float> times;
+  Timer t;
+  t.start();
+
   // Number of defined atomics
   constexpr unsigned int atomic_space = NUM_ATOMICS + 1;
 
@@ -13,9 +23,6 @@ cudaError_t Stream::operator()(
   dim3 sort_num_threads (64);
   dim3 sbt_num_threads (NUMTHREADS_X);
   dim3 velo_states_num_threads (1024);
-
-  // Timer
-  std::vector<float> times;
 
   // Prepare event offset and hit offset
   std::vector<unsigned int> event_offsets;
@@ -236,22 +243,25 @@ cudaError_t Stream::operator()(
   cudaCheck(cudaFree(dev_event_offsets));
   cudaCheck(cudaFree(dev_hit_offsets));
 
-  // Fetch required data
-  std::vector<uint8_t> output (acc_size);
-  std::vector<float> hit_xs (acc_hits);
-  std::vector<char> consolidated_tracks (consolidated_tracks_size);
-  std::vector<VeloState> velo_states (total_number_of_tracks * STATES_PER_TRACK);
+  // TODO: Fetch required data
+  // std::vector<uint8_t> output (acc_size);
+  // std::vector<float> hit_xs (acc_hits);
+  // std::vector<char> consolidated_tracks (consolidated_tracks_size);
+  // std::vector<VeloState> velo_states (total_number_of_tracks * STATES_PER_TRACK);
 
-  cudaCheck(cudaMemcpy(output.data(), dev_input, acc_size, cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(hit_xs.data(), dev_hit_temp, acc_hits * sizeof(float), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(consolidated_tracks.data(), dev_consolidated_tracks, consolidated_tracks_size, cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(velo_states.data(), dev_velo_states, total_number_of_tracks * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost));
+  // cudaCheck(cudaMemcpy(output.data(), dev_input, acc_size, cudaMemcpyDeviceToHost));
+  // cudaCheck(cudaMemcpy(hit_xs.data(), dev_hit_temp, acc_hits * sizeof(float), cudaMemcpyDeviceToHost));
+  // cudaCheck(cudaMemcpy(consolidated_tracks.data(), dev_consolidated_tracks, consolidated_tracks_size, cudaMemcpyDeviceToHost));
+  // cudaCheck(cudaMemcpy(velo_states.data(), dev_velo_states, total_number_of_tracks * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost));
 
   // Free buffers
   cudaCheck(cudaFree(dev_input));
   cudaCheck(cudaFree(dev_hit_temp));
   cudaCheck(cudaFree(dev_consolidated_tracks));
   cudaCheck(cudaFree(dev_velo_states));
+
+  t.stop();
+  times.push_back(t.get());
 
   if (do_print_timing) {
     print_timing(number_of_events, times);
@@ -264,19 +274,18 @@ void Stream::print_timing(
   const unsigned int number_of_events,
   const std::vector<float>& times
 ) {
-  DEBUG << std::endl << "Time averages:" << std::endl
-    << " Phi + sorting throughput: " << number_of_events / (times[0] * 0.001)
-    << " events/s (" << times[0] << " ms)" << std::endl;
+  const auto total_time = times[times.size() - 1];
+  std::string partial_times = "{";
+  for (size_t i=0; i<times.size(); ++i) {
+    if (i != times.size()-1) {
+      partial_times += std::to_string(times[i]);
+      partial_times += ", ";
+    } else {
+      partial_times += std::to_string(1000 * times[i]) + "}";
+    }
+  }
 
-  auto accumulated_time = times[0] + times[1];
-  DEBUG << " Search by triplet: "
-    << number_of_events / (times[1] * 0.001) << " events/s (" << times[1] << " ms), "
-    << number_of_events / (accumulated_time * 0.001) << " events/s integrated throughput"
-    << std::endl;
-
-  accumulated_time += times[2];
-  DEBUG << " Fit: "
-    << number_of_events / (times[2] * 0.001) << " fits/s (" << times[2] << " ms), "
-    << number_of_events / (accumulated_time * 0.001) << " events/s integrated throughput"
-    << std::endl;
+  DEBUG << "stream #" << stream_number << ": "
+    << number_of_events / total_time << " events/s, partial timers (ms): "
+    << partial_times << std::endl;
 }
