@@ -31,11 +31,12 @@ struct Stream {
     const std::vector<unsigned int>& event_offsets,
     const std::vector<unsigned int>& hit_offsets,
     unsigned int start_event,
-    unsigned int number_of_events
+    unsigned int number_of_events,
+    unsigned int number_of_repetitions
   );
 
   void print_timing(
     const unsigned int number_of_events,
-    const std::vector<float>& times
+    const std::vector<std::pair<std::string, float>>& times
   );
 };

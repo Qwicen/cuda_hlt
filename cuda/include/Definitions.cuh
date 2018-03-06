@@ -62,11 +62,6 @@
 #define PARAM_W 3966.94f
 #define PARAM_W_INVERTED 0.000252083f
 
-// Run over same data several times to stress processor
-// (ie. increase the runtime of kernels)
-#define DO_REPEATED_EXECUTION false
-#define REPEAT_ITERATIONS 100
-
 // Parameters to print out solutions
 #define PRINT_SOLUTION false
 #define PRINT_FILL_CANDIDATES false

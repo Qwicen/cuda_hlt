@@ -231,12 +231,10 @@ __device__ void simplified_fit(
   *velo_state = state;
 }
 
-/**
- * fitTracks
- */
 __global__ void velo_fit(
   const char* dev_input,
-  const char* dev_consolidated_tracks,
+  int* dev_atomics_storage,
+  Track* dev_tracks,
   VeloState* dev_velo_states,
   int32_t* dev_hit_temp,
   unsigned int* dev_event_offsets,
@@ -244,8 +242,8 @@ __global__ void velo_fit(
 ) {
   // Data initialization
   // Each event is treated with two blocks, one for each side.
-  const unsigned int number_of_events = gridDim.x;
   const unsigned int event_number = blockIdx.x;
+  const unsigned int tracks_offset = event_number * MAX_TRACKS;
 
   // Pointers to data within the event
   const unsigned int data_offset = dev_event_offsets[event_number];
@@ -264,24 +262,19 @@ __global__ void velo_fit(
   float* hit_Xs = (float*) (dev_hit_temp + hit_offset);
 
   // Reconstructed tracks
-  const unsigned int total_number_of_tracks = *((unsigned int*) dev_consolidated_tracks);
-  const unsigned int* track_start = (unsigned int*) (dev_consolidated_tracks + sizeof(unsigned int));
-  const unsigned int* number_of_tracks = track_start + number_of_events;
-  const Track* tracks = (Track*) (number_of_tracks + number_of_events);
-  VeloState* velo_states = dev_velo_states;
-
-  const unsigned int event_track_start = track_start[event_number];
-  const unsigned int event_number_of_tracks = number_of_tracks[event_number];
+  const Track* tracks = dev_tracks + tracks_offset;
+  const unsigned int number_of_tracks = dev_atomics_storage[event_number];
+  VeloState* velo_states = dev_velo_states + event_number * MAX_TRACKS * STATES_PER_TRACK;
 
   // Iterate over the tracks and calculate fits
-  for (unsigned int i=0; i<(event_number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
+  for (unsigned int i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
     const auto element = threadIdx.x + i * blockDim.x;
-    if (element < event_number_of_tracks) {
+    if (element < number_of_tracks) {
       // Base pointer to velo_states for this element
-      VeloState* velo_state_base = velo_states + (event_track_start + element) * STATES_PER_TRACK;
+      VeloState* velo_state_base = velo_states + element * STATES_PER_TRACK;
 
       // Means square fit
-      const auto track = tracks[event_track_start + element];
+      const auto track = tracks[element];
       TrackFitParameters parameters;
 
       // State at beam line

@@ -36,7 +36,9 @@ int main(int argc, char *argv[])
   std::string foldername;
   std::vector<std::string> folderContents;
   int fileNumber;
-  unsigned int tbb_threads = 4;
+  
+  unsigned int tbb_threads = 1;
+  unsigned int number_of_repetitions = 1;
 
   // Get params (getopt independent - Compatible with Windows)
   if (argc < 3){
@@ -77,13 +79,13 @@ int main(int argc, char *argv[])
     static_cast<unsigned int>(0),
     static_cast<unsigned int>(tbb_threads),
     [&] (unsigned int i) {
-      Stream s (i);
-      s(events, event_offsets, hit_offsets, 0, event_offsets.size());
+      Stream s (i, false);
+      s(events, event_offsets, hit_offsets, 0, event_offsets.size(), number_of_repetitions);
     }
   );
   t.stop();
 
-  std::cout << (event_offsets.size() * tbb_threads / t.get()) << " events/s combined" << std::endl;
+  std::cout << (event_offsets.size() * tbb_threads * number_of_repetitions / t.get()) << " events/s combined" << std::endl;
 
   // Reset device
   cudaCheck(cudaDeviceReset());
