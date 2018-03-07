@@ -43,7 +43,7 @@ cudaError_t Stream::operator()(
     t.start();
 
     // Copy required data
-    cudaCheck(cudaMemcpy(dev_events, events.data(), events.size(), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpyAsync(dev_events, events.data(), events.size(), cudaMemcpyHostToDevice, stream));
 
     t.stop();
     times.emplace_back("copy events", t.get());
@@ -51,8 +51,8 @@ cudaError_t Stream::operator()(
     t.flush();
     t.start();
 
-    cudaCheck(cudaMemcpy(dev_event_offsets, event_offsets.data(), event_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
-    cudaCheck(cudaMemcpy(dev_hit_offsets, hit_offsets.data(), hit_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpyAsync(dev_event_offsets, event_offsets.data(), event_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemcpyAsync(dev_hit_offsets, hit_offsets.data(), hit_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
 
     t.stop();
     times.emplace_back("copy offsets", t.get());
@@ -73,8 +73,8 @@ cudaError_t Stream::operator()(
     t.start();
 
     // Initialize data
-    cudaCheck(cudaMemset(dev_hit_used, false, total_number_of_hits * sizeof(bool)));
-    cudaCheck(cudaMemset(dev_atomics_storage, 0, number_of_events * atomic_space * sizeof(int)));
+    cudaCheck(cudaMemsetAsync(dev_hit_used, false, total_number_of_hits * sizeof(bool), stream));
+    cudaCheck(cudaMemsetAsync(dev_atomics_storage, 0, number_of_events * atomic_space * sizeof(int), stream));
 
     t.stop();
     times.emplace_back("initialize sbt data", t.get());
@@ -106,25 +106,31 @@ cudaError_t Stream::operator()(
     // If the chain follows, we may not need to retrieve the data
     // in the state it is currently, but in a posterior state.
     // In principle, here we need to get back:
-    // - dev_events: Shuffled input
-    // - dev_hit_temp: hit Xs
+    // - dev_hit_permutation: Permutation of hits (reorder)
     // - dev_atomics_storage: Number of tracks
     // - dev_tracks: Tracks
     // - dev_velo_states: VELO filtered states for each track
     
     // Therefore, this is just temporal
-    // Free buffers
+    // Fetch required data
+    // std::vector<int> number_of_tracks (number_of_events);
+    // std::vector<unsigned short> hit_permutations (total_number_of_hits);
+    // cudaCheck(cudaMemcpyAsync(number_of_tracks.data(), dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+    // cudaCheck(cudaMemcpyAsync(hit_permutations.data(), dev_hit_permutation, total_number_of_hits * sizeof(unsigned short), cudaMemcpyDeviceToHost, stream));
 
-    // TODO: Fetch required data
-    // std::vector<uint8_t> output (events.size());
-    // std::vector<float> hit_xs (total_number_of_hits);
-    // std::vector<char> consolidated_tracks (consolidated_tracks_size);
-    // std::vector<VeloState> velo_states (total_number_of_tracks * STATES_PER_TRACK);
+    // unsigned int accumulated_number_of_tracks = 0;
+    // std::vector<unsigned int> tracks_start (number_of_events);
+    // for (size_t i=0; i<number_of_tracks.size(); ++i) {
+    //   tracks_start[i] = accumulated_number_of_tracks;
+    //   accumulated_number_of_tracks += number_of_tracks[i];
+    // }
 
-    // cudaCheck(cudaMemcpy(output.data(), dev_events, events.size(), cudaMemcpyDeviceToHost));
-    // cudaCheck(cudaMemcpy(hit_xs.data(), dev_hit_temp, total_number_of_hits * sizeof(float), cudaMemcpyDeviceToHost));
-    // cudaCheck(cudaMemcpy(consolidated_tracks.data(), dev_consolidated_tracks, consolidated_tracks_size, cudaMemcpyDeviceToHost));
-    // cudaCheck(cudaMemcpy(velo_states.data(), dev_velo_states, total_number_of_tracks * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost));
+    // std::vector<Track> tracks (accumulated_number_of_tracks);
+    // std::vector<VeloState> velo_states (accumulated_number_of_tracks * STATES_PER_TRACK);
+    // for (size_t i=0; i<number_of_tracks.size(); ++i) {
+    //   cudaCheck(cudaMemcpyAsync(tracks.data() + tracks_start[i], dev_tracks + i * max_tracks_in_event, number_of_tracks[i] * sizeof(Track), cudaMemcpyDeviceToHost, stream));
+    //   cudaCheck(cudaMemcpyAsync(velo_states.data() + tracks_start[i] * STATES_PER_TRACK, dev_velo_states + i * max_tracks_in_event * STATES_PER_TRACK, number_of_tracks[i] * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
+    // }
 
     t_total.stop();
     times.emplace_back("total", t_total.get());
