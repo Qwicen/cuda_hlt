@@ -1,7 +1,7 @@
 #include "../include/CalculateVeloStates.cuh"
 
 void CalculateVeloStates::operator()() {
-  velo_fit<<<num_blocks, num_threads, 0, stream>>>(
+  velo_fit<<<num_blocks, num_threads, 0, *stream>>>(
     dev_events,
     dev_atomics_storage,
     dev_tracks,

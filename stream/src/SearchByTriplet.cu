@@ -1,7 +1,7 @@
 #include "../include/SearchByTriplet.cuh"
 
 void SearchByTriplet::operator()() {
-  searchByTriplet<<<num_blocks, num_threads, 0, stream>>>(
+  searchByTriplet<<<num_blocks, num_threads, 0, *stream>>>(
     dev_tracks,
     dev_events,
     dev_tracks_to_follow,

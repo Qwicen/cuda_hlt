@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../main/include/Common.h"
 #include "cuda_runtime.h"
 
 /**
@@ -8,11 +9,12 @@
 struct Measurable {
   cudaEvent_t event_start, event_stop;
   Measurable() {
-    cudaEventCreate(&event_start);
-    cudaEventCreate(&event_stop);
+    cudaCheck(cudaEventCreate(&event_start));
+    cudaCheck(cudaEventCreate(&event_stop));
   }
   ~Measurable() {
-    cudaEventDestroy(event_start);
-    cudaEventDestroy(event_stop);
+    // This, for some reason, segfaults
+    // cudaEventDestroy(event_start);
+    // cudaEventDestroy(event_stop);
   }
 };

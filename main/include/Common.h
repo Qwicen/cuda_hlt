@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <stdint.h>
+#include <stdexcept>
+#include <iostream>
 #include "cuda_runtime.h"
 
 /// For sanity check of input
@@ -15,19 +17,7 @@
   if (err != cudaSuccess){                               \
     std::cerr << "Failed to run " << #stmt << std::endl; \
     std::cerr << cudaGetErrorString(err) << std::endl;   \
-    return err;                                          \
-  }                                                      \
-}
-
-/**
- * @brief Macro to check cuda calls for void functions.
- */
-#define cudaCheckVoid(stmt) {                            \
-  cudaError_t err = stmt;                                \
-  if (err != cudaSuccess){                               \
-    std::cerr << "Failed to run " << #stmt << std::endl; \
-    std::cerr << cudaGetErrorString(err) << std::endl;   \
-    return;                                              \
+    throw std::invalid_argument("cudaCheck failed");     \
   }                                                      \
 }
 

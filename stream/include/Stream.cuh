@@ -52,20 +52,19 @@ struct Stream {
   dim3 sbt_num_threads;
   dim3 velo_states_num_threads;
 
-  Stream(
+  Stream() = default;
+
+  cudaError_t initialize(
     unsigned int number_of_events,
-    size_t starting_events_size,
-    unsigned int stream_number = 0,
-    bool do_print_timing = true
-  ) :
-    stream_number(stream_number),
-    do_print_timing(do_print_timing),
-    dev_events_size(starting_events_size),
-    calculatePhiAndSort(CalculatePhiAndSort(stream)),
-    searchByTriplet(SearchByTriplet(stream)),
-    calculateVeloStates(CalculateVeloStates(stream)) {
-    cudaStreamCreate(&stream);
-    
+    size_t param_starting_events_size,
+    unsigned int param_stream_number = 0,
+    bool param_do_print_timing = true
+  ) {
+    cudaCheck(cudaStreamCreate(&stream));
+    stream_number = param_stream_number;
+    do_print_timing = param_do_print_timing;
+    dev_events_size = param_starting_events_size;
+
     // Blocks and threads for each algorithm
     num_blocks = dim3(number_of_events);
     sort_num_threads = dim3(64);
@@ -74,29 +73,30 @@ struct Stream {
 
     // Do memory allocations only once
     // phi and sort
-    cudaCheckVoid(cudaMalloc((void**)&dev_events, dev_events_size));
-    cudaCheckVoid(cudaMalloc((void**)&dev_event_offsets, number_of_events * sizeof(unsigned int)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_hit_offsets, (number_of_events + 1) * sizeof(unsigned int)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_hit_phi, maximum_average_number_of_hits_per_event * number_of_events * sizeof(float)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_hit_temp, maximum_average_number_of_hits_per_event * number_of_events * sizeof(int32_t)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_hit_permutation, maximum_average_number_of_hits_per_event * number_of_events * sizeof(unsigned short)));
+    cudaCheck(cudaMalloc((void**)&dev_events, dev_events_size));
+    cudaCheck(cudaMalloc((void**)&dev_event_offsets, number_of_events * sizeof(unsigned int)));
+    cudaCheck(cudaMalloc((void**)&dev_hit_offsets, (number_of_events + 1) * sizeof(unsigned int)));
+    cudaCheck(cudaMalloc((void**)&dev_hit_phi, maximum_average_number_of_hits_per_event * number_of_events * sizeof(float)));
+    cudaCheck(cudaMalloc((void**)&dev_hit_temp, maximum_average_number_of_hits_per_event * number_of_events * sizeof(int32_t)));
+    cudaCheck(cudaMalloc((void**)&dev_hit_permutation, maximum_average_number_of_hits_per_event * number_of_events * sizeof(unsigned short)));
     // sbt
-    cudaCheckVoid(cudaMalloc((void**)&dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_tracks_to_follow, number_of_events * TTF_MODULO * sizeof(unsigned int)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_hit_used, maximum_average_number_of_hits_per_event * number_of_events * sizeof(bool)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_atomics_storage, number_of_events * atomic_space * sizeof(int)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_tracklets, maximum_average_number_of_hits_per_event * number_of_events * sizeof(Track)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_weak_tracks, maximum_average_number_of_hits_per_event * number_of_events * sizeof(unsigned int)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_h0_candidates, 2 * maximum_average_number_of_hits_per_event * number_of_events * sizeof(short)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_h2_candidates, 2 * maximum_average_number_of_hits_per_event * number_of_events * sizeof(short)));
-    cudaCheckVoid(cudaMalloc((void**)&dev_rel_indices, number_of_events * max_numhits_in_module * sizeof(unsigned short)));
+    cudaCheck(cudaMalloc((void**)&dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track)));
+    cudaCheck(cudaMalloc((void**)&dev_tracks_to_follow, number_of_events * TTF_MODULO * sizeof(unsigned int)));
+    cudaCheck(cudaMalloc((void**)&dev_hit_used, maximum_average_number_of_hits_per_event * number_of_events * sizeof(bool)));
+    cudaCheck(cudaMalloc((void**)&dev_atomics_storage, number_of_events * atomic_space * sizeof(int)));
+    cudaCheck(cudaMalloc((void**)&dev_tracklets, maximum_average_number_of_hits_per_event * number_of_events * sizeof(Track)));
+    cudaCheck(cudaMalloc((void**)&dev_weak_tracks, maximum_average_number_of_hits_per_event * number_of_events * sizeof(unsigned int)));
+    cudaCheck(cudaMalloc((void**)&dev_h0_candidates, 2 * maximum_average_number_of_hits_per_event * number_of_events * sizeof(short)));
+    cudaCheck(cudaMalloc((void**)&dev_h2_candidates, 2 * maximum_average_number_of_hits_per_event * number_of_events * sizeof(short)));
+    cudaCheck(cudaMalloc((void**)&dev_rel_indices, number_of_events * max_numhits_in_module * sizeof(unsigned short)));
     // velo states
-    cudaCheckVoid(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState)));
+    cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState)));
 
     // Prepare kernels
     calculatePhiAndSort.set(
       num_blocks,
       sort_num_threads,
+      stream,
       dev_events,
       dev_event_offsets,
       dev_hit_offsets,
@@ -108,6 +108,7 @@ struct Stream {
     searchByTriplet.set(
       num_blocks,
       sbt_num_threads,
+      stream,
       dev_tracks,
       dev_events,
       dev_tracks_to_follow,
@@ -127,6 +128,7 @@ struct Stream {
     calculateVeloStates.set(
       num_blocks,
       velo_states_num_threads,
+      stream,
       dev_events,
       dev_atomics_storage,
       dev_tracks,
@@ -135,29 +137,32 @@ struct Stream {
       dev_event_offsets,
       dev_hit_offsets
     );
+
+    return cudaSuccess;
   }
 
   ~Stream() {
-    cudaStreamDestroy(stream);
+    // For some reason, this segfaults at the moment
+    // // Free buffers
+    // cudaCheck(cudaFree(dev_hit_permutation));
+    // cudaCheck(cudaFree(dev_tracks_to_follow));
+    // cudaCheck(cudaFree(dev_hit_used));
+    // cudaCheck(cudaFree(dev_tracklets));
+    // cudaCheck(cudaFree(dev_weak_tracks));
+    // cudaCheck(cudaFree(dev_h0_candidates));
+    // cudaCheck(cudaFree(dev_h2_candidates));
+    // cudaCheck(cudaFree(dev_rel_indices));
+    // cudaCheck(cudaFree(dev_event_offsets));
+    // cudaCheck(cudaFree(dev_hit_offsets));
+    // cudaCheck(cudaFree(dev_events));
+    // cudaCheck(cudaFree(dev_hit_temp));
+    // cudaCheck(cudaFree(dev_atomics_storage));
+    // cudaCheck(cudaFree(dev_tracks));
+    // cudaCheck(cudaFree(dev_velo_states));
 
-    // Free buffers
-    cudaCheckVoid(cudaFree(dev_hit_permutation));
-    cudaCheckVoid(cudaFree(dev_tracks_to_follow));
-    cudaCheckVoid(cudaFree(dev_hit_used));
-    cudaCheckVoid(cudaFree(dev_tracklets));
-    cudaCheckVoid(cudaFree(dev_weak_tracks));
-    cudaCheckVoid(cudaFree(dev_h0_candidates));
-    cudaCheckVoid(cudaFree(dev_h2_candidates));
-    cudaCheckVoid(cudaFree(dev_rel_indices));
-    cudaCheckVoid(cudaFree(dev_event_offsets));
-    cudaCheckVoid(cudaFree(dev_hit_offsets));
-    cudaCheckVoid(cudaFree(dev_events));
-    cudaCheckVoid(cudaFree(dev_hit_temp));
-    cudaCheckVoid(cudaFree(dev_atomics_storage));
-    cudaCheckVoid(cudaFree(dev_tracks));
-    cudaCheckVoid(cudaFree(dev_velo_states));
+    // cudaCheck(cudaStreamDestroy(stream));
   }
-
+  
   cudaError_t operator()(
     const std::vector<char>& events,
     const std::vector<unsigned int>& event_offsets,

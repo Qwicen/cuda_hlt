@@ -35,14 +35,15 @@ void readFileIntoVector(
 
 void readFolder(
   const std::string& foldername,
-  int fileNumber,
+  unsigned int fileNumber,
   std::vector<char>& events,
   std::vector<unsigned int>& event_offsets,
   std::vector<unsigned int>& hit_offsets
 );
 
 void statistics(
-  const std::vector<std::vector<uint8_t>>& input
+  const std::vector<char>& input,
+  std::vector<unsigned int>& event_offsets
 );
 
 std::map<std::string, float> calcResults(

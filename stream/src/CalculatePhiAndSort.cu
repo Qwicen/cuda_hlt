@@ -1,7 +1,7 @@
 #include "../include/CalculatePhiAndSort.cuh"
 
 void CalculatePhiAndSort::operator()() {
-  calculatePhiAndSort<<<num_blocks, num_threads, 0, stream>>>(
+  calculatePhiAndSort<<<num_blocks, num_threads, 0, *stream>>>(
     dev_events,
     dev_event_offsets,
     dev_hit_offsets,

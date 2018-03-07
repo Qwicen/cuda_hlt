@@ -21,7 +21,7 @@ void readFileIntoVector(const std::string& filename, std::vector<char>& output) 
  */
 void readFolder(
   const std::string& foldername,
-  int fileNumber,
+  unsigned int number_of_files,
   std::vector<char>& events,
   std::vector<unsigned int>& event_offsets,
   std::vector<unsigned int>& hit_offsets
@@ -51,12 +51,16 @@ void readFolder(
     exit(-1);
   }
 
-  std::cout << "Requested " << fileNumber << " files" << std::endl;
+  if (number_of_files == 0) {
+    number_of_files = folderContents.size();
+  }
+
+  std::cout << "Requested " << number_of_files << " files" << std::endl;
   int readFiles = 0;
 
   // Read all requested events
   unsigned int accumulated_size=0, accumulated_hits=0;
-  for (int i=0; i<fileNumber; ++i) {
+  for (int i=0; i<number_of_files; ++i) {
     // Read event #i in the list and add it to the inputs
     std::string readingFile = folderContents[i % folderContents.size()];
     std::vector<char> event_contents;
@@ -94,14 +98,14 @@ void statistics(
   unsigned int average_number_of_hits_in_module = 0;
 
   for (size_t i=0; i<event_offsets.size(); ++i) {
-    EventInfo info (&input[event_offsets[i]]);
+    EventInfo info (input.data() + event_offsets[i]);
     for (size_t j=0; j<info.numberOfModules; ++j) {
       max_number_of_hits_in_module = std::max(max_number_of_hits_in_module, info.module_hitNums[j]);
       average_number_of_hits_in_module += info.module_hitNums[j];
     }
     max_number_of_hits = std::max(max_number_of_hits, info.numberOfHits);
   }
-  average_number_of_hits_in_module /= input.size() * 52;
+  average_number_of_hits_in_module /= event_offsets.size() * 52;
 
   std::cout << "Statistics on input events:" << std::endl
     << " Max number of hits in event: " << max_number_of_hits << std::endl
