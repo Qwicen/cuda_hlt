@@ -142,7 +142,6 @@ struct Stream {
   }
 
   ~Stream() {
-    // For some reason, this segfaults at the moment
     // // Free buffers
     // cudaCheck(cudaFree(dev_hit_permutation));
     // cudaCheck(cudaFree(dev_tracks_to_follow));
@@ -161,6 +160,7 @@ struct Stream {
     // cudaCheck(cudaFree(dev_velo_states));
 
     // cudaCheck(cudaStreamDestroy(stream));
+    // cudaCheck(cudaStreamDestroy(stream_receive));
   }
   
   cudaError_t operator()(

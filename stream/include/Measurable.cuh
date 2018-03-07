@@ -13,8 +13,7 @@ struct Measurable {
     cudaCheck(cudaEventCreate(&event_stop));
   }
   ~Measurable() {
-    // This, for some reason, segfaults
-    // cudaEventDestroy(event_start);
-    // cudaEventDestroy(event_stop);
+    // cudaCheck(cudaEventDestroy(event_start));
+    // cudaCheck(cudaEventDestroy(event_stop));
   }
 };

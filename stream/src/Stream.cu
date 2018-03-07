@@ -115,9 +115,15 @@ cudaError_t Stream::operator()(
     // Fetch required data
     // std::vector<int> number_of_tracks (number_of_events);
     // std::vector<unsigned short> hit_permutations (total_number_of_hits);
+    // std::vector<Track> tracks (number_of_events * max_tracks_in_event);
+    // std::vector<VeloState> velo_states (number_of_events * max_tracks_in_event * STATES_PER_TRACK);
+
     // cudaCheck(cudaMemcpyAsync(number_of_tracks.data(), dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
     // cudaCheck(cudaMemcpyAsync(hit_permutations.data(), dev_hit_permutation, total_number_of_hits * sizeof(unsigned short), cudaMemcpyDeviceToHost, stream));
+    // cudaCheck(cudaMemcpyAsync(tracks.data(), dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
+    // cudaCheck(cudaMemcpyAsync(velo_states.data(), dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
 
+    // In case we want to minimize data transmission:
     // unsigned int accumulated_number_of_tracks = 0;
     // std::vector<unsigned int> tracks_start (number_of_events);
     // for (size_t i=0; i<number_of_tracks.size(); ++i) {
