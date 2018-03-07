@@ -20,6 +20,18 @@
 }
 
 /**
+ * @brief Macro to check cuda calls for void functions.
+ */
+#define cudaCheckVoid(stmt) {                            \
+  cudaError_t err = stmt;                                \
+  if (err != cudaSuccess){                               \
+    std::cerr << "Failed to run " << #stmt << std::endl; \
+    std::cerr << cudaGetErrorString(err) << std::endl;   \
+    return;                                              \
+  }                                                      \
+}
+
+/**
  * @brief Struct to typecast events.
  */
 struct EventInfo {
