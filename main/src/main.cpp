@@ -35,6 +35,8 @@ void printUsage(char* argv[]){
     << std::endl << " [-t <number of threads / streams>=3]"
     << std::endl << " [-r <number of repetitions per thread / stream>=10]"
     << std::endl << " [-p (print individual rates)]"
+    << std::endl << " [-a <transmit host to device>=1 (-a 0 implies -r 1)]"
+    << std::endl << " [-b <transmit device to host>=1]"
     << std::endl;
 }
 
@@ -45,9 +47,11 @@ int main(int argc, char *argv[])
   unsigned int tbb_threads = 3;
   unsigned int number_of_repetitions = 10;
   bool print_individual_rates = false;
+  bool transmit_host_to_device = true;
+  bool transmit_device_to_host = true;
 
   signed char c;
-  while ((c = getopt(argc, argv, "f:n:t:r:ph")) != -1) {
+  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:")) != -1) {
     switch (c) {
     case 'f':
       folder_name = std::string(optarg);
@@ -64,12 +68,25 @@ int main(int argc, char *argv[])
     case 'p':
       print_individual_rates = true;
       break;
+    case 'a':
+      transmit_host_to_device = atoi(optarg);
+      break;
+    case 'b':
+      transmit_device_to_host = atoi(optarg);
+      break;
     case '?':
     case 'h':
     default:
       printUsage(argv);
       return -1;
     }
+  }
+
+  // If there is no transmission from host to device,
+  // the data will be invalidated after the first iteration,
+  if (transmit_host_to_device == false) {
+    // Restrict number of iterations to 1
+    number_of_repetitions = 1;
   }
 
   // Check how many files were specified and
@@ -87,6 +104,8 @@ int main(int argc, char *argv[])
     << " tbb threads: " << tbb_threads << std::endl
     << " number of repetitions: " << number_of_repetitions << std::endl
     << " print rates: " << print_individual_rates << std::endl
+    << " transmit host to device: " << transmit_host_to_device << std::endl
+    << " transmit device to host: " << transmit_device_to_host << std::endl
     << std::endl;
 
   // Read folder contents
@@ -107,8 +126,13 @@ int main(int argc, char *argv[])
   std::vector<Stream> streams (tbb_threads);
   for (int i=0; i<streams.size(); ++i) {
     streams[i].initialize(
+      events,
+      event_offsets,
+      hit_offsets,
       number_of_events,
       events.size(),
+      transmit_host_to_device,
+      transmit_device_to_host,
       i,
       print_individual_rates
     );
@@ -133,7 +157,8 @@ int main(int argc, char *argv[])
   );
   t.stop();
 
-  std::cout << (event_offsets.size() * tbb_threads * number_of_repetitions / t.get()) << " events/s combined" << std::endl;
+  std::cout << (event_offsets.size() * tbb_threads * number_of_repetitions / t.get()) << " events/s combined" << std::endl
+    << "Ran test for " << t.get() << " seconds" << std::endl;
 
   // Reset device
   cudaCheck(cudaDeviceReset());

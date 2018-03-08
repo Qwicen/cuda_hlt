@@ -51,19 +51,29 @@ struct Stream {
   dim3 sort_num_threads;
   dim3 sbt_num_threads;
   dim3 velo_states_num_threads;
+  // Launch tests
+  bool transmit_host_to_device;
+  bool transmit_device_to_host;
 
   Stream() = default;
 
   cudaError_t initialize(
-    unsigned int number_of_events,
-    size_t param_starting_events_size,
-    unsigned int param_stream_number = 0,
-    bool param_do_print_timing = true
+    const std::vector<char>& events,
+    const std::vector<unsigned int>& event_offsets,
+    const std::vector<unsigned int>& hit_offsets,
+    const unsigned int number_of_events,
+    const size_t param_starting_events_size,
+    const bool param_transmit_host_to_device,
+    const bool param_transmit_device_to_host,
+    const unsigned int param_stream_number = 0,
+    const bool param_do_print_timing = true
   ) {
     cudaCheck(cudaStreamCreate(&stream));
     stream_number = param_stream_number;
     do_print_timing = param_do_print_timing;
     dev_events_size = param_starting_events_size;
+    transmit_host_to_device = param_transmit_host_to_device;
+    transmit_device_to_host = param_transmit_device_to_host;
 
     // Blocks and threads for each algorithm
     num_blocks = dim3(number_of_events);
@@ -91,6 +101,11 @@ struct Stream {
     cudaCheck(cudaMalloc((void**)&dev_rel_indices, number_of_events * max_numhits_in_module * sizeof(unsigned short)));
     // velo states
     cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState)));
+
+    // Prepare data (for tests)
+    cudaCheck(cudaMemcpyAsync(dev_events, events.data(), events.size(), cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemcpyAsync(dev_event_offsets, event_offsets.data(), event_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemcpyAsync(dev_hit_offsets, hit_offsets.data(), hit_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
 
     // Prepare kernels
     calculatePhiAndSort.set(

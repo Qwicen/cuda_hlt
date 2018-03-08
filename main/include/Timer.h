@@ -36,6 +36,11 @@ public:
    * @brief Flushes the timer
    */
   void flush();
+  
+  /**
+   * @brief Flushes the timer and starts it
+   */
+  void restart();
 
   /**
    * @brief Gets the elapsed time since start

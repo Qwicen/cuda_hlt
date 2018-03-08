@@ -17,6 +17,11 @@ void Timer::flush() {
   accumulated_elapsed_time = std::chrono::duration<double>::zero();
 }
 
+void Timer::restart() {
+  flush();
+  start();
+}
+
 double Timer::get_elapsed_time() const {
   return (std::chrono::duration_cast<std::chrono::duration<double>>(
     std::chrono::high_resolution_clock::now() - start_time
