@@ -22,6 +22,8 @@ cudaError_t Stream::operator()(
 
     Timer t;
 
+    DEBUG << events.size() << std::endl;
+
     if (dev_events_size < events.size()) {
       // malloc just this datatype
       cudaCheck(cudaFree(dev_events));
@@ -54,7 +56,7 @@ cudaError_t Stream::operator()(
 
     // Invoke kernel
     times.emplace_back(
-      "calculatePhiAndSort",
+      "Calculate phi and sort",
       0.001 * Helper::invoke(calculatePhiAndSort)
     );
 
@@ -74,7 +76,6 @@ cudaError_t Stream::operator()(
     times.emplace_back("initialize sbt data", t.get());
 
     // Invoke kernel
-
     times.emplace_back(
       "Search by triplets",
       0.001 * Helper::invoke(searchByTriplet)
@@ -82,15 +83,23 @@ cudaError_t Stream::operator()(
 
     cudaCheck(cudaPeekAtLastError());
 
+    ////////////////////////
+    // Consolidate tracks //
+    ////////////////////////
+    
+    // Invoke kernel
+    times.emplace_back(
+      "Consolidate tracks",
+      0.001 * Helper::invoke(consolidateTracks)
+    );
 
     ///////////////////////////
     // Calculate VELO states //
     ///////////////////////////
 
     // Invoke kernel
-
     times.emplace_back(
-      "calculateVeloStates",
+      "Calculate Velo states",
       0.001 * Helper::invoke(calculateVeloStates)
     );
 
@@ -111,12 +120,12 @@ cudaError_t Stream::operator()(
       std::vector<int> number_of_tracks (number_of_events);
       std::vector<unsigned short> hit_permutations (total_number_of_hits);
       std::vector<Track> tracks (number_of_events * max_tracks_in_event);
-      std::vector<VeloState> velo_states (number_of_events * max_tracks_in_event * STATES_PER_TRACK);
+      // std::vector<VeloState> velo_states (number_of_events * max_tracks_in_event * STATES_PER_TRACK);
 
       cudaCheck(cudaMemcpyAsync(number_of_tracks.data(), dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(hit_permutations.data(), dev_hit_permutation, total_number_of_hits * sizeof(unsigned short), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(tracks.data(), dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(velo_states.data(), dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
+      // cudaCheck(cudaMemcpyAsync(velo_states.data(), dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
       
       // In case we want to minimize data transmission:
       // unsigned int accumulated_number_of_tracks = 0;

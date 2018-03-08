@@ -45,6 +45,7 @@ struct Stream {
   // Algorithms
   CalculatePhiAndSort calculatePhiAndSort;
   SearchByTriplet searchByTriplet;
+  ConsolidateTracks consolidateTracks;
   CalculateVeloStates calculateVeloStates;
   // Algorithm launch options
   dim3 num_blocks;
@@ -77,8 +78,10 @@ struct Stream {
 
     // Blocks and threads for each algorithm
     num_blocks = dim3(number_of_events);
+    consolidate_blocks = dim3(1);
     sort_num_threads = dim3(64);
     sbt_num_threads = dim3(NUMTHREADS_X);
+    consolidate_num_threads = dim3(1024);
     velo_states_num_threads = dim3(1024);
 
     // Do memory allocations only once
@@ -90,7 +93,7 @@ struct Stream {
     cudaCheck(cudaMalloc((void**)&dev_hit_temp, maximum_average_number_of_hits_per_event * number_of_events * sizeof(int32_t)));
     cudaCheck(cudaMalloc((void**)&dev_hit_permutation, maximum_average_number_of_hits_per_event * number_of_events * sizeof(unsigned short)));
     // sbt
-    cudaCheck(cudaMalloc((void**)&dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track)));
+    cudaCheck(cudaMalloc((void**)&dev_tracks, (number_of_events + 1) * max_tracks_in_event * sizeof(Track)));
     cudaCheck(cudaMalloc((void**)&dev_tracks_to_follow, number_of_events * TTF_MODULO * sizeof(unsigned int)));
     cudaCheck(cudaMalloc((void**)&dev_hit_used, maximum_average_number_of_hits_per_event * number_of_events * sizeof(bool)));
     cudaCheck(cudaMalloc((void**)&dev_atomics_storage, number_of_events * atomic_space * sizeof(int)));
@@ -138,6 +141,15 @@ struct Stream {
       dev_rel_indices,
       dev_hit_phi,
       dev_hit_temp
+    );
+
+    consolidateTracks.set(
+      consolidate_blocks,
+      consolidate_num_threads,
+      stream,
+      dev_atomics_storage,
+      dev_tracks,
+      number_of_events
     );
 
     calculateVeloStates.set(

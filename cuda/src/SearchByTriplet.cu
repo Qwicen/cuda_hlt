@@ -23,7 +23,7 @@ __global__ void searchByTriplet(
   // Each event is treated with two blocks, one for each side.
   const unsigned int event_number = blockIdx.x;
   const unsigned int events_under_process = gridDim.x;
-  const unsigned int tracks_offset = event_number * MAX_TRACKS;
+  const unsigned int tracks_offset = (event_number + 1) * MAX_TRACKS;
 
   // Pointers to data within the event
   const unsigned int data_offset = dev_event_offsets[event_number];
