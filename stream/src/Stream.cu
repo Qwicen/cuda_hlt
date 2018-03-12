@@ -8,6 +8,8 @@ cudaError_t Stream::operator()(
   unsigned int number_of_events,
   unsigned int number_of_repetitions
 ) {
+  cudaCheck(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
+  
   for (unsigned int repetitions=0; repetitions<number_of_repetitions; ++repetitions) {
     // Timers
     std::vector<std::pair<std::string, float>> times;
