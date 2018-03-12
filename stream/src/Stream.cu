@@ -88,7 +88,6 @@ cudaError_t Stream::operator()(
     ///////////////////////////
 
     // Invoke kernel
-
     times.emplace_back(
       "calculateVeloStates",
       0.001 * Helper::invoke(calculateVeloStates)
@@ -96,7 +95,7 @@ cudaError_t Stream::operator()(
 
     cudaCheck(cudaPeekAtLastError());
 
-    // TODO: The chain could follow from here on.
+    // The chain can follow from here on.
     // If the chain follows, we may not need to retrieve the data
     // in the state it is currently, but in a posterior state.
     // In principle, here we need to get back:
@@ -117,21 +116,6 @@ cudaError_t Stream::operator()(
       cudaCheck(cudaMemcpyAsync(hit_permutations.data(), dev_hit_permutation, total_number_of_hits * sizeof(unsigned short), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(tracks.data(), dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(velo_states.data(), dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
-      
-      // In case we want to minimize data transmission:
-      // unsigned int accumulated_number_of_tracks = 0;
-      // std::vector<unsigned int> tracks_start (number_of_events);
-      // for (size_t i=0; i<number_of_tracks.size(); ++i) {
-      //   tracks_start[i] = accumulated_number_of_tracks;
-      //   accumulated_number_of_tracks += number_of_tracks[i];
-      // }
-
-      // std::vector<Track> tracks (accumulated_number_of_tracks);
-      // std::vector<VeloState> velo_states (accumulated_number_of_tracks * STATES_PER_TRACK);
-      // for (size_t i=0; i<number_of_tracks.size(); ++i) {
-      //   cudaCheck(cudaMemcpyAsync(tracks.data() + tracks_start[i], dev_tracks + i * max_tracks_in_event, number_of_tracks[i] * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-      //   cudaCheck(cudaMemcpyAsync(velo_states.data() + tracks_start[i] * STATES_PER_TRACK, dev_velo_states + i * max_tracks_in_event * STATES_PER_TRACK, number_of_tracks[i] * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
-      // }
     }
 
 
