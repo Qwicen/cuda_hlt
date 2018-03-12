@@ -52,7 +52,7 @@
 // Constants for requested storage on device
 #define MAX_TRACKS 1000
 #define MAX_TRACK_SIZE 26
-#define MAX_NUMHITS_IN_MODULE 256
+#define MAX_NUMHITS_IN_MODULE 300
 
 // Maximum number of tracks to follow at a time
 #define TTF_MODULO 2000
@@ -61,14 +61,6 @@
 #define STATES_PER_TRACK 3
 #define PARAM_W 3966.94f
 #define PARAM_W_INVERTED 0.000252083f
-
-// Parameters to print out solutions
-#define PRINT_SOLUTION false
-#define PRINT_FILL_CANDIDATES false
-#define PRINT_VERBOSE false
-#define PRINT_BINARY false
-#define PRINT_VELO_FIT false
-#define RESULTS_FOLDER "results"
 
 // Asserts
 #define ASSERTS_ENABLED false

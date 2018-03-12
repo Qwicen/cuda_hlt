@@ -16,9 +16,9 @@ class Timer;
 
 struct Stream {
   // Limiting constants for preallocation
-  constexpr static unsigned int maximum_average_number_of_hits_per_event = 2000;
-  constexpr static unsigned int max_tracks_in_event = 1000;
-  constexpr static unsigned int max_numhits_in_module = 256;
+  constexpr static unsigned int maximum_average_number_of_hits_per_event = TTF_MODULO;
+  constexpr static unsigned int max_tracks_in_event = MAX_TRACKS;
+  constexpr static unsigned int max_numhits_in_module = MAX_NUMHITS_IN_MODULE;
   constexpr static unsigned int atomic_space = NUM_ATOMICS + 1;
   // Stream datatypes
   cudaStream_t stream;
