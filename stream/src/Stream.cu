@@ -22,8 +22,6 @@ cudaError_t Stream::operator()(
 
     Timer t;
 
-    DEBUG << events.size() << std::endl;
-
     if (dev_events_size < events.size()) {
       // malloc just this datatype
       cudaCheck(cudaFree(dev_events));
@@ -59,7 +57,6 @@ cudaError_t Stream::operator()(
       "Calculate phi and sort",
       0.001 * Helper::invoke(calculatePhiAndSort)
     );
-
     cudaCheck(cudaPeekAtLastError());
 
     /////////////////////
@@ -80,7 +77,6 @@ cudaError_t Stream::operator()(
       "Search by triplets",
       0.001 * Helper::invoke(searchByTriplet)
     );
-
     cudaCheck(cudaPeekAtLastError());
 
     ////////////////////////
@@ -92,26 +88,28 @@ cudaError_t Stream::operator()(
       "Consolidate tracks",
       0.001 * Helper::invoke(consolidateTracks)
     );
+    cudaCheck(cudaPeekAtLastError());
 
     ///////////////////////////
     // Calculate VELO states //
     ///////////////////////////
 
     // Invoke kernel
-    times.emplace_back(
-      "Calculate Velo states",
-      0.001 * Helper::invoke(calculateVeloStates)
-    );
-
-    cudaCheck(cudaPeekAtLastError());
+    if (perform_velo_kalman_filter) {
+      times.emplace_back(
+        "Calculate Velo states",
+        0.001 * Helper::invoke(calculateVeloStates)
+      );
+      cudaCheck(cudaPeekAtLastError());
+    }
 
     // TODO: The chain could follow from here on.
     // If the chain follows, we may not need to retrieve the data
     // in the state it is currently, but in a posterior state.
     // In principle, here we need to get back:
     // - dev_hit_permutation: Permutation of hits (reorder)
-    // - dev_atomics_storage: Number of tracks
-    // - dev_tracks: Tracks
+    // - dev_atomics_storage: Number of tracks and track starts
+    // - dev_tracklets: Tracks
     // - dev_velo_states: VELO filtered states for each track
     
     // Therefore, this is just temporal
@@ -119,30 +117,20 @@ cudaError_t Stream::operator()(
     if (transmit_device_to_host) {
       std::vector<int> number_of_tracks (number_of_events);
       std::vector<unsigned short> hit_permutations (total_number_of_hits);
-      std::vector<Track> tracks (number_of_events * max_tracks_in_event);
-      // std::vector<VeloState> velo_states (number_of_events * max_tracks_in_event * STATES_PER_TRACK);
 
       cudaCheck(cudaMemcpyAsync(number_of_tracks.data(), dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(hit_permutations.data(), dev_hit_permutation, total_number_of_hits * sizeof(unsigned short), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(tracks.data(), dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-      // cudaCheck(cudaMemcpyAsync(velo_states.data(), dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
       
-      // In case we want to minimize data transmission:
-      // unsigned int accumulated_number_of_tracks = 0;
-      // std::vector<unsigned int> tracks_start (number_of_events);
-      // for (size_t i=0; i<number_of_tracks.size(); ++i) {
-      //   tracks_start[i] = accumulated_number_of_tracks;
-      //   accumulated_number_of_tracks += number_of_tracks[i];
-      // }
+      const int total_number_of_tracks = std::accumulate(std::begin(number_of_tracks), std::end(number_of_tracks), (int) 0);
 
-      // std::vector<Track> tracks (accumulated_number_of_tracks);
-      // std::vector<VeloState> velo_states (accumulated_number_of_tracks * STATES_PER_TRACK);
-      // for (size_t i=0; i<number_of_tracks.size(); ++i) {
-      //   cudaCheck(cudaMemcpyAsync(tracks.data() + tracks_start[i], dev_tracks + i * max_tracks_in_event, number_of_tracks[i] * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-      //   cudaCheck(cudaMemcpyAsync(velo_states.data() + tracks_start[i] * STATES_PER_TRACK, dev_velo_states + i * max_tracks_in_event * STATES_PER_TRACK, number_of_tracks[i] * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
-      // }
+      std::vector<Track> tracks (total_number_of_tracks);
+      cudaCheck(cudaMemcpyAsync(tracks.data(), dev_tracklets, total_number_of_tracks * sizeof(Track), cudaMemcpyDeviceToHost, stream));
+
+      if (perform_velo_kalman_filter) {
+        std::vector<VeloState> velo_states (total_number_of_tracks * STATES_PER_TRACK);
+        cudaCheck(cudaMemcpyAsync(velo_states.data(), dev_velo_states, total_number_of_tracks * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
+      }
     }
-
 
     t_total.stop();
     times.emplace_back("total", t_total.get());

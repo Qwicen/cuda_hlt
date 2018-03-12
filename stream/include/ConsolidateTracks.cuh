@@ -13,7 +13,7 @@ struct ConsolidateTracks : public Measurable {
   // Call parameters
   int* dev_atomics_storage;
   Track* dev_tracks;
-  unsigned int number_of_events;
+  Track* dev_output_tracks;
 
   ConsolidateTracks() {
     Measurable();
@@ -25,14 +25,14 @@ struct ConsolidateTracks : public Measurable {
     cudaStream_t& param_stream,
     int* param_dev_atomics_storage,
     Track* param_dev_tracks,
-    unsigned int param_number_of_events
+    Track* param_dev_output_tracks
   ) {
     num_blocks = param_num_blocks;
     num_threads = param_num_threads;
     stream = &param_stream;
     dev_atomics_storage = param_dev_atomics_storage;
     dev_tracks = param_dev_tracks;
-    number_of_events = param_number_of_events;
+    dev_output_tracks = param_dev_output_tracks;
   }
 
   void operator()();

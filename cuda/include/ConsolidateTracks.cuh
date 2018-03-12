@@ -2,6 +2,6 @@
 
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
-  Track* dev_tracks,
-  const unsigned int number_of_events
+  const Track* dev_tracks,
+  Track* dev_output_tracks
 );
