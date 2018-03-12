@@ -34,9 +34,9 @@ void printUsage(char* argv[]){
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=3]"
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
-    << std::endl << " [-p (print individual rates)]"
     << std::endl << " [-a {transmit host to device}=1 (-a 0 implies -r 1)]"
     << std::endl << " [-b {transmit device to host}=1]"
+    << std::endl << " [-p (print individual rates)]"
     << std::endl;
 }
 
@@ -103,9 +103,9 @@ int main(int argc, char *argv[])
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
-    << " print rates (-p): " << print_individual_rates << std::endl
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
+    << " print rates (-p): " << print_individual_rates << std::endl
     << std::endl;
 
   // Read folder contents

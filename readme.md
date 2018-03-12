@@ -16,14 +16,24 @@ The project requires a graphics card with CUDA support. The build process doesn'
     cmake ..
     make
 
-In order to run it, some binary input files are included with the project. A run of the program with no arguments will let you know the basic options:
+Some binary input files are included with the project for testing. A run of the program with no arguments will let you know the basic options:
 
-    Usage: ./cuForward <folder containing .bin files> <number of files to process>
+    Usage: ./cu_hlt
+     -f {folder containing .bin files}
+     [-n {number of files to process}=0 (all)]
+     [-t {number of threads / streams}=3]
+     [-r {number of repetitions per thread / stream}=10]
+     [-a {transmit host to device}=1 (-a 0 implies -r 1)]
+     [-b {transmit device to host}=0]
+     [-p (print individual rates)]
 
 Here are some example run options:
 
     # Run all input files once
-    ./cuForward ../input 50
+    ./cu_hlt -f ../input
 
     # Run a total of 1000 events, round robin over the existing ones
-    ./cuForward ../input 1000
+    ./cu_hlt -f ../input -n 1000
+
+    # Run four streams, each with 4000 events, 20 repetitions
+    ./cu_hlt -f ../input -t 4 -n 4000 -r 20
