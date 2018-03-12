@@ -52,7 +52,7 @@
 // Constants for requested storage on device
 #define MAX_TRACKS 1000
 #define MAX_TRACK_SIZE 26
-#define MAX_NUMHITS_IN_MODULE 256
+#define MAX_NUMHITS_IN_MODULE 300
 
 // Maximum number of tracks to follow at a time
 #define TTF_MODULO 2000

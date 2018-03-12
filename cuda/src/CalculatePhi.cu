@@ -93,7 +93,7 @@ __device__ void calculatePhi(
   float* hit_Phis,
   unsigned short* hit_permutations
 ) {
-  __shared__ float shared_hit_phis [256];
+  __shared__ float shared_hit_phis [MAX_NUMHITS_IN_MODULE];
 
   // Odd modules
   calculatePhiSide(
