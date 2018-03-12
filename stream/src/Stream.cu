@@ -148,6 +148,6 @@ void Stream::print_timing(
 
   DEBUG << "stream #" << stream_number << ": "
     << number_of_events / total_time.second << " events/s"
-    << ", partial timers (ms): " << partial_times
+    << ", partial timers (s): " << partial_times
     << std::endl;
 }
