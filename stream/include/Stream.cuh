@@ -9,7 +9,6 @@
 #include "../../cuda/include/Definitions.cuh"
 #include "../include/CalculatePhiAndSort.cuh"
 #include "../include/SearchByTriplet.cuh"
-#include "../include/CalculateVeloStates.cuh"
 #include "../include/ConsolidateTracks.cuh"
 #include "../include/Helper.cuh"
 
@@ -41,7 +40,6 @@ struct Stream {
   float* dev_hit_phi;
   int32_t* dev_hit_temp;
   unsigned short* dev_hit_permutation;
-  VeloState* dev_velo_states;
   // Resizeable datatype
   char* dev_events;
   size_t dev_events_size;
@@ -49,14 +47,12 @@ struct Stream {
   CalculatePhiAndSort calculatePhiAndSort;
   SearchByTriplet searchByTriplet;
   ConsolidateTracks consolidateTracks;
-  CalculateVeloStates calculateVeloStates;
   // Algorithm launch options
   dim3 num_blocks;
   dim3 consolidate_blocks;
   dim3 sort_num_threads;
   dim3 sbt_num_threads;
   dim3 consolidate_num_threads;
-  dim3 velo_states_num_threads;
   // Launch tests
   bool transmit_host_to_device;
   bool transmit_device_to_host;
@@ -71,13 +67,11 @@ struct Stream {
     const size_t param_starting_events_size,
     const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
-    const bool param_perform_velo_kalman_filter,
     const unsigned int param_stream_number = 0,
     const bool param_do_print_timing = true
   ) {
     cudaCheck(cudaStreamCreate(&stream));
     stream_number = param_stream_number;
-    perform_velo_kalman_filter = param_perform_velo_kalman_filter;
     do_print_timing = param_do_print_timing;
     dev_events_size = param_starting_events_size;
     transmit_host_to_device = param_transmit_host_to_device;
@@ -89,7 +83,6 @@ struct Stream {
     sort_num_threads = dim3(64);
     sbt_num_threads = dim3(NUMTHREADS_X);
     consolidate_num_threads = dim3(32);
-    velo_states_num_threads = dim3(1024);
 
     // Do memory allocations only once
     // phi and sort
@@ -109,8 +102,6 @@ struct Stream {
     cudaCheck(cudaMalloc((void**)&dev_h0_candidates, 2 * maximum_average_number_of_hits_per_event * number_of_events * sizeof(short)));
     cudaCheck(cudaMalloc((void**)&dev_h2_candidates, 2 * maximum_average_number_of_hits_per_event * number_of_events * sizeof(short)));
     cudaCheck(cudaMalloc((void**)&dev_rel_indices, number_of_events * max_numhits_in_module * sizeof(unsigned short)));
-    // velo states
-    cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState)));
 
     // Prepare data (for tests)
     cudaCheck(cudaMemcpyAsync(dev_events, events.data(), events.size(), cudaMemcpyHostToDevice, stream));
@@ -156,20 +147,9 @@ struct Stream {
       stream,
       dev_atomics_storage,
       dev_tracks,
-      dev_tracklets
-    );
-
-    calculateVeloStates.set(
-      num_blocks,
-      velo_states_num_threads,
-      stream,
-      dev_events,
-      dev_atomics_storage,
       dev_tracklets,
-      dev_velo_states,
-      dev_hit_temp,
-      dev_event_offsets,
-      dev_hit_offsets
+      dev_hit_offsets,
+      dev_hit_permutation
     );
 
     return cudaSuccess;
@@ -191,7 +171,6 @@ struct Stream {
     // cudaCheck(cudaFree(dev_hit_temp));
     // cudaCheck(cudaFree(dev_atomics_storage));
     // cudaCheck(cudaFree(dev_tracks));
-    // cudaCheck(cudaFree(dev_velo_states));
 
     // cudaCheck(cudaStreamDestroy(stream));
     // cudaCheck(cudaStreamDestroy(stream_receive));

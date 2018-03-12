@@ -14,6 +14,8 @@ struct ConsolidateTracks : public Measurable {
   int* dev_atomics_storage;
   Track* dev_tracks;
   Track* dev_output_tracks;
+  unsigned int* dev_hit_offsets;
+  unsigned short* dev_hit_permutation;
 
   ConsolidateTracks() {
     Measurable();
@@ -25,7 +27,9 @@ struct ConsolidateTracks : public Measurable {
     cudaStream_t& param_stream,
     int* param_dev_atomics_storage,
     Track* param_dev_tracks,
-    Track* param_dev_output_tracks
+    Track* param_dev_output_tracks,
+    unsigned int* param_dev_hit_offsets,
+    unsigned short* param_dev_hit_permutation
   ) {
     num_blocks = param_num_blocks;
     num_threads = param_num_threads;
@@ -33,6 +37,8 @@ struct ConsolidateTracks : public Measurable {
     dev_atomics_storage = param_dev_atomics_storage;
     dev_tracks = param_dev_tracks;
     dev_output_tracks = param_dev_output_tracks;
+    dev_hit_offsets = param_dev_hit_offsets;
+    dev_hit_permutation = param_dev_hit_permutation;
   }
 
   void operator()();

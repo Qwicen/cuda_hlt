@@ -34,7 +34,6 @@ void printUsage(char* argv[]){
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=3]"
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
-    << std::endl << " [-v {perform velo Kalman filter}=1]"
     << std::endl << " [-p (print individual rates)]"
     << std::endl << " [-a {transmit host to device}=1 (-a 0 implies -r 1)]"
     << std::endl << " [-b {transmit device to host}=1]"
@@ -50,10 +49,9 @@ int main(int argc, char *argv[])
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
-  bool perform_velo_kalman_filter = true;
 
   signed char c;
-  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:v:")) != -1) {
+  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:")) != -1) {
     switch (c) {
     case 'f':
       folder_name = std::string(optarg);
@@ -75,9 +73,6 @@ int main(int argc, char *argv[])
       break;
     case 'b':
       transmit_device_to_host = atoi(optarg);
-      break;
-    case 'v':
-      perform_velo_kalman_filter = atoi(optarg);
       break;
     case '?':
     case 'h':
@@ -108,7 +103,6 @@ int main(int argc, char *argv[])
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
-    << " perform velo Kalman filter (-v): " << perform_velo_kalman_filter << std::endl
     << " print rates (-p): " << print_individual_rates << std::endl
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
@@ -139,7 +133,6 @@ int main(int argc, char *argv[])
       events.size(),
       transmit_host_to_device,
       transmit_device_to_host,
-      perform_velo_kalman_filter,
       i,
       print_individual_rates
     );

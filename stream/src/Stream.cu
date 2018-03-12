@@ -90,46 +90,15 @@ cudaError_t Stream::operator()(
     );
     cudaCheck(cudaPeekAtLastError());
 
-    ///////////////////////////
-    // Calculate VELO states //
-    ///////////////////////////
-
-    // Invoke kernel
-    if (perform_velo_kalman_filter) {
-      times.emplace_back(
-        "Calculate Velo states",
-        0.001 * Helper::invoke(calculateVeloStates)
-      );
-      cudaCheck(cudaPeekAtLastError());
-    }
-
-    // TODO: The chain could follow from here on.
-    // If the chain follows, we may not need to retrieve the data
-    // in the state it is currently, but in a posterior state.
-    // In principle, here we need to get back:
-    // - dev_hit_permutation: Permutation of hits (reorder)
-    // - dev_atomics_storage: Number of tracks and track starts
-    // - dev_tracklets: Tracks
-    // - dev_velo_states: VELO filtered states for each track
-    
     // Therefore, this is just temporal
     // Fetch required data
     if (transmit_device_to_host) {
       std::vector<int> number_of_tracks (number_of_events);
-      std::vector<unsigned short> hit_permutations (total_number_of_hits);
-
       cudaCheck(cudaMemcpyAsync(number_of_tracks.data(), dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(hit_permutations.data(), dev_hit_permutation, total_number_of_hits * sizeof(unsigned short), cudaMemcpyDeviceToHost, stream));
       
       const int total_number_of_tracks = std::accumulate(std::begin(number_of_tracks), std::end(number_of_tracks), (int) 0);
-
       std::vector<Track> tracks (total_number_of_tracks);
       cudaCheck(cudaMemcpyAsync(tracks.data(), dev_tracklets, total_number_of_tracks * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-
-      if (perform_velo_kalman_filter) {
-        std::vector<VeloState> velo_states (total_number_of_tracks * STATES_PER_TRACK);
-        cudaCheck(cudaMemcpyAsync(velo_states.data(), dev_velo_states, total_number_of_tracks * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
-      }
     }
 
     t_total.stop();
