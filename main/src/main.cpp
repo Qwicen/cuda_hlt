@@ -36,6 +36,7 @@ void printUsage(char* argv[]){
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
     << std::endl << " [-a {transmit host to device}=1 (-a 0 implies -r 1)]"
     << std::endl << " [-b {transmit device to host}=1]"
+    << std::endl << " [-d {device number}=0]"
     << std::endl << " [-p (print individual rates)]"
     << std::endl;
 }
@@ -46,12 +47,13 @@ int main(int argc, char *argv[])
   unsigned int number_of_files = 0;
   unsigned int tbb_threads = 3;
   unsigned int number_of_repetitions = 10;
+  unsigned int device_number = 0;
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
 
   signed char c;
-  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:")) != -1) {
+  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:d:")) != -1) {
     switch (c) {
     case 'f':
       folder_name = std::string(optarg);
@@ -73,6 +75,9 @@ int main(int argc, char *argv[])
       break;
     case 'b':
       transmit_device_to_host = atoi(optarg);
+      break;
+    case 'd':
+      device_number = atoi(optarg);
       break;
     case '?':
     case 'h':
@@ -97,6 +102,12 @@ int main(int argc, char *argv[])
     return -1;
   }
 
+  // Set device
+  cudaCheck(cudaSetDevice(device_number));
+  cudaCheck(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
+  cudaDeviceProp device_properties;
+  cudaCheck(cudaGetDeviceProperties(&device_properties, 0));
+
   // Show call options
   std::cout << "Requested options:" << std::endl
     << " folder (-f): " << folder_name << std::endl
@@ -105,6 +116,7 @@ int main(int argc, char *argv[])
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
+    << " device number (-d): " << device_number << " (" << device_properties.name << ")" << std::endl
     << " print rates (-p): " << print_individual_rates << std::endl
     << std::endl;
 
@@ -157,7 +169,7 @@ int main(int argc, char *argv[])
   );
   t.stop();
 
-  std::cout << (event_offsets.size() * tbb_threads * number_of_repetitions / t.get()) << " events/s combined" << std::endl
+  std::cout << (event_offsets.size() * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
   // Reset device
