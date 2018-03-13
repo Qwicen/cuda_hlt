@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Measurable.cuh"
 #include "../../cuda/include/CalculatePhiAndSort.cuh"
 
-struct CalculatePhiAndSort : public Measurable {
+struct CalculatePhiAndSort {
   // Call options
   dim3 num_blocks, num_threads;
 
@@ -18,9 +17,7 @@ struct CalculatePhiAndSort : public Measurable {
   int32_t* dev_hit_temp;
   unsigned short* dev_hit_permutation;
 
-  CalculatePhiAndSort() {
-    Measurable();
-  }
+  CalculatePhiAndSort() = default;
 
   void set(
     const dim3& param_num_blocks,

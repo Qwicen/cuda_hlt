@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Measurable.cuh"
 #include "../../cuda/include/ConsolidateTracks.cuh"
 
-struct ConsolidateTracks : public Measurable {
+struct ConsolidateTracks {
   // Call options
   dim3 num_blocks, num_threads;
 
@@ -17,9 +16,7 @@ struct ConsolidateTracks : public Measurable {
   unsigned int* dev_hit_offsets;
   unsigned short* dev_hit_permutation;
 
-  ConsolidateTracks() {
-    Measurable();
-  }
+  ConsolidateTracks() = default;
 
   void set(
     const dim3& param_num_blocks,

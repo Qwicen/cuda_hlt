@@ -36,7 +36,6 @@ void printUsage(char* argv[]){
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
     << std::endl << " [-a {transmit host to device}=1 (-a 0 implies -r 1)]"
     << std::endl << " [-b {transmit device to host}=1]"
-    << std::endl << " [-p (print individual rates)]"
     << std::endl;
 }
 
@@ -64,9 +63,6 @@ int main(int argc, char *argv[])
       break;
     case 'r':
       number_of_repetitions = atoi(optarg);
-      break;
-    case 'p':
-      print_individual_rates = true;
       break;
     case 'a':
       transmit_host_to_device = atoi(optarg);
@@ -149,8 +145,7 @@ int main(int argc, char *argv[])
       events.size(),
       transmit_host_to_device,
       transmit_device_to_host,
-      i,
-      print_individual_rates
+      i
     );
   }
 

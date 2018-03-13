@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Measurable.cuh"
 #include "../../cuda/include/Definitions.cuh"
 #include "../../cuda/include/SearchByTriplet.cuh"
 
-struct SearchByTriplet : public Measurable {
+struct SearchByTriplet {
   // Call options
   dim3 num_blocks, num_threads;
 
@@ -27,9 +26,7 @@ struct SearchByTriplet : public Measurable {
   float* dev_hit_phi;
   int32_t* dev_hit_temp;
 
-  SearchByTriplet() {
-    Measurable();
-  }
+  SearchByTriplet() = default;
 
   void set(
     const dim3& param_num_blocks,

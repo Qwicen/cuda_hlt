@@ -55,25 +55,3 @@ cudaError_t Stream::operator()(
 
   return cudaSuccess;
 }
-
-void Stream::print_timing(
-  const unsigned int number_of_events,
-  const std::vector<std::pair<std::string, float>>& times
-) {
-  const auto total_time = times[times.size() - 1];
-  std::string partial_times = "{\n";
-  for (size_t i=0; i<times.size(); ++i) {
-    if (i != times.size()-1) {
-      partial_times += " " + times[i].first + "\t" + std::to_string(times[i].second) + "\t("
-        + std::to_string(100 * (times[i].second / total_time.second)) + " %)\n";
-    } else {
-      partial_times += " " + times[i].first + "\t" + std::to_string(times[i].second) + "\t("
-        + std::to_string(100 * (times[i].second / total_time.second)) + " %)\n}";
-    }
-  }
-
-  DEBUG << "stream #" << stream_number << ": "
-    << number_of_events / total_time.second << " events/s"
-    << ", partial timers (s): " << partial_times
-    << std::endl;
-}

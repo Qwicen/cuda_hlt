@@ -10,7 +10,6 @@
 #include "../include/CalculatePhiAndSort.cuh"
 #include "../include/SearchByTriplet.cuh"
 #include "../include/ConsolidateTracks.cuh"
-#include "../include/Helper.cuh"
 
 class Timer;
 
@@ -24,7 +23,6 @@ struct Stream {
   cudaStream_t stream;
   cudaEvent_t cuda_generic_event;
   unsigned int stream_number;
-  bool do_print_timing;
   bool perform_velo_kalman_filter;
   // Datatypes
   Track* dev_tracks;
@@ -70,13 +68,11 @@ struct Stream {
     const size_t param_starting_events_size,
     const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
-    const unsigned int param_stream_number = 0,
-    const bool param_do_print_timing = true
+    const unsigned int param_stream_number = 0
   ) {
     cudaCheck(cudaStreamCreate(&stream));
     cudaCheck(cudaEventCreate(&cuda_generic_event));
     stream_number = param_stream_number;
-    do_print_timing = param_do_print_timing;
     dev_events_size = param_starting_events_size;
     transmit_host_to_device = param_transmit_host_to_device;
     transmit_device_to_host = param_transmit_device_to_host;
@@ -194,10 +190,5 @@ struct Stream {
     unsigned int start_event,
     unsigned int number_of_events,
     unsigned int number_of_repetitions
-  );
-
-  void print_timing(
-    const unsigned int number_of_events,
-    const std::vector<std::pair<std::string, float>>& times
   );
 };
