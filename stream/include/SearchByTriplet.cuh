@@ -27,9 +27,7 @@ struct SearchByTriplet : public Measurable {
   float* dev_hit_phi;
   int32_t* dev_hit_temp;
 
-  SearchByTriplet() {
-    Measurable();
-  }
+  SearchByTriplet() : Measurable() {}
 
   void set(
     const dim3& param_num_blocks,

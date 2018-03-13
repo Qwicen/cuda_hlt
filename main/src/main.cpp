@@ -126,6 +126,17 @@ int main(int argc, char *argv[])
   // Show some statistics
   statistics(events, event_offsets);
 
+  // Copy data to pinned host memory
+  char* host_events_pinned;
+  unsigned int* host_event_offsets_pinned;
+  unsigned int* host_hit_offsets_pinned;
+  cudaCheck(cudaMallocHost((void**)&host_events_pinned, events.size()));
+  cudaCheck(cudaMallocHost((void**)&host_event_offsets_pinned, event_offsets.size() * sizeof(unsigned int)));
+  cudaCheck(cudaMallocHost((void**)&host_hit_offsets_pinned, hit_offsets.size() * sizeof(unsigned int)));
+  std::copy_n(std::begin(events), events.size(), host_events_pinned);
+  std::copy_n(std::begin(event_offsets), event_offsets.size(), host_event_offsets_pinned);
+  std::copy_n(std::begin(hit_offsets), hit_offsets.size(), host_hit_offsets_pinned);
+
   // Create streams
   const auto number_of_events = event_offsets.size();
   std::vector<Stream> streams (tbb_threads);
@@ -151,9 +162,12 @@ int main(int argc, char *argv[])
     [&] (unsigned int i) {
       auto& s = streams[i];
       s(
-        events,
-        event_offsets,
-        hit_offsets,
+        host_events_pinned,
+        host_event_offsets_pinned,
+        host_hit_offsets_pinned,
+        events.size(),
+        event_offsets.size(),
+        hit_offsets.size(),
         0,
         event_offsets.size(),
         number_of_repetitions
@@ -165,7 +179,10 @@ int main(int argc, char *argv[])
   std::cout << (event_offsets.size() * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
-  // Reset device
+  // Free and reset device
+  cudaCheck(cudaFreeHost(host_events_pinned));
+  cudaCheck(cudaFreeHost(host_event_offsets_pinned));
+  cudaCheck(cudaFreeHost(host_hit_offsets_pinned));
   cudaCheck(cudaDeviceReset());
 
   return 0;

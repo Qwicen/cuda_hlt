@@ -19,9 +19,7 @@ struct CalculateVeloStates : public Measurable {
   unsigned int* dev_event_offsets;
   unsigned int* dev_hit_offsets;
 
-  CalculateVeloStates() {
-    Measurable();
-  }
+  CalculateVeloStates() : Measurable() {}
 
   void set(
     const dim3& param_num_blocks,

@@ -9,6 +9,7 @@
 #include "../include/CalculatePhiAndSort.cuh"
 #include "../include/SearchByTriplet.cuh"
 #include "../include/CalculateVeloStates.cuh"
+#include "../include/ConsolidateTracks.cuh"
 #include "../include/Helper.cuh"
 
 class Timer;
@@ -21,6 +22,7 @@ struct Stream {
   constexpr static unsigned int atomic_space = NUM_ATOMICS + 1;
   // Stream datatypes
   cudaStream_t stream;
+  cudaEvent_t cuda_generic_event;
   unsigned int stream_number;
   bool do_print_timing;
   // Datatypes
@@ -39,6 +41,9 @@ struct Stream {
   int32_t* dev_hit_temp;
   unsigned short* dev_hit_permutation;
   VeloState* dev_velo_states;
+  int* host_number_of_tracks_pinned;
+  Track* host_tracks_pinned;
+  VeloState* host_velo_states;
   // Resizeable datatype
   char* dev_events;
   size_t dev_events_size;
@@ -46,11 +51,13 @@ struct Stream {
   CalculatePhiAndSort calculatePhiAndSort;
   SearchByTriplet searchByTriplet;
   CalculateVeloStates calculateVeloStates;
+  ConsolidateTracks consolidateTracks;
   // Algorithm launch options
   dim3 num_blocks;
   dim3 sort_num_threads;
   dim3 sbt_num_threads;
   dim3 velo_states_num_threads;
+  dim3 consolidate_num_threads;
   // Launch tests
   bool transmit_host_to_device;
   bool transmit_device_to_host;
@@ -69,6 +76,7 @@ struct Stream {
     const bool param_do_print_timing = true
   ) {
     cudaCheck(cudaStreamCreate(&stream));
+    cudaCheck(cudaEventCreate(&cuda_generic_event));
     stream_number = param_stream_number;
     do_print_timing = param_do_print_timing;
     dev_events_size = param_starting_events_size;
@@ -80,6 +88,7 @@ struct Stream {
     sort_num_threads = dim3(64);
     sbt_num_threads = dim3(NUMTHREADS_X);
     velo_states_num_threads = dim3(1024);
+    consolidate_num_threads = dim3(32);
 
     // Do memory allocations only once
     // phi and sort
@@ -101,6 +110,11 @@ struct Stream {
     cudaCheck(cudaMalloc((void**)&dev_rel_indices, number_of_events * max_numhits_in_module * sizeof(unsigned short)));
     // velo states
     cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState)));
+
+    // Memory allocations for host memory (copy back)
+    cudaCheck(cudaMallocHost((void**)&host_number_of_tracks_pinned, number_of_events * sizeof(int)));
+    cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * max_tracks_in_event * sizeof(Track)));
+    cudaCheck(cudaMallocHost((void**)&host_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState)));
 
     // Prepare data (for tests)
     cudaCheck(cudaMemcpyAsync(dev_events, events.data(), events.size(), cudaMemcpyHostToDevice, stream));
@@ -153,6 +167,17 @@ struct Stream {
       dev_hit_offsets
     );
 
+    consolidateTracks.set(
+      num_blocks,
+      consolidate_num_threads,
+      stream,
+      dev_atomics_storage,
+      dev_tracks,
+      dev_tracklets,
+      dev_hit_offsets,
+      dev_hit_permutation
+    );
+
     return cudaSuccess;
   }
 
@@ -179,9 +204,12 @@ struct Stream {
   }
   
   cudaError_t operator()(
-    const std::vector<char>& events,
-    const std::vector<unsigned int>& event_offsets,
-    const std::vector<unsigned int>& hit_offsets,
+    const char* host_events_pinned,
+    const unsigned int* host_event_offsets_pinned,
+    const unsigned int* host_hit_offsets_pinned,
+    size_t host_events_pinned_size,
+    size_t host_event_offsets_pinned_size,
+    size_t host_hit_offsets_pinned_size,
     unsigned int start_event,
     unsigned int number_of_events,
     unsigned int number_of_repetitions

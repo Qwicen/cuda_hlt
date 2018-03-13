@@ -1,9 +1,12 @@
 #include "../include/Stream.cuh"
 
 cudaError_t Stream::operator()(
-  const std::vector<char>& events,
-  const std::vector<unsigned int>& event_offsets,
-  const std::vector<unsigned int>& hit_offsets,
+  const char* host_events_pinned,
+  const unsigned int* host_event_offsets_pinned,
+  const unsigned int* host_hit_offsets_pinned,
+  size_t host_events_pinned_size,
+  size_t host_event_offsets_pinned_size,
+  size_t host_hit_offsets_pinned_size,
   unsigned int start_event,
   unsigned int number_of_events,
   unsigned int number_of_repetitions
@@ -16,18 +19,18 @@ cudaError_t Stream::operator()(
     Timer t_total;
 
     // Total number of hits
-    const auto total_number_of_hits = hit_offsets[hit_offsets.size() - 1];
+    const auto total_number_of_hits = host_hit_offsets_pinned[host_hit_offsets_pinned_size - 1];
 
-    /////////////////////////
-    // CalculatePhiAndSort //
-    /////////////////////////
+    ////////////////////////////
+    // Calculate phi and sort //
+    ////////////////////////////
 
     Timer t;
 
-    if (dev_events_size < events.size()) {
+    if (dev_events_size < host_events_pinned_size) {
       // malloc just this datatype
       cudaCheck(cudaFree(dev_events));
-      dev_events_size = events.size();
+      dev_events_size = host_events_pinned_size;
       cudaCheck(cudaMalloc((void**)&dev_events, dev_events_size));
     }
 
@@ -42,16 +45,11 @@ cudaError_t Stream::operator()(
 
     if (transmit_host_to_device) {
       t.restart();
-      // Copy required data
-      cudaCheck(cudaMemcpyAsync(dev_events, events.data(), events.size(), cudaMemcpyHostToDevice, stream));
+      cudaCheck(cudaMemcpyAsync(dev_events, host_events_pinned, host_events_pinned_size, cudaMemcpyHostToDevice, stream));
+      cudaCheck(cudaMemcpyAsync(dev_event_offsets, host_event_offsets_pinned, host_event_offsets_pinned_size * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
+      cudaCheck(cudaMemcpyAsync(dev_hit_offsets, host_hit_offsets_pinned, host_hit_offsets_pinned_size * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
       t.stop();
-      times.emplace_back("copy events", t.get());
-      
-      t.restart();
-      cudaCheck(cudaMemcpyAsync(dev_event_offsets, event_offsets.data(), event_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
-      cudaCheck(cudaMemcpyAsync(dev_hit_offsets, hit_offsets.data(), hit_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
-      t.stop();
-      times.emplace_back("copy offsets", t.get());
+      times.emplace_back("copy input events", t.get());
     }
 
     // Invoke kernel
@@ -62,28 +60,16 @@ cudaError_t Stream::operator()(
 
     cudaCheck(cudaPeekAtLastError());
 
-    /////////////////////
-    // SearchByTriplet //
-    /////////////////////
+    ///////////////////////
+    // Search by triplet //
+    ///////////////////////
     
-    t.restart();
-
-    // Initialize data
-    cudaCheck(cudaMemsetAsync(dev_hit_used, false, total_number_of_hits * sizeof(bool), stream));
-    cudaCheck(cudaMemsetAsync(dev_atomics_storage, 0, number_of_events * atomic_space * sizeof(int), stream));
-
-    t.stop();
-    times.emplace_back("initialize sbt data", t.get());
-
     // Invoke kernel
-
     times.emplace_back(
       "Search by triplets",
       0.001 * Helper::invoke(searchByTriplet)
     );
-
     cudaCheck(cudaPeekAtLastError());
-
 
     ///////////////////////////
     // Calculate VELO states //
@@ -94,7 +80,6 @@ cudaError_t Stream::operator()(
       "calculateVeloStates",
       0.001 * Helper::invoke(calculateVeloStates)
     );
-
     cudaCheck(cudaPeekAtLastError());
 
     // The chain can follow from here on.
@@ -106,20 +91,29 @@ cudaError_t Stream::operator()(
     // - dev_tracks: Tracks
     // - dev_velo_states: VELO filtered states for each track
     
-    // Therefore, this is just temporal
-    // Fetch required data
+    // This transmission back is unoptimized
+    // (ie. consolidation can happen prior to VELO execution)
+    // As the GPU HLT1 evolves, so will this excerpt of code
     if (transmit_device_to_host) {
-      std::vector<int> number_of_tracks (number_of_events);
-      std::vector<unsigned short> hit_permutations (total_number_of_hits);
-      std::vector<Track> tracks (number_of_events * max_tracks_in_event);
-      std::vector<VeloState> velo_states (number_of_events * max_tracks_in_event * STATES_PER_TRACK);
+      times.emplace_back(
+        "consolidateTracks",
+        0.001 * Helper::invoke(consolidateTracks)
+      );
+      cudaCheck(cudaPeekAtLastError());
 
-      cudaCheck(cudaMemcpyAsync(number_of_tracks.data(), dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(hit_permutations.data(), dev_hit_permutation, total_number_of_hits * sizeof(unsigned short), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(tracks.data(), dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(velo_states.data(), dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+      cudaEventRecord(cuda_generic_event, stream);
+      cudaEventSynchronize(cuda_generic_event);
+
+      int total_number_of_tracks = 0;
+      for (int i=0; i<number_of_events; ++i) {
+        total_number_of_tracks += host_number_of_tracks_pinned[i];
+      }
+
+      // Consolidated tracks are currently stored in dev_tracklets
+      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, dev_tracklets, total_number_of_tracks * sizeof(Track), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_velo_states, dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
     }
-
 
     t_total.stop();
     times.emplace_back("total", t_total.get());
