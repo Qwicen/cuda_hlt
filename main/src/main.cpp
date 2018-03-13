@@ -46,7 +46,6 @@ int main(int argc, char *argv[])
   unsigned int number_of_files = 0;
   unsigned int tbb_threads = 3;
   unsigned int number_of_repetitions = 10;
-  unsigned int device_number = 0;
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
@@ -98,7 +97,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  // Set device
+  // Get device properties
   cudaDeviceProp device_properties;
   cudaCheck(cudaGetDeviceProperties(&device_properties, 0));
 
