@@ -36,7 +36,6 @@ void printUsage(char* argv[]){
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
     << std::endl << " [-a {transmit host to device}=1 (-a 0 implies -r 1)]"
     << std::endl << " [-b {transmit device to host}=1]"
-    << std::endl << " [-d {device number}=0]"
     << std::endl << " [-p (print individual rates)]"
     << std::endl;
 }
@@ -76,9 +75,6 @@ int main(int argc, char *argv[])
     case 'b':
       transmit_device_to_host = atoi(optarg);
       break;
-    case 'd':
-      device_number = atoi(optarg);
-      break;
     case '?':
     case 'h':
     default:
@@ -103,8 +99,6 @@ int main(int argc, char *argv[])
   }
 
   // Set device
-  cudaCheck(cudaSetDevice(device_number));
-  cudaCheck(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
   cudaDeviceProp device_properties;
   cudaCheck(cudaGetDeviceProperties(&device_properties, 0));
 
@@ -116,8 +110,8 @@ int main(int argc, char *argv[])
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
-    << " device number (-d): " << device_number << " (" << device_properties.name << ")" << std::endl
     << " print rates (-p): " << print_individual_rates << std::endl
+    << " device: " << device_properties.name << std::endl
     << std::endl;
 
   // Read folder contents
@@ -132,6 +126,17 @@ int main(int argc, char *argv[])
 
   // Show some statistics
   statistics(events, event_offsets);
+
+  // Copy data to pinned host memory
+  char* host_events_pinned;
+  unsigned int* host_event_offsets_pinned;
+  unsigned int* host_hit_offsets_pinned;
+  cudaCheck(cudaMallocHost((void**)&host_events_pinned, events.size()));
+  cudaCheck(cudaMallocHost((void**)&host_event_offsets_pinned, event_offsets.size() * sizeof(unsigned int)));
+  cudaCheck(cudaMallocHost((void**)&host_hit_offsets_pinned, hit_offsets.size() * sizeof(unsigned int)));
+  std::copy_n(std::begin(events), events.size(), host_events_pinned);
+  std::copy_n(std::begin(event_offsets), event_offsets.size(), host_event_offsets_pinned);
+  std::copy_n(std::begin(hit_offsets), hit_offsets.size(), host_hit_offsets_pinned);
 
   // Create streams
   const auto number_of_events = event_offsets.size();
@@ -158,9 +163,12 @@ int main(int argc, char *argv[])
     [&] (unsigned int i) {
       auto& s = streams[i];
       s(
-        events,
-        event_offsets,
-        hit_offsets,
+        host_events_pinned,
+        host_event_offsets_pinned,
+        host_hit_offsets_pinned,
+        events.size(),
+        event_offsets.size(),
+        hit_offsets.size(),
         0,
         event_offsets.size(),
         number_of_repetitions

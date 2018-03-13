@@ -22,6 +22,7 @@ struct Stream {
   constexpr static unsigned int atomic_space = NUM_ATOMICS + 1;
   // Stream datatypes
   cudaStream_t stream;
+  cudaEvent_t cuda_generic_event;
   unsigned int stream_number;
   bool do_print_timing;
   bool perform_velo_kalman_filter;
@@ -40,6 +41,8 @@ struct Stream {
   float* dev_hit_phi;
   int32_t* dev_hit_temp;
   unsigned short* dev_hit_permutation;
+  int* host_number_of_tracks_pinned;
+  Track* host_tracks_pinned;
   // Resizeable datatype
   char* dev_events;
   size_t dev_events_size;
@@ -71,6 +74,7 @@ struct Stream {
     const bool param_do_print_timing = true
   ) {
     cudaCheck(cudaStreamCreate(&stream));
+    cudaCheck(cudaEventCreate(&cuda_generic_event));
     stream_number = param_stream_number;
     do_print_timing = param_do_print_timing;
     dev_events_size = param_starting_events_size;
@@ -102,6 +106,10 @@ struct Stream {
     cudaCheck(cudaMalloc((void**)&dev_h0_candidates, 2 * maximum_average_number_of_hits_per_event * number_of_events * sizeof(short)));
     cudaCheck(cudaMalloc((void**)&dev_h2_candidates, 2 * maximum_average_number_of_hits_per_event * number_of_events * sizeof(short)));
     cudaCheck(cudaMalloc((void**)&dev_rel_indices, number_of_events * max_numhits_in_module * sizeof(unsigned short)));
+
+    // Memory allocations for host memory (copy back)
+    cudaCheck(cudaMallocHost((void**)&host_number_of_tracks_pinned, number_of_events * sizeof(int)));
+    cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * max_tracks_in_event * sizeof(Track)));
 
     // Prepare data (for tests)
     cudaCheck(cudaMemcpyAsync(dev_events, events.data(), events.size(), cudaMemcpyHostToDevice, stream));
@@ -177,9 +185,12 @@ struct Stream {
   }
   
   cudaError_t operator()(
-    const std::vector<char>& events,
-    const std::vector<unsigned int>& event_offsets,
-    const std::vector<unsigned int>& hit_offsets,
+    const char* host_events_pinned,
+    const unsigned int* host_event_offsets_pinned,
+    const unsigned int* host_hit_offsets_pinned,
+    size_t host_events_pinned_size,
+    size_t host_event_offsets_pinned_size,
+    size_t host_hit_offsets_pinned_size,
     unsigned int start_event,
     unsigned int number_of_events,
     unsigned int number_of_repetitions

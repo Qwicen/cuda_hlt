@@ -1,111 +1,55 @@
 #include "../include/Stream.cuh"
 
 cudaError_t Stream::operator()(
-  const std::vector<char>& events,
-  const std::vector<unsigned int>& event_offsets,
-  const std::vector<unsigned int>& hit_offsets,
+  const char* host_events_pinned,
+  const unsigned int* host_event_offsets_pinned,
+  const unsigned int* host_hit_offsets_pinned,
+  size_t host_events_pinned_size,
+  size_t host_event_offsets_pinned_size,
+  size_t host_hit_offsets_pinned_size,
   unsigned int start_event,
   unsigned int number_of_events,
   unsigned int number_of_repetitions
 ) {
   for (unsigned int repetitions=0; repetitions<number_of_repetitions; ++repetitions) {
-    // Timers
-    std::vector<std::pair<std::string, float>> times;
-    Timer t_total;
-
-    // Total number of hits
-    const auto total_number_of_hits = hit_offsets[hit_offsets.size() - 1];
-
     /////////////////////////
     // CalculatePhiAndSort //
     /////////////////////////
 
-    Timer t;
-
-    if (dev_events_size < events.size()) {
-      // malloc just this datatype
-      cudaCheck(cudaFree(dev_events));
-      dev_events_size = events.size();
-      cudaCheck(cudaMalloc((void**)&dev_events, dev_events_size));
-    }
-
-    if ((total_number_of_hits / number_of_events) > maximum_average_number_of_hits_per_event) {
-      std::cerr << "total average number of hits exceeds maximum ("
-        << (total_number_of_hits / number_of_events) << " > " << maximum_average_number_of_hits_per_event
-        << ")" << std::endl;
-    }
-
-    t.stop();
-    times.emplace_back("allocate phi buffers", t.get());
-
+    // Optional transmission host to device
     if (transmit_host_to_device) {
-      t.restart();
-      // Copy required data
-      cudaCheck(cudaMemcpyAsync(dev_events, events.data(), events.size(), cudaMemcpyHostToDevice, stream));
-      t.stop();
-      times.emplace_back("copy events", t.get());
-      
-      t.restart();
-      cudaCheck(cudaMemcpyAsync(dev_event_offsets, event_offsets.data(), event_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
-      cudaCheck(cudaMemcpyAsync(dev_hit_offsets, hit_offsets.data(), hit_offsets.size() * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
-      t.stop();
-      times.emplace_back("copy offsets", t.get());
+      cudaCheck(cudaMemcpyAsync(dev_events, host_events_pinned, host_events_pinned_size, cudaMemcpyHostToDevice, stream));
+      cudaCheck(cudaMemcpyAsync(dev_event_offsets, host_event_offsets_pinned, host_event_offsets_pinned_size * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
+      cudaCheck(cudaMemcpyAsync(dev_hit_offsets, host_hit_offsets_pinned, host_hit_offsets_pinned_size * sizeof(unsigned int), cudaMemcpyHostToDevice, stream));
     }
 
     // Invoke kernel
-    times.emplace_back(
-      "Calculate phi and sort",
-      0.001 * Helper::invoke(calculatePhiAndSort)
-    );
-    cudaCheck(cudaPeekAtLastError());
+    calculatePhiAndSort();
 
     /////////////////////
     // SearchByTriplet //
     /////////////////////
-    
-    t.restart();
 
-    // Initialize data
-    cudaCheck(cudaMemsetAsync(dev_hit_used, false, total_number_of_hits * sizeof(bool), stream));
-    cudaCheck(cudaMemsetAsync(dev_atomics_storage, 0, number_of_events * atomic_space * sizeof(int), stream));
-
-    t.stop();
-    times.emplace_back("initialize sbt data", t.get());
-
-    // Invoke kernel
-    times.emplace_back(
-      "Search by triplets",
-      0.001 * Helper::invoke(searchByTriplet)
-    );
-    cudaCheck(cudaPeekAtLastError());
+    searchByTriplet();
 
     ////////////////////////
     // Consolidate tracks //
     ////////////////////////
     
-    // Invoke kernel
-    times.emplace_back(
-      "Consolidate tracks",
-      0.001 * Helper::invoke(consolidateTracks)
-    );
-    cudaCheck(cudaPeekAtLastError());
+    consolidateTracks();
 
-    // Therefore, this is just temporal
-    // Fetch required data
+    // Optional transmission device to host
     if (transmit_device_to_host) {
-      std::vector<int> number_of_tracks (number_of_events);
-      cudaCheck(cudaMemcpyAsync(number_of_tracks.data(), dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+      cudaEventRecord(cuda_generic_event, stream);
+      cudaEventSynchronize(cuda_generic_event);
       
-      const int total_number_of_tracks = std::accumulate(std::begin(number_of_tracks), std::end(number_of_tracks), (int) 0);
-      std::vector<Track> tracks (total_number_of_tracks);
-      cudaCheck(cudaMemcpyAsync(tracks.data(), dev_tracklets, total_number_of_tracks * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-    }
+      int total_number_of_tracks = 0;
+      for (int i=0; i<number_of_events; ++i) {
+        total_number_of_tracks += host_number_of_tracks_pinned[i];
+      }
 
-    t_total.stop();
-    times.emplace_back("total", t_total.get());
-
-    if (do_print_timing) {
-      print_timing(number_of_events, times);
+      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, dev_tracklets, total_number_of_tracks * sizeof(Track), cudaMemcpyDeviceToHost, stream));
     }
   }
 

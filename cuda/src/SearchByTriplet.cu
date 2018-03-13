@@ -68,8 +68,6 @@ __global__ void searchByTriplet(
   __shared__ float shared_best_fits [NUMTHREADS_X];
   __shared__ int module_data [6];
 
-#if DO_REPEATED_EXECUTION
-  for (int repetitions=0; repetitions<REPEAT_ITERATIONS; ++repetitions) {
   // Initialize hit_used
   for (int i=0; i<(number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
     const auto index = i*blockDim.x + threadIdx.x;
@@ -82,7 +80,6 @@ __global__ void searchByTriplet(
   if (threadIdx.x < NUM_ATOMICS-1) {
     dev_atomicsStorage[threadIdx.x + ip_shift + 1] = 0;
   }
-#endif
 
   // Fill candidates for both sides
   fillCandidates(
@@ -134,9 +131,4 @@ __global__ void searchByTriplet(
     tracks,
     hit_used
   );
-
-#if DO_REPEATED_EXECUTION
-  __syncthreads();
-  }
-#endif
 }
