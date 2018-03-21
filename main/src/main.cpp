@@ -26,6 +26,7 @@
 #include "../include/Tools.h"
 #include "../../stream/include/Stream.cuh"
 #include "../include/Timer.h"
+#include "../../x86/include/Clustering.h"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
@@ -112,67 +113,107 @@ int main(int argc, char *argv[])
   // Read folder contents
   std::vector<char> events;
   std::vector<unsigned int> event_offsets;
-  std::vector<unsigned int> hit_offsets;
-  readFolder(folder_name, number_of_files, events, event_offsets, hit_offsets);
+  readFolder(folder_name, number_of_files, events, event_offsets);
 
-  // Set verbosity to max
-  std::cout << std::fixed << std::setprecision(6);
-  logger::ll.verbosityLevel = 3;
+  std::vector<char> geometry;
+  readGeometry(folder_name, geometry);
 
-  // Show some statistics
-  statistics(events, event_offsets);
+  // Invoke clustering
+  clustering(geometry, events, event_offsets);
+  std::vector<uint32_t> cc = cuda_clustering(geometry, events, event_offsets);
+  std::vector<uint32_t> cac = cuda_array_clustering(geometry, events, event_offsets);
 
-  // Copy data to pinned host memory
-  char* host_events_pinned;
-  unsigned int* host_event_offsets_pinned;
-  unsigned int* host_hit_offsets_pinned;
-  cudaCheck(cudaMallocHost((void**)&host_events_pinned, events.size()));
-  cudaCheck(cudaMallocHost((void**)&host_event_offsets_pinned, event_offsets.size() * sizeof(unsigned int)));
-  cudaCheck(cudaMallocHost((void**)&host_hit_offsets_pinned, hit_offsets.size() * sizeof(unsigned int)));
-  std::copy_n(std::begin(events), events.size(), host_events_pinned);
-  std::copy_n(std::begin(event_offsets), event_offsets.size(), host_event_offsets_pinned);
-  std::copy_n(std::begin(hit_offsets), hit_offsets.size(), host_hit_offsets_pinned);
+  std::vector<uint32_t> only_in_cc;
+  std::vector<uint32_t> only_in_cac;
 
-  // Create streams
-  const auto number_of_events = event_offsets.size();
-  std::vector<Stream> streams (tbb_threads);
-  for (int i=0; i<streams.size(); ++i) {
-    streams[i].initialize(
-      events,
-      event_offsets,
-      hit_offsets,
-      number_of_events,
-      events.size(),
-      transmit_host_to_device,
-      transmit_device_to_host,
-      i
-    );
+  for (auto i : cc) {
+    if (std::find(cac.begin(), cac.end(), i) == cac.end()) {
+      only_in_cc.push_back(i);
+    }
   }
 
-  // Attempt to execute all in one go
-  Timer t;
-  tbb::parallel_for(
-    static_cast<unsigned int>(0),
-    static_cast<unsigned int>(tbb_threads),
-    [&] (unsigned int i) {
-      auto& s = streams[i];
-      s(
-        host_events_pinned,
-        host_event_offsets_pinned,
-        host_hit_offsets_pinned,
-        events.size(),
-        event_offsets.size(),
-        hit_offsets.size(),
-        0,
-        event_offsets.size(),
-        number_of_repetitions
-      );
+  for (auto i : cac) {
+    if (std::find(cc.begin(), cc.end(), i) == cc.end()) {
+      only_in_cac.push_back(i);
     }
-  );
-  t.stop();
+  }
 
-  std::cout << (event_offsets.size() * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
-    << "Ran test for " << t.get() << " seconds" << std::endl;
+  std::cout << "Only in cc: ";
+  for (auto i : only_in_cc) {
+    const uint32_t row = (i - 771) / 770;
+    const uint32_t col = (i - 771) % 770;
+
+    std::cout << "(" << i << " " << row << " " << col << ") ";
+  }
+  std::cout << std::endl << std::endl;
+
+  std::cout << "Only in cac: ";
+  for (auto i : only_in_cac) {
+    const uint32_t row = (i - 771) / 770;
+    const uint32_t col = (i - 771) % 770;
+
+    std::cout << "(" << i << " " << row << " " << col << ") ";
+  }
+  std::cout << std::endl;
+
+  // // Set verbosity to max
+  // std::cout << std::fixed << std::setprecision(6);
+  // logger::ll.verbosityLevel = 3;
+
+  // // Show some statistics
+  // statistics(events, event_offsets);
+
+  // // Copy data to pinned host memory
+  // char* host_events_pinned;
+  // unsigned int* host_event_offsets_pinned;
+  // unsigned int* host_hit_offsets_pinned;
+  // cudaCheck(cudaMallocHost((void**)&host_events_pinned, events.size()));
+  // cudaCheck(cudaMallocHost((void**)&host_event_offsets_pinned, event_offsets.size() * sizeof(unsigned int)));
+  // cudaCheck(cudaMallocHost((void**)&host_hit_offsets_pinned, hit_offsets.size() * sizeof(unsigned int)));
+  // std::copy_n(std::begin(events), events.size(), host_events_pinned);
+  // std::copy_n(std::begin(event_offsets), event_offsets.size(), host_event_offsets_pinned);
+  // std::copy_n(std::begin(hit_offsets), hit_offsets.size(), host_hit_offsets_pinned);
+
+  // // Create streams
+  // const auto number_of_events = event_offsets.size();
+  // std::vector<Stream> streams (tbb_threads);
+  // for (int i=0; i<streams.size(); ++i) {
+  //   streams[i].initialize(
+  //     events,
+  //     event_offsets,
+  //     hit_offsets,
+  //     number_of_events,
+  //     events.size(),
+  //     transmit_host_to_device,
+  //     transmit_device_to_host,
+  //     i
+  //   );
+  // }
+
+  // // Attempt to execute all in one go
+  // Timer t;
+  // tbb::parallel_for(
+  //   static_cast<unsigned int>(0),
+  //   static_cast<unsigned int>(tbb_threads),
+  //   [&] (unsigned int i) {
+  //     auto& s = streams[i];
+  //     s(
+  //       host_events_pinned,
+  //       host_event_offsets_pinned,
+  //       host_hit_offsets_pinned,
+  //       events.size(),
+  //       event_offsets.size(),
+  //       hit_offsets.size(),
+  //       0,
+  //       event_offsets.size(),
+  //       number_of_repetitions
+  //     );
+  //   }
+  // );
+  // t.stop();
+
+  // std::cout << (event_offsets.size() * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
+  //   << "Ran test for " << t.get() << " seconds" << std::endl;
 
   // Reset device
   cudaCheck(cudaDeviceReset());
