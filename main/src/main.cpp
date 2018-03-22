@@ -119,42 +119,53 @@ int main(int argc, char *argv[])
   readGeometry(folder_name, geometry);
 
   // Invoke clustering
-  clustering(geometry, events, event_offsets);
-  std::vector<uint32_t> cc = cuda_clustering(geometry, events, event_offsets);
-  std::vector<uint32_t> cac = cuda_array_clustering(geometry, events, event_offsets);
+  std::vector<uint32_t> classical_clusters = clustering(geometry, events, event_offsets);
+  std::vector<uint32_t> cuda_clusters = cuda_clustering(geometry, events, event_offsets);
+  // std::vector<uint32_t> cuda_array_clusters = cuda_array_clustering(geometry, events, event_offsets);
 
-  std::vector<uint32_t> only_in_cc;
-  std::vector<uint32_t> only_in_cac;
+  uint32_t found_classical = 0;
+  uint32_t found_cuda = 0;
+  for (auto c : classical_clusters) { found_classical += c; }
+  for (auto c : cuda_clusters) { found_cuda += c; }
+  
+  // uint32_t found_cuda_array = 0;
+  // for (auto c : cuda_array_clusters) { found_cuda_array += c; }
 
-  for (auto i : cc) {
-    if (std::find(cac.begin(), cac.end(), i) == cac.end()) {
-      only_in_cc.push_back(i);
-    }
-  }
+  std::cout << std::endl << "Classical clustering: " << found_classical << " clusters" << std::endl
+    << "Cuda clustering: " << found_cuda << " clusters (" << (100.0 * found_cuda) / ((float) found_classical) << " %)" << std::endl
+    // << "Cuda array clustering: " << found_cuda_array << " clusters (" << (100.0 * found_cuda_array) / ((float) found_classical) << "%)"
+    << std::endl;
 
-  for (auto i : cac) {
-    if (std::find(cc.begin(), cc.end(), i) == cc.end()) {
-      only_in_cac.push_back(i);
-    }
-  }
+  // std::vector<uint32_t> only_in_cc;
+  // std::vector<uint32_t> only_in_cac;
+  // for (auto i : cc) {
+  //   if (std::find(cac.begin(), cac.end(), i) == cac.end()) {
+  //     only_in_cc.push_back(i);
+  //   }
+  // }
+  // for (auto i : cac) {
+  //   if (std::find(cc.begin(), cc.end(), i) == cc.end()) {
+  //     only_in_cac.push_back(i);
+  //   }
+  // }
 
-  std::cout << "Only in cc: ";
-  for (auto i : only_in_cc) {
-    const uint32_t row = (i - 771) / 770;
-    const uint32_t col = (i - 771) % 770;
+  // std::cout << "Only in cc: ";
+  // for (auto i : only_in_cc) {
+  //   const uint32_t row = (i - 771) / 770;
+  //   const uint32_t col = (i - 771) % 770;
 
-    std::cout << "(" << i << " " << row << " " << col << ") ";
-  }
-  std::cout << std::endl << std::endl;
+  //   std::cout << "(" << i << " " << row << " " << col << ") ";
+  // }
+  // std::cout << std::endl << std::endl;
 
-  std::cout << "Only in cac: ";
-  for (auto i : only_in_cac) {
-    const uint32_t row = (i - 771) / 770;
-    const uint32_t col = (i - 771) % 770;
+  // std::cout << "Only in cac: ";
+  // for (auto i : only_in_cac) {
+  //   const uint32_t row = (i - 771) / 770;
+  //   const uint32_t col = (i - 771) % 770;
 
-    std::cout << "(" << i << " " << row << " " << col << ") ";
-  }
-  std::cout << std::endl;
+  //   std::cout << "(" << i << " " << row << " " << col << ") ";
+  // }
+  // std::cout << std::endl;
 
   // // Set verbosity to max
   // std::cout << std::fixed << std::setprecision(6);

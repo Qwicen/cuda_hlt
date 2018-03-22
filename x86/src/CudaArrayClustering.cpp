@@ -10,9 +10,15 @@ std::vector<uint32_t> cuda_array_clustering(
   std::vector<unsigned char> sp_sizes (256, 0);
   std::vector<float> sp_fx (512, 0);
   std::vector<float> sp_fy (512, 0);
-  std::vector<uint32_t> cluster_candidates;
+  std::vector<uint32_t> cluster_candidates_to_return;
 
+  size_t max_stack_size = 0;
   cache_sp_patterns(sp_patterns.data(), sp_sizes.data(), sp_fx.data(), sp_fy.data());
+
+  int print_times = 10;
+  int printed = 0;
+
+  // Timer t;
 
   // Typecast files and print them
   VeloGeometry g (geometry);
@@ -26,6 +32,7 @@ std::vector<uint32_t> cuda_array_clustering(
     VeloRawEvent e (events.data() + event_offsets[i-1], event_offsets[i] - event_offsets[i-1]);
 
     for (unsigned int raw_bank=0; raw_bank<e.number_of_raw_banks; ++raw_bank) {
+      std::vector<uint32_t> cluster_candidates;
       std::vector<uint8_t> buffer (770 * 258, 0);
       std::vector<uint32_t> pixel_idx;
 
@@ -79,7 +86,6 @@ std::vector<uint32_t> cuda_array_clustering(
       // the sensor buffer is filled, perform the clustering on
       // clusters that span several super pixels.
       const unsigned int nidx = pixel_idx.size();
-      const unsigned int prev_number_of_clusters = approximation_number_of_clusters;
       for (unsigned int irc = 0; irc < nidx; ++irc) {
         const uint32_t idx = pixel_idx[irc];
 
@@ -89,15 +95,180 @@ std::vector<uint32_t> cuda_array_clustering(
         //   x
         const bool non_isolated = buffer[idx+770] | buffer[idx+771] | buffer[idx+1] | buffer[idx-769];
         if (!non_isolated) {
-          approximation_number_of_clusters += 1;
           cluster_candidates.push_back(idx);
+        }
+      }
+
+      // std::cout << "Candidates: ";
+      // for (auto idx : cluster_candidates) {
+      //   const uint32_t row = (idx - 771) / 770;
+      //   const uint32_t col = (idx - 771) % 770;
+      //   const uint32_t sp_row = row / 4;
+      //   const uint32_t sp_col = col / 2;
+
+      //   std::cout << "(" << sp_row << ", " << sp_col << ") ";
+      // }
+      // std::cout << std::endl;
+
+      // Loop over all cluster candidates and check they are not repeated
+      constexpr uint32_t rows_to_check_bottom = 8;
+      constexpr uint32_t rows_to_check_top = 4;
+      constexpr uint32_t cols_to_check_left = 2;
+      constexpr uint32_t cols_to_check_right = 4;
+
+      for (auto idx : cluster_candidates) {
+        if (buffer[idx]) {
+          approximation_number_of_clusters += 1;
+
+          std::vector<uint32_t> stack;
+          stack.push_back(idx);
+
+          const uint32_t row = (idx - 771) / 770;
+          const uint32_t col = (idx - 771) % 770;
+          const uint32_t sp_row = row / 4;
+          const uint32_t sp_col = col / 2;
+          
+          const int32_t row_lower_limit = sp_row*4 - rows_to_check_bottom;
+          const int32_t row_upper_limit = (sp_row+1)*4 + rows_to_check_top;
+          const int32_t col_lower_limit = sp_col*2 - cols_to_check_left;
+          const int32_t col_upper_limit = (sp_col+1)*2 + cols_to_check_right;
+
+          if (printed++ < print_times) {
+            // Print buffer we will look at
+            std::cout << idx << ", "
+              << row_lower_limit << ", " << row_upper_limit
+              << ", " << col_lower_limit << ", " << col_upper_limit
+              << std::endl;
+
+            for (int r=row_lower_limit; r<row_upper_limit; ++r) {
+              for (int c=col_lower_limit; c<col_upper_limit; ++c) {
+                const uint32_t i = r * 770 + c + 771;
+                if (i == idx) {
+                  std::cout << "x";
+                } else if (r<0 || c<0 || r>255 || c>767) {
+                  std::cout << "0";
+                } else {
+                  std::cout << ((int) buffer[i]);
+                }
+                if (((c + 1) % 2) == 0) std::cout << " ";
+              }
+              std::cout << std::endl;
+              if (((r + 1) % 4) == 0) std::cout << std::endl;
+            }
+            std::cout << std::endl;
+          }
+
+          while (!stack.empty()) {
+            max_stack_size = std::max(max_stack_size, stack.size());
+
+            uint32_t working_id = stack.back();
+            stack.pop_back();
+            buffer[working_id] = 0;
+
+            const int32_t row = (working_id - 771) / 770;
+            const int32_t col = (working_id - 771) % 770;
+            
+            // top
+            if (row < row_upper_limit-1) {
+              const uint32_t p_row = row + 1;
+              const uint32_t p_col = col;
+              const uint32_t p_idx = p_row * 770 + p_col + 771;
+              if (buffer[p_idx]) {
+                stack.push_back(p_idx);
+              }
+            }
+
+            // top right
+            if (row < row_upper_limit-1
+              && col < col_upper_limit-1
+              ) {
+              const uint32_t p_row = row + 1;
+              const uint32_t p_col = col + 1;
+              const uint32_t p_idx = p_row * 770 + p_col + 771;
+              if (buffer[p_idx]) {
+                stack.push_back(p_idx);
+              }
+            }
+
+            // right
+            if (col < col_upper_limit-1) {
+              const uint32_t p_row = row;
+              const uint32_t p_col = col + 1;
+              const uint32_t p_idx = p_row * 770 + p_col + 771;
+              if (buffer[p_idx]) {
+                stack.push_back(p_idx);
+              }
+            }
+
+            // bottom right
+            if (row > row_lower_limit
+              && col < col_upper_limit-1
+              ) {
+              const uint32_t p_row = row - 1;
+              const uint32_t p_col = col + 1;
+              const uint32_t p_idx = p_row * 770 + p_col + 771;
+              if (buffer[p_idx]) {
+                stack.push_back(p_idx);
+              }
+            }
+
+            // bottom
+            if (row > row_lower_limit) {
+              const uint32_t p_row = row - 1;
+              const uint32_t p_col = col;
+              const uint32_t p_idx = p_row * 770 + p_col + 771;
+              if (buffer[p_idx]) {
+                stack.push_back(p_idx);
+              }
+            }
+
+            // bottom left
+            if (col > col_lower_limit
+              && row > row_lower_limit
+              ) {
+              const uint32_t p_row = row - 1;
+              const uint32_t p_col = col - 1;
+              const uint32_t p_idx = p_row * 770 + p_col + 771;
+              if (buffer[p_idx]) {
+                stack.push_back(p_idx);
+              }
+            }
+
+            // left
+            if (col > col_lower_limit) {
+              const uint32_t p_row = row;
+              const uint32_t p_col = col - 1;
+              const uint32_t p_idx = p_row * 770 + p_col + 771;
+              if (buffer[p_idx]) {
+                stack.push_back(p_idx);
+              }
+            }
+
+            // top left
+            if (row < row_upper_limit-1
+              && col > col_lower_limit
+              ) {
+              const uint32_t p_row = row + 1;
+              const uint32_t p_col = col - 1;
+              const uint32_t p_idx = p_row * 770 + p_col + 771;
+              if (buffer[p_idx]) {
+                stack.push_back(p_idx);
+              }
+            }
+          }
         }
       }
     }
 
-    std::cout << "Found " << approximation_number_of_clusters << " clusters for event " << i
-      << std::endl;
+    // std::cout << "Found " << approximation_number_of_clusters << " clusters for event " << i
+    //   << std::endl;
+    cluster_candidates_to_return.push_back(approximation_number_of_clusters);
   }
 
-  return cluster_candidates;
+  // t.stop();
+  // std::cout << "Classical: " << t.get() << " s" << std::endl;
+
+  // std::cout << "Max stack size: " << max_stack_size << std::endl;
+
+  return cluster_candidates_to_return;
 }

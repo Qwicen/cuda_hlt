@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../main/include/Common.h"
+#include "../../main/include/Timer.h"
 #include <cstring>
 
 constexpr unsigned int max_cluster_size = 196608;
@@ -65,7 +66,7 @@ uint32_t get_channel_id(
 
 uint32_t get_lhcb_id(uint32_t cid);
 
-void clustering(
+std::vector<uint32_t> clustering(
   const std::vector<char>& geometry,
   const std::vector<char>& events,
   const std::vector<unsigned int>& event_offsets

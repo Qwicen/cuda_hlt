@@ -113,17 +113,20 @@ void cache_sp_patterns(
   }
 }
 
-void clustering(
+std::vector<uint32_t> clustering(
   const std::vector<char>& geometry,
   const std::vector<char>& events,
   const std::vector<unsigned int>& event_offsets
 ) {
+  std::vector<uint32_t> cluster_candidates;
   std::vector<unsigned char> sp_patterns (256, 0);
   std::vector<unsigned char> sp_sizes (256, 0);
   std::vector<float> sp_fx (512, 0);
   std::vector<float> sp_fy (512, 0);
 
   cache_sp_patterns(sp_patterns.data(), sp_sizes.data(), sp_fx.data(), sp_fy.data());
+
+  Timer t;
 
   // Typecast files and print them
   VeloGeometry g (geometry);
@@ -140,7 +143,7 @@ void clustering(
     for (unsigned int raw_bank=0; raw_bank<e.number_of_raw_banks; ++raw_bank) {
       std::vector<uint32_t> pixel_idx;
       std::vector<unsigned char> buffer (VP::NPixelsPerSensor, 0);
-    
+
       const auto velo_raw_bank = VeloRawBank(e.payload + e.raw_bank_offset[raw_bank]);
       
       const unsigned int sensor = velo_raw_bank.sensor_index;
@@ -351,6 +354,9 @@ void clustering(
         if (n <= max_cluster_size) {
           const unsigned int cx = x / n;
           const unsigned int cy = y / n;
+
+          std::cout << "Cluster (cx, cy): " << cx << ", " << cy << std::endl;
+
           const float fx = x / static_cast<float>(n) - cx;
           const float fy = y / static_cast<float>(n) - cy;
 
@@ -377,12 +383,14 @@ void clustering(
       // }
     }
 
-    std::cout << "Found " << lhcb_ids.size() << " clusters for event " << i
-      << ", sp count: " << total_sp_count << std::endl;
-    // std::cout << "Last IDs: ";
-    // for (int i=0; i<10; ++i) {
-    //   std::cout << lhcb_ids[lhcb_ids.size() - 1 - i] << ", ";
-    // }
-    // std::cout << std::endl;
+    // std::cout << "Found " << lhcb_ids.size() << " clusters for event " << i
+    //   << ", sp count: " << total_sp_count << std::endl;
+    
+    cluster_candidates.push_back(lhcb_ids.size());
   }
+
+  t.stop();
+  std::cout << "Classical: " << t.get() << " s" << std::endl;
+
+  return cluster_candidates;
 }
