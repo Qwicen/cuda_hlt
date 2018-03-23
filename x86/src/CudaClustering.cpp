@@ -632,10 +632,10 @@ std::vector<uint32_t> cuda_clustering(
 
           // Transpose momentarily clusters to obtain y in an easier way
           const std::array<uint32_t, 4> transposed_clusters = {
-            (cluster[0]&0x000F000F) | ((cluster[1]&0x000F000F) << 4) | ((cluster[2]&0x000F000F) << 8) | ((cluster[3]&0x000F000F) << 12),
-            ((cluster[0]&0x00F000F0) >> 4) | (cluster[1]&0x00F000F0) | ((cluster[2]&0x00F000F0) << 4) | ((cluster[3]&0x00F000F0) << 8),
-            ((cluster[0]&0x0F000F00) >> 8) | ((cluster[1]&0x0F000F00) >> 4) | (cluster[2]&0x0F000F00) | ((cluster[3]&0x0F000F00) << 4),
-            ((cluster[0]&0xF000F000) >> 12) | ((cluster[1]&0xF000F000) >> 8) | ((cluster[2]&0xF000F000) >> 4) | (cluster[3]&0xF000F000)
+            ( cluster[0]&0x000F000F)        | ((cluster[1]&0x000F000F) << 4) | ((cluster[2]&0x000F000F) << 8) | ((cluster[3]&0x000F000F) << 12),
+            ((cluster[0]&0x00F000F0) >> 4)  | ( cluster[1]&0x00F000F0)       | ((cluster[2]&0x00F000F0) << 4) | ((cluster[3]&0x00F000F0) << 8),
+            ((cluster[0]&0x0F000F00) >> 8)  | ((cluster[1]&0x0F000F00) >> 4) | ( cluster[2]&0x0F000F00)       | ((cluster[3]&0x0F000F00) << 4),
+            ((cluster[0]&0xF000F000) >> 12) | ((cluster[1]&0xF000F000) >> 8) | ((cluster[2]&0xF000F000) >> 4) | ( cluster[3]&0xF000F000)
           };
 
           // Added value of all y
@@ -658,7 +658,7 @@ std::vector<uint32_t> cuda_clustering(
 
           const unsigned int cx = x / n;
           const unsigned int cy = y / n;
-          
+
           const float fx = x / static_cast<float>(n) - cx;
           const float fy = y / static_cast<float>(n) - cy;
 
