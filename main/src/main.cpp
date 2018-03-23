@@ -121,35 +121,35 @@ int main(int argc, char *argv[])
   // Invoke clustering
   std::vector<uint32_t> classical_clusters = clustering(geometry, events, event_offsets);
   std::vector<uint32_t> cuda_clusters = cuda_clustering(geometry, events, event_offsets);
-  // std::vector<uint32_t> cuda_array_clusters = cuda_array_clustering(geometry, events, event_offsets);
+  std::vector<uint32_t> cuda_array_clusters = cuda_array_clustering(geometry, events, event_offsets);
 
   uint32_t found_classical = 0;
   uint32_t found_cuda = 0;
   for (auto c : classical_clusters) { found_classical += c; }
   for (auto c : cuda_clusters) { found_cuda += c; }
   
-  // uint32_t found_cuda_array = 0;
-  // for (auto c : cuda_array_clusters) { found_cuda_array += c; }
+  uint32_t found_cuda_array = 0;
+  for (auto c : cuda_array_clusters) { found_cuda_array += c; }
 
   std::cout << std::endl << "Classical clustering: " << found_classical << " clusters" << std::endl
     << "Cuda clustering: " << found_cuda << " clusters (" << (100.0 * found_cuda) / ((float) found_classical) << " %)" << std::endl
-    // << "Cuda array clustering: " << found_cuda_array << " clusters (" << (100.0 * found_cuda_array) / ((float) found_classical) << "%)"
+    << "Cuda array clustering: " << found_cuda_array << " clusters (" << (100.0 * found_cuda_array) / ((float) found_classical) << "%)"
     << std::endl;
 
   // std::vector<uint32_t> only_in_cc;
   // std::vector<uint32_t> only_in_cac;
-  // for (auto i : cc) {
-  //   if (std::find(cac.begin(), cac.end(), i) == cac.end()) {
+  // for (auto i : cuda_clusters) {
+  //   if (std::find(cuda_array_clusters.begin(), cuda_array_clusters.end(), i) == cuda_array_clusters.end()) {
   //     only_in_cc.push_back(i);
   //   }
   // }
-  // for (auto i : cac) {
-  //   if (std::find(cc.begin(), cc.end(), i) == cc.end()) {
+  // for (auto i : cuda_array_clusters) {
+  //   if (std::find(cuda_clusters.begin(), cuda_clusters.end(), i) == cuda_clusters.end()) {
   //     only_in_cac.push_back(i);
   //   }
   // }
 
-  // std::cout << "Only in cc: ";
+  // std::cout << "Only in cuda_clusters: ";
   // for (auto i : only_in_cc) {
   //   const uint32_t row = (i - 771) / 770;
   //   const uint32_t col = (i - 771) % 770;
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
   // }
   // std::cout << std::endl << std::endl;
 
-  // std::cout << "Only in cac: ";
+  // std::cout << "Only in cuda_array_clusters: ";
   // for (auto i : only_in_cac) {
   //   const uint32_t row = (i - 771) / 770;
   //   const uint32_t col = (i - 771) % 770;

@@ -13,7 +13,7 @@ std::vector<uint32_t> cuda_clustering(
   int printed = 0;
   constexpr int max_clustering_iterations = 16;
 
-  // Timer t;
+  Timer t;
 
   // Typecast files and print them
   VeloGeometry g (geometry);
@@ -292,27 +292,29 @@ std::vector<uint32_t> cuda_clustering(
         //   << ", " << col_lower_limit << ", " << col_upper_limit
         //   << std::endl;
 
-        // for (int r=row_lower_limit; r<row_upper_limit; ++r) {
-        //   for (int c=col_lower_limit; c<col_upper_limit; ++c) {
-        //     if (r==row && c==col) {
-        //       std::cout << "x";
-        //     } else if (r<0 || c<0 || r>255 || c>767) {
-        //       std::cout << "0";
-        //     } else {
-        //       const int relative_c = c - col_lower_limit;
-        //       const int relative_r = r - row_lower_limit;
+        auto print_array_with_candidate = [&] (const std::array<uint32_t, 4>& p) {
+          for (int r=row_lower_limit; r<row_upper_limit; ++r) {
+            for (int c=col_lower_limit; c<col_upper_limit; ++c) {
+              if (r==row && c==col) {
+                std::cout << "x";
+              } else if (r<0 || c<0 || r>255 || c>767) {
+                std::cout << "0";
+              } else {
+                const int relative_c = c - col_lower_limit;
+                const int relative_r = r - row_lower_limit;
 
-        //       const int temp_sp_col = relative_c / 2;
-        //       const bool temp_pixel = (pixel_array[temp_sp_col] >> (16*(relative_c % 2) + (relative_r % 16))) & 0x01;
+                const int temp_sp_col = relative_c / 2;
+                const bool temp_pixel = (p[temp_sp_col] >> (16*(relative_c % 2) + (relative_r % 16))) & 0x01;
 
-        //       std::cout << temp_pixel;
-        //     }
-        //     if (((c + 1) % 2) == 0) std::cout << " ";
-        //   }
-        //   std::cout << std::endl;
-        //   if (((r + 1) % 4) == 0) std::cout << std::endl;
-        // }
-        // std::cout << std::endl;
+                std::cout << temp_pixel;
+              }
+              if (((c + 1) % 2) == 0) std::cout << " ";
+            }
+            std::cout << std::endl;
+            if (((r + 1) % 4) == 0) std::cout << std::endl;
+          }
+          std::cout << std::endl;
+        };
         
         auto print_array = [] (const std::array<uint32_t, 4>& p) {
           for (int r=0; r<16; ++r) {
@@ -337,10 +339,10 @@ std::vector<uint32_t> cuda_clustering(
         const uint32_t mask_top_left     = 0x7FFF7FFF;
         const uint32_t mask_bottom_right = 0xFFFEFFFE;
         auto current_mask = [&mask_bottom, &mask_bottom_right, &mask_top, &mask_top_left] (uint32_t p) {
-          return ((p&mask_top) >> 1)
-                | ((p&mask_bottom) << 1)
-                | ((p&mask_bottom_right) >> 15)
-                | ((p&mask_top_left) << 15)
+          return ((p&mask_top) << 1)
+                | ((p&mask_bottom) >> 1)
+                | ((p&mask_bottom_right) << 15)
+                | ((p&mask_top_left) >> 15)
                 | (p >> 16)
                 | (p >> 17)
                 | (p << 16)
@@ -448,56 +450,168 @@ std::vector<uint32_t> cuda_clustering(
                     + __builtin_popcount(cluster[2])
                     + __builtin_popcount(cluster[3]);
 
-        // Added value of all x
-        const int x = __builtin_popcount(cluster[0]&0x0000FFFF)*col_lower_limit
-                    + __builtin_popcount(cluster[0]&0xFFFF0000)*(col_lower_limit+1)
-                    + __builtin_popcount(cluster[1]&0x0000FFFF)*(col_lower_limit+2)
-                    + __builtin_popcount(cluster[1]&0xFFFF0000)*(col_lower_limit+3)
-                    + __builtin_popcount(cluster[2]&0x0000FFFF)*(col_lower_limit+4)
-                    + __builtin_popcount(cluster[2]&0xFFFF0000)*(col_lower_limit+5)
-                    + __builtin_popcount(cluster[3]&0x0000FFFF)*(col_lower_limit+6)
-                    + __builtin_popcount(cluster[3]&0xFFFF0000)*(col_lower_limit+7);
+        // Prune repeated clusters
+        // Only check for repeated clusters for clusters with at least 3 elements
+        bool do_store = true;
+        if (n >= 3) {
+          // std::cout << "cluster" << std::endl;
+          // print_array_with_candidate(cluster);
 
-        // Transpose momentarily clusters to obtain y in an easier way
-        const std::array<uint32_t, 4> transposed_clusters = {
-          (cluster[0]&0x000F000F) | ((cluster[1]&0x000F000F) << 4) | ((cluster[2]&0x000F000F) << 8) | ((cluster[3]&0x000F000F) << 12),
-          ((cluster[0]&0x00F000F0) >> 4) | (cluster[1]&0x00F000F0) | ((cluster[2]&0x00F000F0) << 4) | ((cluster[3]&0x00F000F0) << 8),
-          ((cluster[0]&0x0F000F00) >> 8) | ((cluster[1]&0x0F000F00) >> 4) | (cluster[2]&0x0F000F00) | ((cluster[3]&0x0F000F00) << 4),
-          ((cluster[0]&0xF000F000) >> 12) | ((cluster[1]&0xF000F000) >> 8) | ((cluster[2]&0xF000F000) >> 4) | (cluster[3]&0xF000F000)
-        };
+          // Create mask for found clusters
+          // o o
+          // x o
+          //   o
+          auto cluster_current_mask = [&mask_bottom_right, &mask_top] (uint32_t p) {
+            return ((p&mask_top) << 1)
+                  | ((p&mask_bottom_right) << 15)
+                  | (p << 16)
+                  | (p << 17);
+          };
+          pixel_mask[0] = cluster_current_mask(cluster[0]);
+          pixel_mask[1] = cluster_current_mask(cluster[1])
+                        | mask_from_left_to_right(cluster[0]);
+          pixel_mask[2] = cluster_current_mask(cluster[2])
+                        | mask_from_left_to_right(cluster[1]);
+          pixel_mask[3] = cluster_current_mask(cluster[3])
+                        | mask_from_left_to_right(cluster[2]);
 
-        // Added value of all y
-        const int y = __builtin_popcount(transposed_clusters[0]&0x11111111)*row_lower_limit
-                    + __builtin_popcount(transposed_clusters[0]&0x22222222)*(row_lower_limit+1)
-                    + __builtin_popcount(transposed_clusters[0]&0x44444444)*(row_lower_limit+2)
-                    + __builtin_popcount(transposed_clusters[0]&0x88888888)*(row_lower_limit+3)
-                    + __builtin_popcount(transposed_clusters[1]&0x11111111)*(row_lower_limit+4)
-                    + __builtin_popcount(transposed_clusters[1]&0x22222222)*(row_lower_limit+5)
-                    + __builtin_popcount(transposed_clusters[1]&0x44444444)*(row_lower_limit+6)
-                    + __builtin_popcount(transposed_clusters[1]&0x88888888)*(row_lower_limit+7)
-                    + __builtin_popcount(transposed_clusters[2]&0x11111111)*(row_lower_limit+8)
-                    + __builtin_popcount(transposed_clusters[2]&0x22222222)*(row_lower_limit+9)
-                    + __builtin_popcount(transposed_clusters[2]&0x44444444)*(row_lower_limit+10)
-                    + __builtin_popcount(transposed_clusters[2]&0x88888888)*(row_lower_limit+11)
-                    + __builtin_popcount(transposed_clusters[3]&0x11111111)*(row_lower_limit+12)
-                    + __builtin_popcount(transposed_clusters[3]&0x22222222)*(row_lower_limit+13)
-                    + __builtin_popcount(transposed_clusters[3]&0x44444444)*(row_lower_limit+14)
-                    + __builtin_popcount(transposed_clusters[3]&0x88888888)*(row_lower_limit+15);
+          // std::cout << "pixel mask" << std::endl;
+          // print_array(pixel_mask);
 
-        std::cout << "Cluster " << pixel << " (cx, cy): " << (x/n) << ", " << (y/n) << std::endl;
+          // Do "and not" with found clusters
+          // This should return patterns like these:
+          // x x
+          //   x
+          //   x
+          working_cluster[0] = pixel_mask[0] & (~cluster[0]);
+          working_cluster[1] = pixel_mask[1] & (~cluster[1]);
+          working_cluster[2] = pixel_mask[2] & (~cluster[2]);
+          working_cluster[3] = pixel_mask[3] & (~cluster[3]);
+
+          // std::cout << "working cluster" << std::endl;
+          // print_array(working_cluster);
+
+          // Require the four pixels of the pattern in order to
+          // get the candidates
+          auto candidates_current_mask = [&mask_bottom] (uint32_t p) {
+            return ((p&mask_bottom) >> 1)
+                & ((p&mask_top_left) >> 15)
+                & (p >> 16)
+                & (p >> 17);
+          };
+          auto candidates_current_mask_with_right_clusters = [&mask_bottom, &mask_rtl_bottom_left] (uint32_t p, uint32_t rp) {
+            return ((p&mask_bottom) >> 1)
+                & (((p&mask_top_left) >> 15) | (rp << 17))
+                & ((p >> 16) | (rp << 16))
+                & ((p >> 17) | ((rp&mask_rtl_bottom_left) << 15));
+          };
+          std::array<uint32_t, 4> candidates;
+          candidates[0] = candidates_current_mask_with_right_clusters(working_cluster[0], working_cluster[1]);
+          candidates[1] = candidates_current_mask_with_right_clusters(working_cluster[1], working_cluster[2]);
+          candidates[2] = candidates_current_mask_with_right_clusters(working_cluster[2], working_cluster[3]);
+          candidates[3] = candidates_current_mask(working_cluster[3]);
+
+          // candidates = candidates "and" clusters, to get the real candidates
+          candidates[0] &= cluster[0];
+          candidates[1] &= cluster[1];
+          candidates[2] &= cluster[2];
+          candidates[3] &= cluster[3];
+
+          // std::cout << "candidates" << std::endl;
+          // print_array(candidates);
+
+          // Remove our cluster candidate
+          const uint32_t working_candidate = (0x01 << (row - row_lower_limit)) << (16 * (col % 2));
+          candidates[1] ^= working_candidate;
+
+          // std::cout << "candidates (without working candidate)" << std::endl;
+          // print_array(candidates);
+
+          // Check if there is another candidate with precedence
+          if (candidates[0] || candidates[1] || candidates[2] || candidates[3]) {
+            // Precedence:
+            // The current candidate should not be considered if there is another candidate
+            // with a smaller row, or a bigger column
+            // 
+            // In order to calculate the last part, we can use the following trick:
+            // In two's complement:
+            // 32:  00100000
+            // -32: 11100000
+            // ~(-32): 00011111 (the mask we want)
+            const int32_t negative_working_candidate_mask = ~(-working_candidate);
+            const bool working_candidate_under_threshold = working_candidate<4096;
+            
+            // Smaller row on candidates[1]
+            uint32_t smaller_row_pixel_mask = working_candidate_under_threshold * (0xFFF&negative_working_candidate_mask)
+              | (!working_candidate_under_threshold) * (0xFFF&(negative_working_candidate_mask>>16));
+            smaller_row_pixel_mask |= smaller_row_pixel_mask << 16;
+
+            // In order to do the current pixel mask, add the eventual bigger column
+            // ie: (add the second column)
+            // oo
+            // xo
+            // oo
+            // oo
+            const uint32_t current_pixel_mask = smaller_row_pixel_mask
+              | working_candidate_under_threshold * 0xFFFF0000;
+
+            // Compute do_store
+            do_store = (candidates[2]
+                      | candidates[3]
+                      | (candidates[0]&smaller_row_pixel_mask)
+                      | (candidates[1]&current_pixel_mask)) == 0;
+          }
+        }
+
+        if (do_store) {
+          // Added value of all x
+          const int x = __builtin_popcount(cluster[0]&0x0000FFFF)*col_lower_limit
+                      + __builtin_popcount(cluster[0]&0xFFFF0000)*(col_lower_limit+1)
+                      + __builtin_popcount(cluster[1]&0x0000FFFF)*(col_lower_limit+2)
+                      + __builtin_popcount(cluster[1]&0xFFFF0000)*(col_lower_limit+3)
+                      + __builtin_popcount(cluster[2]&0x0000FFFF)*(col_lower_limit+4)
+                      + __builtin_popcount(cluster[2]&0xFFFF0000)*(col_lower_limit+5)
+                      + __builtin_popcount(cluster[3]&0x0000FFFF)*(col_lower_limit+6)
+                      + __builtin_popcount(cluster[3]&0xFFFF0000)*(col_lower_limit+7);
+
+          // Transpose momentarily clusters to obtain y in an easier way
+          const std::array<uint32_t, 4> transposed_clusters = {
+            (cluster[0]&0x000F000F) | ((cluster[1]&0x000F000F) << 4) | ((cluster[2]&0x000F000F) << 8) | ((cluster[3]&0x000F000F) << 12),
+            ((cluster[0]&0x00F000F0) >> 4) | (cluster[1]&0x00F000F0) | ((cluster[2]&0x00F000F0) << 4) | ((cluster[3]&0x00F000F0) << 8),
+            ((cluster[0]&0x0F000F00) >> 8) | ((cluster[1]&0x0F000F00) >> 4) | (cluster[2]&0x0F000F00) | ((cluster[3]&0x0F000F00) << 4),
+            ((cluster[0]&0xF000F000) >> 12) | ((cluster[1]&0xF000F000) >> 8) | ((cluster[2]&0xF000F000) >> 4) | (cluster[3]&0xF000F000)
+          };
+
+          // Added value of all y
+          const int y = __builtin_popcount(transposed_clusters[0]&0x11111111)*row_lower_limit
+                      + __builtin_popcount(transposed_clusters[0]&0x22222222)*(row_lower_limit+1)
+                      + __builtin_popcount(transposed_clusters[0]&0x44444444)*(row_lower_limit+2)
+                      + __builtin_popcount(transposed_clusters[0]&0x88888888)*(row_lower_limit+3)
+                      + __builtin_popcount(transposed_clusters[1]&0x11111111)*(row_lower_limit+4)
+                      + __builtin_popcount(transposed_clusters[1]&0x22222222)*(row_lower_limit+5)
+                      + __builtin_popcount(transposed_clusters[1]&0x44444444)*(row_lower_limit+6)
+                      + __builtin_popcount(transposed_clusters[1]&0x88888888)*(row_lower_limit+7)
+                      + __builtin_popcount(transposed_clusters[2]&0x11111111)*(row_lower_limit+8)
+                      + __builtin_popcount(transposed_clusters[2]&0x22222222)*(row_lower_limit+9)
+                      + __builtin_popcount(transposed_clusters[2]&0x44444444)*(row_lower_limit+10)
+                      + __builtin_popcount(transposed_clusters[2]&0x88888888)*(row_lower_limit+11)
+                      + __builtin_popcount(transposed_clusters[3]&0x11111111)*(row_lower_limit+12)
+                      + __builtin_popcount(transposed_clusters[3]&0x22222222)*(row_lower_limit+13)
+                      + __builtin_popcount(transposed_clusters[3]&0x44444444)*(row_lower_limit+14)
+                      + __builtin_popcount(transposed_clusters[3]&0x88888888)*(row_lower_limit+15);
+          
+          // std::cout << "Cluster " << pixel << " (cx, cy): " << (x/n) << ", " << (y/n) << std::endl;
+          approximation_number_of_clusters++;
+          // cluster_candidates_to_return.push_back(pixel);
+        }
       }
     }
-
-    // std::cout << "Found " << approximation_number_of_clusters << " clusters for event " << i
-    //   << ", sp count: " << total_sp_count
-    //   << ", no sp neighbour %: " << (100.0 * no_sp_count) / ((float) total_sp_count)
-    //   << std::endl;
 
     cluster_candidates_to_return.push_back(approximation_number_of_clusters);
   }
 
-  // t.stop();
-  // std::cout << "Classical: " << t.get() << " s" << std::endl;
+  t.stop();
+  std::cout << "Timer: " << t.get() << " s" << std::endl;
 
   return cluster_candidates_to_return;
 }

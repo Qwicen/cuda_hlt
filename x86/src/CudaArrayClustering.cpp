@@ -18,7 +18,7 @@ std::vector<uint32_t> cuda_array_clustering(
   int print_times = 10;
   int printed = 0;
 
-  // Timer t;
+  Timer t;
 
   // Typecast files and print them
   VeloGeometry g (geometry);
@@ -118,6 +118,7 @@ std::vector<uint32_t> cuda_array_clustering(
 
       for (auto idx : cluster_candidates) {
         if (buffer[idx]) {
+          // cluster_candidates_to_return.push_back(idx);
           approximation_number_of_clusters += 1;
 
           std::vector<uint32_t> stack;
@@ -133,30 +134,30 @@ std::vector<uint32_t> cuda_array_clustering(
           const int32_t col_lower_limit = sp_col*2 - cols_to_check_left;
           const int32_t col_upper_limit = (sp_col+1)*2 + cols_to_check_right;
 
-          if (printed++ < print_times) {
-            // Print buffer we will look at
-            std::cout << idx << ", "
-              << row_lower_limit << ", " << row_upper_limit
-              << ", " << col_lower_limit << ", " << col_upper_limit
-              << std::endl;
+          // if (printed++ < print_times) {
+          //   // Print buffer we will look at
+          //   std::cout << idx << ", "
+          //     << row_lower_limit << ", " << row_upper_limit
+          //     << ", " << col_lower_limit << ", " << col_upper_limit
+          //     << std::endl;
 
-            for (int r=row_lower_limit; r<row_upper_limit; ++r) {
-              for (int c=col_lower_limit; c<col_upper_limit; ++c) {
-                const uint32_t i = r * 770 + c + 771;
-                if (i == idx) {
-                  std::cout << "x";
-                } else if (r<0 || c<0 || r>255 || c>767) {
-                  std::cout << "0";
-                } else {
-                  std::cout << ((int) buffer[i]);
-                }
-                if (((c + 1) % 2) == 0) std::cout << " ";
-              }
-              std::cout << std::endl;
-              if (((r + 1) % 4) == 0) std::cout << std::endl;
-            }
-            std::cout << std::endl;
-          }
+          //   for (int r=row_lower_limit; r<row_upper_limit; ++r) {
+          //     for (int c=col_lower_limit; c<col_upper_limit; ++c) {
+          //       const uint32_t i = r * 770 + c + 771;
+          //       if (i == idx) {
+          //         std::cout << "x";
+          //       } else if (r<0 || c<0 || r>255 || c>767) {
+          //         std::cout << "0";
+          //       } else {
+          //         std::cout << ((int) buffer[i]);
+          //       }
+          //       if (((c + 1) % 2) == 0) std::cout << " ";
+          //     }
+          //     std::cout << std::endl;
+          //     if (((r + 1) % 4) == 0) std::cout << std::endl;
+          //   }
+          //   std::cout << std::endl;
+          // }
 
           while (!stack.empty()) {
             max_stack_size = std::max(max_stack_size, stack.size());
@@ -260,13 +261,15 @@ std::vector<uint32_t> cuda_array_clustering(
       }
     }
 
+    // std::cout << approximation_number_of_clusters << std::endl;
+
     // std::cout << "Found " << approximation_number_of_clusters << " clusters for event " << i
     //   << std::endl;
     cluster_candidates_to_return.push_back(approximation_number_of_clusters);
   }
 
-  // t.stop();
-  // std::cout << "Classical: " << t.get() << " s" << std::endl;
+  t.stop();
+  std::cout << "Timer: " << t.get() << " s" << std::endl;
 
   // std::cout << "Max stack size: " << max_stack_size << std::endl;
 

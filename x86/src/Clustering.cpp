@@ -355,7 +355,7 @@ std::vector<uint32_t> clustering(
           const unsigned int cx = x / n;
           const unsigned int cy = y / n;
 
-          std::cout << "Cluster (cx, cy): " << cx << ", " << cy << std::endl;
+          // std::cout << "Cluster (cx, cy): " << cx << ", " << cy << std::endl;
 
           const float fx = x / static_cast<float>(n) - cx;
           const float fy = y / static_cast<float>(n) - cy;
@@ -390,7 +390,7 @@ std::vector<uint32_t> clustering(
   }
 
   t.stop();
-  std::cout << "Classical: " << t.get() << " s" << std::endl;
+  std::cout << "Timer: " << t.get() << " s" << std::endl;
 
   return cluster_candidates;
 }
