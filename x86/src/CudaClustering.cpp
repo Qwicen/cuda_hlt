@@ -8,6 +8,11 @@ std::vector<uint32_t> cuda_clustering(
 ) {
   std::cout << std::endl << "cuda clustering:" << std::endl;
   std::vector<uint32_t> cluster_candidates_to_return;
+  std::vector<unsigned char> sp_patterns (256, 0);
+  std::vector<unsigned char> sp_sizes (256, 0);
+  std::vector<float> sp_fx (512, 0);
+  std::vector<float> sp_fy (512, 0);
+  cache_sp_patterns(sp_patterns.data(), sp_sizes.data(), sp_fx.data(), sp_fy.data());
 
   int print_times = 10;
   int printed = 0;
@@ -59,28 +64,79 @@ std::vector<uint32_t> cuda_clustering(
 
         // There are no neighbours, so compute the number of pixels of this superpixel
         if (no_sp_neighbours) {
-          // Pattern 0:
-          // (x  x)
-          //  o  o
-          // (x  x
-          //  x  x)
-          //  
-          // Note: Pixel order in sp
-          // 0x08 | 0x80
-          // 0x04 | 0x40
-          // 0x02 | 0x20
-          // 0x01 | 0x10
-          const bool pattern_0 = sp&0x88 && !(sp&0x44) && sp&0x33;
+          // // Pattern 0:
+          // // (x  x)
+          // //  o  o
+          // // (x  x
+          // //  x  x)
+          // //  
+          // // Note: Pixel order in sp
+          // // 0x08 | 0x80
+          // // 0x04 | 0x40
+          // // 0x02 | 0x20
+          // // 0x01 | 0x10
+          // const bool pattern_0 = sp&0x88 && !(sp&0x44) && sp&0x33;
 
-          // Pattern 1:
-          // (x  x
-          //  x  x)
-          //  o  o
-          // (x  x)
-          const bool pattern_1 = sp&0xCC && !(sp&0x22) && sp&0x11;
-          const unsigned int number_of_clusters = (sp>0) + pattern_0 + pattern_1;
+          // // Pattern 1:
+          // // (x  x
+          // //  x  x)
+          // //  o  o
+          // // (x  x)
+          // const bool pattern_1 = sp&0xCC && !(sp&0x22) && sp&0x11;
+          // const unsigned int number_of_clusters = 1 + pattern_0 + pattern_1;
+          // approximation_number_of_clusters += number_of_clusters;
 
-          approximation_number_of_clusters += number_of_clusters;
+          const int sp_size = sp_sizes[sp];
+          const uint32_t idx = sp_patterns[sp];
+          const uint32_t chip = sp_col / (VP::ChipColumns / 2);
+
+          if ((sp_size & 0x0F) <= max_cluster_size) {
+            approximation_number_of_clusters++;
+
+            // there is always at least one cluster in the super
+            // pixel. look up the pattern and add it.
+            const uint32_t row = idx & 0x03U;
+            const uint32_t col = (idx >> 2) & 1;
+            const uint32_t cx = sp_col * 2 + col;
+            const uint32_t cy = sp_row * 4 + row;
+
+            unsigned int cid = get_channel_id(sensor, chip, cx % VP::ChipColumns, cy);
+
+            const float fx = sp_fx[sp * 2];
+            const float fy = sp_fy[sp * 2];
+            const float local_x = g.local_x[cx] + fx * g.x_pitch[cx];
+            const float local_y = (cy + 0.5 + fy) * g.pixel_size;
+
+            const float gx = ltg[0] * local_x + ltg[1] * local_y + ltg[9];
+            const float gy = ltg[3] * local_x + ltg[4] * local_y + ltg[10];
+            const float gz = ltg[6] * local_x + ltg[7] * local_y + ltg[11];
+
+            lhcb_ids.emplace_back(get_lhcb_id(cid));
+          }
+
+          // if there is a second cluster for this pattern
+          // add it as well.
+          if ((idx & 8) && (((sp_size >> 4) & 0x0F) <= max_cluster_size)) {
+            approximation_number_of_clusters++;
+
+            const uint32_t row = (idx >> 4) & 3;
+            const uint32_t col = (idx >> 6) & 1;
+            const uint32_t cx = sp_col * 2 + col;
+            const uint32_t cy = sp_row * 4 + row;
+
+            unsigned int cid = get_channel_id(sensor, chip, cx % VP::ChipColumns, cy);
+
+            const float fx = sp_fx[sp * 2 + 1];
+            const float fy = sp_fy[sp * 2 + 1];
+            const float local_x = g.local_x[cx] + fx * g.x_pitch[cx];
+            const float local_y = (cy + 0.5 + fy) * g.pixel_size;
+
+            const float gx = ltg[0] * local_x + ltg[1] * local_y + ltg[9];
+            const float gy = ltg[3] * local_x + ltg[4] * local_y + ltg[10];
+            const float gz = ltg[6] * local_x + ltg[7] * local_y + ltg[11];
+
+            lhcb_ids.emplace_back(get_lhcb_id(cid));
+          }
         } else {
           // Find candidates that follow this condition:
           // For pixel o, all pixels x should *not* be populated
@@ -599,7 +655,26 @@ std::vector<uint32_t> cuda_clustering(
                       + __builtin_popcount(transposed_clusters[3]&0x22222222)*(row_lower_limit+13)
                       + __builtin_popcount(transposed_clusters[3]&0x44444444)*(row_lower_limit+14)
                       + __builtin_popcount(transposed_clusters[3]&0x88888888)*(row_lower_limit+15);
+
+          const unsigned int cx = x / n;
+          const unsigned int cy = y / n;
           
+          const float fx = x / static_cast<float>(n) - cx;
+          const float fy = y / static_cast<float>(n) - cy;
+
+          // store target (3D point for tracking)
+          const uint32_t chip = cx / VP::ChipColumns;
+          // LHCb::VPChannelID cid(sensor, chip, cx % VP::ChipColumns, cy);
+          unsigned int cid = get_channel_id(sensor, chip, cx % VP::ChipColumns, cy);
+
+          const float local_x = g.local_x[cx] + fx * g.x_pitch[cx];
+          const float local_y = (cy + 0.5 + fy) * g.pixel_size;
+          const float gx = ltg[0] * local_x + ltg[1] * local_y + ltg[9];
+          const float gy = ltg[3] * local_x + ltg[4] * local_y + ltg[10];
+          const float gz = ltg[6] * local_x + ltg[7] * local_y + ltg[11];
+
+          lhcb_ids.emplace_back(get_lhcb_id(cid));
+
           // std::cout << "Cluster " << pixel << " (cx, cy): " << (x/n) << ", " << (y/n) << std::endl;
           approximation_number_of_clusters++;
           // cluster_candidates_to_return.push_back(pixel);
