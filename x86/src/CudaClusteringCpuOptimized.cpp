@@ -114,7 +114,6 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
     VeloRawEvent e (events.data() + event_offsets[i-1], event_offsets[i] - event_offsets[i-1]);
 
     for (unsigned int raw_bank=0; raw_bank<e.number_of_raw_banks; ++raw_bank) {
-      std::vector<uint32_t> cluster_candidates;
       const auto velo_raw_bank = VeloRawBank(e.payload + e.raw_bank_offset[raw_bank]);
       
       const unsigned int sensor = velo_raw_bank.sensor_index;

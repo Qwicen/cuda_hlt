@@ -128,6 +128,7 @@ int main(int argc, char *argv[])
 
   // Invoke clustering
   std::vector<std::vector<uint32_t>> classical_clusters = clustering(geometry, events, event_offsets);
+  // cuda_clustering(geometry, events, event_offsets, verbosity);
   std::vector<std::vector<uint32_t>> cuda_clusters = cuda_clustering_cpu_optimized(geometry, events, event_offsets, verbosity);
 
   // Statistics about found clusters
@@ -149,8 +150,6 @@ int main(int argc, char *argv[])
     << "Cuda clustering: " << found_cuda << " clusters (" << (100.0 * found_cuda) / ((float) found_classical) << " %)" << std::endl
     << "Cuda clusters in classical: " << (100.0 * cuda_in_classical) / ((float) found_classical) << " %" << std::endl
     << std::endl;
-
-
 
   // std::vector<uint32_t> only_in_cc;
   // std::vector<uint32_t> only_in_cac;
