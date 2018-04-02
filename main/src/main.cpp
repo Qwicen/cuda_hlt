@@ -46,12 +46,13 @@ int main(int argc, char *argv[])
   unsigned int number_of_files = 0;
   unsigned int tbb_threads = 3;
   unsigned int number_of_repetitions = 10;
+  unsigned int verbosity = 1;
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
 
   signed char c;
-  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:d:")) != -1) {
+  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:d:v:")) != -1) {
     switch (c) {
     case 'f':
       folder_name = std::string(optarg);
@@ -70,6 +71,9 @@ int main(int argc, char *argv[])
       break;
     case 'b':
       transmit_device_to_host = atoi(optarg);
+      break;
+    case 'v':
+      verbosity = atoi(optarg);
       break;
     case '?':
     case 'h':
@@ -94,6 +98,9 @@ int main(int argc, char *argv[])
     return -1;
   }
 
+  // Set verbosity level
+  logger::ll.verbosityLevel = verbosity;
+
   // Get device properties
   cudaDeviceProp device_properties;
   cudaCheck(cudaGetDeviceProperties(&device_properties, 0));
@@ -107,6 +114,7 @@ int main(int argc, char *argv[])
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
     << " print rates (-p): " << print_individual_rates << std::endl
+    << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
     << std::endl;
 
@@ -119,22 +127,30 @@ int main(int argc, char *argv[])
   readGeometry(folder_name, geometry);
 
   // Invoke clustering
-  std::vector<uint32_t> classical_clusters = clustering(geometry, events, event_offsets);
-  std::vector<uint32_t> cuda_clusters = cuda_clustering(geometry, events, event_offsets);
-  std::vector<uint32_t> cuda_array_clusters = cuda_array_clustering(geometry, events, event_offsets);
+  std::vector<std::vector<uint32_t>> classical_clusters = clustering(geometry, events, event_offsets);
+  std::vector<std::vector<uint32_t>> cuda_clusters = cuda_clustering_cpu_optimized(geometry, events, event_offsets, verbosity);
 
-  uint32_t found_classical = 0;
-  uint32_t found_cuda = 0;
-  for (auto c : classical_clusters) { found_classical += c; }
-  for (auto c : cuda_clusters) { found_cuda += c; }
+  // Statistics about found clusters
+  uint32_t found_classical = 0, found_cuda = 0;
+  uint32_t cuda_in_classical = 0;
+
+  for (int i=0; i<cuda_clusters.size(); ++i) {
+    found_classical += classical_clusters[i].size();
+    found_cuda += cuda_clusters[i].size();
+
+    for (auto c : cuda_clusters[i]) {
+      if (std::find(classical_clusters[i].begin(), classical_clusters[i].end(), c) != classical_clusters[i].end()) {
+        cuda_in_classical++;
+      }
+    }
+  }
   
-  uint32_t found_cuda_array = 0;
-  for (auto c : cuda_array_clusters) { found_cuda_array += c; }
-
   std::cout << std::endl << "Classical clustering: " << found_classical << " clusters" << std::endl
     << "Cuda clustering: " << found_cuda << " clusters (" << (100.0 * found_cuda) / ((float) found_classical) << " %)" << std::endl
-    << "Cuda array clustering: " << found_cuda_array << " clusters (" << (100.0 * found_cuda_array) / ((float) found_classical) << "%)"
+    << "Cuda clusters in classical: " << (100.0 * cuda_in_classical) / ((float) found_classical) << " %" << std::endl
     << std::endl;
+
+
 
   // std::vector<uint32_t> only_in_cc;
   // std::vector<uint32_t> only_in_cac;

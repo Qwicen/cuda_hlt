@@ -1,13 +1,14 @@
 #include "../include/Clustering.h"
 #include <array>
 
-std::vector<uint32_t> cuda_clustering(
+std::vector<std::vector<uint32_t>> cuda_clustering(
   const std::vector<char>& geometry,
   const std::vector<char>& events,
-  const std::vector<unsigned int>& event_offsets
+  const std::vector<unsigned int>& event_offsets,
+  const int verbosity
 ) {
   std::cout << std::endl << "cuda clustering:" << std::endl;
-  std::vector<uint32_t> cluster_candidates_to_return;
+  std::vector<std::vector<uint32_t>> cluster_candidates_to_return;
   std::vector<unsigned char> sp_patterns (256, 0);
   std::vector<unsigned char> sp_sizes (256, 0);
   std::vector<float> sp_fx (512, 0);
@@ -18,12 +19,94 @@ std::vector<uint32_t> cuda_clustering(
   int printed = 0;
   constexpr int max_clustering_iterations = 16;
 
+  auto print_array = [] (
+    const std::array<uint32_t, 4>& p,
+    const int row = -1,
+    const int col = -1
+  ) {
+    for (int r=0; r<16; ++r) {
+      for (int c=0; c<8; ++c) {
+        if (r==row && c==col) {
+          std::cout << "x";
+        } else  {
+          const int temp_sp_col = c / 2;
+          const bool temp_pixel = (p[temp_sp_col] >> (16*(c % 2) + (r % 16))) & 0x01;
+          std::cout << temp_pixel;
+        }
+        if (((c + 1) % 2) == 0) std::cout << " ";
+      }
+      std::cout << std::endl;
+      if (((r + 1) % 4) == 0) std::cout << std::endl;
+    }
+    std::cout << std::endl;
+  };
+
+  // Mask for any one pixel array element's next iteration
+  const uint32_t mask_bottom       = 0xFFFEFFFF;
+  const uint32_t mask_top          = 0xFFFF7FFF;
+  const uint32_t mask_top_left     = 0x7FFF7FFF;
+  const uint32_t mask_bottom_right = 0xFFFEFFFE;
+  auto current_mask = [&mask_bottom, &mask_bottom_right, &mask_top, &mask_top_left] (uint32_t p) {
+    return ((p&mask_top) << 1)
+          | ((p&mask_bottom) >> 1)
+          | ((p&mask_bottom_right) << 15)
+          | ((p&mask_top_left) >> 15)
+          | (p >> 16)
+          | (p >> 17)
+          | (p << 16)
+          | (p << 17);
+  };
+
+  // Mask from a pixel array element on the left
+  // to be applied on the pixel array element on the right
+  const uint32_t mask_ltr_top_right = 0x7FFF0000;
+  auto mask_from_left_to_right = [&mask_ltr_top_right] (uint32_t p) {
+    return ((p&mask_ltr_top_right) >> 15)
+      | (p >> 16)
+      | (p >> 17);
+  };
+
+  // Mask from a pixel array element on the right
+  // to be applied on the pixel array element on the left
+  const uint32_t mask_rtl_bottom_left = 0x0000FFFE;
+  auto mask_from_right_to_left = [&mask_rtl_bottom_left] (uint32_t p) {
+    return ((p&mask_rtl_bottom_left) << 15)
+      | (p << 16)
+      | (p << 17);
+  };
+
+  // Create mask for found clusters
+  // o o
+  // x o
+  //   o
+  auto cluster_current_mask = [&mask_bottom_right, &mask_top] (uint32_t p) {
+    return ((p&mask_top) << 1)
+          | ((p&mask_bottom_right) << 15)
+          | (p << 16)
+          | (p << 17);
+  };
+
+  // Require the four pixels of the pattern in order to
+  // get the candidates
+  auto candidates_current_mask = [&mask_bottom] (uint32_t p) {
+    return ((p&mask_bottom) >> 1)
+        & ((p&mask_top_left) >> 15)
+        & (p >> 16)
+        & (p >> 17);
+  };
+  auto candidates_current_mask_with_right_clusters = [&mask_bottom, &mask_rtl_bottom_left] (uint32_t p, uint32_t rp) {
+    return ((p&mask_bottom) >> 1)
+        & (((p&mask_top_left) >> 15) | (rp << 17))
+        & ((p >> 16) | (rp << 16))
+        & ((p >> 17) | ((rp&mask_rtl_bottom_left) << 15));
+  };
+
   Timer t;
 
   // Typecast files and print them
   VeloGeometry g (geometry);
   for (size_t i=1; i<event_offsets.size(); ++i) {
-    std::vector<unsigned int> lhcb_ids;
+    std::vector<uint32_t> lhcb_ids;
     unsigned int total_sp_count = 0;
     unsigned int no_sp_count = 0;
     unsigned int approximation_number_of_clusters = 0;
@@ -38,19 +121,21 @@ std::vector<uint32_t> cuda_clustering(
       const unsigned int module = sensor / g.number_of_sensors_per_module;
       const float* ltg = g.ltg + 16 * sensor;
       
-      //std::cout << "Raw bank " << raw_bank << std::endl;
-      for (unsigned int j=0; j<velo_raw_bank.sp_count; ++j) {
-        const uint32_t sp_word = velo_raw_bank.sp_word[j];
-        const uint32_t sp_addr = (sp_word & 0x007FFF00U) >> 8;
-        const uint32_t sp_row = sp_addr & 0x3FU;
-        const uint32_t sp_col = (sp_addr >> 6);
-        const uint32_t no_sp_neighbours = sp_word & 0x80000000U;
-        const uint8_t sp = sp_word & 0xFFU;
+      if (verbosity >= logger::debug) {
+        std::cout << "Raw bank " << raw_bank << std::endl;
+        for (unsigned int j=0; j<velo_raw_bank.sp_count; ++j) {
+          const uint32_t sp_word = velo_raw_bank.sp_word[j];
+          const uint32_t sp_addr = (sp_word & 0x007FFF00U) >> 8;
+          const uint32_t sp_row = sp_addr & 0x3FU;
+          const uint32_t sp_col = (sp_addr >> 6);
+          const uint32_t no_sp_neighbours = sp_word & 0x80000000U;
+          const uint8_t sp = sp_word & 0xFFU;
 
-        if (!no_sp_neighbours) {
-          //std::cout << "#, row, col, sp: " << j << " " << sp_row << " " << sp_col << " " << ((int) sp) << std::endl;
+          if (!no_sp_neighbours) {
+            std::cout << "#, row, col, sp: " << j << " " << sp_row << " " << sp_col << " " << ((int) sp) << std::endl;
+          }
         }
-      }      
+      }
 
       for (unsigned int j=0; j<velo_raw_bank.sp_count; ++j) {
         const uint32_t sp_word = velo_raw_bank.sp_word[j];
@@ -342,89 +427,11 @@ std::vector<uint32_t> cuda_clustering(
         const int32_t col_lower_limit = sp_col_lower_limit * 2;
         const int32_t col_upper_limit = (sp_col_upper_limit+1) * 2;
 
-        // // if (printed++ < print_times) {
-        // std::cout << pixel << ", "
-        //   << row_lower_limit << ", " << row_upper_limit
-        //   << ", " << col_lower_limit << ", " << col_upper_limit
-        //   << std::endl;
-
-        auto print_array_with_candidate = [&] (const std::array<uint32_t, 4>& p) {
-          for (int r=row_lower_limit; r<row_upper_limit; ++r) {
-            for (int c=col_lower_limit; c<col_upper_limit; ++c) {
-              if (r==row && c==col) {
-                std::cout << "x";
-              } else if (r<0 || c<0 || r>255 || c>767) {
-                std::cout << "0";
-              } else {
-                const int relative_c = c - col_lower_limit;
-                const int relative_r = r - row_lower_limit;
-
-                const int temp_sp_col = relative_c / 2;
-                const bool temp_pixel = (p[temp_sp_col] >> (16*(relative_c % 2) + (relative_r % 16))) & 0x01;
-
-                std::cout << temp_pixel;
-              }
-              if (((c + 1) % 2) == 0) std::cout << " ";
-            }
-            std::cout << std::endl;
-            if (((r + 1) % 4) == 0) std::cout << std::endl;
-          }
-          std::cout << std::endl;
-        };
-        
-        auto print_array = [] (const std::array<uint32_t, 4>& p) {
-          for (int r=0; r<16; ++r) {
-            for (int c=0; c<8; ++c) {
-              const int temp_sp_col = c / 2;
-              const bool temp_pixel = (p[temp_sp_col] >> (16*(c % 2) + (r % 16))) & 0x01;
-              std::cout << temp_pixel;
-
-              if (((c + 1) % 2) == 0) std::cout << " ";
-            }
-            std::cout << std::endl;
-            if (((r + 1) % 4) == 0) std::cout << std::endl;
-          }
-          std::cout << std::endl;
-        };
-
         // Clustering
-        // 
-        // Mask for any one pixel array element's next iteration
-        const uint32_t mask_bottom       = 0xFFFEFFFF;
-        const uint32_t mask_top          = 0xFFFF7FFF;
-        const uint32_t mask_top_left     = 0x7FFF7FFF;
-        const uint32_t mask_bottom_right = 0xFFFEFFFE;
-        auto current_mask = [&mask_bottom, &mask_bottom_right, &mask_top, &mask_top_left] (uint32_t p) {
-          return ((p&mask_top) << 1)
-                | ((p&mask_bottom) >> 1)
-                | ((p&mask_bottom_right) << 15)
-                | ((p&mask_top_left) >> 15)
-                | (p >> 16)
-                | (p >> 17)
-                | (p << 16)
-                | (p << 17);
-        };
-
-        // Mask from a pixel array element on the left
-        // to be applied on the pixel array element on the right
-        const uint32_t mask_ltr_top_right = 0x7FFF0000;
-        auto mask_from_left_to_right = [&mask_ltr_top_right] (uint32_t p) {
-          return ((p&mask_ltr_top_right) >> 15)
-            | (p >> 16)
-            | (p >> 17);
-        };
-
-        // Mask from a pixel array element on the right
-        // to be applied on the pixel array element on the left
-        const uint32_t mask_rtl_bottom_left = 0x0000FFFE;
-        auto mask_from_right_to_left = [&mask_rtl_bottom_left] (uint32_t p) {
-          return ((p&mask_rtl_bottom_left) << 15)
-            | (p << 16)
-            | (p << 17);
-        };
-
-        // std::cout << "pixel array" << std::endl;
-        // print_array(pixel_array);
+        if (verbosity >= logger::debug) {
+          std::cout << "pixel array" << std::endl;
+          print_array(pixel_array);
+        }
 
         // Cluster datatype
         // This will contain our building cluster
@@ -432,21 +439,27 @@ std::vector<uint32_t> cuda_clustering(
         std::array<uint32_t, 4> cluster {0, 0, 0, 0};
         cluster[1] = (0x01 << (row - row_lower_limit)) << (16 * (col % 2));
         
-        // std::cout << "cluster" << std::endl;
-        // print_array(cluster);
+        if (verbosity >= logger::debug) {
+          std::cout << "cluster" << std::endl;
+          print_array(cluster);
+        }
 
         // Current cluster being considered for generating the mask
         std::array<uint32_t, 4> working_cluster {0, 0, 0, 0};
         working_cluster[1] = cluster[1];
 
-        // std::cout << "working cluster" << std::endl;
-        // print_array(working_cluster);
+        if (verbosity >= logger::debug) {
+          std::cout << "working cluster" << std::endl;
+          print_array(working_cluster);
+        }
 
         // Delete pixels in cluster from pixels
         pixel_array[1] &= ~cluster[1];
 
-        // std::cout << "pixel array" << std::endl;
-        // print_array(pixel_array);
+        if (verbosity >= logger::debug) {
+          std::cout << "pixel array" << std::endl;
+          print_array(pixel_array);
+        }
 
         // Create pixel mask
         std::array<uint32_t, 4> pixel_mask {0, 0, 0, 0};
@@ -464,8 +477,10 @@ std::vector<uint32_t> cuda_clustering(
           pixel_mask[3] = current_mask(working_cluster[3])
                         | mask_from_left_to_right(working_cluster[2]);
 
-          // std::cout << "pixel mask" << std::endl;
-          // print_array(pixel_mask);
+          if (verbosity >= logger::debug) {
+            std::cout << "pixel mask" << std::endl;
+            print_array(pixel_mask);
+          }
 
           // Calculate new elements
           working_cluster[0] = pixel_array[0] & pixel_mask[0];
@@ -473,8 +488,10 @@ std::vector<uint32_t> cuda_clustering(
           working_cluster[2] = pixel_array[2] & pixel_mask[2];
           working_cluster[3] = pixel_array[3] & pixel_mask[3];
 
-          // std::cout << "working cluster" << std::endl;
-          // print_array(working_cluster);
+          if (verbosity >= logger::debug) {
+            std::cout << "working cluster" << std::endl;
+            print_array(working_cluster);
+          }
 
           if (working_cluster[0]==0 && working_cluster[1]==0 && working_cluster[2]==0 && working_cluster[3]==0) {
             break;
@@ -486,8 +503,10 @@ std::vector<uint32_t> cuda_clustering(
           cluster[2] |= working_cluster[2];
           cluster[3] |= working_cluster[3];
 
-          // std::cout << "cluster" << std::endl;
-          // print_array(cluster);
+          if (verbosity >= logger::debug) {
+            std::cout << "cluster" << std::endl;
+            print_array(cluster);
+          }
 
           // Delete elements from pixel array
           pixel_array[0] &= ~cluster[0];
@@ -495,8 +514,10 @@ std::vector<uint32_t> cuda_clustering(
           pixel_array[2] &= ~cluster[2];
           pixel_array[3] &= ~cluster[3];
 
-          // std::cout << "pixel array" << std::endl;
-          // print_array(pixel_array);
+          if (verbosity >= logger::debug) {
+            std::cout << "pixel array" << std::endl;
+            print_array(pixel_array);
+          }
         }
 
         // Calculate x and y from our formed cluster
@@ -510,19 +531,15 @@ std::vector<uint32_t> cuda_clustering(
         // Only check for repeated clusters for clusters with at least 3 elements
         bool do_store = true;
         if (n >= 3) {
-          // std::cout << "cluster" << std::endl;
-          // print_array_with_candidate(cluster);
+          if (verbosity >= logger::debug) {
+            std::cout << "cluster" << std::endl;
+            print_array(cluster, row, col);
+          }
 
-          // Create mask for found clusters
+          // Apply mask for found clusters
           // o o
           // x o
           //   o
-          auto cluster_current_mask = [&mask_bottom_right, &mask_top] (uint32_t p) {
-            return ((p&mask_top) << 1)
-                  | ((p&mask_bottom_right) << 15)
-                  | (p << 16)
-                  | (p << 17);
-          };
           pixel_mask[0] = cluster_current_mask(cluster[0]);
           pixel_mask[1] = cluster_current_mask(cluster[1])
                         | mask_from_left_to_right(cluster[0]);
@@ -531,8 +548,10 @@ std::vector<uint32_t> cuda_clustering(
           pixel_mask[3] = cluster_current_mask(cluster[3])
                         | mask_from_left_to_right(cluster[2]);
 
-          // std::cout << "pixel mask" << std::endl;
-          // print_array(pixel_mask);
+          if (verbosity >= logger::debug) {
+            std::cout << "pixel mask" << std::endl;
+            print_array(pixel_mask);
+          }
 
           // Do "and not" with found clusters
           // This should return patterns like these:
@@ -544,23 +563,13 @@ std::vector<uint32_t> cuda_clustering(
           working_cluster[2] = pixel_mask[2] & (~cluster[2]);
           working_cluster[3] = pixel_mask[3] & (~cluster[3]);
 
-          // std::cout << "working cluster" << std::endl;
-          // print_array(working_cluster);
+          if (verbosity >= logger::debug) {
+            std::cout << "working cluster" << std::endl;
+            print_array(working_cluster);
+          }
 
           // Require the four pixels of the pattern in order to
           // get the candidates
-          auto candidates_current_mask = [&mask_bottom] (uint32_t p) {
-            return ((p&mask_bottom) >> 1)
-                & ((p&mask_top_left) >> 15)
-                & (p >> 16)
-                & (p >> 17);
-          };
-          auto candidates_current_mask_with_right_clusters = [&mask_bottom, &mask_rtl_bottom_left] (uint32_t p, uint32_t rp) {
-            return ((p&mask_bottom) >> 1)
-                & (((p&mask_top_left) >> 15) | (rp << 17))
-                & ((p >> 16) | (rp << 16))
-                & ((p >> 17) | ((rp&mask_rtl_bottom_left) << 15));
-          };
           std::array<uint32_t, 4> candidates;
           candidates[0] = candidates_current_mask_with_right_clusters(working_cluster[0], working_cluster[1]);
           candidates[1] = candidates_current_mask_with_right_clusters(working_cluster[1], working_cluster[2]);
@@ -573,15 +582,19 @@ std::vector<uint32_t> cuda_clustering(
           candidates[2] &= cluster[2];
           candidates[3] &= cluster[3];
 
-          // std::cout << "candidates" << std::endl;
-          // print_array(candidates);
+          if (verbosity >= logger::debug) {
+            std::cout << "candidates" << std::endl;
+            print_array(candidates);
+          }
 
           // Remove our cluster candidate
           const uint32_t working_candidate = (0x01 << (row - row_lower_limit)) << (16 * (col % 2));
           candidates[1] ^= working_candidate;
 
-          // std::cout << "candidates (without working candidate)" << std::endl;
-          // print_array(candidates);
+          if (verbosity >= logger::debug) {
+            std::cout << "candidates (without working candidate)" << std::endl;
+            print_array(candidates);
+          }
 
           // Check if there is another candidate with precedence
           if (candidates[0] || candidates[1] || candidates[2] || candidates[3]) {
@@ -674,15 +687,12 @@ std::vector<uint32_t> cuda_clustering(
           const float gz = ltg[6] * local_x + ltg[7] * local_y + ltg[11];
 
           lhcb_ids.emplace_back(get_lhcb_id(cid));
-
-          // std::cout << "Cluster " << pixel << " (cx, cy): " << (x/n) << ", " << (y/n) << std::endl;
-          approximation_number_of_clusters++;
-          // cluster_candidates_to_return.push_back(pixel);
+          // lhcb_ids.emplace_back(pixel);
         }
       }
     }
 
-    cluster_candidates_to_return.push_back(approximation_number_of_clusters);
+    cluster_candidates_to_return.emplace_back(std::move(lhcb_ids));
   }
 
   t.stop();

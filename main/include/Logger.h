@@ -1,8 +1,8 @@
 #pragma once
 
-#define DEBUG logger::logger(3)
-#define INFO  logger::logger(2)
-#define ERROR logger::logger(1)
+#define DEBUG logger::logger(logger::debug)
+#define INFO  logger::logger(logger::info)
+#define ERROR logger::logger(logger::error)
 
 #include <sstream>
 #include <iostream>
@@ -71,21 +71,27 @@ public:
 };
 
 namespace logger {
-    class Logger {
-    public:
-      int verbosityLevel;
-      FileStdLogger discardStream;
-      VoidLogger* discardLogger;
-      Logger(){
-        discardLogger = new VoidLogger(&discardStream);
-      }
-    };
+  enum {
+    error = 1,
+    info = 2,
+    debug = 3
+  };
 
-    std::ostream& logger(int requestedLogLevel);
+  class Logger {
+  public:
+    int verbosityLevel;
+    FileStdLogger discardStream;
+    VoidLogger* discardLogger;
+    Logger(){
+      discardLogger = new VoidLogger(&discardStream);
+    }
+  };
 
-    #ifndef CUDALOGGER_CPP
-    extern Logger ll;
-    #else
-    Logger ll;
-    #endif
+  std::ostream& logger(int requestedLogLevel);
+
+  #ifndef CUDALOGGER_CPP
+  extern Logger ll;
+  #else
+  Logger ll;
+  #endif
 }

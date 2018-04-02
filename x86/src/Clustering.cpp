@@ -113,12 +113,12 @@ void cache_sp_patterns(
   }
 }
 
-std::vector<uint32_t> clustering(
+std::vector<std::vector<uint32_t>> clustering(
   const std::vector<char>& geometry,
   const std::vector<char>& events,
   const std::vector<unsigned int>& event_offsets
 ) {
-  std::vector<uint32_t> cluster_candidates;
+  std::vector<std::vector<uint32_t>> cluster_candidates;
   std::vector<unsigned char> sp_patterns (256, 0);
   std::vector<unsigned char> sp_sizes (256, 0);
   std::vector<float> sp_fx (512, 0);
@@ -374,19 +374,9 @@ std::vector<uint32_t> clustering(
           lhcb_ids.emplace_back(get_lhcb_id(cid));
         }
       }
-
-      // std::cout << velo_raw_bank.sp_count << ", " << (lhcb_ids.size() - prev_size) << std::endl;
-      // if (((raw_bank+1) % 4) == 0) {
-      //   std::cout << "module sp count, lhcb ids: " << module_sp_count
-      //     << ", " << (lhcb_ids.size() - prev_size)
-      //     << std::endl;
-      // }
     }
 
-    // std::cout << "Found " << lhcb_ids.size() << " clusters for event " << i
-    //   << ", sp count: " << total_sp_count << std::endl;
-    
-    cluster_candidates.push_back(lhcb_ids.size());
+    cluster_candidates.emplace_back(std::move(lhcb_ids));
   }
 
   t.stop();
