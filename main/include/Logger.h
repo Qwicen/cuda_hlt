@@ -2,6 +2,7 @@
 
 #define DEBUG logger::logger(logger::debug)
 #define INFO  logger::logger(logger::info)
+#define WARNING logger::logger(logger::warning)
 #define ERROR logger::logger(logger::error)
 
 #include <sstream>
@@ -73,8 +74,9 @@ public:
 namespace logger {
   enum {
     error = 1,
-    info = 2,
-    debug = 3
+    warning = 2,
+    info = 3,
+    debug = 4
   };
 
   class Logger {

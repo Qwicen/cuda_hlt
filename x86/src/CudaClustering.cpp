@@ -7,17 +7,17 @@ std::vector<std::vector<uint32_t>> cuda_clustering(
   const std::vector<unsigned int>& event_offsets,
   const int verbosity
 ) {
-  std::cout << std::endl << "cuda clustering:" << std::endl;
+  // std::cout << std::endl << "cuda clustering:" << std::endl;
   std::vector<std::vector<uint32_t>> cluster_candidates_to_return;
   std::vector<unsigned char> sp_patterns (256, 0);
   std::vector<unsigned char> sp_sizes (256, 0);
   std::vector<float> sp_fx (512, 0);
   std::vector<float> sp_fy (512, 0);
-  cache_sp_patterns(sp_patterns.data(), sp_sizes.data(), sp_fx.data(), sp_fy.data());
+  cache_sp_patterns(sp_patterns, sp_sizes, sp_fx, sp_fy);
 
   int print_times = 10;
   int printed = 0;
-  constexpr int max_clustering_iterations = 16;
+  constexpr int max_clustering_iterations = 12;
 
   auto print_array = [] (
     const std::array<uint32_t, 4>& p,
@@ -323,6 +323,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering(
 
             if (is_candidate) {
               cluster_candidates.push_back(idx);
+              // lhcb_ids.emplace_back(idx);
             }
           }
 
@@ -338,6 +339,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering(
             
             if (is_candidate) {
               cluster_candidates.push_back(idx);
+              // lhcb_ids.emplace_back(idx);
             }
           }
         }
@@ -686,7 +688,8 @@ std::vector<std::vector<uint32_t>> cuda_clustering(
           const float gy = ltg[3] * local_x + ltg[4] * local_y + ltg[10];
           const float gz = ltg[6] * local_x + ltg[7] * local_y + ltg[11];
 
-          lhcb_ids.emplace_back(get_lhcb_id(cid));
+          const auto lhcb_id = get_lhcb_id(cid);
+          lhcb_ids.emplace_back(lhcb_id);
           // lhcb_ids.emplace_back(pixel);
         }
       }
@@ -696,7 +699,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering(
   }
 
   t.stop();
-  std::cout << "Timer: " << t.get() << " s" << std::endl;
+  // std::cout << "Timer: " << t.get() << " s" << std::endl;
 
   return cluster_candidates_to_return;
 }

@@ -13,7 +13,7 @@ std::vector<uint32_t> cuda_array_clustering(
   std::vector<uint32_t> cluster_candidates_to_return;
 
   size_t max_stack_size = 0;
-  cache_sp_patterns(sp_patterns.data(), sp_sizes.data(), sp_fx.data(), sp_fy.data());
+  cache_sp_patterns(sp_patterns, sp_sizes, sp_fx, sp_fy);
 
   int print_times = 10;
   int printed = 0;

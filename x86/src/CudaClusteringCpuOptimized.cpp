@@ -13,7 +13,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
   std::vector<unsigned char> sp_sizes (256, 0);
   std::vector<float> sp_fx (512, 0);
   std::vector<float> sp_fy (512, 0);
-  cache_sp_patterns(sp_patterns.data(), sp_sizes.data(), sp_fx.data(), sp_fy.data());
+  cache_sp_patterns(sp_patterns, sp_sizes, sp_fx, sp_fy);
 
   int print_times = 10;
   int printed = 0;

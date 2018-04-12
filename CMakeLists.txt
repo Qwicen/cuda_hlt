@@ -17,4 +17,19 @@ set(CUDA_SEPARABLE_COMPILATION ON)
 
 set(CUDA_NVCC_FLAGS "-std=c++11;-O3;-g;--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=48;")
 
-cuda_add_executable(cu_hlt main/src/main.cpp main/src/Timer.cpp main/src/Tools.cpp main/src/Logger.cpp cuda/src/TrackForwarding.cu cuda/src/TrackSeeding.cu cuda/src/FillCandidates.cu cuda/src/SearchByTriplet.cu cuda/src/ProcessModules.cu cuda/src/TrackSeedingFirst.cu cuda/src/WeakTracksAdder.cu cuda/src/CalculatePhi.cu cuda/src/SortByPhi.cu cuda/src/CalculatePhiAndSort.cu cuda/src/VeloKalmanFilter.cu cuda/src/ConsolidateTracks.cu stream/src/Stream.cu stream/src/CalculatePhiAndSort.cu stream/src/SearchByTriplet.cu stream/src/ConsolidateTracks.cu x86/src/Clustering.cpp x86/src/CudaClustering.cpp x86/src/CudaArrayClustering.cpp x86/src/CudaClusteringCpuOptimized.cpp)
+# Files from source directories
+file(GLOB main_sources "main/src/*cpp")
+
+# Velo chain
+file(GLOB velo_common "cuda/velo/common/src/*cu")
+file(GLOB velo_clustering_sources "cuda/velo/mask_clustering/src/*cu")
+file(GLOB velo_phi_and_sort "cuda/velo/calculate_phi_and_sort/src/*cu")
+file(GLOB velo_search_by_triplet "cuda/velo/search_by_triplet/src/*cu")
+file(GLOB velo_simplified_kalman_filter "cuda/velo/simplified_kalman_filter/src/*cu")
+file(GLOB velo_consolidate_tracks "cuda/velo/consolidate_tracks/src/*cu")
+
+# Stream and x86 sources
+file(GLOB stream_sources "stream/src/*cu")
+file(GLOB x86_sources "x86/src/*cpp")
+
+cuda_add_executable(cu_hlt ${main_sources} ${velo_common} ${velo_clustering_sources} ${velo_phi_and_sort} ${velo_search_by_triplet} ${velo_simplified_kalman_filter} ${velo_consolidate_tracks} ${stream_sources} ${x86_sources})
