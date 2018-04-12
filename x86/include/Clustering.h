@@ -3,7 +3,7 @@
 #include "../../main/include/Common.h"
 #include "../../main/include/Timer.h"
 #include "../../main/include/Logger.h"
-#include "../../cuda/velo/mask_clustering/include/Common.cuh"
+#include "../../cuda/velo/common/include/ClusteringDefinitions.cuh"
 #include "ClusteringCommon.h"
 #include <cstring>
 

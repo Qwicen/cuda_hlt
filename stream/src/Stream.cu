@@ -49,7 +49,7 @@ cudaError_t Stream::operator()(
     /////////////////////////
 
     // Invoke sorting
-    // calculatePhiAndSort();
+    calculatePhiAndSort();
 
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);

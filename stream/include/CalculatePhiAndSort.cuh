@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../velo/calculate_phi_and_sort/include/CalculatePhiAndSort.cuh"
+#include "../../cuda/velo/calculate_phi_and_sort/include/CalculatePhiAndSort.cuh"
 
 struct CalculatePhiAndSort {
   // Call options

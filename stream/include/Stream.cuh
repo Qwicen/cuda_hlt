@@ -7,7 +7,7 @@
 #include "../../main/include/Common.h"
 #include "../../main/include/Logger.h"
 #include "../../main/include/Timer.h"
-#include "../../velo/common/include/Definitions.cuh"
+#include "../../cuda/velo/common/include/Definitions.cuh"
 #include "../include/EstimateInputSize.cuh"
 #include "../include/PrefixSum.cuh"
 #include "../include/MaskedVeloClustering.cuh"

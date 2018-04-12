@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../velo/common/include/Definitions.cuh"
-#include "../../velo/search_by_triplet/include/SearchByTriplet.cuh"
+#include "../../cuda/velo/common/include/Definitions.cuh"
+#include "../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
 
 struct SearchByTriplet {
   // Call options

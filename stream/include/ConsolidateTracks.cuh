@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../velo/consolidate_tracks/include/ConsolidateTracks.cuh"
+#include "../../cuda/velo/consolidate_tracks/include/ConsolidateTracks.cuh"
 
 struct ConsolidateTracks {
   // Call options
