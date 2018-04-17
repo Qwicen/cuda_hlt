@@ -28,23 +28,23 @@ __global__ void searchByTriplet(
   const uint number_of_hits = dev_module_cluster_start[52 * number_of_events];
   const uint* module_hitStarts = dev_module_cluster_start + event_number * 52;
   const uint* module_hitNums = dev_module_cluster_num + event_number * 52;
+  const uint hit_offset = module_hitStarts[0];
   
   // Order has changed since SortByPhi
-  const float* hit_Ys = (float*) (dev_velo_cluster_container);
-  const float* hit_Zs = (float*) (dev_velo_cluster_container + number_of_hits);
-  const float* hit_Phis = (float*) (dev_velo_cluster_container + 4 * number_of_hits);
-  const float* hit_Xs = (float*) (dev_velo_cluster_container + 5 * number_of_hits);
+  const float* hit_Ys = (float*) (dev_velo_cluster_container + hit_offset);
+  const float* hit_Zs = (float*) (dev_velo_cluster_container + number_of_hits + hit_offset);
+  const float* hit_Phis = (float*) (dev_velo_cluster_container + 4 * number_of_hits + hit_offset);
+  const float* hit_Xs = (float*) (dev_velo_cluster_container + 5 * number_of_hits + hit_offset);
 
   // Per event datatypes
   Track* tracks = dev_tracks + tracks_offset;
   uint* tracks_insert_pointer = (uint*) dev_atomics_storage + event_number;
 
   // Per side datatypes
-  bool* hit_used = dev_hit_used;
-  short* h0_candidates = dev_h0_candidates;
-  short* h2_candidates = dev_h2_candidates;
+  bool* hit_used = dev_hit_used + hit_offset;
+  short* h0_candidates = dev_h0_candidates + 2*hit_offset;
+  short* h2_candidates = dev_h2_candidates + 2*hit_offset;
 
-  const uint hit_offset = module_hitStarts[0];
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * TTF_MODULO;
   uint* weak_tracks = dev_weak_tracks + hit_offset;
   Track* tracklets = dev_tracklets + hit_offset;
@@ -67,7 +67,7 @@ __global__ void searchByTriplet(
   for (int i=0; i<(current_event_number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
     const auto index = i*blockDim.x + threadIdx.x;
     if (index < current_event_number_of_hits) {
-      hit_used[hit_offset + index] = false;
+      hit_used[index] = false;
     }
   }
   // Initialize atomics
@@ -82,7 +82,8 @@ __global__ void searchByTriplet(
     h2_candidates,
     module_hitStarts,
     module_hitNums,
-    hit_Phis
+    hit_Phis,
+    hit_offset
   );
 
   // Process modules
@@ -110,7 +111,8 @@ __global__ void searchByTriplet(
     tracks,
     number_of_hits,
     h1_rel_indices,
-    local_number_of_hits
+    local_number_of_hits,
+    hit_offset
   );
 
   __syncthreads();

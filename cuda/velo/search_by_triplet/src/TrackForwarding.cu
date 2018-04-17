@@ -1,4 +1,4 @@
-#include "../include/TrackForwarding.cuh"
+#include "../include/SearchByTriplet.cuh"
 
 /**
  * @brief Fits hits to tracks.
@@ -41,9 +41,9 @@ __device__ void trackForwarding(
   const float* hit_Ys,
   const float* hit_Zs,
   bool* hit_used,
-  uint* tracks_insert_pointer,
-  uint* ttf_insert_pointer,
-  uint* weaktracks_insert_pointer,
+  uint* tracks_insertPointer,
+  uint* ttf_insertPointer,
+  uint* weaktracks_insertPointer,
   const Module* module_data,
   const uint diff_ttf,
   uint* tracks_to_follow,
@@ -51,10 +51,7 @@ __device__ void trackForwarding(
   const uint prev_ttf,
   Track* tracklets,
   Track* tracks,
-  const uint number_of_hits,
-  const uint first_module,
-  const uint* module_hitStarts,
-  const uint* module_hitNums
+  const uint number_of_hits
 ) {
   // Assign a track to follow to each thread
   for (int i=0; i<(diff_ttf + blockDim.x - 1) / blockDim.x; ++i) {
@@ -94,7 +91,7 @@ __device__ void trackForwarding(
 
       // Find the best candidate
       float best_fit = FLT_MAX;
-      uint best_h2;
+      unsigned short best_h2;
 
       // Some constants of fitting
       const auto h2_z = module_data[2].z;
@@ -142,7 +139,7 @@ __device__ void trackForwarding(
 
           // If it is a track made out of less than or equal than 4 hits,
           // we have to allocate it in the tracks pointer
-          trackno = atomicAdd(tracks_insert_pointer, 1);
+          trackno = atomicAdd(tracks_insertPointer, 1);
         }
 
         // Copy the track into tracks
@@ -150,7 +147,7 @@ __device__ void trackForwarding(
         tracks[trackno] = t;
 
         // Add the tracks to the bag of tracks to_follow
-        const auto ttfP = atomicAdd(ttf_insert_pointer, 1) % TTF_MODULO;
+        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % TTF_MODULO;
         tracks_to_follow[ttfP] = trackno;
       }
       // A track just skipped a module
@@ -160,13 +157,13 @@ __device__ void trackForwarding(
         trackno = ((skipped_modules + 1) << 28) | (fulltrackno & 0x8FFFFFFF);
 
         // Add the tracks to the bag of tracks to_follow
-        const auto ttfP = atomicAdd(ttf_insert_pointer, 1) % TTF_MODULO;
+        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % TTF_MODULO;
         tracks_to_follow[ttfP] = trackno;
       }
       // If there are only three hits in this track,
       // mark it as "doubtful"
       else if (t.hitsNum == 3) {
-        const auto weakP = atomicAdd(weaktracks_insert_pointer, 1);
+        const auto weakP = atomicAdd(weaktracks_insertPointer, 1);
         ASSERT(weakP < number_of_hits)
         weak_tracks[weakP] = trackno;
       }

@@ -30,7 +30,8 @@ __device__ void processModules(
   Track* tracks,
   const uint number_of_hits,
   unsigned short* h1_rel_indices,
-  uint* local_number_of_hits
+  uint* local_number_of_hits,
+  const uint hit_offset
 ) {
   auto first_module = starting_module;
 
@@ -38,7 +39,7 @@ __device__ void processModules(
   // Load shared module information
   if (threadIdx.x < 3) {
     const auto module_number = first_module - threadIdx.x * 2;
-    module_data[threadIdx.x].hitStart = module_hitStarts[module_number];
+    module_data[threadIdx.x].hitStart = module_hitStarts[module_number] - hit_offset;
     module_data[threadIdx.x].hitNums = module_hitNums[module_number];
     module_data[threadIdx.x].z = VeloTracking::velo_module_zs[module_number];
   }
@@ -73,7 +74,7 @@ __device__ void processModules(
     // Load in shared
     if (threadIdx.x < 3) {
       const int module_number = first_module - threadIdx.x * 2;
-      module_data[threadIdx.x].hitStart = module_hitStarts[module_number];
+      module_data[threadIdx.x].hitStart = module_hitStarts[module_number] - hit_offset;
       module_data[threadIdx.x].hitNums = module_hitNums[module_number];
       module_data[threadIdx.x].z = VeloTracking::velo_module_zs[module_number];
     }
@@ -104,10 +105,7 @@ __device__ void processModules(
       prev_ttf,
       tracklets,
       tracks,
-      number_of_hits,
-      first_module,
-      module_hitStarts,
-      module_hitNums
+      number_of_hits
     );
 
     // Due to ttf_insert_pointer

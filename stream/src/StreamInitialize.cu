@@ -85,9 +85,11 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_hit_permutation, average_number_of_hits_per_event * number_of_events * sizeof(uint)));
 
   // sbt
+  // cudaCheck(cudaMalloc((void**)&dev_tracks_to_follow, number_of_events * TTF_MODULO * sizeof(uint)));
+  dev_tracks_to_follow = dev_cluster_candidates;
+  
   cudaCheck(cudaMalloc((void**)&dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track)));
   cudaCheck(cudaMalloc((void**)&dev_tracklets, average_number_of_hits_per_event * number_of_events * sizeof(Track)));
-  cudaCheck(cudaMalloc((void**)&dev_tracks_to_follow, number_of_events * TTF_MODULO * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_weak_tracks, average_number_of_hits_per_event * number_of_events * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_hit_used, average_number_of_hits_per_event * number_of_events * sizeof(bool)));
   cudaCheck(cudaMalloc((void**)&dev_atomics_storage, number_of_events * atomic_space * sizeof(int)));

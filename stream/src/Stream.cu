@@ -77,10 +77,10 @@ cudaError_t Stream::operator()(
       cudaEventRecord(cuda_generic_event, stream);
       cudaEventSynchronize(cuda_generic_event);
 
-      // std::cout << "Number of tracks found per event:" << std::endl;
-      // for (int i=0; i<number_of_events; ++i) {
-      //   std::cout << i << ": " << host_number_of_tracks_pinned[i] << std::endl;
-      // }
+      std::cout << "Number of tracks found per event:" << std::endl;
+      for (int i=0; i<number_of_events; ++i) {
+        std::cout << i << ": " << host_number_of_tracks_pinned[i] << std::endl;
+      }
       
       if (do_consolidate) {
         int total_number_of_tracks = 0;
