@@ -1,6 +1,9 @@
 #pragma once
 
 #include "../../cuda/velo/mask_clustering/include/MaskedVeloClustering.cuh"
+#include "../../main/include/Common.h"
+#include <vector>
+#include <iostream>
 
 struct MaskedVeloClustering {
   // Call options
@@ -60,4 +63,9 @@ struct MaskedVeloClustering {
   }
 
   void operator()();
+
+  void print_output(
+    const uint number_of_events,
+    const int print_max_per_module = -1
+  );
 };

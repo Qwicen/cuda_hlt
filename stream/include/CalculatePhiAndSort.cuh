@@ -1,6 +1,9 @@
 #pragma once
 
 #include "../../cuda/velo/calculate_phi_and_sort/include/CalculatePhiAndSort.cuh"
+#include "../../main/include/Common.h"
+#include <vector>
+#include <iostream>
 
 struct CalculatePhiAndSort {
   // Call options
@@ -36,4 +39,9 @@ struct CalculatePhiAndSort {
   }
 
   void operator()();
+
+  void print_output(
+    const uint number_of_events,
+    const int print_max_per_module = -1
+  );
 };

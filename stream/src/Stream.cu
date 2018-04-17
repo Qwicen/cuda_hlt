@@ -42,17 +42,26 @@ cudaError_t Stream::operator()(
     // Invoke clustering
     maskedVeloClustering();
 
+    // Print output
+    // maskedVeloClustering.print_output(number_of_events, 3);
+
     /////////////////////////
     // CalculatePhiAndSort //
     /////////////////////////
 
     calculatePhiAndSort();
 
+    // Print output
+    // calculatePhiAndSort.print_output(number_of_events, 10);
+
     /////////////////////
     // SearchByTriplet //
     /////////////////////
 
     searchByTriplet();
+
+    // Print output
+    // searchByTriplet.print_output(number_of_events);
 
     //////////////////////////////////
     // Optional: Consolidate tracks //

@@ -2,6 +2,9 @@
 
 #include "../../cuda/velo/common/include/Definitions.cuh"
 #include "../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
+#include "../../main/include/Common.h"
+#include <vector>
+#include <iostream>
 
 struct SearchByTriplet {
   // Call options
@@ -61,4 +64,8 @@ struct SearchByTriplet {
   }
 
   void operator()();
+
+  void print_output(
+    const uint number_of_events
+  );
 };
