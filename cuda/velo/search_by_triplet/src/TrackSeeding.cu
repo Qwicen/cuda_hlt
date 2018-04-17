@@ -98,12 +98,12 @@ __device__ void trackSeeding(
 
       // Iterate over all h0, h2 combinations
       // Ignore used hits
-      const auto h0_first_candidate = h0_candidates[2*h1_index];
-      const auto h0_last_candidate = h0_candidates[2*h1_index + 1];
+      const auto h0_first_candidate = module_data[0].hitStart + h0_candidates[2*h1_index];
+      const auto h0_last_candidate = module_data[0].hitStart + h0_candidates[2*h1_index + 1];
       ASSERT(h0_first_candidate <= h0_last_candidate)
 
-      const auto h2_first_candidate = h2_candidates[2*h1_index];
-      const auto h2_last_candidate = h2_candidates[2*h1_index + 1];
+      const auto h2_first_candidate = module_data[2].hitStart + h2_candidates[2*h1_index];
+      const auto h2_last_candidate = module_data[2].hitStart + h2_candidates[2*h1_index + 1];
       ASSERT(h2_first_candidate <= h2_last_candidate)
 
       // Iterate over h0 with thread_id_y
@@ -111,14 +111,13 @@ __device__ void trackSeeding(
       for (int j=0; j<(h0_num_candidates + block_dim_y - 1) / block_dim_y; ++j) {
         const auto h0_rel_candidate = j*block_dim_y + thread_id_y;
         if (h0_rel_candidate < h0_num_candidates) {
-          const auto h0_index = module_data[0].hitStart + h0_rel_candidate;
+          const auto h0_index = h0_first_candidate + h0_rel_candidate;
           if (!hit_used[h0_index]) {
             // Fetch h0
             const Hit h0 {hit_Xs[h0_index], hit_Ys[h0_index]};
 
             // Finally, iterate over all h2 indices
-            for (auto h2_rel_index=h2_first_candidate; h2_rel_index<h2_last_candidate; ++h2_rel_index) {
-              const auto h2_index = module_data[2].hitStart + h2_rel_index;
+            for (auto h2_index=h2_first_candidate; h2_index<h2_last_candidate; ++h2_index) {
               if (!hit_used[h2_index]) {
                 // const auto best_fits_index = thread_id_y*MAX_NUMHITS_IN_MODULE + h1_rel_index;
 

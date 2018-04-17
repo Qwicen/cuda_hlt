@@ -47,7 +47,8 @@ __device__ void calculatePhiSide(
       const auto hit_rel_id = i*blockDim.x + threadIdx.x;
       if (hit_rel_id < hit_num) {
         const auto hit_index = hit_start + hit_rel_id;
-        shared_hit_phis[hit_rel_id] = calculate_hit_phi(hit_Xs[hit_index], hit_Ys[hit_index]);
+        const auto hit_phi = calculate_hit_phi(hit_Xs[hit_index], hit_Ys[hit_index]);
+        shared_hit_phis[hit_rel_id] = hit_phi;
       }
     }
 

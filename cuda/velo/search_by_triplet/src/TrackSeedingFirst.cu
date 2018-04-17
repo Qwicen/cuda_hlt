@@ -80,26 +80,25 @@ __device__ void trackSeedingFirst(
 
       // Iterate over all h0, h2 combinations
       // Ignore used hits
-      const auto h0_first_candidate = h0_candidates[2*h1_index];
-      const auto h0_last_candidate = h0_candidates[2*h1_index + 1];
-      const auto h2_first_candidate = h2_candidates[2*h1_index];
-      const auto h2_last_candidate = h2_candidates[2*h1_index + 1];
+      const auto h0_first_candidate = module_data[0].hitStart + h0_candidates[2*h1_index];
+      const auto h0_last_candidate = module_data[0].hitStart + h0_candidates[2*h1_index + 1];
+      const auto h2_first_candidate = module_data[2].hitStart + h2_candidates[2*h1_index];
+      const auto h2_last_candidate = module_data[2].hitStart + h2_candidates[2*h1_index + 1];
 
       // Iterate over h0 with thread_id_y
       const auto h0_num_candidates = h0_last_candidate - h0_first_candidate;
       for (int j=0; j<(h0_num_candidates + block_dim_y - 1) / block_dim_y; ++j) {
         const auto h0_rel_candidate = j*block_dim_y + thread_id_y;
         if (h0_rel_candidate < h0_num_candidates) {
-          const auto h0_index = module_data[0].hitStart + h0_rel_candidate;
+          const auto h0_index = h0_first_candidate + h0_rel_candidate;
           // Fetch h0
           const Hit h0 {hit_Xs[h0_index], hit_Ys[h0_index]};
 
           // Finally, iterate over all h2 indices
-          for (auto h2_rel_index=h2_first_candidate; h2_rel_index<h2_last_candidate; ++h2_rel_index) {
+          for (auto h2_index=h2_first_candidate; h2_index<h2_last_candidate; ++h2_index) {
             // Our triplet is h0_index, h1_index, h2_index
             // Fit it and check if it's better than what this thread had
             // for any triplet with h1
-            const auto h2_index = module_data[2].hitStart + h2_rel_index;
             const Hit h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
 
             // Calculate prediction

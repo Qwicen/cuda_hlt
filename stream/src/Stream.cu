@@ -52,7 +52,7 @@ cudaError_t Stream::operator()(
     calculatePhiAndSort();
 
     // Print output
-    // calculatePhiAndSort.print_output(number_of_events, 10);
+    // calculatePhiAndSort.print_output(number_of_events);
 
     /////////////////////
     // SearchByTriplet //
