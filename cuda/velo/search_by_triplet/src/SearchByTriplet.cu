@@ -44,7 +44,7 @@ __global__ void searchByTriplet(
   short* h0_candidates = dev_h0_candidates;
   short* h2_candidates = dev_h2_candidates;
 
-  const uint hit_offset = module_hitStarts[52*event_number];
+  const uint hit_offset = module_hitStarts[0];
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * TTF_MODULO;
   uint* weak_tracks = dev_weak_tracks + hit_offset;
   Track* tracklets = dev_tracklets + hit_offset;
@@ -63,10 +63,11 @@ __global__ void searchByTriplet(
   __shared__ int module_data [9];
 
   // Initialize hit_used
-  for (int i=0; i<(number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
+  const auto current_event_number_of_hits = module_hitStarts[52] - hit_offset;
+  for (int i=0; i<(current_event_number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
     const auto index = i*blockDim.x + threadIdx.x;
-    if (index < number_of_hits) {
-      hit_used[index] = false;
+    if (index < current_event_number_of_hits) {
+      hit_used[hit_offset + index] = false;
     }
   }
   // Initialize atomics
