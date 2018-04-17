@@ -7,7 +7,7 @@ __global__ void calculatePhiAndSort(
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
   uint32_t* dev_velo_cluster_container,
-  unsigned short* dev_hit_permutations
+  uint* dev_hit_permutations
 ) {
   /* Data initialization */
   // Each event is treated with two blocks, one for each side.
@@ -26,7 +26,7 @@ __global__ void calculatePhiAndSort(
   float* hit_Phis = (float*) (dev_velo_cluster_container + 4 * number_of_hits);
   int32_t* hit_temp = (int32_t*) (dev_velo_cluster_container + 5 * number_of_hits);
 
-  unsigned short* hit_permutations = dev_hit_permutations;
+  uint* hit_permutations = dev_hit_permutations;
 
   // TODO: Check speed of various options
   // Initialize hit_permutations to zero

@@ -4,7 +4,7 @@ project(cu_hlt CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}) # for find_package
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -std=c++11 -ltbb -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -std=c++11 -ltbb -march=native")
 
 find_package(CUDA REQUIRED)
 
@@ -15,7 +15,7 @@ set(CUDA_SEPARABLE_COMPILATION ON)
 # Options for P100:
 # -std=c++11;--gpu-architecture=compute_60;--gpu-code=sm_60;--maxrregcount=64;
 
-set(CUDA_NVCC_FLAGS "-std=c++11;-O3;-g;--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=48;")
+set(CUDA_NVCC_FLAGS "-std=c++11;-O0;-G;-g;--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=48;")
 
 # Files from source directories
 file(GLOB main_sources "main/src/*cpp")

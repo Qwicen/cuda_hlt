@@ -34,7 +34,7 @@ __device__ void calculatePhiSide(
   const float* hit_Xs,
   const float* hit_Ys,
   float* hit_Phis,
-  unsigned short* hit_permutations,
+  uint* hit_permutations,
   const unsigned int starting_module,
   T calculate_hit_phi
 ) {
@@ -92,7 +92,7 @@ __device__ void calculatePhi(
   const float* hit_Xs,
   const float* hit_Ys,
   float* hit_Phis,
-  unsigned short* hit_permutations
+  uint* hit_permutations
 ) {
   __shared__ float shared_hit_phis [MAX_NUMHITS_IN_MODULE];
 

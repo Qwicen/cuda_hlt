@@ -35,23 +35,45 @@ void MaskedVeloClustering::print_output(
   float* cluster_zs = (float*) &velo_cluster_container[2 * estimated_number_of_clusters];
   uint32_t* cluster_ids = (uint32_t*) &velo_cluster_container[3 * estimated_number_of_clusters];
 
+  // for (uint i=0; i<number_of_events; ++i) {
+  //   std::cout << "Event " << i << std::endl;
+  //   for (uint module=0; module<52; ++module) {
+  //     std::cout << " Module " << module << ":";
+  //     const auto mod_start = module_cluster_start[52*i + module];
+  //     for (uint cluster=0; cluster<module_cluster_num[52*i + module]; ++cluster) {
+  //       if (print_max_per_module != -1 && cluster >= print_max_per_module) break;
+
+  //       const auto x = cluster_xs[mod_start + cluster];
+  //       const auto y = cluster_ys[mod_start + cluster];
+  //       const auto z = cluster_zs[mod_start + cluster];
+  //       const auto id = cluster_ids[mod_start + cluster];
+
+  //       std::cout << " {" << x << ", " << y << ", " << z << " (#" << id << ")}";
+  //     }
+  //     std::cout << std::endl;
+  //   }
+  //   std::cout << std::endl;
+  // }
+
   for (uint i=0; i<number_of_events; ++i) {
-    std::cout << "Event " << i << std::endl;
+    float sum = 0;
     for (uint module=0; module<52; ++module) {
-      std::cout << " Module " << module << ":";
       const auto mod_start = module_cluster_start[52*i + module];
       for (uint cluster=0; cluster<module_cluster_num[52*i + module]; ++cluster) {
         if (print_max_per_module != -1 && cluster >= print_max_per_module) break;
-
         const auto x = cluster_xs[mod_start + cluster];
         const auto y = cluster_ys[mod_start + cluster];
         const auto z = cluster_zs[mod_start + cluster];
-        const auto id = cluster_ids[mod_start + cluster];
-
-        std::cout << " {" << x << ", " << y << ", " << z << " (#" << id << ")}";
+        sum += x + y + z;
       }
-      std::cout << std::endl;
     }
-    std::cout << std::endl;
+    std::cout << "Event " << i << ": " << sum << std::endl;
   }
+
+    // auto number_of_clusters = 0;
+    // for (uint module=0; module<52; ++module) {
+    //   number_of_clusters += module_cluster_num[52*i + module];
+    // }
+    // std::cout << "Event " << i << ": " << number_of_clusters << std::endl;
+  // }
 }

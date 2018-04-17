@@ -42,7 +42,7 @@ struct Stream {
   unsigned short* dev_rel_indices;
   float* dev_hit_phi;
   int32_t* dev_hit_temp;
-  unsigned short* dev_hit_permutation;
+  uint* dev_hit_permutation;
   int* host_number_of_tracks_pinned;
   Track* host_tracks_pinned;
   // Clustering input

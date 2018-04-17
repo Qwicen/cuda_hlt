@@ -9,7 +9,7 @@ __device__ void calculatePhi(
   const float* hit_Xs,
   const float* hit_Ys,
   float* hit_Phis,
-  unsigned short* hit_permutations
+  uint* hit_permutations
 );
 
 __device__ void sortByPhi(
@@ -20,12 +20,12 @@ __device__ void sortByPhi(
   float* hit_Zs,
   uint* hit_IDs,
   int32_t* hit_temp,
-  unsigned short* hit_permutations
+  uint* hit_permutations
 );
 
 __global__ void calculatePhiAndSort(
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
   uint32_t* dev_velo_cluster_container,
-  unsigned short* dev_hit_permutations
+  uint* dev_hit_permutations
 );

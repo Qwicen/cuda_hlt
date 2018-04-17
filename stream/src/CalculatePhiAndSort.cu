@@ -48,4 +48,16 @@ void CalculatePhiAndSort::print_output(
     }
     std::cout << std::endl;
   }
+
+  // for (uint i=0; i<number_of_events; ++i) {
+  //   float phi_sum = 0.f;
+  //   for (uint module=0; module<52; ++module) {
+  //     const auto mod_start = module_cluster_start[52*i + module];
+  //     for (uint cluster=0; cluster<module_cluster_num[52*i + module]; ++cluster) {
+  //       if (print_max_per_module != -1 && cluster >= print_max_per_module) break;
+  //       phi_sum += cluster_phis[mod_start + cluster];
+  //     }
+  //   }
+  //   std::cout << "Event " << i << ": " << phi_sum << std::endl;
+  // }
 }

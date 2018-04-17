@@ -6,7 +6,7 @@
  */
 template<class T>
 __device__ void applyPermutation(
-  unsigned short* permutation,
+  uint* permutation,
   const uint event_hit_start,
   const uint event_number_of_hits,
   T* prev_container,
@@ -33,7 +33,7 @@ __device__ void sortByPhi(
   float* hit_Zs,
   uint* hit_IDs,
   int32_t* hit_temp,
-  unsigned short* hit_permutations
+  uint* hit_permutations
 ) {
   // Let's work with new pointers
   // Note: It is important we populate later on in strictly

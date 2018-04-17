@@ -16,7 +16,7 @@ struct CalculatePhiAndSort {
   uint* dev_module_cluster_start;
   uint* dev_module_cluster_num;
   uint32_t* dev_velo_cluster_container;
-  unsigned short* dev_hit_permutation;
+  uint* dev_hit_permutation;
 
   CalculatePhiAndSort() = default;
 
@@ -27,7 +27,7 @@ struct CalculatePhiAndSort {
     uint* param_dev_module_cluster_start,
     uint* param_dev_module_cluster_num,
     uint32_t* param_dev_velo_cluster_container,
-    unsigned short* param_dev_hit_permutation
+    uint* param_dev_hit_permutation
   ) {
     num_blocks = param_num_blocks;
     num_threads = param_num_threads;
