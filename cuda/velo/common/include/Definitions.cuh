@@ -8,6 +8,13 @@
 #include <cfloat>
 #include <vector>
 
+namespace VeloTracking {
+  // Detector constants
+  // Note: constexpr for this variable (arrays) is still not supported, so we need
+  //       to initialize it in runtime
+  extern __constant__ float velo_module_zs [52];
+}
+
 // Number of threads
 #define NUMTHREADS_X 32
 
@@ -63,7 +70,7 @@
 #define PARAM_W_INVERTED 0.000252083f
 
 // Asserts
-#define ASSERTS_ENABLED false
+#define ASSERTS_ENABLED true
 #if ASSERTS_ENABLED == true
 #include "assert.h"
 #define ASSERT(EXPR) assert(EXPR);
@@ -72,14 +79,14 @@
 #endif
 
 struct Module {
-    unsigned short hitStart;
-    unsigned short hitNums;
+    uint hitStart;
+    uint hitNums;
     float z;
 
     __device__ Module(){}
     __device__ Module(
-      const unsigned short _hitStart,
-      const unsigned short _hitNums,
+      const uint _hitStart,
+      const uint _hitNums,
       const float _z
     ) : hitStart(_hitStart), hitNums(_hitNums), z(_z) {}
 };
@@ -95,16 +102,16 @@ struct Hit {
     ) : x(_x), y(_y) {}
 };
 
-struct Track { // 2 + 26 * 2 = 58 B
-  unsigned short hitsNum;
-  unsigned short hits[MAX_TRACK_SIZE];
+struct Track { // 4 + 26 * 4 = 116 B
+  uint hitsNum;
+  uint hits[MAX_TRACK_SIZE];
 
   __device__ Track(){}
   __device__ Track(
-    const unsigned short _hitsNum,
-    const unsigned short _h0,
-    const unsigned short _h1,
-    const unsigned short _h2
+    const uint _hitsNum,
+    const uint _h0,
+    const uint _h1,
+    const uint _h2
   ) : hitsNum(_hitsNum) {
     hits[0] = _h0;
     hits[1] = _h1;
@@ -121,7 +128,7 @@ struct Track { // 2 + 26 * 2 = 58 B
  *        since we do two fits (one in X, one in Y)
  *
  *        c00 0.f c20 0.f 0.f
- *            0.f 0.f c31 0.f
+ *            c11 0.f c31 0.f
  *                c22 0.f 0.f
  *                    c33 0.f
  *                        0.f

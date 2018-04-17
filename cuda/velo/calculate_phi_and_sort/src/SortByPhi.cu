@@ -7,16 +7,17 @@
 template<class T>
 __device__ void applyPermutation(
   unsigned short* permutation,
-  const unsigned int number_of_hits,
+  const uint event_hit_start,
+  const uint event_number_of_hits,
   T* prev_container,
   T* new_container
 ) {
   // Apply permutation across all hits in the module (coalesced)
-  for (unsigned int i=0; i<(number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
+  for (uint i=0; i<(event_number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
     const auto permutation_index = i*blockDim.x + threadIdx.x;
-    if (permutation_index < number_of_hits) {
-      const auto hit_index = permutation[permutation_index];
-      new_container[permutation_index] = prev_container[hit_index];
+    if (permutation_index < event_number_of_hits) {
+      const auto hit_index = permutation[event_hit_start + permutation_index];
+      new_container[event_hit_start + permutation_index] = prev_container[event_hit_start + hit_index];
     }
   }
 }
@@ -25,11 +26,12 @@ __device__ void applyPermutation(
  * @brief Calculates phi for each hit
  */
 __device__ void sortByPhi(
-  const unsigned int number_of_hits,
+  const uint event_hit_start,
+  const uint event_number_of_hits,
   float* hit_Xs,
   float* hit_Ys,
   float* hit_Zs,
-  unsigned int* hit_IDs,
+  uint* hit_IDs,
   int32_t* hit_temp,
   unsigned short* hit_permutations
 ) {
@@ -39,14 +41,14 @@ __device__ void sortByPhi(
   float* new_hit_Xs = (float*) hit_temp;
   float* new_hit_Ys = hit_Xs;
   float* new_hit_Zs = hit_Ys;
-  unsigned int* new_hit_IDs = (unsigned int*) hit_Zs;
+  uint* new_hit_IDs = (uint*) hit_Zs;
 
   // Apply permutation across all arrays
-  applyPermutation(hit_permutations, number_of_hits, hit_Xs, new_hit_Xs);
+  applyPermutation(hit_permutations, event_hit_start, event_number_of_hits, hit_Xs, new_hit_Xs);
   __syncthreads();
-  applyPermutation(hit_permutations, number_of_hits, hit_Ys, new_hit_Ys);
+  applyPermutation(hit_permutations, event_hit_start, event_number_of_hits, hit_Ys, new_hit_Ys);
   __syncthreads();
-  applyPermutation(hit_permutations, number_of_hits, hit_Zs, new_hit_Zs);
+  applyPermutation(hit_permutations, event_hit_start, event_number_of_hits, hit_Zs, new_hit_Zs);
   __syncthreads();
-  applyPermutation(hit_permutations, number_of_hits, hit_IDs, new_hit_IDs);
+  applyPermutation(hit_permutations, event_hit_start, event_number_of_hits, hit_IDs, new_hit_IDs);
 }

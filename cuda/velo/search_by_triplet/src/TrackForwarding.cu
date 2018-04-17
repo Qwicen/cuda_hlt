@@ -1,4 +1,4 @@
-#include "../include/SearchByTriplet.cuh"
+#include "../include/TrackForwarding.cuh"
 
 /**
  * @brief Fits hits to tracks.
@@ -41,25 +41,24 @@ __device__ void trackForwarding(
   const float* hit_Ys,
   const float* hit_Zs,
   bool* hit_used,
-  unsigned int* tracks_insertPointer,
-  unsigned int* ttf_insertPointer,
-  unsigned int* weaktracks_insertPointer,
+  uint* tracks_insert_pointer,
+  uint* ttf_insert_pointer,
+  uint* weaktracks_insert_pointer,
   const Module* module_data,
-  const unsigned int diff_ttf,
-  unsigned int* tracks_to_follow,
-  unsigned int* weak_tracks,
-  const unsigned int prev_ttf,
+  const uint diff_ttf,
+  uint* tracks_to_follow,
+  uint* weak_tracks,
+  const uint prev_ttf,
   Track* tracklets,
   Track* tracks,
-  const unsigned int number_of_hits,
-  const unsigned int first_module,
-  const float* module_Zs,
-  const unsigned int* module_hitStarts,
-  const unsigned int* module_hitNums
+  const uint number_of_hits,
+  const uint first_module,
+  const uint* module_hitStarts,
+  const uint* module_hitNums
 ) {
   // Assign a track to follow to each thread
   for (int i=0; i<(diff_ttf + blockDim.x - 1) / blockDim.x; ++i) {
-    const unsigned int ttf_element = blockDim.x * i + threadIdx.x;
+    const uint ttf_element = blockDim.x * i + threadIdx.x;
     if (ttf_element < diff_ttf) {
       const auto fulltrackno = tracks_to_follow[(prev_ttf + ttf_element) % TTF_MODULO];
       const bool track_flag = (fulltrackno & 0x80000000) == 0x80000000;
@@ -95,7 +94,7 @@ __device__ void trackForwarding(
 
       // Find the best candidate
       float best_fit = FLT_MAX;
-      unsigned short best_h2;
+      uint best_h2;
 
       // Some constants of fitting
       const auto h2_z = module_data[2].z;
@@ -143,7 +142,7 @@ __device__ void trackForwarding(
 
           // If it is a track made out of less than or equal than 4 hits,
           // we have to allocate it in the tracks pointer
-          trackno = atomicAdd(tracks_insertPointer, 1);
+          trackno = atomicAdd(tracks_insert_pointer, 1);
         }
 
         // Copy the track into tracks
@@ -151,7 +150,7 @@ __device__ void trackForwarding(
         tracks[trackno] = t;
 
         // Add the tracks to the bag of tracks to_follow
-        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % TTF_MODULO;
+        const auto ttfP = atomicAdd(ttf_insert_pointer, 1) % TTF_MODULO;
         tracks_to_follow[ttfP] = trackno;
       }
       // A track just skipped a module
@@ -161,13 +160,13 @@ __device__ void trackForwarding(
         trackno = ((skipped_modules + 1) << 28) | (fulltrackno & 0x8FFFFFFF);
 
         // Add the tracks to the bag of tracks to_follow
-        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % TTF_MODULO;
+        const auto ttfP = atomicAdd(ttf_insert_pointer, 1) % TTF_MODULO;
         tracks_to_follow[ttfP] = trackno;
       }
       // If there are only three hits in this track,
       // mark it as "doubtful"
       else if (t.hitsNum == 3) {
-        const auto weakP = atomicAdd(weaktracks_insertPointer, 1);
+        const auto weakP = atomicAdd(weaktracks_insert_pointer, 1);
         ASSERT(weakP < number_of_hits)
         weak_tracks[weakP] = trackno;
       }

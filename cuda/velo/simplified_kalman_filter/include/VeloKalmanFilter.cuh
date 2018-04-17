@@ -1,13 +1,13 @@
 #pragma once
 
+#include <stdint.h>
 #include "../../common/include/Definitions.cuh"
 
 __global__ void velo_fit(
-  const char* dev_input,
-  int* dev_atomics_storage,
-  Track* dev_tracks,
+  const uint32_t* dev_velo_cluster_container,
+  const uint* dev_module_cluster_start,
+  const int* dev_atomics_storage,
+  const Track* dev_tracks,
   VeloState* dev_velo_states,
-  int32_t* dev_hit_temp,
-  unsigned int* dev_event_offsets,
-  unsigned int* dev_hit_offsets
+  const bool is_consolidated = false
 );

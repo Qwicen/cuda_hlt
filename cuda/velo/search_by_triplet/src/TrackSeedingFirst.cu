@@ -1,4 +1,4 @@
-#include "../include/SearchByTriplet.cuh"
+#include "../include/TrackSeedingFirst.cuh"
 
 /**
  * @brief  First iteration of seeding
@@ -14,10 +14,10 @@ __device__ void trackSeedingFirst(
   const Module* module_data,
   const short* h0_candidates,
   const short* h2_candidates,
-  unsigned int* tracklets_insertPointer,
-  unsigned int* ttf_insertPointer,
+  uint* tracklets_insert_pointer,
+  uint* ttf_insert_pointer,
   Track* tracklets,
-  unsigned int* tracks_to_follow
+  uint* tracks_to_follow
 ) {
   // Some constants of the calculation below
   const auto dmax = MAX_SLOPE * (module_data[0].z - module_data[1].z);
@@ -33,9 +33,9 @@ __device__ void trackSeedingFirst(
   const auto num_hits_last_iteration = ((number_of_hits_h1 - 1) % MAX_CONCURRENT_H1_FIRST_ITERATION) + 1;
   for (int i=0; i<last_iteration; ++i) {
     // The output we are searching for
-    unsigned short best_h0 = 0;
-    unsigned short best_h2 = 0;
-    unsigned short h1_index = 0;
+    uint best_h0 = 0;
+    uint best_h2 = 0;
+    uint h1_index = 0;
     float best_fit = FLT_MAX;
 
     // Assign an adaptive x and y id for the current thread depending on the load.
@@ -90,15 +90,16 @@ __device__ void trackSeedingFirst(
       for (int j=0; j<(h0_num_candidates + block_dim_y - 1) / block_dim_y; ++j) {
         const auto h0_rel_candidate = j*block_dim_y + thread_id_y;
         if (h0_rel_candidate < h0_num_candidates) {
-          const auto h0_index = h0_first_candidate + h0_rel_candidate;
+          const auto h0_index = module_data[0].hitStart + h0_rel_candidate;
           // Fetch h0
           const Hit h0 {hit_Xs[h0_index], hit_Ys[h0_index]};
 
           // Finally, iterate over all h2 indices
-          for (auto h2_index=h2_first_candidate; h2_index<h2_last_candidate; ++h2_index) {
+          for (auto h2_rel_index=h2_first_candidate; h2_rel_index<h2_last_candidate; ++h2_rel_index) {
             // Our triplet is h0_index, h1_index, h2_index
             // Fit it and check if it's better than what this thread had
             // for any triplet with h1
+            const auto h2_index = module_data[2].hitStart + h2_rel_index;
             const Hit h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
 
             // Calculate prediction
@@ -146,14 +147,14 @@ __device__ void trackSeedingFirst(
     // If this condition holds, then necessarily best_fit < FLT_MAX
     if (threadIdx.x == winner_thread) {
       // Add the track to the bag of tracks
-      const auto trackP = atomicAdd(tracklets_insertPointer, 1);
+      const auto trackP = atomicAdd(tracklets_insert_pointer, 1);
       // ASSERT(trackP < number_of_hits)
       tracklets[trackP] = Track {3, best_h0, h1_index, best_h2};
 
       // Add the tracks to the bag of tracks to_follow
       // Note: The first bit flag marks this is a tracklet (hitsNum == 3),
       // and hence it is stored in tracklets
-      const auto ttfP = atomicAdd(ttf_insertPointer, 1) % TTF_MODULO;
+      const auto ttfP = atomicAdd(ttf_insert_pointer, 1) % TTF_MODULO;
       tracks_to_follow[ttfP] = 0x80000000 | trackP;
     }
 

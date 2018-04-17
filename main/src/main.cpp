@@ -35,8 +35,9 @@ void printUsage(char* argv[]){
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=3]"
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
-    << std::endl << " [-a {transmit host to device}=1 (-a 0 implies -r 1)]"
+    << std::endl << " [-a {transmit host to device}=1]"
     << std::endl << " [-b {transmit device to host}=1]"
+    << std::endl << " [-c {consolidate tracks}=0]"
     << std::endl << " [-v {verbosity}=3 (info)]"
     << std::endl << " [-p (print rates)]"
     << std::endl;
@@ -52,9 +53,10 @@ int main(int argc, char *argv[])
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
+  bool do_consolidate = false;
 
   signed char c;
-  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:d:v:")) != -1) {
+  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:d:v:c:")) != -1) {
     switch (c) {
     case 'f':
       folder_name = std::string(optarg);
@@ -74,6 +76,9 @@ int main(int argc, char *argv[])
     case 'b':
       transmit_device_to_host = atoi(optarg);
       break;
+    case 'c':
+      do_consolidate = atoi(optarg);
+      break;
     case 'v':
       verbosity = atoi(optarg);
       break;
@@ -83,13 +88,6 @@ int main(int argc, char *argv[])
       printUsage(argv);
       return -1;
     }
-  }
-
-  // If there is no transmission from host to device,
-  // the data will be invalidated after the first iteration,
-  if (transmit_host_to_device == false) {
-    // Restrict number of iterations to 1
-    number_of_repetitions = 1;
   }
 
   // Check how many files were specified and
@@ -116,6 +114,7 @@ int main(int argc, char *argv[])
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
+    << " consolidate tracks (-c): " << do_consolidate << std::endl
     << " print rates (-p): " << print_individual_rates << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
@@ -128,6 +127,14 @@ int main(int argc, char *argv[])
 
   std::vector<char> geometry;
   readGeometry(folder_name, geometry);
+
+  // Copy data to pinned host memory
+  char* host_events_pinned;
+  unsigned int* host_event_offsets_pinned;
+  cudaCheck(cudaMallocHost((void**)&host_events_pinned, events.size()));
+  cudaCheck(cudaMallocHost((void**)&host_event_offsets_pinned, event_offsets.size() * sizeof(unsigned int)));
+  std::copy_n(std::begin(events), events.size(), host_events_pinned);
+  std::copy_n(std::begin(event_offsets), event_offsets.size(), host_event_offsets_pinned);
 
   // // Call clustering
   // std::vector<std::vector<uint32_t>> clusters = cuda_clustering(
@@ -145,20 +152,6 @@ int main(int argc, char *argv[])
   // Show some statistics
   // statistics(events, event_offsets);
 
-  // TODO: Remove
-  std::vector<unsigned int> hit_offsets;
-
-  // Copy data to pinned host memory
-  char* host_events_pinned;
-  unsigned int* host_event_offsets_pinned;
-  unsigned int* host_hit_offsets_pinned;
-  cudaCheck(cudaMallocHost((void**)&host_events_pinned, events.size()));
-  cudaCheck(cudaMallocHost((void**)&host_event_offsets_pinned, event_offsets.size() * sizeof(unsigned int)));
-  cudaCheck(cudaMallocHost((void**)&host_hit_offsets_pinned, hit_offsets.size() * sizeof(unsigned int)));
-  std::copy_n(std::begin(events), events.size(), host_events_pinned);
-  std::copy_n(std::begin(event_offsets), event_offsets.size(), host_event_offsets_pinned);
-  // std::copy_n(std::begin(hit_offsets), hit_offsets.size(), host_hit_offsets_pinned);
-
   // Create streams
   const auto number_of_events = event_offsets.size() - 1;
   std::vector<Stream> streams (tbb_threads);
@@ -166,7 +159,6 @@ int main(int argc, char *argv[])
     streams[i].initialize(
       events,
       event_offsets,
-      hit_offsets,
       geometry,
       number_of_events,
       events.size(),
@@ -186,10 +178,8 @@ int main(int argc, char *argv[])
       s(
         host_events_pinned,
         host_event_offsets_pinned,
-        host_hit_offsets_pinned,
         events.size(),
         event_offsets.size(),
-        hit_offsets.size(),
         0,
         number_of_events,
         number_of_repetitions

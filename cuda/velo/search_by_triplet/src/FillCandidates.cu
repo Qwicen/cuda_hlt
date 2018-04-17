@@ -1,10 +1,10 @@
-#include "../include/SearchByTriplet.cuh"
+#include "../include/FillCandidates.cuh"
 
 __device__ void fillCandidates(
   short* h0_candidates,
   short* h2_candidates,
-  const unsigned int* module_hitStarts,
-  const unsigned int* module_hitNums,
+  const uint* module_hitStarts,
+  const uint* module_hitNums,
   const float* hit_Phis
 ) {
   // Notation is m0, m1, m2 in reverse order for each module
@@ -18,10 +18,10 @@ __device__ void fillCandidates(
 
       if (h1_rel_index < m1_hitNums) {
         // Find for module module_index, hit h1_rel_index the candidates
-        const unsigned short m0_hitStarts = module_hitStarts[module_index+2];
-        const unsigned short m2_hitStarts = module_hitStarts[module_index-2];
-        const unsigned short m0_hitNums = module_hitNums[module_index+2];
-        const unsigned short m2_hitNums = module_hitNums[module_index-2];
+        const auto m0_hitStarts = module_hitStarts[module_index+2];
+        const auto m2_hitStarts = module_hitStarts[module_index-2];
+        const auto m0_hitNums = module_hitNums[module_index+2];
+        const auto m2_hitNums = module_hitNums[module_index-2];
         const auto h1_index = module_hitStarts[module_index] + h1_rel_index;
 
         // Calculate phi limits
@@ -32,21 +32,21 @@ __device__ void fillCandidates(
         bool first_h2_found = false, last_h2_found = false;
         
         // Add h0 candidates
-        for (auto h0_index=m0_hitStarts; h0_index < m0_hitStarts + m0_hitNums; ++h0_index) {
-          const auto h0_phi = hit_Phis[h0_index];
+        for (auto h0_rel_index=0; h0_rel_index < m0_hitNums; ++h0_rel_index) {
+          const auto h0_phi = hit_Phis[m0_hitStarts + h0_rel_index];
           const bool tolerance_condition = fabs(h1_phi - h0_phi) < PHI_EXTRAPOLATION;
 
           if (!first_h0_found && tolerance_condition) {
-            h0_candidates[2*h1_index] = h0_index;
+            h0_candidates[2*h1_index] = h0_rel_index;
             first_h0_found = true;
           }
           else if (first_h0_found && !last_h0_found && !tolerance_condition) {
-            h0_candidates[2*h1_index + 1] = h0_index;
+            h0_candidates[2*h1_index + 1] = h0_rel_index;
             last_h0_found = true;
           }
         }
         if (first_h0_found && !last_h0_found) {
-          h0_candidates[2*h1_index + 1] = m0_hitStarts + m0_hitNums;
+          h0_candidates[2*h1_index + 1] = m0_hitNums;
         }
         // In case of repeated execution, we need to populate
         // the candidates with -1 if not found
@@ -56,21 +56,21 @@ __device__ void fillCandidates(
         }
 
         // Add h2 candidates
-        for (int h2_index=m2_hitStarts; h2_index < m2_hitStarts + m2_hitNums; ++h2_index) {
-          const auto h2_phi = hit_Phis[h2_index];
+        for (int h2_rel_index=0; h2_rel_index < m2_hitNums; ++h2_rel_index) {
+          const auto h2_phi = hit_Phis[m2_hitStarts + h2_rel_index];
           const bool tolerance_condition = fabs(h1_phi - h2_phi) < PHI_EXTRAPOLATION;
 
           if (!first_h2_found && tolerance_condition) {
-            h2_candidates[2*h1_index] = h2_index;
+            h2_candidates[2*h1_index] = h2_rel_index;
             first_h2_found = true;
           }
           else if (first_h2_found && !last_h2_found && !tolerance_condition) {
-            h2_candidates[2*h1_index + 1] = h2_index;
+            h2_candidates[2*h1_index + 1] = h2_rel_index;
             last_h2_found = true;
           }
         }
         if (first_h2_found && !last_h2_found) {
-          h2_candidates[2*h1_index + 1] = m2_hitStarts + m2_hitNums;
+          h2_candidates[2*h1_index + 1] = m2_hitNums;
         }
         else if (!first_h2_found) {
           h2_candidates[2*h1_index] = -1;

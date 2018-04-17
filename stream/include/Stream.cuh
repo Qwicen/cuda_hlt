@@ -20,7 +20,7 @@ class Timer;
 
 struct Stream {
   // Limiting constants for preallocation
-  constexpr static uint maximum_average_number_of_hits_per_event = TTF_MODULO;
+  constexpr static uint average_number_of_hits_per_event = TTF_MODULO;
   constexpr static uint max_tracks_in_event = MAX_TRACKS;
   constexpr static uint max_numhits_in_module = MAX_NUMHITS_IN_MODULE;
   constexpr static uint atomic_space = NUM_ATOMICS + 1;
@@ -37,7 +37,6 @@ struct Stream {
   Track* dev_tracklets;
   uint* dev_weak_tracks;
   uint* dev_event_offsets;
-  uint* dev_hit_offsets;
   short* dev_h0_candidates;
   short* dev_h2_candidates;
   unsigned short* dev_rel_indices;
@@ -59,9 +58,6 @@ struct Stream {
   float* dev_sp_fx;
   float* dev_sp_fy;
   char* dev_velo_geometry;
-  // Resizeable datatype
-  char* dev_events;
-  size_t dev_events_size;
   // Algorithms
   EstimateInputSize estimateInputSize;
   PrefixSum prefixSum;
@@ -85,6 +81,7 @@ struct Stream {
   // Launch tests
   bool transmit_host_to_device;
   bool transmit_device_to_host;
+  bool do_consolidate;
   // Varying cluster container size
   uint velo_cluster_container_size;
 
@@ -93,12 +90,12 @@ struct Stream {
   cudaError_t initialize(
     const std::vector<char>& raw_events,
     const std::vector<uint>& event_offsets,
-    const std::vector<uint>& hit_offsets,
     const std::vector<char>& geometry,
     const uint number_of_events,
     const size_t param_starting_events_size,
     const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
+    const bool param_do_consolidate = false,
     const uint param_stream_number = 0
   );
 
@@ -113,7 +110,6 @@ struct Stream {
     // cudaCheck(cudaFree(dev_h2_candidates));
     // cudaCheck(cudaFree(dev_rel_indices));
     // cudaCheck(cudaFree(dev_event_offsets));
-    // cudaCheck(cudaFree(dev_hit_offsets));
     // cudaCheck(cudaFree(dev_events));
     // cudaCheck(cudaFree(dev_hit_temp));
     // cudaCheck(cudaFree(dev_atomics_storage));
@@ -126,10 +122,8 @@ struct Stream {
   cudaError_t operator()(
     const char* host_events_pinned,
     const uint* host_event_offsets_pinned,
-    const uint* host_hit_offsets_pinned,
     size_t host_events_pinned_size,
     size_t host_event_offsets_pinned_size,
-    size_t host_hit_offsets_pinned_size,
     uint start_event,
     uint number_of_events,
     uint number_of_repetitions

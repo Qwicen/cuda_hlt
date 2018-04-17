@@ -51,15 +51,15 @@ namespace LHCb {
 }
 
 namespace VP {
-  static constexpr unsigned int NModules = 52;
-  static constexpr unsigned int NSensorsPerModule = 4;
-  static constexpr unsigned int NSensors = NModules * NSensorsPerModule;
-  static constexpr unsigned int NChipsPerSensor = 3;
-  static constexpr unsigned int NRows = 256;
-  static constexpr unsigned int NColumns = 256;
-  static constexpr unsigned int NSensorColumns = NColumns * NChipsPerSensor;
-  static constexpr unsigned int NPixelsPerSensor = NSensorColumns * NRows;
-  static constexpr unsigned int ChipColumns = 256;
+  static constexpr uint NModules = 52;
+  static constexpr uint NSensorsPerModule = 4;
+  static constexpr uint NSensors = NModules * NSensorsPerModule;
+  static constexpr uint NChipsPerSensor = 3;
+  static constexpr uint NRows = 256;
+  static constexpr uint NColumns = 256;
+  static constexpr uint NSensorColumns = NColumns * NChipsPerSensor;
+  static constexpr uint NPixelsPerSensor = NSensorColumns * NRows;
+  static constexpr uint ChipColumns = 256;
   static constexpr double Pitch = 0.055;
 }
 
@@ -113,10 +113,10 @@ struct VeloGeometry {
 };
 
 __device__ __host__ uint32_t get_channel_id(
-  unsigned int sensor,
-  unsigned int chip,
-  unsigned int col,
-  unsigned int row
+  uint sensor,
+  uint chip,
+  uint col,
+  uint row
 );
 
 __device__ __host__ uint32_t get_lhcb_id(uint32_t cid);

@@ -10,8 +10,8 @@ struct PrefixSum {
   cudaStream_t* stream;
 
   // Call parameters
-  unsigned int* dev_estimated_input_size;
-  unsigned int array_size;
+  uint* dev_estimated_input_size;
+  uint array_size;
 
   PrefixSum() = default;
 
@@ -19,8 +19,8 @@ struct PrefixSum {
     const dim3& param_num_blocks,
     const dim3& param_num_threads,
     cudaStream_t& param_stream,
-    unsigned int* param_dev_estimated_input_size,
-    unsigned int param_array_size
+    uint* param_dev_estimated_input_size,
+    uint param_array_size
   ) {
     num_blocks = param_num_blocks;
     num_threads = param_num_threads;

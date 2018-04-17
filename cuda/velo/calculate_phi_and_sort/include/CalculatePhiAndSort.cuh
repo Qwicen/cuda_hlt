@@ -13,7 +13,8 @@ __device__ void calculatePhi(
 );
 
 __device__ void sortByPhi(
-  const uint number_of_hits,
+  const uint event_hit_start,
+  const uint event_number_of_hits,
   float* hit_Xs,
   float* hit_Ys,
   float* hit_Zs,

@@ -1,4 +1,7 @@
-#include "../include/SearchByTriplet.cuh"
+#include "../include/ProcessModules.cuh"
+#include "../include/TrackSeedingFirst.cuh"
+#include "../include/TrackSeeding.cuh"
+#include "../include/TrackForwarding.cuh"
 
 /**
  * @brief Processes modules in decreasing order with some stride
@@ -6,29 +9,28 @@
 __device__ void processModules(
   Module* module_data,
   float* shared_best_fits,
-  const unsigned int starting_module,
-  const unsigned int stride,
+  const uint starting_module,
+  const uint stride,
   bool* hit_used,
   const short* h0_candidates,
   const short* h2_candidates,
-  const unsigned int number_of_modules,
-  const unsigned int* module_hitStarts,
-  const unsigned int* module_hitNums,
+  const uint number_of_modules,
+  const uint* module_hitStarts,
+  const uint* module_hitNums,
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
-  const float* module_Zs,
-  unsigned int* weaktracks_insertPointer,
-  unsigned int* tracklets_insertPointer,
-  unsigned int* ttf_insertPointer,
-  unsigned int* tracks_insertPointer,
-  unsigned int* tracks_to_follow,
-  unsigned int* weak_tracks,
+  uint* weaktracks_insert_pointer,
+  uint* tracklets_insert_pointer,
+  uint* ttf_insert_pointer,
+  uint* tracks_insert_pointer,
+  uint* tracks_to_follow,
+  uint* weak_tracks,
   Track* tracklets,
   Track* tracks,
-  const unsigned int number_of_hits,
+  const uint number_of_hits,
   unsigned short* h1_rel_indices,
-  unsigned int* local_number_of_hits
+  uint* local_number_of_hits
 ) {
   auto first_module = starting_module;
 
@@ -38,7 +40,7 @@ __device__ void processModules(
     const auto module_number = first_module - threadIdx.x * 2;
     module_data[threadIdx.x].hitStart = module_hitStarts[module_number];
     module_data[threadIdx.x].hitNums = module_hitNums[module_number];
-    module_data[threadIdx.x].z = module_Zs[module_number];
+    module_data[threadIdx.x].z = VeloTracking::velo_module_zs[module_number];
   }
 
   // Due to shared module data loading
@@ -52,14 +54,14 @@ __device__ void processModules(
     module_data,
     h0_candidates,
     h2_candidates,
-    tracklets_insertPointer,
-    ttf_insertPointer,
+    tracklets_insert_pointer,
+    ttf_insert_pointer,
     tracklets,
     tracks_to_follow
   );
 
   // Prepare forwarding - seeding loop
-  unsigned int last_ttf = 0;
+  uint last_ttf = 0;
   first_module -= stride;
 
   while (first_module >= 4) {
@@ -73,11 +75,11 @@ __device__ void processModules(
       const int module_number = first_module - threadIdx.x * 2;
       module_data[threadIdx.x].hitStart = module_hitStarts[module_number];
       module_data[threadIdx.x].hitNums = module_hitNums[module_number];
-      module_data[threadIdx.x].z = module_Zs[module_number];
+      module_data[threadIdx.x].z = VeloTracking::velo_module_zs[module_number];
     }
 
     const auto prev_ttf = last_ttf;
-    last_ttf = ttf_insertPointer[0];
+    last_ttf = ttf_insert_pointer[0];
     const auto diff_ttf = last_ttf - prev_ttf;
 
     // Reset atomics
@@ -92,9 +94,9 @@ __device__ void processModules(
       hit_Ys,
       hit_Zs,
       hit_used,
-      tracks_insertPointer,
-      ttf_insertPointer,
-      weaktracks_insertPointer,
+      tracks_insert_pointer,
+      ttf_insert_pointer,
+      weaktracks_insert_pointer,
       module_data,
       diff_ttf,
       tracks_to_follow,
@@ -104,12 +106,11 @@ __device__ void processModules(
       tracks,
       number_of_hits,
       first_module,
-      module_Zs,
       module_hitStarts,
       module_hitNums
     );
 
-    // Due to ttf_insertPointer
+    // Due to ttf_insert_pointer
     __syncthreads();
 
     // Seeding
@@ -121,8 +122,8 @@ __device__ void processModules(
       h0_candidates,
       h2_candidates,
       hit_used,
-      tracklets_insertPointer,
-      ttf_insertPointer,
+      tracklets_insert_pointer,
+      ttf_insert_pointer,
       tracklets,
       tracks_to_follow,
       h1_rel_indices,
@@ -132,11 +133,11 @@ __device__ void processModules(
     first_module -= stride;
   }
 
-  // Due to last seeding ttf_insertPointer
+  // Due to last seeding ttf_insert_pointer
   __syncthreads();
 
   const auto prev_ttf = last_ttf;
-  last_ttf = ttf_insertPointer[0];
+  last_ttf = ttf_insert_pointer[0];
   const auto diff_ttf = last_ttf - prev_ttf;
 
   // Process the last bunch of track_to_follows
@@ -151,7 +152,7 @@ __device__ void processModules(
       // Here we are only interested in three-hit tracks,
       // to mark them as "doubtful"
       if (track_flag) {
-        const auto weakP = atomicAdd(weaktracks_insertPointer, 1);
+        const auto weakP = atomicAdd(weaktracks_insert_pointer, 1);
         ASSERT(weakP < number_of_hits)
         weak_tracks[weakP] = trackno;
       }

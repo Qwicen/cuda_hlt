@@ -83,7 +83,7 @@ __device__ void means_square_fit(
     //=========================================================================
     float ch = 0.0f;
     int nDoF = -4;
-    for (unsigned int h=0; h<track.hitsNum; ++h) {
+    for (uint h=0; h<track.hitsNum; ++h) {
       const auto hitno = track.hits[h];
 
       const auto z = hit_Zs[hitno];
@@ -205,8 +205,8 @@ __device__ void simplified_fit(
 
   // add remaining hits
   state.chi2 = 0.0f;
-  for (unsigned int i=firsthit + dhit; i!=lasthit + dhit; i+=dhit) {
-    const unsigned int hitno = track.hits[i];
+  for (uint i=firsthit + dhit; i!=lasthit + dhit; i+=dhit) {
+    const uint hitno = track.hits[i];
     const auto hit_x = hit_Xs[hitno];
     const auto hit_y = hit_Ys[hitno];
     const auto hit_z = hit_Zs[hitno];
@@ -232,44 +232,43 @@ __device__ void simplified_fit(
 }
 
 __global__ void velo_fit(
-  const char* dev_input,
-  int* dev_atomics_storage,
-  Track* dev_tracks,
+  const uint32_t* dev_velo_cluster_container,
+  const uint* dev_module_cluster_start,
+  const int* dev_atomics_storage,
+  const Track* dev_tracks,
   VeloState* dev_velo_states,
-  int32_t* dev_hit_temp,
-  unsigned int* dev_event_offsets,
-  unsigned int* dev_hit_offsets
+  const bool is_consolidated
 ) {
-  // Data initialization
+  /* Data initialization */
   // Each event is treated with two blocks, one for each side.
-  const unsigned int number_of_events = gridDim.x;
-  const unsigned int event_number = blockIdx.x;
+  const uint event_number = blockIdx.x;
+  const uint number_of_events = gridDim.x;
+  const uint tracks_offset = event_number * MAX_TRACKS;
 
   // Pointers to data within the event
-  const unsigned int data_offset = dev_event_offsets[event_number];
-  const unsigned int* no_modules = (const unsigned int*) &dev_input[data_offset];
-  const unsigned int* no_hits = (const unsigned int*) (no_modules + 1);
-  const float* module_Zs = (const float*) (no_hits + 1);
-  const unsigned int number_of_modules = no_modules[0];
-  const unsigned int number_of_hits = no_hits[0];
-  const unsigned int* module_hitStarts = (const unsigned int*) (module_Zs + number_of_modules);
-  const unsigned int* module_hitNums = (const unsigned int*) (module_hitStarts + number_of_modules);
-  int32_t* hit_temp = (int32_t*) (module_hitNums + number_of_modules);
-  float* hit_Ys = (float*) (hit_temp + number_of_hits);
-  float* hit_Zs = (float*) (hit_Ys + number_of_hits);
+  const uint number_of_hits = dev_module_cluster_start[52 * number_of_events];
   
-  const unsigned int hit_offset = dev_hit_offsets[event_number];
-  float* hit_Xs = (float*) (dev_hit_temp + hit_offset);
+  // Order has changed since SortByPhi
+  const float* hit_Ys = (float*) (dev_velo_cluster_container);
+  const float* hit_Zs = (float*) (dev_velo_cluster_container + number_of_hits);
+  const float* hit_Xs = (float*) (dev_velo_cluster_container + 5 * number_of_hits);
 
   // Reconstructed tracks
-  const Track* tracks = dev_tracks;
-  const unsigned int number_of_tracks = dev_atomics_storage[event_number];
-  const unsigned int track_start = dev_atomics_storage[number_of_events + event_number];
-  VeloState* velo_states = dev_velo_states + track_start * STATES_PER_TRACK;
+  const Track* tracks = dev_tracks + tracks_offset;
+  const uint number_of_tracks = dev_atomics_storage[event_number];
+  VeloState* velo_states = dev_velo_states;
+
+  // The location of the track depends on whether the consolidation took place
+  if (is_consolidated) {
+    const uint track_start = dev_atomics_storage[number_of_events + event_number];
+    velo_states += track_start * STATES_PER_TRACK;
+  } else {
+    velo_states += event_number * MAX_TRACKS * STATES_PER_TRACK;
+  }
 
   // Iterate over the tracks and calculate fits
-  for (unsigned int i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
-    const auto element = threadIdx.x + i * blockDim.x;
+  for (uint i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
+    const auto element = i * blockDim.x + threadIdx.x;
     if (element < number_of_tracks) {
       // Base pointer to velo_states for this element
       VeloState* velo_state_base = velo_states + element * STATES_PER_TRACK;

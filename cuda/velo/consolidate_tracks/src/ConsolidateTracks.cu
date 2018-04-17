@@ -3,18 +3,13 @@
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
   const Track* dev_tracks,
-  Track* dev_output_tracks,
-  unsigned int* dev_hit_offsets,
-  unsigned short* dev_hit_permutation
+  Track* dev_output_tracks
 ) {
   const unsigned int number_of_events = gridDim.x;
   const unsigned int event_number = blockIdx.x;
 
   unsigned int accumulated_tracks = 0;
   const Track* event_tracks = dev_tracks + event_number * MAX_TRACKS;
-
-  const unsigned int hit_offset = dev_hit_offsets[event_number];
-  const unsigned short* hit_permutation = dev_hit_permutation + hit_offset;
 
   // Obtain accumulated tracks
   for (unsigned int i=0; i<event_number; ++i) {
@@ -35,7 +30,7 @@ __global__ void consolidate_tracks(
       Track t = event_tracks[element];
 
       for (int hit_no=0; hit_no<t.hitsNum; ++hit_no) {
-        t.hits[hit_no] = hit_permutation[t.hits[hit_no]];
+        t.hits[hit_no] = t.hits[hit_no];
       }
 
       destination_tracks[element] = t;

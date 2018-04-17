@@ -3,10 +3,8 @@
 cudaError_t Stream::operator()(
   const char* host_events_pinned,
   const uint* host_event_offsets_pinned,
-  const uint* host_hit_offsets_pinned,
   size_t host_events_pinned_size,
   size_t host_event_offsets_pinned_size,
-  size_t host_hit_offsets_pinned_size,
   uint start_event,
   uint number_of_events,
   uint number_of_repetitions
@@ -48,37 +46,42 @@ cudaError_t Stream::operator()(
     // CalculatePhiAndSort //
     /////////////////////////
 
-    // Invoke sorting
     calculatePhiAndSort();
 
-    cudaEventRecord(cuda_generic_event, stream);
-    cudaEventSynchronize(cuda_generic_event);
+    /////////////////////
+    // SearchByTriplet //
+    /////////////////////
 
-    // /////////////////////
-    // // SearchByTriplet //
-    // /////////////////////
+    searchByTriplet();
 
-    // searchByTriplet();
-
-    // ////////////////////////
-    // // Consolidate tracks //
-    // ////////////////////////
+    //////////////////////////////////
+    // Optional: Consolidate tracks //
+    //////////////////////////////////
     
-    // consolidateTracks();
+    if (do_consolidate) {
+      consolidateTracks();
+    }
 
-    // // Optional transmission device to host
-    // if (transmit_device_to_host) {
-    //   cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-    //   cudaEventRecord(cuda_generic_event, stream);
-    //   cudaEventSynchronize(cuda_generic_event);
+    // Transmission device to host
+    if (transmit_device_to_host) {
+      cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+      cudaEventRecord(cuda_generic_event, stream);
+      cudaEventSynchronize(cuda_generic_event);
+
+      std::cout << "Number of tracks found per event: ";
+      for (int i=0; i<number_of_events; ++i) {
+        std::cout << host_number_of_tracks_pinned[i] << " ";
+      }
+      std::cout << std::endl;
       
-    //   int total_number_of_tracks = 0;
-    //   for (int i=0; i<number_of_events; ++i) {
-    //     total_number_of_tracks += host_number_of_tracks_pinned[i];
-    //   }
-
-    //   cudaCheck(cudaMemcpyAsync(host_tracks_pinned, dev_tracklets, total_number_of_tracks * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-    // }
+      if (do_consolidate) {
+        int total_number_of_tracks = 0;
+        for (int i=0; i<number_of_events; ++i) {
+          total_number_of_tracks += host_number_of_tracks_pinned[i];
+        }
+        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, dev_tracklets, total_number_of_tracks * sizeof(Track), cudaMemcpyDeviceToHost, stream));
+      }
+    }
   }
 
   return cudaSuccess;

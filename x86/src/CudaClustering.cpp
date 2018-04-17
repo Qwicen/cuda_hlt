@@ -7,6 +7,8 @@ std::vector<std::vector<uint32_t>> cuda_clustering(
   const std::vector<unsigned int>& event_offsets,
   const int verbosity
 ) {
+  std::array<float, 208> z_set;
+
   // std::cout << std::endl << "cuda clustering:" << std::endl;
   std::vector<std::vector<uint32_t>> cluster_candidates_to_return;
   std::vector<unsigned char> sp_patterns (256, 0);
@@ -195,6 +197,8 @@ std::vector<std::vector<uint32_t>> cuda_clustering(
             const float gx = ltg[0] * local_x + ltg[1] * local_y + ltg[9];
             const float gy = ltg[3] * local_x + ltg[4] * local_y + ltg[10];
             const float gz = ltg[6] * local_x + ltg[7] * local_y + ltg[11];
+
+            z_set[raw_bank] = gz;
 
             lhcb_ids.emplace_back(get_lhcb_id(cid));
           }
@@ -699,6 +703,15 @@ std::vector<std::vector<uint32_t>> cuda_clustering(
   }
 
   t.stop();
+
+  for (int i=0; i<52; ++i) {
+    float average = 0.f;
+    for (int j=0; j<4; ++j) {
+      average += z_set[i*4 + j];
+    }
+    std::cout << (average / 4.f) << ", ";
+  }
+
   // std::cout << "Timer: " << t.get() << " s" << std::endl;
 
   return cluster_candidates_to_return;
