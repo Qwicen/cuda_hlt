@@ -1,9 +1,8 @@
 #pragma once
 
 #include "../../../cuda/velo/simplified_kalman_filter/include/VeloKalmanFilter.cuh"
-#include "Measurable.cuh"
 
-struct SimplifiedKalmanFilter : public Measurable {
+struct SimplifiedKalmanFilter {
   // Call options
   dim3 num_blocks, num_threads;
 
@@ -18,12 +17,19 @@ struct SimplifiedKalmanFilter : public Measurable {
   VeloState* dev_velo_states;
   bool is_consolidated;
 
-  SimplifiedKalmanFilter() : Measurable() {}
+  SimplifiedKalmanFilter() = default;
 
   void set(
     const dim3& param_num_blocks,
     const dim3& param_num_threads,
-    cudaStream_t& param_stream,
+    cudaStream_t& param_stream
+  ) {
+    num_blocks = param_num_blocks;
+    num_threads = param_num_threads;
+    stream = &param_stream;
+  }
+
+  void setParameters(
     uint32_t* param_dev_velo_cluster_container,
     uint* param_dev_module_cluster_start,
     int* param_dev_atomics_storage,
@@ -31,9 +37,6 @@ struct SimplifiedKalmanFilter : public Measurable {
     VeloState* param_dev_velo_states,
     bool param_is_consolidated
   ) {
-    num_blocks = param_num_blocks;
-    num_threads = param_num_threads;
-    stream = &param_stream;
     dev_velo_cluster_container = param_dev_velo_cluster_container;
     dev_module_cluster_start = param_dev_module_cluster_start;
     dev_atomics_storage = param_dev_atomics_storage;

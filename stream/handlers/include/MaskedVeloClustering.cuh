@@ -2,11 +2,10 @@
 
 #include "../../../cuda/velo/mask_clustering/include/MaskedVeloClustering.cuh"
 #include "../../../main/include/Common.h"
-#include "Measurable.cuh"
 #include <vector>
 #include <iostream>
 
-struct MaskedVeloClustering : public Measurable {
+struct MaskedVeloClustering {
   // Call options
   dim3 num_blocks, num_threads;
 
@@ -28,7 +27,14 @@ struct MaskedVeloClustering : public Measurable {
   void set(
     const dim3& param_num_blocks,
     const dim3& param_num_threads,
-    cudaStream_t& param_stream,
+    cudaStream_t& param_stream
+  ) {
+    num_blocks = param_num_blocks;
+    num_threads = param_num_threads;
+    stream = &param_stream;
+  }
+
+  void setParameters(
     char* param_dev_raw_input,
     uint* param_dev_raw_input_offsets,
     uint* param_dev_module_cluster_start,
@@ -38,9 +44,6 @@ struct MaskedVeloClustering : public Measurable {
     uint32_t* param_dev_velo_cluster_container,
     char* param_dev_velo_geometry
   ) {
-    num_blocks = param_num_blocks;
-    num_threads = param_num_threads;
-    stream = &param_stream;
     dev_raw_input = param_dev_raw_input,
     dev_raw_input_offsets = param_dev_raw_input_offsets,
     dev_module_cluster_start = param_dev_module_cluster_start;

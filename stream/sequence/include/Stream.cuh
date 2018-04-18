@@ -28,39 +28,9 @@ struct Stream {
   // Stream datatypes
   cudaStream_t stream;
   cudaEvent_t cuda_generic_event;
+  cudaEvent_t cuda_event_start;
+  cudaEvent_t cuda_event_stop;
   uint stream_number;
-  bool perform_velo_kalman_filter;
-  // Datatypes
-  Track* dev_tracks;
-  uint* dev_tracks_to_follow;
-  bool* dev_hit_used;
-  int* dev_atomics_storage;
-  Track* dev_tracklets;
-  uint* dev_weak_tracks;
-  uint* dev_event_offsets;
-  short* dev_h0_candidates;
-  short* dev_h2_candidates;
-  unsigned short* dev_rel_indices;
-  float* dev_hit_phi;
-  int32_t* dev_hit_temp;
-  uint* dev_hit_permutation;
-  int* host_number_of_tracks_pinned;
-  Track* host_tracks_pinned;
-  // Clustering input
-  char* dev_raw_input;
-  uint* dev_raw_input_offsets;
-  uint* dev_estimated_input_size;
-  uint* dev_module_cluster_num;
-  uint* dev_module_candidate_num;
-  uint* dev_cluster_candidates;
-  uint32_t* dev_velo_cluster_container;
-  unsigned char* dev_sp_patterns;
-  unsigned char* dev_sp_sizes;
-  float* dev_sp_fx;
-  float* dev_sp_fy;
-  char* dev_velo_geometry;
-  // Velo states
-  VeloState* dev_velo_states;
   // Algorithms
   EstimateInputSize estimateInputSize;
   PrefixSum prefixSum;
@@ -69,27 +39,17 @@ struct Stream {
   SearchByTriplet searchByTriplet;
   ConsolidateTracks consolidateTracks;
   SimplifiedKalmanFilter simplifiedKalmanFilter;
-  // Algorithm launch options
-  dim3 num_blocks;
-  dim3 estimate_input_size_blocks;
-  dim3 prefix_sum_blocks;
-  dim3 masked_velo_clustering_blocks;
-  dim3 consolidate_blocks;
-  // num threads
-  dim3 estimate_input_size_threads;
-  dim3 prefix_sum_threads;
-  dim3 masked_velo_clustering_threads;
-  dim3 sort_num_threads;
-  dim3 sbt_num_threads;
-  dim3 consolidate_num_threads;
-  dim3 simplified_kalman_num_threads;
-  // Launch tests
+  // Launch options
   bool transmit_host_to_device;
   bool transmit_device_to_host;
   bool do_consolidate;
   bool do_simplified_kalman_filter;
+  bool print_individual_rates;
   // Varying cluster container size
   uint velo_cluster_container_size;
+  // Data back transmission
+  int* host_number_of_tracks_pinned;
+  Track* host_tracks_pinned;
 
   Stream() = default;
 
@@ -103,6 +63,7 @@ struct Stream {
     const bool param_transmit_device_to_host,
     const bool param_do_consolidate,
     const bool param_do_simplified_kalman_filter,
+    const bool param_print_individual_rates,
     const uint param_stream_number
   );
 
@@ -134,5 +95,10 @@ struct Stream {
     uint start_event,
     uint number_of_events,
     uint number_of_repetitions
+  );
+
+  void print_timing(
+    const uint number_of_events,
+    const std::vector<std::pair<std::string, float>>& times
   );
 };

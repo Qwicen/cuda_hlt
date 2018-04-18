@@ -1,9 +1,8 @@
 #pragma once
 
 #include "../../../cuda/velo/consolidate_tracks/include/ConsolidateTracks.cuh"
-#include "Measurable.cuh"
 
-struct ConsolidateTracks : public Measurable {
+struct ConsolidateTracks {
   // Call options
   dim3 num_blocks, num_threads;
 
@@ -20,14 +19,18 @@ struct ConsolidateTracks : public Measurable {
   void set(
     const dim3& param_num_blocks,
     const dim3& param_num_threads,
-    cudaStream_t& param_stream,
-    int* param_dev_atomics_storage,
-    Track* param_dev_tracks,
-    Track* param_dev_output_tracks
+    cudaStream_t& param_stream
   ) {
     num_blocks = param_num_blocks;
     num_threads = param_num_threads;
     stream = &param_stream;
+  }
+
+  void setParameters(
+    int* param_dev_atomics_storage,
+    Track* param_dev_tracks,
+    Track* param_dev_output_tracks
+  ) {
     dev_atomics_storage = param_dev_atomics_storage;
     dev_tracks = param_dev_tracks;
     dev_output_tracks = param_dev_output_tracks;

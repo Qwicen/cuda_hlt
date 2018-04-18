@@ -1,9 +1,8 @@
 #pragma once
 
 #include "../../../cuda/velo/mask_clustering/include/PrefixSum.cuh"
-#include "Measurable.cuh"
 
-struct PrefixSum : public Measurable {
+struct PrefixSum {
   // Call options
   dim3 num_blocks, num_threads;
 
@@ -19,13 +18,17 @@ struct PrefixSum : public Measurable {
   void set(
     const dim3& param_num_blocks,
     const dim3& param_num_threads,
-    cudaStream_t& param_stream,
-    uint* param_dev_estimated_input_size,
-    uint param_array_size
+    cudaStream_t& param_stream
   ) {
     num_blocks = param_num_blocks;
     num_threads = param_num_threads;
     stream = &param_stream;
+  }
+
+  void setParameters(
+    uint* param_dev_estimated_input_size,
+    uint param_array_size
+  ) {
     dev_estimated_input_size = param_dev_estimated_input_size;
     array_size = param_array_size;
   }

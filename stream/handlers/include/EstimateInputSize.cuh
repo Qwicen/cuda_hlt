@@ -1,9 +1,8 @@
 #pragma once
 
 #include "../../../cuda/velo/mask_clustering/include/EstimateInputSize.cuh"
-#include "Measurable.cuh"
 
-struct EstimateInputSize : public Measurable {
+struct EstimateInputSize {
   // Call options
   dim3 num_blocks, num_threads;
 
@@ -23,7 +22,14 @@ struct EstimateInputSize : public Measurable {
   void set(
     const dim3& param_num_blocks,
     const dim3& param_num_threads,
-    cudaStream_t& param_stream,
+    cudaStream_t& param_stream
+  ) {
+    num_blocks = param_num_blocks;
+    num_threads = param_num_threads;
+    stream = &param_stream;
+  }
+
+  void setParameters(
     char* param_dev_raw_input,
     uint* param_dev_raw_input_offsets,
     uint* param_dev_estimated_input_size,
@@ -31,9 +37,6 @@ struct EstimateInputSize : public Measurable {
     uint* param_dev_module_candidate_num,
     uint32_t* param_dev_cluster_candidates
   ) {
-    num_blocks = param_num_blocks;
-    num_threads = param_num_threads;
-    stream = &param_stream;
     dev_raw_input = param_dev_raw_input;
     dev_raw_input_offsets = param_dev_raw_input_offsets;
     dev_estimated_input_size = param_dev_estimated_input_size;

@@ -3,11 +3,10 @@
 #include "../../../cuda/velo/common/include/Definitions.cuh"
 #include "../../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
 #include "../../../main/include/Common.h"
-#include "Measurable.cuh"
 #include <vector>
 #include <iostream>
 
-struct SearchByTriplet : public Measurable {
+struct SearchByTriplet {
   // Call options
   dim3 num_blocks, num_threads;
 
@@ -33,7 +32,14 @@ struct SearchByTriplet : public Measurable {
   void set(
     const dim3& param_num_blocks,
     const dim3& param_num_threads,
-    cudaStream_t& param_stream,
+    cudaStream_t& param_stream
+  ) {
+    num_blocks = param_num_blocks;
+    num_threads = param_num_threads;
+    stream = &param_stream;
+  }
+
+  void setParameters(
     uint32_t* param_dev_velo_cluster_container,
     uint* param_dev_module_cluster_start,
     uint* param_dev_module_cluster_num,
@@ -47,9 +53,6 @@ struct SearchByTriplet : public Measurable {
     short* param_dev_h2_candidates,
     unsigned short* param_dev_rel_indices
   ) {
-    num_blocks = param_num_blocks;
-    num_threads = param_num_threads;
-    stream = &param_stream;
     dev_velo_cluster_container = param_dev_velo_cluster_container;
     dev_module_cluster_start = param_dev_module_cluster_start;
     dev_module_cluster_num = param_dev_module_cluster_num;
