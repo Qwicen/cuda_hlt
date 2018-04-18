@@ -53,6 +53,7 @@ cudaError_t Stream::initialize(
 
   // Clustering patterns
   // Fetch patterns and populate in GPU
+  // TODO: These should also be constants
   cudaCheck(cudaMalloc((void**)&dev_sp_patterns, 256));
   cudaCheck(cudaMalloc((void**)&dev_sp_sizes, 256));
   cudaCheck(cudaMalloc((void**)&dev_sp_fx, 512 * sizeof(float)));

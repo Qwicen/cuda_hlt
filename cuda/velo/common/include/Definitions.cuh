@@ -70,7 +70,7 @@ namespace VeloTracking {
 #define PARAM_W_INVERTED 0.000252083f
 
 // Asserts
-#define ASSERTS_ENABLED true
+#define ASSERTS_ENABLED false
 #if ASSERTS_ENABLED == true
 #include "assert.h"
 #define ASSERT(EXPR) assert(EXPR);
