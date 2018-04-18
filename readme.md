@@ -1,11 +1,7 @@
-Search by triplet
-=================
+CUDA HLT
+========
 
-Welcome to the search by triplet algorithm written in CUDA.
-
-Here is some documentation for the algorithm idea implemented here:
-
-* https://cernbox.cern.ch/index.php/s/R8i13RP6uLm9JJW
+Welcome to the CUDA High Level Trigger project, an attempt to provide a full HLT1 realization on GPU.
 
 How to run it
 -------------
