@@ -21,6 +21,70 @@
   }                                                      \
 }
 
+// Maybe for the future:
+// More efficient Velo format (not used atm)
+// 
+//   size_t size;
+//   uint32_t number_of_raw_banks;
+//   uint32_t* sensor_index;
+//   uint32_t* sp_count;
+//   uint32_t* sp_word;
+//   
+
+// /**
+//  * @brief Velo raw event format typecast.
+//  */
+// struct VeloRawEvent {
+//   uint32_t number_of_raw_banks;
+//   uint32_t* raw_bank_offset;
+//   char* payload;
+
+//   VeloRawEvent(
+//     const char* event,
+//     const unsigned int event_size
+//   ) {
+//     const char* p = event;
+
+//     number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
+//     raw_bank_offset = (uint32_t*) p; p += number_of_raw_banks * sizeof(uint32_t);
+//     payload = (char*) p;
+
+//     // Sanity check
+//     unsigned int last_nsp = 0;
+//     for (unsigned int i=0; i<number_of_raw_banks; ++i) {
+//       uint32_t* raw_bank_payload = (uint32_t*) (payload + raw_bank_offset[i]);
+//       uint32_t nsp = raw_bank_payload[1];
+
+//       if (i!=(number_of_raw_banks-1) && raw_bank_offset[i+1] != raw_bank_offset[i] + (2 + nsp) * sizeof(uint32_t)) {
+//         std::cout << "Warning: Unexpected VeloRawEvent offset" << std::endl;
+//       }
+
+//       last_nsp = nsp;
+//     }
+    
+//     if (event_size != sizeof(uint32_t)
+//       + number_of_raw_banks * sizeof(uint32_t)
+//       + raw_bank_offset[number_of_raw_banks-1]
+//       + (2 + last_nsp) * sizeof(uint32_t)) {
+//       std::cout << "Warning: Size mismatch for VeloRawEvent" << std::endl;
+//     }
+//   }
+// };
+
+// struct VeloRawBank {
+//   uint32_t sensor_index;
+//   uint32_t sp_count;
+//   uint32_t* sp_word;
+
+//   VeloRawBank(const char* raw_bank) {
+//     const char* p = raw_bank;
+
+//     sensor_index = *((uint32_t*)p); p += sizeof(uint32_t);
+//     sp_count = *((uint32_t*)p); p += sizeof(uint32_t);
+//     sp_word = (uint32_t*) p;
+//   }
+// };
+
 /**
  * @brief Struct to typecast events.
  */
