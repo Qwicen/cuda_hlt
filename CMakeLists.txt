@@ -24,6 +24,7 @@ include_directories(stream/include)
 
 add_subdirectory(cuda)
 add_subdirectory(stream)
+add_subdirectory(checker)
 
 cuda_add_executable( cu_hlt
   main/src/main.cpp
