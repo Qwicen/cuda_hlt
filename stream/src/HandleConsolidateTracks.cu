@@ -1,4 +1,4 @@
-#include "../include/ConsolidateTracks.cuh"
+#include "HandleConsolidateTracks.cuh"
 
 void ConsolidateTracks::operator()() {
   consolidate_tracks<<<num_blocks, num_threads, 0, *stream>>>(

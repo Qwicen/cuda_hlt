@@ -1,4 +1,4 @@
-#include "../include/CalculatePhiAndSort.cuh"
+#include "HandleCalculatePhiAndSort.cuh"
 
 void CalculatePhiAndSort::operator()() {
   calculatePhiAndSort<<<num_blocks, num_threads, 0, *stream>>>(

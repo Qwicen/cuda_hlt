@@ -23,9 +23,9 @@
 #include "cuda_runtime.h"
 #include "../include/Common.h"
 #include "../include/Logger.h"
-#include "../include/Tools.h"
-#include "../../stream/include/Stream.cuh"
-#include "../include/Timer.h"
+#include "Tools.h"
+#include "Stream.cuh"
+#include "Timer.h"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "

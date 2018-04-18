@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Measurable.cuh"
-#include "../../cuda/include/VeloKalmanFilter.cuh"
+#include "ConsolidateTracks.cuh"
 
-struct CalculateVeloStates : public Measurable {
+struct ConsolidateTracks : public Measurable {
   // Call options
   dim3 num_blocks, num_threads;
 
@@ -11,38 +11,32 @@ struct CalculateVeloStates : public Measurable {
   cudaStream_t* stream;
 
   // Call parameters
-  char* dev_events;
   int* dev_atomics_storage;
   Track* dev_tracks;
-  VeloState* dev_velo_states;
-  int32_t* dev_hit_temp;
-  unsigned int* dev_event_offsets;
+  Track* dev_output_tracks;
   unsigned int* dev_hit_offsets;
+  unsigned short* dev_hit_permutation;
 
-  CalculateVeloStates() : Measurable() {}
+  ConsolidateTracks() : Measurable() {}
 
   void set(
     const dim3& param_num_blocks,
     const dim3& param_num_threads,
     cudaStream_t& param_stream,
-    char* param_dev_events,
     int* param_dev_atomics_storage,
     Track* param_dev_tracks,
-    VeloState* param_dev_velo_states,
-    int32_t* param_dev_hit_temp,
-    unsigned int* param_dev_event_offsets,
-    unsigned int* param_dev_hit_offsets
+    Track* param_dev_output_tracks,
+    unsigned int* param_dev_hit_offsets,
+    unsigned short* param_dev_hit_permutation
   ) {
     num_blocks = param_num_blocks;
     num_threads = param_num_threads;
     stream = &param_stream;
-    dev_events = param_dev_events;
     dev_atomics_storage = param_dev_atomics_storage;
     dev_tracks = param_dev_tracks;
-    dev_velo_states = param_dev_velo_states;
-    dev_hit_temp = param_dev_hit_temp;
-    dev_event_offsets = param_dev_event_offsets;
+    dev_output_tracks = param_dev_output_tracks;
     dev_hit_offsets = param_dev_hit_offsets;
+    dev_hit_permutation = param_dev_hit_permutation;
   }
 
   void operator()();

@@ -1,4 +1,4 @@
-#include "../include/Stream.cuh"
+#include "Stream.cuh"
 
 cudaError_t Stream::operator()(
   const char* host_events_pinned,

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Measurable.cuh"
-#include "../../cuda/include/Definitions.cuh"
-#include "../../cuda/include/SearchByTriplet.cuh"
+#include "Definitions.cuh"
+#include "SearchByTriplet.cuh"
 
 struct SearchByTriplet : public Measurable {
   // Call options

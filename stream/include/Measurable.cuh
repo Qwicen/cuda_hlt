@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../main/include/Common.h"
+#include "Common.h"
 #include "cuda_runtime.h"
 
 /**

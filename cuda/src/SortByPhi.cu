@@ -1,4 +1,4 @@
-#include "../include/SearchByTriplet.cuh"
+#include "SearchByTriplet.cuh"
 #include "math_constants.h"
 
 /**

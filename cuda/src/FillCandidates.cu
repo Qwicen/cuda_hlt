@@ -1,4 +1,4 @@
-#include "../include/SearchByTriplet.cuh"
+#include "SearchByTriplet.cuh"
 
 __device__ void fillCandidates(
   short* h0_candidates,

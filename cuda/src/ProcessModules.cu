@@ -1,4 +1,4 @@
-#include "../include/SearchByTriplet.cuh"
+#include "SearchByTriplet.cuh"
 
 /**
  * @brief Processes modules in decreasing order with some stride

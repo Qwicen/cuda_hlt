@@ -1,4 +1,4 @@
-#include "../include/SearchByTriplet.cuh"
+#include "SearchByTriplet.cuh"
 
 /**
  * @brief  First iteration of seeding

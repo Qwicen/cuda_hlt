@@ -9,3 +9,4 @@ Debug
 mcdata/*.dat
 mcdata_old
 build
+*~

@@ -2,15 +2,15 @@
 
 #include <iostream>
 #include <vector>
-#include "../../main/include/Common.h"
-#include "../../main/include/Logger.h"
-#include "../../main/include/Timer.h"
-#include "../../cuda/include/Definitions.cuh"
-#include "../include/CalculatePhiAndSort.cuh"
-#include "../include/SearchByTriplet.cuh"
-#include "../include/CalculateVeloStates.cuh"
-#include "../include/ConsolidateTracks.cuh"
-#include "../include/Helper.cuh"
+#include "Common.h"
+#include "Logger.h"
+#include "Timer.h"
+#include "Definitions.cuh"
+#include "HandleCalculatePhiAndSort.cuh"
+#include "HandleSearchByTriplet.cuh"
+#include "HandleCalculateVeloStates.cuh"
+#include "HandleConsolidateTracks.cuh"
+#include "Helper.cuh"
 
 class Timer;
 

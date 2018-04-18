@@ -1,4 +1,4 @@
-#include "../include/CalculateVeloStates.cuh"
+#include "HandleCalculateVeloStates.cuh"
 
 void CalculateVeloStates::operator()() {
   velo_fit<<<num_blocks, num_threads, 0, *stream>>>(

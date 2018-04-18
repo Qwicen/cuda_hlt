@@ -1,4 +1,4 @@
-#include "../include/ConsolidateTracks.cuh"
+#include "ConsolidateTracks.cuh"
 
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
