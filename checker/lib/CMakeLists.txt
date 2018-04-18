@@ -1,0 +1,12 @@
+include_directories(include)
+include_directories(SOAContainer/include)
+
+file(GLOB headers include/*)
+
+add_library( libMClinking SHARED
+  src/velopix-input-reader.cc
+  src/TrackSerializer.cc
+  src/MCAssociator.cc
+  src/TrackChecker.cc
+  ${headers}
+  )
