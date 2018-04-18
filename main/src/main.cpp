@@ -207,7 +207,9 @@ int main(int argc, char *argv[])
   std::cout << (number_of_events * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
-  // Reset device
+  // Free and reset device
+  cudaCheck(cudaFreeHost(host_events_pinned));
+  cudaCheck(cudaFreeHost(host_event_offsets_pinned));
   cudaCheck(cudaDeviceReset());
 
   return 0;
