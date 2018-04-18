@@ -5,6 +5,11 @@
 #include <iostream>
 
 namespace VeloClustering {
+  extern __constant__ uint8_t sp_patterns [256];
+  extern __constant__ uint8_t sp_sizes [256];
+  extern __constant__ float sp_fx [512];
+  extern __constant__ float sp_fy [512];
+
   static constexpr uint32_t mask_bottom          = 0xFFFEFFFF;
   static constexpr uint32_t mask_top             = 0xFFFF7FFF;
   static constexpr uint32_t mask_top_left        = 0x7FFF7FFF;

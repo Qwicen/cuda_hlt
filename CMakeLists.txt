@@ -28,8 +28,11 @@ file(GLOB velo_search_by_triplet "cuda/velo/search_by_triplet/src/*cu")
 file(GLOB velo_simplified_kalman_filter "cuda/velo/simplified_kalman_filter/src/*cu")
 file(GLOB velo_consolidate_tracks "cuda/velo/consolidate_tracks/src/*cu")
 
-# Stream and x86 sources
-file(GLOB stream_sources "stream/src/*cu")
-file(GLOB x86_sources "x86/src/*cpp")
+# Stream
+file(GLOB stream_handlers "stream/handlers/src/*cu")
+file(GLOB stream_sequence "stream/sequence/src/*cu")
 
-cuda_add_executable(cu_hlt ${main_sources} ${velo_common} ${velo_clustering_sources} ${velo_phi_and_sort} ${velo_search_by_triplet} ${velo_simplified_kalman_filter} ${velo_consolidate_tracks} ${stream_sources} ${x86_sources})
+# x86 sources
+file(GLOB x86_clustering "x86/velo/clustering/src/*cpp")
+
+cuda_add_executable(cu_hlt ${main_sources} ${velo_common} ${velo_clustering_sources} ${velo_phi_and_sort} ${velo_search_by_triplet} ${velo_simplified_kalman_filter} ${velo_consolidate_tracks} ${stream_handlers} ${stream_sequence} ${x86_clustering})

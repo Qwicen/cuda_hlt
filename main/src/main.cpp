@@ -25,8 +25,9 @@
 #include "../include/Logger.h"
 #include "../include/Tools.h"
 #include "../include/Timer.h"
-#include "../../stream/include/Stream.cuh"
-#include "../../x86/include/Clustering.h"
+#include "../../stream/sequence/include/Stream.cuh"
+#include "../../stream/sequence/include/InitializeConstants.cuh"
+#include "../../x86/velo/clustering/include/Clustering.h"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
@@ -37,7 +38,8 @@ void printUsage(char* argv[]){
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
     << std::endl << " [-a {transmit host to device}=1]"
     << std::endl << " [-b {transmit device to host}=1]"
-    << std::endl << " [-c {consolidate tracks}=0]"
+    << std::endl << " [-c {consolidate tracks}=1]"
+    << std::endl << " [-k {simplified kalman filter}=0]"
     << std::endl << " [-v {verbosity}=3 (info)]"
     << std::endl << " [-p (print rates)]"
     << std::endl;
@@ -53,10 +55,11 @@ int main(int argc, char *argv[])
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
-  bool do_consolidate = false;
+  bool do_consolidate = true;
+  bool do_simplified_kalman_filter = false;
 
   signed char c;
-  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:d:v:c:")) != -1) {
+  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:d:v:c:k:")) != -1) {
     switch (c) {
     case 'f':
       folder_name = std::string(optarg);
@@ -78,6 +81,9 @@ int main(int argc, char *argv[])
       break;
     case 'c':
       do_consolidate = atoi(optarg);
+      break;
+    case 'k':
+      do_simplified_kalman_filter = atoi(optarg);
       break;
     case 'v':
       verbosity = atoi(optarg);
@@ -115,6 +121,7 @@ int main(int argc, char *argv[])
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
     << " consolidate tracks (-c): " << do_consolidate << std::endl
+    << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " print rates (-p): " << print_individual_rates << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
@@ -152,6 +159,9 @@ int main(int argc, char *argv[])
   // Show some statistics
   // statistics(events, event_offsets);
 
+  // Initialize detector constants on GPU
+  initializeConstants();
+
   // Create streams
   const auto number_of_events = event_offsets.size() - 1;
   std::vector<Stream> streams (tbb_threads);
@@ -164,6 +174,8 @@ int main(int argc, char *argv[])
       events.size(),
       transmit_host_to_device,
       transmit_device_to_host,
+      do_consolidate,
+      do_simplified_kalman_filter,
       i
     );
   }

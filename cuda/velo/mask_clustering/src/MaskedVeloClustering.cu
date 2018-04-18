@@ -1,5 +1,4 @@
 #include "../include/MaskedVeloClustering.cuh"
-#include "../../common/include/ClusteringDefinitions.cuh"
 
 // Mask for any one pixel array element's next iteration
 __device__ uint32_t current_mask(uint32_t p) {
@@ -67,11 +66,7 @@ __global__ void masked_velo_clustering(
   uint* dev_event_candidate_num,
   uint* dev_cluster_candidates,
   uint32_t* dev_velo_cluster_container,
-  char* dev_velo_geometry,
-  unsigned char* dev_sp_patterns,
-  unsigned char* dev_sp_sizes,
-  float* dev_sp_fx,
-  float* dev_sp_fy
+  char* dev_velo_geometry
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
@@ -118,7 +113,7 @@ __global__ void masked_velo_clustering(
           const int32_t sp_col = (sp_addr >> 6);
           const uint8_t sp = sp_word & 0xFFU;
 
-          const uint32_t idx = dev_sp_patterns[sp];
+          const uint32_t idx = VeloClustering::sp_patterns[sp];
           const uint32_t chip = sp_col / (VP::ChipColumns / 2);
 
           {
@@ -131,8 +126,8 @@ __global__ void masked_velo_clustering(
 
             const uint cid = get_channel_id(raw_bank.sensor_index, chip, cx % VP::ChipColumns, cy);
 
-            const float fx = dev_sp_fx[sp * 2];
-            const float fy = dev_sp_fy[sp * 2];
+            const float fx = VeloClustering::sp_fx[sp * 2];
+            const float fy = VeloClustering::sp_fy[sp * 2];
             const float local_x = g.local_x[cx] + fx * g.x_pitch[cx];
             const float local_y = (cy + 0.5 + fy) * g.pixel_size;
 
@@ -158,8 +153,8 @@ __global__ void masked_velo_clustering(
 
             uint cid = get_channel_id(raw_bank.sensor_index, chip, cx % VP::ChipColumns, cy);
 
-            const float fx = dev_sp_fx[sp * 2 + 1];
-            const float fy = dev_sp_fy[sp * 2 + 1];
+            const float fx = VeloClustering::sp_fx[sp * 2 + 1];
+            const float fy = VeloClustering::sp_fy[sp * 2 + 1];
             const float local_x = g.local_x[cx] + fx * g.x_pitch[cx];
             const float local_y = (cy + 0.5 + fy) * g.pixel_size;
 
