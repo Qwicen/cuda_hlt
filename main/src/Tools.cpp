@@ -1,9 +1,33 @@
-#include "Tools.h"
+#include "../include/Tools.h"
 
 /**
  * @brief Read files into vectors.
  */
-void readFileIntoVector(const std::string& filename, std::vector<char>& output) {
+void readFileIntoVector(
+  const std::string& filename,
+  std::vector<char>& events
+) {
+  std::ifstream infile(filename.c_str(), std::ifstream::binary);
+  infile.seekg(0, std::ios::end);
+  auto end = infile.tellg();
+  infile.seekg(0, std::ios::beg);
+  auto dataSize = end - infile.tellg();
+
+  events.resize(dataSize);
+  infile.read((char*) &(events[0]), dataSize);
+  infile.close();
+}
+
+/**
+ * @brief Appends a file to a vector of char.
+ *        It can also be used to read a file to a vector,
+ *        returning the event_size.
+ */
+void appendFileToVector(
+  const std::string& filename,
+  std::vector<char>& events,
+  std::vector<unsigned int>& event_sizes
+) {
   std::ifstream infile(filename.c_str(), std::ifstream::binary);
   infile.seekg(0, std::ios::end);
   auto end = infile.tellg();
@@ -11,9 +35,18 @@ void readFileIntoVector(const std::string& filename, std::vector<char>& output) 
   auto dataSize = end - infile.tellg();
 
   // read content of infile with a vector
-  output.resize(dataSize);
-  infile.read ((char*) &(output[0]), dataSize);
+  const size_t previous_size = events.size();
+  events.resize(events.size() + dataSize);
+  infile.read(events.data() + previous_size, dataSize);
+  event_sizes.push_back(dataSize);
   infile.close();
+}
+
+void readGeometry(
+  const std::string& foldername,
+  std::vector<char>& geometry
+) {
+  readFileIntoVector(foldername + "/geometry.bin", geometry);
 }
 
 /**
@@ -23,8 +56,7 @@ void readFolder(
   const std::string& foldername,
   unsigned int number_of_files,
   std::vector<char>& events,
-  std::vector<unsigned int>& event_offsets,
-  std::vector<unsigned int>& hit_offsets
+  std::vector<unsigned int>& event_offsets
 ) {
   std::vector<std::string> folderContents;
   DIR *dir;
@@ -35,7 +67,8 @@ void readFolder(
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
       std::string filename = std::string(ent->d_name);
-      if (filename.find(".bin") != std::string::npos) {
+      if (filename.find(".bin") != std::string::npos &&
+        filename.find("geometry") == std::string::npos) {
         folderContents.push_back(filename);
       }
     }
@@ -51,6 +84,9 @@ void readFolder(
     exit(-1);
   }
 
+  // Sort folder contents
+  std::sort(folderContents.begin(), folderContents.end()); 
+
   if (number_of_files == 0) {
     number_of_files = folderContents.size();
   }
@@ -59,31 +95,26 @@ void readFolder(
   int readFiles = 0;
 
   // Read all requested events
-  unsigned int accumulated_size=0, accumulated_hits=0;
+  unsigned int accumulated_size=0;
+  std::vector<unsigned int> event_sizes;
   for (int i=0; i<number_of_files; ++i) {
     // Read event #i in the list and add it to the inputs
     std::string readingFile = folderContents[i % folderContents.size()];
-    std::vector<char> event_contents;
-    readFileIntoVector(foldername + "/" + readingFile, event_contents);
+    appendFileToVector(foldername + "/" + readingFile, events, event_sizes);
 
-    // Check the number of modules is correct, otherwise ignore it
-    auto eventInfo = EventInfo(event_contents);
-    if (eventInfo.numberOfModules == NUMBER_OF_SENSORS) {
-      // Populate contents, event offsets and hit offsets
-      events.insert(std::end(events), std::begin(event_contents), std::end(event_contents));
-      event_offsets.push_back(accumulated_size);
-      hit_offsets.push_back(accumulated_hits);
-      accumulated_size += event_contents.size();
-      accumulated_hits += eventInfo.numberOfHits;
-    }
+    event_offsets.push_back(accumulated_size);
+    accumulated_size += event_sizes.back();
+
     readFiles++;
     if ((readFiles % 100) == 0) {
       std::cout << "." << std::flush;
     }
   }
-  // Make last entry in hit_offsets contain total number of hits
-  hit_offsets.push_back(accumulated_hits);
-  std::cout << std::endl << event_offsets.size() << " files read" << std::endl << std::endl;
+
+  // Add last offset
+  event_offsets.push_back(accumulated_size);
+
+  std::cout << std::endl << (event_offsets.size() - 1) << " files read" << std::endl << std::endl;
 }
 
 /**

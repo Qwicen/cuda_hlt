@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include "Logger.h"
 #include "Common.h"
-#include "Definitions.cuh"
+#include "../../cuda/velo/common/include/Definitions.cuh"
 
 /**
  * Generic StrException launcher
@@ -29,16 +29,26 @@ public:
 };
 
 void readFileIntoVector(
+  const std::string& filename,
+  std::vector<char>& events
+);
+
+void appendFileToVector(
+  const std::string& filename,
+  std::vector<char>& events,
+  std::vector<unsigned int>& event_sizes
+);
+
+void readGeometry(
   const std::string& foldername,
-  std::vector<char> & output
+  std::vector<char>& geometry
 );
 
 void readFolder(
   const std::string& foldername,
   unsigned int fileNumber,
   std::vector<char>& events,
-  std::vector<unsigned int>& event_offsets,
-  std::vector<unsigned int>& hit_offsets
+  std::vector<unsigned int>& event_offsets
 );
 
 void statistics(

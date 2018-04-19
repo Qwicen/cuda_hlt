@@ -1,11 +1,7 @@
-Search by triplet
-=================
+CUDA HLT
+========
 
-Welcome to the search by triplet algorithm written in CUDA.
-
-Here is some documentation for the algorithm idea implemented here:
-
-* https://cernbox.cern.ch/index.php/s/R8i13RP6uLm9JJW
+Welcome to the CUDA High Level Trigger project, an attempt to provide a full HLT1 realization on GPU.
 
 How to run it
 -------------
@@ -23,9 +19,13 @@ Some binary input files are included with the project for testing. A run of the 
      [-n {number of files to process}=0 (all)]
      [-t {number of threads / streams}=3]
      [-r {number of repetitions per thread / stream}=10]
-     [-a {transmit host to device}=1 (-a 0 implies -r 1)]
-     [-b {transmit device to host}=0]
-     [-p (print individual rates)]
+     [-a {transmit host to device}=1]
+     [-b {transmit device to host}=1]
+     [-c {consolidate tracks}=0]
+     [-k {simplified kalman filter}=0]
+     [-v {verbosity}=3 (info)]
+     [-p (print rates)]
+
 
 Here are some example run options:
 
@@ -37,3 +37,6 @@ Here are some example run options:
 
     # Run four streams, each with 4000 events, 20 repetitions
     ./cu_hlt -f ../input -t 4 -n 4000 -r 20
+
+    # Run twelve streams, each with 3500 events, 40 repetitions
+    ./cu_hlt -f ../input -n 3500 -t 12 -r 40
