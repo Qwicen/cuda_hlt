@@ -4,13 +4,13 @@ project(cu_hlt CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}) # for find_package
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -std=c++11 -ltbb -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -std=c++11 -march=native")
 
 find_package(CUDA REQUIRED)
 
 set(CUDA_HOST_COMPILER "g++")
-
 set(CUDA_SEPARABLE_COMPILATION ON)
+option(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
 # Options for P100:
 # -std=c++11;--gpu-architecture=compute_60;--gpu-code=sm_60;
@@ -36,3 +36,5 @@ file(GLOB stream_sequence "stream/sequence/src/*cu")
 file(GLOB x86_clustering "x86/velo/clustering/src/*cpp")
 
 cuda_add_executable(cu_hlt ${main_sources} ${velo_common} ${velo_clustering_sources} ${velo_phi_and_sort} ${velo_search_by_triplet} ${velo_simplified_kalman_filter} ${velo_consolidate_tracks} ${stream_handlers} ${stream_sequence} ${x86_clustering})
+
+target_link_libraries(cu_hlt tbb)
