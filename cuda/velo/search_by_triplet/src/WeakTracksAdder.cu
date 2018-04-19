@@ -1,5 +1,5 @@
-#include "../include/SearchByTriplet.cuh"
-#include "../include/WeakTracksAdder.cuh"
+#include "SearchByTriplet.cuh"
+#include "WeakTracksAdder.cuh"
 
 __device__ void weakTracksAdder(
   int* shared_hits,

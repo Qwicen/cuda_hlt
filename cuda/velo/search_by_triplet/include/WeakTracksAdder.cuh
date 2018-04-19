@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../common/include/Definitions.cuh"
+#include "VeloDefinitions.cuh"
 
 __device__ void weakTracksAdder(
   int* shared_hits,

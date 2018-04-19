@@ -1,4 +1,4 @@
-#include "../include/MaskedVeloClustering.cuh"
+#include "MaskedVeloClustering.cuh"
 
 // Mask for any one pixel array element's next iteration
 __device__ uint32_t current_mask(uint32_t p) {

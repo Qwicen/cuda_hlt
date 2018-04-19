@@ -1,5 +1,5 @@
-﻿#include "../include/SearchByTriplet.cuh"
-#include "../../common/include/ClusteringDefinitions.cuh"
+﻿#include "SearchByTriplet.cuh"
+#include "ClusteringDefinitions.cuh"
 
 /**
  * @brief Track forwarding algorithm based on triplet finding

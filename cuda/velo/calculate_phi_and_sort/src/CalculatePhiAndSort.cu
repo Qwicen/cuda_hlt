@@ -1,4 +1,4 @@
-#include "../include/CalculatePhiAndSort.cuh"
+#include "CalculatePhiAndSort.cuh"
 
 /**
  * @brief Track forwarding algorithm based on triplet finding
