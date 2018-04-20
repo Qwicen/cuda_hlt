@@ -1,4 +1,4 @@
-#include "../include/Stream.cuh"
+#include "Stream.cuh"
 
 cudaError_t Stream::initialize(
   const std::vector<char>& raw_events,

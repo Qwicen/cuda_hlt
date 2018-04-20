@@ -1,4 +1,4 @@
-#include "../include/MaskedVeloClustering.cuh"
+#include "HandleMaskedVeloClustering.cuh"
 
 void MaskedVeloClustering::operator()() {
   masked_velo_clustering<<<num_blocks, num_threads, 0, *stream>>>(

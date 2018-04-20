@@ -1,4 +1,4 @@
-#include "../include/SearchByTriplet.cuh"
+#include "HandleSearchByTriplet.cuh"
 
 void SearchByTriplet::operator()() {
   searchByTriplet<<<num_blocks, num_threads, 0, *stream>>>(

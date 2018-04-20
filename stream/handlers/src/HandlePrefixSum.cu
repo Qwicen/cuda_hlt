@@ -1,4 +1,4 @@
-#include "../include/PrefixSum.cuh"
+#include "HandlePrefixSum.cuh"
 
 void PrefixSum::operator()() {
   prefix_sum<<<num_blocks, num_threads, 0, *stream>>>(

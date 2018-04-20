@@ -1,6 +1,6 @@
 
-file(GLOB stream_handlers "handlers/src/*cu")
-file(GLOB stream_sequence "sequence/src/*cu")
+file(GLOB stream_handlers "handlers/src/*cu" "handlers/include/*cuh")
+file(GLOB stream_sequence "sequence/src/*cu" "sequence/include/*cuh")
 
 cuda_add_library( libStream STATIC
   ${stream_handlers}
