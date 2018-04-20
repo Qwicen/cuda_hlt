@@ -4,7 +4,7 @@
 #include <vector>
 #include <numeric>
 #include <algorithm>
-#include "../../../main/include/Common.h"
+#include "../../../main/include/CudaCommon.h"
 #include "../../../main/include/Logger.h"
 #include "../../../main/include/Timer.h"
 #include "../../../cuda/velo/common/include/Definitions.cuh"
