@@ -2,7 +2,7 @@
 
 #include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
-#include "../../../main/include/Common.h"
+#include "../../../main/include/CudaCommon.h"
 #include <vector>
 #include <iostream>
 

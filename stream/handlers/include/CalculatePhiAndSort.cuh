@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../../cuda/velo/calculate_phi_and_sort/include/CalculatePhiAndSort.cuh"
-#include "../../../main/include/Common.h"
+#include "../../../main/include/CudaCommon.h"
 #include <vector>
 #include <iostream>
 
