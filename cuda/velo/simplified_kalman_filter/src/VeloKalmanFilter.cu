@@ -246,7 +246,7 @@ __global__ void velo_fit(
   const uint tracks_offset = event_number * MAX_TRACKS;
 
   // Pointers to data within the event
-  const uint number_of_hits = dev_module_cluster_start[52 * number_of_events];
+  const uint number_of_hits = dev_module_cluster_start[N_MODULES * number_of_events];
   
   // Order has changed since SortByPhi
   const float* hit_Ys = (float*) (dev_velo_cluster_container);

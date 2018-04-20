@@ -8,11 +8,12 @@
 #include <cfloat>
 #include <vector>
 
+#define N_MODULES 52
 namespace VeloTracking {
   // Detector constants
   // Note: constexpr for this variable (arrays) is still not supported, so we need
   //       to initialize it in runtime
-  extern __constant__ float velo_module_zs [52];
+  extern __constant__ float velo_module_zs [N_MODULES];
 }
 
 // Number of threads

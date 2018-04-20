@@ -17,8 +17,8 @@ void MaskedVeloClustering::print_output(
   const uint number_of_events,
   const int print_max_per_module
 ) {
-  std::vector<uint> module_cluster_start (number_of_events * 52 + 1);
-  std::vector<uint> module_cluster_num (number_of_events * 52);
+  std::vector<uint> module_cluster_start (number_of_events * N_MODULES + 1);
+  std::vector<uint> module_cluster_num (number_of_events * N_MODULES);
   cudaCheck(cudaMemcpyAsync(module_cluster_start.data(), dev_module_cluster_start, module_cluster_start.size() * sizeof(uint), cudaMemcpyDeviceToHost, *stream));
   cudaCheck(cudaMemcpyAsync(module_cluster_num.data(), dev_module_cluster_num, module_cluster_num.size() * sizeof(uint), cudaMemcpyDeviceToHost, *stream));
 
@@ -34,10 +34,10 @@ void MaskedVeloClustering::print_output(
   // Print all clusters
   for (uint i=0; i<number_of_events; ++i) {
     std::cout << "Event " << i << std::endl;
-    for (uint module=0; module<52; ++module) {
+    for (uint module=0; module<N_MODULES; ++module) {
       std::cout << " Module " << module << ":";
-      const auto mod_start = module_cluster_start[52*i + module];
-      for (uint cluster=0; cluster<module_cluster_num[52*i + module]; ++cluster) {
+      const auto mod_start = module_cluster_start[N_MODULES*i + module];
+      for (uint cluster=0; cluster<module_cluster_num[N_MODULES*i + module]; ++cluster) {
         if (print_max_per_module != -1 && cluster >= print_max_per_module) break;
 
         const auto x = cluster_xs[mod_start + cluster];
@@ -55,9 +55,9 @@ void MaskedVeloClustering::print_output(
   // // Print checksum for every event
   // for (uint i=0; i<number_of_events; ++i) {
   //   float sum = 0;
-  //   for (uint module=0; module<52; ++module) {
-  //     const auto mod_start = module_cluster_start[52*i + module];
-  //     for (uint cluster=0; cluster<module_cluster_num[52*i + module]; ++cluster) {
+  //   for (uint module=0; module<N_MODULES; ++module) {
+  //     const auto mod_start = module_cluster_start[N_MODULES*i + module];
+  //     for (uint cluster=0; cluster<module_cluster_num[N_MODULES*i + module]; ++cluster) {
   //       if (print_max_per_module != -1 && cluster >= print_max_per_module) break;
   //       const auto x = cluster_xs[mod_start + cluster];
   //       const auto y = cluster_ys[mod_start + cluster];

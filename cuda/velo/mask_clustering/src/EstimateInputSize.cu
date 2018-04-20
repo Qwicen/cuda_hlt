@@ -12,16 +12,16 @@ __global__ void estimate_input_size(
   const uint event_number = blockIdx.x;
   const uint raw_bank_number = threadIdx.y;
   const char* raw_input = dev_raw_input + dev_raw_input_offsets[event_number];
-  uint* estimated_input_size = dev_estimated_input_size + event_number * 52;
-  uint* module_cluster_num = dev_module_cluster_num + event_number * 52;
+  uint* estimated_input_size = dev_estimated_input_size + event_number * N_MODULES;
+  uint* module_cluster_num = dev_module_cluster_num + event_number * N_MODULES;
   uint* event_candidate_num = dev_event_candidate_num + event_number;
-  uint* number_of_cluster_candidates = dev_estimated_input_size + number_of_events * 52 + 2;
+  uint* number_of_cluster_candidates = dev_estimated_input_size + number_of_events * N_MODULES + 2;
   uint32_t* cluster_candidates = dev_cluster_candidates + event_number * VeloClustering::max_candidates_event;
 
   // Initialize estimated_input_size, module_cluster_num and dev_module_candidate_num to 0
-  for (int i=0; i<(52 + blockDim.x - 1) / blockDim.x; ++i) {
+  for (int i=0; i<(N_MODULES + blockDim.x - 1) / blockDim.x; ++i) {
     const auto index = i*blockDim.x + threadIdx.x;
-    if (index < 52) {
+    if (index < N_MODULES) {
       estimated_input_size[index] = 0;
       module_cluster_num[index] = 0;
     }

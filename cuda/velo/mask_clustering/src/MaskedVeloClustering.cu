@@ -71,13 +71,13 @@ __global__ void masked_velo_clustering(
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
   const char* raw_input = dev_raw_input + dev_raw_input_offsets[event_number];
-  const uint* module_cluster_start = dev_module_cluster_start + event_number * 52;
-  uint* module_cluster_num = dev_module_cluster_num + event_number * 52;
+  const uint* module_cluster_start = dev_module_cluster_start + event_number * N_MODULES;
+  uint* module_cluster_num = dev_module_cluster_num + event_number * N_MODULES;
   uint number_of_candidates = dev_event_candidate_num[event_number];
   uint32_t* cluster_candidates = (uint32_t*) &dev_cluster_candidates[event_number * VeloClustering::max_candidates_event];
 
   // Local pointers to dev_velo_cluster_container
-  const uint estimated_number_of_clusters = dev_module_cluster_start[52 * number_of_events];
+  const uint estimated_number_of_clusters = dev_module_cluster_start[N_MODULES * number_of_events];
   float* cluster_xs = (float*) &dev_velo_cluster_container[0];
   float* cluster_ys = (float*) &dev_velo_cluster_container[estimated_number_of_clusters];
   float* cluster_zs = (float*) &dev_velo_cluster_container[2 * estimated_number_of_clusters];

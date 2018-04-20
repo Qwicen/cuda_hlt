@@ -69,7 +69,8 @@ cudaError_t Stream::initialize(
   // - cluster_phis
   // - temporary
   // 
-  // The temporary is required to do the sorting in an efficient manner
+  // The temporary is required to do the sortinge in an efficient manner
+  // DvB: where do the 2000 and the 6 come from?
   velo_cluster_container_size = number_of_events * 2000 * 6;
 
   // Data preparation
@@ -81,8 +82,8 @@ cudaError_t Stream::initialize(
   // Clustering
   cudaCheck(cudaMalloc((void**)&dev_raw_input, param_starting_events_size));
   cudaCheck(cudaMalloc((void**)&dev_raw_input_offsets, event_offsets.size() * sizeof(uint)));
-  cudaCheck(cudaMalloc((void**)&dev_estimated_input_size, (number_of_events * 52 + 2) * sizeof(uint)));
-  cudaCheck(cudaMalloc((void**)&dev_module_cluster_num, number_of_events * 52 * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_estimated_input_size, (number_of_events * N_MODULES + 2) * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_module_cluster_num, number_of_events * N_MODULES * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_module_candidate_num, number_of_events * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_cluster_candidates, number_of_events * 2000 * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_velo_cluster_container, velo_cluster_container_size * sizeof(uint)));
@@ -128,7 +129,7 @@ cudaError_t Stream::initialize(
 
   prefixSum.setParameters(
     dev_estimated_input_size,
-    number_of_events * 52
+    number_of_events * N_MODULES
   );
 
   maskedVeloClustering.setParameters(

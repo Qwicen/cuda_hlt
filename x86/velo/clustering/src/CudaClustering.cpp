@@ -704,7 +704,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering(
 
   t.stop();
 
-  for (int i=0; i<52; ++i) {
+  for (int i=0; i<N_MODULES; ++i) {
     float average = 0.f;
     for (int j=0; j<4; ++j) {
       average += z_set[i*4 + j];

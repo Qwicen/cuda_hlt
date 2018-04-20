@@ -136,7 +136,7 @@ void statistics(
     }
     max_number_of_hits = std::max(max_number_of_hits, info.numberOfHits);
   }
-  average_number_of_hits_in_module /= event_offsets.size() * 52;
+  average_number_of_hits_in_module /= event_offsets.size() * N_MODULES;
 
   std::cout << "Statistics on input events:" << std::endl
     << " Max number of hits in event: " << max_number_of_hits << std::endl
@@ -256,7 +256,7 @@ void printOutModuleHits(const EventInfo& info, int moduleNumber, int* prevs, int
 }
 
 void printInfo(const EventInfo& info, int numberOfModules, int numberOfHits) {
-  numberOfModules = numberOfModules>52 ? 52 : numberOfModules;
+  numberOfModules = numberOfModules>N_MODULES ? N_MODULES : numberOfModules;
 
   DEBUG << "Read info:" << std::endl
     << " no modules: " << info.numberOfModules << std::endl

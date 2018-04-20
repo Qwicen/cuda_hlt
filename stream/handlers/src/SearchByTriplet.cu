@@ -21,8 +21,8 @@ void SearchByTriplet::print_output(
   const uint number_of_events
 ) {
   // Fetch clusters
-  std::vector<uint> module_cluster_start (number_of_events * 52 + 1);
-  std::vector<uint> module_cluster_num (number_of_events * 52);
+  std::vector<uint> module_cluster_start (number_of_events * N_MODULES + 1);
+  std::vector<uint> module_cluster_num (number_of_events * N_MODULES);
   cudaCheck(cudaMemcpy(module_cluster_start.data(), dev_module_cluster_start, module_cluster_start.size() * sizeof(uint), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(module_cluster_num.data(), dev_module_cluster_num, module_cluster_num.size() * sizeof(uint), cudaMemcpyDeviceToHost));
 
@@ -35,9 +35,9 @@ void SearchByTriplet::print_output(
   for (int i=0; i<number_of_events; ++i) {
     int sum_h0 = 0;
     int sum_h2 = 0;
-    for (int module=0; module<52; ++module) {
-      const auto h_start = module_cluster_start[52*i + module];
-      for (int n=0; n<module_cluster_num[52*i + module]; ++n) {
+    for (int module=0; module<N_MODULES; ++module) {
+      const auto h_start = module_cluster_start[N_MODULES*i + module];
+      for (int n=0; n<module_cluster_num[N_MODULES*i + module]; ++n) {
         sum_h0 += h0_candidates[2*(h_start + n)];
         sum_h0 += h0_candidates[2*(h_start + n) + 1];
         sum_h2 += h2_candidates[2*(h_start + n)];

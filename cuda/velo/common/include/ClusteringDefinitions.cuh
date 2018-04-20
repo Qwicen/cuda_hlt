@@ -5,6 +5,8 @@
 #include <vector>
 #include <iostream>
 
+#include "VeloDefinitions.cuh"
+
 namespace VeloClustering {
   extern __constant__ uint8_t sp_patterns [256];
   extern __constant__ uint8_t sp_sizes [256];
@@ -57,7 +59,7 @@ namespace LHCb {
 }
 
 namespace VP {
-  static constexpr uint NModules = 52;
+  static constexpr uint NModules = N_MODULES;
   static constexpr uint NSensorsPerModule = 4;
   static constexpr uint NSensors = NModules * NSensorsPerModule;
   static constexpr uint NChipsPerSensor = 3;

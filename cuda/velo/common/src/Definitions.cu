@@ -1,3 +1,3 @@
 #include "VeloDefinitions.cuh"
 
-__constant__ float VeloTracking::velo_module_zs [52];
+__constant__ float VeloTracking::velo_module_zs [N_MODULES];
