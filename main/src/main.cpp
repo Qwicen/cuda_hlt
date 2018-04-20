@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include "tbb/tbb.h"
 #include "cuda_runtime.h"
-#include "../include/Common.h"
+#include "../include/CudaCommon.h"
 #include "../include/Logger.h"
 #include "../include/Tools.h"
 #include "../include/Timer.h"

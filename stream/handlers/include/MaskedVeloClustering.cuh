@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../../cuda/velo/mask_clustering/include/MaskedVeloClustering.cuh"
-#include "../../../main/include/Common.h"
+#include "../../../main/include/CudaCommon.h"
 #include <vector>
 #include <iostream>
 
