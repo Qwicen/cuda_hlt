@@ -1,4 +1,4 @@
-#include "../include/SearchByTriplet.cuh"
+#include "SearchByTriplet.cuh"
 
 /**
  * @brief Fits hits to tracks.

@@ -1,4 +1,4 @@
-#include "../include/PrefixSum.cuh"
+#include "PrefixSum.cuh"
 
 /**
  * @brief Up-Sweep (reduce)

@@ -1,4 +1,4 @@
-#include "../include/EstimateInputSize.cuh"
+#include "EstimateInputSize.cuh"
 
 __global__ void estimate_input_size(
   char* dev_raw_input,

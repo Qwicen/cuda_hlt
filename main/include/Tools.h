@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include "Logger.h"
 #include "Common.h"
-#include "../../cuda/velo/common/include/Definitions.cuh"
+#include "../../cuda/velo/common/include/VeloDefinitions.cuh"
 
 /**
  * Generic StrException launcher

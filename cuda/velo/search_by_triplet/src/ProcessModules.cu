@@ -1,7 +1,7 @@
-#include "../include/ProcessModules.cuh"
-#include "../include/TrackSeedingFirst.cuh"
-#include "../include/TrackSeeding.cuh"
-#include "../include/TrackForwarding.cuh"
+#include "ProcessModules.cuh"
+#include "TrackSeedingFirst.cuh"
+#include "TrackSeeding.cuh"
+#include "TrackForwarding.cuh"
 
 /**
  * @brief Processes modules in decreasing order with some stride

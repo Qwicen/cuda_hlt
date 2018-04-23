@@ -1,4 +1,4 @@
-#include "../include/FillCandidates.cuh"
+#include "FillCandidates.cuh"
 
 __device__ void fillCandidates(
   short* h0_candidates,

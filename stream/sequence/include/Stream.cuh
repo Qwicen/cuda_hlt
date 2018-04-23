@@ -4,10 +4,10 @@
 #include <vector>
 #include <numeric>
 #include <algorithm>
-#include "../../../main/include/Common.h"
+#include "../../../main/include/CudaCommon.h"
 #include "../../../main/include/Logger.h"
 #include "../../../main/include/Timer.h"
-#include "../../../cuda/velo/common/include/Definitions.cuh"
+#include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../handlers/include/EstimateInputSize.cuh"
 #include "../../handlers/include/PrefixSum.cuh"
 #include "../../handlers/include/MaskedVeloClustering.cuh"

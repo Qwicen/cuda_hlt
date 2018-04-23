@@ -1,4 +1,4 @@
-#include "../../common/include/Definitions.cuh"
+#include "VeloDefinitions.cuh"
 #include "math_constants.h" // PI
 
 /**

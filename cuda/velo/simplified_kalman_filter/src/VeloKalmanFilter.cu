@@ -1,4 +1,4 @@
-#include "../include/VeloKalmanFilter.cuh"
+#include "VeloKalmanFilter.cuh"
 
 /**
  * @brief Calculates the parameters according to a root means square fit

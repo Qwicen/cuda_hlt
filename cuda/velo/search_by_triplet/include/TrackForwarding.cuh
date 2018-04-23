@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../common/include/Definitions.cuh"
+#include "../../common/include/VeloDefinitions.cuh"
 
 __device__ void trackForwarding(
   const float* hit_Xs,

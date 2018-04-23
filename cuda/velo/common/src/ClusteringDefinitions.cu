@@ -1,4 +1,4 @@
-#include "../include/ClusteringDefinitions.cuh"
+#include "ClusteringDefinitions.cuh"
 
 __constant__ uint8_t VeloClustering::sp_patterns [256];
 __constant__ uint8_t VeloClustering::sp_sizes [256];
