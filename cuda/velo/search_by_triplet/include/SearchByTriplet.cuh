@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "VeloDefinitions.cuh"
+#include "../../common/include/VeloDefinitions.cuh"
 #include "FillCandidates.cuh"
 #include "ProcessModules.cuh"
 #include "TrackForwarding.cuh"

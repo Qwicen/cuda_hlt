@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "VeloDefinitions.cuh"
+#include "../../common/include/VeloDefinitions.cuh"
 
 __global__ void velo_fit(
   const uint32_t* dev_velo_cluster_container,

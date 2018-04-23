@@ -6,6 +6,13 @@ file(GLOB velo_search_by_triplet "search_by_triplet/src/*cu")
 file(GLOB velo_simplified_kalman_filter "simplified_kalman_filter/src/*cu")
 file(GLOB velo_consolidate_tracks "consolidate_tracks/src/*cu")
 
+include_directories(consolidate_tracks/include)
+include_directories(common/include)
+include_directories(mask_clustering/include)
+include_directories(calculate_phi_and_sort/include)
+include_directories(search_by_triplet/include)
+include_directories(simplified_kalman_filter/include) 
+
 cuda_add_library( libcuVelo STATIC
   ${velo_common}
   ${velo_clustering_sources}
@@ -15,14 +22,4 @@ cuda_add_library( libcuVelo STATIC
   ${velo_consolidate_tracks}
   )
 
-# attention, the PUBLIC scope might cause problems if more projects
-# are added which have headers with the same name
-# should restructure project to not need this
-# currently it is needed because some headers are included by files in stream
-# we could pack everything cuda/velo related into the library
-target_include_directories(libcuVelo PUBLIC common/include)
-target_include_directories(libcuVelo PRIVATE mask_clustering/include)
-target_include_directories(libcuVelo PRIVATE calculate_phi_and_sort/include)
-target_include_directories(libcuVelo PRIVATE search_by_triplet/include)
-target_include_directories(libcuVelo PRIVATE simplified_kalman_filter/include)
-target_include_directories(libcuVelo PRIVATE consolidate_tracks/include)
+ 

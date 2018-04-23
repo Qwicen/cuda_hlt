@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VeloDefinitions.cuh"
+#include "../../common/include/VeloDefinitions.cuh"
 
 __device__ void trackSeeding(
   float* shared_best_fits,
