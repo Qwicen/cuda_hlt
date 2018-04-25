@@ -7,6 +7,7 @@
 #include "../../../main/include/CudaCommon.h"
 #include "../../../main/include/Logger.h"
 #include "../../../main/include/Timer.h"
+#include "../../../main/include/Tools.h"
 #include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../handlers/include/HandleEstimateInputSize.cuh"
 #include "../../handlers/include/HandlePrefixSum.cuh"

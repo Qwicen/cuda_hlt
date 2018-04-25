@@ -103,7 +103,7 @@ struct HitXY {
     ) : x(_x), y(_y) {}
 };
 
-struct Hit {
+struct Hit { // 4 * 4 = 16 B
     float x;
     float y;
     float z;
@@ -139,7 +139,7 @@ struct TrackHits { // 4 + 26 * 4 = 116 B
 /* Structure to save final track
    Contains information needed later on in the HLT chain
    and / or for truth matching */
-struct Track { 
+struct Track { 4 + 26 * 16 = 420 B
   unsigned short hitsNum;
   Hit hits[MAX_TRACK_SIZE];
   

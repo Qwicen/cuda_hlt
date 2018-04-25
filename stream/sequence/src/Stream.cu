@@ -164,6 +164,18 @@ cudaError_t Stream::operator()(
       times.emplace_back("total", t_total.get());
       print_timing(number_of_events, times);
     }
+    
+    if ( repetitions == 0 ) { // only print out tracks once
+      std::ofstream out_file;
+      out_file.open("tracks_out.txt");
+      for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
+	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+	  Track* tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
+	  printTrack( tracks_event, i_track, out_file );
+	}
+      }
+      out_file.close();
+    }
   }
 
   return cudaSuccess;

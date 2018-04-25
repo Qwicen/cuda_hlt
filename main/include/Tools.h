@@ -79,18 +79,17 @@ void printInfo(
   int numberOfHits
 );
 
-/* void printTrack( */
-/*   const EventInfo& info, */
-/*   Track* tracks, */
-/*   const int trackNumber, */
-/*   std::ofstream& outstream */
-/* ); */
+void printTrack(
+  Track* tracks,
+  const int trackNumber,
+  std::ofstream& outstream
+);
 
-/* void writeBinaryTrack( */
-/*   const unsigned int* hit_IDs, */
-/*   const Track& track, */
-/*   std::ofstream& outstream */
-/* ); */
+void writeBinaryTrack(
+  const unsigned int* hit_IDs,
+  const Track& track,
+  std::ofstream& outstream
+);
 
 cudaError_t checkSorting(
   const std::vector<std::vector<uint8_t>>& input,
