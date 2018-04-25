@@ -171,7 +171,7 @@ __device__ void trackSeeding(
     if (threadIdx.x == winner_thread) {
       // Add the track to the bag of tracks
       const auto trackP = atomicAdd(tracklets_insertPointer, 1);
-      // ASSERT(trackP < number_of_hits)
+      // assert(trackP < number_of_hits);
       tracklets[trackP] = Track {3, best_h0, h1_index, best_h2};
 
       // Add the tracks to the bag of tracks to_follow

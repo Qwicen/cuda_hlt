@@ -69,7 +69,7 @@ __device__ void calculatePhiSide(
           // Stable sorting
           position += phi>other_phi || (phi==other_phi && hit_rel_id>j);
         }
-        ASSERT(position < MAX_NUMHITS_IN_MODULE)
+        assert(position < MAX_NUMHITS_IN_MODULE);
 
         // Store it in hit permutations and in hit_Phis, already ordered
         const auto global_position = hit_start + position;

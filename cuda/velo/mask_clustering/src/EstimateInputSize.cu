@@ -15,7 +15,6 @@ __global__ void estimate_input_size(
   uint* estimated_input_size = dev_estimated_input_size + event_number * 52;
   uint* module_cluster_num = dev_module_cluster_num + event_number * 52;
   uint* event_candidate_num = dev_event_candidate_num + event_number;
-  uint* number_of_cluster_candidates = dev_estimated_input_size + number_of_events * 52 + 2;
   uint32_t* cluster_candidates = dev_cluster_candidates + event_number * VeloClustering::max_candidates_event;
 
   // Initialize estimated_input_size, module_cluster_num and dev_module_candidate_num to 0

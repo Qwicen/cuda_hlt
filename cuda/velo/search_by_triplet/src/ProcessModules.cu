@@ -151,7 +151,7 @@ __device__ void processModules(
       // to mark them as "doubtful"
       if (track_flag) {
         const auto weakP = atomicAdd(weaktracks_insert_pointer, 1);
-        ASSERT(weakP < number_of_hits)
+        assert(weakP < number_of_hits);
         weak_tracks[weakP] = trackno;
       }
     }

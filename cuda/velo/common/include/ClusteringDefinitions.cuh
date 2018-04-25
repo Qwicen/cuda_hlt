@@ -125,4 +125,4 @@ __device__ __host__ uint32_t get_channel_id(
   uint row
 );
 
-__device__ __host__ uint32_t get_lhcb_id(uint32_t cid);
+__device__ __host__ int32_t get_lhcb_id(int32_t cid);
