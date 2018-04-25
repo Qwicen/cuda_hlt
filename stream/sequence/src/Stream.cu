@@ -135,12 +135,8 @@ cudaError_t Stream::operator()(
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       
-      if (!do_consolidate) {
-        // Copy non-consolidated tracks
-        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracks, number_of_events * max_tracks_in_event * sizeof(TrackHits), cudaMemcpyDeviceToHost, stream));
-      }
-      else {
-        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, number_of_events * max_tracks_in_event * sizeof(TrackHits), cudaMemcpyDeviceToHost, stream));
+      if (do_consolidate) {
+	cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
       }
 
       cudaEventRecord(cuda_generic_event, stream);

@@ -54,6 +54,7 @@ cudaError_t Stream::initialize(
   int* dev_atomics_storage;
   TrackHits* dev_tracklets;
   uint* dev_weak_tracks;
+  Track* dev_output_tracks;
   short* dev_h0_candidates;
   short* dev_h2_candidates;
   unsigned short* dev_rel_indices;
@@ -98,6 +99,7 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_tracks, number_of_events * max_tracks_in_event * sizeof(TrackHits)));
   cudaCheck(cudaMalloc((void**)&dev_tracklets, average_number_of_hits_per_event * number_of_events * sizeof(TrackHits)));
   cudaCheck(cudaMalloc((void**)&dev_weak_tracks, average_number_of_hits_per_event * number_of_events * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_output_tracks, max_tracks_in_event * number_of_events * sizeof(Track)));
   cudaCheck(cudaMalloc((void**)&dev_hit_used, average_number_of_hits_per_event * number_of_events * sizeof(bool)));
   cudaCheck(cudaMalloc((void**)&dev_atomics_storage, number_of_events * atomic_space * sizeof(int)));
   cudaCheck(cudaMalloc((void**)&dev_h0_candidates, 2 * average_number_of_hits_per_event * number_of_events * sizeof(short)));
@@ -111,7 +113,7 @@ cudaError_t Stream::initialize(
 
   // Memory allocations for host memory (copy back)
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks_pinned, number_of_events * sizeof(int)));
-  cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * max_tracks_in_event * sizeof(TrackHits)));
+  cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * max_tracks_in_event * sizeof(Track)));
 
   // Pre-populate raw_input data, in case the user requested -a 0
   cudaCheck(cudaMemcpyAsync(dev_raw_input, raw_events.data(), raw_events.size(), cudaMemcpyHostToDevice, stream));
@@ -168,7 +170,10 @@ cudaError_t Stream::initialize(
   consolidateTracks.setParameters(
     dev_atomics_storage,
     dev_tracks,
-    dev_tracklets
+    dev_output_tracks,
+    dev_velo_cluster_container,
+    dev_estimated_input_size,
+    dev_module_cluster_num
   );
 
   simplifiedKalmanFilter.setParameters(

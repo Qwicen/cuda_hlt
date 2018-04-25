@@ -142,9 +142,11 @@ struct TrackHits { // 4 + 26 * 4 = 116 B
 struct Track { 
   unsigned short hitsNum;
   Hit hits[MAX_TRACK_SIZE];
-
-  __device__ Track(){}
-
+  
+  __device__ Track(){
+  hitsNum = 0;
+  }
+ 
   __device__ void addHit( Hit _h ){
     hits[ hitsNum ] = _h;
     hitsNum++;
