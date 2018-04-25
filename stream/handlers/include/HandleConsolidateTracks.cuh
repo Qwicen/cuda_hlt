@@ -11,8 +11,8 @@ struct ConsolidateTracks {
 
   // Call parameters
   int* dev_atomics_storage;
-  Track* dev_tracks;
-  Track* dev_output_tracks;
+  TrackHits* dev_tracks;
+  TrackHits* dev_output_tracks;
 
   ConsolidateTracks() = default;
 
@@ -28,8 +28,8 @@ struct ConsolidateTracks {
 
   void setParameters(
     int* param_dev_atomics_storage,
-    Track* param_dev_tracks,
-    Track* param_dev_output_tracks
+    TrackHits* param_dev_tracks,
+    TrackHits* param_dev_output_tracks
   ) {
     dev_atomics_storage = param_dev_atomics_storage;
     dev_tracks = param_dev_tracks;

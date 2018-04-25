@@ -180,17 +180,17 @@ std::map<std::string, float> calcResults(std::vector<float>& times){
  * @details The binary format is per every track:
  *   hitsNum hit0 hit1 hit2 ... (#hitsNum times)
  */
-void writeBinaryTrack(
-  const unsigned int* hit_IDs,
-  const Track& track,
-  std::ofstream& outstream
-) {
-  uint32_t hitsNum = track.hitsNum;
-  outstream.write((char*) &hitsNum, sizeof(uint32_t));
-  for (int i=0; i<track.hitsNum; ++i) {
-    outstream.write((char*) &hit_IDs[track.hits[i]], sizeof(uint32_t));
-  }
-}
+// void writeBinaryTrack(
+//   const unsigned int* hit_IDs,
+//   const Track& track,
+//   std::ofstream& outstream
+// ) {
+//   uint32_t hitsNum = track.hitsNum;
+//   outstream.write((char*) &hitsNum, sizeof(uint32_t));
+//   for (int i=0; i<track.hitsNum; ++i) {
+//     outstream.write((char*) &hit_IDs[track.hits[i]], sizeof(uint32_t));
+//   }
+// } 
 
 /**
  * Prints tracks
@@ -200,40 +200,40 @@ void writeBinaryTrack(
  * @param tracks      
  * @param trackNumber 
  */
-void printTrack(
-  const EventInfo& info,
-  Track* tracks,
-  const int trackNumber,
-  std::ofstream& outstream
-) {
-  const Track t = tracks[trackNumber];
-  outstream << "Track #" << trackNumber << ", length " << (int) t.hitsNum << std::endl;
+// void printTrack(
+//   const EventInfo& info,
+//   Track* tracks,
+//   const int trackNumber,
+//   std::ofstream& outstream
+// ) {
+//   const Track t = tracks[trackNumber];
+//   outstream << "Track #" << trackNumber << ", length " << (int) t.hitsNum << std::endl;
 
-  for(int i=0; i<t.hitsNum; ++i){
-    const int hitNumber = t.hits[i];
-    const unsigned int id = info.hit_IDs[hitNumber];
-    const float x = info.hit_Xs[hitNumber];
-    const float y = info.hit_Ys[hitNumber];
+//   for(int i=0; i<t.hitsNum; ++i){
+//     const int hitNumber = t.hits[i];
+//     const unsigned int id = info.hit_IDs[hitNumber];
+//     const float x = info.hit_Xs[hitNumber];
+//     const float y = info.hit_Ys[hitNumber];
 
-    int module = 0;
-    for (int i=0; i<info.numberOfModules; ++i) {
-      if (hitNumber >= info.module_hitStarts[i] &&
-          hitNumber < info.module_hitStarts[i] + info.module_hitNums[i]) {
-        module = i;
-      }
-    }
+//     int module = 0;
+//     for (int i=0; i<info.numberOfModules; ++i) {
+//       if (hitNumber >= info.module_hitStarts[i] &&
+//           hitNumber < info.module_hitStarts[i] + info.module_hitNums[i]) {
+//         module = i;
+//       }
+//     }
 
-    outstream << " " << std::setw(8) << id << " (" << hitNumber << ")"
-      << " module " << std::setw(2) << module
-      << ", x " << std::setw(6) << x
-      << ", y " << std::setw(6) << y
-      << ", z " << std::setw(6) << info.module_Zs[module]
-      << std::endl;
-  }
+//     outstream << " " << std::setw(8) << id << " (" << hitNumber << ")"
+//       << " module " << std::setw(2) << module
+//       << ", x " << std::setw(6) << x
+//       << ", y " << std::setw(6) << y
+//       << ", z " << std::setw(6) << info.module_Zs[module]
+//       << std::endl;
+//   }
 
-  outstream << std::endl;
-}
-
+//   outstream << std::endl;
+// }
+ 
 void printOutAllModuleHits(const EventInfo& info, int* prevs, int* nexts) {
   DEBUG << "All valid module hits: " << std::endl;
   for(int i=0; i<info.numberOfModules; ++i){

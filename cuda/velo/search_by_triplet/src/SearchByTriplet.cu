@@ -8,8 +8,8 @@ __global__ void searchByTriplet(
   uint32_t* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
-  Track* dev_tracks,
-  Track* dev_tracklets,
+  TrackHits* dev_tracks,
+  TrackHits* dev_tracklets,
   uint* dev_tracks_to_follow,
   uint* dev_weak_tracks,
   bool* dev_hit_used,
@@ -38,7 +38,7 @@ __global__ void searchByTriplet(
   const float* hit_IDs = (float*) (dev_velo_cluster_container + 3 * number_of_hits + hit_offset);
 
   // Per event datatypes
-  Track* tracks = dev_tracks + tracks_offset;
+  TrackHits* tracks = dev_tracks + tracks_offset;
   uint* tracks_insert_pointer = (uint*) dev_atomics_storage + event_number;
 
   // Per side datatypes
@@ -48,7 +48,7 @@ __global__ void searchByTriplet(
 
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * TTF_MODULO;
   uint* weak_tracks = dev_weak_tracks + hit_offset;
-  Track* tracklets = dev_tracklets + hit_offset;
+  TrackHits* tracklets = dev_tracklets + hit_offset;
   unsigned short* h1_rel_indices = dev_rel_indices + event_number * MAX_NUMHITS_IN_MODULE;
 
   // Initialize variables according to event number and module side

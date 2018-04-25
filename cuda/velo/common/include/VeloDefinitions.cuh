@@ -103,12 +103,12 @@ struct Hit {
     ) : x(_x), y(_y) {}
 };
 
-struct Track { // 4 + 26 * 4 = 116 B
+struct TrackHits { // 4 + 26 * 4 = 116 B
   unsigned short hitsNum;
   unsigned short hits[MAX_TRACK_SIZE];
 
-  __device__ Track(){}
-  __device__ Track(
+  __device__ TrackHits(){}
+  __device__ TrackHits(
     const unsigned short _hitsNum,
     const unsigned short _h0,
     const unsigned short _h1,

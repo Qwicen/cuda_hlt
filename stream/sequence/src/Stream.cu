@@ -137,10 +137,10 @@ cudaError_t Stream::operator()(
       
       if (!do_consolidate) {
         // Copy non-consolidated tracks
-        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracks, number_of_events * max_tracks_in_event * sizeof(TrackHits), cudaMemcpyDeviceToHost, stream));
       }
       else {
-        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, number_of_events * max_tracks_in_event * sizeof(TrackHits), cudaMemcpyDeviceToHost, stream));
       }
 
       cudaEventRecord(cuda_generic_event, stream);
@@ -159,7 +159,7 @@ cudaError_t Stream::operator()(
       //   for (int i=0; i<number_of_events; ++i) {
       //     total_number_of_tracks += host_number_of_tracks_pinned[i];
       //   }
-      //   cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, total_number_of_tracks * sizeof(Track), cudaMemcpyDeviceToHost, stream));
+      //   cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, total_number_of_tracks * sizeof(TrackHits), cudaMemcpyDeviceToHost, stream));
       // }
     }
 

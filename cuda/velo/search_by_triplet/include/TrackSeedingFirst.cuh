@@ -11,6 +11,6 @@ __device__ void trackSeedingFirst(
   const short* h2_candidates,
   unsigned int* tracklets_insertPointer,
   unsigned int* ttf_insertPointer,
-  Track* tracklets,
+  TrackHits* tracklets,
   unsigned int* tracks_to_follow
 );

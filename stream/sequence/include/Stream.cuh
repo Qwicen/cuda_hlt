@@ -49,7 +49,7 @@ struct Stream {
   uint velo_cluster_container_size;
   // Data back transmission
   int* host_number_of_tracks_pinned;
-  Track* host_tracks_pinned;
+  TrackHits* host_tracks_pinned;
 
   Stream() = default;
 

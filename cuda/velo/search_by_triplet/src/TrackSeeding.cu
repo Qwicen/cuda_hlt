@@ -14,7 +14,7 @@ __device__ void trackSeeding(
   bool* hit_used,
   uint* tracklets_insertPointer,
   uint* ttf_insertPointer,
-  Track* tracklets,
+  TrackHits* tracklets,
   uint* tracks_to_follow,
   unsigned short* h1_rel_indices,
   uint* local_number_of_hits
@@ -172,7 +172,7 @@ __device__ void trackSeeding(
       // Add the track to the bag of tracks
       const auto trackP = atomicAdd(tracklets_insertPointer, 1);
       // ASSERT(trackP < number_of_hits)
-      tracklets[trackP] = Track {3, best_h0, h1_index, best_h2};
+      tracklets[trackP] = TrackHits {3, best_h0, h1_index, best_h2};
 
       // Add the tracks to the bag of tracks to_follow
       // Note: The first bit flag marks this is a tracklet (hitsNum == 3),

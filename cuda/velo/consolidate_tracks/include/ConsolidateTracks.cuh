@@ -4,6 +4,6 @@
 
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
-  const Track* dev_tracks,
-  Track* dev_output_tracks
+  const TrackHits* dev_tracks,
+  TrackHits* dev_output_tracks
 );

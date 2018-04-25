@@ -49,8 +49,8 @@ __device__ void trackForwarding(
   uint* tracks_to_follow,
   uint* weak_tracks,
   const uint prev_ttf,
-  Track* tracklets,
-  Track* tracks,
+  TrackHits* tracklets,
+  TrackHits* tracks,
   const uint number_of_hits
 ) {
   // Assign a track to follow to each thread
@@ -62,7 +62,7 @@ __device__ void trackForwarding(
       const auto skipped_modules = (fulltrackno & 0x70000000) >> 28;
       auto trackno = fulltrackno & 0x0FFFFFFF;
 
-      const Track* track_pointer = track_flag ? tracklets : tracks;
+      const TrackHits* track_pointer = track_flag ? tracklets : tracks;
       
       ASSERT(track_pointer==tracklets ? trackno < number_of_hits : true)
       ASSERT(track_pointer==tracks ? trackno < MAX_TRACKS : true)

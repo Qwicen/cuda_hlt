@@ -48,11 +48,11 @@ cudaError_t Stream::initialize(
   uint32_t* dev_velo_cluster_container;
   char* dev_velo_geometry;
   // Velo tracking
-  Track* dev_tracks;
+  TrackHits* dev_tracks;
   uint* dev_tracks_to_follow;
   bool* dev_hit_used;
   int* dev_atomics_storage;
-  Track* dev_tracklets;
+  TrackHits* dev_tracklets;
   uint* dev_weak_tracks;
   short* dev_h0_candidates;
   short* dev_h2_candidates;
@@ -95,8 +95,8 @@ cudaError_t Stream::initialize(
   // cudaCheck(cudaMalloc((void**)&dev_tracks_to_follow, number_of_events * TTF_MODULO * sizeof(uint)));
   dev_tracks_to_follow = dev_cluster_candidates;
   
-  cudaCheck(cudaMalloc((void**)&dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track)));
-  cudaCheck(cudaMalloc((void**)&dev_tracklets, average_number_of_hits_per_event * number_of_events * sizeof(Track)));
+  cudaCheck(cudaMalloc((void**)&dev_tracks, number_of_events * max_tracks_in_event * sizeof(TrackHits)));
+  cudaCheck(cudaMalloc((void**)&dev_tracklets, average_number_of_hits_per_event * number_of_events * sizeof(TrackHits)));
   cudaCheck(cudaMalloc((void**)&dev_weak_tracks, average_number_of_hits_per_event * number_of_events * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_hit_used, average_number_of_hits_per_event * number_of_events * sizeof(bool)));
   cudaCheck(cudaMalloc((void**)&dev_atomics_storage, number_of_events * atomic_space * sizeof(int)));
@@ -111,7 +111,7 @@ cudaError_t Stream::initialize(
 
   // Memory allocations for host memory (copy back)
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks_pinned, number_of_events * sizeof(int)));
-  cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * max_tracks_in_event * sizeof(Track)));
+  cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * max_tracks_in_event * sizeof(TrackHits)));
 
   // Pre-populate raw_input data, in case the user requested -a 0
   cudaCheck(cudaMemcpyAsync(dev_raw_input, raw_events.data(), raw_events.size(), cudaMemcpyHostToDevice, stream));
