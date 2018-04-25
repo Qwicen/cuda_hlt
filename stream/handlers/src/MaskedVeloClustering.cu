@@ -31,14 +31,14 @@ void MaskedVeloClustering::print_output(
   float* cluster_zs = (float*) &velo_cluster_container[2 * estimated_number_of_clusters];
   uint32_t* cluster_ids = (uint32_t*) &velo_cluster_container[3 * estimated_number_of_clusters];
 
-  // // Print number of found clusters per event
-  // for (uint i=0; i<number_of_events; ++i) {
-  //   uint found_clusters = 0;
-  //   for (uint module=0; module<52; ++module) {
-  //     found_clusters += module_cluster_num[52*i + module];
-  //   }
-  //   std::cout << "Event " << i << ": " << found_clusters << " clusters" << std::endl;
-  // }
+  // Print number of found clusters per event
+  for (uint i=0; i<number_of_events; ++i) {
+    uint found_clusters = 0;
+    for (uint module=0; module<52; ++module) {
+      found_clusters += module_cluster_num[52*i + module];
+    }
+    std::cout << "Event " << i << ": " << found_clusters << " clusters" << std::endl;
+  }
 
   // // Print all clusters
   // for (uint i=0; i<number_of_events; ++i) {

@@ -7,7 +7,7 @@
 
 namespace VeloClustering {
   extern __constant__ uint8_t sp_patterns [256];
-  extern __constant__ uint8_t sp_sizes [256];
+  extern __constant__ uint8_t candidate_ks [9];
   extern __constant__ float sp_fx [512];
   extern __constant__ float sp_fy [512];
 

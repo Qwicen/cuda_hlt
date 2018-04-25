@@ -1,6 +1,6 @@
 #pragma once
 
-#define DEBUG logger::logger(logger::debug)
+#define DEBUG_OUT logger::logger(logger::debug)
 #define INFO  logger::logger(logger::info)
 #define WARNING logger::logger(logger::warning)
 #define ERROR logger::logger(logger::error)

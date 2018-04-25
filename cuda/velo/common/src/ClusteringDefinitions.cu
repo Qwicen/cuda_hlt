@@ -1,7 +1,7 @@
 #include "ClusteringDefinitions.cuh"
 
 __constant__ uint8_t VeloClustering::sp_patterns [256];
-__constant__ uint8_t VeloClustering::sp_sizes [256];
+__constant__ uint8_t VeloClustering::candidate_ks [9];
 __constant__ float VeloClustering::sp_fx [512];
 __constant__ float VeloClustering::sp_fy [512];
 

@@ -8,7 +8,6 @@ __global__ void estimate_input_size(
   uint* dev_event_candidate_num,
   uint32_t* dev_cluster_candidates
 ) {
-  const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
   const uint raw_bank_number = threadIdx.y;
   const char* raw_input = dev_raw_input + dev_raw_input_offsets[event_number];
@@ -157,48 +156,46 @@ __global__ void estimate_input_size(
           // 
           uint found_cluster_candidates = 0;
 
-          // Apply pattern to each pixel
-          // Pixels 0 to 3
-          for (int k=0; k<4; ++k) {
-            // Note: Pattern is 0x71 because of how the int is done:
-            // 
-            // 0x10 0x0400 0x010000
-            // 0x08 0x0200   0x8000
-            // 0x04 0x0100   0x4000
-            // 0x02   0x80   0x2000
-            // 0x01   0x40   0x1000
-            //        0x20   0x0800
-            //        
-            // 0x71 = 0x01 + 0x10 + 0x20 + 0x40
-            const bool isolated = (pixels&(0x71 << (k+1))) == 0;
-            const bool is_candidate = (pixels&(0x01 << k)) != 0 && isolated;
-            found_cluster_candidates += is_candidate;
-            if (is_candidate) {
-              auto current_cluster_candidate = atomicAdd(event_candidate_num, 1);
-              const uint32_t candidate = (sp_index << 11)
-                | (raw_bank_number << 3)
-                | k;
-              cluster_candidates[current_cluster_candidate] = candidate;
-            }
+          const uint32_t sp_inside_pixel = pixels & 0x3CF;
+          const uint32_t mask = (sp_inside_pixel << 1)
+            | (sp_inside_pixel << 5)
+            | (sp_inside_pixel << 6)
+            | (sp_inside_pixel << 7);
+
+          const uint32_t working_cluster = mask & (~pixels);
+          const uint32_t candidates = (working_cluster >> 1)
+            & (working_cluster >> 5)
+            & (working_cluster >> 6)
+            & (working_cluster >> 7);
+
+          const uint8_t candidates_uint8 = ((candidates >> 2) & 0xF0) | (candidates & 0xF);
+
+          // Add candidates 0-3
+          if (candidates_uint8 & 0xF) {
+            const uint8_t k = VeloClustering::candidate_ks[candidates_uint8 & 0xF];
+            auto current_cluster_candidate = atomicAdd(event_candidate_num, 1);
+            const uint32_t candidate = (sp_index << 11)
+              | (raw_bank_number << 3)
+              | k;
+            cluster_candidates[current_cluster_candidate] = candidate;
+            ++found_cluster_candidates;
           }
 
-          // Pixels 4 to 7
-          for (int k=0; k<4; ++k) {
-            // For pixels 4 to 7, we need to shift everything by 6
-            const bool isolated = (pixels&(0x71 << (k+7))) == 0;
-            const bool is_candidate = (pixels&(0x01 << k+6)) != 0 && isolated;
-            found_cluster_candidates += is_candidate;
-            if (is_candidate) {
-              auto current_cluster_candidate = atomicAdd(event_candidate_num, 1);
-              const uint32_t candidate = (sp_index << 11)
-                | (raw_bank_number << 3)
-                | (k+4);
-              cluster_candidates[current_cluster_candidate] = candidate;
-            }
+          // Add candidates 4-7
+          if (candidates_uint8 & 0xF0) {
+            const uint8_t k = VeloClustering::candidate_ks[(candidates_uint8 >> 4)] + 4;
+            auto current_cluster_candidate = atomicAdd(event_candidate_num, 1);
+            const uint32_t candidate = (sp_index << 11)
+              | (raw_bank_number << 3)
+              | k;
+            cluster_candidates[current_cluster_candidate] = candidate;
+            ++found_cluster_candidates;
           }
 
           // Add the found cluster candidates
-          atomicAdd(estimated_module_size, found_cluster_candidates);
+          if (found_cluster_candidates > 0) {
+            atomicAdd(estimated_module_size, found_cluster_candidates);
+          }
         }
       }
     }

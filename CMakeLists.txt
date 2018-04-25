@@ -21,13 +21,13 @@ set(CUDA_SEPARABLE_COMPILATION ON)
 option(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
 # Cuda: Deal with build type
-if(CMAKE_BUILD_TYPE EQUAL RelWithDebInfo)
-  set(CUDA_BUILD_TYPE "-O3;-g;-DNDEBUG;")
-elseif(CMAKE_BUILD_TYPE EQUAL Release)
-  set(CUDA_BUILD_TYPE "-O3;-DNDEBUG;")
-elseif(CMAKE_BUILD_TYPE EQUAL Debug)
-  set(CUDA_BUILD_TYPE "-O0;-G;-g;-DDEBUG;")
-endif(CMAKE_BUILD_TYPE EQUAL RelWithDebInfo)
+if(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
+  set(CUDA_BUILD_TYPE "-O3\;-g\;-DNDEBUG\;")
+elseif(${CMAKE_BUILD_TYPE} STREQUAL Release)
+  set(CUDA_BUILD_TYPE "-O3\;-DNDEBUG\;")
+elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+  set(CUDA_BUILD_TYPE "-O0\;-G\;-g\;-DDEBUG\;")
+endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 
 set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=64;")
 
