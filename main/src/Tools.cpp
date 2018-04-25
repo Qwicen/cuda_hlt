@@ -226,13 +226,36 @@ void printTrack(
 
   outstream << std::endl;
 }
- 
+
+void printTracks(
+  Track* tracks,
+  int* n_tracks,
+  int n_events,
+  std::ofstream& outstream 
+) {
+  for ( int i_event = 0; i_event < n_events; ++i_event ) {
+    Track* tracks_event = tracks + i_event * MAX_TRACKS;
+    int n_tracks_event = n_tracks[ i_event ];
+    outstream << i_event << "\t" << n_tracks_event << std::endl;
+
+    for ( int i_track = 0; i_track < n_tracks_event; ++i_track ) {
+      const Track t = tracks_event[i_track];
+      outstream << t.hitsNum << std::endl;
+      for ( int i_hit = 0; i_hit < t.hitsNum; ++i_hit ) {
+	Hit hit = t.hits[ i_hit ];
+	outstream << hit.LHCbID << std::endl;
+      }
+    }
+  }
+  
+}
+
 void printOutAllModuleHits(const EventInfo& info, int* prevs, int* nexts) {
   DEBUG << "All valid module hits: " << std::endl;
   for(int i=0; i<info.numberOfModules; ++i){
     for(int j=0; j<info.module_hitNums[i]; ++j){
       int hit = info.module_hitStarts[i] + j;
-
+ 
       if(nexts[hit] != -1){
         DEBUG << hit << ", " << nexts[hit] << std::endl;
       }

@@ -61,7 +61,9 @@ __global__ void consolidate_tracks(
   
   // Consolidate tracks in dev_output_tracks
   const unsigned int number_of_tracks = dev_atomics_storage[event_number];
-  Track* destination_tracks = dev_output_tracks + accumulated_tracks;
+  //Track* destination_tracks = dev_output_tracks + accumulated_tracks;
+  /* don't do consolidation now -> easier to check tracks offline */
+  Track* destination_tracks = dev_output_tracks + event_number * MAX_TRACKS;
   for (unsigned int j=0; j<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++j) {
     const unsigned int element = j * blockDim.x + threadIdx.x;
     if (element < number_of_tracks) {

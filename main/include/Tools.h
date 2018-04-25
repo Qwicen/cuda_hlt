@@ -85,6 +85,13 @@ void printTrack(
   std::ofstream& outstream
 );
 
+void printTracks(
+  Track* tracks,
+  int* n_tracks,
+  int n_events,
+  std::ofstream& outstream
+);
+
 void writeBinaryTrack(
   const unsigned int* hit_IDs,
   const Track& track,

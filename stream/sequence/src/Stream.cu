@@ -166,15 +166,24 @@ cudaError_t Stream::operator()(
     }
     
     if ( repetitions == 0 ) { // only print out tracks once
+      /* Print tracks: track #, length, x, y, z, LHCb ID of all hits */
       std::ofstream out_file;
       out_file.open("tracks_out.txt");
       for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
+	Track* tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
 	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
-	  Track* tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
 	  printTrack( tracks_event, i_track, out_file );
 	}
       }
       out_file.close();
+      /* Print tracks for PrChecker: length, LHCb Ids of all hits */
+      std::ofstream tracks_out_file;
+      tracks_out_file.open("tracks_checker_out.txt");
+      printTracks( host_tracks_pinned,
+		   host_number_of_tracks_pinned,
+		   number_of_events,
+		   tracks_out_file );
+      tracks_out_file.close();
     }
   }
 
