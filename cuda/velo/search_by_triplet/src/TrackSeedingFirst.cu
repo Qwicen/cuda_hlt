@@ -76,7 +76,7 @@ __device__ void trackSeedingFirst(
     if (h1_rel_index < number_of_hits_h1) {
       // Fetch h1
       h1_index = module_data[1].hitStart + h1_rel_index;
-      const Hit h1 {hit_Xs[h1_index], hit_Ys[h1_index]};
+      const HitXY h1 {hit_Xs[h1_index], hit_Ys[h1_index]};
 
       // Iterate over all h0, h2 combinations
       // Ignore used hits
@@ -92,14 +92,14 @@ __device__ void trackSeedingFirst(
         if (h0_rel_candidate < h0_num_candidates) {
           const auto h0_index = h0_first_candidate + h0_rel_candidate;
           // Fetch h0
-          const Hit h0 {hit_Xs[h0_index], hit_Ys[h0_index]};
+          const HitXY h0 {hit_Xs[h0_index], hit_Ys[h0_index]};
 
           // Finally, iterate over all h2 indices
           for (auto h2_index=h2_first_candidate; h2_index<h2_last_candidate; ++h2_index) {
             // Our triplet is h0_index, h1_index, h2_index
             // Fit it and check if it's better than what this thread had
             // for any triplet with h1
-            const Hit h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
+            const HitXY h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
 
             // Calculate prediction
             const auto x = h0.x + (h1.x - h0.x) * z2_tz;

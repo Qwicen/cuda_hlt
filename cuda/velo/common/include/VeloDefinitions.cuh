@@ -92,12 +92,12 @@ struct Module {
     ) : hitStart(_hitStart), hitNums(_hitNums), z(_z) {}
 };
 
-struct Hit {
+struct HitXY {
     float x;
     float y;
 
-    __device__ Hit(){}
-    __device__ Hit(
+    __device__ HitXY(){}
+    __device__ HitXY(
       const float _x,
       const float _y
     ) : x(_x), y(_y) {}
