@@ -10,33 +10,39 @@
 
 #include <cassert>
 #include <iostream>
+#include <fstream>
 
 #include "velopix-input-reader.h"
+#include "track_input_reader.h"
 #include "MCAssociator.h"
 #include "TrackChecker.h"
 #include "TrackSerializer.h"
 
 int main()
 {
-    std::vector<VelopixEvent> events = VelopixEventReader::readFolder("../input");
-    TrackSerializer trackWriter("../output/");
-    TrackChecker trackChecker;
-    //VeloPhiDrdz2 tracking;
-    uint64_t evnum = 1;
-    for (const auto& ev: events) {
-        std::cout << "Event " << evnum << std::endl;
-        auto pixels = ev.soaHits();
-        auto mcps = ev.mcparticles();
-        MCAssociator mcassoc(mcps);
-        std::cout << "INFO: have " << pixels.size() << " pixels" << std::endl;
-        //auto tracks = tracking(pixels, mcassoc);
-        //std::cout << "INFO: found " << tracks.size() << " tracks" << std::endl;
-        //trackChecker(tracks, mcassoc, mcps);
-        //trackWriter(evnum, tracks);
-
-        ++evnum;
-    }
-    return 0;
+  /* Tracks to be checked */
+  std::ifstream tracks_in ("tracks_checker_out.txt" );
+  std::vector< Tracks > all_tracks = read_input_tracks( tracks_in );
+  
+  /* MC information */
+  std::vector<VelopixEvent> events = VelopixEventReader::readFolder("../input");
+  
+  // TrackChecker trackChecker;
+  // uint64_t evnum = 1;
+  // for (const auto& ev: events) {
+  //   std::cout << "Event " << evnum << std::endl;
+  //   auto pixels = ev.soaHits();
+  //   auto mcps = ev.mcparticles();
+  //   MCAssociator mcassoc(mcps);
+  //   std::cout << "INFO: have " << pixels.size() << " pixels" << std::endl;
+  //   //auto tracks = tracking(pixels, mcassoc);
+  //   //std::cout << "INFO: found " << tracks.size() << " tracks" << std::endl;
+  //   //trackChecker(tracks, mcassoc, mcps);
+  //   //trackWriter(evnum, tracks);
+    
+  //   ++evnum;
+  // }
+  return 0;
 }
 
 // vim: sw=4:tw=78:ft=cpp:et

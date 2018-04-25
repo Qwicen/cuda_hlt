@@ -236,7 +236,8 @@ void printTracks(
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
     Track* tracks_event = tracks + i_event * MAX_TRACKS;
     int n_tracks_event = n_tracks[ i_event ];
-    outstream << i_event << "\t" << n_tracks_event << std::endl;
+    outstream << i_event << std::endl;
+    outstream << n_tracks_event << std::endl;
 
     for ( int i_track = 0; i_track < n_tracks_event; ++i_track ) {
       const Track t = tracks_event[i_track];
