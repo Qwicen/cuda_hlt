@@ -101,21 +101,6 @@ cudaError_t Stream::operator()(
     // Print output
     // searchByTriplet.print_output(number_of_events);
 
-    //////////////////////////////////
-    // Optional: Consolidate tracks //
-    //////////////////////////////////
-    
-    if (do_consolidate) {
-      Helper::invoke(
-        consolidateTracks,
-        "Consolidate tracks",
-        times,
-        cuda_event_start,
-        cuda_event_stop,
-        print_individual_rates
-      );
-    }
-
     ////////////////////////////////////////
     // Optional: Simplified Kalman filter //
     ////////////////////////////////////////
@@ -124,6 +109,21 @@ cudaError_t Stream::operator()(
       Helper::invoke(
         simplifiedKalmanFilter,
         "Simplified Kalman filter",
+        times,
+        cuda_event_start,
+        cuda_event_stop,
+        print_individual_rates
+      );
+    }
+    
+    //////////////////////////////////
+    // Optional: Consolidate tracks //
+    //////////////////////////////////
+    
+    if (do_consolidate) {
+      Helper::invoke(
+        consolidateTracks,
+        "Consolidate tracks",
         times,
         cuda_event_start,
         cuda_event_stop,

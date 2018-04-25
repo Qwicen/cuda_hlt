@@ -6,7 +6,6 @@ void SimplifiedKalmanFilter::operator()() {
     dev_module_cluster_start,
     dev_atomics_storage,
     dev_tracks,
-    dev_velo_states,
-    is_consolidated
+    dev_velo_states
   );
 }

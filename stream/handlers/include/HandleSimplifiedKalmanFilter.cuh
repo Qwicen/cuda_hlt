@@ -15,7 +15,6 @@ struct SimplifiedKalmanFilter {
   int* dev_atomics_storage;
   TrackHits* dev_tracks;
   VeloState* dev_velo_states;
-  bool is_consolidated;
 
   SimplifiedKalmanFilter() = default;
 
@@ -34,15 +33,13 @@ struct SimplifiedKalmanFilter {
     uint* param_dev_module_cluster_start,
     int* param_dev_atomics_storage,
     TrackHits* param_dev_tracks,
-    VeloState* param_dev_velo_states,
-    bool param_is_consolidated
+    VeloState* param_dev_velo_states
   ) {
     dev_velo_cluster_container = param_dev_velo_cluster_container;
     dev_module_cluster_start = param_dev_module_cluster_start;
     dev_atomics_storage = param_dev_atomics_storage;
     dev_tracks = param_dev_tracks;
     dev_velo_states = param_dev_velo_states;
-    is_consolidated = param_is_consolidated;
   }
 
   void operator()();

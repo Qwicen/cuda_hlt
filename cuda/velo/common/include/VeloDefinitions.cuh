@@ -103,6 +103,22 @@ struct HitXY {
     ) : x(_x), y(_y) {}
 };
 
+struct Hit {
+    float x;
+    float y;
+    float z;
+    float LHCbID;
+   
+    __device__ Hit(){}
+    __device__ Hit(
+      const float _x,
+      const float _y,
+      const float _z,
+      const float _LHCbID
+    ) : x(_x), y(_y), z(_z), LHCbID(_LHCbID) {}
+};
+
+/* Structure containing indices to hits within hit array */
 struct TrackHits { // 4 + 26 * 4 = 116 B
   unsigned short hitsNum;
   unsigned short hits[MAX_TRACK_SIZE];
@@ -119,6 +135,22 @@ struct TrackHits { // 4 + 26 * 4 = 116 B
     hits[2] = _h2;
   }
 };
+
+/* Structure to save final track
+   Contains information needed later on in the HLT chain
+   and / or for truth matching */
+struct Track { 
+  unsigned short hitsNum;
+  Hit hits[MAX_TRACK_SIZE];
+
+  __device__ Track(){}
+
+  __device__ void addHit( Hit _h ){
+    hits[ hitsNum ] = _h;
+    hitsNum++;
+  }
+
+}; 
 
 /**
  * @brief A simplified state for the Velo

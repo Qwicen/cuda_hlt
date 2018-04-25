@@ -176,8 +176,7 @@ cudaError_t Stream::initialize(
     dev_estimated_input_size,
     dev_atomics_storage,
     dev_tracks,
-    dev_velo_states,
-    do_consolidate
+    dev_velo_states
   );
 
   return cudaSuccess;
