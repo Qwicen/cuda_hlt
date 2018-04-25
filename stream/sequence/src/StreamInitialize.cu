@@ -27,7 +27,7 @@ cudaError_t Stream::initialize(
   // Blocks and threads for each algorithm
   const uint prefixSumBlocks = (52 * number_of_events + 511) / 512;
 
-  estimateInputSize.set(     dim3(number_of_events),  dim3(4, 208),       stream);
+  estimateInputSize.set(     dim3(number_of_events),  dim3(32, 26),       stream);
   prefixSumReduce.set(       dim3(prefixSumBlocks),   dim3(256),          stream);
   prefixSumSingleBlock.set(  dim3(1),                 dim3(1024),         stream);
   prefixSumScan.set(         dim3(prefixSumBlocks-1), dim3(512),          stream);
