@@ -27,12 +27,7 @@ __global__ void consolidate_tracks(
   for (unsigned int j=0; j<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++j) {
     const unsigned int element = j * blockDim.x + threadIdx.x;
     if (element < number_of_tracks) {
-      Track t = event_tracks[element];
-
-      for (int hit_no=0; hit_no<t.hitsNum; ++hit_no) {
-        t.hits[hit_no] = t.hits[hit_no];
-      }
-
+      const Track t = event_tracks[element];
       destination_tracks[element] = t;
     }
   }

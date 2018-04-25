@@ -139,6 +139,9 @@ cudaError_t Stream::operator()(
         // Copy non-consolidated tracks
         cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
       }
+      else {
+        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
+      }
 
       cudaEventRecord(cuda_generic_event, stream);
       cudaEventSynchronize(cuda_generic_event);
@@ -148,14 +151,16 @@ cudaError_t Stream::operator()(
       //   std::cout << i << ": " << host_number_of_tracks_pinned[i] << std::endl;
       // }
       
-      if (do_consolidate) {
-        // Calculate number of tracks (prefix sum) and fetch consolidated tracks
-        int total_number_of_tracks = 0;
-        for (int i=0; i<number_of_events; ++i) {
-          total_number_of_tracks += host_number_of_tracks_pinned[i];
-        }
-        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, total_number_of_tracks * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-      }
+      // Calculating the sum on CPU (the code below) slows down the CUDA stream
+      // If we do this on CPU, it should happen concurrently to some CUDA stream
+      // if (do_consolidate) {
+      //   // Calculate number of tracks (prefix sum) and fetch consolidated tracks
+      //   int total_number_of_tracks = 0;
+      //   for (int i=0; i<number_of_events; ++i) {
+      //     total_number_of_tracks += host_number_of_tracks_pinned[i];
+      //   }
+      //   cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, total_number_of_tracks * sizeof(Track), cudaMemcpyDeviceToHost, stream));
+      // }
     }
 
     if (print_individual_rates) {

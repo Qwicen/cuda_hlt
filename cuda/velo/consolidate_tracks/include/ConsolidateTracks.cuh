@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VeloDefinitions.cuh"
+#include "../../common/include/VeloDefinitions.cuh"
 
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
