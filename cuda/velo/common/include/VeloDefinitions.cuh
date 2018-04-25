@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cfloat>
 #include <vector>
+#include <stdint.h>
 
 #define N_MODULES 52
 namespace VeloTracking {
@@ -107,14 +108,14 @@ struct Hit { // 4 * 4 = 16 B
     float x;
     float y;
     float z;
-    float LHCbID;
+    uint32_t LHCbID;
    
     __device__ Hit(){}
     __device__ Hit(
       const float _x,
       const float _y,
       const float _z,
-      const float _LHCbID
+      const uint32_t _LHCbID
     ) : x(_x), y(_y), z(_z), LHCbID(_LHCbID) {}
 };
 
@@ -139,7 +140,7 @@ struct TrackHits { // 4 + 26 * 4 = 116 B
 /* Structure to save final track
    Contains information needed later on in the HLT chain
    and / or for truth matching */
-struct Track { 4 + 26 * 16 = 420 B
+struct Track { // 4 + 26 * 16 = 420 B
   unsigned short hitsNum;
   Hit hits[MAX_TRACK_SIZE];
   

@@ -17,5 +17,5 @@ __device__ Track createTrack(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_zs,
-  const float* hit_IDs
+  const uint32_t* hit_IDs
 );
