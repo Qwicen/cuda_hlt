@@ -3,16 +3,11 @@
 #include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
 #include "../../../main/include/CudaCommon.h"
+#include "Handler.cuh"
 #include <vector>
 #include <iostream>
 
-struct SearchByTriplet {
-  // Call options
-  dim3 num_blocks, num_threads;
-
-  // Cuda stream
-  cudaStream_t* stream;
-
+struct SearchByTriplet : public Handler {
   // Call parameters
   uint32_t* dev_velo_cluster_container;
   uint* dev_module_cluster_start;
@@ -28,16 +23,6 @@ struct SearchByTriplet {
   unsigned short* dev_rel_indices;
 
   SearchByTriplet() = default;
-
-  void set(
-    const dim3& param_num_blocks,
-    const dim3& param_num_threads,
-    cudaStream_t& param_stream
-  ) {
-    num_blocks = param_num_blocks;
-    num_threads = param_num_threads;
-    stream = &param_stream;
-  }
 
   void setParameters(
     uint32_t* param_dev_velo_cluster_container,

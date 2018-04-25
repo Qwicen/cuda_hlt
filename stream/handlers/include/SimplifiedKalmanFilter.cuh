@@ -1,14 +1,9 @@
 #pragma once
 
 #include "../../../cuda/velo/simplified_kalman_filter/include/VeloKalmanFilter.cuh"
+#include "Handler.cuh"
 
-struct SimplifiedKalmanFilter {
-  // Call options
-  dim3 num_blocks, num_threads;
-
-  // Cuda stream
-  cudaStream_t* stream;
-
+struct SimplifiedKalmanFilter : public Handler {
   // Call parameters
   uint32_t* dev_velo_cluster_container;
   uint* dev_module_cluster_start;
@@ -18,16 +13,6 @@ struct SimplifiedKalmanFilter {
   bool is_consolidated;
 
   SimplifiedKalmanFilter() = default;
-
-  void set(
-    const dim3& param_num_blocks,
-    const dim3& param_num_threads,
-    cudaStream_t& param_stream
-  ) {
-    num_blocks = param_num_blocks;
-    num_threads = param_num_threads;
-    stream = &param_stream;
-  }
 
   void setParameters(
     uint32_t* param_dev_velo_cluster_container,

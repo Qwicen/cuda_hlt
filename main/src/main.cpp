@@ -38,7 +38,7 @@ void printUsage(char* argv[]){
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
     << std::endl << " [-a {transmit host to device}=1]"
     << std::endl << " [-b {transmit device to host}=1]"
-    << std::endl << " [-c {consolidate tracks}=0]"
+    << std::endl << " [-c {consolidate tracks}=1]"
     << std::endl << " [-k {simplified kalman filter}=0]"
     << std::endl << " [-v {verbosity}=3 (info)]"
     << std::endl << " [-p (print rates)]"
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
-  bool do_consolidate = false;
+  bool do_consolidate = true;
   bool do_simplified_kalman_filter = false;
 
   signed char c;

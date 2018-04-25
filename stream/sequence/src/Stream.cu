@@ -34,8 +34,26 @@ cudaError_t Stream::operator()(
 
     // Convert the estimated sizes to module hit start format (offsets)
     Helper::invoke(
-      prefixSum,
-      "Prefix sum",
+      prefixSumReduce,
+      "Prefix sum reduce",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+    );
+
+    Helper::invoke(
+      prefixSumSingleBlock,
+      "Prefix sum single block",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+    );
+
+    Helper::invoke(
+      prefixSumScan,
+      "Prefix sum scan",
       times,
       cuda_event_start,
       cuda_event_stop,

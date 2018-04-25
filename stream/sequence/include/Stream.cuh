@@ -9,7 +9,9 @@
 #include "../../../main/include/Timer.h"
 #include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../handlers/include/EstimateInputSize.cuh"
-#include "../../handlers/include/PrefixSum.cuh"
+#include "../../handlers/include/PrefixSumReduce.cuh"
+#include "../../handlers/include/PrefixSumSingleBlock.cuh"
+#include "../../handlers/include/PrefixSumScan.cuh"
 #include "../../handlers/include/MaskedVeloClustering.cuh"
 #include "../../handlers/include/CalculatePhiAndSort.cuh"
 #include "../../handlers/include/SearchByTriplet.cuh"
@@ -33,7 +35,9 @@ struct Stream {
   uint stream_number;
   // Algorithms
   EstimateInputSize estimateInputSize;
-  PrefixSum prefixSum;
+  PrefixSumReduce prefixSumReduce;
+  PrefixSumScan prefixSumScan;
+  PrefixSumSingleBlock prefixSumSingleBlock;
   MaskedVeloClustering maskedVeloClustering;
   CalculatePhiAndSort calculatePhiAndSort;
   SearchByTriplet searchByTriplet;

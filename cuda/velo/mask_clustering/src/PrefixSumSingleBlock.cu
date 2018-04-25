@@ -1,9 +1,9 @@
 #include "PrefixSum.cuh"
 
 /**
- * @brief Up-Sweep (reduce)
+ * @brief Up-Sweep
  */
-__device__ void up_sweep(
+__device__ void up_sweep_2048(
   uint* data_block
 ) {
   uint starting_elem = 1;
@@ -22,7 +22,7 @@ __device__ void up_sweep(
 /**
  * @brief Down-sweep
  */
-__device__ void down_sweep(
+__device__ void down_sweep_2048(
   uint* data_block
 ) {
   for (uint i=2048; i>=2; i>>=1) {
@@ -39,11 +39,12 @@ __device__ void down_sweep(
   }
 }
 
-__global__ void prefix_sum(
-  uint* dev_estimated_input_size,
+__global__ void prefix_sum_single_block(
+  uint* dev_total_sum,
+  uint* dev_array,
   const uint array_size
 ) {
-  // Prefix sum of elements in dev_estimated_input_size
+  // Prefix sum of elements in dev_array
   // Using Blelloch scan https://www.youtube.com/watch?v=mmYv3Haj6uc
   __shared__ uint data_block [2048];
 
@@ -53,12 +54,12 @@ __global__ void prefix_sum(
     const uint first_elem = block << 11;
 
     // Load elements into shared memory, add prev_last_elem
-    data_block[2*threadIdx.x] = dev_estimated_input_size[first_elem + 2*threadIdx.x];
-    data_block[2*threadIdx.x + 1] = dev_estimated_input_size[first_elem + 2*threadIdx.x + 1];
+    data_block[2*threadIdx.x] = dev_array[first_elem + 2*threadIdx.x];
+    data_block[2*threadIdx.x + 1] = dev_array[first_elem + 2*threadIdx.x + 1];
 
     __syncthreads();
 
-    up_sweep((uint*) &data_block[0]);
+    up_sweep_2048((uint*) &data_block[0]);
 
     const uint new_last_elem = data_block[2047];
 
@@ -66,11 +67,11 @@ __global__ void prefix_sum(
     data_block[2047] = 0;
     __syncthreads();
 
-    down_sweep((uint*) &data_block[0]);
+    down_sweep_2048((uint*) &data_block[0]);
 
     // Store back elements
-    dev_estimated_input_size[first_elem + 2*threadIdx.x] = data_block[2*threadIdx.x] + prev_last_elem;
-    dev_estimated_input_size[first_elem + 2*threadIdx.x + 1] = data_block[2*threadIdx.x + 1] + prev_last_elem;
+    dev_array[first_elem + 2*threadIdx.x] = data_block[2*threadIdx.x] + prev_last_elem;
+    dev_array[first_elem + 2*threadIdx.x + 1] = data_block[2*threadIdx.x + 1] + prev_last_elem;
     prev_last_elem += new_last_elem;
 
     __syncthreads();
@@ -89,33 +90,33 @@ __global__ void prefix_sum(
     // Load elements
     const auto elem_index = first_elem + 2 * threadIdx.x;
     if (elem_index < array_size) {
-      data_block[2*threadIdx.x] = dev_estimated_input_size[elem_index];
+      data_block[2*threadIdx.x] = dev_array[elem_index];
     }
     if ((elem_index+1) < array_size) {
-      data_block[2*threadIdx.x + 1] = dev_estimated_input_size[elem_index + 1];
+      data_block[2*threadIdx.x + 1] = dev_array[elem_index + 1];
     }
 
     __syncthreads();
 
-    up_sweep((uint*) &data_block[0]);
+    up_sweep_2048((uint*) &data_block[0]);
 
     // Store sum of all elements
     if (threadIdx.x==0) {
-      dev_estimated_input_size[array_size] = prev_last_elem + data_block[2047];
+      dev_total_sum[0] = prev_last_elem + data_block[2047];
     }
 
     __syncthreads();
     data_block[2047] = 0;
     __syncthreads();
 
-    down_sweep((uint*) &data_block[0]);
+    down_sweep_2048((uint*) &data_block[0]);
 
     // Store back elements
     if (elem_index < array_size) {
-      dev_estimated_input_size[elem_index] = data_block[2*threadIdx.x] + prev_last_elem;
+      dev_array[elem_index] = data_block[2*threadIdx.x] + prev_last_elem;
     }
     if ((elem_index+1) < array_size) {
-      dev_estimated_input_size[elem_index + 1] = data_block[2*threadIdx.x + 1] + prev_last_elem;
+      dev_array[elem_index + 1] = data_block[2*threadIdx.x + 1] + prev_last_elem;
     }
   }
 }

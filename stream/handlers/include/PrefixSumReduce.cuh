@@ -1,35 +1,23 @@
 #pragma once
 
 #include "../../../cuda/velo/mask_clustering/include/PrefixSum.cuh"
+#include "Handler.cuh"
 
-struct PrefixSum {
-  // Call options
-  dim3 num_blocks, num_threads;
-
-  // Cuda stream
-  cudaStream_t* stream;
-
+struct PrefixSumReduce : public Handler {
   // Call parameters
   uint* dev_estimated_input_size;
+  uint* dev_cluster_offset;
   uint array_size;
 
-  PrefixSum() = default;
-
-  void set(
-    const dim3& param_num_blocks,
-    const dim3& param_num_threads,
-    cudaStream_t& param_stream
-  ) {
-    num_blocks = param_num_blocks;
-    num_threads = param_num_threads;
-    stream = &param_stream;
-  }
+  PrefixSumReduce() = default;
 
   void setParameters(
     uint* param_dev_estimated_input_size,
+    uint* param_dev_cluster_offset,
     uint param_array_size
   ) {
     dev_estimated_input_size = param_dev_estimated_input_size;
+    dev_cluster_offset = param_dev_cluster_offset;
     array_size = param_array_size;
   }
 
