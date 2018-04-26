@@ -34,13 +34,13 @@ int main()
     auto pixels = ev.soaHits();
     auto mcps = ev.mcparticles();
     MCAssociator mcassoc(mcps);
-    std::cout << "INFO: have " << pixels.size() << " pixels" << std::endl;
-    //auto tracks = tracking(pixels, mcassoc);
-    Tracks tracks = all_tracks[evnum - 1];
-    std::cout << "INFO: found " << tracks.size() << " tracks" << std::endl;
+
+    Tracks tracks = all_tracks[evnum-1];
+    std::cout << "INFO: found " << tracks.size() << " reconstructed tracks" <<
+     " and " << mcps.size() << " MC particles " << std::endl;
+
     trackChecker(tracks, mcassoc, mcps);
-    //trackWriter(evnum, tracks);
-    
+        
     ++evnum;
   }
   return 0;

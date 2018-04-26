@@ -6,6 +6,8 @@ add_subdirectory(lib)
 add_executable(velopix-input-reader velopix-input-reader.cc)
 add_executable(checkEfficiencies checkEfficiencies.cc)
 
+add_executable(testing test.cc)
+
 target_link_libraries(velopix-input-reader libTrackChecking)
 target_link_libraries(checkEfficiencies libTrackChecking)
 

@@ -17,24 +17,26 @@
 
 #include "LHCbID.h"
 
+
 class Track
 {
 
  public:
-  std::vector<LHCbID>  allids;
+  SomeLHCbIDs  allids;
   
   void addId ( LHCbID id ) {
     allids.push_back(id);
   }
   
-  ConstSomeLHCbIDRange ids() const {
-    SomeLHCbIDs id_collection = SomeLHCbIDs( allids.begin(), allids.end() );
-    return id_collection;
+  SomeLHCbIDs ids() const {
+    //SomeLHCbIDs id_collection = SomeLHCbIDs( allids.begin(), allids.end() );
+    //return id_collection;
+    return allids;
   }
 
  
   int nIDs() const {
-    allids.size();
+    return allids.size();
   }
 
   

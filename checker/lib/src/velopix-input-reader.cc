@@ -207,6 +207,16 @@ void VelopixEventReader::readFileIntoVector(const std::string& filename, std::ve
     assert(endpos == currpos);
 }
 
+bool sortFiles( std::string s1, std::string s2 ) {
+  size_t lastindex1 = s1.find_last_of("."); 
+  std::string raw1 = s1.substr(0, lastindex1);
+  size_t lastindex2 = s2.find_last_of("."); 
+  std::string raw2 = s2.substr(0, lastindex2);
+  int int1 = stoi(raw1, nullptr, 0);
+  int int2 = stoi(raw2, nullptr, 0);
+  return int1 < int2;
+}
+
 std::vector<VelopixEvent> VelopixEventReader::readFolder (
         const std::string& foldername,
         uint nFiles,
@@ -235,7 +245,9 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
         std::cerr << "Folder could not be opened" << std::endl;
         exit(-1);
     }
-
+    
+    std::sort( folderContents.begin(), folderContents.end(), sortFiles );
+    
     uint requestedFiles = nFiles==0 ? folderContents.size() : nFiles;
     std::cout << "Requested " << requestedFiles << " files" << std::endl;
 
@@ -262,6 +274,18 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
         if ((readFiles % 100) == 0) {
             std::cout << "." << std::flush;
         }
+
+	/* dump first event */
+	if ( i == 0 ) {
+	  std::ofstream out_file;
+	  out_file.open("first_event_MC_tracks.txt");
+	  for ( auto mcp : event.mcps ) 
+	    for ( auto id : mcp.hits )
+	      out_file << id << std::endl;
+	  
+	  out_file.close();
+
+	}
     }
 
     std::cout << std::endl << input.size() << " files read" << std::endl << std::endl;
