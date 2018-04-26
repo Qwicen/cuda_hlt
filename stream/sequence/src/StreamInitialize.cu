@@ -25,13 +25,17 @@ cudaError_t Stream::initialize(
   print_individual_rates = param_print_individual_rates;
 
   // Blocks and threads for each algorithm
-  estimateInputSize.set(     dim3(number_of_events), dim3(4, 208),       stream);
-  prefixSum.set(             dim3(1),                dim3(1024),         stream);
-  maskedVeloClustering.set(  dim3(number_of_events), dim3(256),          stream);
-  calculatePhiAndSort.set(   dim3(number_of_events), dim3(64),           stream);
-  searchByTriplet.set(       dim3(number_of_events), dim3(NUMTHREADS_X), stream);
-  consolidateTracks.set(     dim3(number_of_events), dim3(32),           stream);
-  simplifiedKalmanFilter.set(dim3(number_of_events), dim3(1024),         stream);
+  const uint prefixSumBlocks = (52 * number_of_events + 511) / 512;
+
+  estimateInputSize.set(     dim3(number_of_events),  dim3(32, 26),       stream);
+  prefixSumReduce.set(       dim3(prefixSumBlocks),   dim3(256),          stream);
+  prefixSumSingleBlock.set(  dim3(1),                 dim3(1024),         stream);
+  prefixSumScan.set(         dim3(prefixSumBlocks-1), dim3(512),          stream);
+  maskedVeloClustering.set(  dim3(number_of_events),  dim3(256),          stream);
+  calculatePhiAndSort.set(   dim3(number_of_events),  dim3(64),           stream);
+  searchByTriplet.set(       dim3(number_of_events),  dim3(NUMTHREADS_X), stream);
+  consolidateTracks.set(     dim3(number_of_events),  dim3(32),           stream);
+  simplifiedKalmanFilter.set(dim3(number_of_events),  dim3(1024),         stream);
 
   // Datatypes for definitions below
   // Note: The malloc'ing could be eventually moved to each handler, together
@@ -44,6 +48,7 @@ cudaError_t Stream::initialize(
   uint* dev_estimated_input_size;
   uint* dev_module_cluster_num;
   uint* dev_module_candidate_num;
+  uint* dev_cluster_offset;
   uint* dev_cluster_candidates;
   uint32_t* dev_velo_cluster_container;
   char* dev_velo_geometry;
@@ -82,6 +87,7 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_raw_input, param_starting_events_size));
   cudaCheck(cudaMalloc((void**)&dev_raw_input_offsets, event_offsets.size() * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_estimated_input_size, (number_of_events * 52 + 2) * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_cluster_offset, number_of_events * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_module_cluster_num, number_of_events * 52 * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_module_candidate_num, number_of_events * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_cluster_candidates, number_of_events * 2000 * sizeof(uint)));
@@ -126,9 +132,22 @@ cudaError_t Stream::initialize(
     dev_cluster_candidates
   );
 
-  prefixSum.setParameters(
+  prefixSumReduce.setParameters(
     dev_estimated_input_size,
-    number_of_events * 52
+    dev_cluster_offset,
+    52 * number_of_events
+  );
+
+  prefixSumSingleBlock.setParameters(
+    dev_estimated_input_size + 52 * number_of_events,
+    dev_cluster_offset,
+    prefixSumBlocks
+  );
+
+  prefixSumScan.setParameters(
+    dev_estimated_input_size,
+    dev_cluster_offset,
+    52 * number_of_events
   );
 
   maskedVeloClustering.setParameters(

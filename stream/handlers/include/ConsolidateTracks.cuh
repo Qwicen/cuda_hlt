@@ -1,30 +1,15 @@
 #pragma once
 
 #include "../../../cuda/velo/consolidate_tracks/include/ConsolidateTracks.cuh"
+#include "Handler.cuh"
 
-struct ConsolidateTracks {
-  // Call options
-  dim3 num_blocks, num_threads;
-
-  // Cuda stream
-  cudaStream_t* stream;
-
+struct ConsolidateTracks : public Handler {
   // Call parameters
   int* dev_atomics_storage;
   Track* dev_tracks;
   Track* dev_output_tracks;
 
   ConsolidateTracks() = default;
-
-  void set(
-    const dim3& param_num_blocks,
-    const dim3& param_num_threads,
-    cudaStream_t& param_stream
-  ) {
-    num_blocks = param_num_blocks;
-    num_threads = param_num_threads;
-    stream = &param_stream;
-  }
 
   void setParameters(
     int* param_dev_atomics_storage,

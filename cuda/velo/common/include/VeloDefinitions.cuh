@@ -2,6 +2,7 @@
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+#include "assert.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -68,15 +69,6 @@ namespace VeloTracking {
 #define STATES_PER_TRACK 3
 #define PARAM_W 3966.94f
 #define PARAM_W_INVERTED 0.000252083f
-
-// Asserts
-#define ASSERTS_ENABLED false
-#if ASSERTS_ENABLED == true
-#include "assert.h"
-#define ASSERT(EXPR) assert(EXPR);
-#else
-#define ASSERT(EXPR) 
-#endif
 
 struct Module {
     uint hitStart;

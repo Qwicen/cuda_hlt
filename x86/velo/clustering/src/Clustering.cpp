@@ -3,7 +3,8 @@
 std::vector<std::vector<uint32_t>> clustering(
   const std::vector<char>& geometry,
   const std::vector<char>& events,
-  const std::vector<unsigned int>& event_offsets
+  const std::vector<unsigned int>& event_offsets,
+  const bool assume_never_no_sp
 ) {
   std::vector<std::vector<uint32_t>> cluster_candidates;
   std::vector<unsigned char> sp_patterns (256, 0);
@@ -66,7 +67,7 @@ std::vector<std::vector<uint32_t>> clustering(
         // contributing channels; in that scenario a few more us are negligible
         // compared to the complication of keeping track of all contributing
         // channel IDs.
-        if (no_sp_neighbours) {
+        if (!assume_never_no_sp && no_sp_neighbours) {
           const int sp_size = sp_sizes[sp];
           const uint32_t idx = sp_patterns[sp];
           const uint32_t chip = sp_col / (VP::ChipColumns / 2);
@@ -268,7 +269,8 @@ std::vector<std::vector<uint32_t>> clustering(
   }
 
   t.stop();
-  std::cout << "Timer: " << t.get() << " s" << std::endl;
+  std::cout << "Classical clustering:" << std::endl
+    << "Timer: " << t.get() << " s" << std::endl << std::endl;
 
   return cluster_candidates;
 }

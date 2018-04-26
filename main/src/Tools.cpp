@@ -235,13 +235,13 @@ void printTrack(
 }
 
 void printOutAllModuleHits(const EventInfo& info, int* prevs, int* nexts) {
-  DEBUG << "All valid module hits: " << std::endl;
+  DEBUG_OUT << "All valid module hits: " << std::endl;
   for(int i=0; i<info.numberOfModules; ++i){
     for(int j=0; j<info.module_hitNums[i]; ++j){
       int hit = info.module_hitStarts[i] + j;
 
       if(nexts[hit] != -1){
-        DEBUG << hit << ", " << nexts[hit] << std::endl;
+        DEBUG_OUT << hit << ", " << nexts[hit] << std::endl;
       }
     }
   }
@@ -251,28 +251,28 @@ void printOutModuleHits(const EventInfo& info, int moduleNumber, int* prevs, int
   for(int i=0; i<info.module_hitNums[moduleNumber]; ++i){
     int hstart = info.module_hitStarts[moduleNumber];
 
-    DEBUG << hstart + i << ": " << prevs[hstart + i] << ", " << nexts[hstart + i] << std::endl;
+    DEBUG_OUT << hstart + i << ": " << prevs[hstart + i] << ", " << nexts[hstart + i] << std::endl;
   }
 }
 
 void printInfo(const EventInfo& info, int numberOfModules, int numberOfHits) {
   numberOfModules = numberOfModules>52 ? 52 : numberOfModules;
 
-  DEBUG << "Read info:" << std::endl
+  DEBUG_OUT << "Read info:" << std::endl
     << " no modules: " << info.numberOfModules << std::endl
     << " no hits: " << info.numberOfHits << std::endl
     << numberOfModules << " modules: " << std::endl;
 
   for (int i=0; i<numberOfModules; ++i){
-    DEBUG << " Zs: " << info.module_Zs[i] << std::endl
+    DEBUG_OUT << " Zs: " << info.module_Zs[i] << std::endl
       << " hitStarts: " << info.module_hitStarts[i] << std::endl
       << " hitNums: " << info.module_hitNums[i] << std::endl << std::endl;
   }
 
-  DEBUG << numberOfHits << " hits: " << std::endl;
+  DEBUG_OUT << numberOfHits << " hits: " << std::endl;
 
   for (int i=0; i<numberOfHits; ++i){
-    DEBUG << " hit_id: " << info.hit_IDs[i] << std::endl
+    DEBUG_OUT << " hit_id: " << info.hit_IDs[i] << std::endl
       << " hit_X: " << info.hit_Xs[i] << std::endl
       << " hit_Y: " << info.hit_Ys[i] << std::endl
       // << " hit_Z: " << info.hit_Zs[i] << std::endl

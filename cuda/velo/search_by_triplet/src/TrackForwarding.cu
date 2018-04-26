@@ -64,20 +64,20 @@ __device__ void trackForwarding(
 
       const Track* track_pointer = track_flag ? tracklets : tracks;
       
-      ASSERT(track_pointer==tracklets ? trackno < number_of_hits : true)
-      ASSERT(track_pointer==tracks ? trackno < MAX_TRACKS : true)
+      assert(track_pointer==tracklets ? trackno < number_of_hits : true);
+      assert(track_pointer==tracks ? trackno < MAX_TRACKS : true);
       auto t = track_pointer[trackno];
 
       // Load last two hits in h0, h1
-      ASSERT(t.hitsNum < MAX_TRACK_SIZE)
+      assert(t.hitsNum < MAX_TRACK_SIZE);
       const auto h0_num = t.hits[t.hitsNum - 2];
       const auto h1_num = t.hits[t.hitsNum - 1];
 
-      ASSERT(h0_num < number_of_hits)
+      assert(h0_num < number_of_hits);
       const Hit h0 {hit_Xs[h0_num], hit_Ys[h0_num]};
       const auto h0_z = hit_Zs[h0_num];
 
-      ASSERT(h1_num < number_of_hits)
+      assert(h1_num < number_of_hits);
       const Hit h1 {hit_Xs[h1_num], hit_Ys[h1_num]};
       const auto h1_z = hit_Zs[h1_num];
 
@@ -118,19 +118,19 @@ __device__ void trackForwarding(
       // Condition for finding a h2
       if (best_fit != FLT_MAX) {
         // Mark h2 as used
-        ASSERT(best_h2 < number_of_hits)
+        assert(best_h2 < number_of_hits);
         hit_used[best_h2] = true;
 
         // Update the tracks to follow, we'll have to follow up
         // this track on the next iteration :)
-        ASSERT(t.hitsNum < MAX_TRACK_SIZE)
+        assert(t.hitsNum < MAX_TRACK_SIZE);
         t.hits[t.hitsNum++] = best_h2;
 
         // Update the track in the bag
         if (t.hitsNum <= 4) {
-          ASSERT(t.hits[0] < number_of_hits)
-          ASSERT(t.hits[1] < number_of_hits)
-          ASSERT(t.hits[2] < number_of_hits)
+          assert(t.hits[0] < number_of_hits);
+          assert(t.hits[1] < number_of_hits);
+          assert(t.hits[2] < number_of_hits);
 
           // Also mark the first three as used
           hit_used[t.hits[0]] = true;
@@ -143,7 +143,7 @@ __device__ void trackForwarding(
         }
 
         // Copy the track into tracks
-        ASSERT(trackno < number_of_hits)
+        assert(trackno < number_of_hits);
         tracks[trackno] = t;
 
         // Add the tracks to the bag of tracks to_follow
@@ -164,7 +164,7 @@ __device__ void trackForwarding(
       // mark it as "doubtful"
       else if (t.hitsNum == 3) {
         const auto weakP = atomicAdd(weaktracks_insertPointer, 1);
-        ASSERT(weakP < number_of_hits)
+        assert(weakP < number_of_hits);
         weak_tracks[weakP] = trackno;
       }
       // In the "else" case, we couldn't follow up the track,

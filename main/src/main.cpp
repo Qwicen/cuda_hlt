@@ -38,7 +38,7 @@ void printUsage(char* argv[]){
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
     << std::endl << " [-a {transmit host to device}=1]"
     << std::endl << " [-b {transmit device to host}=1]"
-    << std::endl << " [-c {consolidate tracks}=0]"
+    << std::endl << " [-c {consolidate tracks}=1]"
     << std::endl << " [-k {simplified kalman filter}=0]"
     << std::endl << " [-v {verbosity}=3 (info)]"
     << std::endl << " [-p (print rates)]"
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
-  bool do_consolidate = false;
+  bool do_consolidate = true;
   bool do_simplified_kalman_filter = false;
 
   signed char c;
@@ -147,20 +147,64 @@ int main(int argc, char *argv[])
   std::copy_n(std::begin(event_offsets), event_offsets.size(), host_event_offsets_pinned);
 
   // // Call clustering
-  // std::vector<std::vector<uint32_t>> clusters = cuda_clustering(
+  // std::vector<std::vector<uint32_t>> clusters = cuda_clustering_simplified(
   //   geometry,
   //   events,
-  //   event_offsets
+  //   event_offsets,
+  //   true
   // );
 
-  // auto cluster_sum = 0;
+  // std::vector<std::vector<uint32_t>> clusters_simplified = cuda_clustering_cpu_optimized(
+  //   geometry,
+  //   events,
+  //   event_offsets,
+  //   true
+  // );
+
+  // std::vector<std::vector<uint32_t>> clusters_classical = clustering(
+  //   geometry,
+  //   events,
+  //   event_offsets,
+  //   true
+  // );
+
+  // uint found_clusters = 0;
+  // uint found_clusters_classical = 0;
+  // uint found_clusters_simplified = 0;
+
   // for (int i=0; i<clusters.size(); ++i) {
+  //   found_clusters += clusters[i].size();
+  //   found_clusters_simplified += clusters_simplified[i].size();
+  //   found_clusters_classical += clusters_classical[i].size();
+  // }
+
+  // std::cout << "Found classical: " << found_clusters_classical << std::endl
+  //   << "Found cuda simplified: " << found_clusters << " (" << (100.f * (((float) found_clusters) / ((float) found_clusters_classical))) << " %)" << std::endl
+  //   << "Found cuda simplified cpu optimized: " << found_clusters_simplified << " (" << (100.f * (((float) found_clusters_simplified) / ((float) found_clusters_classical))) << " %)" << std::endl;
+
+  // auto cluster_sum = 0;
+  // std::cout << "Reconstructed clusters:" << std::endl;
+  // for (int i=0; i<clusters.size(); ++i) {
+  //   std::cout << i << ": " << clusters[i].size() << std::endl;
   //   cluster_sum += clusters[i].size();
   // }
   // std::cout << "Reconstructed cluster total: " << cluster_sum << std::endl;
 
-  // Show some statistics
-  // statistics(events, event_offsets);
+  // cluster_sum = 0;
+  // std::cout << "Reconstructed clusters (simplified):" << std::endl;
+  // for (int i=0; i<clusters_simplified.size(); ++i) {
+  //   std::cout << i << ": " << clusters_simplified[i].size() << std::endl;
+  //   cluster_sum += clusters_simplified[i].size();
+  // }
+  // std::cout << "Reconstructed cluster total (simplified): " << cluster_sum << std::endl;
+
+  // cluster_sum = 0;
+  // std::cout << "Reconstructed clusters (classical):" << std::endl;
+  // for (int i=0; i<clusters_classical.size(); ++i) {
+  //   std::cout << i << ": " << clusters_classical[i].size() << std::endl;
+  //   cluster_sum += clusters_classical[i].size();
+  // }
+  // std::cout << "Reconstructed cluster total (classical): " << cluster_sum << std::endl;
 
   // Initialize detector constants on GPU
   initializeConstants();

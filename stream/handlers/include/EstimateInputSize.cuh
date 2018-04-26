@@ -1,14 +1,9 @@
 #pragma once
 
 #include "../../../cuda/velo/mask_clustering/include/EstimateInputSize.cuh"
+#include "Handler.cuh"
 
-struct EstimateInputSize {
-  // Call options
-  dim3 num_blocks, num_threads;
-
-  // Cuda stream
-  cudaStream_t* stream;
-
+struct EstimateInputSize : public Handler {
   // Call parameters
   char* dev_raw_input;
   uint* dev_raw_input_offsets;
@@ -18,16 +13,6 @@ struct EstimateInputSize {
   uint32_t* dev_cluster_candidates;
 
   EstimateInputSize() = default;
-
-  void set(
-    const dim3& param_num_blocks,
-    const dim3& param_num_threads,
-    cudaStream_t& param_stream
-  ) {
-    num_blocks = param_num_blocks;
-    num_threads = param_num_threads;
-    stream = &param_stream;
-  }
 
   void setParameters(
     char* param_dev_raw_input,
