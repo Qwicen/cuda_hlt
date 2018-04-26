@@ -25,23 +25,24 @@ int main()
   std::vector< Tracks > all_tracks = read_input_tracks( tracks_in );
   
   /* MC information */
-  std::vector<VelopixEvent> events = VelopixEventReader::readFolder("../input");
+  std::vector<VelopixEvent> events = VelopixEventReader::readFolder("../input_checker", 20, true );
   
-  // TrackChecker trackChecker;
-  // uint64_t evnum = 1;
-  // for (const auto& ev: events) {
-  //   std::cout << "Event " << evnum << std::endl;
-  //   auto pixels = ev.soaHits();
-  //   auto mcps = ev.mcparticles();
-  //   MCAssociator mcassoc(mcps);
-  //   std::cout << "INFO: have " << pixels.size() << " pixels" << std::endl;
-  //   //auto tracks = tracking(pixels, mcassoc);
-  //   //std::cout << "INFO: found " << tracks.size() << " tracks" << std::endl;
-  //   //trackChecker(tracks, mcassoc, mcps);
-  //   //trackWriter(evnum, tracks);
+  TrackChecker trackChecker;
+  uint64_t evnum = 1;
+  for (const auto& ev: events) {
+    std::cout << "Event " << evnum << std::endl;
+    auto pixels = ev.soaHits();
+    auto mcps = ev.mcparticles();
+    MCAssociator mcassoc(mcps);
+    std::cout << "INFO: have " << pixels.size() << " pixels" << std::endl;
+    //auto tracks = tracking(pixels, mcassoc);
+    Tracks tracks = all_tracks[evnum - 1];
+    std::cout << "INFO: found " << tracks.size() << " tracks" << std::endl;
+    trackChecker(tracks, mcassoc, mcps);
+    //trackWriter(evnum, tracks);
     
-  //   ++evnum;
-  // }
+    ++evnum;
+  }
   return 0;
 }
 

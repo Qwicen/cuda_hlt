@@ -32,6 +32,7 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
 
     // Monte Carlo
     uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
+    //    std::cout << "n mc particles = " << number_mcp << std::endl;
     for (uint32_t i=0; i<number_mcp; ++i) {
         MCP p;
         p.key          = *((uint32_t*)  input); input += sizeof(uint32_t);
@@ -49,6 +50,7 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
         p.fromb        = (bool) *((int8_t*)  input); input += sizeof(int8_t);
         p.fromd        = (bool) *((int8_t*)  input); input += sizeof(int8_t);
         p.numHits      = *((uint32_t*)  input); input += sizeof(uint32_t);
+	//	std::cout << "numHits = " << p.numHits << std::endl;
         std::copy_n((uint32_t*) input, p.numHits, std::back_inserter(p.hits)); input += sizeof(uint32_t) * p.numHits;
         mcps.push_back(p);
     }
@@ -103,6 +105,7 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
                 hitStart = module_hitStarts[i];
             }
         }
+	
     }
 }
 
@@ -241,10 +244,12 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
     for (uint i=0; i<requestedFiles; ++i) {
         // Read event #i in the list and add it to the inputs
         std::string readingFile = folderContents[i % folderContents.size()];
-
+	std::cout << readingFile << std::endl;
+	
         std::vector<uint8_t> inputContents;
         readFileIntoVector(foldername + "/" + readingFile, inputContents);
-
+	//std::cout << "vector size = " << inputContents.size() << std::endl;
+	
         // Check the number of sensors is correct, otherwise ignore it
         VelopixEvent event {inputContents, checkEvents};
 
