@@ -9,6 +9,7 @@ How to run it
 The project requires a graphics card with CUDA support. The build process doesn't differ from standard cmake projects:
 
     mkdir build
+    cd build
     cmake ..
     make
 
