@@ -17,17 +17,17 @@ __device__ float fitHitToTrack(
   // tolerances
   const float x_prediction = h0.x + predx;
   const float dx = fabs(x_prediction - h2.x);
-  const bool tolx_condition = dx < TOLERANCE;
+  const bool tolx_condition = dx < VeloTracking::tolerance;
 
   const float y_prediction = h0.y + predy;
   const float dy = fabs(y_prediction - h2.y);
-  const bool toly_condition = dy < TOLERANCE;
+  const bool toly_condition = dy < VeloTracking::tolerance;
 
   // Scatter
   const float scatterNum = (dx * dx) + (dy * dy);
   const float scatter = scatterNum * scatterDenom2;
 
-  const bool scatter_condition = scatter < MAX_SCATTER_FORWARDING;
+  const bool scatter_condition = scatter < VeloTracking::max_scatter_forwarding;
   const bool condition = tolx_condition && toly_condition && scatter_condition;
 
   return condition * scatter + !condition * FLT_MAX;
@@ -57,7 +57,7 @@ __device__ void trackForwarding(
   for (int i=0; i<(diff_ttf + blockDim.x - 1) / blockDim.x; ++i) {
     const uint ttf_element = blockDim.x * i + threadIdx.x;
     if (ttf_element < diff_ttf) {
-      const auto fulltrackno = tracks_to_follow[(prev_ttf + ttf_element) % TTF_MODULO];
+      const auto fulltrackno = tracks_to_follow[(prev_ttf + ttf_element) % VeloTracking::ttf_modulo];
       const bool track_flag = (fulltrackno & 0x80000000) == 0x80000000;
       const auto skipped_modules = (fulltrackno & 0x70000000) >> 28;
       auto trackno = fulltrackno & 0x0FFFFFFF;
@@ -65,11 +65,11 @@ __device__ void trackForwarding(
       const Track* track_pointer = track_flag ? tracklets : tracks;
       
       assert(track_pointer==tracklets ? trackno < number_of_hits : true);
-      assert(track_pointer==tracks ? trackno < MAX_TRACKS : true);
+      assert(track_pointer==tracks ? trackno < VeloTracking::max_tracks : true);
       auto t = track_pointer[trackno];
 
       // Load last two hits in h0, h1
-      assert(t.hitsNum < MAX_TRACK_SIZE);
+      assert(t.hitsNum < VeloTracking::max_track_size);
       const auto h0_num = t.hits[t.hitsNum - 2];
       const auto h1_num = t.hits[t.hitsNum - 1];
 
@@ -123,7 +123,7 @@ __device__ void trackForwarding(
 
         // Update the tracks to follow, we'll have to follow up
         // this track on the next iteration :)
-        assert(t.hitsNum < MAX_TRACK_SIZE);
+        assert(t.hitsNum < VeloTracking::max_track_size);
         t.hits[t.hitsNum++] = best_h2;
 
         // Update the track in the bag
@@ -147,17 +147,17 @@ __device__ void trackForwarding(
         tracks[trackno] = t;
 
         // Add the tracks to the bag of tracks to_follow
-        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % TTF_MODULO;
+        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % VeloTracking::ttf_modulo;
         tracks_to_follow[ttfP] = trackno;
       }
       // A track just skipped a module
       // We keep it for another round
-      else if (skipped_modules <= MAX_SKIPPED_MODULES) {
+      else if (skipped_modules <= VeloTracking::max_skipped_modules) {
         // Form the new mask
         trackno = ((skipped_modules + 1) << 28) | (fulltrackno & 0x8FFFFFFF);
 
         // Add the tracks to the bag of tracks to_follow
-        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % TTF_MODULO;
+        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % VeloTracking::ttf_modulo;
         tracks_to_follow[ttfP] = trackno;
       }
       // If there are only three hits in this track,

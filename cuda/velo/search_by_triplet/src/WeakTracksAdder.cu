@@ -22,7 +22,7 @@ __device__ void weakTracksAdder(
       // Store them in the tracks bag
       if (used < 1) {
         const uint trackno = atomicAdd(tracks_insert_pointer, 1);
-        assert(trackno < MAX_TRACKS);
+        assert(trackno < VeloTracking::max_tracks);
         tracks[trackno] = t;
       }
     }
@@ -70,7 +70,7 @@ __device__ void weakTracksAdderShared(
         // Store them in the tracks bag
         // Note: They have already been checked for used hits
         const uint trackno = atomicAdd(tracks_insert_pointer, 1);
-        assert(trackno < MAX_TRACKS);
+        assert(trackno < VeloTracking::max_tracks);
         tracks[trackno] = t;
       }
     }

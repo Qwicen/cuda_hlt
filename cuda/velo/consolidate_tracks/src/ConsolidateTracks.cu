@@ -9,7 +9,7 @@ __global__ void consolidate_tracks(
   const unsigned int event_number = blockIdx.x;
 
   unsigned int accumulated_tracks = 0;
-  const Track* event_tracks = dev_tracks + event_number * MAX_TRACKS;
+  const Track* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
 
   // Obtain accumulated tracks
   for (unsigned int i=0; i<event_number; ++i) {

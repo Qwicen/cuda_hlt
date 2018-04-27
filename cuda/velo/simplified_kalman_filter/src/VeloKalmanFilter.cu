@@ -24,7 +24,7 @@ __device__ void means_square_fit(
     const auto y = hit_Ys[hitno];
     const auto z = hit_Zs[hitno];
     
-    const auto wx = PARAM_W;
+    const auto wx = VeloTracking::param_w;
     const auto wx_t_x = wx * x;
     const auto wx_t_z = wx * z;
     s0 += wx;
@@ -33,7 +33,7 @@ __device__ void means_square_fit(
     sxz += wx_t_x * z;
     sz2 += wx_t_z * z;
 
-    const auto wy = PARAM_W;
+    const auto wy = VeloTracking::param_w;
     const auto wy_t_y = wy * y;
     const auto wy_t_z = wy * z;
     u0 += wy;
@@ -93,12 +93,12 @@ __device__ void means_square_fit(
       const auto dx = x - hit_Xs[hitno];
       const auto dy = y - hit_Ys[hitno];
       
-      ch += dx * dx * PARAM_W + dy * dy * PARAM_W;
+      ch += dx * dx * VeloTracking::param_w + dy * dy * VeloTracking::param_w;
 
       // Nice :)
       // TODO: We can get rid of the X and Y read here
-      // float sum_w_xzi_2 = CL_PARAM_W * x; // for each hit
-      // float sum_w_xi_2 = CL_PARAM_W * hit_Xs[hitno]; // for each hit
+      // float sum_w_xzi_2 = CL_VeloTracking::param_w * x; // for each hit
+      // float sum_w_xi_2 = CL_VeloTracking::param_w * hit_Xs[hitno]; // for each hit
       // ch = (sum_w_xzi_2 - sum_w_xi_2) + (sum_w_yzi_2 - sum_w_yi_2);
 
       nDoF += 2;
@@ -196,8 +196,8 @@ __device__ void simplified_fit(
   state.ty = parameters.ty;
 
   // Initialize the covariance matrix
-  state.c00 = PARAM_W_INVERTED;
-  state.c11 = PARAM_W_INVERTED;
+  state.c00 = VeloTracking::param_w_inverted;
+  state.c11 = VeloTracking::param_w_inverted;
   state.c20 = 0.f;
   state.c31 = 0.f;
   state.c22 = 1.f;
@@ -216,8 +216,8 @@ __device__ void simplified_fit(
     state.c33 += noise2PerLayer;
 
     // filter X and filter Y
-    state.chi2 += velo_kalman_filter_step(state.z, hit_z, hit_x, PARAM_W, state.x, state.tx, state.c00, state.c20, state.c22);
-    state.chi2 += velo_kalman_filter_step(state.z, hit_z, hit_y, PARAM_W, state.y, state.ty, state.c11, state.c31, state.c33);
+    state.chi2 += velo_kalman_filter_step(state.z, hit_z, hit_x, VeloTracking::param_w, state.x, state.tx, state.c00, state.c20, state.c22);
+    state.chi2 += velo_kalman_filter_step(state.z, hit_z, hit_y, VeloTracking::param_w, state.y, state.ty, state.c11, state.c31, state.c33);
     
     // update z (note done in the filter, since needed only once)
     state.z = hit_z;
@@ -243,7 +243,7 @@ __global__ void velo_fit(
   // Each event is treated with two blocks, one for each side.
   const uint event_number = blockIdx.x;
   const uint number_of_events = gridDim.x;
-  const uint tracks_offset = event_number * MAX_TRACKS;
+  const uint tracks_offset = event_number * VeloTracking::max_tracks;
 
   // Pointers to data within the event
   const uint number_of_hits = dev_module_cluster_start[52 * number_of_events];
@@ -261,9 +261,9 @@ __global__ void velo_fit(
   // The location of the track depends on whether the consolidation took place
   if (is_consolidated) {
     const uint track_start = dev_atomics_storage[number_of_events + event_number];
-    velo_states += track_start * STATES_PER_TRACK;
+    velo_states += track_start * VeloTracking::states_per_track;
   } else {
-    velo_states += event_number * MAX_TRACKS * STATES_PER_TRACK;
+    velo_states += event_number * VeloTracking::max_tracks * VeloTracking::states_per_track;
   }
 
   // Iterate over the tracks and calculate fits
@@ -271,7 +271,7 @@ __global__ void velo_fit(
     const auto element = i * blockDim.x + threadIdx.x;
     if (element < number_of_tracks) {
       // Base pointer to velo_states for this element
-      VeloState* velo_state_base = velo_states + element * STATES_PER_TRACK;
+      VeloState* velo_state_base = velo_states + element * VeloTracking::states_per_track;
 
       // Means square fit
       const auto track = tracks[element];

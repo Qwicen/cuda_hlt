@@ -1,7 +1,7 @@
 #include "../include/SearchByTriplet.cuh"
 
 void SearchByTriplet::operator()() {
-  searchByTriplet<<<num_blocks, num_threads, 0, *stream>>>(
+  searchByTriplet<<<num_blocks, num_threads, num_threads.x, *stream>>>(
     dev_velo_cluster_container,
     dev_module_cluster_start,
     dev_module_cluster_num,
@@ -59,7 +59,7 @@ void SearchByTriplet::print_output(
 
   // // Fetch tracks
   // std::vector<int> number_of_tracks (number_of_events);
-  // std::vector<Track> tracks (number_of_events * MAX_TRACKS);
+  // std::vector<Track> tracks (number_of_events * VeloTracking::max_tracks);
   // cudaCheck(cudaMemcpy(number_of_tracks.data(), dev_atomics_storage, number_of_tracks.size() * sizeof(int), cudaMemcpyDeviceToHost));
   // cudaCheck(cudaMemcpy(tracks.data(), dev_tracks, tracks.size() * sizeof(Track), cudaMemcpyDeviceToHost));
 
@@ -67,7 +67,7 @@ void SearchByTriplet::print_output(
   // for (int i=0; i<number_of_events; ++i) {
   //   std::cout << "Event " << i << ": Found " << number_of_tracks[i] << " tracks" << std::endl;
   //   for (int j=0; j<number_of_tracks[i]; ++j) {
-  //     const auto track = tracks[i*MAX_TRACKS + j];
+  //     const auto track = tracks[i*VeloTracking::max_tracks + j];
   //     std::cout << " Track #" << j << ", " << track.hitsNum << " hits:";
   //     for (int k=0; k<track.hitsNum; ++k) {
   //       const auto x = cluster_xs[track.hits[k]];

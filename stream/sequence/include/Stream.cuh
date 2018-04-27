@@ -23,10 +23,10 @@ class Timer;
 
 struct Stream {
   // Limiting constants for preallocation
-  constexpr static uint average_number_of_hits_per_event = TTF_MODULO;
-  constexpr static uint max_tracks_in_event = MAX_TRACKS;
-  constexpr static uint max_numhits_in_module = MAX_NUMHITS_IN_MODULE;
-  constexpr static uint atomic_space = NUM_ATOMICS + 1;
+  constexpr static uint average_number_of_hits_per_event = VeloTracking::ttf_modulo;
+  constexpr static uint max_tracks_in_event = VeloTracking::max_tracks;
+  constexpr static uint max_numhits_in_module = VeloTracking::max_numhits_in_module;
+  constexpr static uint atomic_space = VeloTracking::num_atomics + 1;
   // Stream datatypes
   cudaStream_t stream;
   cudaEvent_t cuda_generic_event;

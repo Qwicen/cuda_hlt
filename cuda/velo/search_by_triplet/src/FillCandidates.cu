@@ -36,7 +36,7 @@ __device__ void fillCandidates(
         for (auto h0_rel_index=0; h0_rel_index < m0_hitNums; ++h0_rel_index) {
           const unsigned short h0_index = m0_hitStarts + h0_rel_index;
           const auto h0_phi = hit_Phis[h0_index];
-          const bool tolerance_condition = fabs(h1_phi - h0_phi) < PHI_EXTRAPOLATION;
+          const bool tolerance_condition = fabs(h1_phi - h0_phi) < VeloTracking::phi_extrapolation;
 
           if (!first_h0_found && tolerance_condition) {
             h0_candidates[2*h1_index] = h0_index;
@@ -61,7 +61,7 @@ __device__ void fillCandidates(
         for (int h2_rel_index=0; h2_rel_index < m2_hitNums; ++h2_rel_index) {
           const unsigned short h2_index = m2_hitStarts + h2_rel_index;
           const auto h2_phi = hit_Phis[h2_index];
-          const bool tolerance_condition = fabs(h1_phi - h2_phi) < PHI_EXTRAPOLATION;
+          const bool tolerance_condition = fabs(h1_phi - h2_phi) < VeloTracking::phi_extrapolation;
 
           if (!first_h2_found && tolerance_condition) {
             h2_candidates[2*h1_index] = h2_index;

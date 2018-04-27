@@ -20,17 +20,17 @@ __device__ void trackSeedingFirst(
   uint* tracks_to_follow
 ) {
   // Some constants of the calculation below
-  const auto dmax = MAX_SLOPE * (module_data[0].z - module_data[1].z);
+  const auto dmax = VeloTracking::max_slope * (module_data[0].z - module_data[1].z);
   const auto scatterDenom2 = 1.f / ((module_data[2].z - module_data[1].z) * (module_data[2].z - module_data[1].z));
   const auto z2_tz = (module_data[2].z - module_data[0].z) / (module_data[1].z - module_data[0].z);
 
   // Adaptive number of xthreads and ythreads,
   // depending on number of hits in h1 to process
 
-  // Process at a time a maximum of MAX_CONCURRENT_H1_FIRST_ITERATION elements
+  // Process at a time a maximum of max_concurrent_h1_first_iteration elements
   const auto number_of_hits_h1 = module_data[1].hitNums;
-  const auto last_iteration = (number_of_hits_h1 + MAX_CONCURRENT_H1_FIRST_ITERATION - 1) / MAX_CONCURRENT_H1_FIRST_ITERATION;
-  const auto num_hits_last_iteration = ((number_of_hits_h1 - 1) % MAX_CONCURRENT_H1_FIRST_ITERATION) + 1;
+  const auto last_iteration = (number_of_hits_h1 + VeloTracking::max_concurrent_h1_first_iteration - 1) / VeloTracking::max_concurrent_h1_first_iteration;
+  const auto num_hits_last_iteration = ((number_of_hits_h1 - 1) % VeloTracking::max_concurrent_h1_first_iteration) + 1;
   for (int i=0; i<last_iteration; ++i) {
     // The output we are searching for
     unsigned short best_h0 = 0;
@@ -41,7 +41,7 @@ __device__ void trackSeedingFirst(
     // Assign an adaptive x and y id for the current thread depending on the load.
     // This is not trivial because:
     // 
-    // - We want a MAX_CONCURRENT_H1_FIRST_ITERATION:
+    // - We want a max_concurrent_h1_first_iteration:
     //     It turns out the load is more evenly balanced if we distribute systematically
     //     the processing of one h1 across several threads (ie. h0_candidates x h2_candidates)
     //     
@@ -50,7 +50,7 @@ __device__ void trackSeedingFirst(
     //     
     const auto is_last_iteration = i==last_iteration-1;
     const auto block_dim_x = is_last_iteration*num_hits_last_iteration + 
-                             !is_last_iteration*MAX_CONCURRENT_H1_FIRST_ITERATION;
+                             !is_last_iteration*VeloTracking::max_concurrent_h1_first_iteration;
 
     // Adapted local thread ID of each thread
     const auto thread_id_x = threadIdx.x % block_dim_x;
@@ -69,10 +69,10 @@ __device__ void trackSeedingFirst(
     // Work with thread_id_x, thread_id_y and block_dim_y from now on
     // Each h1 is associated with a thread_id_x
     // 
-    // Ie. if processing 30 h1 hits, with MAX_CONCURRENT_H1_FIRST_ITERATION = 8, #h1 in each iteration to process are:
+    // Ie. if processing 30 h1 hits, with max_concurrent_h1_first_iteration = 8, #h1 in each iteration to process are:
     // {8, 8, 8, 6}
-    // On the fourth iteration, we should start from 3*MAX_CONCURRENT_H1_FIRST_ITERATION (24 + thread_id_x)
-    const auto h1_rel_index = i*MAX_CONCURRENT_H1_FIRST_ITERATION + thread_id_x;
+    // On the fourth iteration, we should start from 3*max_concurrent_h1_first_iteration (24 + thread_id_x)
+    const auto h1_rel_index = i*VeloTracking::max_concurrent_h1_first_iteration + thread_id_x;
     if (h1_rel_index < number_of_hits_h1) {
       // Fetch h1
       h1_index = module_data[1].hitStart + h1_rel_index;
@@ -112,9 +112,9 @@ __device__ void trackSeedingFirst(
             const auto scatter = scatterNum * scatterDenom2;
             const auto condition = fabs(h1.x - h0.x) < dmax &&
                                    fabs(h1.y - h0.y) < dmax &&
-                                   fabs(dx) < TOLERANCE &&
-                                   fabs(dy) < TOLERANCE &&
-                                   scatter < MAX_SCATTER_SEEDING &&
+                                   fabs(dx) < VeloTracking::tolerance &&
+                                   fabs(dy) < VeloTracking::tolerance &&
+                                   scatter < VeloTracking::max_scatter_seeding &&
                                    scatter < best_fit;
 
             // Populate fit, h0 and h2 in case we have found a better one
@@ -153,7 +153,7 @@ __device__ void trackSeedingFirst(
       // Add the tracks to the bag of tracks to_follow
       // Note: The first bit flag marks this is a tracklet (hitsNum == 3),
       // and hence it is stored in tracklets
-      const auto ttfP = atomicAdd(ttf_insertPointer, 1) % TTF_MODULO;
+      const auto ttfP = atomicAdd(ttf_insertPointer, 1) % VeloTracking::ttf_modulo;
       tracks_to_follow[ttfP] = 0x80000000 | trackP;
     }
 

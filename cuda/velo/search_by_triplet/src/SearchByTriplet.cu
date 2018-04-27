@@ -22,7 +22,7 @@ __global__ void searchByTriplet(
   // Each event is treated with two blocks, one for each side.
   const uint event_number = blockIdx.x;
   const uint number_of_events = gridDim.x;
-  const uint tracks_offset = event_number * MAX_TRACKS;
+  const uint tracks_offset = event_number * VeloTracking::max_tracks;
 
   // Pointers to data within the event
   const uint number_of_hits = dev_module_cluster_start[52 * number_of_events];
@@ -45,21 +45,21 @@ __global__ void searchByTriplet(
   short* h0_candidates = dev_h0_candidates + 2*hit_offset;
   short* h2_candidates = dev_h2_candidates + 2*hit_offset;
 
-  uint* tracks_to_follow = dev_tracks_to_follow + event_number * TTF_MODULO;
+  uint* tracks_to_follow = dev_tracks_to_follow + event_number * VeloTracking::ttf_modulo;
   uint* weak_tracks = dev_weak_tracks + hit_offset;
   Track* tracklets = dev_tracklets + hit_offset;
-  unsigned short* h1_rel_indices = dev_rel_indices + event_number * MAX_NUMHITS_IN_MODULE;
+  unsigned short* h1_rel_indices = dev_rel_indices + event_number * VeloTracking::max_numhits_in_module;
 
   // Initialize variables according to event number and module side
   // Insert pointers (atomics)
-  const int ip_shift = number_of_events + event_number * NUM_ATOMICS;
+  const int ip_shift = number_of_events + event_number * VeloTracking::num_atomics;
   uint* weaktracks_insert_pointer = (uint*) dev_atomics_storage + ip_shift;
   uint* tracklets_insert_pointer = (uint*) dev_atomics_storage + ip_shift + 1;
   uint* ttf_insert_pointer = (uint*) dev_atomics_storage + ip_shift + 2;
   uint* local_number_of_hits = (uint*) dev_atomics_storage + ip_shift + 3;
 
   // Shared memory
-  __shared__ float shared_best_fits [NUMTHREADS_X];
+  extern __shared__ float shared_best_fits [];
   __shared__ int module_data [9];
 
   // Initialize hit_used
@@ -72,7 +72,7 @@ __global__ void searchByTriplet(
   }
   // Initialize atomics
   tracks_insert_pointer[0] = 0;
-  if (threadIdx.x < NUM_ATOMICS) {
+  if (threadIdx.x < VeloTracking::num_atomics) {
     dev_atomics_storage[ip_shift + threadIdx.x] = 0;
   }
 

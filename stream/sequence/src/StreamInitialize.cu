@@ -27,15 +27,15 @@ cudaError_t Stream::initialize(
   // Blocks and threads for each algorithm
   const uint prefixSumBlocks = (52 * number_of_events + 511) / 512;
 
-  estimateInputSize.set(     dim3(number_of_events),  dim3(32, 26),       stream);
-  prefixSumReduce.set(       dim3(prefixSumBlocks),   dim3(256),          stream);
-  prefixSumSingleBlock.set(  dim3(1),                 dim3(1024),         stream);
-  prefixSumScan.set(         dim3(prefixSumBlocks-1), dim3(512),          stream);
-  maskedVeloClustering.set(  dim3(number_of_events),  dim3(256),          stream);
-  calculatePhiAndSort.set(   dim3(number_of_events),  dim3(64),           stream);
-  searchByTriplet.set(       dim3(number_of_events),  dim3(NUMTHREADS_X), stream);
-  consolidateTracks.set(     dim3(number_of_events),  dim3(32),           stream);
-  simplifiedKalmanFilter.set(dim3(number_of_events),  dim3(1024),         stream);
+  estimateInputSize.set(     dim3(number_of_events),  dim3(32, 26), stream);
+  prefixSumReduce.set(       dim3(prefixSumBlocks),   dim3(256),    stream);
+  prefixSumSingleBlock.set(  dim3(1),                 dim3(1024),   stream);
+  prefixSumScan.set(         dim3(prefixSumBlocks-1), dim3(512),    stream);
+  maskedVeloClustering.set(  dim3(number_of_events),  dim3(256),    stream);
+  calculatePhiAndSort.set(   dim3(number_of_events),  dim3(64),     stream);
+  searchByTriplet.set(       dim3(number_of_events),  dim3(32),     stream);
+  consolidateTracks.set(     dim3(number_of_events),  dim3(32),     stream);
+  simplifiedKalmanFilter.set(dim3(number_of_events),  dim3(1024),   stream);
 
   // Datatypes for definitions below
   // Note: The malloc'ing could be eventually moved to each handler, together
@@ -97,7 +97,7 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_hit_permutation, average_number_of_hits_per_event * number_of_events * sizeof(uint)));
 
   // sbt
-  // cudaCheck(cudaMalloc((void**)&dev_tracks_to_follow, number_of_events * TTF_MODULO * sizeof(uint)));
+  // cudaCheck(cudaMalloc((void**)&dev_tracks_to_follow, number_of_events * VeloTracking::ttf_modulo * sizeof(uint)));
   dev_tracks_to_follow = dev_cluster_candidates;
   
   cudaCheck(cudaMalloc((void**)&dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track)));
@@ -111,7 +111,7 @@ cudaError_t Stream::initialize(
 
   if (do_simplified_kalman_filter) {
     // simplified kalman filter
-    cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * STATES_PER_TRACK * sizeof(VeloState)));
+    cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * VeloTracking::states_per_track * sizeof(VeloState)));
   }
 
   // Memory allocations for host memory (copy back)
