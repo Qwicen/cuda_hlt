@@ -17,16 +17,16 @@ int main ( ) {
   while ( getline( reco_in, line ) ) {
     int id = std::stoul( line, nullptr, 0 );
     reco_ids.push_back( id );
-    //printf("id = %ul \n", id);
+    //printf("id = %x \n", id);
   }
   while ( getline( mc_in, line ) ) {
     int id = std::stoul( line, nullptr, 0 );
     mc_ids.push_back( id );
-    //printf("id = %ul \n", id);
+    printf("id = %x \n", id);
   }
 
   for ( auto id : reco_ids ) {
-    printf("checking id %u \n", id );
+    //printf("checking id %u \n", id );
     std::vector<uint>::iterator it = std::find( mc_ids.begin(), mc_ids.end(), id );
     if ( it != mc_ids.end() )
       printf("Found match: %u = %u \n", *it, id);
