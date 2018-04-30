@@ -180,15 +180,16 @@ std::map<std::string, float> calcResults(std::vector<float>& times){
  * @details The binary format is per every track:
  *   hitsNum hit0 hit1 hit2 ... (#hitsNum times)
  */
+template <bool mc_check>
 void writeBinaryTrack(
   const unsigned int* hit_IDs,
-  const Track& track,
+  const Track <mc_check> & track,
   std::ofstream& outstream
 ) {
   uint32_t hitsNum = track.hitsNum;
   outstream.write((char*) &hitsNum, sizeof(uint32_t));
   for (int i=0; i<track.hitsNum; ++i) {
-    const Hit hit = track.hits[i];
+    const Hit <true> hit = track.hits[i];
     outstream.write((char*) &hit.LHCbID, sizeof(uint32_t));
   }
 }
@@ -201,49 +202,51 @@ void writeBinaryTrack(
  * @param tracks      
  * @param trackNumber 
  */
+template <bool mc_check>
 void printTrack(
-  Track* tracks,
+  Track <mc_check> * tracks,
   const int trackNumber,
   std::ofstream& outstream
 ) {
-  const Track t = tracks[trackNumber];
+  const Track<mc_check> t = tracks[trackNumber];
   outstream << "Track #" << trackNumber << ", length " << (int) t.hitsNum << std::endl;
 
   for(int i=0; i<t.hitsNum; ++i){
-    const Hit hit = t.hits[i];
+    const Hit <true> hit = t.hits[i];
     const float x = hit.x;
     const float y = hit.y;
     const float z = hit.z;
-    const uint LHCbID = hit.LHCbID;
+    //const uint LHCbID = hit.LHCbID;
   
     outstream 
       << ", x " << std::setw(6) << x
       << ", y " << std::setw(6) << y
       << ", z " << std::setw(6) << z
-      << ", LHCbID " << LHCbID 
+      //<< ", LHCbID " << LHCbID 
       << std::endl;
   }
 
   outstream << std::endl;
 }
 
+template <bool mc_check>
 void printTracks(
-  Track* tracks,
+  Track <mc_check> * tracks,
   int* n_tracks,
   int n_events,
   std::ofstream& outstream 
 ) {
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
-    Track* tracks_event = tracks + i_event * MAX_TRACKS;
+    Track <mc_check> * tracks_event = tracks + i_event * MAX_TRACKS;
     int n_tracks_event = n_tracks[ i_event ];
     outstream << i_event << std::endl;
     outstream << n_tracks_event << std::endl;
 
     for ( int i_track = 0; i_track < n_tracks_event; ++i_track ) {
-      const Track t = tracks_event[i_track];
+      const Track <mc_check> t = tracks_event[i_track];
       outstream << t.hitsNum << std::endl;
       for ( int i_hit = 0; i_hit < t.hitsNum; ++i_hit ) {
-	Hit hit = t.hits[ i_hit ];
+	Hit <true> hit = t.hits[ i_hit ];
 	outstream << hit.LHCbID << std::endl;
       }
     }

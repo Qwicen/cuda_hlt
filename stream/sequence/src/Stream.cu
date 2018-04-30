@@ -96,7 +96,7 @@ cudaError_t Stream::operator()(
       cuda_event_start,
       cuda_event_stop,
       print_individual_rates
-    );
+     );
 
     // Print output
     // searchByTriplet.print_output(number_of_events);
@@ -122,13 +122,13 @@ cudaError_t Stream::operator()(
     
     if (do_consolidate) {
       Helper::invoke(
-        consolidateTracks,
+	consolidateTracks,
         "Consolidate tracks",
         times,
         cuda_event_start,
         cuda_event_stop,
         print_individual_rates
-      );
+       );
     }
 
     // Transmission device to host
@@ -136,7 +136,7 @@ cudaError_t Stream::operator()(
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       
       if (do_consolidate) {
-	cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
+	cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
       }
 
       cudaEventRecord(cuda_generic_event, stream);
@@ -166,24 +166,25 @@ cudaError_t Stream::operator()(
     }
     
     if ( repetitions == 0 ) { // only print out tracks once
-      /* Print tracks: track #, length, x, y, z, LHCb ID of all hits */
-      std::ofstream out_file;
-      out_file.open("tracks_out.txt");
-      for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
-	Track* tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
-	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
-	  printTrack( tracks_event, i_track, out_file );
-	}
-      }
-      out_file.close();
-      /* Print tracks for PrChecker: length, LHCb Ids of all hits */
-      std::ofstream tracks_out_file;
-      tracks_out_file.open("tracks_checker_out.txt");
-      printTracks( host_tracks_pinned,
-		   host_number_of_tracks_pinned,
-		   number_of_events,
-		   tracks_out_file );
-      tracks_out_file.close();
+      // /* Print tracks: track #, length, x, y, z, LHCb ID of all hits */
+      // std::ofstream out_file;
+      // out_file.open("tracks_out.txt");
+      // for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
+      // 	Track<do_mc_check>* tracks_event;
+      // 	tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
+      // 	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+      // 	  printTrack<do_mc_check>( tracks_event, i_track, out_file );
+      // 	}
+      // }
+      // out_file.close();
+      // /* Print tracks for PrChecker: length, LHCb Ids of all hits */
+      // std::ofstream tracks_out_file;
+      // tracks_out_file.open("tracks_checker_out.txt");
+      // printTracks( host_tracks_pinned,
+      // 		   host_number_of_tracks_pinned,
+      // 		   number_of_events,
+      // 		   tracks_out_file );
+      // tracks_out_file.close();
     }
   }
 

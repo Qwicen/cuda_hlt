@@ -57,7 +57,8 @@ int main(int argc, char *argv[])
   bool transmit_device_to_host = true;
   bool do_consolidate = false;
   bool do_simplified_kalman_filter = false;
-
+ 
+  
   signed char c;
   while ((c = getopt(argc, argv, "f:n:t:r:pha:b:d:v:c:k:")) != -1) {
     switch (c) {
@@ -107,6 +108,13 @@ int main(int argc, char *argv[])
     return -1;
   }
 
+  // MC Check
+#ifdef MC_CHECK
+  printf("MC checking ON \n");
+#else
+   printf("MC checking OFF \n");
+#endif
+  
   // Set verbosity level
   std::cout << std::fixed << std::setprecision(6);
   logger::ll.verbosityLevel = verbosity;

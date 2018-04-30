@@ -80,6 +80,15 @@ namespace VeloTracking {
 #define ASSERT(EXPR) 
 #endif
 
+
+// MC check on?
+#ifdef MC_CHECK
+  const bool do_mc_check = true;
+#else
+  const bool do_mc_check = false;
+#endif
+  
+
 struct Module {
     uint hitStart;
     uint hitNums;
@@ -104,19 +113,45 @@ struct HitXY {
     ) : x(_x), y(_y) {}
 };
 
-struct Hit { // 4 * 4 = 16 B
+
+
+struct HitBase { // 4 * 4 = 16 B
     float x;
     float y;
     float z;
+      
+    __device__ HitBase(){}
+    __device__ HitBase(
+      const float _x,
+      const float _y,
+      const float _z
+    ) : x(_x), y(_y), z(_z) {}
+};
+
+template <bool MCCheck>
+struct Hit;
+
+template <>
+struct Hit <true> : public HitBase {
     uint32_t LHCbID;
-   
+    
     __device__ Hit(){}
     __device__ Hit(
       const float _x,
       const float _y,
       const float _z,
       const uint32_t _LHCbID
-    ) : x(_x), y(_y), z(_z), LHCbID(_LHCbID) {}
+    ) : HitBase( _x, _y, _z ), LHCbID( _LHCbID ) {}
+};
+
+template <>
+struct Hit <false> : public HitBase {
+     __device__ Hit(){}
+     __device__ Hit(
+       const float _x,
+       const float _y,
+       const float _z
+    ) : HitBase( _x, _y, _z) {}
 };
 
 /* Structure containing indices to hits within hit array */
@@ -140,15 +175,16 @@ struct TrackHits { // 4 + 26 * 4 = 116 B
 /* Structure to save final track
    Contains information needed later on in the HLT chain
    and / or for truth matching */
+template <bool MCCheck>   
 struct Track { // 4 + 26 * 16 = 420 B
   unsigned short hitsNum;
-  Hit hits[MAX_TRACK_SIZE];
+  Hit <MCCheck> hits[MAX_TRACK_SIZE];
   
   __device__ Track(){
   hitsNum = 0;
   }
  
-  __device__ void addHit( Hit _h ){
+  __device__ void addHit( Hit <MCCheck> _h ){
     hits[ hitsNum ] = _h;
     hitsNum++;
   }

@@ -79,22 +79,25 @@ void printInfo(
   int numberOfHits
 );
 
+template <bool mc_check>
 void printTrack(
-  Track* tracks,
+  Track <mc_check> * tracks,
   const int trackNumber,
   std::ofstream& outstream
 );
 
+template <bool mc_check>
 void printTracks(
-  Track* tracks,
+  Track <mc_check> * tracks,
   int* n_tracks,
   int n_events,
   std::ofstream& outstream
 );
 
+template <bool mc_check>
 void writeBinaryTrack(
   const unsigned int* hit_IDs,
-  const Track& track,
+  const Track <mc_check> & track,
   std::ofstream& outstream
 );
 

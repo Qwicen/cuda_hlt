@@ -12,7 +12,7 @@ struct ConsolidateTracks {
   // Call parameters
   int* dev_atomics_storage;
   TrackHits* dev_tracks;
-  Track* dev_output_tracks;
+  Track <do_mc_check> * dev_output_tracks;
   uint32_t* dev_velo_cluster_container;
   uint* dev_module_cluster_start;
   uint* dev_module_cluster_num;
@@ -32,7 +32,7 @@ struct ConsolidateTracks {
   void setParameters(
     int* param_dev_atomics_storage,
     TrackHits* param_dev_tracks,
-    Track* param_dev_output_tracks,
+    Track <do_mc_check> * param_dev_output_tracks,
     uint32_t* param_dev_velo_cluster_container,
     uint* param_dev_module_cluster_start,
     uint* param_dev_module_cluster_num
@@ -46,5 +46,5 @@ struct ConsolidateTracks {
 
   }
 
-  void operator()();
+   void operator()();
 };
