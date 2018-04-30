@@ -4,6 +4,26 @@
 #include <iostream>
 #include <stdint.h>
 
+
+// MC check on?
+#ifdef MC_CHECK
+  const bool do_mc_check = true;
+ #else
+  const bool do_mc_check = false;
+#endif
+
+/**
+ * Generic StrException launcher
+ */
+class StrException : public std::exception
+{
+public:
+    std::string s;
+    StrException(std::string ss) : s(ss) {}
+    ~StrException() throw () {} // Updated
+    const char* what() const throw() { return s.c_str(); }
+};
+
 /**
  * @brief Struct to typecast events.
  */

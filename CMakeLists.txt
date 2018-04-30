@@ -26,7 +26,7 @@ file(GLOB main_sources "main/src/*cpp")
 
 cuda_add_executable(cu_hlt ${main_sources})
 
-target_link_libraries(cu_hlt tbb libcuVelo libStream libx86Clustering)
+target_link_libraries(cu_hlt tbb libcuVelo libStream libx86Clustering libTrackChecking)
 
 # option to do MC truth matching
 option(MC_CHECK "MC truth matching" ON)

@@ -2,12 +2,15 @@
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+#include "../../../../main/include/Common.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
 #include <cfloat>
 #include <vector>
 #include <stdint.h>
+#include <stdio.h>
 
 #define N_MODULES 52
 namespace VeloTracking {
@@ -81,12 +84,6 @@ namespace VeloTracking {
 #endif
 
 
-// MC check on?
-#ifdef MC_CHECK
-  const bool do_mc_check = true;
-#else
-  const bool do_mc_check = false;
-#endif
   
 
 struct Module {

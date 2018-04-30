@@ -164,30 +164,53 @@ cudaError_t Stream::operator()(
       times.emplace_back("total", t_total.get());
       print_timing(number_of_events, times);
     }
-    
-    if ( repetitions == 0 ) { // only print out tracks once
-      // /* Print tracks: track #, length, x, y, z, LHCb ID of all hits */
-      // std::ofstream out_file;
-      // out_file.open("tracks_out.txt");
-      // for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
-      // 	Track<do_mc_check>* tracks_event;
-      // 	tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
-      // 	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
-      // 	  printTrack<do_mc_check>( tracks_event, i_track, out_file );
-      // 	}
-      // }
-      // out_file.close();
-      // /* Print tracks for PrChecker: length, LHCb Ids of all hits */
-      // std::ofstream tracks_out_file;
-      // tracks_out_file.open("tracks_checker_out.txt");
-      // printTracks( host_tracks_pinned,
-      // 		   host_number_of_tracks_pinned,
-      // 		   number_of_events,
-      // 		   tracks_out_file );
-      // tracks_out_file.close();
-    }
-  }
 
+    /* MC check */
+    printf("mc check on?: %d \n", do_mc_check);
+#ifdef MC_CHECK
+    if ( repetitions == 0 ) { // only print out tracks once
+      /* Write tracks to file: track #, length, x, y, z, LHCb ID of all hits */
+      std::ofstream out_file;
+      out_file.open("tracks_out.txt");
+      for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
+      	Track<do_mc_check>* tracks_event;
+      	tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
+      	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+      	  printTrack<do_mc_check>( tracks_event, i_track, out_file );
+      	}
+      }
+      out_file.close();
+      /* Write tracks to file for PrChecker: length, LHCb Ids of all hits */
+      std::ofstream tracks_out_file;
+      tracks_out_file.open("tracks_checker_out.txt");
+      printTracks( host_tracks_pinned,
+      		   host_number_of_tracks_pinned,
+      		   number_of_events,
+      		   tracks_out_file );
+      tracks_out_file.close();
+      
+      /* Tracks to be checked, save in format for checker */
+      std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
+      for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
+      	Track<do_mc_check>* tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
+	trackChecker::Tracks tracks; // all tracks within one event
+      	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+	  trackChecker::Track t;
+	  const Track <do_mc_check> track = tracks_event[i_track];
+	  for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
+	    Hit <true> hit = track.hits[ i_hit ];
+	    LHCbID lhcb_id( hit.LHCbID );
+	    t.addId( lhcb_id );
+	  } // hits
+	  tracks.push_back( t );
+	} // tracks
+	all_tracks.push_back( tracks );
+      } // events
+
+      checkTracks( all_tracks );
+    }
+#endif    
+  }
   return cudaSuccess;
 }
 

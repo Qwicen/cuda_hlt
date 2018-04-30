@@ -1,5 +1,8 @@
 #include "../include/Tools.h"
 
+#include "../../checker/lib/include/velopix-input-reader.h"
+#include "../../checker/lib/include/TrackChecker.h"
+
 /**
  * @brief Read files into vectors.
  */
@@ -298,4 +301,28 @@ void printInfo(const EventInfo& info, int numberOfModules, int numberOfHits) {
       // << " hit_Z: " << info.hit_Zs[i] << std::endl
       << std::endl;
   }
+}
+
+void checkTracks( std::vector< trackChecker::Tracks > all_tracks ) {
+
+  /* MC information */
+  std::vector<VelopixEvent> events = VelopixEventReader::readFolder("../input_checker", 20, true );
+  
+  TrackChecker trackChecker;
+  uint64_t evnum = 1;
+  for (const auto& ev: events) {
+    std::cout << "Event " << evnum << std::endl;
+    auto pixels = ev.soaHits();
+    auto mcps = ev.mcparticles();
+    MCAssociator mcassoc(mcps);
+
+    trackChecker::Tracks tracks = all_tracks[evnum-1];
+    std::cout << "INFO: found " << tracks.size() << " reconstructed tracks" <<
+     " and " << mcps.size() << " MC particles " << std::endl;
+
+    trackChecker(tracks, mcassoc, mcps);
+        
+    ++evnum;
+  }
+  
 }

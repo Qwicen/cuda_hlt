@@ -59,7 +59,7 @@ class TrackChecker
             /// register MC particles
             void operator()(const MCParticles& mcps);
             /// register track and its MC association
-            void operator()(const Tracks::const_reference& track,
+	  void operator()(const trackChecker::Tracks::const_reference& track,
                     const MCParticles::const_reference& mcp,
                     const float weight);
             /// notify of end of event
@@ -79,7 +79,7 @@ class TrackChecker
     public:
         TrackChecker();
         ~TrackChecker();
-        void operator()(const Tracks& tracks,
+        void operator()(const trackChecker::Tracks& tracks,
                 const MCAssociator& mcassoc,
                 const MCParticles& mcps);
 };

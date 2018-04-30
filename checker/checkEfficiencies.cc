@@ -16,13 +16,12 @@
 #include "track_input_reader.h"
 #include "MCAssociator.h"
 #include "TrackChecker.h"
-#include "TrackSerializer.h"
 
 int main()
 {
   /* Tracks to be checked */
   std::ifstream tracks_in ("tracks_checker_out.txt" );
-  std::vector< Tracks > all_tracks = read_input_tracks( tracks_in );
+  std::vector< trackChecker::Tracks > all_tracks = read_input_tracks( tracks_in );
   
   /* MC information */
   std::vector<VelopixEvent> events = VelopixEventReader::readFolder("../input_checker", 20, true );
@@ -35,7 +34,7 @@ int main()
     auto mcps = ev.mcparticles();
     MCAssociator mcassoc(mcps);
 
-    Tracks tracks = all_tracks[evnum-1];
+    trackChecker::Tracks tracks = all_tracks[evnum-1];
     std::cout << "INFO: found " << tracks.size() << " reconstructed tracks" <<
      " and " << mcps.size() << " MC particles " << std::endl;
 

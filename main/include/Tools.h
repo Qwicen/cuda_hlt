@@ -15,18 +15,11 @@
 #include "Logger.h"
 #include "Common.h"
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
+#include "../../checker/lib/include/Tracks.h"
 
 /**
  * Generic StrException launcher
  */
-class StrException : public std::exception
-{
-public:
-    std::string s;
-    StrException(std::string ss) : s(ss) {}
-    ~StrException() throw () {} // Updated
-    const char* what() const throw() { return s.c_str(); }
-};
 
 void readFileIntoVector(
   const std::string& filename,
@@ -106,4 +99,8 @@ cudaError_t checkSorting(
   unsigned int acc_hits,
   unsigned short* dev_hit_phi,
   const std::vector<unsigned int>& hit_offsets
+);
+
+void checkTracks(
+		 std::vector< trackChecker::Tracks > all_tracks
 );

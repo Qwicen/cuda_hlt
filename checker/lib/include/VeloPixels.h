@@ -14,7 +14,7 @@
 
 #include "boost/range/iterator_range.hpp"
 
-#include "SOAContainer.h"
+#include "../SOAContainer/include/SOAContainer.h"
 #include "LHCbID.h"
 
 namespace VeloPixelDesc {

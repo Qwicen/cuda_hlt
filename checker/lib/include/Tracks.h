@@ -17,34 +17,28 @@
 
 #include "LHCbID.h"
 
-
-class Track
-{
-
- public:
-  SomeLHCbIDs  allids;
+namespace trackChecker {
   
-  void addId ( LHCbID id ) {
-    allids.push_back(id);
-  }
-  
-  SomeLHCbIDs ids() const {
-    //SomeLHCbIDs id_collection = SomeLHCbIDs( allids.begin(), allids.end() );
-    //return id_collection;
-    return allids;
-  }
-
- 
+  class Track
+  {
+    
+  public:
+    SomeLHCbIDs  allids;
+    
+    void addId ( LHCbID id ) {
+      allids.push_back(id);
+    }
+    
+    SomeLHCbIDs ids() const {
+      return allids;
+    }
+    
+    
   int nIDs() const {
     return allids.size();
   }
-
   
-};
-
-using Tracks = std::vector< Track >;
-
-//using Tracks = SOA::Container<std::vector, TracksDesc::Skin>;
-//using TracksRange = boost::iterator_range<Tracks::iterator>;
-
-// vim: sw=4:tw=78:ft=cpp:et
+  };
+  
+  using Tracks = std::vector< Track >;
+}

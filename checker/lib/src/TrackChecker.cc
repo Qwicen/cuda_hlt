@@ -95,9 +95,9 @@ void TrackChecker::TrackEffReport::operator()(const MCParticles& mcps)
 }
 
 void TrackChecker::TrackEffReport::operator()(
-        const Tracks::const_reference& track,
-        const MCParticles::const_reference& mcp,
-        const float weight)
+					      const trackChecker::Tracks::const_reference& track,
+					      const MCParticles::const_reference& mcp,
+					      const float weight)
 {
 
     if (!m_accept(mcp)) return;
@@ -145,10 +145,10 @@ TrackChecker::TrackEffReport::~TrackEffReport()
             100.f * m_hiteff, 100.f * m_hitpur);
 }
 
-void TrackChecker::operator()(const Tracks& tracks,
+void TrackChecker::operator()(const trackChecker::Tracks& tracks,
         const MCAssociator& mcassoc, const MCParticles& mcps)
 {
-    // register MC particles
+  // register MC particles
     for (auto& report: m_categories) report(mcps);
     // go through tracks
     const std::size_t ntracksperevt = tracks.size();
