@@ -17,10 +17,10 @@ __device__ void weakTracksAdder(
     if (weaktrack_no < weaktracks_total) {
       // Load the tracks from the tracklets
       const Track t = tracklets[weak_tracks[weaktrack_no]];
-      const uint used = hit_used[t.hits[0]] + hit_used[t.hits[1]] + hit_used[t.hits[2]];
+      const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
 
       // Store them in the tracks bag
-      if (used < 1) {
+      if (!any_used) {
         const uint trackno = atomicAdd(tracks_insert_pointer, 1);
         assert(trackno < VeloTracking::max_tracks);
         tracks[trackno] = t;

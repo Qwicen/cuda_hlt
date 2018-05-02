@@ -65,7 +65,7 @@ cudaError_t Stream::operator()(
     // cudaCheck(cudaMemcpyAsync(&number_of_hits, dev_estimated_input_size + number_of_events * 52, sizeof(uint), cudaMemcpyDeviceToHost, stream));
 
     // if (number_of_hits * 6 * sizeof(uint32_t) > velo_cluster_container_size) {
-    //   WARNING << "Number of hits: " << number_of_hits << std::endl
+    //   warning_cout << "Number of hits: " << number_of_hits << std::endl
     //     << "Size of velo cluster container is larger than previously accomodated." << std::endl
     //     << "Resizing from " << velo_cluster_container_size << " to " << number_of_hits * 6 * sizeof(uint) << " B" << std::endl;
 
@@ -207,7 +207,7 @@ void Stream::print_timing(
     }
   }
 
-  INFO << "stream #" << stream_number << ": "
+  info_cout << "stream #" << stream_number << ": "
     << number_of_events / total_time.second << " events/s"
     << ", partial timers (s): " << partial_times
     << std::endl;
