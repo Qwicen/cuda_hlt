@@ -191,8 +191,15 @@ int main(int argc, char *argv[])
       print_individual_rates,
       i
     );
+    // Memory consumption
+    size_t free_byte ;
+    size_t total_byte ;
+    cudaCheck( cudaMemGetInfo( &free_byte, &total_byte ) );
+    float free_percent = (float)free_byte / total_byte * 100;
+    float used_percent = (float)(total_byte - free_byte) / total_byte * 100;
+    printf("GPU memory: %f percent free, %f percent used \n", free_percent, used_percent );
   }
-
+  
   // Attempt to execute all in one go
   Timer t;
   tbb::parallel_for(
@@ -216,6 +223,14 @@ int main(int argc, char *argv[])
   std::cout << (number_of_events * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
+  // // Memory consumption
+  // size_t free_byte ;
+  // size_t total_byte ;
+  // cudaCheck( cudaMemGetInfo( &free_byte, &total_byte ) );
+  // float free_percent = (float)free_byte / total_byte * 100;
+  // float used_percent = (float)(total_byte - free_byte) / total_byte * 100;
+  // printf("GPU memory: %f percent free, %f percent used \n", free_percent, used_percent );
+  
   // Free and reset device
   cudaCheck(cudaFreeHost(host_events_pinned));
   cudaCheck(cudaFreeHost(host_event_offsets_pinned));
