@@ -3,13 +3,13 @@
 #include <vector>
 #include <iostream>
 #include <stdint.h>
+#include <stdio.h>
 
-
-// MC check on?
+// MC Check
 #ifdef MC_CHECK
-  const bool do_mc_check = true;
- #else
-  const bool do_mc_check = false;
+const bool do_mc_check = true;
+#else
+const bool do_mc_check = false;
 #endif
 
 /**

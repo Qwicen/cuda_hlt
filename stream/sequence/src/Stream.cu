@@ -166,7 +166,6 @@ cudaError_t Stream::operator()(
     }
 
     /* MC check */
-    printf("mc check on?: %d \n", do_mc_check);
 #ifdef MC_CHECK
     if ( repetitions == 0 ) { // only print out tracks once
       /* Write tracks to file: track #, length, x, y, z, LHCb ID of all hits */
@@ -176,17 +175,17 @@ cudaError_t Stream::operator()(
       	Track<do_mc_check>* tracks_event;
       	tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
       	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
-      	  printTrack<do_mc_check>( tracks_event, i_track, out_file );
+      	  //printTrack<do_mc_check>( tracks_event, i_track, out_file );
       	}
       }
       out_file.close();
       /* Write tracks to file for PrChecker: length, LHCb Ids of all hits */
       std::ofstream tracks_out_file;
       tracks_out_file.open("tracks_checker_out.txt");
-      printTracks( host_tracks_pinned,
-      		   host_number_of_tracks_pinned,
-      		   number_of_events,
-      		   tracks_out_file );
+      // printTracks( host_tracks_pinned,
+      // 		   host_number_of_tracks_pinned,
+      // 		   number_of_events,
+      // 		   tracks_out_file ); 
       tracks_out_file.close();
       
       /* Tracks to be checked, save in format for checker */

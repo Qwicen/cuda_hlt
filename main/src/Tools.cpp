@@ -215,7 +215,7 @@ void printTrack(
   outstream << "Track #" << trackNumber << ", length " << (int) t.hitsNum << std::endl;
 
   for(int i=0; i<t.hitsNum; ++i){
-    const Hit <true> hit = t.hits[i];
+    const Hit <mc_check> hit = t.hits[i];
     const float x = hit.x;
     const float y = hit.y;
     const float z = hit.z;

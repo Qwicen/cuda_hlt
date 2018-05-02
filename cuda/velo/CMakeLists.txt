@@ -22,4 +22,7 @@ cuda_add_library( libcuVelo STATIC
   ${velo_consolidate_tracks}
   )
 
+if ( MC_CHECK )
+  target_compile_definitions( libcuVelo PUBLIC MC_CHECK )
+endif()
  

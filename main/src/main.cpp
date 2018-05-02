@@ -45,6 +45,9 @@ void printUsage(char* argv[]){
     << std::endl;
 }
 
+
+
+
 int main(int argc, char *argv[])
 {
   std::string folder_name;
@@ -57,8 +60,7 @@ int main(int argc, char *argv[])
   bool transmit_device_to_host = true;
   bool do_consolidate = false;
   bool do_simplified_kalman_filter = false;
- 
-  
+   
   signed char c;
   while ((c = getopt(argc, argv, "f:n:t:r:pha:b:d:v:c:k:")) != -1) {
     switch (c) {
@@ -100,6 +102,11 @@ int main(int argc, char *argv[])
     }
   }
 
+  if ( do_mc_check )
+    printf("MC check ON \n");
+  else
+    printf("MC check OFF \n");
+  
   // Check how many files were specified and
   // call the entrypoint with the suggested format
   if(folder_name.empty()){
@@ -108,12 +115,6 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  // MC Check
-#ifdef MC_CHECK
-  printf("MC checking ON \n");
-#else
-   printf("MC checking OFF \n");
-#endif
   
   // Set verbosity level
   std::cout << std::fixed << std::setprecision(6);
