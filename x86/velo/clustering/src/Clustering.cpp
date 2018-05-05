@@ -269,8 +269,8 @@ std::vector<std::vector<uint32_t>> clustering(
   }
 
   t.stop();
-  std::cout << "Classical clustering:" << std::endl
-    << "Timer: " << t.get() << " s" << std::endl << std::endl;
+  // std::cout << "Classical clustering:" << std::endl
+  //   << "Timer: " << t.get() << " s" << std::endl << std::endl;
 
   return cluster_candidates;
 }

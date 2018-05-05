@@ -124,24 +124,24 @@ void statistics(
   const std::vector<char>& input,
   std::vector<unsigned int>& event_offsets
 ) {
-  unsigned int max_number_of_hits = 0;
-  unsigned int max_number_of_hits_in_module = 0;
-  unsigned int average_number_of_hits_in_module = 0;
+  // unsigned int max_number_of_hits = 0;
+  // unsigned int max_number_of_hits_in_module = 0;
+  // unsigned int average_number_of_hits_in_module = 0;
 
-  for (size_t i=0; i<event_offsets.size(); ++i) {
-    EventInfo info (input.data() + event_offsets[i]);
-    for (size_t j=0; j<info.numberOfModules; ++j) {
-      max_number_of_hits_in_module = std::max(max_number_of_hits_in_module, info.module_hitNums[j]);
-      average_number_of_hits_in_module += info.module_hitNums[j];
-    }
-    max_number_of_hits = std::max(max_number_of_hits, info.numberOfHits);
-  }
-  average_number_of_hits_in_module /= event_offsets.size() * 52;
+  // for (size_t i=0; i<event_offsets.size(); ++i) {
+  //   EventInfo info (input.data() + event_offsets[i]);
+  //   for (size_t j=0; j<info.numberOfModules; ++j) {
+  //     max_number_of_hits_in_module = std::max(max_number_of_hits_in_module, info.module_hitNums[j]);
+  //     average_number_of_hits_in_module += info.module_hitNums[j];
+  //   }
+  //   max_number_of_hits = std::max(max_number_of_hits, info.numberOfHits);
+  // }
+  // average_number_of_hits_in_module /= event_offsets.size() * 52;
 
-  std::cout << "Statistics on input events:" << std::endl
-    << " Max number of hits in event: " << max_number_of_hits << std::endl
-    << " Max number of hits in one module: " << max_number_of_hits_in_module << std::endl
-    << " Average number of hits in module: " << average_number_of_hits_in_module << std::endl << std::endl;
+  // std::cout << "Statistics on input events:" << std::endl
+  //   << " Max number of hits in event: " << max_number_of_hits << std::endl
+  //   << " Max number of hits in one module: " << max_number_of_hits_in_module << std::endl
+  //   << " Average number of hits in module: " << average_number_of_hits_in_module << std::endl << std::endl;
 }
 
 /**
@@ -172,110 +172,4 @@ std::map<std::string, float> calcResults(std::vector<float>& times){
     results["max"] = max;
 
     return results;
-}
-
-/**
- * @brief Writes a track in binary format
- * 
- * @details The binary format is per every track:
- *   hitsNum hit0 hit1 hit2 ... (#hitsNum times)
- */
-void writeBinaryTrack(
-  const unsigned int* hit_IDs,
-  const Track& track,
-  std::ofstream& outstream
-) {
-  uint32_t hitsNum = track.hitsNum;
-  outstream.write((char*) &hitsNum, sizeof(uint32_t));
-  for (int i=0; i<track.hitsNum; ++i) {
-    outstream.write((char*) &hit_IDs[track.hits[i]], sizeof(uint32_t));
-  }
-}
-
-/**
- * Prints tracks
- * Track #n, length <length>:
- *  <ID> module <module>, x <x>, y <y>, z <z>
- * 
- * @param tracks      
- * @param trackNumber 
- */
-void printTrack(
-  const EventInfo& info,
-  Track* tracks,
-  const int trackNumber,
-  std::ofstream& outstream
-) {
-  const Track t = tracks[trackNumber];
-  outstream << "Track #" << trackNumber << ", length " << (int) t.hitsNum << std::endl;
-
-  for(int i=0; i<t.hitsNum; ++i){
-    const int hitNumber = t.hits[i];
-    const unsigned int id = info.hit_IDs[hitNumber];
-    const float x = info.hit_Xs[hitNumber];
-    const float y = info.hit_Ys[hitNumber];
-
-    int module = 0;
-    for (int i=0; i<info.numberOfModules; ++i) {
-      if (hitNumber >= info.module_hitStarts[i] &&
-          hitNumber < info.module_hitStarts[i] + info.module_hitNums[i]) {
-        module = i;
-      }
-    }
-
-    outstream << " " << std::setw(8) << id << " (" << hitNumber << ")"
-      << " module " << std::setw(2) << module
-      << ", x " << std::setw(6) << x
-      << ", y " << std::setw(6) << y
-      << ", z " << std::setw(6) << info.module_Zs[module]
-      << std::endl;
-  }
-
-  outstream << std::endl;
-}
-
-void printOutAllModuleHits(const EventInfo& info, int* prevs, int* nexts) {
-  debug_cout << "All valid module hits: " << std::endl;
-  for(int i=0; i<info.numberOfModules; ++i){
-    for(int j=0; j<info.module_hitNums[i]; ++j){
-      int hit = info.module_hitStarts[i] + j;
-
-      if(nexts[hit] != -1){
-        debug_cout << hit << ", " << nexts[hit] << std::endl;
-      }
-    }
-  }
-}
-
-void printOutModuleHits(const EventInfo& info, int moduleNumber, int* prevs, int* nexts){
-  for(int i=0; i<info.module_hitNums[moduleNumber]; ++i){
-    int hstart = info.module_hitStarts[moduleNumber];
-
-    debug_cout << hstart + i << ": " << prevs[hstart + i] << ", " << nexts[hstart + i] << std::endl;
-  }
-}
-
-void printInfo(const EventInfo& info, int numberOfModules, int numberOfHits) {
-  numberOfModules = numberOfModules>52 ? 52 : numberOfModules;
-
-  debug_cout << "Read info:" << std::endl
-    << " no modules: " << info.numberOfModules << std::endl
-    << " no hits: " << info.numberOfHits << std::endl
-    << numberOfModules << " modules: " << std::endl;
-
-  for (int i=0; i<numberOfModules; ++i){
-    debug_cout << " Zs: " << info.module_Zs[i] << std::endl
-      << " hitStarts: " << info.module_hitStarts[i] << std::endl
-      << " hitNums: " << info.module_hitNums[i] << std::endl << std::endl;
-  }
-
-  debug_cout << numberOfHits << " hits: " << std::endl;
-
-  for (int i=0; i<numberOfHits; ++i){
-    debug_cout << " hit_id: " << info.hit_IDs[i] << std::endl
-      << " hit_X: " << info.hit_Xs[i] << std::endl
-      << " hit_Y: " << info.hit_Ys[i] << std::endl
-      // << " hit_Z: " << info.hit_Zs[i] << std::endl
-      << std::endl;
-  }
 }

@@ -87,6 +87,18 @@ cudaError_t Stream::operator()(
     // Print output
     // maskedVeloClustering.print_output(number_of_events, 3);
 
+    if (do_check) {
+      // Check results
+      maskedVeloClustering.check(
+        host_events_pinned,
+        host_event_offsets_pinned,
+        host_events_pinned_size,
+        host_event_offsets_pinned_size,
+        geometry,
+        number_of_events
+      );
+    }
+
     /////////////////////////
     // CalculatePhiAndSort //
     /////////////////////////
@@ -119,20 +131,18 @@ cudaError_t Stream::operator()(
     // Print output
     // searchByTriplet.print_output(number_of_events);
 
-    //////////////////////////////////
-    // Optional: Consolidate tracks //
-    //////////////////////////////////
+    ////////////////////////
+    // Consolidate tracks //
+    ////////////////////////
     
-    if (do_consolidate) {
-      Helper::invoke(
-        consolidateTracks,
-        "Consolidate tracks",
-        times,
-        cuda_event_start,
-        cuda_event_stop,
-        print_individual_rates
-      );
-    }
+    Helper::invoke(
+      consolidateTracks,
+      "Consolidate tracks",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+    );
 
     ////////////////////////////////////////
     // Optional: Simplified Kalman filter //
@@ -153,13 +163,8 @@ cudaError_t Stream::operator()(
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       
-      if (!do_consolidate) {
-        // Copy non-consolidated tracks
-        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracks, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-      }
-      else {
-        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-      }
+      // Copy the whole consolidated tracks container
+      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
 
       cudaEventRecord(cuda_generic_event, stream);
       cudaEventSynchronize(cuda_generic_event);

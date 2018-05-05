@@ -91,9 +91,5 @@ namespace logger {
 
   std::ostream& logger(int requestedLogLevel);
 
-  #ifndef CUDALOGGER_CPP
   extern Logger ll;
-  #else
-  Logger ll;
-  #endif
 }

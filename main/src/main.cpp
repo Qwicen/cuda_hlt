@@ -38,7 +38,7 @@ void printUsage(char* argv[]){
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
     << std::endl << " [-a {transmit host to device}=1]"
     << std::endl << " [-b {transmit device to host}=1]"
-    << std::endl << " [-c {consolidate tracks}=1]"
+    << std::endl << " [-c {run checkers}=0]"
     << std::endl << " [-k {simplified kalman filter}=0]"
     << std::endl << " [-v {verbosity}=3 (info)]"
     << std::endl << " [-p (print rates)]"
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
-  bool do_consolidate = true;
+  bool do_check = false;
   bool do_simplified_kalman_filter = false;
 
   signed char c;
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
       transmit_device_to_host = atoi(optarg);
       break;
     case 'c':
-      do_consolidate = atoi(optarg);
+      do_check = atoi(optarg);
       break;
     case 'k':
       do_simplified_kalman_filter = atoi(optarg);
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
-    << " consolidate tracks (-c): " << do_consolidate << std::endl
+    << " run checkers (-c): " << do_check << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " print rates (-p): " << print_individual_rates << std::endl
     << " verbosity (-v): " << verbosity << std::endl
@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
       events.size(),
       transmit_host_to_device,
       transmit_device_to_host,
-      do_consolidate,
+      do_check,
       do_simplified_kalman_filter,
       print_individual_rates,
       i
