@@ -198,6 +198,7 @@ cudaError_t Stream::operator()(
 	  const Track <do_mc_check> track = tracks_event[i_track];
 	  for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
 	    Hit <true> hit = track.hits[ i_hit ];
+	    printf("id = %u \n", (uint32_t)(hit.LHCbID) );
 	    LHCbID lhcb_id( hit.LHCbID );
 	    t.addId( lhcb_id );
 	  } // hits

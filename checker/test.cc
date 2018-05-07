@@ -17,12 +17,12 @@ int main ( ) {
   while ( getline( reco_in, line ) ) {
     int id = std::stoul( line, nullptr, 0 );
     reco_ids.push_back( id );
-    //printf("id = %x \n", id);
+    printf("id = %x \n", id);
   }
   while ( getline( mc_in, line ) ) {
     int id = std::stoul( line, nullptr, 0 );
     mc_ids.push_back( id );
-    printf("id = %x \n", id);
+    //printf("id = %x \n", id);
   }
 
   for ( auto id : reco_ids ) {

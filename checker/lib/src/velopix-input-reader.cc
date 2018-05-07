@@ -88,7 +88,7 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
             // Check all IDs in MC particles exist in hit_IDs
             for (size_t i=0; i<mcp.numHits; ++i) {
                 auto hit = mcp.hits[i];
-		//printf("checking hit %u \n", hit );
+		printf("checking hit %u \n", hit );
                 if (std::find(hit_IDs.begin(), hit_IDs.end(), hit) == hit_IDs.end()) {
                     throw StrException("The following MC particle hit ID was not found in hit_IDs: " + std::to_string(hit));
                 }

@@ -11,9 +11,9 @@
 
 #include "Tracks.h"
 
-std::vector< Tracks > read_input_tracks ( std::ifstream& input_tracks ) {
+std::vector< trackChecker::Tracks > read_input_tracks ( std::ifstream& input_tracks ) {
 
-  std::vector< Tracks > all_tracks; // all tracks from all events
+  std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
 
   unsigned long i_event = 0;
   unsigned long n_tracks = 0;
@@ -30,9 +30,9 @@ std::vector< Tracks > read_input_tracks ( std::ifstream& input_tracks ) {
       n_tracks = std::stoul( line, nullptr, 0);
       
       //printf("reading event %lu, with %lu tracks \n", i_event, n_tracks);
-      Tracks tracks; // all tracks within one event
+      trackChecker::Tracks tracks; // all tracks within one event
       for ( int i_track = 0; i_track < n_tracks; ++i_track ) {
-	Track t;
+	trackChecker::Track t;
 	unsigned long n_hits;
 	getline( input_tracks, line);
 	n_hits = std::stoul( line, nullptr, 0);
