@@ -8,6 +8,5 @@ __global__ void velo_fit(
   const uint* dev_module_cluster_start,
   const int* dev_atomics_storage,
   const Track* dev_tracks,
-  VeloState* dev_velo_states,
-  const bool is_consolidated = false
+  VeloState* dev_velo_states
 );

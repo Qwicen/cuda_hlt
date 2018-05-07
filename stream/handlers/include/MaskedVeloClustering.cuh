@@ -2,9 +2,12 @@
 
 #include "../../../cuda/velo/mask_clustering/include/MaskedVeloClustering.cuh"
 #include "../../../main/include/CudaCommon.h"
+#include "../../../checker/clustering/include/ClusteringChecker.h"
 #include "Handler.cuh"
 #include <vector>
 #include <iostream>
+#include <algorithm>
+#include <tuple>
 
 struct MaskedVeloClustering : public Handler {
   // Call parameters
@@ -44,5 +47,14 @@ struct MaskedVeloClustering : public Handler {
   void print_output(
     const uint number_of_events,
     const int print_max_per_module = -1
+  );
+
+  void check(
+    const char* host_events_pinned,
+    const uint* host_event_offsets_pinned,
+    const size_t host_events_pinned_size,
+    const size_t host_event_offsets_pinned_size,
+    const std::vector<char>& geometry,
+    const uint number_of_events
   );
 };

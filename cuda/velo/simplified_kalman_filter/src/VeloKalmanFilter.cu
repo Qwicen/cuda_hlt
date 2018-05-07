@@ -236,8 +236,7 @@ __global__ void velo_fit(
   const uint* dev_module_cluster_start,
   const int* dev_atomics_storage,
   const Track* dev_tracks,
-  VeloState* dev_velo_states,
-  const bool is_consolidated
+  VeloState* dev_velo_states
 ) {
   /* Data initialization */
   // Each event is treated with two blocks, one for each side.
@@ -258,14 +257,10 @@ __global__ void velo_fit(
   const uint number_of_tracks = dev_atomics_storage[event_number];
   VeloState* velo_states = dev_velo_states;
 
-  // The location of the track depends on whether the consolidation took place
-  if (is_consolidated) {
-    const uint track_start = dev_atomics_storage[number_of_events + event_number];
-    velo_states += track_start * VeloTracking::states_per_track;
-  } else {
-    velo_states += event_number * VeloTracking::max_tracks * VeloTracking::states_per_track;
-  }
-
+  // The location of the track
+  const uint track_start = dev_atomics_storage[number_of_events + event_number];
+  velo_states += track_start * VeloTracking::states_per_track;
+  
   // Iterate over the tracks and calculate fits
   for (uint i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
     const auto element = i * blockDim.x + threadIdx.x;

@@ -46,11 +46,13 @@ struct Stream {
   // Launch options
   bool transmit_host_to_device;
   bool transmit_device_to_host;
-  bool do_consolidate;
+  bool do_check;
   bool do_simplified_kalman_filter;
   bool print_individual_rates;
   // Varying cluster container size
   uint velo_cluster_container_size;
+  // Geometry of Velo detector
+  std::vector<char> geometry;
   // Data back transmission
   int* host_number_of_tracks_pinned;
   Track* host_tracks_pinned;
@@ -65,7 +67,7 @@ struct Stream {
     const size_t param_starting_events_size,
     const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
-    const bool param_do_consolidate,
+    const bool param_do_check,
     const bool param_do_simplified_kalman_filter,
     const bool param_print_individual_rates,
     const uint param_stream_number

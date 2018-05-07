@@ -3,12 +3,12 @@
 cudaError_t Stream::initialize(
   const std::vector<char>& raw_events,
   const std::vector<uint>& event_offsets,
-  const std::vector<char>& geometry,
+  const std::vector<char>& param_geometry,
   const uint number_of_events,
   const size_t param_starting_events_size,
   const bool param_transmit_host_to_device,
   const bool param_transmit_device_to_host,
-  const bool param_do_consolidate,
+  const bool param_do_check,
   const bool param_do_simplified_kalman_filter,
   const bool param_print_individual_rates,
   const uint param_stream_number
@@ -20,9 +20,10 @@ cudaError_t Stream::initialize(
   stream_number = param_stream_number;
   transmit_host_to_device = param_transmit_host_to_device;
   transmit_device_to_host = param_transmit_device_to_host;
-  do_consolidate = param_do_consolidate;
+  do_check = param_do_check;
   do_simplified_kalman_filter = param_do_simplified_kalman_filter;
   print_individual_rates = param_print_individual_rates;
+  geometry = param_geometry;
 
   // Blocks and threads for each algorithm
   const uint prefixSumBlocks = (52 * number_of_events + 511) / 512;
@@ -194,8 +195,7 @@ cudaError_t Stream::initialize(
     dev_estimated_input_size,
     dev_atomics_storage,
     dev_tracks,
-    dev_velo_states,
-    do_consolidate
+    dev_velo_states
   );
 
   return cudaSuccess;

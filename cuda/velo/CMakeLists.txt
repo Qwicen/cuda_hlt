@@ -1,4 +1,3 @@
-
 file(GLOB velo_common "common/src/*cu")
 file(GLOB velo_clustering_sources "mask_clustering/src/*cu")
 file(GLOB velo_phi_and_sort "calculate_phi_and_sort/src/*cu")
@@ -21,5 +20,3 @@ cuda_add_library( libcuVelo STATIC
   ${velo_simplified_kalman_filter}
   ${velo_consolidate_tracks}
   )
-
- 
