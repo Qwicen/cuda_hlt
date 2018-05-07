@@ -2,7 +2,7 @@ CUDA HLT
 ========
 
 Welcome to the CUDA High Level Trigger project, an attempt to provide
-a full HLT realization on GPU.
+a full HLT1 realization on GPU.
 
 How to run it
 -------------
