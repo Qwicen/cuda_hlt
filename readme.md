@@ -1,19 +1,22 @@
 CUDA HLT
 ========
 
-Welcome to the CUDA High Level Trigger project, an attempt to provide a full HLT1 realization on GPU.
+Welcome to the CUDA High Level Trigger project, an attempt to provide
+a full HLT realization on GPU.
 
 How to run it
 -------------
 
-The project requires a graphics card with CUDA support. The build process doesn't differ from standard cmake projects:
+The project requires a graphics card with CUDA support.
+The build process doesn't differ from standard cmake projects:
 
     mkdir build
     cd build
     cmake ..
     make
 
-Some binary input files are included with the project for testing. A run of the program with no arguments will let you know the basic options:
+Some binary input files are included with the project for testing.
+A run of the program with no arguments will let you know the basic options:
 
     Usage: ./cu_hlt
      -f {folder containing .bin files}
