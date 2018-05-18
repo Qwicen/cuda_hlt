@@ -17,6 +17,7 @@ cudaError_t Stream::operator()(
     // Clustering //
     ////////////////
 
+    printf("host_events_pinned size = %u \n", host_events_pinned_size );
     if (transmit_host_to_device) {
       cudaCheck(cudaMemcpyAsync(estimateInputSize.dev_raw_input, host_events_pinned, host_events_pinned_size, cudaMemcpyHostToDevice, stream));
       cudaCheck(cudaMemcpyAsync(estimateInputSize.dev_raw_input_offsets, host_event_offsets_pinned, host_event_offsets_pinned_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
@@ -190,22 +191,31 @@ cudaError_t Stream::operator()(
       
       /* Tracks to be checked, save in format for checker */
       std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
+      std::ofstream out_file_ids;
+      out_file_ids.open("first_event_reco_tracks.txt");
       for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
       	Track<do_mc_check>* tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
 	trackChecker::Tracks tracks; // all tracks within one event
+	//printf("Found %u tracks in event %u \n", host_number_of_tracks_pinned[i_event], i_event);
       	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
 	  trackChecker::Track t;
 	  const Track <do_mc_check> track = tracks_event[i_track];
+	  //printf("Track %u has %u hits \n", i_track, track.hitsNum);
 	  for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
 	    Hit <true> hit = track.hits[ i_hit ];
-	    printf("id = %u \n", (uint32_t)(hit.LHCbID) );
-	    LHCbID lhcb_id( hit.LHCbID );
+	    //printf("id = %u \n", (uint32_t)(hit.LHCbID) );
+	    if ( i_event == 1 )
+	      out_file_ids << std::hex << hit.LHCbID << std::endl;
+	    uint32_t masked_id = hit.LHCbID & 0x0FFFFFFF;
+	    LHCbID lhcb_id( masked_id );
 	    t.addId( lhcb_id );
 	  } // hits
 	  tracks.push_back( t );
 	} // tracks
+	
 	all_tracks.push_back( tracks );
       } // events
+      out_file_ids.close();
 
       checkTracks( all_tracks );
     }

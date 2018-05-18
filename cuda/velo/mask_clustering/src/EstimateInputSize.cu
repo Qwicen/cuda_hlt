@@ -35,7 +35,11 @@ __global__ void estimate_input_size(
   if (raw_bank_number < raw_event.number_of_raw_banks) {
     // Read raw bank
     const auto raw_bank = VeloRawBank(raw_event.payload + raw_event.raw_bank_offset[raw_bank_number]);
+    if ( threadIdx.x == 0 )
+      printf("event # = %u, # of raw banks = %u, # of sp's in first raw bank = %u, first word = %u \n", event_number, raw_event.number_of_raw_banks, raw_bank.sp_count, raw_bank.sp_word[0]);
     uint* estimated_module_size = estimated_input_size + (raw_bank.sensor_index >> 2);
+    // loop over all super pixels within an event using all threads available in one block
+    // one block works on one event
     for (int i=0; i<(raw_bank.sp_count + blockDim.x - 1) / blockDim.x; ++i) {
       const auto sp_index = i*blockDim.x + threadIdx.x;
       if (sp_index < raw_bank.sp_count) {
@@ -112,7 +116,9 @@ __global__ void estimate_input_size(
           const uint32_t sp_row = sp_addr & 0x3FU;
           const uint32_t sp_col = sp_addr >> 6;
 
-          for (uint k=0; k<raw_bank.sp_count; ++k) {
+	  // second loop over all super pixels in this event
+	  // to find out whether this can become a cluster
+	  for (uint k=0; k<raw_bank.sp_count; ++k) {
             const uint32_t other_sp_word = raw_bank.sp_word[k];
             const uint32_t other_no_sp_neighbours = sp_word & 0x80000000U;
             
@@ -141,8 +147,8 @@ __global__ void estimate_input_size(
                 pixels |= is_right_bottom*((other_sp&0x08) << 8);
                 pixels |= is_bottom*((other_sp&0x80) >> 2);
               }
-            }
-          }
+            } // super pixel not isolated
+          } // second loop over super pixels
 
           // 16 1024 65536
           //  8  512 32768

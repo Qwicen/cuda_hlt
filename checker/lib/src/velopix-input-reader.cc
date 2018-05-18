@@ -88,7 +88,7 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
             // Check all IDs in MC particles exist in hit_IDs
             for (size_t i=0; i<mcp.numHits; ++i) {
                 auto hit = mcp.hits[i];
-		printf("checking hit %u \n", hit );
+		//printf("checking hit %u \n", hit );
                 if (std::find(hit_IDs.begin(), hit_IDs.end(), hit) == hit_IDs.end()) {
                     throw StrException("The following MC particle hit ID was not found in hit_IDs: " + std::to_string(hit));
                 }
@@ -278,17 +278,21 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
         }
 
 	/* dump first event */
-	if ( i == 0 ) {
+	if ( i == 1 ) {
+
+	  std::ofstream out_file_reco;
+	  out_file_reco.open("first_event_reco_tracks_from_input.txt");
+	  for ( auto id : event.hit_IDs )
+	    out_file_reco << std::hex << id << std::endl;
+	  
 	  std::ofstream out_file;
 	  out_file.open("first_event_MC_tracks.txt");
-	  for ( auto id : event.hit_IDs )
-	    out_file << id << std::endl;
-	  // for ( auto mcp : event.mcps ) {
-	  //   if ( mcp.hits.size() != mcp.numHits ) 
-	  //     printf("ATTENTION: size of hits = %u, num hits = %u \n", mcp.hits.size(), mcp.numHits );
-	  //   for ( auto id : mcp.hits )
-	  //     out_file << id << std::endl;
-	  // }
+	   for ( auto mcp : event.mcps ) {
+	     if ( mcp.hits.size() != mcp.numHits ) 
+	       printf("ATTENTION: size of hits = %u, num hits = %u \n", mcp.hits.size(), mcp.numHits );
+	     for ( auto id : mcp.hits )
+	       out_file << std::hex << id << std::endl;
+	   }
 	  out_file.close();
 
 	}

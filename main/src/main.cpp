@@ -102,8 +102,13 @@ int main(int argc, char *argv[])
     }
   }
 
-  if ( do_mc_check )
+  if ( do_mc_check ) {
     printf("MC check ON \n");
+    if ( !do_consolidate ) {
+      do_consolidate = true;
+      printf("Track consolidation turned on, otherwise no MC CHECK possible \n");
+    }
+  }
   else
     printf("MC check OFF \n");
   

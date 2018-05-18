@@ -15,6 +15,7 @@
 #include "Logger.h"
 #include "Common.h"
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
+#include "../../cuda/velo/common/include/ClusteringDefinitions.cuh"
 #include "../../checker/lib/include/Tracks.h"
 
 /**
@@ -36,6 +37,11 @@ void readGeometry(
   const std::string& foldername,
   std::vector<char>& geometry
 );
+
+void check_events( const std::vector<char> events,
+		   const std::vector<unsigned int> event_offsets,
+		   int n_events
+		   );
 
 void readFolder(
   const std::string& foldername,

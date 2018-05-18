@@ -43,6 +43,12 @@ void appendFileToVector(
   infile.read(events.data() + previous_size, dataSize);
   event_sizes.push_back(dataSize);
   infile.close();
+
+  // checks
+  // const char* p = events.data() + previous_size;
+  // uint32_t sensor =  *((uint32_t*)p);  p += sizeof(uint32_t);
+  // uint32_t sp_count =  *((uint32_t*)p); p += sizeof(uint32_t);
+  // printf("sensor = %u, sp_count = %u \n", sensor, sp_count);
 }
 
 void readGeometry(
@@ -50,6 +56,33 @@ void readGeometry(
   std::vector<char>& geometry
 ) {
   readFileIntoVector(foldername + "/geometry.bin", geometry);
+}
+
+void check_events( const std::vector<char> events,
+		   const std::vector<unsigned int> event_offsets,
+		   int n_events) {
+
+  for ( int i_event = 0; i_event < n_events; ++i_event ) {
+    const char* raw_input = events.data() + event_offsets[i_event];
+
+    const char* p = events.data() + event_offsets[i_event];
+    uint32_t number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
+    uint32_t* raw_bank_offset = (uint32_t*) p; p += number_of_raw_banks * sizeof(uint32_t);
+
+    printf("at event %u, # of raw banks = %u, first offset = %u, second offset = %u \n", i_event, number_of_raw_banks, raw_bank_offset[0], raw_bank_offset[1]);
+    
+    uint32_t sensor =  *((uint32_t*)p);  p += sizeof(uint32_t);
+    uint32_t sp_count =  *((uint32_t*)p); p += sizeof(uint32_t);
+    printf("sensor = %u, sp_count = %u \n", sensor, sp_count);
+  
+    const auto raw_event = VeloRawEvent(raw_input);
+    printf("at raw event %u: number_of_raw_banks = %u \n", i_event, raw_event.number_of_raw_banks);
+    for ( int i_raw_bank = 0; i_raw_bank < raw_event.number_of_raw_banks; i_raw_bank++ ) {
+      const auto raw_bank = VeloRawBank(raw_event.payload + raw_event.raw_bank_offset[i_raw_bank]);
+      //printf("\t at raw bank %u, sensor = %u, sp_count = %u \n", i_raw_bank, raw_bank.sensor_index, raw_bank.sp_count);
+    }
+  }
+
 }
 
 /**
@@ -87,7 +120,7 @@ void readFolder(
     exit(-1);
   }
 
-  // Sort folder contents
+  // Sort folder contents (file names)
   std::sort(folderContents.begin(), folderContents.end()); 
 
   if (number_of_files == 0) {
@@ -104,10 +137,11 @@ void readFolder(
     // Read event #i in the list and add it to the inputs
     std::string readingFile = folderContents[i % folderContents.size()];
     appendFileToVector(foldername + "/" + readingFile, events, event_sizes);
+    std::cout << "Reading raw event " <<  readingFile << std::endl;
 
     event_offsets.push_back(accumulated_size);
     accumulated_size += event_sizes.back();
-
+    
     readFiles++;
     if ((readFiles % 100) == 0) {
       std::cout << "." << std::flush;
@@ -118,6 +152,8 @@ void readFolder(
   event_offsets.push_back(accumulated_size);
 
   std::cout << std::endl << (event_offsets.size() - 1) << " files read" << std::endl << std::endl;
+
+  check_events( events, event_offsets, number_of_files );
 }
 
 /**
@@ -306,7 +342,8 @@ void printInfo(const EventInfo& info, int numberOfModules, int numberOfHits) {
 void checkTracks( std::vector< trackChecker::Tracks > all_tracks ) {
 
   /* MC information */
-  std::vector<VelopixEvent> events = VelopixEventReader::readFolder("../input_checker", 20, true );
+  //std::vector<VelopixEvent> events = VelopixEventReader::readFolder("../input_checker", 20, true );
+  std::vector<VelopixEvent> events = VelopixEventReader::readFolder("../velopix_MC", 10, true );
   
   TrackChecker trackChecker;
   uint64_t evnum = 1;
