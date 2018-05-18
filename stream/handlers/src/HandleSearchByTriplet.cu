@@ -26,8 +26,8 @@ void SearchByTriplet::print_output(
   cudaCheck(cudaMemcpy(module_cluster_start.data(), dev_module_cluster_start, module_cluster_start.size() * sizeof(uint), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(module_cluster_num.data(), dev_module_cluster_num, module_cluster_num.size() * sizeof(uint), cudaMemcpyDeviceToHost));
 
-  std::vector<short> h0_candidates (2 * 2000 * number_of_events);
-  std::vector<short> h2_candidates (2 * 2000 * number_of_events);
+  std::vector<short> h0_candidates (2 * max_candidates_event * number_of_events);
+  std::vector<short> h2_candidates (2 * max_candidates_event * number_of_events);
   cudaCheck(cudaMemcpy(h0_candidates.data(), dev_h0_candidates, h0_candidates.size() * sizeof(short), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(h2_candidates.data(), dev_h2_candidates, h2_candidates.size() * sizeof(short), cudaMemcpyDeviceToHost));
 

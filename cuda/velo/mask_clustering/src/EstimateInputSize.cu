@@ -16,7 +16,7 @@ __global__ void estimate_input_size(
   uint* module_cluster_num = dev_module_cluster_num + event_number * N_MODULES;
   uint* event_candidate_num = dev_event_candidate_num + event_number;
   uint* number_of_cluster_candidates = dev_estimated_input_size + number_of_events * N_MODULES + 2;
-  uint32_t* cluster_candidates = dev_cluster_candidates + event_number * VeloClustering::max_candidates_event;
+  uint32_t* cluster_candidates = dev_cluster_candidates + event_number * max_candidates_event;
 
   // Initialize estimated_input_size, module_cluster_num and dev_module_candidate_num to 0
   for (int i=0; i<(N_MODULES + blockDim.x - 1) / blockDim.x; ++i) {
@@ -35,8 +35,8 @@ __global__ void estimate_input_size(
   if (raw_bank_number < raw_event.number_of_raw_banks) {
     // Read raw bank
     const auto raw_bank = VeloRawBank(raw_event.payload + raw_event.raw_bank_offset[raw_bank_number]);
-    if ( threadIdx.x == 0 )
-      printf("event # = %u, # of raw banks = %u, # of sp's in first raw bank = %u, first word = %u \n", event_number, raw_event.number_of_raw_banks, raw_bank.sp_count, raw_bank.sp_word[0]);
+    // if ( threadIdx.x == 0 )
+    //   printf("event # = %u, # of raw banks = %u, # of sp's in first raw bank = %u, first word = %u \n", event_number, raw_event.number_of_raw_banks, raw_bank.sp_count, raw_bank.sp_word[0]);
     uint* estimated_module_size = estimated_input_size + (raw_bank.sensor_index >> 2);
     // loop over all super pixels within an event using all threads available in one block
     // one block works on one event
@@ -45,6 +45,8 @@ __global__ void estimate_input_size(
       if (sp_index < raw_bank.sp_count) {
         // Decode sp
         const uint32_t sp_word = raw_bank.sp_word[sp_index];
+	// if ( threadIdx.x == 0 && blockIdx.x == 0 )
+	//   printf("sp index = %u, word = %u \n", sp_index, sp_word);
         const uint32_t no_sp_neighbours = sp_word & 0x80000000U;
         const uint32_t sp_addr = (sp_word & 0x007FFF00U) >> 8;
         const uint8_t sp = sp_word & 0xFFU;

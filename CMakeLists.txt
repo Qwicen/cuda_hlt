@@ -14,7 +14,7 @@ option(CUDA_PROPAGATE_HOST_FLAGS OFF)
 # Options for P100:
 # --gpu-architecture=compute_60;--gpu-code=sm_60;
 
-set(CUDA_NVCC_FLAGS "-O3;-g;--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=64;")
+set(CUDA_NVCC_FLAGS "-O3;-g;-G;--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=64;")
 
 add_subdirectory(cuda)
 add_subdirectory(stream)

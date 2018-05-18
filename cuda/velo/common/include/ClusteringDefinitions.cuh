@@ -7,6 +7,8 @@
 
 #include "VeloDefinitions.cuh"
 
+static constexpr uint32_t max_candidates_event = 8000; // 2000;
+
 namespace VeloClustering {
   extern __constant__ uint8_t sp_patterns [256];
   extern __constant__ uint8_t sp_sizes [256];
@@ -20,7 +22,6 @@ namespace VeloClustering {
   static constexpr uint32_t mask_ltr_top_right   = 0x7FFF0000;
   static constexpr uint32_t mask_rtl_bottom_left = 0x0000FFFE;
   static constexpr uint32_t max_clustering_iterations = 12;
-  static constexpr uint32_t max_candidates_event = 2000;
 }
 
 namespace LHCb {

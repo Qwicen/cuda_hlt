@@ -62,6 +62,7 @@ void check_events( const std::vector<char> events,
 		   const std::vector<unsigned int> event_offsets,
 		   int n_events) {
 
+  int n_sps_all_events = 0;
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
     const char* raw_input = events.data() + event_offsets[i_event];
 
@@ -69,20 +70,26 @@ void check_events( const std::vector<char> events,
     uint32_t number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
     uint32_t* raw_bank_offset = (uint32_t*) p; p += number_of_raw_banks * sizeof(uint32_t);
 
-    printf("at event %u, # of raw banks = %u, first offset = %u, second offset = %u \n", i_event, number_of_raw_banks, raw_bank_offset[0], raw_bank_offset[1]);
+    //printf("at event %u, # of raw banks = %u, first offset = %u, second offset = %u \n", i_event, number_of_raw_banks, raw_bank_offset[0], raw_bank_offset[1]);
     
     uint32_t sensor =  *((uint32_t*)p);  p += sizeof(uint32_t);
     uint32_t sp_count =  *((uint32_t*)p); p += sizeof(uint32_t);
-    printf("sensor = %u, sp_count = %u \n", sensor, sp_count);
+    //printf("sensor = %u, sp_count = %u \n", sensor, sp_count);
   
     const auto raw_event = VeloRawEvent(raw_input);
-    printf("at raw event %u: number_of_raw_banks = %u \n", i_event, raw_event.number_of_raw_banks);
+    //printf("at raw event %u: number_of_raw_banks = %u \n", i_event, raw_event.number_of_raw_banks);
+    int n_sps_event = 0;
     for ( int i_raw_bank = 0; i_raw_bank < raw_event.number_of_raw_banks; i_raw_bank++ ) {
       const auto raw_bank = VeloRawBank(raw_event.payload + raw_event.raw_bank_offset[i_raw_bank]);
+      n_sps_event += raw_bank.sp_count;
       //printf("\t at raw bank %u, sensor = %u, sp_count = %u \n", i_raw_bank, raw_bank.sensor_index, raw_bank.sp_count);
     }
+    n_sps_all_events += n_sps_event;
+    printf("# of sps in this event = %u\n", n_sps_event);
   }
 
+  printf("total # of sps = %u \n", n_sps_all_events);
+  
 }
 
 /**

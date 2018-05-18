@@ -74,7 +74,7 @@ __global__ void masked_velo_clustering(
   const uint* module_cluster_start = dev_module_cluster_start + event_number * N_MODULES;
   uint* module_cluster_num = dev_module_cluster_num + event_number * N_MODULES;
   uint number_of_candidates = dev_event_candidate_num[event_number];
-  uint32_t* cluster_candidates = (uint32_t*) &dev_cluster_candidates[event_number * VeloClustering::max_candidates_event];
+  uint32_t* cluster_candidates = (uint32_t*) &dev_cluster_candidates[event_number * max_candidates_event];
 
   // Local pointers to dev_velo_cluster_container
   const uint estimated_number_of_clusters = dev_module_cluster_start[N_MODULES * number_of_events];

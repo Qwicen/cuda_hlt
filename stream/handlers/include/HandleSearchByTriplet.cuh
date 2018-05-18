@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
+#include "../../../cuda/velo/common/include/ClusteringDefinitions.cuh"
 #include "../../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
 #include "../../../main/include/CudaCommon.h"
 #include <vector>

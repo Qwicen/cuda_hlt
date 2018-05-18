@@ -62,12 +62,12 @@ namespace VeloTracking {
 #define NUM_ATOMICS 4
 
 // Constants for requested storage on device
-#define MAX_TRACKS 1000
+#define MAX_TRACKS 6000 // 1000
 #define MAX_TRACK_SIZE 26
-#define MAX_NUMHITS_IN_MODULE 300
+#define MAX_NUMHITS_IN_MODULE 1000 // 300
 
 // Maximum number of tracks to follow at a time
-#define TTF_MODULO 2000
+#define TTF_MODULO 8000 // 2000
 
 // Constants for filters
 #define STATES_PER_TRACK 3

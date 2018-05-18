@@ -11,6 +11,7 @@
 #include "../../../main/include/Timer.h"
 #include "../../../main/include/Tools.h"
 #include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
+#include "../../../cuda/velo/common/include/ClusteringDefinitions.cuh"
 #include "../../handlers/include/HandleEstimateInputSize.cuh"
 #include "../../handlers/include/HandlePrefixSum.cuh"
 #include "../../handlers/include/HandleMaskedVeloClustering.cuh"
