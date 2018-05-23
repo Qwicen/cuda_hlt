@@ -240,7 +240,7 @@ void MagneticFieldGridReader::fillGridFromQuadrants( GridQuadrant* quadrants,
       double fz = std::stod( sFz ) ;
       // Add the magnetic field components of each point
       quad.Q.emplace_back( fx,fy,fz );
-      cout << fx << " " << fy << " " << fz << endl;
+      //cout << fx << " " << fy << " " << fz << endl;
       
 
     }

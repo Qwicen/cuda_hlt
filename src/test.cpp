@@ -165,7 +165,6 @@ void readFiles( const std::vector<std::string>& filenames)
 */
 
 int main () {
-  cout<< "hello world!"<<endl;
 
   // open the file
   string filename = "/home/freiss/lxplus_work/field101.c1.down.cdf";
@@ -174,16 +173,20 @@ int main () {
   MagneticFieldGridReader magreader;
   magreader.readQuadrant(filename, quad);
   vector<std::string> filenames;
-  filenames.push_back(filename);
-  filenames.push_back(filename);
-  filenames.push_back(filename);
-  filenames.push_back(filename);
+  filenames.push_back("/home/freiss/lxplus_work/field101.c1.down.cdf");
+  filenames.push_back("/home/freiss/lxplus_work/field101.c2.down.cdf");
+  filenames.push_back("/home/freiss/lxplus_work/field101.c3.down.cdf");
+  filenames.push_back("/home/freiss/lxplus_work/field101.c4.down.cdf");
   LHCb::MagneticFieldGrid grid;
   magreader.readFiles( filenames, grid);
-  XYZPoint point (0., 0., 0.);
+  XYZPoint point (1., 1., 1.);
   grid.fieldVector(point);
-
-
+  cout << grid.fieldVector(point).X() << endl;
+  XYZVector bfeld;
+  grid.fieldVector(point, bfeld);
+  cout << grid.fieldVector(point).X() << " " << bfeld.X() << endl;
+  cout << grid.fieldVector(point).Y() << " " << bfeld.Y() << endl;
+  cout << grid.fieldVector(point).Z() << " " << bfeld.Z() << endl;
 
     
 

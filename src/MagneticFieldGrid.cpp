@@ -64,8 +64,17 @@ namespace LHCb
     return _rc ;
   }
 
-  FieldVector
-  MagneticFieldGrid::fieldVector( const XYZPoint& r ) const
+
+
+  void MagneticFieldGrid::fieldVector( const XYZPoint& r, XYZVector &   fvec ) const
+  {
+    FieldVector temp = fieldVector(r);
+    fvec = temp;
+
+  }
+
+
+  FieldVector MagneticFieldGrid::fieldVector( const XYZPoint& r ) const
   {
     // //  Interpolate the field on a cube
 

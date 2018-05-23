@@ -58,6 +58,9 @@ namespace LHCb
     /// on the grid.
     FieldVector fieldVector( const XYZPoint& xyz ) const;
 
+    //
+    void fieldVector( const XYZPoint& xyz , XYZVector &   fvec ) const;
+
     /// Return the field vector fvec at the point xyz by interpolation
     /// on the grid.
     FieldGradient fieldGradient( const XYZPoint& xyz ) const;
