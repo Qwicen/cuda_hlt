@@ -18,7 +18,7 @@ public:
   MagneticFieldGridReader( ) ;
 
 
-  void readFiles( const std::vector<std::string>& filenames) const ;
+  void readFiles( const std::vector<std::string>& filenames,  LHCb::MagneticFieldGrid& grid ) const ;
 
   void readDC06File( const std::string& filename,
          LHCb::MagneticFieldGrid& grid ) const ;

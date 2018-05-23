@@ -19,7 +19,8 @@ MagneticFieldGridReader::MagneticFieldGridReader()
 }
 
 
- void MagneticFieldGridReader::readFiles( const std::vector<std::string>& filenames) const
+ void MagneticFieldGridReader::readFiles( const std::vector<std::string>& filenames, LHCb::MagneticFieldGrid& grid ) const
+
   //,
     //                                           LHCb::MagneticFieldGrid& grid ) 
 {
@@ -45,7 +46,7 @@ MagneticFieldGridReader::MagneticFieldGridReader()
     }
 
     // now fill the grid
-    //fillGridFromQuadrants( quadrants, grid ) ;
+    fillGridFromQuadrants( quadrants, grid ) ;
   
 
   
@@ -239,6 +240,7 @@ void MagneticFieldGridReader::fillGridFromQuadrants( GridQuadrant* quadrants,
       double fz = std::stod( sFz ) ;
       // Add the magnetic field components of each point
       quad.Q.emplace_back( fx,fy,fz );
+      cout << fx << " " << fy << " " << fz << endl;
       
 
     }

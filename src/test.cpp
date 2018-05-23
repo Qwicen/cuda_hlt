@@ -173,8 +173,15 @@ int main () {
   GridQuadrant quad; 
   MagneticFieldGridReader magreader;
   magreader.readQuadrant(filename, quad);
-
-
+  vector<std::string> filenames;
+  filenames.push_back(filename);
+  filenames.push_back(filename);
+  filenames.push_back(filename);
+  filenames.push_back(filename);
+  LHCb::MagneticFieldGrid grid;
+  magreader.readFiles( filenames, grid);
+  XYZPoint point (0., 0., 0.);
+  grid.fieldVector(point);
 
 
 
