@@ -5,14 +5,31 @@
 #include <vector>
 #include <array>
 #include <cmath>
-
-// Gaudi
-#include "GaudiKernel/Point3DTypes.h"
-#include "GaudiKernel/Vector3DTypes.h"
-#include "GaudiKernel/GenericMatrixTypes.h"
-
-// VectorClass
 #include "VectorClass/vectorclass.h"
+#include "TROOT.h"
+#include "TMath.h"
+#include "TH1D.h"
+#include "Math/Vector3D.h"
+#include "Math/Point3D.h"
+#include "Math/SMatrix.h"
+
+
+    typedef ROOT::Math::XYZVector XYZVector;
+    typedef ROOT::Math::SMatrix<double, 3, 3> Matrix3x3;
+    typedef ROOT::Math::XYZPoint XYZPoint;
+    typedef XYZVector FieldVector ;
+    typedef Matrix3x3 FieldGradient ;
+
+
+
+struct GridQuadrant
+{
+  std::vector<XYZVector> Q ;
+  double zOffset {0};
+  double Dxyz[3] {{}};
+  size_t Nxyz[3] {{}};
+} ;
+
 
 class MagneticFieldGridReader ;
 
@@ -31,23 +48,23 @@ namespace LHCb
   public:
 
     /// typedefs etc
-    typedef ROOT::Math::XYZVector FieldVector ;
-    typedef ROOT::Math::SMatrix<double, 3, 3> FieldGradient ;
+
+
 
     /// declare the field reader as friend so that we don't have to make a constructor
     friend class ::MagneticFieldGridReader;
 
     /// Return the field vector fvec at the point xyz by interpolation
     /// on the grid.
-    FieldVector fieldVector( const Gaudi::XYZPoint& xyz ) const;
+    FieldVector fieldVector( const XYZPoint& xyz ) const;
 
     /// Return the field vector fvec at the point xyz by interpolation
     /// on the grid.
-    FieldGradient fieldGradient( const Gaudi::XYZPoint& xyz ) const;
+    FieldGradient fieldGradient( const XYZPoint& xyz ) const;
 
     /// Return the field vector fvec at the point xyz by choosing the
     /// closest point on the grid.
-    FieldVector fieldVectorClosestPoint( const Gaudi::XYZPoint& xyz ) const ;
+    FieldVector fieldVectorClosestPoint( const XYZPoint& xyz ) const ;
 
     /// Return the magnetic field scale factor
     double scaleFactor() const noexcept { return m_scaleFactor ; }

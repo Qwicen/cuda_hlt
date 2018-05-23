@@ -4,10 +4,11 @@
 #include <cstring>
 #include <vector>
 #include <cassert>
+#include "MagneticFieldGridReader.h"
 using namespace std;
 
 
-
+/*
  // structure that holds the grid parameters for one quadrant (a la DC06)
 struct GridQuadrant
   {
@@ -161,7 +162,7 @@ void readFiles( const std::vector<std::string>& filenames)
 }
 
 
-
+*/
 
 int main () {
   cout<< "hello world!"<<endl;
@@ -170,7 +171,8 @@ int main () {
   string filename = "/home/freiss/lxplus_work/field101.c1.down.cdf";
   
   GridQuadrant quad; 
-  readQuadrant(filename, quad);
+  MagneticFieldGridReader magreader;
+  magreader.readQuadrant(filename, quad);
 
 
 

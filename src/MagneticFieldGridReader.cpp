@@ -1,9 +1,9 @@
 
 #include "MagneticFieldGridReader.h"
-#include "MagneticFieldGrid.h"
+
 #include <string>
 #include <fstream>
-
+using namespace std;
 //=============================================================================
 // Read the field map files and scale by scaleFactor
 //=============================================================================
@@ -11,23 +11,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 // structure that holds the grid parameters for one quadrant (a la DC06)
 ////////////////////////////////////////////////////////////////////////////////////////
-struct GridQuadrant
-  {
-    double zOffset ;
-    double Dxyz[3] ;
-    size_t Nxyz[3] ;
-    //vector of vector holding field grid
-    vector<vector<double>> Q;
-  } ;
 
 
-MagneticFieldGridReader::MagneticFieldGridReader(IMessageSvc& msgsvc)
-  : m_msg( &msgsvc, "MagneticFieldSvc" )
+
+MagneticFieldGridReader::MagneticFieldGridReader()
 {
 }
 
 
-void readFiles( const std::vector<std::string>& filenames)
+ void MagneticFieldGridReader::readFiles( const std::vector<std::string>& filenames) const
   //,
     //                                           LHCb::MagneticFieldGrid& grid ) 
 {
@@ -59,58 +51,6 @@ void readFiles( const std::vector<std::string>& filenames)
   
 }
 
-StatusCode MagneticFieldGridReader::readDC06File( const std::string& filename,
-                                                  LHCb::MagneticFieldGrid& grid ) const
-{
-  GridQuadrant quadrants[4] ;
-  // read the first quadrant
-  StatusCode sc = readQuadrant( filename, quadrants[0] ) ;
-
-  if( sc.isSuccess() ) {
-    // multiply by 4
-    for(size_t iquad=1; iquad<4; ++iquad)
-      quadrants[iquad] = quadrants[0];
-
-    // now fill the grid
-    fillGridFromQuadrants( quadrants, grid ) ;
-  }
-
-  return sc ;
-}
-
-void MagneticFieldGridReader::fillConstantField( const Gaudi::XYZVector& /* field */,
-                                                 LHCb::MagneticFieldGrid& grid ) const
-{
-  // make a grid that spans the entire world
-
-  // // original
-  // grid.m_Dxyz[0] = 2*Gaudi::Units::km ;
-  // grid.m_Dxyz[1] = 2*Gaudi::Units::km ;
-  // grid.m_Dxyz[2] = 2*Gaudi::Units::km ;
-  // grid.m_invDxyz[0] = 1.0 / grid.m_Dxyz[0];
-  // grid.m_invDxyz[1] = 1.0 / grid.m_Dxyz[1];
-  // grid.m_invDxyz[2] = 1.0 / grid.m_Dxyz[2];
-  // grid.m_min_FL[0] = - Gaudi::Units::km ;
-  // grid.m_min_FL[1] = - Gaudi::Units::km ;
-  // grid.m_min_FL[2] = - Gaudi::Units::km ;
-  // grid.m_Nxyz[0] = 2;
-  // grid.m_Nxyz[1] = 2;
-  // grid.m_Nxyz[2] = 2 ;
-  // grid.m_Q.clear() ;
-  // grid.m_Q.resize( grid.m_Nxyz[0] * grid.m_Nxyz[1] * grid.m_Nxyz[2], decltype(grid.m_Q)::value_type{field} ) ;
-
-  // Vectorised version
-  grid.m_Dxyz_V = Vec4f( 2*Gaudi::Units::km, 2*Gaudi::Units::km, 2*Gaudi::Units::km, 0. );
-  grid.m_invDxyz_V = Vec4f( 1.0 / grid.m_Dxyz_V[0],
-                            1.0 / grid.m_Dxyz_V[1],
-                            1.0 / grid.m_Dxyz_V[2], 0.0 );
-  grid.m_min_FL_V = Vec4f( -Gaudi::Units::km, -Gaudi::Units::km, -Gaudi::Units::km, 0. );
-  grid.m_Nxyz_V = { 2, 2, 2 };
-  grid.m_Q_V.clear() ;
-  grid.m_Q_V.resize( grid.m_Nxyz_V[0] * grid.m_Nxyz_V[1] * grid.m_Nxyz_V[2], Vec4f(0,0,0,0) ) ;
-
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////
 // routine to fill the grid from the 4 quadrants
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -126,9 +66,9 @@ void MagneticFieldGridReader::fillGridFromQuadrants( GridQuadrant* quadrants,
     case 2: signx = -1 ; signz = -1 ; break ;
     case 3: signz = -1 ;
     }
-    for( std::vector<Gaudi::XYZVector>::iterator it = quadrants[iquad].Q.begin() ;
+    for( std::vector<XYZVector>::iterator it = quadrants[iquad].Q.begin() ;
          it != quadrants[iquad].Q.end(); ++it ) {
-      *it = Gaudi::XYZVector( signx * it->x(),
+      *it = XYZVector( signx * it->x(),
                               signy * it->y(),
                               signz * it->z() ) ;
     }
@@ -206,21 +146,7 @@ void MagneticFieldGridReader::fillGridFromQuadrants( GridQuadrant* quadrants,
                             - ((Nyquad-1) * grid.m_Dxyz_V[1]),
                             quadrants[0].zOffset, 0 );
 
-  if( UNLIKELY(m_msg.level() <= MSG::DEBUG) )
-  {
-    m_msg << MSG::DEBUG
-          << "Field grid , nbins x,y,z  : (" << grid.m_Nxyz_V[0] << ","
-          << grid.m_Nxyz_V[1] << "," <<  grid.m_Nxyz_V[2] << ")" << std::endl
-          << "dx, xmin, xmax: "
-          << "(" << grid.m_Dxyz_V[0] << "," << grid.m_min_FL_V[0] << ","
-          << grid.m_min_FL_V[0] + (grid.m_Nxyz_V[0]-1) * grid.m_Dxyz_V[0] << ")" << std::endl
-          << "dy, ymin, ymax: "
-          << "(" << grid.m_Dxyz_V[0] << "," << grid.m_min_FL_V[1] << ","
-          << grid.m_min_FL_V[1] + (grid.m_Nxyz_V[1]-1) * grid.m_Dxyz_V[1] << ")" << std::endl
-          << "dz, zmin, zmax: "
-          << "(" << grid.m_Dxyz_V[0] << "," << grid.m_min_FL_V[2] << ","
-          << grid.m_min_FL_V[2] + (grid.m_Nxyz_V[2]-1) * grid.m_Dxyz_V[2] << ")" << endmsg ;
-  }
+ 
 
 }
 
@@ -228,7 +154,7 @@ void MagneticFieldGridReader::fillGridFromQuadrants( GridQuadrant* quadrants,
 // read the data for a single quadrant from a file
 ////////////////////////////////////////////////////////////////////////////////////////
 
-void readQuadrant( const std::string& filename, GridQuadrant& quad )  {
+ void MagneticFieldGridReader::readQuadrant( const std::string& filename, GridQuadrant& quad ) const  {
   std::ifstream infile( filename );
 
   if ( infile ) {
@@ -289,6 +215,8 @@ void readQuadrant( const std::string& filename, GridQuadrant& quad )  {
 
     // Number of lines with data to be read
     long int nlines = ( npar - 7 ) / 3;
+    quad.Q.clear();
+    quad.Q.reserve(nlines);
     
 
     // Skip comments and fill a vector of magnetic components for the
@@ -309,15 +237,8 @@ void readQuadrant( const std::string& filename, GridQuadrant& quad )  {
       double fx = std::stod( sFx ) ;
       double fy = std::stod( sFy );
       double fz = std::stod( sFz ) ;
-      vector<double> test;
-      test.push_back(fx);
-      test.push_back(fy);
-      test.push_back(fz);
-      //cout << test[0] << " " << test.size() << endl;
-      quad.Q.push_back(test);
-      cout << quad.Q.size() <<" " << sizeof(quad.Q) <<endl;
-
       // Add the magnetic field components of each point
+      quad.Q.emplace_back( fx,fy,fz );
       
 
     }
