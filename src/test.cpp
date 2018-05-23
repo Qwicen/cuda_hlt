@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cstring>
 #include <vector>
+#include <cassert>
 using namespace std;
 
 
@@ -20,36 +21,7 @@ struct GridQuadrant
 
 
 
-voidreadFiles( const std::vector<std::string>& filenames,
-                                               LHCb::MagneticFieldGrid& grid ) 
-{
-  assert ( filenames.size() == 4 ) ;
 
-  GridQuadrant quadrants[4] ;
-
-  for ( int iquad=0; iquad<4 ; ++iquad )
-  {
-    readQuadrant( filenames[iquad], quadrants[iquad] ) ;
-  }
-
-  // check that the quadrants are consistent
-
-    for ( int iquad=1; iquad<4; ++iquad ) 
-    {
-      assert( quadrants[0].zOffset == quadrants[iquad].zOffset ) ;
-      for ( size_t icoord = 0; icoord<3; ++icoord ) 
-      {
-        assert( quadrants[0].Dxyz[icoord] == quadrants[iquad].Dxyz[icoord] ) ;
-        assert( quadrants[0].Nxyz[icoord] == quadrants[iquad].Nxyz[icoord] ) ;
-      }
-    }
-
-    // now fill the grid
-    fillGridFromQuadrants( quadrants, grid ) ;
-  
-
-  
-}
 
 
 
@@ -138,19 +110,54 @@ void readQuadrant( const std::string& filename, GridQuadrant& quad )  {
       test.push_back(fx);
       test.push_back(fy);
       test.push_back(fz);
-      cout << test[0] << " " << test.size() << endl;
+      //cout << test[0] << " " << test.size() << endl;
       quad.Q.push_back(test);
+      cout << quad.Q.size() <<" " << sizeof(quad.Q) <<endl;
 
       // Add the magnetic field components of each point
       
 
     }
-    cout << "total size: " << sizeof(quad) << endl;
+    cout << "total size: " << sizeof(quad.Q) << endl;
     infile.close();
   }
 
 
 
+}
+
+
+
+void readFiles( const std::vector<std::string>& filenames)
+  //,
+    //                                           LHCb::MagneticFieldGrid& grid ) 
+{
+  assert ( filenames.size() == 4 ) ;
+
+  GridQuadrant quadrants[4] ;
+
+  for ( int iquad=0; iquad<4 ; ++iquad )
+  {
+    readQuadrant( filenames[iquad], quadrants[iquad] ) ;
+  }
+
+  // check that the quadrants are consistent
+
+    for ( int iquad=1; iquad<4; ++iquad ) 
+    {
+      assert( quadrants[0].zOffset == quadrants[iquad].zOffset ) ;
+      for ( size_t icoord = 0; icoord<3; ++icoord ) 
+      {
+        assert( quadrants[0].Dxyz[icoord] == quadrants[iquad].Dxyz[icoord] ) ;
+        assert( quadrants[0].Nxyz[icoord] == quadrants[iquad].Nxyz[icoord] ) ;
+      }
+    }
+
+    // now fill the grid
+    //fillGridFromQuadrants( quadrants, grid ) ;
+  
+
+  
 }
 
 
