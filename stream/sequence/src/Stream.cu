@@ -17,7 +17,6 @@ cudaError_t Stream::operator()(
     // Clustering //
     ////////////////
 
-    printf("host_events_pinned size = %u \n", host_events_pinned_size );
     if (transmit_host_to_device) {
       cudaCheck(cudaMemcpyAsync(estimateInputSize.dev_raw_input, host_events_pinned, host_events_pinned_size, cudaMemcpyHostToDevice, stream));
       cudaCheck(cudaMemcpyAsync(estimateInputSize.dev_raw_input_offsets, host_event_offsets_pinned, host_event_offsets_pinned_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
@@ -204,10 +203,10 @@ cudaError_t Stream::operator()(
 	  for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
 	    Hit <true> hit = track.hits[ i_hit ];
 	    //printf("id = %u \n", (uint32_t)(hit.LHCbID) );
-	    if ( i_event == 1 )
+	    if ( i_event == 0 )
 	      out_file_ids << std::hex << hit.LHCbID << std::endl;
 	    uint32_t masked_id = hit.LHCbID & 0x0FFFFFFF;
-	    LHCbID lhcb_id( masked_id );
+	    LHCbID lhcb_id( hit.LHCbID );
 	    t.addId( lhcb_id );
 	  } // hits
 	  tracks.push_back( t );

@@ -82,7 +82,6 @@ cudaError_t Stream::initialize(
   
   // Allocate buffers for algorithms
   // Clustering
-  printf("dev_raw_input size = %u \n", param_starting_events_size);
   cudaCheck(cudaMalloc((void**)&dev_raw_input, param_starting_events_size));
   cudaCheck(cudaMalloc((void**)&dev_raw_input_offsets, event_offsets.size() * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_estimated_input_size, (number_of_events * N_MODULES + 2) * sizeof(uint)));

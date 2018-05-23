@@ -156,21 +156,14 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
     for (auto track: tracks) {
         // check LHCbIDs for MC association
         const auto& ids = track.ids();
-	// printf("track has %u ids \n", track.nIDs() );
-	// int index = 0;
-	// for ( auto id : track.ids() ) {
-	//   printf("\t %u\n", uint32_t(id) );
-	//   index++;
-	// }
-	//printf("counted %u ids \n", index);
         const auto assoc = mcassoc(ids.begin(), ids.end());
         if (!assoc) {
             ++nghostsperevt;
-            continue;
+	    continue;
         }
         // have MC association, check weight
         const auto weight = assoc.front().second;
-        if (weight < m_minweight) {
+	if (weight < m_minweight) {
             ++nghostsperevt;
             continue;
         }

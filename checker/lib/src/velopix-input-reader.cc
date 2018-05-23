@@ -32,7 +32,7 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
 
     // Monte Carlo
     uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
-    //    std::cout << "n mc particles = " << number_mcp << std::endl;
+    //std::cout << "n mc particles = " << number_mcp << std::endl;
     for (uint32_t i=0; i<number_mcp; ++i) {
         MCP p;
         p.key          = *((uint32_t*)  input); input += sizeof(uint32_t);
@@ -50,7 +50,7 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
         p.fromb        = (bool) *((int8_t*)  input); input += sizeof(int8_t);
         p.fromd        = (bool) *((int8_t*)  input); input += sizeof(int8_t);
         p.numHits      = *((uint32_t*)  input); input += sizeof(uint32_t);
-	//	std::cout << "numHits = " << p.numHits << std::endl;
+	//std::cout << "numHits = " << p.numHits << std::endl;
         std::copy_n((uint32_t*) input, p.numHits, std::back_inserter(p.hits)); input += sizeof(uint32_t) * p.numHits;
         mcps.push_back(p);
     }
@@ -258,7 +258,7 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
         // Read event #i in the list and add it to the inputs
         // if more files are requested than present in folder, read them again
         std::string readingFile = folderContents[i % folderContents.size()];
-	std::cout << "Reading event " << readingFile << std::endl;
+	std::cout << "Reading MC event " << readingFile << std::endl;
 	
         std::vector<uint8_t> inputContents;
         readFileIntoVector(foldername + "/" + readingFile, inputContents);
@@ -266,11 +266,16 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
 	
         // Check the number of sensors is correct, otherwise ignore it
         VelopixEvent event {inputContents, checkEvents};
-
+	if ( i == 0 )
+	  event.print();
+	
         // Sanity check
         if (event.numberOfModules == VelopixEventReader::numberOfModules) {
             input.emplace_back(event);
         }
+	else
+	  printf("ERROR: number of sensors should be %u, but it is %u \n", VelopixEventReader::numberOfModules, event.numberOfModules);  
+	     
 
         readFiles++;
         if ((readFiles % 100) == 0) {
@@ -287,9 +292,11 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
 	  
 	  std::ofstream out_file;
 	  out_file.open("first_event_MC_tracks.txt");
-	   for ( auto mcp : event.mcps ) {
+	  //printf("# of mcps = %u \n", event.mcps.size() );
+	  for ( auto mcp : event.mcps ) {
 	     if ( mcp.hits.size() != mcp.numHits ) 
 	       printf("ATTENTION: size of hits = %u, num hits = %u \n", mcp.hits.size(), mcp.numHits );
+	     //printf("# of hits = %u \n", mcp.numHits );
 	     for ( auto id : mcp.hits )
 	       out_file << std::hex << id << std::endl;
 	   }

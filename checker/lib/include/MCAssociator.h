@@ -204,7 +204,7 @@ class MCAssociator
                 if (m_map.end() == it) continue;
                 ++assoc[it->second];
                 ++total;
-		printf("total = %u \n", total);
+		//printf("total = %u \n", total);
             }
             // bring the map into a more compact format
             return buildResult(assoc, total);

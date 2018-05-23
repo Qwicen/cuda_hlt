@@ -3,6 +3,8 @@
 #include "../../checker/lib/include/velopix-input-reader.h"
 #include "../../checker/lib/include/TrackChecker.h"
 
+#include "../../checker/lib/include/MCParticle.h"
+
 /**
  * @brief Read files into vectors.
  */
@@ -44,11 +46,6 @@ void appendFileToVector(
   event_sizes.push_back(dataSize);
   infile.close();
 
-  // checks
-  // const char* p = events.data() + previous_size;
-  // uint32_t sensor =  *((uint32_t*)p);  p += sizeof(uint32_t);
-  // uint32_t sp_count =  *((uint32_t*)p); p += sizeof(uint32_t);
-  // printf("sensor = %u, sp_count = %u \n", sensor, sp_count);
 }
 
 void readGeometry(
@@ -85,10 +82,10 @@ void check_events( const std::vector<char> events,
       //printf("\t at raw bank %u, sensor = %u, sp_count = %u \n", i_raw_bank, raw_bank.sensor_index, raw_bank.sp_count);
     }
     n_sps_all_events += n_sps_event;
-    printf("# of sps in this event = %u\n", n_sps_event);
+    //printf("# of sps in this event = %u\n", n_sps_event);
   }
 
-  printf("total # of sps = %u \n", n_sps_all_events);
+  //printf("total # of sps = %u \n", n_sps_all_events);
   
 }
 
@@ -346,6 +343,60 @@ void printInfo(const EventInfo& info, int numberOfModules, int numberOfHits) {
   }
 }
 
+void check_roughly( const trackChecker::Tracks& tracks, const std::vector<uint32_t> hit_IDs, const std::vector< VelopixEvent::MCP > mcps ) {
+
+  int matched = 0;
+  for ( auto track : tracks ) {
+    std::vector< uint32_t > mcp_ids;
+    
+    for ( LHCbID id : track.ids() ) {
+      uint32_t id_int = uint32_t( id );
+      
+      //for ( uint32_t id_int : hit_IDs ) {
+	
+      // find associated IDs from mcps
+      for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
+	VelopixEvent::MCP part = mcps[i_mcp];
+	auto it = find( part.hits.begin(), part.hits.end(), id_int );
+	if ( it != part.hits.end() ) {
+	  mcp_ids.push_back( i_mcp );
+	  //matched++;
+	}
+      }
+    }
+    
+    //printf("# of hits on track = %u, # of MCP ids = %u \n", track.nIDs(), uint32_t( mcp_ids.size() ) );
+    
+    for ( int i_id = 0; i_id < mcp_ids.size(); ++i_id ) {
+      uint32_t mcp_id = mcp_ids[i_id];
+      //printf("\t mcp id = %u p = %f \n", mcp_id);
+      // how many same mcp IDs are there?
+      int n_same = count( mcp_ids.begin(), mcp_ids.end(), mcp_id );
+      if ( float(n_same) / track.nIDs() >= 0.7 ) {
+	matched++;
+	break;
+      }
+    }
+  }
+  
+  int long_tracks = 0;
+  for ( VelopixEvent::MCP part : mcps ) {
+    if ( part.islong )
+      long_tracks++;
+  }
+  
+  printf("efficiency = %f \n", float(matched) / long_tracks );
+  
+      // int n_mcp_ids = 0;
+      // for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
+      // 	VelopixEvent::MCP part = mcps[i_mcp];
+      // 	n_mcp_ids += part.numHits;
+      // }
+      
+      // printf("single id efficiency = %f \n", float(matched) / n_mcp_ids);
+      
+}
+
 void checkTracks( std::vector< trackChecker::Tracks > all_tracks ) {
 
   /* MC information */
@@ -356,8 +407,10 @@ void checkTracks( std::vector< trackChecker::Tracks > all_tracks ) {
   uint64_t evnum = 1;
   for (const auto& ev: events) {
     std::cout << "Event " << evnum << std::endl;
-    auto pixels = ev.soaHits();
+    //    auto pixels = ev.soaHits();
     auto mcps = ev.mcparticles();
+    std::vector< uint32_t > hit_IDs = ev.hit_IDs;
+    std::vector<VelopixEvent::MCP> mcps_vector = ev.mcps;
     MCAssociator mcassoc(mcps);
 
     trackChecker::Tracks tracks = all_tracks[evnum-1];
@@ -365,6 +418,7 @@ void checkTracks( std::vector< trackChecker::Tracks > all_tracks ) {
      " and " << mcps.size() << " MC particles " << std::endl;
 
     trackChecker(tracks, mcassoc, mcps);
+    check_roughly(tracks, hit_IDs, mcps_vector);
         
     ++evnum;
   }
