@@ -16,7 +16,8 @@
 
 namespace LHCb
 {
-
+  
+  MagneticFieldGrid::MagneticFieldGrid() {}
 
   FieldVector
   MagneticFieldGrid::fieldVectorClosestPoint( const XYZPoint& r ) const

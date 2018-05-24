@@ -3,16 +3,34 @@
 #define PRUTMAGNETTOOL_H 1
 
 
-// Include files
-#include "GaudiAlg/GaudiTool.h"
-
-// Forward declarations
-class IMagneticFieldSvc;
-class PrTableForFunction;
-#include "STDet/DeSTDetector.h"
 
 
-static const InterfaceID IID_PrUTMagnetTool ( "PrUTMagnetTool", 1, 0 );
+
+
+#include "PrTableForFunction.h"
+#include "MagneticFieldGrid.h"
+#include "MagneticFieldGridReader.h"
+
+#include <algorithm>
+#include <iostream>
+#include <math.h>  
+#include <array>
+
+#include "TROOT.h"
+#include "TMath.h"
+#include "TH1D.h"
+#include "Math/Vector3D.h"
+#include "Math/Point3D.h"
+#include "Math/SMatrix.h"
+using namespace std;
+
+
+    typedef ROOT::Math::XYZVector XYZVector;
+    typedef ROOT::Math::SMatrix<double, 3, 3> Matrix3x3;
+    typedef ROOT::Math::XYZPoint XYZPoint;
+    typedef XYZVector FieldVector ;
+    typedef Matrix3x3 FieldGradient ;
+
 
 
 
@@ -25,23 +43,23 @@ static const InterfaceID IID_PrUTMagnetTool ( "PrUTMagnetTool", 1, 0 );
    *  @update for A-Team framework 2007-08-20 SHM
    *
    */
+class DeSTDetector;
+class DeSTLayer;
+    class PrTableForFunction;
 
-class PrUTMagnetTool : public GaudiTool {
+class PrUTMagnetTool  {
 public:
 
-  // Return the interface ID
-  static const InterfaceID& interfaceID() { return IID_PrUTMagnetTool; }
+
   
   /// Standard constructor
   PrUTMagnetTool( const std::string& type,
-                  const std::string& name,
-                  const IInterface* parent);
+                  const std::string& name);
   
   /// Standard Destructor
   virtual ~PrUTMagnetTool();
-  
-  StatusCode initialize() override;
-  
+
+  LHCb::MagneticFieldGrid * m_magFieldSvc;
   /// Actual operator function
   float bdlIntegral(float ySlopeVelo,float zOrigin,float zVelo);
   float zBdlMiddle(float ySlopeVelo,float zOrigin,float zVelo);
@@ -55,7 +73,7 @@ public:
   float averageDist2mom();
   void prepareBdlTables();
   void prepareDeflectionTables();
-  StatusCode updateField() ;
+  void updateField() ;
 
   std::vector<float> returnDxLayTable();
   std::vector<float> returnBdlTable();
@@ -73,7 +91,6 @@ private:
   std::vector<float> m_bdlTmp, m_zTmp;
   
   /// pointer to mag field service
-  IMagneticFieldSvc* m_magFieldSvc;
   PrTableForFunction* m_lutBdl;
   PrTableForFunction* m_lutZHalfBdl;
   

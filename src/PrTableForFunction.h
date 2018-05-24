@@ -1,12 +1,12 @@
 // $Id: PrTableForFunction.h,v 1.3 2009-10-30 13:19:13 wouter Exp $
+
 #ifndef PRTABLEFORFUNCTION_H
 #define PRTABLEFORFUNCTION_H 1
 
-// Include files
-// from Gaudi
-#include "GaudiAlg/GaudiTool.h"
+#include <string>
+#include <vector>
 
-static const InterfaceID IID_PrTableForFunction ( "PrTableForFunction", 1, 0 );
+
 
 
   /** @class PrTableForFunction PrTableForFunction.h
@@ -45,16 +45,14 @@ static const InterfaceID IID_PrTableForFunction ( "PrTableForFunction", 1, 0 );
    *
    */
 
-  class PrTableForFunction : public GaudiTool {
+  class PrTableForFunction  {
   public:
 
-    // Return the interface ID
-    static const InterfaceID& interfaceID() { return IID_PrTableForFunction; }
+  
 
     /// Standard constructor
     PrTableForFunction( const std::string& type,
-                      const std::string& name,
-                      const IInterface* parent);
+                      const std::string& name);
 
     virtual ~PrTableForFunction( ); ///< Destructor
 

@@ -46,6 +46,7 @@ namespace LHCb
   {
 
   public:
+    MagneticFieldGrid()  ;
 
     /// typedefs etc
 

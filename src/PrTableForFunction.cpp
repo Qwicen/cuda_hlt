@@ -9,21 +9,13 @@
 //-----------------------------------------------------------------------------
 
 
-// Declaration of the Tool Factory
-DECLARE_COMPONENT( PrTableForFunction )
+
 
 
 //=============================================================================
 // Standard constructor, initializes variables
 //=============================================================================
-PrTableForFunction::PrTableForFunction( const std::string& type,
-                                          const std::string& name,
-                                          const IInterface* parent )
-  : GaudiTool ( type, name , parent ),
-    m_nVar(0)
-{
-  declareInterface<PrTableForFunction>(this);
-}
+PrTableForFunction::PrTableForFunction( const std::string& type,   const std::string& name ){}
 //=============================================================================
 // Destructor
 //=============================================================================
