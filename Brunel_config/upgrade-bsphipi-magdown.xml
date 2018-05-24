@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<!-- Edited By PoolXMLCatalog.py -->
+<!DOCTYPE POOLFILECATALOG SYSTEM "InMemory">
+<POOLFILECATALOG>
+
+<File ID="10129E0C-53BA-E711-B62D-008CFAFBF0BA">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://ccdcacli264.in2p3.fr:1094/pnfs/in2p3.fr/data/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000065_1.xdigi" se="IN2P3_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000065_1.xdigi"/>
+   </logical>
+</File>
+<File ID="6A6839C2-50B6-E711-B5B3-0CC47A4D9A1A">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000030_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000030_1.xdigi"/>
+   </logical>
+</File>
+<File ID="F68FCE51-23B6-E711-868C-A4BF0112BBDC">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://f01-080-124-e.gridka.de:1094/pnfs/gridka.de/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000025_1.xdigi" se="GRIDKA_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000025_1.xdigi"/>
+   </logical>
+</File>
+<File ID="321AC421-7AB5-E711-9424-001E67E6F4C2">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://f01-080-124-e.gridka.de:1094/pnfs/gridka.de/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000019_1.xdigi" se="GRIDKA_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000019_1.xdigi"/>
+   </logical>
+</File>
+<File ID="14A2C416-4DBA-E711-BDE8-0242AC110003">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://clhcbstager.ads.rl.ac.uk//castor/ads.rl.ac.uk/prod/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000064_1.xdigi?svcClass=lhcbDst" se="RAL_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000064_1.xdigi"/>
+   </logical>
+</File>
+<File ID="C8A3C609-58B4-E711-9B25-0CC47A4D9A4C">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000008_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000008_1.xdigi"/>
+   </logical>
+</File>
+<File ID="60E7FED7-6EB6-E711-9100-0025902D1450">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://eoslhcb.cern.ch//eos/lhcb/grid/prod/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000032_1.xdigi" se="CERN_MC-DST-EOS"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000032_1.xdigi"/>
+   </logical>
+</File>
+<File ID="12351E6E-66B4-E711-BDFB-48FD8E2824DB">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000010_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000010_1.xdigi"/>
+   </logical>
+</File>
+<File ID="58D21661-93B8-E711-BC2C-0CC47A1E0DBC">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000050_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000050_1.xdigi"/>
+   </logical>
+</File>
+<File ID="0A50EC78-81B7-E711-877B-0242AC110016">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://clhcbstager.ads.rl.ac.uk//castor/ads.rl.ac.uk/prod/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000042_1.xdigi?svcClass=lhcbDst" se="RAL_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000042_1.xdigi"/>
+   </logical>
+</File>
+<File ID="4E6A661C-5DB5-E711-AB9F-7CD30ACE1732">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://ccdcacli264.in2p3.fr:1094/pnfs/in2p3.fr/data/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000016_1.xdigi" se="IN2P3_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000016_1.xdigi"/>
+   </logical>
+</File>
+<File ID="C2AA024B-CCB7-E711-99C8-0001010006C8">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://door03.pic.es:1094/pnfs/pic.es/data/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000046_1.xdigi" se="PIC_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000046_1.xdigi"/>
+   </logical>
+</File>
+<File ID="B80D6B12-6EB5-E711-9881-B083FED35D37">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://hake13.grid.surfsara.nl:1094/pnfs/grid.sara.nl/data/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000017_1.xdigi" se="SARA_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000017_1.xdigi"/>
+   </logical>
+</File>
+<File ID="461D1612-84B6-E711-91BB-7CD30AD0A66C">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://ccdcacli265.in2p3.fr:1094/pnfs/in2p3.fr/data/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000034_1.xdigi" se="IN2P3_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000034_1.xdigi"/>
+   </logical>
+</File>
+<File ID="6E3DD2E0-D3B6-E711-8581-002590D0B054">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000037_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000037_1.xdigi"/>
+   </logical>
+</File>
+<File ID="6A6EA141-75B8-E711-8BE1-0CC47A4D9980">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000047_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000047_1.xdigi"/>
+   </logical>
+</File>
+<File ID="8C716227-AEB8-E711-8565-0025902D14B8">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://by27-7.grid.sara.nl:1094/pnfs/grid.sara.nl/data/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000053_1.xdigi" se="SARA_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000053_1.xdigi"/>
+   </logical>
+</File>
+<File ID="2C2951B5-56B4-E711-8A81-0CC47A4DEE72">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000005_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000005_1.xdigi"/>
+   </logical>
+</File>
+<File ID="0ACA2AB8-E7B8-E711-8A29-FA163E6ED4BA">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://eoslhcb.cern.ch//eos/lhcb/grid/prod/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000060_1.xdigi" se="CERN_MC-DST-EOS"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000060_1.xdigi"/>
+   </logical>
+</File>
+<File ID="E8BD2BC2-7AB7-E711-B31D-002590D0AF56">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000041_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000041_1.xdigi"/>
+   </logical>
+</File>
+<File ID="924DE0C5-E4B5-E711-8C68-0001010006C3">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://door01.pic.es:1094/pnfs/pic.es/data/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000023_1.xdigi" se="PIC_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000023_1.xdigi"/>
+   </logical>
+</File>
+<File ID="18838F79-8CB8-E711-AF83-0025904CF974">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://eoslhcb.cern.ch//eos/lhcb/grid/prod/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000049_1.xdigi" se="CERN_MC-DST-EOS"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000049_1.xdigi"/>
+   </logical>
+</File>
+<File ID="241B9186-B9B5-E711-A6F4-0242AC110010">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://clhcbstager.ads.rl.ac.uk//castor/ads.rl.ac.uk/prod/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000021_1.xdigi?svcClass=lhcbDst" se="RAL_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000021_1.xdigi"/>
+   </logical>
+</File>
+<File ID="9030DC96-56B4-E711-9314-049FCA100F88">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000006_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000006_1.xdigi"/>
+   </logical>
+</File>
+<File ID="CE3E6688-57B4-E711-95A3-48FD8E28249B">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000004_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000004_1.xdigi"/>
+   </logical>
+</File>
+<File ID="AC66342F-83B8-E711-9B8B-002655213BC8">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://f01-080-124-e.gridka.de:1094/pnfs/gridka.de/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000048_1.xdigi" se="GRIDKA_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000048_1.xdigi"/>
+   </logical>
+</File>
+<File ID="D478F76B-42B5-E711-9B00-0025901895B2">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://eoslhcb.cern.ch//eos/lhcb/grid/prod/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000015_1.xdigi" se="CERN_MC-DST-EOS"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000015_1.xdigi"/>
+   </logical>
+</File>
+<File ID="56DE7A6C-4AB5-E711-9D76-0025904E3A5C">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://f01-080-124-e.gridka.de:1094/pnfs/gridka.de/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000014_1.xdigi" se="GRIDKA_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000014_1.xdigi"/>
+   </logical>
+</File>
+<File ID="BC0BDAFF-31B6-E711-99FC-FA163EC116E8">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://eoslhcb.cern.ch//eos/lhcb/grid/prod/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000027_1.xdigi" se="CERN_MC-DST-EOS"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000027_1.xdigi"/>
+   </logical>
+</File>
+<File ID="A0F9D36F-57B4-E711-92E8-0CC47A4DEE76">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000003_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000003_1.xdigi"/>
+   </logical>
+</File>
+<File ID="C40D31E4-57B4-E711-8B1B-48FD8EE739B1">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000007_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000007_1.xdigi"/>
+   </logical>
+</File>
+<File ID="AC05C2E4-7BB5-E711-A31E-0CC47A1DF616">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000020_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000020_1.xdigi"/>
+   </logical>
+</File>
+<File ID="06556809-6AB7-E711-A33F-0025904B23B8">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000038_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000038_1.xdigi"/>
+   </logical>
+</File>
+<File ID="ECC9D1C2-75B5-E711-9666-FA163E38D8BA">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://eoslhcb.cern.ch//eos/lhcb/grid/prod/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000018_1.xdigi" se="CERN_MC-DST-EOS"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000018_1.xdigi"/>
+   </logical>
+</File>
+<File ID="B83B77B9-58B7-E711-A069-003048C56E40">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://ccdcacli264.in2p3.fr:1094/pnfs/in2p3.fr/data/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000039_1.xdigi" se="IN2P3_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000039_1.xdigi"/>
+   </logical>
+</File>
+<File ID="A84544C3-9FB8-E711-89FE-0CC47A4DEF50">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000052_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000052_1.xdigi"/>
+   </logical>
+</File>
+<File ID="729890B7-12BB-E711-B2E6-0CC47A4DEE76">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000068_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000068_1.xdigi"/>
+   </logical>
+</File>
+<File ID="7AD2C6E3-87BA-E711-BC2A-0CC47A166D66">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://xrootd-lhcb.cr.cnaf.infn.it//storage/gpfs_lhcb/lhcb/disk/MC/Upgrade/XDIGI/00067195/0000/00067195_00000066_1.xdigi" se="CNAF_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000066_1.xdigi"/>
+   </logical>
+</File>
+<File ID="1CBB4DD4-97B7-E711-94E9-002590189578">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://s35-07.grid.sara.nl:1094/pnfs/grid.sara.nl/data/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000043_1.xdigi" se="SARA_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000043_1.xdigi"/>
+   </logical>
+</File>
+<File ID="24D1D5E3-A4B8-E711-BC9B-0001010006CC">
+   <physical>
+      <pfn filetype="ROOT_All" name="root://by27-7.grid.sara.nl:1094/pnfs/grid.sara.nl/data/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000054_1.xdigi" se="SARA_MC-DST"/>
+   </physical>
+   <logical>
+      <lfn name="/lhcb/MC/Upgrade/XDIGI/00067195/0000/00067195_00000054_1.xdigi"/>
+   </logical>
+</File>
+
+</POOLFILECATALOG>
