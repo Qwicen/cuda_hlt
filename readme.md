@@ -4,6 +4,39 @@ CUDA HLT
 Welcome to the CUDA High Level Trigger project, an attempt to provide
 a full HLT1 realization on GPU.
 
+How to create the input
+-----------------------
+
+In the current development stage, the input is created by running Brunel. 
+On one hand, the raw bank / hit information is written to binary files; 
+on the other hand, the MC truth information is written to binary files to be 
+able to run the PrChecker. Use the branch 
+dovombru_extract_output_for_CUDA_HLT1Project (branched from Brunel v53r1)
+of the Rec repository to create the input by following these steps on lxplus:
+
+Compilation:
+
+    fresh shell
+    source /cvmfs/lhcb.cern.ch/group_login.sh
+    lb-dev Brunel/v53r1
+    cd BrunelDev_v53r1
+    git lb-use Rec
+    git lb-checkout Rec/dovombru_extract_output_for_CUDA_HLT1Project Pr/PrPixel
+    git lb-checkout Rec/dovombru_extract_output_for_CUDA_HLT1Project Pr/PrEventDumper
+    make
+    
+Running:
+    
+    mkdir velopix_raw
+    mkdir velopix_MC
+    ./run gaudirun.py options.py upgrade-bsphipi-magdown.py
+    
+The options and data input files can be found in the Brunel_config directory
+of this repository (CUDA HLT). The output is stored in the velopix_raw and velopix_MC 
+directories and needs to be copied to these folders in the CUDA_HLT1 project
+to be used as input there.
+    
+
 How to run it
 -------------
 
