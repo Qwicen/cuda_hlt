@@ -19,7 +19,7 @@ namespace VeloTracking {
   // Detector constants
   // Note: constexpr for this variable (arrays) is still not supported, so we need
   //       to initialize it in runtime
-  extern __constant__ float velo_module_zs [52];
+  extern __constant__ float velo_module_zs [N_MODULES];
 
   // How many concurrent h1s to process max
   // It should be a divisor of NUMTHREADS_X

@@ -408,7 +408,6 @@ void checkTracks( std::vector< trackChecker::Tracks > all_tracks ) {
   uint64_t evnum = 1;
   for (const auto& ev: events) {
     std::cout << "Event " << evnum << std::endl;
-    //    auto pixels = ev.soaHits();
     auto mcps = ev.mcparticles();
     std::vector< uint32_t > hit_IDs = ev.hit_IDs;
     std::vector<VelopixEvent::MCP> mcps_vector = ev.mcps;
