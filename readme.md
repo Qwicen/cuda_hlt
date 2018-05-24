@@ -48,11 +48,13 @@ The build process doesn't differ from standard cmake projects:
     cmake ..
     make
 
-Some binary input files are included with the project for testing.
+Some binary input files are included with the project for testing. [To do: include
+MC truth and raw binaries once they are in the final format.]
 A run of the program with no arguments will let you know the basic options:
 
     Usage: ./cu_hlt
-     -f {folder containing .bin files}
+     -f {folder containing .bin files with raw bank information}
+     -g {folder containing .bin files with MC truth information}
      [-n {number of files to process}=0 (all)]
      [-t {number of threads / streams}=3]
      [-r {number of repetitions per thread / stream}=10]
