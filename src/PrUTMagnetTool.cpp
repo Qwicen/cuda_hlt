@@ -144,8 +144,8 @@ void PrUTMagnetTool::prepareBdlTables() {
   // warning layers not in order of increasing z
   std::sort(m_zLayers.begin(),m_zLayers.end());
 
-  PrTableForFunction * m_lutBdl      = new PrTableForFunction("PrTableForFunction/table1", "PrTableForFunction/table1");
-  PrTableForFunction * m_lutZHalfBdl = new PrTableForFunction("PrTableForFunction/table2", "PrTableForFunction/table1");
+  m_lutBdl      = new PrTableForFunction("PrTableForFunction/table1", "PrTableForFunction/table1");
+  m_lutZHalfBdl = new PrTableForFunction("PrTableForFunction/table2", "PrTableForFunction/table1");
   m_lutBdl->clear() ;
   m_lutZHalfBdl->clear() ;
 
@@ -338,4 +338,22 @@ std::vector<float> PrUTMagnetTool::returnDxLayTable(){
 //=========================================================================
 std::vector<float> PrUTMagnetTool::returnBdlTable(){
   return m_lutBdl->returnTable();
+}
+
+
+//=========================================================================
+// prepareDeflectionTables
+//=========================================================================
+void PrUTMagnetTool::prepareDeflectionTables() {
+
+  cout << "Start generation of VeloUT deflection LUTs" << endl;
+
+
+  // prepare deflection tables
+
+  m_lutDxLay    = new PrTableForFunction("PrTableForFunction/table3","PrTableForFunction/table3");
+  
+  cout << "Generation of VeloUT deflection LUTs finished" << endl;
+
+  return;
 }

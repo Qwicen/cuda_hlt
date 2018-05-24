@@ -78,7 +78,7 @@ public:
   std::vector<float> returnDxLayTable();
   std::vector<float> returnBdlTable();
   
-
+PrTableForFunction* m_lutBdl;
 protected:
   void f_bdl(float slopeY, float zOrigin , float zStart, float zStop);
   
@@ -91,7 +91,7 @@ private:
   std::vector<float> m_bdlTmp, m_zTmp;
   
   /// pointer to mag field service
-  PrTableForFunction* m_lutBdl;
+  
   PrTableForFunction* m_lutZHalfBdl;
   
   float m_zCenterUT;
