@@ -4,6 +4,8 @@
 #include "device_launch_parameters.h"
 #include "../../../../main/include/Common.h"
 
+#include "assert.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -17,71 +19,63 @@ namespace VeloTracking {
   // Detector constants
   // Note: constexpr for this variable (arrays) is still not supported, so we need
   //       to initialize it in runtime
-  extern __constant__ float velo_module_zs [N_MODULES];
-}
+  extern __constant__ float velo_module_zs [52];
 
-// Number of threads
-#define NUMTHREADS_X 32
+  // How many concurrent h1s to process max
+  // It should be a divisor of NUMTHREADS_X
+  static constexpr uint max_concurrent_h1 = 16;
 
-// How many concurrent h1s to process max
-// It should be a divisor of NUMTHREADS_X
-#define MAX_CONCURRENT_H1 16
+  // Number of concurrent h1s in the first iteration
+  // The first iteration has no flagged hits and more triplets per hit
+  static constexpr uint max_concurrent_h1_first_iteration = 8;
 
-// Number of concurrent h1s in the first iteration
-// The first iteration has no flagged hits and more triplets per hit
-#define MAX_CONCURRENT_H1_FIRST_ITERATION 8
+  // These parameters impact the found tracks
+  // Maximum / minimum acceptable phi
+  // This impacts enourmously the speed of track seeding
+  static constexpr float phi_extrapolation = 0.062f;
 
-// These parameters impact the found tracks
-// Maximum / minimum acceptable phi
-// This impacts enourmously the speed of track seeding
-#define PHI_EXTRAPOLATION 0.062
+  // Tolerance angle for forming triplets
+  static constexpr float max_slope = 0.4f;
+  static constexpr float tolerance = 0.6f;
 
-// Tolerance angle for forming triplets
-#define MAX_SLOPE 0.4f
-#define TOLERANCE 0.6f
+  // Maximum scatter of each three hits
+  // This impacts velo tracks and a to a lesser extent
+  // long and long strange tracks
+  static constexpr float max_scatter_seeding = 0.004f;
 
-// Maximum scatter of each three hits
-// This impacts velo tracks and a to a lesser extent
-// long and long strange tracks
-#define MAX_SCATTER_SEEDING 0.004f
+  // Making a bigger forwarding scatter window causes
+  // less clones and more ghosts
+  static constexpr float max_scatter_forwarding = 0.004f;
 
-// Making a bigger forwarding scatter window causes
-// less clones and more ghosts
-#define MAX_SCATTER_FORWARDING 0.004f
+  // Maximum number of skipped modules allowed for a track
+  // before storing it
+  static constexpr uint max_skipped_modules = 3;
 
-// Number of seeding iterations before storing tracklets
-// This impacts the amount of shared memory to request per thread
-// #define SEEDING_CONTINUOUS_ITERATIONS 2
-
-// Maximum number of skipped modules allowed for a track
-// before storing it
-#define MAX_SKIPPED_MODULES 3
-
-// Total number of atomics required
-// This is just a constant (that I keep changing)
-#define NUM_ATOMICS 4
+  // Total number of atomics required
+  // This is just a constant
+  static constexpr uint num_atomics = 4;
 
 // Constants for requested storage on device
-#define MAX_TRACKS 6000 // 1000
-#define MAX_TRACK_SIZE 26
-#define MAX_NUMHITS_IN_MODULE 1000 // 300
+//#define MAX_TRACKS 6000 // 1000
+//#define MAX_TRACK_SIZE 26
+//#define MAX_NUMHITS_IN_MODULE 1000 // 300
 
 // Maximum number of tracks to follow at a time
-#define TTF_MODULO 8000 // 2000
+//#define TTF_MODULO 6000 // 2000
 
-// Constants for filters
-#define STATES_PER_TRACK 3
-#define PARAM_W 3966.94f
-#define PARAM_W_INVERTED 0.000252083f
+// Constants for requested storage on device
+  static constexpr uint max_tracks = 6000; // 1000;
+  static constexpr uint max_track_size = 26;
+  static constexpr uint max_numhits_in_module = 1000; // 300;
 
-// Asserts
-#define ASSERTS_ENABLED false
-#if ASSERTS_ENABLED == true
-#include "assert.h"
-#define ASSERT(EXPR) assert(EXPR);
-#else
-#define ASSERT(EXPR) 
-#endif
+  // Maximum number of tracks to follow at a time
+  static constexpr uint ttf_modulo = 6000; // 2000;
+
+  // Constants for filters
+  static constexpr uint states_per_track = 3;
+  static constexpr float param_w = 3966.94f;
+  static constexpr float param_w_inverted = 0.000252083f;
+}
 
 
   
@@ -154,7 +148,7 @@ struct Hit <false> : public HitBase {
 /* Structure containing indices to hits within hit array */
 struct TrackHits { // 4 + 26 * 4 = 116 B
   unsigned short hitsNum;
-  unsigned short hits[MAX_TRACK_SIZE];
+  unsigned short hits[VeloTracking::max_track_size];
 
   __device__ TrackHits(){}
   __device__ TrackHits(
@@ -175,7 +169,7 @@ struct TrackHits { // 4 + 26 * 4 = 116 B
 template <bool MCCheck>   
 struct Track { // 4 + 26 * 16 = 420 B
   unsigned short hitsNum;
-  Hit <MCCheck> hits[MAX_TRACK_SIZE];
+  Hit <MCCheck> hits[VeloTracking::max_track_size];
   
   __device__ Track(){
   hitsNum = 0;

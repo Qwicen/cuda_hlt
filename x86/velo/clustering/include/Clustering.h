@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../../../main/include/Common.h"
 #include "../../../../main/include/Timer.h"
 #include "../../../../main/include/Logger.h"
 #include "../../../../cuda/velo/common/include/ClusteringDefinitions.cuh"
@@ -12,7 +11,8 @@ constexpr unsigned int max_cluster_size = 196608;
 std::vector<std::vector<uint32_t>> clustering(
   const std::vector<char>& geometry,
   const std::vector<char>& events,
-  const std::vector<unsigned int>& event_offsets
+  const std::vector<unsigned int>& event_offsets,
+  const bool assume_never_no_sp = false
 );
 
 std::vector<std::vector<uint32_t>> cuda_clustering(
@@ -26,6 +26,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
   const std::vector<char>& geometry,
   const std::vector<char>& events,
   const std::vector<unsigned int>& event_offsets,
+  const bool assume_never_no_sp = false,
   const int verbosity = logger::error
 );
 
@@ -33,6 +34,14 @@ std::vector<uint32_t> cuda_array_clustering(
   const std::vector<char>& geometry,
   const std::vector<char>& events,
   const std::vector<unsigned int>& event_offsets
+);
+
+std::vector<std::vector<uint32_t>> cuda_clustering_simplified(
+  const std::vector<char>& geometry,
+  const std::vector<char>& events,
+  const std::vector<unsigned int>& event_offsets,
+  const bool assume_never_no_sp = false,
+  const int verbosity = logger::error
 );
 
 void cache_sp_patterns(

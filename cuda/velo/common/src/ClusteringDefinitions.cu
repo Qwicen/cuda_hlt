@@ -1,7 +1,7 @@
 #include "ClusteringDefinitions.cuh"
 
 __constant__ uint8_t VeloClustering::sp_patterns [256];
-__constant__ uint8_t VeloClustering::sp_sizes [256];
+__constant__ uint8_t VeloClustering::candidate_ks [9];
 __constant__ float VeloClustering::sp_fx [512];
 __constant__ float VeloClustering::sp_fy [512];
 
@@ -70,6 +70,6 @@ __device__ __host__ uint32_t get_channel_id(
   return (sensor << LHCb::VPChannelID::sensorBits) | (chip << LHCb::VPChannelID::chipBits) | (col << LHCb::VPChannelID::colBits) | row;
 }
 
-__device__ __host__ uint32_t get_lhcb_id(uint32_t cid) {
+__device__ __host__ int32_t get_lhcb_id(int32_t cid) {
   return (LHCb::VPChannelID::VP << LHCb::detectorTypeBits) + cid;
 }

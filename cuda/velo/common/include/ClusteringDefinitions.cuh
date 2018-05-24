@@ -11,7 +11,7 @@ static constexpr uint32_t max_candidates_event = 8000; // 2000;
 
 namespace VeloClustering {
   extern __constant__ uint8_t sp_patterns [256];
-  extern __constant__ uint8_t sp_sizes [256];
+  extern __constant__ uint8_t candidate_ks [9];
   extern __constant__ float sp_fx [512];
   extern __constant__ float sp_fy [512];
 
@@ -128,4 +128,4 @@ __device__ __host__ uint32_t get_channel_id(
   uint row
 );
 
-__device__ __host__ uint32_t get_lhcb_id(uint32_t cid);
+__device__ __host__ int32_t get_lhcb_id(int32_t cid);

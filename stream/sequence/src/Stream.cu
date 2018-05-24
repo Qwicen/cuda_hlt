@@ -34,8 +34,26 @@ cudaError_t Stream::operator()(
 
     // Convert the estimated sizes to module hit start format (offsets)
     Helper::invoke(
-      prefixSum,
-      "Prefix sum",
+      prefixSumReduce,
+      "Prefix sum reduce",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+    );
+
+    Helper::invoke(
+      prefixSumSingleBlock,
+      "Prefix sum single block",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+    );
+
+    Helper::invoke(
+      prefixSumScan,
+      "Prefix sum scan",
       times,
       cuda_event_start,
       cuda_event_stop,
@@ -47,7 +65,7 @@ cudaError_t Stream::operator()(
     // cudaCheck(cudaMemcpyAsync(&number_of_hits, dev_estimated_input_size + number_of_events * N_MODULES, sizeof(uint), cudaMemcpyDeviceToHost, stream));
 
     // if (number_of_hits * 6 * sizeof(uint32_t) > velo_cluster_container_size) {
-    //   WARNING << "Number of hits: " << number_of_hits << std::endl
+    //   warning_cout << "Number of hits: " << number_of_hits << std::endl
     //     << "Size of velo cluster container is larger than previously accomodated." << std::endl
     //     << "Resizing from " << velo_cluster_container_size << " to " << number_of_hits * 6 * sizeof(uint) << " B" << std::endl;
 
@@ -68,6 +86,18 @@ cudaError_t Stream::operator()(
 
     // Print output
     // maskedVeloClustering.print_output(number_of_events, 3);
+
+    if (do_check) {
+      // Check results
+      maskedVeloClustering.check(
+        host_events_pinned,
+        host_event_offsets_pinned,
+        host_events_pinned_size,
+        host_event_offsets_pinned_size,
+        geometry,
+        number_of_events
+      );
+    }
 
     /////////////////////////
     // CalculatePhiAndSort //
@@ -101,8 +131,11 @@ cudaError_t Stream::operator()(
     // Print output
     // searchByTriplet.print_output(number_of_events);
 
+
     ////////////////////////////////////////
     // Optional: Simplified Kalman filter //
+    // DvB: should not be optional, at least not
+    // the state at the last measurement  //
     ////////////////////////////////////////
 
     if (do_simplified_kalman_filter) {
@@ -116,29 +149,27 @@ cudaError_t Stream::operator()(
       );
     }
     
-    //////////////////////////////////
-    // Optional: Consolidate tracks //
-    //////////////////////////////////
+    ////////////////////////
+    // Consolidate tracks //
+    ////////////////////////
     
-    if (do_consolidate) {
-      Helper::invoke(
-	consolidateTracks,
-        "Consolidate tracks",
-        times,
-        cuda_event_start,
-        cuda_event_stop,
-        print_individual_rates
-       );
-    }
+    Helper::invoke(
+      consolidateTracks,
+      "Consolidate tracks",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+    );
 
+   
+        
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       
-      if (do_consolidate) {
-	cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
-      }
-
+      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
+      
       cudaEventRecord(cuda_generic_event, stream);
       cudaEventSynchronize(cuda_generic_event);
 
@@ -239,7 +270,7 @@ void Stream::print_timing(
     }
   }
 
-  INFO << "stream #" << stream_number << ": "
+  info_cout << "stream #" << stream_number << ": "
     << number_of_events / total_time.second << " events/s"
     << ", partial timers (s): " << partial_times
     << std::endl;

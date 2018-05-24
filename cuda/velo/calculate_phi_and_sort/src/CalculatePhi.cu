@@ -69,7 +69,7 @@ __device__ void calculatePhiSide(
           // Stable sorting
           position += phi>other_phi || (phi==other_phi && hit_rel_id>j);
         }
-        ASSERT(position < MAX_NUMHITS_IN_MODULE)
+        assert(position < VeloTracking::max_numhits_in_module);
 
         // Store it in hit permutations and in hit_Phis, already ordered
         const auto global_position = hit_start + position;
@@ -94,7 +94,7 @@ __device__ void calculatePhi(
   float* hit_Phis,
   uint* hit_permutations
 ) {
-  __shared__ float shared_hit_phis [MAX_NUMHITS_IN_MODULE];
+  __shared__ float shared_hit_phis [VeloTracking::max_numhits_in_module];
 
   // Odd modules
   calculatePhiSide(

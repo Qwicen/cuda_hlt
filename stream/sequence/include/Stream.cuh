@@ -13,7 +13,9 @@
 #include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../../cuda/velo/common/include/ClusteringDefinitions.cuh"
 #include "../../handlers/include/HandleEstimateInputSize.cuh"
-#include "../../handlers/include/HandlePrefixSum.cuh"
+#include "../../handlers/include/HandlePrefixSumReduce.cuh"
+#include "../../handlers/include/HandlePrefixSumSingleBlock.cuh"
+#include "../../handlers/include/HandlePrefixSumScan.cuh"
 #include "../../handlers/include/HandleMaskedVeloClustering.cuh"
 #include "../../handlers/include/HandleCalculatePhiAndSort.cuh"
 #include "../../handlers/include/HandleSearchByTriplet.cuh"
@@ -25,10 +27,10 @@ class Timer;
 
 struct Stream {
   // Limiting constants for preallocation
-  constexpr static uint average_number_of_hits_per_event = TTF_MODULO;
-  constexpr static uint max_tracks_in_event = MAX_TRACKS;
-  constexpr static uint max_numhits_in_module = MAX_NUMHITS_IN_MODULE;
-  constexpr static uint atomic_space = NUM_ATOMICS + 1;
+  constexpr static uint average_number_of_hits_per_event = VeloTracking::ttf_modulo;
+  constexpr static uint max_tracks_in_event = VeloTracking::max_tracks;
+  constexpr static uint max_numhits_in_module = VeloTracking::max_numhits_in_module;
+  constexpr static uint atomic_space = VeloTracking::num_atomics + 1;
   // Stream datatypes
   cudaStream_t stream;
   cudaEvent_t cuda_generic_event;
@@ -37,7 +39,9 @@ struct Stream {
   uint stream_number;
   // Algorithms
   EstimateInputSize estimateInputSize;
-  PrefixSum prefixSum;
+  PrefixSumReduce prefixSumReduce;
+  PrefixSumScan prefixSumScan;
+  PrefixSumSingleBlock prefixSumSingleBlock;
   MaskedVeloClustering maskedVeloClustering;
   CalculatePhiAndSort calculatePhiAndSort;
   SearchByTriplet searchByTriplet;
@@ -46,11 +50,13 @@ struct Stream {
   // Launch options
   bool transmit_host_to_device;
   bool transmit_device_to_host;
-  bool do_consolidate;
+  bool do_check;
   bool do_simplified_kalman_filter;
   bool print_individual_rates;
   // Varying cluster container size
   uint velo_cluster_container_size;
+  // Geometry of Velo detector
+  std::vector<char> geometry;
   // Data back transmission
   int* host_number_of_tracks_pinned;
   Track <do_mc_check> * host_tracks_pinned;
@@ -64,7 +70,7 @@ struct Stream {
     const size_t param_starting_events_size,
     const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
-    const bool param_do_consolidate,
+    const bool param_do_check,
     const bool param_do_simplified_kalman_filter,
     const bool param_print_individual_rates,
     const uint param_stream_number

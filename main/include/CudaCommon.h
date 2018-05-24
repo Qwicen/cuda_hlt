@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 /// For sanity check of input
-// DvB: not used anywhere, devined as N_MODULES in cuda/velo/common/include/VeloDefinitions.cuh
+// DvB: not used anywhere, defined as N_MODULES in cuda/velo/common/include/VeloDefinitions.cuh
 //#define NUMBER_OF_SENSORS 52
 
 /**

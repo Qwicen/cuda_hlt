@@ -143,7 +143,7 @@ __device__ void processModules(
     const auto ttf_element = blockDim.x * i + threadIdx.x;
 
     if (ttf_element < diff_ttf) {
-      const int fulltrackno = tracks_to_follow[(prev_ttf + ttf_element) % TTF_MODULO];
+      const int fulltrackno = tracks_to_follow[(prev_ttf + ttf_element) % VeloTracking::ttf_modulo];
       const bool track_flag = (fulltrackno & 0x80000000) == 0x80000000;
       const int trackno = fulltrackno & 0x0FFFFFFF;
 
@@ -151,7 +151,7 @@ __device__ void processModules(
       // to mark them as "doubtful"
       if (track_flag) {
         const auto weakP = atomicAdd(weaktracks_insert_pointer, 1);
-        ASSERT(weakP < number_of_hits)
+        assert(weakP < number_of_hits);
         weak_tracks[weakP] = trackno;
       }
     }

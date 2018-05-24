@@ -2,16 +2,11 @@
 
 #include "../../../cuda/velo/calculate_phi_and_sort/include/CalculatePhiAndSort.cuh"
 #include "../../../main/include/CudaCommon.h"
+#include "Handler.cuh"
 #include <vector>
 #include <iostream>
 
-struct CalculatePhiAndSort {
-  // Call options
-  dim3 num_blocks, num_threads;
-
-  // Cuda stream
-  cudaStream_t* stream;
-
+struct CalculatePhiAndSort : public Handler {
   // Call parameters
   uint* dev_module_cluster_start;
   uint* dev_module_cluster_num;
@@ -19,16 +14,6 @@ struct CalculatePhiAndSort {
   uint* dev_hit_permutation;
 
   CalculatePhiAndSort() = default;
-
-  void set(
-    const dim3& param_num_blocks,
-    const dim3& param_num_threads,
-    cudaStream_t& param_stream
-  ) {
-    num_blocks = param_num_blocks;
-    num_threads = param_num_threads;
-    stream = &param_stream;
-  }
 
   void setParameters(
     uint* param_dev_module_cluster_start,

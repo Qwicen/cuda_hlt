@@ -5,9 +5,9 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
   const std::vector<char>& geometry,
   const std::vector<char>& events,
   const std::vector<unsigned int>& event_offsets,
+  const bool assume_never_no_sp,
   const int verbosity
 ) {
-  std::cout << std::endl << "cuda clustering:" << std::endl;
   std::vector<std::vector<uint32_t>> cluster_candidates_to_return;
   std::vector<unsigned char> sp_patterns (256, 0);
   std::vector<unsigned char> sp_sizes (256, 0);
@@ -20,12 +20,12 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
   constexpr int max_clustering_iterations = 16;
 
   auto print_array = [] (
-    const std::array<uint32_t, 4>& p,
+    const std::array<uint32_t, 3>& p,
     const int row = -1,
     const int col = -1
   ) {
     for (int r=0; r<16; ++r) {
-      for (int c=0; c<8; ++c) {
+      for (int c=0; c<6; ++c) {
         if (r==row && c==col) {
           std::cout << "x";
         } else  {
@@ -107,7 +107,6 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
   VeloGeometry g (geometry);
   for (size_t i=1; i<event_offsets.size(); ++i) {
     std::vector<uint32_t> lhcb_ids;
-    unsigned int total_sp_count = 0;
     unsigned int no_sp_count = 0;
     unsigned int approximation_number_of_clusters = 0;
 
@@ -130,10 +129,8 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
         const uint32_t no_sp_neighbours = sp_word & 0x80000000U;
         const uint8_t sp = sp_word & 0xFFU;
 
-        total_sp_count++;
-
         // There are no neighbours, so compute the number of pixels of this superpixel
-        if (no_sp_neighbours) {
+        if (!assume_never_no_sp && no_sp_neighbours) {
           // // Pattern 0:
           // // (x  x)
           // //  o  o
@@ -234,13 +231,13 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
           // 2: x
           // 1: o
           // 0: o
-          std::array<uint32_t, 4> pixel_array {0, 0, 0, 0};
+          std::array<uint32_t, 3> pixel_array {0, 0, 0};
 
           // sp limits to load
           const int32_t sp_row_lower_limit = sp_row - 2;
           const int32_t sp_row_upper_limit = sp_row + 1;
           const int32_t sp_col_lower_limit = sp_col - 1;
-          const int32_t sp_col_upper_limit = sp_col + 2;
+          const int32_t sp_col_upper_limit = sp_col + 1;
 
           // Row limits
           const int32_t row_lower_limit = sp_row_lower_limit * 4;
@@ -254,7 +251,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
           for (unsigned int k=0; k<velo_raw_bank.sp_count; ++k) {
             const uint32_t other_sp_word = velo_raw_bank.sp_word[k];
             const uint32_t other_no_sp_neighbours = other_sp_word & 0x80000000U;
-            if (!other_no_sp_neighbours) {
+            if (assume_never_no_sp || !other_no_sp_neighbours) {
               const uint32_t other_sp_addr = (other_sp_word & 0x007FFF00U) >> 8;
               const int32_t other_sp_row = other_sp_addr & 0x3FU;
               const int32_t other_sp_col = (other_sp_addr >> 6);
@@ -297,9 +294,9 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
           }
 
           // Some datatypes to work with
-          std::array<uint32_t, 4> working_cluster {0, 0, 0, 0};
-          std::array<uint32_t, 4> pixel_mask {0, 0, 0, 0};
-          std::array<uint32_t, 4> candidates;
+          std::array<uint32_t, 3> working_cluster {0, 0, 0};
+          std::array<uint32_t, 3> pixel_mask {0, 0, 0};
+          std::array<uint32_t, 3> candidates;
 
           // Find candidates in pixel_array[1] & 0x000FF00
           // Create mask for pattern
@@ -346,10 +343,9 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
           const uint8_t candidates_uint8 = ((candidates[1] >> 20)&0xF0) | ((candidates[1] >> 8)&0x0F);
           if (candidates_uint8) {
             for (int k=0; k<8; ++k) {
-
-              const uint32_t row = sp_row * 4 + (k % 4);
-              const uint32_t col = sp_col * 2 + (k >= 4);
-              const uint32_t idx = row * 770 + col + 771;
+              // const uint32_t row = sp_row * 4 + (k % 4);
+              // const uint32_t col = sp_col * 2 + (k >= 4);
+              // const uint32_t idx = row * 770 + col + 771;
 
               if ((candidates_uint8 >> k) & 0x01) {
                 // Work with this candidate
@@ -368,7 +364,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                 // Cluster datatype
                 // This will contain our building cluster
                 // Start it with row, col element active
-                std::array<uint32_t, 4> cluster {0, 0, 0, 0};
+                std::array<uint32_t, 3> cluster {0, 0, 0};
                 cluster[1] = (0x01 << (row - row_lower_limit)) << (16 * (col % 2));
                 
                 if (verbosity >= logger::debug) {
@@ -380,7 +376,6 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                 working_cluster[0] = 0;
                 working_cluster[1] = cluster[1];
                 working_cluster[2] = 0;
-                working_cluster[3] = 0;
 
                 if (verbosity >= logger::debug) {
                   std::cout << "working cluster" << std::endl;
@@ -403,11 +398,8 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                                 | mask_from_right_to_left(working_cluster[2])
                                 | mask_from_left_to_right(working_cluster[0]);
                   pixel_mask[2] = current_mask(working_cluster[2])
-                                | mask_from_right_to_left(working_cluster[3])
                                 | mask_from_left_to_right(working_cluster[1]);
-                  pixel_mask[3] = current_mask(working_cluster[3])
-                                | mask_from_left_to_right(working_cluster[2]);
-
+                  
                   if (verbosity >= logger::debug) {
                     std::cout << "pixel mask" << std::endl;
                     print_array(pixel_mask);
@@ -417,14 +409,13 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                   working_cluster[0] = working_pixel_array[0] & pixel_mask[0];
                   working_cluster[1] = working_pixel_array[1] & pixel_mask[1];
                   working_cluster[2] = working_pixel_array[2] & pixel_mask[2];
-                  working_cluster[3] = working_pixel_array[3] & pixel_mask[3];
 
                   if (verbosity >= logger::debug) {
                     std::cout << "working cluster" << std::endl;
                     print_array(working_cluster);
                   }
 
-                  if (working_cluster[0]==0 && working_cluster[1]==0 && working_cluster[2]==0 && working_cluster[3]==0) {
+                  if (working_cluster[0]==0 && working_cluster[1]==0 && working_cluster[2]==0) {
                     break;
                   }
 
@@ -432,7 +423,6 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                   cluster[0] |= working_cluster[0];
                   cluster[1] |= working_cluster[1];
                   cluster[2] |= working_cluster[2];
-                  cluster[3] |= working_cluster[3];
 
                   if (verbosity >= logger::debug) {
                     std::cout << "cluster" << std::endl;
@@ -443,7 +433,6 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                   working_pixel_array[0] &= ~cluster[0];
                   working_pixel_array[1] &= ~cluster[1];
                   working_pixel_array[2] &= ~cluster[2];
-                  working_pixel_array[3] &= ~cluster[3];
 
                   if (verbosity >= logger::debug) {
                     std::cout << "pixel array" << std::endl;
@@ -451,12 +440,14 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                   }
                 }
 
+                if (cluster[2]) {
+                  continue;
+                }
+
                 // Calculate x and y from our formed cluster
                 // number of active clusters
                 const int n = __builtin_popcount(cluster[0])
-                            + __builtin_popcount(cluster[1])
-                            + __builtin_popcount(cluster[2])
-                            + __builtin_popcount(cluster[3]);
+                            + __builtin_popcount(cluster[1]);
 
                 // Prune repeated clusters
                 // Only check for repeated clusters for clusters with at least 3 elements
@@ -476,8 +467,6 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                                 | mask_from_left_to_right(cluster[0]);
                   pixel_mask[2] = cluster_current_mask(cluster[2])
                                 | mask_from_left_to_right(cluster[1]);
-                  pixel_mask[3] = cluster_current_mask(cluster[3])
-                                | mask_from_left_to_right(cluster[2]);
 
                   if (verbosity >= logger::debug) {
                     std::cout << "pixel mask" << std::endl;
@@ -491,8 +480,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                   //   x
                   working_cluster[0] = pixel_mask[0] & (~cluster[0]);
                   working_cluster[1] = pixel_mask[1] & (~cluster[1]);
-                  working_cluster[2] = pixel_mask[2] & (~cluster[2]);
-                  working_cluster[3] = pixel_mask[3] & (~cluster[3]);
+                  working_cluster[2] = pixel_mask[2];
 
                   if (verbosity >= logger::debug) {
                     std::cout << "working cluster" << std::endl;
@@ -503,14 +491,12 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                   // get the candidates
                   candidates[0] = candidates_current_mask_with_right_clusters(working_cluster[0], working_cluster[1]);
                   candidates[1] = candidates_current_mask_with_right_clusters(working_cluster[1], working_cluster[2]);
-                  candidates[2] = candidates_current_mask_with_right_clusters(working_cluster[2], working_cluster[3]);
-                  candidates[3] = candidates_current_mask(working_cluster[3]);
+                  candidates[2] = candidates_current_mask(working_cluster[2]);
 
                   // candidates = candidates "and" clusters, to get the real candidates
                   candidates[0] &= cluster[0];
                   candidates[1] &= cluster[1];
                   candidates[2] &= cluster[2];
-                  candidates[3] &= cluster[3];
 
                   if (verbosity >= logger::debug) {
                     std::cout << "candidates" << std::endl;
@@ -527,7 +513,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                   }
 
                   // Check if there is another candidate with precedence
-                  if (candidates[0] || candidates[1] || candidates[2] || candidates[3]) {
+                  if (candidates[0] || candidates[1]) {
                     // Precedence:
                     // The current candidate should not be considered if there is another candidate
                     // with a smaller row, or a bigger column
@@ -555,9 +541,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                       | working_candidate_under_threshold * 0xFFFF0000;
 
                     // Compute do_store
-                    do_store = (candidates[2]
-                              | candidates[3]
-                              | (candidates[0]&smaller_row_pixel_mask)
+                    do_store = ((candidates[0]&smaller_row_pixel_mask)
                               | (candidates[1]&current_pixel_mask)) == 0;
                   }
                 }
@@ -567,18 +551,14 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                   const int x = __builtin_popcount(cluster[0]&0x0000FFFF)*col_lower_limit
                               + __builtin_popcount(cluster[0]&0xFFFF0000)*(col_lower_limit+1)
                               + __builtin_popcount(cluster[1]&0x0000FFFF)*(col_lower_limit+2)
-                              + __builtin_popcount(cluster[1]&0xFFFF0000)*(col_lower_limit+3)
-                              + __builtin_popcount(cluster[2]&0x0000FFFF)*(col_lower_limit+4)
-                              + __builtin_popcount(cluster[2]&0xFFFF0000)*(col_lower_limit+5)
-                              + __builtin_popcount(cluster[3]&0x0000FFFF)*(col_lower_limit+6)
-                              + __builtin_popcount(cluster[3]&0xFFFF0000)*(col_lower_limit+7);
+                              + __builtin_popcount(cluster[1]&0xFFFF0000)*(col_lower_limit+3);
 
                   // Transpose momentarily clusters to obtain y in an easier way
                   const std::array<uint32_t, 4> transposed_clusters = {
-                    ( cluster[0]&0x000F000F)        | ((cluster[1]&0x000F000F) << 4) | ((cluster[2]&0x000F000F) << 8) | ((cluster[3]&0x000F000F) << 12),
-                    ((cluster[0]&0x00F000F0) >> 4)  | ( cluster[1]&0x00F000F0)       | ((cluster[2]&0x00F000F0) << 4) | ((cluster[3]&0x00F000F0) << 8),
-                    ((cluster[0]&0x0F000F00) >> 8)  | ((cluster[1]&0x0F000F00) >> 4) | ( cluster[2]&0x0F000F00)       | ((cluster[3]&0x0F000F00) << 4),
-                    ((cluster[0]&0xF000F000) >> 12) | ((cluster[1]&0xF000F000) >> 8) | ((cluster[2]&0xF000F000) >> 4) | ( cluster[3]&0xF000F000)
+                    ( cluster[0]&0x000F000F)        | ((cluster[1]&0x000F000F) << 4),
+                    ((cluster[0]&0x00F000F0) >> 4)  | ( cluster[1]&0x00F000F0)      ,
+                    ((cluster[0]&0x0F000F00) >> 8)  | ((cluster[1]&0x0F000F00) >> 4),
+                    ((cluster[0]&0xF000F000) >> 12) | ((cluster[1]&0xF000F000) >> 8)
                   };
 
                   // Added value of all y
@@ -630,7 +610,8 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
   }
 
   t.stop();
-  std::cout << "Timer: " << t.get() << " s" << std::endl;
+  std::cout << "Cuda simplified cpu optimized clustering:" << std::endl
+    << "Timer: " << t.get() << " s" << std::endl << std::endl;
 
   return cluster_candidates_to_return;
 }

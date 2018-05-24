@@ -13,7 +13,6 @@
 #include <cmath>
 #include <stdint.h>
 #include "Logger.h"
-#include "Common.h"
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../cuda/velo/common/include/ClusteringDefinitions.cuh"
 #include "../../checker/lib/include/Tracks.h"

@@ -8,6 +8,10 @@ void initializeConstants() {
     387.5, 400, 487.5, 500, 587.5, 600, 637.5, 650, 687.5, 700, 737.5, 750};
   cudaCheck(cudaMemcpyToSymbol(VeloTracking::velo_module_zs, velo_module_zs.data(), velo_module_zs.size() * sizeof(float)));
 
+  // Velo clustering candidate ks
+  const std::array<uint8_t, 9> candidate_ks = {0, 0, 1, 2, 2, 3, 3, 3, 3};
+  cudaCheck(cudaMemcpyToSymbol(VeloClustering::candidate_ks, candidate_ks.data(), candidate_ks.size() * sizeof(uint8_t)));
+
   // Clustering patterns
   // Fetch patterns and populate in GPU
   std::vector<uint8_t> sp_patterns (256, 0);
@@ -17,7 +21,6 @@ void initializeConstants() {
   cache_sp_patterns(sp_patterns, sp_sizes, sp_fx, sp_fy);
 
   cudaCheck(cudaMemcpyToSymbol(VeloClustering::sp_patterns, sp_patterns.data(), sp_patterns.size()));
-  cudaCheck(cudaMemcpyToSymbol(VeloClustering::sp_sizes, sp_sizes.data(), sp_sizes.size()));
   cudaCheck(cudaMemcpyToSymbol(VeloClustering::sp_fx, sp_fx.data(), sp_fx.size() * sizeof(float)));
   cudaCheck(cudaMemcpyToSymbol(VeloClustering::sp_fy, sp_fy.data(), sp_fy.size() * sizeof(float)));
 }

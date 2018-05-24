@@ -4,17 +4,32 @@ project(cu_hlt CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}) # for find_package
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -std=c++11 -march=native")
+# Deal with build type
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif(NOT CMAKE_BUILD_TYPE)
+MESSAGE(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 
 find_package(CUDA REQUIRED)
 set(CUDA_HOST_COMPILER "g++")
 set(CUDA_SEPARABLE_COMPILATION ON)
 option(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
-# Options for P100:
-# --gpu-architecture=compute_60;--gpu-code=sm_60;
+# Cuda: Deal with build type
+if(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
+  set(CUDA_BUILD_TYPE "-O3\;-g\;-DNDEBUG\;")
+elseif(${CMAKE_BUILD_TYPE} STREQUAL Release)
+  set(CUDA_BUILD_TYPE "-O3\;-DNDEBUG\;")
+elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+  set(CUDA_BUILD_TYPE "-O0\;-G\;-g\;-DDEBUG\;")
+endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 
-set(CUDA_NVCC_FLAGS "-O3;-g;-G;--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=64;")
+set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=64;")
 
 add_subdirectory(cuda)
 add_subdirectory(stream)
@@ -26,9 +41,10 @@ file(GLOB main_sources "main/src/*cpp")
 
 cuda_add_executable(cu_hlt ${main_sources})
 
-target_link_libraries(cu_hlt tbb libcuVelo libStream libx86Clustering libTrackChecking)
+target_link_libraries(cu_hlt tbb libcuVelo libStream libx86Clustering libTrackChecking libCheckClustering)
 
 # option to do MC truth matching
 if ( MC_CHECK )
+  message(STATUS "MC CHECK ON")
   add_definitions( -DMC_CHECK )
 endif()

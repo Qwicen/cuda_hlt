@@ -1,9 +1,9 @@
 #pragma once
 
-#define DEBUG logger::logger(logger::debug)
-#define INFO  logger::logger(logger::info)
-#define WARNING logger::logger(logger::warning)
-#define ERROR logger::logger(logger::error)
+#define debug_cout logger::logger(logger::debug)
+#define info_cout  logger::logger(logger::info)
+#define warning_cout logger::logger(logger::warning)
+#define error_cout logger::logger(logger::error)
 
 #include <sstream>
 #include <iostream>
@@ -91,9 +91,5 @@ namespace logger {
 
   std::ostream& logger(int requestedLogLevel);
 
-  #ifndef CUDALOGGER_CPP
   extern Logger ll;
-  #else
-  Logger ll;
-  #endif
 }

@@ -2,16 +2,14 @@
 
 #include "../../../cuda/velo/mask_clustering/include/MaskedVeloClustering.cuh"
 #include "../../../main/include/CudaCommon.h"
+#include "../../../checker/clustering/include/ClusteringChecker.h"
+#include "Handler.cuh"
 #include <vector>
 #include <iostream>
+#include <algorithm>
+#include <tuple>
 
-struct MaskedVeloClustering {
-  // Call options
-  dim3 num_blocks, num_threads;
-
-  // Cuda stream
-  cudaStream_t* stream;
-
+struct MaskedVeloClustering : public Handler {
   // Call parameters
   char* dev_raw_input;
   uint* dev_raw_input_offsets;
@@ -23,16 +21,6 @@ struct MaskedVeloClustering {
   char* dev_velo_geometry;
 
   MaskedVeloClustering() = default;
-
-  void set(
-    const dim3& param_num_blocks,
-    const dim3& param_num_threads,
-    cudaStream_t& param_stream
-  ) {
-    num_blocks = param_num_blocks;
-    num_threads = param_num_threads;
-    stream = &param_stream;
-  }
 
   void setParameters(
     char* param_dev_raw_input,
@@ -59,5 +47,14 @@ struct MaskedVeloClustering {
   void print_output(
     const uint number_of_events,
     const int print_max_per_module = -1
+  );
+
+  void check(
+    const char* host_events_pinned,
+    const uint* host_event_offsets_pinned,
+    const size_t host_events_pinned_size,
+    const size_t host_event_offsets_pinned_size,
+    const std::vector<char>& geometry,
+    const uint number_of_events
   );
 };

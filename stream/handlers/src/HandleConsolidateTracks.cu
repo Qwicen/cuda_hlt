@@ -1,4 +1,5 @@
 #include "HandleConsolidateTracks.cuh"
+#include "../../../cuda/velo/consolidate_tracks/include/ConsolidateTracks.cuh"
 
 void ConsolidateTracks::operator()() {
   consolidate_tracks <do_mc_check> <<<num_blocks, num_threads, 0, *stream>>>(

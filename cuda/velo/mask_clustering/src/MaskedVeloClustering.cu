@@ -221,13 +221,13 @@ __global__ void masked_velo_clustering(
       // 2: x
       // 1: o
       // 0: o
-      uint32_t pixel_array [4] = {0, 0, 0, 0};
+      uint32_t pixel_array [3] = {0, 0, 0};
 
       // sp limits to load
       const int32_t sp_row_lower_limit = sp_row - 2;
       const int32_t sp_row_upper_limit = sp_row + 1;
       const int32_t sp_col_lower_limit = sp_col - 1;
-      const int32_t sp_col_upper_limit = sp_col + 2;
+      const int32_t sp_col_upper_limit = sp_col + 1;
 
       // Row limits
       const int32_t row_lower_limit = sp_row_lower_limit * 4;
@@ -283,10 +283,10 @@ __global__ void masked_velo_clustering(
       // Cluster
       // This will contain our building cluster
       // Start it with row, col element active
-      uint32_t cluster [4] = {0, (uint32_t) ((0x01 << (row - row_lower_limit)) << (16 * (col % 2))), 0, 0};
+      uint32_t cluster [3] = {0, (uint32_t) ((0x01 << (row - row_lower_limit)) << (16 * (col % 2))), 0};
       
       // Current cluster being considered for generating the mask
-      uint32_t working_cluster [4] = {0, cluster[1], 0, 0};
+      uint32_t working_cluster [3] = {0, cluster[1], 0};
 
       // Delete pixels in cluster from pixels
       pixel_array[1] &= ~cluster[1];
@@ -294,25 +294,21 @@ __global__ void masked_velo_clustering(
       // Perform actual clustering
       for (int clustering_iterations=0; clustering_iterations<VeloClustering::max_clustering_iterations; ++clustering_iterations) {
         // Create mask for working cluster
-        uint32_t pixel_mask [4];
+        uint32_t pixel_mask [3];
         pixel_mask[0] = current_mask(working_cluster[0])
                       | mask_from_right_to_left(working_cluster[1]);
         pixel_mask[1] = current_mask(working_cluster[1])
                       | mask_from_right_to_left(working_cluster[2])
                       | mask_from_left_to_right(working_cluster[0]);
         pixel_mask[2] = current_mask(working_cluster[2])
-                      | mask_from_right_to_left(working_cluster[3])
                       | mask_from_left_to_right(working_cluster[1]);
-        pixel_mask[3] = current_mask(working_cluster[3])
-                      | mask_from_left_to_right(working_cluster[2]);
 
         // Calculate new elements
         working_cluster[0] = pixel_array[0] & pixel_mask[0];
         working_cluster[1] = pixel_array[1] & pixel_mask[1];
         working_cluster[2] = pixel_array[2] & pixel_mask[2];
-        working_cluster[3] = pixel_array[3] & pixel_mask[3];
 
-        if (working_cluster[0]==0 && working_cluster[1]==0 && working_cluster[2]==0 && working_cluster[3]==0) {
+        if (working_cluster[0]==0 && working_cluster[1]==0 && working_cluster[2]==0) {
           break;
         }
 
@@ -320,21 +316,25 @@ __global__ void masked_velo_clustering(
         cluster[0] |= working_cluster[0];
         cluster[1] |= working_cluster[1];
         cluster[2] |= working_cluster[2];
-        cluster[3] |= working_cluster[3];
 
         // Delete elements from pixel array
         pixel_array[0] &= ~cluster[0];
         pixel_array[1] &= ~cluster[1];
         pixel_array[2] &= ~cluster[2];
-        pixel_array[3] &= ~cluster[3];
+      }
+
+      // Early break: If there are any pixels
+      // active in SPs to the right, then
+      // there must be another pixel eventually
+      // fulfilling the condition
+      if (cluster[2]) {
+        continue;
       }
 
       // Calculate x and y from our formed cluster
       // number of active clusters
       const int n = __popc(cluster[0])
-                  + __popc(cluster[1])
-                  + __popc(cluster[2])
-                  + __popc(cluster[3]);
+                  + __popc(cluster[1]);
 
       // Prune repeated clusters
       // Only check for repeated clusters for clusters with at least 3 elements
@@ -348,10 +348,7 @@ __global__ void masked_velo_clustering(
         pixel_mask[0] = cluster_current_mask(cluster[0]);
         pixel_mask[1] = cluster_current_mask(cluster[1])
                       | mask_from_left_to_right(cluster[0]);
-        pixel_mask[2] = cluster_current_mask(cluster[2])
-                      | mask_from_left_to_right(cluster[1]);
-        pixel_mask[3] = cluster_current_mask(cluster[3])
-                      | mask_from_left_to_right(cluster[2]);
+        pixel_mask[2] = mask_from_left_to_right(cluster[1]);
 
         // Do "and not" with found clusters
         // This should return patterns like these:
@@ -360,29 +357,24 @@ __global__ void masked_velo_clustering(
         //   x
         working_cluster[0] = pixel_mask[0] & (~cluster[0]);
         working_cluster[1] = pixel_mask[1] & (~cluster[1]);
-        working_cluster[2] = pixel_mask[2] & (~cluster[2]);
-        working_cluster[3] = pixel_mask[3] & (~cluster[3]);
+        working_cluster[2] = pixel_mask[2];
 
         // Require the four pixels of the pattern in order to
         // get the candidates
-        uint32_t candidates [4];
+        uint32_t candidates [2];
         candidates[0] = candidates_current_mask_with_right_clusters(working_cluster[0], working_cluster[1]);
         candidates[1] = candidates_current_mask_with_right_clusters(working_cluster[1], working_cluster[2]);
-        candidates[2] = candidates_current_mask_with_right_clusters(working_cluster[2], working_cluster[3]);
-        candidates[3] = candidates_current_mask(working_cluster[3]);
 
         // candidates = candidates "and" clusters, to get the real candidates
         candidates[0] &= cluster[0];
         candidates[1] &= cluster[1];
-        candidates[2] &= cluster[2];
-        candidates[3] &= cluster[3];
 
         // Remove our cluster candidate
         const uint32_t working_candidate = (0x01 << (row - row_lower_limit)) << (16 * (col % 2));
         candidates[1] ^= working_candidate;
 
         // Check if there is another candidate with precedence
-        if (candidates[0] || candidates[1] || candidates[2] || candidates[3]) {
+        if (candidates[0] || candidates[1]) {
           // Precedence:
           // The current candidate should not be considered if there is another candidate
           // with a smaller row, or a bigger column
@@ -410,9 +402,7 @@ __global__ void masked_velo_clustering(
             | working_candidate_under_threshold * 0xFFFF0000;
 
           // Compute do_store
-          do_store = (candidates[2]
-                    | candidates[3]
-                    | (candidates[0]&smaller_row_pixel_mask)
+          do_store = ((candidates[0]&smaller_row_pixel_mask)
                     | (candidates[1]&current_pixel_mask)) == 0;
         }
       }
@@ -422,18 +412,14 @@ __global__ void masked_velo_clustering(
         const int x = __popc(cluster[0]&0x0000FFFF)*col_lower_limit
                     + __popc(cluster[0]&0xFFFF0000)*(col_lower_limit+1)
                     + __popc(cluster[1]&0x0000FFFF)*(col_lower_limit+2)
-                    + __popc(cluster[1]&0xFFFF0000)*(col_lower_limit+3)
-                    + __popc(cluster[2]&0x0000FFFF)*(col_lower_limit+4)
-                    + __popc(cluster[2]&0xFFFF0000)*(col_lower_limit+5)
-                    + __popc(cluster[3]&0x0000FFFF)*(col_lower_limit+6)
-                    + __popc(cluster[3]&0xFFFF0000)*(col_lower_limit+7);
+                    + __popc(cluster[1]&0xFFFF0000)*(col_lower_limit+3);
 
         // Transpose momentarily clusters to obtain y in an easier way
         const uint32_t transposed_clusters [4] = {
-          ( cluster[0]&0x000F000F)        | ((cluster[1]&0x000F000F) << 4) | ((cluster[2]&0x000F000F) << 8) | ((cluster[3]&0x000F000F) << 12),
-          ((cluster[0]&0x00F000F0) >> 4)  | ( cluster[1]&0x00F000F0)       | ((cluster[2]&0x00F000F0) << 4) | ((cluster[3]&0x00F000F0) << 8),
-          ((cluster[0]&0x0F000F00) >> 8)  | ((cluster[1]&0x0F000F00) >> 4) | ( cluster[2]&0x0F000F00)       | ((cluster[3]&0x0F000F00) << 4),
-          ((cluster[0]&0xF000F000) >> 12) | ((cluster[1]&0xF000F000) >> 8) | ((cluster[2]&0xF000F000) >> 4) | ( cluster[3]&0xF000F000)
+          ( cluster[0]&0x000F000F)        | ((cluster[1]&0x000F000F) << 4),
+          ((cluster[0]&0x00F000F0) >> 4)  | ( cluster[1]&0x00F000F0)      ,
+          ((cluster[0]&0x0F000F00) >> 8)  | ((cluster[1]&0x0F000F00) >> 4),
+          ((cluster[0]&0xF000F000) >> 12) | ((cluster[1]&0xF000F000) >> 8)
         };
 
         // Added value of all y
