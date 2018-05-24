@@ -11,6 +11,7 @@ cudaError_t Stream::initialize(
   const bool param_do_check,
   const bool param_do_simplified_kalman_filter,
   const bool param_print_individual_rates,
+  const std::string param_folder_name_MC,
   const uint param_stream_number
 ) {
   cudaCheck(cudaStreamCreate(&stream));
@@ -24,7 +25,8 @@ cudaError_t Stream::initialize(
   do_simplified_kalman_filter = param_do_simplified_kalman_filter;
   print_individual_rates = param_print_individual_rates;
   geometry = param_geometry;
-
+  folder_name_MC = param_folder_name_MC;
+  
   // Blocks and threads for each algorithm
   const uint prefixSumBlocks = (N_MODULES * number_of_events + 511) / 512;
 

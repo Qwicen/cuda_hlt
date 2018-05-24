@@ -107,5 +107,6 @@ cudaError_t checkSorting(
 );
 
 void checkTracks(
-		 std::vector< trackChecker::Tracks > all_tracks
+		 const std::vector< trackChecker::Tracks > all_tracks,
+		 const std::string folder_name_MC
 );

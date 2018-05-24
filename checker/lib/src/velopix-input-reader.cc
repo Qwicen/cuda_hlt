@@ -252,6 +252,11 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
     uint requestedFiles = nFiles==0 ? folderContents.size() : nFiles;
     std::cout << "Requested " << requestedFiles << " files" << std::endl;
 
+    if ( requestedFiles > folderContents.size() ) {
+      std::cout << "ERROR: requested " << requestedFiles << " files, but only " << folderContents.size() << " files are present" << std::endl;
+      exit(-1);
+    }
+    
     std::vector<VelopixEvent> input;
     int readFiles = 0;
     for (uint i=0; i<requestedFiles; ++i) {

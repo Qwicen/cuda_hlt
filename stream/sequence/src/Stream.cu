@@ -210,15 +210,7 @@ cudaError_t Stream::operator()(
       	}
       }
       out_file.close();
-      /* Write tracks to file for PrChecker: length, LHCb Ids of all hits */
-      std::ofstream tracks_out_file;
-      tracks_out_file.open("tracks_checker_out.txt");
-      // printTracks( host_tracks_pinned,
-      // 		   host_number_of_tracks_pinned,
-      // 		   number_of_events,
-      // 		   tracks_out_file ); 
-      tracks_out_file.close();
-      
+     
       /* Tracks to be checked, save in format for checker */
       std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
       std::ofstream out_file_ids;
@@ -236,7 +228,7 @@ cudaError_t Stream::operator()(
 	    //printf("id = %u \n", (uint32_t)(hit.LHCbID) );
 	    if ( i_event == 0 )
 	      out_file_ids << std::hex << hit.LHCbID << std::endl;
-	    uint32_t masked_id = hit.LHCbID & 0x0FFFFFFF;
+	    //uint32_t masked_id = hit.LHCbID & 0x0FFFFFFF;
 	    LHCbID lhcb_id( hit.LHCbID );
 	    t.addId( lhcb_id );
 	  } // hits
@@ -247,7 +239,7 @@ cudaError_t Stream::operator()(
       } // events
       out_file_ids.close();
 
-      checkTracks( all_tracks );
+      checkTracks( all_tracks, folder_name_MC );
     }
 #endif    
   }

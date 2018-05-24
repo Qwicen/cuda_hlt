@@ -32,7 +32,8 @@
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
-    << std::endl << " -f {folder containing .bin files}"
+    << std::endl << " -f {folder containing .bin files with raw bank information}"
+    << std::endl << " -g {folder containing .bin files with MC truth information}"
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=3]"
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
@@ -50,7 +51,8 @@ void printUsage(char* argv[]){
 
 int main(int argc, char *argv[])
 {
-  std::string folder_name;
+  std::string folder_name_raw;
+  std::string folder_name_MC;
   unsigned int number_of_files = 0;
   unsigned int tbb_threads = 3;
   unsigned int number_of_repetitions = 10;
@@ -62,10 +64,13 @@ int main(int argc, char *argv[])
   bool do_simplified_kalman_filter = false;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:n:t:r:pha:b:d:v:c:k:")) != -1) {
+  while ((c = getopt(argc, argv, "f:g:n:t:r:pha:b:d:v:c:k:")) != -1) {
     switch (c) {
     case 'f':
-      folder_name = std::string(optarg);
+      folder_name_raw = std::string(optarg);
+      break;
+    case 'g':
+      folder_name_MC = std::string(optarg);
       break;
     case 'n':
       number_of_files = atoi(optarg);
@@ -109,8 +114,14 @@ int main(int argc, char *argv[])
   
   // Check how many files were specified and
   // call the entrypoint with the suggested format
-  if(folder_name.empty()){
+  if(folder_name_raw.empty()){
     std::cerr << "No folder specified" << std::endl;
+    printUsage(argv);
+    return -1;
+  }
+
+  if(folder_name_MC.empty() && do_mc_check){
+    std::cerr << "No MC folder specified, but MC CHECK turned on" << std::endl;
     printUsage(argv);
     return -1;
   }
@@ -126,7 +137,8 @@ int main(int argc, char *argv[])
 
   // Show call options
   std::cout << "Requested options:" << std::endl
-    << " folder (-f): " << folder_name << std::endl
+    << " folder with raw bank input (-f): " << folder_name_raw << std::endl
+    << " folder with MC truth input (-g): " << folder_name_MC << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
@@ -142,10 +154,10 @@ int main(int argc, char *argv[])
   // Read folder contents
   std::vector<char> events;
   std::vector<unsigned int> event_offsets;
-  readFolder(folder_name, number_of_files, events, event_offsets);
+  readFolder(folder_name_raw, number_of_files, events, event_offsets);
 
   std::vector<char> geometry;
-  readGeometry(folder_name, geometry);
+  readGeometry(folder_name_raw, geometry);
 
   // Copy data to pinned host memory
   char* host_events_pinned;
@@ -233,6 +245,7 @@ int main(int argc, char *argv[])
       do_check,
       do_simplified_kalman_filter,
       print_individual_rates,
+      folder_name_MC,
       i
     );
     // Memory consumption

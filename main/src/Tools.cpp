@@ -398,11 +398,11 @@ void check_roughly( const trackChecker::Tracks& tracks, const std::vector<uint32
       
 }
 
-void checkTracks( std::vector< trackChecker::Tracks > all_tracks ) {
+void checkTracks( const std::vector< trackChecker::Tracks > all_tracks, const std::string folder_name_MC ) {
 
   /* MC information */
-  //std::vector<VelopixEvent> events = VelopixEventReader::readFolder("../input_checker", 20, true );
-  std::vector<VelopixEvent> events = VelopixEventReader::readFolder("../velopix_MC", 10, true );
+  int n_events = all_tracks.size();
+  std::vector<VelopixEvent> events = VelopixEventReader::readFolder(folder_name_MC, n_events, true );
   
   TrackChecker trackChecker;
   uint64_t evnum = 1;

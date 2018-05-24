@@ -62,6 +62,8 @@ struct Stream {
   Track <do_mc_check> * host_tracks_pinned;
   Stream() = default;
 
+  std::string folder_name_MC;
+
   cudaError_t initialize(
     const std::vector<char>& raw_events,
     const std::vector<uint>& event_offsets,
@@ -73,6 +75,7 @@ struct Stream {
     const bool param_do_check,
     const bool param_do_simplified_kalman_filter,
     const bool param_print_individual_rates,
+    const std::string param_folder_name_MC,
     const uint param_stream_number
   );
 
