@@ -126,10 +126,13 @@ void PrUTMagnetTool::prepareBdlTables() {
      zCenterUT += zlay;
   }    
   */
-
+  zCenterUT += 2327.5;
   m_zLayers.push_back(2327.5);
+  zCenterUT += 2372.5;
   m_zLayers.push_back(2372.5);
+  zCenterUT += 2597.5;
   m_zLayers.push_back(2597.5);
+  zCenterUT += 2642.5;
   m_zLayers.push_back(2642.5);
   zCenterUT /= m_zLayers.size();
   if (fabs( m_zCenterUT - zCenterUT ) > 50. ) {

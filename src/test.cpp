@@ -36,13 +36,13 @@ int main () {
   cout << grid.fieldVector(point).Z() << " " << bfeld.Z() << endl;
 
   PrUTMagnetTool testtool("bla", "bla");
-  //testtool.updateField();
-  testtool.m_magFieldSvc->fieldVector(point, bfeld);
+  testtool.updateField();
+  /*testtool.m_magFieldSvc->fieldVector(point, bfeld);
    cout << grid.fieldVector(point).X() << " a" << bfeld.X() << endl;
   cout << grid.fieldVector(point).Y() << " " << bfeld.Y() << endl;
   cout << grid.fieldVector(point).Z() << " " << bfeld.Z() << endl;
     
-
+*/
   
   return 0;
 }
