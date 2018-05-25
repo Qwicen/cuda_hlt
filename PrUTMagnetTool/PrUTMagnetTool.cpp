@@ -299,14 +299,20 @@ void PrUTMagnetTool::f_bdl( float slopeY, float zOrigin,
 
     float bdl = 0.;
 
+    bool nottrue = true;
     while( z<zStop ) {
       
       aPoint.SetY( y );
       aPoint.SetZ( z );
 
       m_magFieldSvc->fieldVector( aPoint, bField );
+      if(nottrue) {
+       nottrue = false;
+       cout << "points " << aPoint.X() << " " << aPoint.Y() << " " << aPoint.Z() << " " << bField.X() << " " << bField.Y() << " " << bField.Z() << endl;
+
+      }
       bdl += dy*bField.z() - dz*bField.y();
-      if(z>100.) {
+      if(z>100. * 10.) {
         m_bdlTmp.push_back(bdl);
         m_zTmp.push_back(z);
       }
@@ -334,6 +340,12 @@ void PrUTMagnetTool::f_bdl( float slopeY, float zOrigin,
 //  return the DxTable
 //=========================================================================
 std::vector<float> PrUTMagnetTool::returnDxLayTable(){
+
+  std::cout << "here's the deflection  LUT " << std::endl;
+  for (auto i = m_lutDxLay->returnTable().begin(); i != m_lutDxLay->returnTable().end(); ++i)
+    std::cout << *i << ' ' << std::endl;
+  std::cout << "here ends deflection LUT " << std::endl;
+
   return m_lutDxLay->returnTable();
 }
 
@@ -341,6 +353,10 @@ std::vector<float> PrUTMagnetTool::returnDxLayTable(){
 //  return the Bdl Table
 //=========================================================================
 std::vector<float> PrUTMagnetTool::returnBdlTable(){
+  std::cout << "here's the BDl LUT " << std::endl;
+  for (auto i = m_lutBdl->returnTable().begin(); i != m_lutBdl->returnTable().end(); ++i)
+    std::cout << *i << ' ' << std::endl;
+  std::cout << "here ends BDl LUT " << std::endl;
   return m_lutBdl->returnTable();
 }
 

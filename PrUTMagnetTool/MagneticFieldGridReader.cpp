@@ -206,13 +206,13 @@ void MagneticFieldGridReader::fillGridFromQuadrants( GridQuadrant* quadrants,
 
     // Grid dimensions are given in cm in CDF file. Convert to CLHEP units
 
-    quad.Dxyz[0] = atof( sGeom[0].c_str() ) ;
-    quad.Dxyz[1] = atof( sGeom[1].c_str() ) ;
-    quad.Dxyz[2] = atof( sGeom[2].c_str() ) ;
+    quad.Dxyz[0] = atof( sGeom[0].c_str()) * 10.0 ;
+    quad.Dxyz[1] = atof( sGeom[1].c_str()) * 10.0 ;
+    quad.Dxyz[2] = atof( sGeom[2].c_str()) * 10.0 ;
     quad.Nxyz[0] = atoi( sGeom[3].c_str() );
     quad.Nxyz[1] = atoi( sGeom[4].c_str() );
     quad.Nxyz[2] = atoi( sGeom[5].c_str() );
-    quad.zOffset = atof( sGeom[6].c_str() ) ;
+    quad.zOffset = atof( sGeom[6].c_str()) * 10.0 ;
 
     // Number of lines with data to be read
     long int nlines = ( npar - 7 ) / 3;
@@ -235,9 +235,9 @@ void MagneticFieldGridReader::fillGridFromQuadrants( GridQuadrant* quadrants,
       if ( token != nullptr ) continue;
 
       // Field values are given in gauss in CDF file. Convert to CLHEP units
-      double fx = std::stod( sFx ) ;
-      double fy = std::stod( sFy );
-      double fz = std::stod( sFz ) ;
+      double fx = std::stod( sFx ) * 1.e-7 ;
+      double fy = std::stod( sFy ) * 1.e-7;
+      double fz = std::stod( sFz ) * 1.e-7;
       // Add the magnetic field components of each point
       quad.Q.emplace_back( fx,fy,fz );
       //cout << fx << " " << fy << " " << fz << endl;

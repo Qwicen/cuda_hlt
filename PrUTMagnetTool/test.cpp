@@ -20,10 +20,10 @@ int main () {
   MagneticFieldGridReader magreader;
   magreader.readQuadrant(filename, quad);
   vector<std::string> filenames;
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field101.c1.down.cdf");
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field101.c2.down.cdf");
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field101.c3.down.cdf");
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field101.c4.down.cdf");
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c1.down.cdf");
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c2.down.cdf");
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c3.down.cdf");
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c4.down.cdf");
   LHCb::MagneticFieldGrid grid;
   magreader.readFiles( filenames, grid);
   XYZPoint point (1., 1., 1.);
