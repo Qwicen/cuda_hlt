@@ -19,6 +19,15 @@
 
 
 
+
+
+
+
+
+
+
+
+
 // Standard Constructor
 PrUTMagnetTool::PrUTMagnetTool( const std::string& type,
                   const std::string& name)
@@ -171,6 +180,7 @@ void PrUTMagnetTool::prepareBdlTables() {
     float slopeY   = m_lutVar[0];
     float zOrigin  = m_lutVar[1];
     float zEndVelo = m_lutVar[2];
+    cout << "lut var " << m_lutVar[0] <<  " " << m_lutVar[1] << " " << m_lutVar[2] <<endl;
     f_bdl(slopeY, zOrigin, zEndVelo, m_zCenterUT);
     m_lutBdl->fillTable(m_BdlTrack);
     m_lutZHalfBdl->fillTable(m_zHalfBdlTrack);
@@ -352,8 +362,79 @@ void PrUTMagnetTool::prepareDeflectionTables() {
   // prepare deflection tables
 
   m_lutDxLay    = new PrTableForFunction("PrTableForFunction/table3","PrTableForFunction/table3");
+  m_lutDxToMom  = new PrTableForFunction("PrTableForFunction/table4","PrTableForFunction/table3");
+  m_lutDxLay->clear() ;
+  m_lutDxToMom->clear() ;
+
+  // Retrieve extrapolators
+  float xBeg = 0.;
+  float yBeg = 0.;
+  float zBeg = 0.;
+  float qpBeg = 1./10.;
+  float dxdzBeg = 0.0;
+  float dydzBeg = 0.0;
+
+
+
+  m_lutDxLay->addVariable(3, 0., 3.); // index of UT layer 1 to 4
+  m_lutDxLay->addVariable(30, 0.0, 0.3); // slope y
+  m_lutDxLay->prepareTable();
+
+  m_lutVar.clear();
+  m_lutVar.push_back(0.0);
+  m_lutVar.push_back(0.0);
+
+  int iover = 0;
+  while(!iover) {
+    m_lutDxLay->getVariableVector(m_lutVar);
+    int idLay       = int(m_lutVar[0]+0.000001);
+    dydzBeg  = m_lutVar[1];
+    dxdzBeg  = 0.0;
+    float zLay = m_zLayers[idLay];
+    
+    xBeg = 0.;
+    yBeg = 0.;
+    zBeg = 0.;
+
+
+    float dx_mid = 0.;
+    float dx_lay = 0.;
+    float ratio = 0.5;
+
+    m_lutDxLay->fillTable(ratio);
+    iover = m_lutDxLay->incrementIndexVector();
+  }
+
+  // distance to momentum table (depends on y slope only)
+  m_lutDxToMom->addVariable(30, 0.0, 0.3); // slope y
+  m_lutDxToMom->prepareTable();
+
+  iover = 0;
+  m_lutVar.clear();
+  m_lutVar.push_back(0.0);
+
+  while(!iover) {
+    m_lutDxToMom->getVariableVector(m_lutVar);
+    dxdzBeg = 0.0;
+    dydzBeg = m_lutVar[0];
+    xBeg = 0.;
+    yBeg = 0.;
+    zBeg = 0.;
+
+
+    float dx2mom = 0.5;
+    m_lutDxToMom->fillTable(dx2mom);
+    iover = m_lutDxToMom->incrementIndexVector();
+  }
   
+  // determine distToMomentum parameter
+  m_lutVar.clear();
+  m_lutVar.push_back(0.05);
+  m_dist2mom = m_lutDxToMom->getValueFromTable(m_lutVar);
+
   cout << "Generation of VeloUT deflection LUTs finished" << endl;
 
   return;
 }
+
+

@@ -37,12 +37,15 @@ int main () {
 
   PrUTMagnetTool testtool("bla", "bla");
   testtool.prepareBdlTables();
+  testtool.prepareDeflectionTables() ;
+  //cout "defleciton tables"
    // still need to implement deflection tables -> need extrapolators
-  testtool.prepareDeflectionTables();
+  //testtool.prepareDeflectionTables();
   testtool.returnDxLayTable();
-  testtool.returnBdlTable();
+  auto bla = testtool.returnBdlTable();
   testtool.zMidUT();
   testtool.averageDist2mom();
+  cout<< bla.size() << endl;
   //PrTableForFunction * testtable  = testtool.m_lutBdl;
   //testtable->returnTable();
   /*testtool.m_magFieldSvc->fieldVector(point, bfeld);
