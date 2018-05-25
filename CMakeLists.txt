@@ -10,7 +10,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 MESSAGE(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=native")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
@@ -42,3 +42,9 @@ file(GLOB main_sources "main/src/*cpp")
 cuda_add_executable(cu_hlt ${main_sources})
 
 target_link_libraries(cu_hlt tbb libcuVelo libStream libx86Clustering libCheckClustering)
+
+file(GLOB magnet_sources "PrUTMagnetTool/*cpp")
+find_package(ROOT REQUIRED COMPONENTS  Matrix Physics MathCore Thread GenVector)
+add_executable(magnet_test ${magnet_sources})
+target_compile_options(magnet_test PRIVATE "-Wall")
+target_link_libraries(magnet_test ${ROOT_LIBRARIES}  )
