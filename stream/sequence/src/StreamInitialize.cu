@@ -81,6 +81,7 @@ cudaError_t Stream::initialize(
   // The temporary is required to do the sortinge in an efficient manner
   // DvB: where do the 2000 and the 6 come from?
   // DvB: the six are the six variables :-)
+  // DvB: 2000 no more hard-coded:-> max_candidates_event
   velo_cluster_container_size = number_of_events * max_candidates_event * 6;
 
   // Data preparation
@@ -92,6 +93,7 @@ cudaError_t Stream::initialize(
   // Clustering
   cudaCheck(cudaMalloc((void**)&dev_raw_input, param_starting_events_size));
   cudaCheck(cudaMalloc((void**)&dev_raw_input_offsets, event_offsets.size() * sizeof(uint)));
+  // DvB: why +2?
   cudaCheck(cudaMalloc((void**)&dev_estimated_input_size, (number_of_events * N_MODULES + 2) * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_cluster_offset, number_of_events * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_module_cluster_num, number_of_events * N_MODULES * sizeof(uint)));

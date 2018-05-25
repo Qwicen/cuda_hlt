@@ -8,10 +8,11 @@ __global__ void estimate_input_size(
   uint* dev_event_candidate_num,
   uint32_t* dev_cluster_candidates
 ) {
+  const uint number_of_events = blockDim.x;
   const uint event_number = blockIdx.x;
-  const uint raw_bank_starting_chunk = threadIdx.y;
-  // DvB: what is the 208?
-  const uint raw_bank_chunk_size = 208 / blockDim.y;
+  const uint raw_bank_starting_chunk = threadIdx.y; // up to 26
+  // DvB: what is the 208? -> # of sensors!
+  const uint raw_bank_chunk_size = 208 / blockDim.y; // blockDim.y = 26 -> chunk_size = 8
   const char* raw_input = dev_raw_input + dev_raw_input_offsets[event_number];
   uint* estimated_input_size = dev_estimated_input_size + event_number * N_MODULES;
   uint* module_cluster_num = dev_module_cluster_num + event_number * N_MODULES;
@@ -75,7 +76,8 @@ __global__ void estimate_input_size(
             const uint number_of_clusters = 1 + (pattern_0 | pattern_1);
             
             // Add the found clusters
-            atomicAdd(estimated_module_size, number_of_clusters);
+            uint current_estimated_module_size = atomicAdd(estimated_module_size, number_of_clusters);
+	    assert( current_estimated_module_size < VeloTracking::max_numhits_in_module);
           } else {
             // Find candidates that follow this condition:
             // For pixel o, all pixels x should *not* be populated
@@ -177,12 +179,13 @@ __global__ void estimate_input_size(
 
             // Add candidates 0-3
             if (candidates_uint8 & 0xF) {
-              const uint8_t k = VeloClustering::candidate_ks[candidates_uint8 & 0xF];
+              const uint8_t k = VeloClustering::candidate_ks[candidates_uint8 & 0xF]; // ?
               auto current_cluster_candidate = atomicAdd(event_candidate_num, 1);
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)
                 | k;
-              cluster_candidates[current_cluster_candidate] = candidate;
+	      assert( current_cluster_candidate < number_of_events * max_candidates_event );
+	      cluster_candidates[current_cluster_candidate] = candidate;
               ++found_cluster_candidates;
             }
 
@@ -193,13 +196,15 @@ __global__ void estimate_input_size(
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)
                 | k;
+	      assert( current_cluster_candidate < number_of_events * max_candidates_event );
               cluster_candidates[current_cluster_candidate] = candidate;
               ++found_cluster_candidates;
             }
 
             // Add the found cluster candidates
             if (found_cluster_candidates > 0) {
-              atomicAdd(estimated_module_size, found_cluster_candidates);
+              uint current_estimated_module_size = atomicAdd(estimated_module_size, found_cluster_candidates);
+	      assert( current_estimated_module_size < VeloTracking::max_numhits_in_module);
             }
           }
         }

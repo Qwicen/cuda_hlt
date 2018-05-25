@@ -74,18 +74,30 @@ void check_events( const std::vector<char> events,
     //printf("sensor = %u, sp_count = %u \n", sensor, sp_count);
   
     const auto raw_event = VeloRawEvent(raw_input);
-    //printf("at raw event %u: number_of_raw_banks = %u \n", i_event, raw_event.number_of_raw_banks);
     int n_sps_event = 0;
     for ( int i_raw_bank = 0; i_raw_bank < raw_event.number_of_raw_banks; i_raw_bank++ ) {
       const auto raw_bank = VeloRawBank(raw_event.payload + raw_event.raw_bank_offset[i_raw_bank]);
       n_sps_event += raw_bank.sp_count;
-      //printf("\t at raw bank %u, sensor = %u, sp_count = %u \n", i_raw_bank, raw_bank.sensor_index, raw_bank.sp_count);
+      if ( i_raw_bank != raw_bank.sensor_index )
+	printf("ERROR: at raw bank %u, but index = %u \n", i_raw_bank, raw_bank.sensor_index);
+      //printf("\t sensor = %u, sp_count = %u \n",  raw_bank.sensor_index, raw_bank.sp_count);
+      if ( raw_bank.sp_count > 0 ) {
+	uint32_t sp_word = raw_bank.sp_word[0];
+	uint8_t sp = sp_word & 0xFFU;
+	if (0 == sp) { continue; };
+	const uint32_t sp_addr = (sp_word & 0x007FFF00U) >> 8;
+        const uint32_t sp_row = sp_addr & 0x3FU;
+        const uint32_t sp_col = (sp_addr >> 6);
+        const uint32_t no_sp_neighbours = sp_word & 0x80000000U;
+	//printf("\t first sp col = %u, row = %u \n", sp_col, sp_row);
+      }
+      
     }
     n_sps_all_events += n_sps_event;
     //printf("# of sps in this event = %u\n", n_sps_event);
   }
 
-  //printf("total # of sps = %u \n", n_sps_all_events);
+  printf("total # of sps = %u \n", n_sps_all_events);
   
 }
 

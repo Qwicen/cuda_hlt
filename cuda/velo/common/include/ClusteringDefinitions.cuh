@@ -7,7 +7,7 @@
 
 #include "VeloDefinitions.cuh"
 
-static constexpr uint32_t max_candidates_event = 8000; // 2000;
+static constexpr uint32_t max_candidates_event = 2000; // 8000;
 
 namespace VeloClustering {
   extern __constant__ uint8_t sp_patterns [256];

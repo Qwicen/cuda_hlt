@@ -78,6 +78,7 @@ __global__ void masked_velo_clustering(
 
   // Local pointers to dev_velo_cluster_container
   const uint estimated_number_of_clusters = dev_module_cluster_start[N_MODULES * number_of_events];
+  //assert( estimated_number_of_clusters < max_candidates_event );
   float* cluster_xs = (float*) &dev_velo_cluster_container[0];
   float* cluster_ys = (float*) &dev_velo_cluster_container[estimated_number_of_clusters];
   float* cluster_zs = (float*) &dev_velo_cluster_container[2 * estimated_number_of_clusters];
@@ -137,6 +138,7 @@ __global__ void masked_velo_clustering(
             const float gy = ltg[3] * local_x + ltg[4] * local_y + ltg[10];
             const float gz = ltg[6] * local_x + ltg[7] * local_y + ltg[11];
 
+	    //assert( cluster_start + cluster_num < max_candidates_event && cluster_start + cluster_num < estimated_number_of_clusters );
             cluster_xs[cluster_start + cluster_num] = gx;
             cluster_ys[cluster_start + cluster_num] = gy;
             cluster_zs[cluster_start + cluster_num] = gz;
@@ -164,6 +166,8 @@ __global__ void masked_velo_clustering(
             const float gy = ltg[3] * local_x + ltg[4] * local_y + ltg[10];
             const float gz = ltg[6] * local_x + ltg[7] * local_y + ltg[11];
 
+	    //assert( cluster_start + cluster_num < max_candidates_event
+	    //	    && cluster_start + cluster_num < estimated_number_of_clusters );
             cluster_xs[cluster_start + cluster_num] = gx;
             cluster_ys[cluster_start + cluster_num] = gy;
             cluster_zs[cluster_start + cluster_num] = gz;
@@ -464,6 +468,8 @@ __global__ void masked_velo_clustering(
 
         const auto lhcb_id = get_lhcb_id(cid);
 
+	//assert( cluster_start + cluster_num < max_candidates_event
+	//	&& cluster_start + cluster_num < estimated_number_of_clusters );
         cluster_xs[cluster_start + cluster_num] = gx;
         cluster_ys[cluster_start + cluster_num] = gy;
         cluster_zs[cluster_start + cluster_num] = gz;
