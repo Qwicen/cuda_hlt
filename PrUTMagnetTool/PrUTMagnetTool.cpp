@@ -29,17 +29,12 @@
 
 
 // Standard Constructor
-PrUTMagnetTool::PrUTMagnetTool( const std::string& type,
-                  const std::string& name)
+PrUTMagnetTool::PrUTMagnetTool( vector<std::string> filenames)
 {
 
   MagneticFieldGridReader magreader;
 
-  vector<std::string> filenames;
-  filenames.push_back("/home/freiss/lxplus_work/field101.c1.down.cdf");
-  filenames.push_back("/home/freiss/lxplus_work/field101.c2.down.cdf");
-  filenames.push_back("/home/freiss/lxplus_work/field101.c3.down.cdf");
-  filenames.push_back("/home/freiss/lxplus_work/field101.c4.down.cdf");
+  
   m_magFieldSvc = new LHCb::MagneticFieldGrid();
   magreader.readFiles( filenames, *m_magFieldSvc);
 
@@ -180,7 +175,6 @@ void PrUTMagnetTool::prepareBdlTables() {
     float slopeY   = m_lutVar[0];
     float zOrigin  = m_lutVar[1];
     float zEndVelo = m_lutVar[2];
-    cout << "lut var " << m_lutVar[0] <<  " " << m_lutVar[1] << " " << m_lutVar[2] <<endl;
     f_bdl(slopeY, zOrigin, zEndVelo, m_zCenterUT);
     m_lutBdl->fillTable(m_BdlTrack);
     m_lutZHalfBdl->fillTable(m_zHalfBdlTrack);

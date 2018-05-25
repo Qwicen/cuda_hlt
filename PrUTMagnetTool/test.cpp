@@ -14,16 +14,16 @@ using namespace std;
 int main () {
 
   // open the file
-  string filename = "/home/freiss/lxplus_work/field101.c1.down.cdf";
-  
+  string filename = "fieldmaps/field101.c1.down.cdf";
+  //test magnet grid reader
   GridQuadrant quad; 
   MagneticFieldGridReader magreader;
   magreader.readQuadrant(filename, quad);
   vector<std::string> filenames;
-  filenames.push_back("/home/freiss/lxplus_work/field101.c1.down.cdf");
-  filenames.push_back("/home/freiss/lxplus_work/field101.c2.down.cdf");
-  filenames.push_back("/home/freiss/lxplus_work/field101.c3.down.cdf");
-  filenames.push_back("/home/freiss/lxplus_work/field101.c4.down.cdf");
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field101.c1.down.cdf");
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field101.c2.down.cdf");
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field101.c3.down.cdf");
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field101.c4.down.cdf");
   LHCb::MagneticFieldGrid grid;
   magreader.readFiles( filenames, grid);
   XYZPoint point (1., 1., 1.);
@@ -35,25 +35,30 @@ int main () {
   cout << grid.fieldVector(point).Y() << " " << bfeld.Y() << endl;
   cout << grid.fieldVector(point).Z() << " " << bfeld.Z() << endl;
 
-  PrUTMagnetTool testtool("bla", "bla");
+
+  //test standalone magnet tool
+  PrUTMagnetTool testtool(filenames);
+
+  //prepare Bdl LUT
   testtool.prepareBdlTables();
+  testtool.returnBdlTable();
+
+  // prepare deflection LUT
+  // still dummy implementation -> need extrapolators
   testtool.prepareDeflectionTables() ;
-  //cout "defleciton tables"
-   // still need to implement deflection tables -> need extrapolators
-  //testtool.prepareDeflectionTables();
   testtool.returnDxLayTable();
-  auto bla = testtool.returnBdlTable();
+
+
   testtool.zMidUT();
   testtool.averageDist2mom();
-  cout<< bla.size() << endl;
-  //PrTableForFunction * testtable  = testtool.m_lutBdl;
-  //testtable->returnTable();
-  /*testtool.m_magFieldSvc->fieldVector(point, bfeld);
-   cout << grid.fieldVector(point).X() << " a" << bfeld.X() << endl;
+
+
+  testtool.m_magFieldSvc->fieldVector(point, bfeld);
+   cout << grid.fieldVector(point).X() << " " << bfeld.X() << endl;
   cout << grid.fieldVector(point).Y() << " " << bfeld.Y() << endl;
   cout << grid.fieldVector(point).Z() << " " << bfeld.Z() << endl;
     
-*/
+
   
   return 0;
 }

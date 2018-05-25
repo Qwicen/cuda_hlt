@@ -53,8 +53,7 @@ public:
 
   
   /// Standard constructor
-  PrUTMagnetTool( const std::string& type,
-                  const std::string& name);
+  PrUTMagnetTool( vector<std::string> filenames);
   
   /// Standard Destructor
   virtual ~PrUTMagnetTool();
