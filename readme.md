@@ -11,7 +11,7 @@ In the current development stage, the input is created by running Brunel.
 On one hand, the raw bank / hit information is written to binary files; 
 on the other hand, the MC truth information is written to binary files to be 
 able to run the PrChecker. Use the branch 
-dovombru_extract_output_for_CUDA_HLT1Project (branched from Brunel v53r1)
+dovombru_output_for_CUDA_HLT1 (branched from Brunel v53r1)
 of the Rec repository to create the input by following these steps on lxplus:
 
 Compilation:
@@ -21,9 +21,13 @@ Compilation:
     lb-dev Brunel/v53r1
     cd BrunelDev_v53r1
     git lb-use Rec
-    git lb-checkout Rec/dovombru_extract_output_for_CUDA_HLT1Project Pr/PrPixel
-    git lb-checkout Rec/dovombru_extract_output_for_CUDA_HLT1Project Pr/PrEventDumper
+    git lb-checkout Rec/dovombru_output_for_CUDA_HLT1 Pr/PrPixel
+    git lb-checkout Rec/dovombru_output_for_CUDA_HLT1 Pr/PrEventDumper
     make
+    
+Copy the files `options.py`, `upgrade-bsphipi-magdown.py` and `upgrade-bsphipi-magdown.xml`
+from the Brunel_config directory of this repository into the BrunelDev_v53r1 
+directory on lxplus, then you can run.
     
 Running:
     
@@ -31,10 +35,9 @@ Running:
     mkdir velopix_MC
     ./run gaudirun.py options.py upgrade-bsphipi-magdown.py
     
-The options and data input files can be found in the Brunel_config directory
-of this repository (CUDA HLT). The output is stored in the velopix_raw and velopix_MC 
-directories and needs to be copied to these folders in the CUDA_HLT1 project
-to be used as input there.
+One file per event is created and stored in the velopix_raw and velopix_MC 
+directories, which need to be copied to folders in the CUDA_HLT1 project
+to be used as input there. 
     
 
 How to run it
