@@ -72,7 +72,7 @@ void check_events( const std::vector<char> events,
     uint32_t sensor =  *((uint32_t*)p);  p += sizeof(uint32_t);
     uint32_t sp_count =  *((uint32_t*)p); p += sizeof(uint32_t);
     //printf("sensor = %u, sp_count = %u \n", sensor, sp_count);
-  
+
     const auto raw_event = VeloRawEvent(raw_input);
     int n_sps_event = 0;
     for ( int i_raw_bank = 0; i_raw_bank < raw_event.number_of_raw_banks; i_raw_bank++ ) {
@@ -98,7 +98,8 @@ void check_events( const std::vector<char> events,
   }
 
   printf("total # of sps = %u \n", n_sps_all_events);
-  
+  float n_sps_average = (float)n_sps_all_events / n_events;
+  printf("average # of sps per event = %f \n", n_sps_average);
 }
 
 /**
