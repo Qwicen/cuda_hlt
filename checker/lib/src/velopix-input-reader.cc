@@ -288,7 +288,7 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
         }
 
 	/* dump first event */
-	if ( i == 1 ) {
+	if ( i == 0 ) {
 
 	  std::ofstream out_file_reco;
 	  out_file_reco.open("first_event_reco_tracks_from_input.txt");
