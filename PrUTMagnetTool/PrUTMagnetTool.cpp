@@ -299,18 +299,13 @@ void PrUTMagnetTool::f_bdl( float slopeY, float zOrigin,
 
     float bdl = 0.;
 
-    bool nottrue = true;
+
     while( z<zStop ) {
       
       aPoint.SetY( y );
       aPoint.SetZ( z );
 
       m_magFieldSvc->fieldVector( aPoint, bField );
-      if(nottrue) {
-       nottrue = false;
-       cout << "points " << aPoint.X() << " " << aPoint.Y() << " " << aPoint.Z() << " " << bField.X() << " " << bField.Y() << " " << bField.Z() << endl;
-
-      }
       bdl += dy*bField.z() - dz*bField.y();
       if(z>100. * 10.) {
         m_bdlTmp.push_back(bdl);
@@ -340,13 +335,31 @@ void PrUTMagnetTool::f_bdl( float slopeY, float zOrigin,
 //  return the DxTable
 //=========================================================================
 std::vector<float> PrUTMagnetTool::returnDxLayTable(){
+  std::vector<float> deflection_vals;
+  float deflection;
+  ifstream deflectionfile;
+  deflectionfile.open("../PrUTMagnetTool/deflection.txt");
+  if (deflectionfile.is_open()) {
+    while (!deflectionfile.eof()) {
+      deflectionfile >> deflection;
+      deflection_vals.push_back(deflection);
 
+    }
+  }
+
+  /*
   std::cout << "here's the deflection  LUT " << std::endl;
   for (auto i = m_lutDxLay->returnTable().begin(); i != m_lutDxLay->returnTable().end(); ++i)
     std::cout << *i << ' ' << std::endl;
   std::cout << "here ends deflection LUT " << std::endl;
 
   return m_lutDxLay->returnTable();
+  */
+  std::cout << "here's the deflection  LUT " << std::endl;
+  for (auto i = deflection_vals.begin(); i != deflection_vals.end(); ++i)
+    std::cout << *i << ' ' << std::endl;
+  std::cout << "here ends deflection LUT " << std::endl;
+ return deflection_vals;
 }
 
 //=========================================================================
@@ -393,7 +406,7 @@ void PrUTMagnetTool::prepareDeflectionTables() {
   m_lutVar.clear();
   m_lutVar.push_back(0.0);
   m_lutVar.push_back(0.0);
-
+  
   int iover = 0;
   while(!iover) {
     m_lutDxLay->getVariableVector(m_lutVar);
@@ -410,7 +423,7 @@ void PrUTMagnetTool::prepareDeflectionTables() {
     float dx_mid = 0.;
     float dx_lay = 0.;
     float ratio = 0.5;
-
+    
     m_lutDxLay->fillTable(ratio);
     iover = m_lutDxLay->incrementIndexVector();
   }
@@ -422,7 +435,7 @@ void PrUTMagnetTool::prepareDeflectionTables() {
   iover = 0;
   m_lutVar.clear();
   m_lutVar.push_back(0.0);
-
+  int counter = 0;
   while(!iover) {
     m_lutDxToMom->getVariableVector(m_lutVar);
     dxdzBeg = 0.0;
@@ -435,8 +448,9 @@ void PrUTMagnetTool::prepareDeflectionTables() {
     float dx2mom = 0.5;
     m_lutDxToMom->fillTable(dx2mom);
     iover = m_lutDxToMom->incrementIndexVector();
+    counter++;
   }
-  
+  cout<<"numbert of iterations: " << counter << endl;
   // determine distToMomentum parameter
   m_lutVar.clear();
   m_lutVar.push_back(0.05);
