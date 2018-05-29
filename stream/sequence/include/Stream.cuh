@@ -30,6 +30,10 @@ struct Stream {
   constexpr static uint average_number_of_hits_per_event = VeloTracking::ttf_modulo;
   constexpr static uint max_tracks_in_event = VeloTracking::max_tracks;
   constexpr static uint max_numhits_in_module = VeloTracking::max_numhits_in_module;
+  // DvB: why + 1? sizes should be understandable
+  // because this array first contains the track counters for all events
+  // then an array of size number_of_events of structures of the num_atomics counters
+  // this is not easily understandable
   constexpr static uint atomic_space = VeloTracking::num_atomics + 1;
   // Stream datatypes
   cudaStream_t stream;

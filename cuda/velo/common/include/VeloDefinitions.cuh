@@ -56,15 +56,7 @@ namespace VeloTracking {
   static constexpr uint num_atomics = 4;
 
 // Constants for requested storage on device
-//#define MAX_TRACKS 6000 // 1000
-//#define MAX_TRACK_SIZE 26
-//#define MAX_NUMHITS_IN_MODULE 1000 // 300
-
-// Maximum number of tracks to follow at a time
-//#define TTF_MODULO 6000 // 2000
-
-// Constants for requested storage on device
-  static constexpr uint max_tracks = 6000; // 1000;
+  static constexpr uint max_tracks = 2000; // 1000;
   static constexpr uint max_track_size = 26;
   static constexpr uint max_numhits_in_module = 300; // 1000;
 

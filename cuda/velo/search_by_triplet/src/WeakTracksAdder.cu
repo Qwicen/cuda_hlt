@@ -16,6 +16,7 @@ __device__ void weakTracksAdder(
     const auto weaktrack_no = blockDim.x * i + threadIdx.x;
     if (weaktrack_no < weaktracks_total) {
       // Load the tracks from the tracklets
+      assert( weaktrack_no < VeloTracking::ttf_modulo );
       const TrackHits t = tracklets[weak_tracks[weaktrack_no]];
       const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
 

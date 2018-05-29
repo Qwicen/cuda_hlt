@@ -147,13 +147,15 @@ __device__ void trackSeedingFirst(
     if (threadIdx.x == winner_thread) {
       // Add the track to the bag of tracks
       const auto trackP = atomicAdd(tracklets_insertPointer, 1);
-      // ASSERT(trackP < number_of_hits)
+      assert(trackP < VeloTracking::ttf_modulo );
       tracklets[trackP] = TrackHits {3, best_h0, h1_index, best_h2};
 
       // Add the tracks to the bag of tracks to_follow
       // Note: The first bit flag marks this is a tracklet (hitsNum == 3),
       // and hence it is stored in tracklets
       const auto ttfP = atomicAdd(ttf_insertPointer, 1) % VeloTracking::ttf_modulo;
+      // DvB: the dev_cluster_candidates container seems to be reused here, hence the size
+      assert( ttfP < max_candidates_event ); 
       tracks_to_follow[ttfP] = 0x80000000 | trackP;
     }
 

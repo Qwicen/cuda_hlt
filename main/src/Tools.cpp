@@ -360,35 +360,52 @@ void printInfo(const EventInfo& info, int numberOfModules, int numberOfHits) {
 void check_roughly( const trackChecker::Tracks& tracks, const std::vector<uint32_t> hit_IDs, const std::vector< VelopixEvent::MCP > mcps ) {
 
   int matched = 0;
-  for ( auto track : tracks ) {
-    std::vector< uint32_t > mcp_ids;
+  // for ( auto track : tracks ) {
+  //   std::vector< uint32_t > mcp_ids;
     
-    for ( LHCbID id : track.ids() ) {
-      uint32_t id_int = uint32_t( id );
+  //   for ( LHCbID id : track.ids() ) {
+  //     uint32_t id_int = uint32_t( id );
       
-      //for ( uint32_t id_int : hit_IDs ) {
+  //     //for ( uint32_t id_int : hit_IDs ) {
 	
-      // find associated IDs from mcps
-      for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
-	VelopixEvent::MCP part = mcps[i_mcp];
-	auto it = find( part.hits.begin(), part.hits.end(), id_int );
-	if ( it != part.hits.end() ) {
-	  mcp_ids.push_back( i_mcp );
-	  //matched++;
+  //     // find associated IDs from mcps
+  //     for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
+  // 	VelopixEvent::MCP part = mcps[i_mcp];
+  // 	auto it = find( part.hits.begin(), part.hits.end(), id_int );
+  // 	if ( it != part.hits.end() ) {
+  // 	  mcp_ids.push_back( i_mcp );
+  // 	  //matched++;
+  // 	}
+  //     }
+  //   }
+    
+  //   printf("# of hits on track = %u, # of MCP ids = %u \n", track.nIDs(), uint32_t( mcp_ids.size() ) );
+    
+  //   for ( int i_id = 0; i_id < mcp_ids.size(); ++i_id ) {
+  //     uint32_t mcp_id = mcp_ids[i_id];
+  //     printf("\t mcp id = %u \n", mcp_id);
+  //     // how many same mcp IDs are there?
+  //     int n_same = count( mcp_ids.begin(), mcp_ids.end(), mcp_id );
+  //     if ( float(n_same) / track.nIDs() >= 0.7 ) {
+  // 	matched++;
+  // 	break;
+  //     }
+  //   }
+  // }
+
+  for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
+    VelopixEvent::MCP mcp = mcps[i_mcp];
+    //printf("checking mcp %u \n", i_mcp);
+    for ( uint32_t id : mcp.hits ) {
+      // search all tracks for this LHCbID
+      for ( int i_tr = 0; i_tr < tracks.size(); ++i_tr ) {
+	auto track = tracks[i_tr];
+	//auto it = find( track.ids().begin(), track.ids().end(), id );
+	//find_if( myVector.begin(), myVector.end(), [&toFind](const MyStruct& x) { return x.m_id == toFind.m_id;});
+	auto it = find_if( track.ids().begin(), track.ids().end(), [&id](const LHCbID _id) { return uint32_t(_id) == id; } );
+	if ( it != track.ids().end() ) {
+	  printf("\t \t id %x found in track %u \n", id, i_tr);
 	}
-      }
-    }
-    
-    //printf("# of hits on track = %u, # of MCP ids = %u \n", track.nIDs(), uint32_t( mcp_ids.size() ) );
-    
-    for ( int i_id = 0; i_id < mcp_ids.size(); ++i_id ) {
-      uint32_t mcp_id = mcp_ids[i_id];
-      //printf("\t mcp id = %u p = %f \n", mcp_id);
-      // how many same mcp IDs are there?
-      int n_same = count( mcp_ids.begin(), mcp_ids.end(), mcp_id );
-      if ( float(n_same) / track.nIDs() >= 0.7 ) {
-	matched++;
-	break;
       }
     }
   }
