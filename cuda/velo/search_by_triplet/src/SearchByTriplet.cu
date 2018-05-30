@@ -25,9 +25,9 @@ __global__ void searchByTriplet(
   const uint tracks_offset = event_number * VeloTracking::max_tracks;
 
   // Pointers to data within the event
-  const uint number_of_hits = dev_module_cluster_start[N_MODULES * number_of_events];
-  const uint* module_hitStarts = dev_module_cluster_start + event_number * N_MODULES;
-  const uint* module_hitNums = dev_module_cluster_num + event_number * N_MODULES;
+  const uint number_of_hits = dev_module_cluster_start[VeloTracking::n_modules * number_of_events];
+  const uint* module_hitStarts = dev_module_cluster_start + event_number * VeloTracking::n_modules;
+  const uint* module_hitNums = dev_module_cluster_num + event_number * VeloTracking::n_modules;
   const uint hit_offset = module_hitStarts[0];
   
   // Order has changed since SortByPhi
@@ -64,7 +64,7 @@ __global__ void searchByTriplet(
   __shared__ int module_data [9];
 
   // Initialize hit_used
-  const auto current_event_number_of_hits = module_hitStarts[N_MODULES] - hit_offset;
+  const auto current_event_number_of_hits = module_hitStarts[VeloTracking::n_modules] - hit_offset;
   for (int i=0; i<(current_event_number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
     const auto index = i*blockDim.x + threadIdx.x;
     if (index < current_event_number_of_hits) {

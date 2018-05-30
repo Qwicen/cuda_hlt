@@ -193,7 +193,7 @@ void statistics(
   //   }
   //   max_number_of_hits = std::max(max_number_of_hits, info.numberOfHits);
   // }
-  // average_number_of_hits_in_module /= event_offsets.size() * N_MODULES;
+  // average_number_of_hits_in_module /= event_offsets.size() * VeloTracking::n_modules;
 
   // std::cout << "Statistics on input events:" << std::endl
   //   << " Max number of hits in event: " << max_number_of_hits << std::endl
@@ -333,7 +333,7 @@ void printOutModuleHits(const EventInfo& info, int moduleNumber, int* prevs, int
 }
 
 void printInfo(const EventInfo& info, int numberOfModules, int numberOfHits) {
-  numberOfModules = numberOfModules>N_MODULES ? N_MODULES : numberOfModules;
+  numberOfModules = numberOfModules>VeloTracking::n_modules ? VeloTracking::n_modules : numberOfModules;
 
   std::cout << "Read info:" << std::endl
     << " no modules: " << info.numberOfModules << std::endl
@@ -366,8 +366,6 @@ void check_roughly( const trackChecker::Tracks& tracks, const std::vector<uint32
     for ( LHCbID id : track.ids() ) {
       uint32_t id_int = uint32_t( id );
       
-      //for ( uint32_t id_int : hit_IDs ) {
-	
       // find associated IDs from mcps
       for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
   	VelopixEvent::MCP part = mcps[i_mcp];
@@ -393,23 +391,6 @@ void check_roughly( const trackChecker::Tracks& tracks, const std::vector<uint32
     }
   }
 
-  // for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
-  //   VelopixEvent::MCP mcp = mcps[i_mcp];
-  //   printf("checking mcp %u \n", i_mcp);
-  //   for ( uint32_t id : mcp.hits ) {
-  //     // search all tracks for this LHCbID
-  //     for ( int i_tr = 0; i_tr < tracks.size(); ++i_tr ) {
-  // 	auto track = tracks[i_tr];
-  // 	//auto it = find( track.ids().begin(), track.ids().end(), id );
-  // 	//find_if( myVector.begin(), myVector.end(), [&toFind](const MyStruct& x) { return x.m_id == toFind.m_id;});
-  // 	auto it = find_if( track.ids().begin(), track.ids().end(), [&id](const LHCbID _id) { return uint32_t(_id) == id; } );
-  // 	if ( it != track.ids().end() ) {
-  // 	  printf("\t \t id %x found in track %u \n", id, i_tr);
-  // 	}
-  //     }
-  //   }
-  // }
-  
   int long_tracks = 0;
   for ( VelopixEvent::MCP part : mcps ) {
     if ( part.islong )
@@ -417,15 +398,7 @@ void check_roughly( const trackChecker::Tracks& tracks, const std::vector<uint32
   }
   
   printf("efficiency = %f \n", float(matched) / long_tracks );
-  
-      // int n_mcp_ids = 0;
-      // for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
-      // 	VelopixEvent::MCP part = mcps[i_mcp];
-      // 	n_mcp_ids += part.numHits;
-      // }
-      
-      // printf("single id efficiency = %f \n", float(matched) / n_mcp_ids);
-      
+        
 }
 
 void checkTracks( const std::vector< trackChecker::Tracks > all_tracks, const std::string folder_name_MC ) {

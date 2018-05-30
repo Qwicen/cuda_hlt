@@ -7,9 +7,10 @@
 
 #include "VeloDefinitions.cuh"
 
-static constexpr uint32_t max_candidates_event = 2000; // 8000;
-
 namespace VeloClustering {
+
+  static constexpr uint32_t max_candidates_event = 2000; 
+
   extern __constant__ uint8_t sp_patterns [256];
   extern __constant__ uint8_t candidate_ks [9];
   extern __constant__ float sp_fx [512];
@@ -60,7 +61,7 @@ namespace LHCb {
 }
 
 namespace VP {
-  static constexpr uint NModules = N_MODULES;
+  static constexpr uint NModules = VeloTracking::n_modules;
   static constexpr uint NSensorsPerModule = 4;
   static constexpr uint NSensors = NModules * NSensorsPerModule;
   static constexpr uint NChipsPerSensor = 3;

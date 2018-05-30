@@ -17,8 +17,8 @@ void MaskedVeloClustering::print_output(
   const uint number_of_events,
   const int print_max_per_module
 ) {
-  std::vector<uint> module_cluster_start (number_of_events * N_MODULES + 1);
-  std::vector<uint> module_cluster_num (number_of_events * N_MODULES);
+  std::vector<uint> module_cluster_start (number_of_events * VeloTracking::n_modules + 1);
+  std::vector<uint> module_cluster_num (number_of_events * VeloTracking::n_modules);
   cudaCheck(cudaMemcpyAsync(module_cluster_start.data(), dev_module_cluster_start, module_cluster_start.size() * sizeof(uint), cudaMemcpyDeviceToHost, *stream));
   cudaCheck(cudaMemcpyAsync(module_cluster_num.data(), dev_module_cluster_num, module_cluster_num.size() * sizeof(uint), cudaMemcpyDeviceToHost, *stream));
 
@@ -34,8 +34,8 @@ void MaskedVeloClustering::print_output(
   // Print number of found clusters per event
   for (uint i=0; i<number_of_events; ++i) {
     uint found_clusters = 0;
-    for (uint module=0; module<N_MODULES; ++module) {
-      found_clusters += module_cluster_num[N_MODULES*i + module];
+    for (uint module=0; module<VeloTracking::n_modules; ++module) {
+      found_clusters += module_cluster_num[VeloTracking::n_modules*i + module];
     }
     std::cout << "Event " << i << ": " << found_clusters << " clusters" << std::endl;
   }
@@ -43,10 +43,10 @@ void MaskedVeloClustering::print_output(
   // // Print all clusters
   // for (uint i=0; i<number_of_events; ++i) {
   //   std::cout << "Event " << i << std::endl;
-  //   for (uint module=0; module<N_MODULES; ++module) {
+  //   for (uint module=0; module<VeloTracking::n_modules; ++module) {
   //     std::cout << " Module " << module << ":";
-  //     const auto mod_start = module_cluster_start[N_MODULES*i + module];
-  //     for (uint cluster=0; cluster<module_cluster_num[N_MODULES*i + module]; ++cluster) {
+  //     const auto mod_start = module_cluster_start[VeloTracking::n_modules*i + module];
+  //     for (uint cluster=0; cluster<module_cluster_num[VeloTracking::n_modules*i + module]; ++cluster) {
   //       if (print_max_per_module != -1 && cluster >= print_max_per_module) break;
 
   //       const auto x = cluster_xs[mod_start + cluster];
@@ -64,9 +64,9 @@ void MaskedVeloClustering::print_output(
   // // Print checksum for every event
   // for (uint i=0; i<number_of_events; ++i) {
   //   float sum = 0;
-  //   for (uint module=0; module<N_MODULES; ++module) {
-  //     const auto mod_start = module_cluster_start[N_MODULES*i + module];
-  //     for (uint cluster=0; cluster<module_cluster_num[N_MODULES*i + module]; ++cluster) {
+  //   for (uint module=0; module<VeloTracking::n_modules; ++module) {
+  //     const auto mod_start = module_cluster_start[VeloTracking::n_modules*i + module];
+  //     for (uint cluster=0; cluster<module_cluster_num[VeloTracking::n_modules*i + module]; ++cluster) {
   //       if (print_max_per_module != -1 && cluster >= print_max_per_module) break;
   //       const auto x = cluster_xs[mod_start + cluster];
   //       const auto y = cluster_ys[mod_start + cluster];
@@ -91,8 +91,8 @@ void MaskedVeloClustering::check(
   std::copy_n(host_events_pinned, host_events_pinned_size, events.data());
   std::copy_n(host_event_offsets_pinned, host_event_offsets_pinned_size, event_offsets.data());
 
-  std::vector<uint> module_cluster_start (number_of_events * N_MODULES + 1);
-  std::vector<uint> module_cluster_num (number_of_events * N_MODULES);
+  std::vector<uint> module_cluster_start (number_of_events * VeloTracking::n_modules + 1);
+  std::vector<uint> module_cluster_num (number_of_events * VeloTracking::n_modules);
   cudaCheck(cudaMemcpyAsync(module_cluster_start.data(), dev_module_cluster_start, module_cluster_start.size() * sizeof(uint), cudaMemcpyDeviceToHost, *stream));
   cudaCheck(cudaMemcpyAsync(module_cluster_num.data(), dev_module_cluster_num, module_cluster_num.size() * sizeof(uint), cudaMemcpyDeviceToHost, *stream));
 
@@ -104,9 +104,9 @@ void MaskedVeloClustering::check(
   std::vector<std::vector<uint32_t>> found_lhcb_ids;
   for (uint i=0; i<number_of_events; ++i) {
     std::vector<uint32_t> event_found_lhcb_ids;
-    for (uint module=0; module<N_MODULES; ++module) {
-      const uint mod_num = module_cluster_num[N_MODULES*i + module];
-      const uint mod_start = module_cluster_start[N_MODULES*i + module];
+    for (uint module=0; module<VeloTracking::n_modules; ++module) {
+      const uint mod_num = module_cluster_num[VeloTracking::n_modules*i + module];
+      const uint mod_start = module_cluster_start[VeloTracking::n_modules*i + module];
       for (uint cluster=0; cluster<mod_num; ++cluster) {
         const auto id = cluster_ids[mod_start + cluster];
         event_found_lhcb_ids.emplace_back(id);

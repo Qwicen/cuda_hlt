@@ -28,7 +28,7 @@ cudaError_t Stream::initialize(
   folder_name_MC = param_folder_name_MC;
   
   // Blocks and threads for each algorithm
-  const uint prefixSumBlocks = (N_MODULES * number_of_events + 511) / 512;
+  const uint prefixSumBlocks = (VeloTracking::n_modules * number_of_events + 511) / 512;
 
   estimateInputSize.set(     dim3(number_of_events),  dim3(32, 26), stream);
   prefixSumReduce.set(       dim3(prefixSumBlocks),   dim3(256),    stream);
@@ -79,10 +79,7 @@ cudaError_t Stream::initialize(
   // - temporary
   // 
   // The temporary is required to do the sortinge in an efficient manner
-  // DvB: where do the 2000 and the 6 come from?
-  // DvB: the six are the six variables :-)
-  // DvB: 2000 no more hard-coded:-> max_candidates_event
-  velo_cluster_container_size = number_of_events * max_candidates_event * 6;
+  velo_cluster_container_size = number_of_events * VeloClustering::max_candidates_event * 6;
 
   // Data preparation
   // Populate velo geometry
@@ -94,11 +91,11 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_raw_input, param_starting_events_size));
   cudaCheck(cudaMalloc((void**)&dev_raw_input_offsets, event_offsets.size() * sizeof(uint)));
   // DvB: why +2?
-  cudaCheck(cudaMalloc((void**)&dev_estimated_input_size, (number_of_events * N_MODULES + 2) * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_estimated_input_size, (number_of_events * VeloTracking::n_modules + 2) * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_cluster_offset, number_of_events * sizeof(uint)));
-  cudaCheck(cudaMalloc((void**)&dev_module_cluster_num, number_of_events * N_MODULES * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_module_cluster_num, number_of_events * VeloTracking::n_modules * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_module_candidate_num, number_of_events * sizeof(uint)));
-  cudaCheck(cudaMalloc((void**)&dev_cluster_candidates, number_of_events * max_candidates_event * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_cluster_candidates, number_of_events * VeloClustering::max_candidates_event * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_velo_cluster_container, velo_cluster_container_size * sizeof(uint)));
 
   // phi and sort
@@ -143,11 +140,11 @@ cudaError_t Stream::initialize(
   prefixSumReduce.setParameters(
     dev_estimated_input_size,
     dev_cluster_offset,
-    N_MODULES * number_of_events
+    VeloTracking::n_modules * number_of_events
   );
 
   prefixSumSingleBlock.setParameters(
-    dev_estimated_input_size + N_MODULES * number_of_events,
+    dev_estimated_input_size + VeloTracking::n_modules * number_of_events,
     dev_cluster_offset,
     prefixSumBlocks
   );
@@ -155,7 +152,7 @@ cudaError_t Stream::initialize(
   prefixSumScan.setParameters(
     dev_estimated_input_size,
     dev_cluster_offset,
-    N_MODULES * number_of_events
+    VeloTracking::n_modules * number_of_events
   );
 
   maskedVeloClustering.setParameters(

@@ -14,13 +14,15 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define N_MODULES 52
 namespace VeloTracking {
   // Detector constants
+  static constexpr uint n_modules = 52;
+  static constexpr uint n_sensors = 208;
+  
   // Note: constexpr for this variable (arrays) is still not supported, so we need
   //       to initialize it in runtime
-  extern __constant__ float velo_module_zs [N_MODULES];
-
+  extern __constant__ float velo_module_zs [n_modules];
+  
   // How many concurrent h1s to process max
   // It should be a divisor of NUMTHREADS_X
   static constexpr uint max_concurrent_h1 = 16;

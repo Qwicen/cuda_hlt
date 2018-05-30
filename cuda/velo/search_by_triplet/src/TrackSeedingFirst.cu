@@ -155,7 +155,7 @@ __device__ void trackSeedingFirst(
       // and hence it is stored in tracklets
       const auto ttfP = atomicAdd(ttf_insertPointer, 1) % VeloTracking::ttf_modulo;
       // DvB: the dev_cluster_candidates container seems to be reused here, hence the size
-      assert( ttfP < max_candidates_event ); 
+      assert( ttfP < VeloClustering::max_candidates_event ); 
       tracks_to_follow[ttfP] = 0x80000000 | trackP;
     }
 

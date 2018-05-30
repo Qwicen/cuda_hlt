@@ -62,7 +62,7 @@ cudaError_t Stream::operator()(
 
     // // Fetch the number of hits we require
     // uint number_of_hits;
-    // cudaCheck(cudaMemcpyAsync(&number_of_hits, dev_estimated_input_size + number_of_events * N_MODULES, sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    // cudaCheck(cudaMemcpyAsync(&number_of_hits, dev_estimated_input_size + number_of_events * VeloTracking::n_modules, sizeof(uint), cudaMemcpyDeviceToHost, stream));
 
     // if (number_of_hits * 6 * sizeof(uint32_t) > velo_cluster_container_size) {
     //   warning_cout << "Number of hits: " << number_of_hits << std::endl

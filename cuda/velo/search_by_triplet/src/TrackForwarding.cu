@@ -148,7 +148,7 @@ __device__ void trackForwarding(
 
         // Add the tracks to the bag of tracks to_follow
         const auto ttfP = atomicAdd(ttf_insertPointer, 1) % VeloTracking::ttf_modulo;
-	assert( ttfP < max_candidates_event );
+	assert( ttfP < VeloClustering::max_candidates_event );
         tracks_to_follow[ttfP] = trackno;
       }
       // A track just skipped a module
@@ -159,7 +159,7 @@ __device__ void trackForwarding(
 
         // Add the tracks to the bag of tracks to_follow
         const auto ttfP = atomicAdd(ttf_insertPointer, 1) % VeloTracking::ttf_modulo;
-	assert( ttfP < max_candidates_event );
+	assert( ttfP < VeloClustering::max_candidates_event );
         tracks_to_follow[ttfP] = trackno;
       }
       // If there are only three hits in this track,

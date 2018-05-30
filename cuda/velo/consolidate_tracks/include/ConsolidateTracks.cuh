@@ -86,8 +86,8 @@ __global__ void consolidate_tracks(
 
   
   // Pointers to data within event
-  const uint number_of_hits = dev_module_cluster_start[N_MODULES * number_of_events];
-  const uint* module_hitStarts = dev_module_cluster_start + event_number * N_MODULES;
+  const uint number_of_hits = dev_module_cluster_start[VeloTracking::n_modules * number_of_events];
+  const uint* module_hitStarts = dev_module_cluster_start + event_number * VeloTracking::n_modules;
   const uint hit_offset = module_hitStarts[0];
   
   // Order has changed since SortByPhi

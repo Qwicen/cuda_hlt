@@ -42,7 +42,7 @@ __device__ void down_sweep_512(
 __global__ void prefix_sum_reduce(
   uint* dev_estimated_input_size,
   uint* dev_cluster_offset,
-  const uint array_size // N_MODULES * number_of_events
+  const uint array_size // VeloTracking::n_modules * number_of_events
 ) {
   
   // Prefix sum of elements in dev_estimated_input_size
@@ -72,7 +72,7 @@ __global__ void prefix_sum_reduce(
     down_sweep_512((uint*) &data_block[0]);
 
     // Store back elements
-    //assert( first_elem + threadIdx.x + blockDim.x < number_of_events * N_MODULES + 2);
+    //assert( first_elem + threadIdx.x + blockDim.x < number_of_events * VeloTracking::n_modules + 2);
     dev_estimated_input_size[first_elem + threadIdx.x] = data_block[threadIdx.x];
     dev_estimated_input_size[first_elem + threadIdx.x + blockDim.x] = data_block[threadIdx.x + blockDim.x];
 

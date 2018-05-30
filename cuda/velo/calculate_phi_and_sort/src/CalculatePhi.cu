@@ -38,7 +38,7 @@ __device__ void calculatePhiSide(
   const unsigned int starting_module,
   T calculate_hit_phi
 ) {
-  for (unsigned int module=starting_module; module<N_MODULES; module += 2) {
+  for (unsigned int module=starting_module; module<VeloTracking::n_modules; module += 2) {
     const auto hit_start = module_hitStarts[module];
     const auto hit_num = module_hitNums[module];
 

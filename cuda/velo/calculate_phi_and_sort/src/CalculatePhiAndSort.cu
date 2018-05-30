@@ -15,9 +15,9 @@ __global__ void calculatePhiAndSort(
   const uint number_of_events = gridDim.x;
 
   // Pointers to data within the event
-  const uint number_of_hits = dev_module_cluster_start[N_MODULES * number_of_events];
-  const uint* module_hitStarts = dev_module_cluster_start + event_number * N_MODULES;
-  const uint* module_hitNums = dev_module_cluster_num + event_number * N_MODULES;
+  const uint number_of_hits = dev_module_cluster_start[VeloTracking::n_modules * number_of_events];
+  const uint* module_hitStarts = dev_module_cluster_start + event_number * VeloTracking::n_modules;
+  const uint* module_hitNums = dev_module_cluster_num + event_number * VeloTracking::n_modules;
   
   float* hit_Xs = (float*) (dev_velo_cluster_container);
   float* hit_Ys = (float*) (dev_velo_cluster_container + number_of_hits);
@@ -31,7 +31,7 @@ __global__ void calculatePhiAndSort(
   // TODO: Check speed of various options
   // Initialize hit_permutations to zero
   const uint event_hit_start = module_hitStarts[0];
-  const uint event_number_of_hits = module_hitStarts[N_MODULES] - event_hit_start;
+  const uint event_number_of_hits = module_hitStarts[VeloTracking::n_modules] - event_hit_start;
   for (unsigned int i=0; i<(event_number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
     const auto index = i*blockDim.x + threadIdx.x;
     if (index < event_number_of_hits) {
