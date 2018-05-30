@@ -170,6 +170,7 @@ cudaError_t Stream::operator()(
       cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       cudaEventRecord(cuda_generic_event, stream);
       cudaEventSynchronize(cuda_generic_event);
+      
       int total_number_of_tracks = host_accumulated_tracks[ number_of_events - 1 ] + host_number_of_tracks_pinned[ number_of_events - 1];
       //cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, total_number_of_tracks * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
@@ -186,31 +187,10 @@ cudaError_t Stream::operator()(
 
     /* MC check */
 #ifdef MC_CHECK
-    if ( repetitions == 0 ) { // only print out tracks once
-      /* Tracks to be checked, save in format for checker */
-      std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
-      for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
-      	//Track<do_mc_check>* tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
-	Track<do_mc_check>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
-	trackChecker::Tracks tracks; // all tracks within one event
-
-      	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
-	  trackChecker::Track t;
-	  const Track <do_mc_check> track = tracks_event[i_track];
-
-	  for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
-	    Hit <true> hit = track.hits[ i_hit ];
-	    LHCbID lhcb_id( hit.LHCbID );
-	    t.addId( lhcb_id );
-	  } // hits
-	  tracks.push_back( t );
-	} // tracks
-	
-	all_tracks.push_back( tracks );
-      } // events
-
-      checkTracks( all_tracks, folder_name_MC );
-    }
+    if ( repetitions == 0 )  // only check efficiencies once
+      checkTracks( host_tracks_pinned, host_accumulated_tracks,
+		   host_number_of_tracks_pinned, number_of_events,
+		   folder_name_MC);
 #endif    
   }
   return cudaSuccess;

@@ -401,7 +401,7 @@ void check_roughly( const trackChecker::Tracks& tracks, const std::vector<uint32
         
 }
 
-void checkTracks( const std::vector< trackChecker::Tracks > all_tracks, const std::string folder_name_MC ) {
+void call_PrChecker( const std::vector< trackChecker::Tracks > all_tracks, const std::string folder_name_MC ) {
 
   /* MC information */
   int n_events = all_tracks.size();
@@ -427,3 +427,32 @@ void checkTracks( const std::vector< trackChecker::Tracks > all_tracks, const st
   }
   
 }
+
+void checkTracks( Track <do_mc_check> * host_tracks_pinned, int * host_accumulated_tracks, int * host_number_of_tracks_pinned, const int &number_of_events, const std::string folder_name_MC ) {
+  
+  /* Tracks to be checked, save in format for checker */
+  std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
+  for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
+    //Track<do_mc_check>* tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
+    Track<do_mc_check>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
+    trackChecker::Tracks tracks; // all tracks within one event
+    
+    for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+      trackChecker::Track t;
+      const Track <do_mc_check> track = tracks_event[i_track];
+      
+      for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
+	Hit <true> hit = track.hits[ i_hit ];
+	LHCbID lhcb_id( hit.LHCbID );
+	t.addId( lhcb_id );
+      } // hits
+      tracks.push_back( t );
+    } // tracks
+    
+    all_tracks.push_back( tracks );
+  } // events
+  
+  call_PrChecker( all_tracks, folder_name_MC );
+} 
+
+
