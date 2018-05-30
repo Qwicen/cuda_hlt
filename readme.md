@@ -25,7 +25,7 @@ Compilation:
     git lb-checkout Rec/dovombru_output_for_CUDA_HLT1 Pr/PrEventDumper
     make
     
-Copy the files `options.py`, `upgrade-bsphipi-magdown.py` and `upgrade-bsphipi-magdown.xml`
+Copy the files `options.py`, `upgrade-minbias-magdown.py` and `upgrade-minbias-magdown.xml`
 from the Brunel_config directory of this repository into the BrunelDev_v53r1 
 directory on lxplus, then you can run.
     
@@ -33,12 +33,15 @@ Running:
     
     mkdir velopix_raw
     mkdir velopix_MC
-    ./run gaudirun.py options.py upgrade-bsphipi-magdown.py
+    ./run gaudirun.py options.py upgrade-minbias-magdown.py
     
 One file per event is created and stored in the velopix_raw and velopix_MC 
 directories, which need to be copied to folders in the CUDA_HLT1 project
 to be used as input there. 
     
+Caution with the bsphipi data also provided in the Brunel_config directory. The
+occupancies are about twice as high. Currently, the velo clustering algorithm can 
+not handle these high occupancies.
 
 How to run it
 -------------
@@ -51,6 +54,11 @@ The build process doesn't differ from standard cmake projects:
     cmake ..
     make
 
+There are some cmake options to configure the build process:
+
+   * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DBUILD_TYPE=Debug ..`
+   * The option to run the PrChecker can be turned on and off with `DMC_CHECK=ON/OFF`. 
+   
 Some binary input files are included with the project for testing. [To do: include
 MC truth and raw binaries once they are in the final format.]
 A run of the program with no arguments will let you know the basic options:
