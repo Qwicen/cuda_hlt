@@ -71,12 +71,16 @@ __global__ void consolidate_tracks(
   const TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
 
   // Obtain accumulated tracks
+  // DvB: this seems to be calculated on every thread of a block,
+  // could probably be parllelized
   for (unsigned int i=0; i<event_number; ++i) {
     const unsigned int number_of_tracks = dev_atomics_storage[i];
     accumulated_tracks += number_of_tracks;
   }
 
   // Store accumulated tracks after the number of tracks
+  // DvB: reusing the previous space for the weak tracks counter,
+  // but storing in SoA rather than AoS now
   int* accumulated_tracks_base_pointer = dev_atomics_storage + number_of_events;
   accumulated_tracks_base_pointer[event_number] = accumulated_tracks;
 
