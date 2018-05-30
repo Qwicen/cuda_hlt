@@ -57,7 +57,7 @@ The build process doesn't differ from standard cmake projects:
 There are some cmake options to configure the build process:
 
    * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DBUILD_TYPE=Debug ..`
-   * The option to run the PrChecker can be turned on and off with `DMC_CHECK=ON/OFF`. 
+   * The option to run the PrChecker can be turned on and off with `-DMC_CHECK=ON/OFF`. 
    
 Some binary input files are included with the project for testing. [To do: include
 MC truth and raw binaries once they are in the final format.]
@@ -71,7 +71,7 @@ A run of the program with no arguments will let you know the basic options:
      [-r {number of repetitions per thread / stream}=10]
      [-a {transmit host to device}=1]
      [-b {transmit device to host}=1]
-     [-c {consolidate tracks}=0]
+     [-c {run checkers}=0]
      [-k {simplified kalman filter}=0]
      [-v {verbosity}=3 (info)]
      [-p (print rates)]
@@ -80,13 +80,16 @@ A run of the program with no arguments will let you know the basic options:
 Here are some example run options:
 
     # Run all input files once
-    ./cu_hlt -f ../input
+    ./cu_hlt -f ../minbias_raw
 
     # Run a total of 1000 events, round robin over the existing ones
-    ./cu_hlt -f ../input -n 1000
+    ./cu_hlt -f ../minbias_raw -n 1000
 
     # Run four streams, each with 4000 events, 20 repetitions
-    ./cu_hlt -f ../input -t 4 -n 4000 -r 20
+    ./cu_hlt -f ../minbias_raw -t 4 -n 4000 -r 20
 
     # Run twelve streams, each with 3500 events, 40 repetitions
-    ./cu_hlt -f ../input -n 3500 -t 12 -r 40
+    ./cu_hlt -f ../minbias_raw -n 3500 -t 12 -r 40
+
+    # Run clustering efficiency checker and PrChecker, no repetitions or multiple threads needed
+    ./cu_hlt -f ../minbias_raw -g ../minbias_MC -n 10 -t 1 -r 1 -c 1
