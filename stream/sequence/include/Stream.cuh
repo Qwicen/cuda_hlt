@@ -63,6 +63,7 @@ struct Stream {
   std::vector<char> geometry;
   // Data back transmission
   int* host_number_of_tracks_pinned;
+  int* host_accumulated_tracks;
   Track <do_mc_check> * host_tracks_pinned;
   Stream() = default;
 

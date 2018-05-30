@@ -167,27 +167,15 @@ cudaError_t Stream::operator()(
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      
-      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+      cudaEventRecord(cuda_generic_event, stream);
+      cudaEventSynchronize(cuda_generic_event);
+      int total_number_of_tracks = host_accumulated_tracks[ number_of_events - 1 ] + host_number_of_tracks_pinned[ number_of_events - 1];
+      //cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, total_number_of_tracks * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
       
       cudaEventRecord(cuda_generic_event, stream);
       cudaEventSynchronize(cuda_generic_event);
-
-      // std::cout << "Number of tracks found per event:" << std::endl;
-      // for (int i=0; i<number_of_events; ++i) {
-      //   std::cout << i << ": " << host_number_of_tracks_pinned[i] << std::endl;
-      // }
-      
-      // Calculating the sum on CPU (the code below) slows down the CUDA stream
-      // If we do this on CPU, it should happen concurrently to some CUDA stream
-      // if (do_consolidate) {
-      //   // Calculate number of tracks (prefix sum) and fetch consolidated tracks
-      //   int total_number_of_tracks = 0;
-      //   for (int i=0; i<number_of_events; ++i) {
-      //     total_number_of_tracks += host_number_of_tracks_pinned[i];
-      //   }
-      //   cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, total_number_of_tracks * sizeof(TrackHits), cudaMemcpyDeviceToHost, stream));
-      // }
     }
 
     if (print_individual_rates) {
@@ -199,36 +187,19 @@ cudaError_t Stream::operator()(
     /* MC check */
 #ifdef MC_CHECK
     if ( repetitions == 0 ) { // only print out tracks once
-      /* Write tracks to file: track #, length, x, y, z, LHCb ID of all hits */
-      std::ofstream out_file;
-      out_file.open("tracks_out.txt");
-      for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
-      	Track<do_mc_check>* tracks_event;
-      	tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
-      	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
-      	  //printTrack<do_mc_check>( tracks_event, i_track, out_file );
-      	}
-      }
-      out_file.close();
-     
       /* Tracks to be checked, save in format for checker */
       std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
-      std::ofstream out_file_ids;
-      out_file_ids.open("first_event_reco_tracks.txt");
       for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
-      	Track<do_mc_check>* tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
+      	//Track<do_mc_check>* tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
+	Track<do_mc_check>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
 	trackChecker::Tracks tracks; // all tracks within one event
-	//printf("Found %u tracks in event %u \n", host_number_of_tracks_pinned[i_event], i_event);
+
       	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
 	  trackChecker::Track t;
 	  const Track <do_mc_check> track = tracks_event[i_track];
-	  //printf("Track %u has %u hits \n", i_track, track.hitsNum);
+
 	  for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
 	    Hit <true> hit = track.hits[ i_hit ];
-	    //printf("id = %u \n", (uint32_t)(hit.LHCbID) );
-	    if ( i_event == 0 )
-	      out_file_ids << std::hex << hit.LHCbID << std::endl;
-	    //uint32_t masked_id = hit.LHCbID & 0x0FFFFFFF;
 	    LHCbID lhcb_id( hit.LHCbID );
 	    t.addId( lhcb_id );
 	  } // hits
@@ -237,7 +208,6 @@ cudaError_t Stream::operator()(
 	
 	all_tracks.push_back( tracks );
       } // events
-      out_file_ids.close();
 
       checkTracks( all_tracks, folder_name_MC );
     }

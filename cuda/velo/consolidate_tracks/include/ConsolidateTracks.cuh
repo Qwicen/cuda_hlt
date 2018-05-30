@@ -83,8 +83,7 @@ __global__ void consolidate_tracks(
   // but storing in SoA rather than AoS now
   int* accumulated_tracks_base_pointer = dev_atomics_storage + number_of_events;
   accumulated_tracks_base_pointer[event_number] = accumulated_tracks;
-
-  
+    
   // Pointers to data within event
   const uint number_of_hits = dev_module_cluster_start[VeloTracking::n_modules * number_of_events];
   const uint* module_hitStarts = dev_module_cluster_start + event_number * VeloTracking::n_modules;
@@ -99,9 +98,9 @@ __global__ void consolidate_tracks(
   
   // Consolidate tracks in dev_output_tracks
   const unsigned int number_of_tracks = dev_atomics_storage[event_number];
-  //Track* destination_tracks = dev_output_tracks + accumulated_tracks;
+  Track <do_mc_check> * destination_tracks = dev_output_tracks + accumulated_tracks;
   /* don't do consolidation now -> easier to check tracks offline */
-  Track <do_mc_check> * destination_tracks = dev_output_tracks + event_number * VeloTracking::max_tracks;
+  //Track <do_mc_check> * destination_tracks = dev_output_tracks + event_number * VeloTracking::max_tracks;
   for (unsigned int j=0; j<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++j) {
     const unsigned int element = j * blockDim.x + threadIdx.x;
     if (element < number_of_tracks) {

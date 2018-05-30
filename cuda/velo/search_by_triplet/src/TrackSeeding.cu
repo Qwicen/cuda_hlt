@@ -178,7 +178,7 @@ __device__ void trackSeeding(
       // Note: The first bit flag marks this is a tracklet (hitsNum == 3),
       // and hence it is stored in tracklets
       const auto ttfP = atomicAdd(ttf_insertPointer, 1) % VeloTracking::ttf_modulo;
-      assert( ttfP < max_candidates_event );
+      assert( ttfP < VeloClustering::max_candidates_event );
       tracks_to_follow[ttfP] = 0x80000000 | trackP;
     }
 
