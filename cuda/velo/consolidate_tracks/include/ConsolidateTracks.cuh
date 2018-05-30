@@ -94,7 +94,7 @@ __global__ void consolidate_tracks(
   const float* hit_Ys   = (float*) (dev_velo_cluster_container + hit_offset);
   const float* hit_Zs   = (float*) (dev_velo_cluster_container + number_of_hits + hit_offset);
   const float* hit_Xs   = (float*) (dev_velo_cluster_container + 5 * number_of_hits + hit_offset);
-  const uint32_t* hit_IDs  = (uint32_t*) (dev_velo_cluster_container + 3 * number_of_hits + hit_offset);
+  const uint32_t* hit_IDs  = (uint32_t*) (dev_velo_cluster_container + 2 * number_of_hits + hit_offset);
 
   
   // Consolidate tracks in dev_output_tracks
