@@ -1,7 +1,11 @@
-#ifndef PRVELOUT_H
-#define PRVELOUT_H 1
+# pragma once
+
+// #ifndef PRVELOUT_H
+// #define PRVELOUT_H 1
 
 //#define SMALL_OUTPUT
+
+#include <cmath>
 
 // Include files
 // // from Gaudi
@@ -35,11 +39,14 @@
 // Math from ROOT
 #include "CholeskyDecomp.h"
 
+// Types
+#include "include/VeloTypes.h"
+
 // #ifdef SMALL_OUTPUT
 // #include "PrKernel/PrVeloUTTrack.h"
 // #endif
 
-#include "vdt/sqrt.h"
+// #include "vdt/sqrt.h"
 /** @class PrVeloUT PrVeloUT.h
    *
    *  PrVeloUT algorithm. This is just a wrapper,
@@ -56,13 +63,18 @@
    *  2017-03-01: Christoph Hasse (adapt to future framework)
    */
 
-
-struct MiniState{
-  float x,y,z,tx,ty;
-};
-
 struct TrackHelper{
-  TrackHelper(const MiniState& miniState, const float zKink, const float sigmaVeloSlope, const float maxPseudoChi2):
+  VeloState state;
+  std::array<const Hit*, 4> bestHits = { nullptr, nullptr, nullptr, nullptr};
+  std::array<float, 4> bestParams;
+  float wb, invKinkVeloDist, xMidField;
+
+  TrackHelper(
+    const VeloState& miniState, 
+    const float zKink, 
+    const float sigmaVeloSlope, 
+    const float maxPseudoChi2
+  ):
     state(miniState),
     bestParams{{ 0.0, maxPseudoChi2, 0.0, 0.0 }}{
     xMidField = state.x + state.tx*(zKink-state.z);
@@ -70,36 +82,17 @@ struct TrackHelper{
     wb=1./(a*a);
     invKinkVeloDist = 1/(zKink-state.z);
   }
-
-  MiniState state;
-  std::array<const UT::Mut::Hit*, 4> bestHits = { nullptr, nullptr, nullptr, nullptr};
-  std::array<float, 4> bestParams;
-  float wb, invKinkVeloDist, xMidField;
-
 };
 
+class PrVeloUT {
 
-
-// #ifdef SMALL_OUTPUT
-// class PrVeloUT : public Gaudi::Functional::Transformer<PrVeloUTTracks(const LHCb::Tracks&)>{
-// #endif
-
-// #ifndef SMALL_OUTPUT
-class PrVeloUT : public Gaudi::Functional::Transformer<LHCb::Tracks(const LHCb::Tracks&)>{
-// #endif
 public:
   /// Standard constructor
   // PrVeloUT( const std::string& name, ISvcLocator* pSvcLocator );
-  PrVeloUT( const std::string& name );
-
+  PrVeloUT();
   virtual int initialize() override;    ///< Algorithm initialization
+  LHCb::Tracks operator()(const std::vector<Track>& inputTracks) const override;
 
-// #ifndef SMALL_OUTPUT
-  LHCb::Tracks operator()(const LHCb::Tracks& inputTracks) const override;
-// #endif
-// #ifdef SMALL_OUTPUT
-//   PrVeloUTTracks operator()(const LHCb::Tracks& inputTracks) const override;
-// #endif
 private:
 
   float m_minMomentum;    // {this, "minMomentum",      1.5*Gaudi::Units::GeV};
@@ -122,36 +115,21 @@ private:
   bool  m_passTracks;     // {this, "PassTracks",       false};
   bool  m_doTiming;       // {this, "TimingMeasurement",false};
 
-  typedef MultiIndexedHitContainer<UT::Hit, UT::Info::kNStations, UT::Info::kNLayers>::HitRange HitRange;
+  // typedef MultiIndexedHitContainer<Hit, UT::Info::kNStations, UT::Info::kNLayers>::HitRange HitRange;
 
-// #ifndef SMALL_OUTPUT
-  bool getState(const LHCb::Track* iTr, MiniState& trState, LHCb::Tracks& outputTracks) const;
-// #endif
-// #ifdef SMALL_OUTPUT
-//   bool getState(const LHCb::Track* iTr, MiniState& trState, PrVeloUTTracks& outputTracks) const;
-// #endif
+  bool getState(const Track* iTr, VeloState& trState, Track& outputTracks) const;
 
-  bool getHits(std::array<UT::Mut::Hits,4>& hitsInLayers,  const std::array<std::array<HitRange::const_iterator,85>,4>& iteratorsLayers,
+  bool getHits(std::array<std::vector<Hit>,4>& hitsInLayers,  const std::array<std::array<HitRange::const_iterator,85>,4>& iteratorsLayers,
                const UT::HitHandler* hh,
-               const std::vector<float>& fudgeFactors, MiniState& trState ) const;
+               const std::vector<float>& fudgeFactors, VeloState& trState ) const;
 
-  bool formClusters(const std::array<UT::Mut::Hits,4>& hitsInLayers, TrackHelper& helper) const;
+  bool formClusters(const std::array<std::vector<Hit>,4>& hitsInLayers, TrackHelper& helper) const;
 
-// #ifndef SMALL_OUTPUT
-  void prepareOutputTrack(const LHCb::Track* veloTrack,
+  void prepareOutputTrack(const Track* veloTrack,
                           const TrackHelper& helper,
-                          const std::array<UT::Mut::Hits,4>& hitsInLayers,
-                          LHCb::Tracks& outputTracks,
+                          const std::array<std::vector<Hit>,4>& hitsInLayers,
+                          std::vector<Track>& outputTracks,
                           const std::vector<float>& bdlTable) const;
-// #endif
-// #ifdef SMALL_OUTPUT
-//     void prepareOutputTrack(const LHCb::Track* veloTrack,
-//                             const TrackHelper& helper,
-//                             const std::array<UT::Mut::Hits,4>& hitsInLayers,
-//                             PrVeloUTTracks& outputTracks,
-//                             const std::vector<float>& bdlTable) const;
-// #endif
-
 
   // ==============================================================================
   // -- Method to cache some starting points for the search
@@ -194,8 +172,8 @@ private:
   // -- Method that finds the hits in a given layer within a certain range
   // ==============================================================================
   inline void findHits( HitRange::const_iterator itH, HitRange::const_iterator itEnd,
-                        const MiniState& myState, const float xTolNormFact,
-                        const float invNormFact, UT::Mut::Hits& hits) const {
+                        const VeloState& myState, const float xTolNormFact,
+                        const float invNormFact, std::vector<Hits>& hits) const {
 
     const auto zInit = (*itH).zAtYEq0();
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
@@ -230,7 +208,7 @@ private:
   // -- 2 helper functions for fit
   // -- Pseudo chi2 fit, templated for 3 or 4 hits
   // ===========================================================================================
-  void addHit( float* mat, float* rhs, const UT::Mut::Hit* hit)const{
+  void addHit( float* mat, float* rhs, const Hit* hit)const{
     const float ui = hit->x;
     const float ci = hit->HitPtr->cosT();
     const float dz = 0.001*(hit->z - m_zMidUT);
@@ -242,7 +220,7 @@ private:
     rhs[1] += wi * ui * dz;
   }
 
-  void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const UT::Mut::Hit* hit)const{
+  void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const Hit* hit)const{
     const float zd    = hit->z;
     const float xd    = xTTFit + xSlopeTTFit*(zd-m_zMidUT);
     const float du    = xd - hit->x;
@@ -252,7 +230,7 @@ private:
 
 
   template <std::size_t N>
-  void simpleFit( std::array<const UT::Mut::Hit*,N> hits, TrackHelper& helper) const {
+  void simpleFit( std::array<const Hit*,N> hits, TrackHelper& helper) const {
     assert( N==3||N==4 );
 
     // -- Scale the z-component, to not run into numerical problems
@@ -262,7 +240,7 @@ private:
     float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
 
     const int nHighThres = std::count_if( hits.begin(),  hits.end(),
-                                          []( const UT::Mut::Hit* hit ){ return hit && hit->HitPtr->highThreshold(); });
+                                          []( const Hit* hit ){ return hit && hit->HitPtr->highThreshold(); });
 
 
     // -- Veto hit combinations with no high threshold hit
@@ -293,8 +271,8 @@ private:
     if( chi2TT < helper.bestParams[1] ){
 
       // calculate q/p
-      const float sinInX  = xSlopeVeloFit*vdt::fast_isqrt(1.+xSlopeVeloFit*xSlopeVeloFit);
-      const float sinOutX = xSlopeTTFit*vdt::fast_isqrt(1.+xSlopeTTFit*xSlopeTTFit);
+      const float sinInX  = xSlopeVeloFit * std::sqrt(1.+xSlopeVeloFit*xSlopeVeloFit);
+      const float sinOutX = xSlopeTTFit * std::sqrt(1.+xSlopeTTFit*xSlopeTTFit);
       const float qp = (sinInX-sinOutX);
 
       helper.bestParams = { qp, chi2TT, xTTFit,xSlopeTTFit };
@@ -306,7 +284,7 @@ private:
   }
   // --
 
-  AnyDataHandle<UT::HitHandler> m_HitHandler {UT::Info::HitLocation, Gaudi::DataHandle::Reader, this};
+  // AnyDataHandle<UT::HitHandler> m_HitHandler {UT::Info::HitLocation, Gaudi::DataHandle::Reader, this};
 
   ITracksFromTrackR*   m_veloUTTool       = nullptr;             ///< The tool that does the actual pattern recognition
   ISequencerTimerTool* m_timerTool        = nullptr;             ///< Timing tool
@@ -321,4 +299,4 @@ private:
 
 };
 
-#endif // PRVELOUT_H
+// #endif // PRVELOUT_H
