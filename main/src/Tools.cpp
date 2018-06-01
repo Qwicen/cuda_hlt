@@ -102,9 +102,11 @@ void check_velopix_events( const std::vector<char> events,
   printf("average # of sps per event = %f \n", n_sps_average);
 }
 
-void check_ut_events( const std::vector<char> events,
-		      const std::vector<unsigned int> event_offsets,
-		      int n_events) {
+void read_ut_events_into_arrays( VeloUTTracking::Hits * ut_hits_events[][VeloUTTracking::n_layers],
+				 uint32_t * n_hits_layers_events[][VeloUTTracking::n_layers],
+				 const std::vector<char> events,
+				 const std::vector<unsigned int> event_offsets,
+				 int n_events ) {
 
   
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
@@ -113,22 +115,61 @@ void check_ut_events( const std::vector<char> events,
     /* In the binary input file, the ut hit variables are stored in arrays,
        there are two stations with two layers each,
        one layer is appended to the other
-     */
-    uint32_t n_hits_layers[ VeloUTTracking::n_layers_halves ];
+    */
+    // first four words: how many hits are in each layer?
+    //uint32_t n_hits_layers_events[ VeloUTTracking::n_layers ];
     int n_hits_total = 0;
-    for ( int i = 0; i < VeloUTTracking::n_layers_halves; ++i ) {
-      n_hits_layers[i] = *((uint32_t*)raw_input);
-      n_hits_total += n_hits_layers[i];
+    for ( int i = 0; i < VeloUTTracking::n_layers; ++i ) {
+      *(n_hits_layers_events[i_event][i]) = *((uint32_t*)raw_input);
+      n_hits_total += *(n_hits_layers_events[i_event][i]);
       raw_input += sizeof(uint32_t);
-      printf("At event %u, in layer %u, # of hits = %u \n", i_event, i, n_hits_layers[i]);
+      printf("At event %u, in layer %u, # of hits = %u \n", i_event, i, *(n_hits_layers_events[i_event][i]) );
+      assert( *(n_hits_layers_events[i_event][i]) < VeloUTTracking::max_numhits_per_layer );
+    }
+    // then the hit variables, sorted by layer
+    //VeloUTTracking::Hits hits_layers[ VeloUTTracking::n_layers ];
+    for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+      
+      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].x[0]) );
+      // raw_input += sizeof(float) * n_hits_layers[i_layer];
+      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].z[0]) );
+      // raw_input += sizeof(float) * n_hits_layers[i_layer];
+      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].yMin[0]) );
+      // raw_input += sizeof(float) * n_hits_layers[i_layer];
+      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].yMax[0]) );
+      // raw_input += sizeof(float) * n_hits_layers[i_layer];
+      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].dxdy[0]) );
+      // raw_input += sizeof(float) * n_hits_layers[i_layer];
+      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].zAtyEq0[0]) );
+      // raw_input += sizeof(float) * n_hits_layers[i_layer];
+      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].weight[0]) );
+      // raw_input += sizeof(float) * n_hits_layers[i_layer];
+      // std::copy_n((int*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].planeCode[0]) );
+      // raw_input += sizeof(int) * n_hits_layers[i_layer];
+      // std::copy_n((int*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].highThreshold[0]) );
+      // raw_input += sizeof(int) * n_hits_layers[i_layer]; 
+    }
+ 
+  
+  }
+}
+
+
+void check_ut_events( const std::vector<char> events,
+		      const std::vector<unsigned int> event_offsets,
+		      int n_events) {
+  for ( int i_event = 0; i_event < n_events; ++i_event ) {
+    // sanity checks
+    for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+      printf("checks on layer %u  \n", i_layer);
+      for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
+	//	printf("\t at hit %u, x = %f, z = %f, yMin = %f, yMax = %f, dxdy = %f, zAtyEq0 = %f, weight = %f, planeCode = %u, highThreshold = %u \n", i_hit, hits_layers[i_layer].x[i_hit], hits_layers[i_layer].z[i_hit], hits_layers[i_layer].yMin[i_hit], hits_layers[i_layer].yMax[i_hit], hits_layers[i_layer].dxdy[i_hit], hits_layers[i_layer].zAtyEq0[i_hit], hits_layers[i_layer].weight[i_hit], hits_layers[i_layer].planeCode[i_hit], hits_layers[i_layer].highThreshold[i_hit] );
+      }
     }
     
-    raw_input +=  n_hits_total * VeloUTTracking::n_ut_hit_variables * sizeof(uint32_t);
-  
-
   }
-
-
+  
+  
 }
 
 /**

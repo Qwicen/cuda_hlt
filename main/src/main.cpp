@@ -169,17 +169,12 @@ int main(int argc, char *argv[])
   
   check_velopix_events( velopix_events, velopix_event_offsets, number_of_files );
   
-  std::vector<char> ut_events;
-  std::vector<unsigned int> ut_event_offsets;
-  readFolder( folder_name_ut_hits, number_of_files,
-	      ut_events, ut_event_offsets );
-
-  check_ut_events( ut_events, ut_event_offsets, number_of_files );
   
   std::vector<char> geometry;
   readGeometry(folder_name_velopix_raw, geometry);
 
   // Copy data to pinned host memory
+  const auto number_of_events = velopix_event_offsets.size() - 1;
   char* host_velopix_events_pinned;
   unsigned int* host_velopix_event_offsets_pinned;
   cudaCheck(cudaMallocHost((void**)&host_velopix_events_pinned, velopix_events.size()));
@@ -187,6 +182,19 @@ int main(int argc, char *argv[])
   std::copy_n(std::begin(velopix_events), velopix_events.size(), host_velopix_events_pinned);
   std::copy_n(std::begin(velopix_event_offsets), velopix_event_offsets.size(), host_velopix_event_offsets_pinned);
 
+  std::vector<char> ut_events;
+  std::vector<unsigned int> ut_event_offsets;
+  readFolder( folder_name_ut_hits, number_of_files,
+	      ut_events, ut_event_offsets );
+
+  //check_ut_events( ut_events, ut_event_offsets, number_of_files );
+  
+  VeloUTTracking::Hits ut_hits_events[number_of_events][VeloUTTracking::n_layers];
+  uint32_t n_hits_layers_events[number_of_events][VeloUTTracking::n_layers];
+  read_ut_events_into_arrays( ut_hits_events, n_hits_layers_events,
+				ut_events, ut_event_offsets, number_of_files );
+  
+  
   // // Call clustering
   // std::vector<std::vector<uint32_t>> clusters = cuda_clustering_simplified(
   //   geometry,
@@ -251,7 +259,6 @@ int main(int argc, char *argv[])
   initializeConstants();
 
   // Create streams
-  const auto number_of_events = velopix_event_offsets.size() - 1;
   std::vector<Stream> streams (tbb_threads);
   for (int i=0; i<streams.size(); ++i) {
     streams[i].initialize(

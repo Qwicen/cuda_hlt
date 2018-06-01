@@ -43,6 +43,12 @@ void check_velopix_events( const std::vector<char> events,
 		   int n_events
 		   );
 
+void read_ut_events_into_arrays(  VeloUTTracking::Hits * ut_hits_events[][VeloUTTracking::n_layers],
+				  uint32_t * n_hits_layers_events[][VeloUTTracking::n_layers],
+				  const std::vector<char> events,
+				  const std::vector<unsigned int> event_offsets,
+				  int n_events );
+
 void check_ut_events( const std::vector<char> events,
 		      const std::vector<unsigned int> event_offsets,
 		      int n_events
