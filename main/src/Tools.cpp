@@ -428,6 +428,7 @@ void call_PrChecker( const std::vector< trackChecker::Tracks > all_tracks, const
   
 }
 
+#ifdef MC_CHECK
 void checkTracks( Track <do_mc_check> * host_tracks_pinned, int * host_accumulated_tracks, int * host_number_of_tracks_pinned, const int &number_of_events, const std::string folder_name_MC ) {
   
   /* Tracks to be checked, save in format for checker */
@@ -442,7 +443,7 @@ void checkTracks( Track <do_mc_check> * host_tracks_pinned, int * host_accumulat
       const Track <do_mc_check> track = tracks_event[i_track];
       
       for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
-	Hit <true> hit = track.hits[ i_hit ];
+	Hit <do_mc_check> hit = track.hits[ i_hit ];
 	LHCbID lhcb_id( hit.LHCbID );
 	t.addId( lhcb_id );
       } // hits
@@ -454,5 +455,5 @@ void checkTracks( Track <do_mc_check> * host_tracks_pinned, int * host_accumulat
   
   call_PrChecker( all_tracks, folder_name_MC );
 } 
-
+#endif
 
