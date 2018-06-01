@@ -4,6 +4,7 @@
 
 // local
 #include "PrVeloUT.h"
+#include "../PrUTMagnetTool/PrUTMagnetTool.h"
 //-----------------------------------------------------------------------------
 // Implementation file for class : PrVeloUT
 //
@@ -12,9 +13,9 @@
 //-----------------------------------------------------------------------------
 
 namespace {
-  bool rejectTrack(const LHCb::Track* track){
-    return track->checkFlag( LHCb::Track::Backward )
-      || track->checkFlag( LHCb::Track::Invalid );
+  bool rejectTrack(const Track* track){
+    return track->checkFlag( Track::Backward )
+      || track->checkFlag( Track::Invalid );
   }
 
 
@@ -39,12 +40,12 @@ namespace {
 //=============================================================================
 // Standard constructor, initializes variables
 //=============================================================================
-PrVeloUT::PrVeloUT(const std::string& name,
-                   ISvcLocator* pSvcLocator) :
-Transformer(name, pSvcLocator,
-            KeyValue{"InputTracksName", LHCb::TrackLocation::Velo} ,
-            KeyValue{"OutputTracksName", LHCb::TrackLocation::VeloTT}){
-}
+// PrVeloUT::PrVeloUT(const std::string& name,
+//                    ISvcLocator* pSvcLocator) :
+// Transformer(name, pSvcLocator,
+//             KeyValue{"InputTracksName", LHCb::TrackLocation::Velo} ,
+//             KeyValue{"OutputTracksName", LHCb::TrackLocation::VeloTT}){
+// }
 
 
 //=============================================================================
@@ -52,31 +53,21 @@ Transformer(name, pSvcLocator,
 //=============================================================================
 int PrVeloUT::initialize() {
 
-  // auto sc = Transformer::initialize();
-  // if (sc.isFailure()) return sc;  // error printed already by GaudiAlgorithm
-
   // TODO not used?
   // m_veloUTTool = tool<ITracksFromTrackR>("PrVeloUTTool", this );
 
-  m_PrUTMagnetTool = tool<PrUTMagnetTool>( "PrUTMagnetTool","PrUTMagnetTool");
+  std::vector<std::string> filenames; //  TODO init filenames
+  PrUTMagnetTool m_PrUTMagnetTool = PrUTMagnetTool(filenames);
 
   // m_zMidUT is a position of normalization plane which should to be close to z middle of UT ( +- 5 cm ).
   // Cashed once in PrVeloUTTool at initialization. No need to update with small UT movement.
-  m_zMidUT    = m_PrUTMagnetTool->zMidUT();
+  m_zMidUT    = m_PrUTMagnetTool.zMidUT();
   //  zMidField and distToMomentum isproperly recalculated in PrUTMagnetTool when B field changes
-  m_distToMomentum = m_PrUTMagnetTool->averageDist2mom();
-
-  // if (m_doTiming) {
-  //   m_timerTool = tool<ISequencerTimerTool>( "SequencerTimerTool" );
-  //   m_timerTool->increaseIndent();
-  //   m_veloUTTime = m_timerTool->addTimer( "Internal VeloUT Tracking" );
-  //   m_timerTool->decreaseIndent();
-  // }
+  m_distToMomentum = m_PrUTMagnetTool.averageDist2mom();
 
   m_sigmaVeloSlope = 0.10*Gaudi::Units::mrad;
   m_invSigmaVeloSlope = 1.0/m_sigmaVeloSlope;
   m_zKink = 1780.0;
-
 
   return 1;
 }
@@ -84,26 +75,10 @@ int PrVeloUT::initialize() {
 //=============================================================================
 // Main execution
 //=============================================================================
-// #ifndef SMALL_OUTPUT
-LHCb::Track PrVeloUT::operator()(const LHCb::Track& inputTracks) const {
-// #endif
-// #ifdef SMALL_OUTPUT
-// PrVeloUTTracks PrVeloUT::operator()(const LHCb::Tracks& inputTracks) const {
-// #endif
+Track PrVeloUT::operator()(const Track& inputTracks) const {
 
-//   // TODO
-//   if ( m_doTiming ) m_timerTool->start( m_veloUTTime );
-
-// #ifndef SMALL_OUTPUT
-  LHCb::Track outputTracks;
-// #endif
-// #ifdef SMALL_OUTPUT
-//   PrVeloUTTracks outputTracks;
-// #endif
-
+  Track outputTracks;
   outputTracks.reserve(inputTracks.size());
-
-  // counter("#seeds") += inputTracks.size();
 
   const UT::HitHandler* hh = m_HitHandler.get();
   std::array<std::array<HitRange::const_iterator,85>,4> iteratorsLayers;
@@ -113,14 +88,14 @@ LHCb::Track PrVeloUT::operator()(const LHCb::Track& inputTracks) const {
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool->returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool->returnBdlTable();
 
-  std::array<UT::Mut::Hits,4> hitsInLayers;
+  std::array<std::vector<Hit>,4> hitsInLayers;
   for( auto& it : hitsInLayers ) it.reserve(8); // check this number!
 
-  for(const LHCb::Track* veloTr : inputTracks) {
+  for(const Track* veloTr : inputTracks) {
 
     if( rejectTrack( veloTr ) ) continue;
 
-    MiniState trState;
+    VeloState trState;
     if( !getState(veloTr, trState, outputTracks)) continue;
 
     for( auto& it : hitsInLayers ) it.clear();
@@ -143,8 +118,7 @@ LHCb::Track PrVeloUT::operator()(const LHCb::Track& inputTracks) const {
   }
 
   // counter("#tracks") += outputTracks.size();
-  
-  // if ( m_doTiming ) m_timerTool->stop( m_veloUTTime );
+
   return outputTracks;
 }
 //=============================================================================

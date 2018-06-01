@@ -287,7 +287,7 @@ private:
   // AnyDataHandle<UT::HitHandler> m_HitHandler {UT::Info::HitLocation, Gaudi::DataHandle::Reader, this};
 
   ITracksFromTrackR*   m_veloUTTool       = nullptr;             ///< The tool that does the actual pattern recognition
-  ISequencerTimerTool* m_timerTool        = nullptr;             ///< Timing tool
+  // ISequencerTimerTool* m_timerTool        = nullptr;             ///< Timing tool
   int                  m_veloUTTime       = 0;                   ///< Counter for timing tool
   PrUTMagnetTool*      m_PrUTMagnetTool   = nullptr;             ///< Multipupose tool for Bdl and deflection
   float                m_zMidUT;
