@@ -48,7 +48,6 @@ namespace VeloTracking {
   // Making a bigger forwarding scatter window causes
   // less clones and more ghosts
   static constexpr float max_scatter_forwarding = 0.004f;
-
   // Maximum number of skipped modules allowed for a track
   // before storing it
   static constexpr uint max_skipped_modules = 3;
@@ -174,7 +173,7 @@ struct Track { // 4 + 26 * 16 = 420 B
     hitsNum++;
   }
 
-}; 
+} ; 
 
 /**
  * @brief A simplified state for the Velo

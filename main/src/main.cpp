@@ -51,8 +51,9 @@ void printUsage(char* argv[]){
 
 int main(int argc, char *argv[])
 {
-  std::string folder_name_raw;
+  std::string folder_name_velopix_raw;
   std::string folder_name_MC;
+  std::string folder_name_ut_hits;
   unsigned int number_of_files = 0;
   unsigned int tbb_threads = 3;
   unsigned int number_of_repetitions = 10;
@@ -64,13 +65,16 @@ int main(int argc, char *argv[])
   bool do_simplified_kalman_filter = false;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:g:n:t:r:pha:b:d:v:c:k:")) != -1) {
+  while ((c = getopt(argc, argv, "f:g:e:n:t:r:pha:b:d:v:c:k:")) != -1) {
     switch (c) {
     case 'f':
-      folder_name_raw = std::string(optarg);
+      folder_name_velopix_raw = std::string(optarg);
       break;
     case 'g':
       folder_name_MC = std::string(optarg);
+      break;
+    case 'e':
+      folder_name_ut_hits = std::string(optarg);
       break;
     case 'n':
       number_of_files = atoi(optarg);
@@ -114,12 +118,17 @@ int main(int argc, char *argv[])
   
   // Check how many files were specified and
   // call the entrypoint with the suggested format
-  if(folder_name_raw.empty()){
-    std::cerr << "No folder specified" << std::endl;
+  if(folder_name_velopix_raw.empty()){
+    std::cerr << "No folder for velopix raw events specified" << std::endl;
     printUsage(argv);
     return -1;
   }
-
+  if(folder_name_ut_hits.empty()){
+    std::cerr << "No folder for ut hits specified" << std::endl;
+    printUsage(argv);
+    return -1;
+  }
+  
   if(folder_name_MC.empty() && do_mc_check){
     std::cerr << "No MC folder specified, but MC CHECK turned on" << std::endl;
     printUsage(argv);
@@ -137,8 +146,9 @@ int main(int argc, char *argv[])
 
   // Show call options
   std::cout << "Requested options:" << std::endl
-    << " folder with raw bank input (-f): " << folder_name_raw << std::endl
+    << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
     << " folder with MC truth input (-g): " << folder_name_MC << std::endl
+    << " folder with ut hits input (-e): " << folder_name_ut_hits << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
@@ -154,13 +164,20 @@ int main(int argc, char *argv[])
   // Read folder contents
   std::vector<char> velopix_events;
   std::vector<unsigned int> velopix_event_offsets;
+  readFolder( folder_name_velopix_raw, number_of_files,
+	      velopix_events, velopix_event_offsets );
+  
+  check_velopix_events( velopix_events, velopix_event_offsets, number_of_files );
+  
   std::vector<char> ut_events;
   std::vector<unsigned int> ut_event_offsets;
-  readFolder( folder_name_raw, number_of_files,
-	      velopix_events, velopix_event_offsets );
+  readFolder( folder_name_ut_hits, number_of_files,
+	      ut_events, ut_event_offsets );
 
+  check_ut_events( ut_events, ut_event_offsets, number_of_files );
+  
   std::vector<char> geometry;
-  readGeometry(folder_name_raw, geometry);
+  readGeometry(folder_name_velopix_raw, geometry);
 
   // Copy data to pinned host memory
   char* host_velopix_events_pinned;

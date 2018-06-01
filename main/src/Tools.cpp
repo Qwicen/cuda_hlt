@@ -55,7 +55,7 @@ void readGeometry(
   readFileIntoVector(foldername + "/geometry.bin", geometry);
 }
 
-void check_events( const std::vector<char> events,
+void check_velopix_events( const std::vector<char> events,
 		   const std::vector<unsigned int> event_offsets,
 		   int n_events) {
 
@@ -100,6 +100,35 @@ void check_events( const std::vector<char> events,
   printf("total # of sps = %u \n", n_sps_all_events);
   float n_sps_average = (float)n_sps_all_events / n_events;
   printf("average # of sps per event = %f \n", n_sps_average);
+}
+
+void check_ut_events( const std::vector<char> events,
+		      const std::vector<unsigned int> event_offsets,
+		      int n_events) {
+
+  
+  for ( int i_event = 0; i_event < n_events; ++i_event ) {
+    const char* raw_input = events.data() + event_offsets[i_event];
+    
+    /* In the binary input file, the ut hit variables are stored in arrays,
+       there are two stations with two layers each,
+       one layer is appended to the other
+     */
+    uint32_t n_hits_layers[ VeloUTTracking::n_layers_halves ];
+    int n_hits_total = 0;
+    for ( int i = 0; i < VeloUTTracking::n_layers_halves; ++i ) {
+      n_hits_layers[i] = *((uint32_t*)raw_input);
+      n_hits_total += n_hits_layers[i];
+      raw_input += sizeof(uint32_t);
+      printf("At event %u, in layer %u, # of hits = %u \n", i_event, i, n_hits_layers[i]);
+    }
+    
+    raw_input +=  n_hits_total * VeloUTTracking::n_ut_hit_variables * sizeof(uint32_t);
+  
+
+  }
+
+
 }
 
 /**
@@ -170,7 +199,6 @@ void readFolder(
 
   std::cout << std::endl << (event_offsets.size() - 1) << " files read" << std::endl << std::endl;
 
-  check_events( events, event_offsets, number_of_files );
 }
 
 /**
