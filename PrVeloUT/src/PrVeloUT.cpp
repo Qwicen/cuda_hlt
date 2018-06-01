@@ -124,12 +124,7 @@ Track PrVeloUT::operator()(const Track& inputTracks) const {
 //=============================================================================
 // Get the state, do some cuts
 //=============================================================================
-// #ifndef SMALL_OUTPUT
-bool PrVeloUT::getState(const LHCb::Track* iTr, MiniState& trState, LHCb::Tracks& outputTracks) const {
-// #endif
-// #ifdef SMALL_OUTPUT
-// bool PrVeloUT::getState(const LHCb::Track* iTr, MiniState& trState, PrVeloUTTracks& outputTracks) const {
-// #endif
+bool PrVeloUT::getState(const Track* iTr, MiniState& trState, Tracks& outputTracks) const {
   const LHCb::State* s = iTr->stateAt(LHCb::State::EndVelo);
   const LHCb::State& state = s ? *s : (iTr->closestState(LHCb::State::EndVelo));
 
