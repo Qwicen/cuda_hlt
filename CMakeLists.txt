@@ -47,4 +47,6 @@ target_link_libraries(cu_hlt tbb libcuVelo libStream libx86Clustering libTrackCh
 if ( MC_CHECK )
   message(STATUS "MC CHECK ON")
   add_definitions( -DMC_CHECK )
+elseif ( !MC_CHECK )
+  message(STATUS "MC CHECK OFF")
 endif()

@@ -152,40 +152,43 @@ int main(int argc, char *argv[])
     << std::endl;
 
   // Read folder contents
-  std::vector<char> events;
-  std::vector<unsigned int> event_offsets;
-  readFolder(folder_name_raw, number_of_files, events, event_offsets);
+  std::vector<char> velopix_events;
+  std::vector<unsigned int> velopix_event_offsets;
+  std::vector<char> ut_events;
+  std::vector<unsigned int> ut_event_offsets;
+  readFolder( folder_name_raw, number_of_files,
+	      velopix_events, velopix_event_offsets );
 
   std::vector<char> geometry;
   readGeometry(folder_name_raw, geometry);
 
   // Copy data to pinned host memory
-  char* host_events_pinned;
-  unsigned int* host_event_offsets_pinned;
-  cudaCheck(cudaMallocHost((void**)&host_events_pinned, events.size()));
-  cudaCheck(cudaMallocHost((void**)&host_event_offsets_pinned, event_offsets.size() * sizeof(unsigned int)));
-  std::copy_n(std::begin(events), events.size(), host_events_pinned);
-  std::copy_n(std::begin(event_offsets), event_offsets.size(), host_event_offsets_pinned);
+  char* host_velopix_events_pinned;
+  unsigned int* host_velopix_event_offsets_pinned;
+  cudaCheck(cudaMallocHost((void**)&host_velopix_events_pinned, velopix_events.size()));
+  cudaCheck(cudaMallocHost((void**)&host_velopix_event_offsets_pinned, velopix_event_offsets.size() * sizeof(unsigned int)));
+  std::copy_n(std::begin(velopix_events), velopix_events.size(), host_velopix_events_pinned);
+  std::copy_n(std::begin(velopix_event_offsets), velopix_event_offsets.size(), host_velopix_event_offsets_pinned);
 
   // // Call clustering
   // std::vector<std::vector<uint32_t>> clusters = cuda_clustering_simplified(
   //   geometry,
-  //   events,
-  //   event_offsets,
+  //   velopix_events,
+  //   velopix_event_offsets,
   //   true
   // );
 
   // std::vector<std::vector<uint32_t>> clusters_simplified = cuda_clustering_cpu_optimized(
   //   geometry,
-  //   events,
-  //   event_offsets,
+  //   velopix_events,
+  //   velopix_event_offsets,
   //   true
   // );
 
   // std::vector<std::vector<uint32_t>> clusters_classical = clustering(
   //   geometry,
-  //   events,
-  //   event_offsets,
+  //   velopix_events,
+  //   velopix_event_offsets,
   //   true
   // );
 
@@ -231,15 +234,15 @@ int main(int argc, char *argv[])
   initializeConstants();
 
   // Create streams
-  const auto number_of_events = event_offsets.size() - 1;
+  const auto number_of_events = velopix_event_offsets.size() - 1;
   std::vector<Stream> streams (tbb_threads);
   for (int i=0; i<streams.size(); ++i) {
     streams[i].initialize(
-      events,
-      event_offsets,
+      velopix_events,
+      velopix_event_offsets,
       geometry,
       number_of_events,
-      events.size(),
+      velopix_events.size(),
       transmit_host_to_device,
       transmit_device_to_host,
       do_check,
@@ -265,10 +268,10 @@ int main(int argc, char *argv[])
     [&] (unsigned int i) {
       auto& s = streams[i];
       s(
-        host_events_pinned,
-        host_event_offsets_pinned,
-        events.size(),
-        event_offsets.size(),
+        host_velopix_events_pinned,
+        host_velopix_event_offsets_pinned,
+        velopix_events.size(),
+        velopix_event_offsets.size(),
         0,
         number_of_events,
         number_of_repetitions
@@ -289,8 +292,8 @@ int main(int argc, char *argv[])
   // printf("GPU memory: %f percent free, %f percent used \n", free_percent, used_percent );
   
   // Free and reset device
-  cudaCheck(cudaFreeHost(host_events_pinned));
-  cudaCheck(cudaFreeHost(host_event_offsets_pinned));
+  cudaCheck(cudaFreeHost(host_velopix_events_pinned));
+  cudaCheck(cudaFreeHost(host_velopix_event_offsets_pinned));
   cudaCheck(cudaDeviceReset());
 
   return 0;

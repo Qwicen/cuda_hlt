@@ -246,7 +246,7 @@ void writeBinaryTrack(
   uint32_t hitsNum = track.hitsNum;
   outstream.write((char*) &hitsNum, sizeof(uint32_t));
   for (int i=0; i<track.hitsNum; ++i) {
-    const Hit <true> hit = track.hits[i];
+    const Hit <mc_check> hit = track.hits[i];
     outstream.write((char*) &hit.LHCbID, sizeof(uint32_t));
   }
 }
@@ -303,7 +303,7 @@ void printTracks(
       const Track <mc_check> t = tracks_event[i_track];
       outstream << t.hitsNum << std::endl;
       for ( int i_hit = 0; i_hit < t.hitsNum; ++i_hit ) {
-	Hit <true> hit = t.hits[ i_hit ];
+	Hit <mc_check> hit = t.hits[ i_hit ];
 	outstream << hit.LHCbID << std::endl;
       }
     }

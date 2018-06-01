@@ -187,10 +187,12 @@ cudaError_t Stream::operator()(
 
     /* MC check */
 #ifdef MC_CHECK
-    if ( repetitions == 0 )  // only check efficiencies once
-      checkTracks( host_tracks_pinned, host_accumulated_tracks,
-		   host_number_of_tracks_pinned, number_of_events,
-		   folder_name_MC);
+    //if ( do_mc_check) {
+      if ( repetitions == 0 )  // only check efficiencies once
+	checkTracks( host_tracks_pinned, host_accumulated_tracks,
+		     host_number_of_tracks_pinned, number_of_events,
+		     folder_name_MC);
+      //}
 #endif    
   }
   return cudaSuccess;
