@@ -72,5 +72,3 @@ namespace MCParticleDesc {
 
 using MCParticles = SOA::Container<std::vector, MCParticleDesc::Skin>;
 using MCParticleRange = boost::iterator_range<MCParticles::iterator>;
-
-// vim: sw=4:tw=78:ft=cpp:et

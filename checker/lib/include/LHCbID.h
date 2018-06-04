@@ -56,29 +56,7 @@ class LHCbID {
 
 typedef std::vector< LHCbID > SomeLHCbIDs;
 
-/// how many LHCbIDs for small collections
-/* enum { maxLHCbIDs = 128 }; */
-/* /// a small collection of LHCbIDs */
-/* class SomeLHCbIDs : public std::array<LHCbID, maxLHCbIDs> */
-/* { */
-/*     public: */
-/*         SomeLHCbIDs() = default; */
-/*         SomeLHCbIDs(const SomeLHCbIDs&) = default; */
-/*         SomeLHCbIDs(SomeLHCbIDs&&) = default; */
-/*         SomeLHCbIDs& operator=(const SomeLHCbIDs&) = default; */
-/*         SomeLHCbIDs& operator=(SomeLHCbIDs&&) = default; */
-/*         template <typename IT> */
-/*         SomeLHCbIDs(IT first, IT last) */
-/*         { */
-/*             assert(maxLHCbIDs >= std::distance(first, last)); */
-/*             for (auto it = this->begin(); last != first; ++first, ++it) */
-/*                 *it = *first; */
-/*         } */
-/* }; */
-
 /// a range of LHCbIDs from a small collection
 using SomeLHCbIDRange = boost::iterator_range<SomeLHCbIDs::iterator>;
 /// a const range of LHCbIDs from a small collection
 using ConstSomeLHCbIDRange = boost::iterator_range<SomeLHCbIDs::const_iterator>;
-
-// vim: sw=4:tw=78:ft=cpp:et

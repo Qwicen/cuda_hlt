@@ -82,5 +82,3 @@ public:
     static std::vector<VelopixEvent> readFolder(
       const std::string& foldername, uint nFiles = 0, const bool checkFiles = true);
 };
-
-// vim: sw=4:tw=78:ft=cpp:et

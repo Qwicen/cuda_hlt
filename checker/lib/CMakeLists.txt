@@ -1,7 +1,6 @@
 include_directories(include)
 include_directories(SOAContainer/include)
 
-
 add_library( libTrackChecking SHARED
   src/velopix-input-reader.cc
   src/MCAssociator.cc
