@@ -33,9 +33,10 @@ Running:
     
     mkdir velopix_raw
     mkdir velopix_MC
+    mkdir ut_hits
     ./run gaudirun.py options.py upgrade-minbias-magdown.py
     
-One file per event is created and stored in the velopix_raw and velopix_MC 
+One file per event is created and stored in the velopix_raw, velopix_MC and ut_hits
 directories, which need to be copied to folders in the CUDA_HLT1 project
 to be used as input there. 
     
@@ -64,8 +65,9 @@ MC truth and raw binaries once they are in the final format.]
 A run of the program with no arguments will let you know the basic options:
 
     Usage: ./cu_hlt
-     -f {folder containing .bin files with raw bank information}
-     -g {folder containing .bin files with MC truth information}
+     -f {folder containing .bin files with velopix raw bank information}
+     -g {folder containing .bin files with velopix MC truth information}
+     -e {folder containing .bin files with ut hit information}
      [-n {number of files to process}=0 (all)]
      [-t {number of threads / streams}=3]
      [-r {number of repetitions per thread / stream}=10]
@@ -83,13 +85,13 @@ Here are some example run options:
     ./cu_hlt -f ../minbias_raw
 
     # Run a total of 1000 events, round robin over the existing ones
-    ./cu_hlt -f ../minbias_raw -n 1000
+    ./cu_hlt -f ../velopix_minbias_raw -n 1000
 
     # Run four streams, each with 4000 events, 20 repetitions
-    ./cu_hlt -f ../minbias_raw -t 4 -n 4000 -r 20
+    ./cu_hlt -f ../velopix_minbias_raw -t 4 -n 4000 -r 20
 
     # Run twelve streams, each with 3500 events, 40 repetitions
-    ./cu_hlt -f ../minbias_raw -n 3500 -t 12 -r 40
+    ./cu_hlt -f ../velopix_minbias_raw -n 3500 -t 12 -r 40
 
     # Run clustering efficiency checker and PrChecker, no repetitions or multiple threads needed
-    ./cu_hlt -f ../minbias_raw -g ../minbias_MC -n 10 -t 1 -r 1 -c 1
+    ./cu_hlt -f ../velopix_minbias_raw -g ../velopix_minbias_MC -n 10 -t 1 -r 1 -c 1
