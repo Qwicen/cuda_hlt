@@ -102,11 +102,11 @@ void check_velopix_events( const std::vector<char> events,
   printf("average # of sps per event = %f \n", n_sps_average);
 }
 
-void read_ut_events_into_arrays( VeloUTTracking::Hits * ut_hits_events[][VeloUTTracking::n_layers],
-				 uint32_t * n_hits_layers_events[][VeloUTTracking::n_layers],
+void read_ut_events_into_arrays( VeloUTTracking::Hits hits_layers_events[][VeloUTTracking::n_layers],
+				 uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 				 const std::vector<char> events,
 				 const std::vector<unsigned int> event_offsets,
-				 int n_events ) {
+				 const int n_events ) {
 
   
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
@@ -117,37 +117,36 @@ void read_ut_events_into_arrays( VeloUTTracking::Hits * ut_hits_events[][VeloUTT
        one layer is appended to the other
     */
     // first four words: how many hits are in each layer?
-    //uint32_t n_hits_layers_events[ VeloUTTracking::n_layers ];
     int n_hits_total = 0;
     for ( int i = 0; i < VeloUTTracking::n_layers; ++i ) {
-      *(n_hits_layers_events[i_event][i]) = *((uint32_t*)raw_input);
-      n_hits_total += *(n_hits_layers_events[i_event][i]);
+      n_hits_layers_events[i_event][i] = *((uint32_t*)raw_input);
+      n_hits_total += n_hits_layers_events[i_event][i];
       raw_input += sizeof(uint32_t);
-      printf("At event %u, in layer %u, # of hits = %u \n", i_event, i, *(n_hits_layers_events[i_event][i]) );
-      assert( *(n_hits_layers_events[i_event][i]) < VeloUTTracking::max_numhits_per_layer );
+      printf("At event %u, in layer %u, # of hits = %u \n", i_event, i, n_hits_layers_events[i_event][i] );
+      assert( n_hits_layers_events[i_event][i] < VeloUTTracking::max_numhits_per_layer );
     }
     // then the hit variables, sorted by layer
     //VeloUTTracking::Hits hits_layers[ VeloUTTracking::n_layers ];
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       
-      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].x[0]) );
-      // raw_input += sizeof(float) * n_hits_layers[i_layer];
-      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].z[0]) );
-      // raw_input += sizeof(float) * n_hits_layers[i_layer];
-      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].yMin[0]) );
-      // raw_input += sizeof(float) * n_hits_layers[i_layer];
-      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].yMax[0]) );
-      // raw_input += sizeof(float) * n_hits_layers[i_layer];
-      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].dxdy[0]) );
-      // raw_input += sizeof(float) * n_hits_layers[i_layer];
-      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].zAtyEq0[0]) );
-      // raw_input += sizeof(float) * n_hits_layers[i_layer];
-      // std::copy_n((float*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].weight[0]) );
-      // raw_input += sizeof(float) * n_hits_layers[i_layer];
-      // std::copy_n((int*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].planeCode[0]) );
-      // raw_input += sizeof(int) * n_hits_layers[i_layer];
-      // std::copy_n((int*) raw_input, n_hits_layers[i_layer], &(hits_layers[i_layer].highThreshold[0]) );
-      // raw_input += sizeof(int) * n_hits_layers[i_layer]; 
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].x[0]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].z[0]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].yMin[0]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].yMax[0]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].dxdy[0]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].zAtyEq0[0]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].weight[0]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].planeCode[0]) );
+      raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].highThreshold[0]) );
+      raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer]; 
     }
  
   
@@ -155,15 +154,28 @@ void read_ut_events_into_arrays( VeloUTTracking::Hits * ut_hits_events[][VeloUTT
 }
 
 
-void check_ut_events( const std::vector<char> events,
-		      const std::vector<unsigned int> event_offsets,
-		      int n_events) {
+void check_ut_events( const VeloUTTracking::Hits hits_layers_events[][VeloUTTracking::n_layers],
+		      const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
+		      const int n_events ) {
+
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
     // sanity checks
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      printf("checks on layer %u  \n", i_layer);
+      printf("checks on layer %u, with %u hits \n", i_layer, n_hits_layers_events[i_event][i_layer]);
       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
-	//	printf("\t at hit %u, x = %f, z = %f, yMin = %f, yMax = %f, dxdy = %f, zAtyEq0 = %f, weight = %f, planeCode = %u, highThreshold = %u \n", i_hit, hits_layers[i_layer].x[i_hit], hits_layers[i_layer].z[i_hit], hits_layers[i_layer].yMin[i_hit], hits_layers[i_layer].yMax[i_hit], hits_layers[i_layer].dxdy[i_hit], hits_layers[i_layer].zAtyEq0[i_hit], hits_layers[i_layer].weight[i_hit], hits_layers[i_layer].planeCode[i_hit], hits_layers[i_layer].highThreshold[i_hit] );
+
+	
+	printf("\t at hit %u, x = %f, z = %f, yMin = %f, yMax = %f, dxdy = %f, zAtyEq0 = %f, weight = %f, planeCode = %u, highThreshold = %u \n",
+	       i_hit,
+	       hits_layers_events[i_event][i_layer].x[i_hit],
+	       hits_layers_events[i_event][i_layer].z[i_hit],
+	       hits_layers_events[i_event][i_layer].yMin[i_hit],
+	       hits_layers_events[i_event][i_layer].yMax[i_hit],
+	       hits_layers_events[i_event][i_layer].dxdy[i_hit],
+	       hits_layers_events[i_event][i_layer].zAtyEq0[i_hit],
+	       hits_layers_events[i_event][i_layer].weight[i_hit],
+	       hits_layers_events[i_event][i_layer].planeCode[i_hit],
+	       hits_layers_events[i_event][i_layer].highThreshold[i_hit] );
       }
     }
     

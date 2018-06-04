@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
   readGeometry(folder_name_velopix_raw, geometry);
 
   // Copy data to pinned host memory
-  const auto number_of_events = velopix_event_offsets.size() - 1;
+  const int number_of_events = velopix_event_offsets.size() - 1;
   char* host_velopix_events_pinned;
   unsigned int* host_velopix_event_offsets_pinned;
   cudaCheck(cudaMallocHost((void**)&host_velopix_events_pinned, velopix_events.size()));
@@ -187,13 +187,14 @@ int main(int argc, char *argv[])
   readFolder( folder_name_ut_hits, number_of_files,
 	      ut_events, ut_event_offsets );
 
-  //check_ut_events( ut_events, ut_event_offsets, number_of_files );
   
   VeloUTTracking::Hits ut_hits_events[number_of_events][VeloUTTracking::n_layers];
-  uint32_t n_hits_layers_events[number_of_events][VeloUTTracking::n_layers];
-  read_ut_events_into_arrays( ut_hits_events, n_hits_layers_events,
-				ut_events, ut_event_offsets, number_of_files );
-  
+  uint32_t ut_n_hits_layers_events[number_of_events][VeloUTTracking::n_layers];
+  read_ut_events_into_arrays( ut_hits_events, ut_n_hits_layers_events,
+			      ut_events, ut_event_offsets, number_of_events );
+
+  //check_ut_events( ut_hits_events, ut_n_hits_layers_events, number_of_events );
+
   
   // // Call clustering
   // std::vector<std::vector<uint32_t>> clusters = cuda_clustering_simplified(
@@ -296,6 +297,8 @@ int main(int argc, char *argv[])
         host_velopix_event_offsets_pinned,
         velopix_events.size(),
         velopix_event_offsets.size(),
+	ut_hits_events,
+	ut_n_hits_layers_events,
         0,
         number_of_events,
         number_of_repetitions
