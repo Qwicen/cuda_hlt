@@ -37,10 +37,11 @@ void readGeometry(
   std::vector<char>& geometry
 );
 
-void check_events( const std::vector<char> events,
-		   const std::vector<unsigned int> event_offsets,
-		   int n_events
-		   );
+void check_events(
+  const std::vector<char>& events,
+  const std::vector<unsigned int>& event_offsets,
+  int n_events
+);
 
 void readFolder(
   const std::string& foldername,
@@ -58,35 +59,16 @@ std::map<std::string, float> calcResults(
   std::vector<float>& times
 );
 
-void printOutSensorHits(
-  const EventInfo& info,
-  int sensorNumber,
-  int* prevs,
-  int* nexts
-);
-
-void printOutAllSensorHits(
-  const EventInfo& info,
-  int* prevs,
-  int* nexts
-);
-
-void printInfo(
-  const EventInfo& info,
-  int numberOfSensors,
-  int numberOfHits
-);
-
 template <bool mc_check>
 void printTrack(
-  Track <mc_check> * tracks,
+  Track<mc_check>* tracks,
   const int trackNumber,
   std::ofstream& outstream
 );
 
 template <bool mc_check>
 void printTracks(
-  Track <mc_check> * tracks,
+  Track<mc_check>* tracks,
   int* n_tracks,
   int n_events,
   std::ofstream& outstream
@@ -99,22 +81,15 @@ void writeBinaryTrack(
   std::ofstream& outstream
 );
 
-cudaError_t checkSorting(
-  const std::vector<std::vector<uint8_t>>& input,
-  unsigned int acc_hits,
-  unsigned short* dev_hit_phi,
-  const std::vector<unsigned int>& hit_offsets
-);
-
 void call_PrChecker(
-		 const std::vector< trackChecker::Tracks > all_tracks,
-		 const std::string folder_name_MC
+  const std::vector<trackChecker::Tracks>& all_tracks,
+  const std::string& folder_name_MC
 );
 
 void checkTracks(
-		 Track <do_mc_check> * host_tracks_pinned,
-		 int * host_accumulated_tracks,
-		 int * host_number_of_tracks_pinned,
-		 const int &number_of_events,
-		 const std::string folder_name_MC
+  Track<true>* host_tracks_pinned,
+  int* host_accumulated_tracks,
+  int* host_number_of_tracks_pinned,
+  const int number_of_events,
+  const std::string& folder_name_MC
 );
