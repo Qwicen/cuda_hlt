@@ -1,8 +1,6 @@
 #include "../include/Tools.h"
-
 #include "../../checker/lib/include/velopix-input-reader.h"
 #include "../../checker/lib/include/TrackChecker.h"
-
 #include "../../checker/lib/include/MCParticle.h"
 
 /**
@@ -154,7 +152,6 @@ void readFolder(
     // Read event #i in the list and add it to the inputs
     std::string readingFile = folderContents[i % folderContents.size()];
     appendFileToVector(foldername + "/" + readingFile, events, event_sizes);
-    std::cout << "Reading raw event " <<  readingFile << std::endl;
 
     event_offsets.push_back(accumulated_size);
     accumulated_size += event_sizes.back();

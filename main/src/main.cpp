@@ -107,11 +107,6 @@ int main(int argc, char *argv[])
     }
   }
 
-  if ( do_mc_check ) 
-    printf("MC check ON \n");
-  else
-    printf("MC check OFF \n");
-  
   // Check how many files were specified and
   // call the entrypoint with the suggested format
   if(folder_name_raw.empty()){
@@ -139,6 +134,7 @@ int main(int argc, char *argv[])
   std::cout << "Requested options:" << std::endl
     << " folder with raw bank input (-f): " << folder_name_raw << std::endl
     << " folder with MC truth input (-g): " << folder_name_MC << std::endl
+    << " mc check (compile opt): " << do_mc_check << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
