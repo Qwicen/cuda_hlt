@@ -50,11 +50,6 @@ void readFolder(
   std::vector<unsigned int>& event_offsets
 );
 
-void statistics(
-  const std::vector<char>& input,
-  std::vector<unsigned int>& event_offsets
-);
-
 std::map<std::string, float> calcResults(
   std::vector<float>& times
 );

@@ -5,7 +5,6 @@ cudaError_t Stream::operator()(
   const uint* host_event_offsets_pinned,
   size_t host_events_pinned_size,
   size_t host_event_offsets_pinned_size,
-  uint start_event,
   uint number_of_events,
   uint number_of_repetitions
 ) {
@@ -62,16 +61,16 @@ cudaError_t Stream::operator()(
 
     // // Fetch the number of hits we require
     // uint number_of_hits;
-    // cudaCheck(cudaMemcpyAsync(&number_of_hits, dev_estimated_input_size + number_of_events * VeloTracking::n_modules, sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    // cudaCheck(cudaMemcpyAsync(&number_of_hits, estimateInputSize.dev_estimated_input_size + number_of_events * VeloTracking::n_modules, sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    // const auto required_size = number_of_hits * 6;
 
-    // if (number_of_hits * 6 * sizeof(uint32_t) > velo_cluster_container_size) {
+    // if (required_size > velo_cluster_container_size) {
     //   warning_cout << "Number of hits: " << number_of_hits << std::endl
     //     << "Size of velo cluster container is larger than previously accomodated." << std::endl
-    //     << "Resizing from " << velo_cluster_container_size << " to " << number_of_hits * 6 * sizeof(uint) << " B" << std::endl;
+    //     << "Resizing from " << velo_cluster_container_size * sizeof(uint) << " to " << required_size * sizeof(uint) << " B" << std::endl;
 
-    //   cudaCheck(cudaFree(dev_velo_cluster_container));
-    //   velo_cluster_container_size = number_of_hits * 6 * sizeof(uint32_t);
-    //   cudaCheck(cudaMalloc((void**)&dev_velo_cluster_container, velo_cluster_container_size));
+    //   cudaCheck(cudaFree(maskedVeloClustering.dev_velo_cluster_container));
+    //   cudaCheck(cudaMalloc((void**)&maskedVeloClustering.dev_velo_cluster_container, required_size * sizeof(uint)));
     // }
 
     // Invoke clustering
@@ -131,7 +130,6 @@ cudaError_t Stream::operator()(
     // Print output
     // searchByTriplet.print_output(number_of_events);
 
-
     ////////////////////////////////////////
     // Optional: Simplified Kalman filter //
     // DvB: should not be optional, at least not
@@ -161,23 +159,15 @@ cudaError_t Stream::operator()(
       cuda_event_stop,
       print_individual_rates
     );
-
-   
         
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaEventRecord(cuda_generic_event, stream);
-      cudaEventSynchronize(cuda_generic_event);
-      
-      int total_number_of_tracks = host_accumulated_tracks[ number_of_events - 1 ] + host_number_of_tracks_pinned[ number_of_events - 1];
-      //cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, total_number_of_tracks * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
-      
-      cudaEventRecord(cuda_generic_event, stream);
-      cudaEventSynchronize(cuda_generic_event);
+      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
     }
+
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
 
     if (print_individual_rates) {
       t_total.stop();
@@ -185,12 +175,25 @@ cudaError_t Stream::operator()(
       print_timing(number_of_events, times);
     }
 
-    /* MC check */
+    ///////////////////////
+    // Monte Carlo Check //
+    ///////////////////////
+
 #ifdef MC_CHECK
-    if ( repetitions == 0 )  // only check efficiencies once
-      checkTracks( host_tracks_pinned, host_accumulated_tracks,
-		   host_number_of_tracks_pinned, number_of_events,
-		   folder_name_MC);
+    if (repetitions == 0) {  // only check efficiencies once
+      // Fetch data
+      cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
+      cudaEventRecord(cuda_generic_event, stream);
+      cudaEventSynchronize(cuda_generic_event);
+
+      checkTracks(host_tracks_pinned,
+        host_accumulated_tracks,
+		    host_number_of_tracks_pinned,
+        number_of_events,
+		    folder_name_MC);
+    }
 #endif    
   }
   return cudaSuccess;

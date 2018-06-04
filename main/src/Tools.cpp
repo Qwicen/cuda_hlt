@@ -76,8 +76,9 @@ void check_events(
     for ( int i_raw_bank = 0; i_raw_bank < raw_event.number_of_raw_banks; i_raw_bank++ ) {
       const auto raw_bank = VeloRawBank(raw_event.payload + raw_event.raw_bank_offset[i_raw_bank]);
       n_sps_event += raw_bank.sp_count;
-      if ( i_raw_bank != raw_bank.sensor_index )
-        printf("ERROR: at raw bank %u, but index = %u \n", i_raw_bank, raw_bank.sensor_index);
+      if ( i_raw_bank != raw_bank.sensor_index ) {
+        error_cout << "at raw bank " << i_raw_bank << ", but index = " << raw_bank.sensor_index << std::endl;
+      }
       //printf("\t sensor = %u, sp_count = %u \n",  raw_bank.sensor_index, raw_bank.sp_count);
       if ( raw_bank.sp_count > 0 ) {
         uint32_t sp_word = raw_bank.sp_word[0];
@@ -95,9 +96,9 @@ void check_events(
     //printf("# of sps in this event = %u\n", n_sps_event);
   }
 
-  printf("total # of sps = %u \n", n_sps_all_events);
-  float n_sps_average = (float)n_sps_all_events / n_events;
-  printf("average # of sps per event = %f \n", n_sps_average);
+  // printf("total # of sps = %u \n", n_sps_all_events);
+  // float n_sps_average = (float)n_sps_all_events / n_events;
+  // printf("average # of sps per event = %f \n", n_sps_average);
 }
 
 /**
@@ -125,13 +126,13 @@ void readFolder(
     }
     closedir(dir);
     if (folderContents.size() == 0) {
-      std::cerr << "No binary files found in folder " << foldername << std::endl;
+      error_cout << "No binary files found in folder " << foldername << std::endl;
       exit(-1);
     } else {
-      std::cout << "Found " << folderContents.size() << " binary files" << std::endl;
+      info_cout << "Found " << folderContents.size() << " binary files" << std::endl;
     }
   } else {
-    std::cerr << "Folder could not be opened" << std::endl;
+    error_cout << "Folder could not be opened" << std::endl;
     exit(-1);
   }
 
@@ -142,7 +143,7 @@ void readFolder(
     number_of_files = folderContents.size();
   }
 
-  std::cout << "Requested " << number_of_files << " files" << std::endl;
+  info_cout << "Requested " << number_of_files << " files" << std::endl;
   int readFiles = 0;
 
   // Read all requested events
@@ -158,44 +159,16 @@ void readFolder(
     
     readFiles++;
     if ((readFiles % 100) == 0) {
-      std::cout << "." << std::flush;
+      info_cout << "." << std::flush;
     }
   }
 
   // Add last offset
   event_offsets.push_back(accumulated_size);
 
-  std::cout << std::endl << (event_offsets.size() - 1) << " files read" << std::endl << std::endl;
+  info_cout << std::endl << (event_offsets.size() - 1) << " files read" << std::endl << std::endl;
 
   check_events( events, event_offsets, number_of_files );
-}
-
-/**
- * @brief Print statistics from the input files
- */
-void statistics(
-  const std::vector<char>& input,
-  std::vector<unsigned int>& event_offsets
-) {
-
-  // unsigned int max_number_of_hits = 0;
-  // unsigned int max_number_of_hits_in_module = 0;
-  // unsigned int average_number_of_hits_in_module = 0;
-
-  // for (size_t i=0; i<event_offsets.size(); ++i) {
-  //   EventInfo info (input.data() + event_offsets[i]);
-  //   for (size_t j=0; j<info.numberOfModules; ++j) {
-  //     max_number_of_hits_in_module = std::max(max_number_of_hits_in_module, info.module_hitNums[j]);
-  //     average_number_of_hits_in_module += info.module_hitNums[j];
-  //   }
-  //   max_number_of_hits = std::max(max_number_of_hits, info.numberOfHits);
-  // }
-  // average_number_of_hits_in_module /= event_offsets.size() * VeloTracking::n_modules;
-
-  // std::cout << "Statistics on input events:" << std::endl
-  //   << " Max number of hits in event: " << max_number_of_hits << std::endl
-  //   << " Max number of hits in one module: " << max_number_of_hits_in_module << std::endl
-  //   << " Average number of hits in module: " << average_number_of_hits_in_module << std::endl << std::endl;
 }
 
 /**

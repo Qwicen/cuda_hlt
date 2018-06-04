@@ -23,7 +23,7 @@ void MaskedVeloClustering::print_output(
   cudaCheck(cudaMemcpyAsync(module_cluster_num.data(), dev_module_cluster_num, module_cluster_num.size() * sizeof(uint), cudaMemcpyDeviceToHost, *stream));
 
   const auto estimated_number_of_clusters = module_cluster_start[module_cluster_start.size() - 1];
-  std::vector<uint32_t> velo_cluster_container (6 * estimated_number_of_clusters);
+  std::vector<uint32_t> velo_cluster_container (5 * estimated_number_of_clusters);
   cudaCheck(cudaMemcpyAsync(velo_cluster_container.data(), dev_velo_cluster_container, velo_cluster_container.size() * sizeof(uint32_t), cudaMemcpyDeviceToHost, *stream));
 
   float* cluster_xs = (float*) &velo_cluster_container[0];

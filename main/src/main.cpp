@@ -1,8 +1,8 @@
 /**
- *      CUDA Search by Triplet project
+ *      CUDA HLT1
  *      
- *      author  -   Daniel Campora
- *      email   -   dcampora@cern.ch
+ *      author  -  GPU working group
+ *      e-mail  -  lhcb-parallelization@cern.ch
  *
  *      Original development June, 2014
  *      Restarted development on February, 2018
@@ -46,17 +46,14 @@ void printUsage(char* argv[]){
     << std::endl;
 }
 
-
-
-
 int main(int argc, char *argv[])
 {
   std::string folder_name_raw;
-  std::string folder_name_MC;
-  unsigned int number_of_files = 0;
-  unsigned int tbb_threads = 3;
-  unsigned int number_of_repetitions = 10;
-  unsigned int verbosity = 3;
+  std::string folder_name_MC = "";
+  uint number_of_files = 0;
+  uint tbb_threads = 3;
+  uint number_of_repetitions = 10;
+  uint verbosity = 3;
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
@@ -121,7 +118,6 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  
   // Set verbosity level
   std::cout << std::fixed << std::setprecision(6);
   logger::ll.verbosityLevel = verbosity;
@@ -134,7 +130,7 @@ int main(int argc, char *argv[])
   std::cout << "Requested options:" << std::endl
     << " folder with raw bank input (-f): " << folder_name_raw << std::endl
     << " folder with MC truth input (-g): " << folder_name_MC << std::endl
-    << " mc check (compile opt): " << do_mc_check << std::endl
+    << " MC check (compile opt): " << do_mc_check << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
@@ -149,82 +145,26 @@ int main(int argc, char *argv[])
 
   // Read folder contents
   std::vector<char> velopix_events;
-  std::vector<unsigned int> velopix_event_offsets;
+  std::vector<uint> velopix_event_offsets;
   std::vector<char> ut_events;
-  std::vector<unsigned int> ut_event_offsets;
-  readFolder( folder_name_raw, number_of_files,
-	      velopix_events, velopix_event_offsets );
+  std::vector<uint> ut_event_offsets;
+  readFolder(
+    folder_name_raw,
+    number_of_files,
+	  velopix_events,
+    velopix_event_offsets
+  );
 
   std::vector<char> geometry;
   readGeometry(folder_name_raw, geometry);
 
   // Copy data to pinned host memory
   char* host_velopix_events_pinned;
-  unsigned int* host_velopix_event_offsets_pinned;
+  uint* host_velopix_event_offsets_pinned;
   cudaCheck(cudaMallocHost((void**)&host_velopix_events_pinned, velopix_events.size()));
-  cudaCheck(cudaMallocHost((void**)&host_velopix_event_offsets_pinned, velopix_event_offsets.size() * sizeof(unsigned int)));
+  cudaCheck(cudaMallocHost((void**)&host_velopix_event_offsets_pinned, velopix_event_offsets.size() * sizeof(uint)));
   std::copy_n(std::begin(velopix_events), velopix_events.size(), host_velopix_events_pinned);
   std::copy_n(std::begin(velopix_event_offsets), velopix_event_offsets.size(), host_velopix_event_offsets_pinned);
-
-  // // Call clustering
-  // std::vector<std::vector<uint32_t>> clusters = cuda_clustering_simplified(
-  //   geometry,
-  //   velopix_events,
-  //   velopix_event_offsets,
-  //   true
-  // );
-
-  // std::vector<std::vector<uint32_t>> clusters_simplified = cuda_clustering_cpu_optimized(
-  //   geometry,
-  //   velopix_events,
-  //   velopix_event_offsets,
-  //   true
-  // );
-
-  // std::vector<std::vector<uint32_t>> clusters_classical = clustering(
-  //   geometry,
-  //   velopix_events,
-  //   velopix_event_offsets,
-  //   true
-  // );
-
-  // uint found_clusters = 0;
-  // uint found_clusters_classical = 0;
-  // uint found_clusters_simplified = 0;
-
-  // for (int i=0; i<clusters.size(); ++i) {
-  //   found_clusters += clusters[i].size();
-  //   found_clusters_simplified += clusters_simplified[i].size();
-  //   found_clusters_classical += clusters_classical[i].size();
-  // }
-
-  // std::cout << "Found classical: " << found_clusters_classical << std::endl
-  //   << "Found cuda simplified: " << found_clusters << " (" << (100.f * (((float) found_clusters) / ((float) found_clusters_classical))) << " %)" << std::endl
-  //   << "Found cuda simplified cpu optimized: " << found_clusters_simplified << " (" << (100.f * (((float) found_clusters_simplified) / ((float) found_clusters_classical))) << " %)" << std::endl;
-
-  // auto cluster_sum = 0;
-  // std::cout << "Reconstructed clusters:" << std::endl;
-  // for (int i=0; i<clusters.size(); ++i) {
-  //   std::cout << i << ": " << clusters[i].size() << std::endl;
-  //   cluster_sum += clusters[i].size();
-  // }
-  // std::cout << "Reconstructed cluster total: " << cluster_sum << std::endl;
-
-  // cluster_sum = 0;
-  // std::cout << "Reconstructed clusters (simplified):" << std::endl;
-  // for (int i=0; i<clusters_simplified.size(); ++i) {
-  //   std::cout << i << ": " << clusters_simplified[i].size() << std::endl;
-  //   cluster_sum += clusters_simplified[i].size();
-  // }
-  // std::cout << "Reconstructed cluster total (simplified): " << cluster_sum << std::endl;
-
-  // cluster_sum = 0;
-  // std::cout << "Reconstructed clusters (classical):" << std::endl;
-  // for (int i=0; i<clusters_classical.size(); ++i) {
-  //   std::cout << i << ": " << clusters_classical[i].size() << std::endl;
-  //   cluster_sum += clusters_classical[i].size();
-  // }
-  // std::cout << "Reconstructed cluster total (classical): " << cluster_sum << std::endl;
 
   // Initialize detector constants on GPU
   initializeConstants();
@@ -238,7 +178,6 @@ int main(int argc, char *argv[])
       velopix_event_offsets,
       geometry,
       number_of_events,
-      velopix_events.size(),
       transmit_host_to_device,
       transmit_device_to_host,
       do_check,
@@ -247,28 +186,29 @@ int main(int argc, char *argv[])
       folder_name_MC,
       i
     );
+
     // Memory consumption
     size_t free_byte ;
     size_t total_byte ;
     cudaCheck( cudaMemGetInfo( &free_byte, &total_byte ) );
     float free_percent = (float)free_byte / total_byte * 100;
     float used_percent = (float)(total_byte - free_byte) / total_byte * 100;
-    printf("GPU memory: %f percent free, %f percent used \n", free_percent, used_percent );
+    verbose_cout << "GPU memory: " << free_percent << " percent free, "
+      << used_percent << " percent used " << std::endl;
   }
   
   // Attempt to execute all in one go
   Timer t;
   tbb::parallel_for(
-    static_cast<unsigned int>(0),
-    static_cast<unsigned int>(tbb_threads),
-    [&] (unsigned int i) {
+    static_cast<uint>(0),
+    static_cast<uint>(tbb_threads),
+    [&] (uint i) {
       auto& s = streams[i];
       s(
         host_velopix_events_pinned,
         host_velopix_event_offsets_pinned,
         velopix_events.size(),
         velopix_event_offsets.size(),
-        0,
         number_of_events,
         number_of_repetitions
       );
@@ -279,17 +219,9 @@ int main(int argc, char *argv[])
   std::cout << (number_of_events * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
-  // // Memory consumption
-  // size_t free_byte ;
-  // size_t total_byte ;
-  // cudaCheck( cudaMemGetInfo( &free_byte, &total_byte ) );
-  // float free_percent = (float)free_byte / total_byte * 100;
-  // float used_percent = (float)(total_byte - free_byte) / total_byte * 100;
-  // printf("GPU memory: %f percent free, %f percent used \n", free_percent, used_percent );
-  
   // Free and reset device
-  cudaCheck(cudaFreeHost(host_velopix_events_pinned));
-  cudaCheck(cudaFreeHost(host_velopix_event_offsets_pinned));
+  // cudaCheck(cudaFreeHost(host_velopix_events_pinned));
+  // cudaCheck(cudaFreeHost(host_velopix_event_offsets_pinned));
   cudaCheck(cudaDeviceReset());
 
   return 0;

@@ -3,9 +3,7 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include "../../../../main/include/Common.h"
-
 #include "assert.h"
-
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -17,7 +15,7 @@
 namespace VeloTracking {
   // Detector constants
   static constexpr uint n_modules = 52;
-  static constexpr uint n_sensors = 208;
+  static constexpr uint n_sensors = n_modules * 4;
   
   // Note: constexpr for this variable (arrays) is still not supported, so we need
   //       to initialize it in runtime
@@ -57,8 +55,8 @@ namespace VeloTracking {
   // This is just a constant
   static constexpr uint num_atomics = 4;
 
-// Constants for requested storage on device
-  static constexpr uint max_tracks = 2000; // 1000;
+  // Constants for requested storage on device
+  static constexpr uint max_tracks = 2000;
   static constexpr uint max_track_size = 26;
   static constexpr uint max_numhits_in_module = 300; 
 
@@ -70,9 +68,6 @@ namespace VeloTracking {
   static constexpr float param_w = 3966.94f;
   static constexpr float param_w_inverted = 0.000252083f;
 }
-
-
-  
 
 struct Module {
     uint hitStart;
@@ -98,9 +93,7 @@ struct HitXY {
     ) : x(_x), y(_y) {}
 };
 
-
-
-struct HitBase { // 4 * 4 = 16 B
+struct HitBase { // 3 * 4 = 12 B
     float x;
     float y;
     float z;
@@ -117,7 +110,7 @@ template <bool MCCheck>
 struct Hit;
 
 template <>
-struct Hit <true> : public HitBase {
+struct Hit <true> : public HitBase { // 4 * 4 = 16 B
     uint32_t LHCbID;
     
     __device__ Hit(){}
@@ -159,9 +152,12 @@ struct TrackHits { // 4 + 26 * 4 = 116 B
 
 /* Structure to save final track
    Contains information needed later on in the HLT chain
-   and / or for truth matching */
+   and / or for truth matching
+
+   Without MC: 4 + 26 * 12 = 316 B
+   With MC:    4 + 26 * 16 = 420 B */
 template <bool MCCheck>   
-struct Track { // 4 + 26 * 16 = 420 B
+struct Track {
   unsigned short hitsNum;
   Hit <MCCheck> hits[VeloTracking::max_track_size];
   

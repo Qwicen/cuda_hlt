@@ -74,7 +74,6 @@ struct Stream {
     const std::vector<uint>& event_offsets,
     const std::vector<char>& geometry,
     const uint number_of_events,
-    const size_t param_starting_events_size,
     const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
@@ -109,7 +108,6 @@ struct Stream {
     const uint* host_event_offsets_pinned,
     size_t host_events_pinned_size,
     size_t host_event_offsets_pinned_size,
-    uint start_event,
     uint number_of_events,
     uint number_of_repetitions
   );

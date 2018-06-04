@@ -5,7 +5,6 @@ cudaError_t Stream::initialize(
   const std::vector<uint>& event_offsets,
   const std::vector<char>& param_geometry,
   const uint number_of_events,
-  const size_t param_starting_events_size,
   const bool param_transmit_host_to_device,
   const bool param_transmit_device_to_host,
   const bool param_do_check,
@@ -29,16 +28,17 @@ cudaError_t Stream::initialize(
   
   // Blocks and threads for each algorithm
   const uint prefixSumBlocks = (VeloTracking::n_modules * number_of_events + 511) / 512;
+  const uint prefixSumScanBlocks = prefixSumBlocks==1 ? 1 : (prefixSumBlocks-1);
 
-  estimateInputSize.set(     dim3(number_of_events),  dim3(32, 26), stream);
-  prefixSumReduce.set(       dim3(prefixSumBlocks),   dim3(256),    stream);
-  prefixSumSingleBlock.set(  dim3(1),                 dim3(1024),   stream);
-  prefixSumScan.set(         dim3(prefixSumBlocks-1), dim3(512),    stream);
-  maskedVeloClustering.set(  dim3(number_of_events),  dim3(256),    stream);
-  calculatePhiAndSort.set(   dim3(number_of_events),  dim3(64),     stream);
-  searchByTriplet.set(       dim3(number_of_events),  dim3(32),     stream);
-  consolidateTracks.set(     dim3(number_of_events),  dim3(32),     stream);
-  simplifiedKalmanFilter.set(dim3(number_of_events),  dim3(1024),   stream);
+  estimateInputSize.set(     dim3(number_of_events),    dim3(32, 26), stream);
+  prefixSumReduce.set(       dim3(prefixSumBlocks),     dim3(256),    stream);
+  prefixSumSingleBlock.set(  dim3(1),                   dim3(1024),   stream);
+  prefixSumScan.set(         dim3(prefixSumScanBlocks), dim3(512),    stream);
+  maskedVeloClustering.set(  dim3(number_of_events),    dim3(256),    stream);
+  calculatePhiAndSort.set(   dim3(number_of_events),    dim3(64),     stream);
+  searchByTriplet.set(       dim3(number_of_events),    dim3(32),     stream);
+  consolidateTracks.set(     dim3(number_of_events),    dim3(32),     stream);
+  simplifiedKalmanFilter.set(dim3(number_of_events),    dim3(1024),   stream);
 
   // Datatypes for definitions below
   // Note: The malloc'ing could be eventually moved to each handler, together
@@ -88,7 +88,7 @@ cudaError_t Stream::initialize(
   
   // Allocate buffers for algorithms
   // Clustering
-  cudaCheck(cudaMalloc((void**)&dev_raw_input, param_starting_events_size));
+  cudaCheck(cudaMalloc((void**)&dev_raw_input, raw_events.size()));
   cudaCheck(cudaMalloc((void**)&dev_raw_input_offsets, event_offsets.size() * sizeof(uint)));
   // DvB: why +2?
   cudaCheck(cudaMalloc((void**)&dev_estimated_input_size, (number_of_events * VeloTracking::n_modules + 2) * sizeof(uint)));
@@ -106,9 +106,23 @@ cudaError_t Stream::initialize(
   dev_tracks_to_follow = dev_cluster_candidates;
   
   cudaCheck(cudaMalloc((void**)&dev_tracks, number_of_events * max_tracks_in_event * sizeof(TrackHits)));
-  cudaCheck(cudaMalloc((void**)&dev_tracklets, average_number_of_hits_per_event * number_of_events * sizeof(TrackHits)));
   cudaCheck(cudaMalloc((void**)&dev_weak_tracks, average_number_of_hits_per_event * number_of_events * sizeof(uint)));
+  
+  cudaCheck(cudaMalloc((void**)&dev_tracklets, average_number_of_hits_per_event * number_of_events * sizeof(TrackHits)));
   cudaCheck(cudaMalloc((void**)&dev_output_tracks, max_tracks_in_event * number_of_events * sizeof(Track<do_mc_check>)));
+
+  // std::cout << average_number_of_hits_per_event << " " << number_of_events << " " << sizeof(TrackHits)
+  //   << " = " << average_number_of_hits_per_event * number_of_events * sizeof(TrackHits) << std::endl
+  //   << (max_tracks_in_event / 3) << " " << number_of_events << " " << sizeof(Track<do_mc_check>) << " = "
+  //   << (max_tracks_in_event / 3) * number_of_events * sizeof(Track<do_mc_check>) << std::endl;
+
+  // const auto tracklets_size = average_number_of_hits_per_event * number_of_events * sizeof(TrackHits);
+  // const auto output_tracks_size = ((tracklets_size / sizeof(Track<do_mc_check>)) + 1) * sizeof(Track<do_mc_check>);
+  // std::cout << output_tracks_size << std::endl;
+
+  // cudaCheck(cudaMalloc((void**)&dev_output_tracks, output_tracks_size));
+  // dev_tracklets = (TrackHits*) dev_output_tracks;
+
   cudaCheck(cudaMalloc((void**)&dev_hit_used, average_number_of_hits_per_event * number_of_events * sizeof(bool)));
   cudaCheck(cudaMalloc((void**)&dev_atomics_storage, number_of_events * atomic_space * sizeof(int)));
   cudaCheck(cudaMalloc((void**)&dev_h0_candidates, 2 * average_number_of_hits_per_event * number_of_events * sizeof(short)));
@@ -206,6 +220,5 @@ cudaError_t Stream::initialize(
     dev_module_cluster_num
   );
 
- 
   return cudaSuccess;
 }
