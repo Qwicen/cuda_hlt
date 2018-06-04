@@ -102,7 +102,7 @@ void check_velopix_events( const std::vector<char> events,
   printf("average # of sps per event = %f \n", n_sps_average);
 }
 
-void read_ut_events_into_arrays( VeloUTTracking::Hits hits_layers_events[][VeloUTTracking::n_layers],
+void read_ut_events_into_arrays( VeloUTTracking::Hits hits_layers_events[],
 				 uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 				 const std::vector<char> events,
 				 const std::vector<unsigned int> event_offsets,
@@ -118,34 +118,38 @@ void read_ut_events_into_arrays( VeloUTTracking::Hits hits_layers_events[][VeloU
     */
     // first four words: how many hits are in each layer?
     int n_hits_total = 0;
-    for ( int i = 0; i < VeloUTTracking::n_layers; ++i ) {
-      n_hits_layers_events[i_event][i] = *((uint32_t*)raw_input);
-      n_hits_total += n_hits_layers_events[i_event][i];
+    int accumulated_hits = 0;
+    int accumulated_hits_layers[4];
+    for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+      n_hits_layers_events[i_event][i_layer] = *((uint32_t*)raw_input);
+      n_hits_total += n_hits_layers_events[i_event][i_layer];
       raw_input += sizeof(uint32_t);
-      printf("At event %u, in layer %u, # of hits = %u \n", i_event, i, n_hits_layers_events[i_event][i] );
-      assert( n_hits_layers_events[i_event][i] < VeloUTTracking::max_numhits_per_layer );
+      //printf("At event %u, in layer %u, # of hits = %u \n", i_event, i, n_hits_layers_events[i_event][i_layer] );
+      assert( n_hits_layers_events[i_event][i_layer] < VeloUTTracking::max_numhits_per_layer );
+      accumulated_hits_layers[i_layer] = accumulated_hits;
+      accumulated_hits += n_hits_layers_events[i_event][i_layer];
+      printf("At event %u, accumulated hits in layer %u = %u \n", i_event, i_layer, accumulated_hits_layers[i_layer]);
     }
     // then the hit variables, sorted by layer
-    //VeloUTTracking::Hits hits_layers[ VeloUTTracking::n_layers ];
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].x[0]) );
+      int layer_offset = accumulated_hits_layers[i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &( hits_layers_events[i_event].x[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].z[0]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].z[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].yMin[0]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].yMin[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].yMax[0]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].yMax[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].dxdy[0]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].dxdy[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].zAtyEq0[0]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].zAtyEq0[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].weight[0]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].weight[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].planeCode[0]) );
+      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].planeCode[ layer_offset ]) );
       raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event][i_layer].highThreshold[0]) );
+      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].highThreshold[ layer_offset ]) );
       raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer]; 
     }
  
@@ -154,33 +158,51 @@ void read_ut_events_into_arrays( VeloUTTracking::Hits hits_layers_events[][VeloU
 }
 
 
-void check_ut_events( const VeloUTTracking::Hits hits_layers_events[][VeloUTTracking::n_layers],
+void check_ut_events( const VeloUTTracking::Hits hits_layers_events[],
 		      const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 		      const int n_events ) {
 
+  float average_number_of_hits_per_event = 0;
+  
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
     // sanity checks
+    float number_of_hits = 0;
+
+    // find out offsets for every layer
+    int accumulated_hits = 0;
+    int accumulated_hits_layers[4];
+    for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+      accumulated_hits_layers[i_layer] = accumulated_hits;
+      accumulated_hits += n_hits_layers_events[i_event][i_layer];
+    }
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       printf("checks on layer %u, with %u hits \n", i_layer, n_hits_layers_events[i_event][i_layer]);
+      number_of_hits += n_hits_layers_events[i_event][i_layer];
       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
-
-	
+	int layer_offset = accumulated_hits_layers[i_layer];
 	printf("\t at hit %u, x = %f, z = %f, yMin = %f, yMax = %f, dxdy = %f, zAtyEq0 = %f, weight = %f, planeCode = %u, highThreshold = %u \n",
 	       i_hit,
-	       hits_layers_events[i_event][i_layer].x[i_hit],
-	       hits_layers_events[i_event][i_layer].z[i_hit],
-	       hits_layers_events[i_event][i_layer].yMin[i_hit],
-	       hits_layers_events[i_event][i_layer].yMax[i_hit],
-	       hits_layers_events[i_event][i_layer].dxdy[i_hit],
-	       hits_layers_events[i_event][i_layer].zAtyEq0[i_hit],
-	       hits_layers_events[i_event][i_layer].weight[i_hit],
-	       hits_layers_events[i_event][i_layer].planeCode[i_hit],
-	       hits_layers_events[i_event][i_layer].highThreshold[i_hit] );
+	       hits_layers_events[i_event].x[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].z[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].yMin[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].yMax[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].dxdy[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].zAtyEq0[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].weight[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].planeCode[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].highThreshold[ layer_offset + i_hit ] );
       }
     }
+
+    
+    average_number_of_hits_per_event += number_of_hits;
+    printf("# of UT hits = %f \n", number_of_hits);
     
   }
-  
+
+  average_number_of_hits_per_event = average_number_of_hits_per_event / n_events;
+  printf("average # of UT hits / event = %f \n", average_number_of_hits_per_event);
+    
   
 }
 

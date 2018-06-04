@@ -32,8 +32,9 @@
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
-    << std::endl << " -f {folder containing .bin files with raw bank information}"
+    << std::endl << " -f {folder containing .bin files with velopix raw bank information}"
     << std::endl << " -g {folder containing .bin files with MC truth information}"
+    << std::endl << " -e {folder containing, bin files with UT hit information}"
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=3]"
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
@@ -188,12 +189,12 @@ int main(int argc, char *argv[])
 	      ut_events, ut_event_offsets );
 
   
-  VeloUTTracking::Hits ut_hits_events[number_of_events][VeloUTTracking::n_layers];
+  VeloUTTracking::Hits ut_hits_events[number_of_events];
   uint32_t ut_n_hits_layers_events[number_of_events][VeloUTTracking::n_layers];
   read_ut_events_into_arrays( ut_hits_events, ut_n_hits_layers_events,
 			      ut_events, ut_event_offsets, number_of_events );
 
-  //check_ut_events( ut_hits_events, ut_n_hits_layers_events, number_of_events );
+  check_ut_events( ut_hits_events, ut_n_hits_layers_events, number_of_events );
 
   
   // // Call clustering

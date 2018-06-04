@@ -25,17 +25,23 @@ namespace VeloUTTracking {
   
   /* Cut-offs */
   static constexpr uint max_numhits_per_layer = 500;
+  static constexpr uint max_numhits_per_event = 1500; // to do: find optimal value for this cut-off
 
+  /* SoA for hit variables
+     The hits for every layer are written behind each other, the offsets 
+     are stored for access;
+     one Hits structure exists per event
+   */
   struct Hits {
-    float x[max_numhits_per_layer];
-    float z[max_numhits_per_layer];
-    float yMin[max_numhits_per_layer];
-    float yMax[max_numhits_per_layer];
-    float dxdy[max_numhits_per_layer];
-    float zAtyEq0[max_numhits_per_layer];
-    float weight[max_numhits_per_layer];
-    int   planeCode[max_numhits_per_layer];
-    int   highThreshold[max_numhits_per_layer];
+    float x[max_numhits_per_event];
+    float z[max_numhits_per_event];
+    float yMin[max_numhits_per_event];
+    float yMax[max_numhits_per_event];
+    float dxdy[max_numhits_per_event];
+    float zAtyEq0[max_numhits_per_event];
+    float weight[max_numhits_per_event];
+    int   planeCode[max_numhits_per_event];
+    int   highThreshold[max_numhits_per_event];
   };
 
 
