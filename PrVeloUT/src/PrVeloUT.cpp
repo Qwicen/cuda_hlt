@@ -13,10 +13,10 @@
 //-----------------------------------------------------------------------------
 
 namespace {
-  bool rejectTrack(const Track* track){
-    return track->checkFlag( Track::Backward )
-      || track->checkFlag( Track::Invalid );
-  }
+  // bool rejectTrack(const Track* track){
+  //   return track->checkFlag( Track::Backward )
+  //     || track->checkFlag( Track::Invalid );
+  // }
 
 
   // -- These things are all hardcopied from the PrTableForFunction
@@ -75,9 +75,9 @@ int PrVeloUT::initialize() {
 //=============================================================================
 // Main execution
 //=============================================================================
-Track PrVeloUT::operator()(const Track& inputTracks) const {
+std::vector<Track> PrVeloUT::operator()(const std::vector<Track>& inputTracks) const {
 
-  Track outputTracks;
+  std::vector<Track> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
   const UT::HitHandler* hh = m_HitHandler.get();
@@ -85,15 +85,15 @@ Track PrVeloUT::operator()(const Track& inputTracks) const {
 
   fillIterators(hh, iteratorsLayers);
 
-  const std::vector<float> fudgeFactors = m_PrUTMagnetTool->returnDxLayTable();
-  const std::vector<float> bdlTable     = m_PrUTMagnetTool->returnBdlTable();
+  const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
+  const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
   std::array<std::vector<Hit>,4> hitsInLayers;
   for( auto& it : hitsInLayers ) it.reserve(8); // check this number!
 
-  for(const Track* veloTr : inputTracks) {
+  for(const Track& veloTr : inputTracks) {
 
-    if( rejectTrack( veloTr ) ) continue;
+    // if( rejectTrack( veloTr ) ) continue;
 
     VeloState trState;
     if( !getState(veloTr, trState, outputTracks)) continue;
@@ -121,12 +121,19 @@ Track PrVeloUT::operator()(const Track& inputTracks) const {
 
   return outputTracks;
 }
+
 //=============================================================================
 // Get the state, do some cuts
 //=============================================================================
-bool PrVeloUT::getState(const Track* iTr, MiniState& trState, Tracks& outputTracks) const {
-  const LHCb::State* s = iTr->stateAt(LHCb::State::EndVelo);
-  const LHCb::State& state = s ? *s : (iTr->closestState(LHCb::State::EndVelo));
+bool PrVeloUT::getState(
+  const std::vector<VeloState>& iTr, 
+  VeloState& trState, 
+  std::vector<std::vector<VeloState>>& outputTracks ) const 
+{
+  // const VeloState* s = iTr.stateAt(LHCb::State::EndVelo);
+  // const VeloState& state = s ? *s : (iTr.closestState(LHCb::State::EndVelo));
+  // TODO get the closest state not the last
+  const VeloState state = iTr.back();
 
   // -- reject tracks outside of acceptance or pointing to the beam pipe
   trState.tx = state.tx();
@@ -135,47 +142,51 @@ bool PrVeloUT::getState(const Track* iTr, MiniState& trState, Tracks& outputTrac
   trState.y = state.y();
   trState.z = state.z();
 
-  const float xMidUT =  trState.x + trState.tx*(m_zMidUT-trState.z);
-  const float yMidUT =  trState.y + trState.ty*(m_zMidUT-trState.z);
+  // m_zMidUT comes from MagnetTool
+  const float xMidUT =  trState.x + trState.tx*( m_zMidUT - trState.z);
+  const float yMidUT =  trState.y + trState.ty*( m_zMidUT - trState.z);
 
   if( xMidUT*xMidUT+yMidUT*yMidUT  < m_centralHoleSize*m_centralHoleSize ) return false;
   if( (std::abs(trState.tx) > m_maxXSlope) || (std::abs(trState.ty) > m_maxYSlope) ) return false;
 
-#ifndef SMALL_OUTPUT
-  if(m_passTracks && std::abs(xMidUT) < m_passHoleSize && std::abs(yMidUT) < m_passHoleSize){
-    std::unique_ptr<LHCb::Track> outTr{ new LHCb::Track() };
-    outTr->reset();
-    outTr->copy(*iTr);
-    outTr->addToAncestors( iTr );
-    outputTracks.insert(outTr.release());
-    return false;
-  }
-#endif
-#ifdef SMALL_OUTPUT
-  if(m_passTracks && std::abs(xMidUT) < m_passHoleSize && std::abs(yMidUT) < m_passHoleSize){
-    outputTracks.emplace_back();
-    outputTracks.back().qOverP = 0;
-    outputTracks.back().veloTr = iTr;
+  if(m_passTracks && std::abs(xMidUT) < m_passHoleSize && std::abs(yMidUT) < m_passHoleSize) {
+
+    // TODO confirm this
+    // std::unique_ptr<LHCb::Track> outTr{ new LHCb::Track() };
+    // outTr->reset();
+    // outTr->copy(*iTr);
+    // outTr->addToAncestors( iTr );
+    // outputTracks.insert(outTr.release());
+
+    outputTracks.emplace_back(iTr);
 
     return false;
   }
-#endif
 
   return true;
 
 }
+
 //=============================================================================
 // Find the hits
 //=============================================================================
- bool PrVeloUT::getHits(std::array<UT::Mut::Hits,4>& hitsInLayers, const std::array<std::array<HitRange::const_iterator,85>,4>& iteratorsLayers,
-                        const UT::HitHandler* hh,
-                        const std::vector<float>& fudgeFactors, MiniState& trState ) const {
-
+bool PrVeloUT::getHits(
+  std::array<std::vector<Hit>,4>& hitsInLayers, 
+  const std::array<std::array<HitRange::const_iterator,85>,4>& iteratorsLayers,
+  const UT::HitHandler* hh,
+  const std::vector<float>& fudgeFactors, 
+  VeloState& trState ) const 
+{
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
   const float absSlopeY = std::abs( trState.ty );
   const int index = (int)(absSlopeY*100 + 0.5);
-  const std::array<float,4> normFact = { fudgeFactors[4*index], fudgeFactors[1 + 4*index], fudgeFactors[2 + 4*index], fudgeFactors[3 + 4*index] };
+  const std::array<float,4> normFact = { 
+    fudgeFactors[4*index], 
+    fudgeFactors[1 + 4*index], 
+    fudgeFactors[2 + 4*index], 
+    fudgeFactors[3 + 4*index] 
+  };
 
   // -- this 500 seems a little odd...
   const float invTheta = std::min(500.,1.0/std::sqrt(trState.tx*trState.tx+trState.ty*trState.ty));
@@ -185,20 +196,25 @@ bool PrVeloUT::getState(const Track* iTr, MiniState& trState, Tracks& outputTrac
 
   int nLayers = 0;
 
-  for(int iStation = 0; iStation < 2; ++iStation){
+  for(int iStation = 0; iStation < 2; ++iStation) {
 
     if( iStation == 1 && nLayers == 0 ){
-      //counter("#NoHitsFound")++;
+      // No hits found
       return false;
     }
 
-    for(int iLayer = 0; iLayer < 2; ++iLayer){
-
+    for(int iLayer = 0; iLayer < 2; ++iLayer) {
       if( iStation == 1 && iLayer == 1 && nLayers < 2 ) return false;
 
-      const HitRange& hits = hh->hits( iStation, iLayer );
+      const std::pair<Hit, Hit> hit_range = {
+        std::next( std::begin(hits), iStation),
+        std::next( std::begin(hits), iLayer)
+      };
+      // TODO get a vector reference to the "range of hits" instead of the beginning and the end
+      // const HitRange& hits = hh->hits( iStation, iLayer );
 
-      if( UNLIKELY( hits.empty() ) ) continue;
+      // UNLIKELY is a MACRO for `__builtin_expect` compiler hint of GCC
+      if( hits.empty() ) continue;
 
       const float dxDy   = hits.front().dxDy();
       const float zLayer = hits.front().zAtYEq0();
@@ -231,6 +247,11 @@ bool PrVeloUT::getState(const Track* iTr, MiniState& trState, Tracks& outputTrac
       const int indexLow  = std::max( indexLowProto, 0 );
       const int indexHi   = std::min( indexHiProto, 84);
 
+      const std::pair<Hit, Hit> hit_range = {
+        std::next( std::begin(hits), iStation),
+        std::next( std::begin(hits), iLayer)
+      };
+
       HitRange::const_iterator itBeg = iteratorsLayers[2*iStation+iLayer][ indexLow ];
       HitRange::const_iterator itEnd = iteratorsLayers[2*iStation+iLayer][ indexHi  ];
 
@@ -249,7 +270,7 @@ bool PrVeloUT::getState(const Track* iTr, MiniState& trState, Tracks& outputTrac
 //=========================================================================
 // Form clusters
 //=========================================================================
-bool PrVeloUT::formClusters(const std::array<UT::Mut::Hits,4>& hitsInLayers, TrackHelper& helper) const {
+bool PrVeloUT::formClusters(const std::array<std::vector<Hit>,4>& hitsInLayers, TrackHelper& helper) const {
 
   bool fourLayerSolution = false;
 
@@ -268,7 +289,7 @@ bool PrVeloUT::formClusters(const std::array<UT::Mut::Hits,4>& hitsInLayers, Tra
 
       if( std::abs(tx-helper.state.tx) > m_deltaTx2 ) continue;
 
-      const UT::Mut::Hit* bestHit1 = nullptr;
+      const Hit* bestHit1 = nullptr;
       float hitTol = m_hitTol2;
       for( auto& hit1 : hitsInLayers[1]){
 

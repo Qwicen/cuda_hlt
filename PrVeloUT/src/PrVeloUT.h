@@ -39,8 +39,8 @@
 // Math from ROOT
 #include "CholeskyDecomp.h"
 
-// Types
 #include "include/VeloTypes.h"
+#include "include/SystemOfUnits.h"
 
 // #ifdef SMALL_OUTPUT
 // #include "PrKernel/PrVeloUTTrack.h"
@@ -95,25 +95,25 @@ public:
 
 private:
 
-  float m_minMomentum;    // {this, "minMomentum",      1.5*Gaudi::Units::GeV};
-  float m_minPT;          // {this, "minPT",            0.3*Gaudi::Units::GeV};
-  float m_maxPseudoChi2;  // {this, "maxPseudoChi2",    1280.};
-  float m_yTol;           // {this, "YTolerance",       0.5  * Gaudi::Units::mm}; // 0.8
-  float m_yTolSlope;      // {this, "YTolSlope",        0.08}; // 0.2
-  float m_hitTol1;        // {this, "HitTol1",          6.0 * Gaudi::Units::mm};
-  float m_hitTol2;        // {this, "HitTol2",          0.8 * Gaudi::Units::mm}; // 0.8
-  float m_deltaTx1;       // {this, "DeltaTx1",         0.035};
-  float m_deltaTx2;       // {this, "DeltaTx2",         0.018}; // 0.02
-  float m_maxXSlope;      // {this, "MaxXSlope",        0.350};
-  float m_maxYSlope;      // {this, "MaxYSlope",        0.300};
-  float m_centralHoleSize;// {this, "centralHoleSize",  33. * Gaudi::Units::mm};
-  float m_intraLayerDist; // {this, "IntraLayerDist",   15.0 * Gaudi::Units::mm};
-  float m_overlapTol;     // {this, "OverlapTol",       0.7 * Gaudi::Units::mm};
-  float m_passHoleSize;   // {this, "PassHoleSize",     40. * Gaudi::Units::mm};
-  int   m_minHighThres;   // {this, "MinHighThreshold", 1};
-  bool  m_printVariables; // {this, "PrintVariables",   false};
-  bool  m_passTracks;     // {this, "PassTracks",       false};
-  bool  m_doTiming;       // {this, "TimingMeasurement",false};
+  float m_minMomentum = 1.5*Gaudi::Units::GeV;
+  float m_minPT = 0.3*Gaudi::Units::GeV;
+  float m_maxPseudoChi2 = 1280.;
+  float m_yTol = 0.5  * Gaudi::Units::mm;
+  float m_yTolSlope = 0.08;
+  float m_hitTol1 = 6.0 * Gaudi::Units::mm;
+  float m_hitTol2 = 0.8 * Gaudi::Units::mm;
+  float m_deltaTx1 = 0.035;
+  float m_deltaTx2 = 0.018;
+  float m_maxXSlope = 0.350;
+  float m_maxYSlope = 0.300;
+  float m_centralHoleSize = 33. * Gaudi::Units::mm;
+  float m_intraLayerDist = 15.0 * Gaudi::Units::mm;
+  float m_overlapTol = 0.7 * Gaudi::Units::mm;
+  float m_passHoleSize = 40. * Gaudi::Units::mm;
+  int   m_minHighThres = 1;
+  bool  m_printVariables = false;
+  bool  m_passTracks = false;
+  bool  m_doTiming = false;
 
   // typedef MultiIndexedHitContainer<Hit, UT::Info::kNStations, UT::Info::kNLayers>::HitRange HitRange;
 
@@ -142,7 +142,7 @@ private:
   // -- -882mm -> 882mm
   // -- The last element is an "end" iterator, to make sure we never go out of bound
   // ==============================================================================
-  inline void fillIterators(const UT::HitHandler*hh, std::array<std::array<HitRange::const_iterator,85>,4>& iteratorsLayers) const{
+  inline void fillIterators(const UT::HitHandler* hh, std::array<std::array<HitRange::const_iterator,85>,4>& iteratorsLayers) const{
 
     for(int iStation = 0; iStation < 2; ++iStation){
       for(int iLayer = 0; iLayer < 2; ++iLayer){
