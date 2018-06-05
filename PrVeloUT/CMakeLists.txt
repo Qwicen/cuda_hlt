@@ -1,0 +1,28 @@
+cmake_minimum_required(VERSION 2.8)
+
+message ( STATUS "CMAKE_CXX_COMPILER: " ${CMAKE_CXX_COMPILER} )
+
+project(prvelout)
+
+# -ferror-limit=2
+
+set (CMAKE_CXX_FLAGS_INIT "-g -std=c++17 -Wall -march=native")
+set (OPTIMIZATION "-O2 -DNDEBUG")
+set (DEBUG_VARS "-O0 -DDEBUG")
+
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_INIT} ${DEBUG_VARS}" )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS_INIT} ${DEBUG_VARS}" )
+
+# set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl -lrt" )
+
+# Add headers
+file (GLOB_RECURSE LibFiles 
+    "include/*.h" )
+add_custom_target(headers SOURCES ${LibFiles})
+
+# Add source files
+file (GLOB_RECURSE SrcFiles 
+    "src/*.cpp")
+#add_custom_target(sources SOURCES ${SrcFiles})
+
+add_executable (${PROJECT_NAME} "src/entryp.cpp" ${SrcFiles})

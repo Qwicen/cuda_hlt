@@ -2,14 +2,6 @@
 
 #include <cmath>
 
-// from cuda_hlt/checker/lib
-#include "../checker/lib/include/Tracks.h"
-
-// from Rec - PrKernel
-#include "include/UTHitHandler.h"
-#include "include/UTHitInfo.h"
-#include "include/UTHit.h"
-
 #include "PrUTMagnetTool.h"
 
 // Math from ROOT
