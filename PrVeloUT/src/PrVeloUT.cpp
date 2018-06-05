@@ -80,16 +80,16 @@ std::vector<Track> PrVeloUT::operator()(const std::vector<Track>& inputTracks) c
   std::vector<Track> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
-  const UT::HitHandler* hh = m_HitHandler.get();
-  std::array<std::array<HitRange::const_iterator,85>,4> iteratorsLayers;
+  // const UT::HitHandler* hh = m_HitHandler.get();
+  // std::array<std::array<HitRange::const_iterator,85>,4> iteratorsLayers;
 
-  fillIterators(hh, iteratorsLayers);
+  // fillIterators(hh, iteratorsLayers);
 
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
   std::array<std::vector<Hit>,4> hitsInLayers;
-  for( auto& it : hitsInLayers ) it.reserve(8); // check this number!
+  // for( auto& it : hitsInLayers ) it.reserve(8); // check this number!
 
   for(const Track& veloTr : inputTracks) {
 
@@ -98,7 +98,8 @@ std::vector<Track> PrVeloUT::operator()(const std::vector<Track>& inputTracks) c
     VeloState trState;
     if( !getState(veloTr, trState, outputTracks)) continue;
 
-    for( auto& it : hitsInLayers ) it.clear();
+    // for( auto& it : hitsInLayers ) it.clear();
+
     if( !getHits(hitsInLayers, iteratorsLayers, hh, fudgeFactors, trState) ) continue;
 
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
@@ -171,11 +172,10 @@ bool PrVeloUT::getState(
 // Find the hits
 //=============================================================================
 bool PrVeloUT::getHits(
-  std::array<std::vector<Hit>,4>& hitsInLayers, 
-  const std::array<std::array<HitRange::const_iterator,85>,4>& iteratorsLayers,
-  const UT::HitHandler* hh,
+  std::array<std::vector<Hit>,4>& hitsInLayers,
+  const std::array<std::vector<Hit>,4>& inputHits,
   const std::vector<float>& fudgeFactors, 
-  VeloState& trState ) const 
+  const VeloState& trState ) const 
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
@@ -198,20 +198,13 @@ bool PrVeloUT::getHits(
 
   for(int iStation = 0; iStation < 2; ++iStation) {
 
-    if( iStation == 1 && nLayers == 0 ){
-      // No hits found
-      return false;
-    }
+    if( iStation == 1 && nLayers == 0 ) return false;
 
     for(int iLayer = 0; iLayer < 2; ++iLayer) {
       if( iStation == 1 && iLayer == 1 && nLayers < 2 ) return false;
 
-      const std::pair<Hit, Hit> hit_range = {
-        std::next( std::begin(hits), iStation),
-        std::next( std::begin(hits), iLayer)
-      };
-      // TODO get a vector reference to the "range of hits" instead of the beginning and the end
-      // const HitRange& hits = hh->hits( iStation, iLayer );
+      int layer = 2*iStation+iLayer;
+      const std::vector<Hit>& hits = inputHits[layer];
 
       // UNLIKELY is a MACRO for `__builtin_expect` compiler hint of GCC
       if( hits.empty() ) continue;
@@ -221,9 +214,9 @@ bool PrVeloUT::getHits(
 
       const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
       const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
-      const float yLayer = yAtZ + yTol*dxDyHelper[2*iStation+iLayer];
+      const float yLayer = yAtZ + yTol*dxDyHelper[layer];
 
-      const float normFactNum = normFact[2*iStation + iLayer];
+      const float normFactNum = normFact[layer];
       const float invNormFact = 1.0/normFactNum;
 
       // -- Get the (approximate) x position at y=0. For stereo layers, we need to take
@@ -236,31 +229,27 @@ bool PrVeloUT::getHits(
       // -- and then do a linear search is faster than binary
       // -- searching the whole range (or binary searching)
       // -- starting from the iterator positions.
-      const float lowerBoundX =
-        (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(trState.tx)*m_intraLayerDist;
-      const float upperBoundX =
-        (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(trState.tx)*m_intraLayerDist;
 
-      const int indexLowProto = lowerBoundX > 0 ? std::sqrt( std::abs(lowerBoundX)*2.0 ) + 42 : 42 - std::sqrt( std::abs(lowerBoundX)*2.0 );
-      const int indexHiProto  = upperBoundX > 0 ? std::sqrt( std::abs(upperBoundX)*2.0 ) + 43 : 43 - std::sqrt( std::abs(upperBoundX)*2.0 );
+      // const float lowerBoundX =
+      //   (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(trState.tx)*m_intraLayerDist;
+      // const float upperBoundX =
+      //   (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(trState.tx)*m_intraLayerDist;
 
-      const int indexLow  = std::max( indexLowProto, 0 );
-      const int indexHi   = std::min( indexHiProto, 84);
+      // const int indexLowProto = lowerBoundX > 0 ? std::sqrt( std::abs(lowerBoundX)*2.0 ) + 42 : 42 - std::sqrt( std::abs(lowerBoundX)*2.0 );
+      // const int indexHiProto  = upperBoundX > 0 ? std::sqrt( std::abs(upperBoundX)*2.0 ) + 43 : 43 - std::sqrt( std::abs(upperBoundX)*2.0 );
 
-      const std::pair<Hit, Hit> hit_range = {
-        std::next( std::begin(hits), iStation),
-        std::next( std::begin(hits), iLayer)
-      };
+      // const int indexLow  = std::max( indexLowProto, 0 );
+      // const int indexHi   = std::min( indexHiProto, 84);
 
-      HitRange::const_iterator itBeg = iteratorsLayers[2*iStation+iLayer][ indexLow ];
-      HitRange::const_iterator itEnd = iteratorsLayers[2*iStation+iLayer][ indexHi  ];
+      // HitRange::const_iterator itBeg = iteratorsLayers[layer][ indexLow ];
+      // HitRange::const_iterator itEnd = iteratorsLayers[layer][ indexHi  ];
 
-      while( (*itBeg).xAtYEq0() < lowerBoundX && itBeg != itEnd) ++itBeg;
-      if(itBeg == itEnd) continue;
+      // while( (*itBeg).xAtYEq0() < lowerBoundX && itBeg != itEnd) ++itBeg;
+      // if(itBeg == itEnd) continue;
 
-      findHits(itBeg, itEnd, trState, xTol*invNormFact, invNormFact, hitsInLayers[2*iStation + iLayer]);
+      findHits(hits, trState, xTol*invNormFact, invNormFact, hitsInLayers[layer]);
 
-      nLayers += int(!hitsInLayers[2*iStation + iLayer].empty());
+      nLayers += int(!hitsInLayers[layer].empty());
     }
   }
 

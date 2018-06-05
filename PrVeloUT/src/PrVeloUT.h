@@ -1,20 +1,6 @@
 # pragma once
 
-// #ifndef PRVELOUT_H
-// #define PRVELOUT_H 1
-
-//#define SMALL_OUTPUT
-
 #include <cmath>
-
-// Include files
-// // from Gaudi
-// #include "GaudiAlg/ISequencerTimerTool.h"
-// #include "GaudiAlg/Transformer.h"
-
-// // from TrackInterfaces
-// #include "TrackInterfaces/ITracksFromTrackR.h"
-// #include "Event/Track.h"
 
 // from cuda_hlt/checker/lib
 #include "../checker/lib/include/Tracks.h"
@@ -24,16 +10,6 @@
 #include "include/UTHitInfo.h"
 #include "include/UTHit.h"
 
-// from Gaudi - GaudiKernel
-#include "include/DataObject.h"
-#include "include/ObjectContainerBase.h"
-#include "include/Range.h"
-
-// from LHCb - Tf/TfKernel
-#include "include/IndexedHitContainer.h"
-#include "include/MultiIndexedHitContainer.h"
-
-// TODO
 #include "PrUTMagnetTool.h"
 
 // Math from ROOT
@@ -42,11 +18,6 @@
 #include "include/VeloTypes.h"
 #include "include/SystemOfUnits.h"
 
-// #ifdef SMALL_OUTPUT
-// #include "PrKernel/PrVeloUTTrack.h"
-// #endif
-
-// #include "vdt/sqrt.h"
 /** @class PrVeloUT PrVeloUT.h
    *
    *  PrVeloUT algorithm. This is just a wrapper,
@@ -61,6 +32,7 @@
    *  @update for A-Team framework 2007-08-20 SHM
    *
    *  2017-03-01: Christoph Hasse (adapt to future framework)
+   *  2018-05-05: Plácido Fernández
    */
 
 struct TrackHelper{
@@ -88,32 +60,31 @@ class PrVeloUT {
 
 public:
   /// Standard constructor
-  // PrVeloUT( const std::string& name, ISvcLocator* pSvcLocator );
   PrVeloUT();
   virtual int initialize() override;    ///< Algorithm initialization
   LHCb::Tracks operator()(const std::vector<Track>& inputTracks) const override;
 
 private:
 
-  float m_minMomentum = 1.5*Gaudi::Units::GeV;
-  float m_minPT = 0.3*Gaudi::Units::GeV;
-  float m_maxPseudoChi2 = 1280.;
-  float m_yTol = 0.5  * Gaudi::Units::mm;
-  float m_yTolSlope = 0.08;
-  float m_hitTol1 = 6.0 * Gaudi::Units::mm;
-  float m_hitTol2 = 0.8 * Gaudi::Units::mm;
-  float m_deltaTx1 = 0.035;
-  float m_deltaTx2 = 0.018;
-  float m_maxXSlope = 0.350;
-  float m_maxYSlope = 0.300;
-  float m_centralHoleSize = 33. * Gaudi::Units::mm;
-  float m_intraLayerDist = 15.0 * Gaudi::Units::mm;
-  float m_overlapTol = 0.7 * Gaudi::Units::mm;
-  float m_passHoleSize = 40. * Gaudi::Units::mm;
-  int   m_minHighThres = 1;
-  bool  m_printVariables = false;
-  bool  m_passTracks = false;
-  bool  m_doTiming = false;
+  const float m_minMomentum = 1.5*Gaudi::Units::GeV;
+  const float m_minPT = 0.3*Gaudi::Units::GeV;
+  const float m_maxPseudoChi2 = 1280.;
+  const float m_yTol = 0.5  * Gaudi::Units::mm;
+  const float m_yTolSlope = 0.08;
+  const float m_hitTol1 = 6.0 * Gaudi::Units::mm;
+  const float m_hitTol2 = 0.8 * Gaudi::Units::mm;
+  const float m_deltaTx1 = 0.035;
+  const float m_deltaTx2 = 0.018;
+  const float m_maxXSlope = 0.350;
+  const float m_maxYSlope = 0.300;
+  const float m_centralHoleSize = 33. * Gaudi::Units::mm;
+  const float m_intraLayerDist = 15.0 * Gaudi::Units::mm;
+  const float m_overlapTol = 0.7 * Gaudi::Units::mm;
+  const float m_passHoleSize = 40. * Gaudi::Units::mm;
+  const int   m_minHighThres = 1;
+  const bool  m_printVariables = false;
+  const bool  m_passTracks = false;
+  const bool  m_doTiming = false;
 
   // typedef MultiIndexedHitContainer<Hit, UT::Info::kNStations, UT::Info::kNLayers>::HitRange HitRange;
 
@@ -132,75 +103,51 @@ private:
                           const std::vector<float>& bdlTable) const;
 
   // ==============================================================================
-  // -- Method to cache some starting points for the search
-  // -- This is actually faster than binary searching the full array
-  // -- Granularity hardcoded for the moment.
-  // -- Idea is: UTb has dimensions in x (at y = 0) of about -860mm -> 860mm
-  // -- The indices go from 0 -> 84, and shift by -42, leading to -42 -> 42
-  // -- Taking the higher density of hits in the center into account, the positions of the iterators are
-  // -- calculated as index*index/2, where index = [ -42, 42 ], leading to
-  // -- -882mm -> 882mm
-  // -- The last element is an "end" iterator, to make sure we never go out of bound
-  // ==============================================================================
-  inline void fillIterators(const UT::HitHandler* hh, std::array<std::array<HitRange::const_iterator,85>,4>& iteratorsLayers) const{
-
-    for(int iStation = 0; iStation < 2; ++iStation){
-      for(int iLayer = 0; iLayer < 2; ++iLayer){
-        const HitRange& hits = hh->hits( iStation, iLayer );
-
-        iteratorsLayers[2*iStation + iLayer].fill( hits.begin() );
-
-        float bound = -42.0;
-        float val = std::copysign(bound*bound/2.0, bound);
-        const auto itEnd = hits.end();
-        for( auto it = hits.begin(); it != itEnd; ++it){
-
-          while( (*it).xAtYEq0() > val){
-            iteratorsLayers[2*iStation + iLayer][bound+42] = it;
-            ++bound;
-            val = std::copysign(bound*bound/2.0, bound);
-          }
-        }
-
-        std::fill(iteratorsLayers[2*iStation + iLayer].begin() + 42 + int(bound), iteratorsLayers[2*iStation + iLayer].end(), hits.end());
-
-      }
-    }
-  }
-
-  // ==============================================================================
   // -- Method that finds the hits in a given layer within a certain range
   // ==============================================================================
-  inline void findHits( HitRange::const_iterator itH, HitRange::const_iterator itEnd,
-                        const VeloState& myState, const float xTolNormFact,
-                        const float invNormFact, std::vector<Hits>& hits) const {
-
-    const auto zInit = (*itH).zAtYEq0();
+  inline void findHits( 
+    const std::vector<Hit>& inputHits,
+    const VeloState& myState, 
+    const float xTolNormFact,
+    const float invNormFact,
+    std::vector<Hit>& outHits ) const 
+  {
+    const auto zInit = inputHits.at(0).zAtYEq0();
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
 
-    while( itH != itEnd && (*itH).isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) )  ) ++itH;
+    int pos = 0;
+    for (auto& hit : inputHits) {
+      if ( hit.isNotYCompatible(yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact)) ) {
+        ++pos;
+      }
+    }
 
     const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
     const auto yyProto =       myState.y - myState.ty*myState.z;
 
-    for ( ; itH != itEnd; ++itH ){
+    for (int i=pos; i<inputHits.size(); ++i) {
 
-      const auto xx = (*itH).xAt(yApprox);
+      const Hit& hit = inputHits[pos];
+
+      const auto xx = hit.xAt(yApprox);
       const auto dx = xx - xOnTrackProto;
-
-      //counter("#findHitsLoop")++;
 
       if( dx < -xTolNormFact ) continue;
       if( dx >  xTolNormFact ) break;
 
       // -- Now refine the tolerance in Y
-      if(  (*itH).isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
+      if( hit.isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
 
-      const auto zz = (*itH).zAtYEq0();
+      const auto zz = hit.zAtYEq0();
       const auto yy = yyProto +  myState.ty*zz;
-      const auto xx2 = (*itH).xAt(yy);
-      hits.emplace_back(&(*itH), xx2, zz);
+      const auto xx2 = hit.xAt(yy);
 
+      // TODO avoid the copy - remove the const?
+      Hit temp_hit = hit;
+      temp_hit.m_second_x = xx2;
+      temp_hit.m_second_z = zz;
+
+      outHits.emplace_back(temp_hit);
     }
   }
 
@@ -282,9 +229,8 @@ private:
     }
 
   }
-  // --
 
-  // AnyDataHandle<UT::HitHandler> m_HitHandler {UT::Info::HitLocation, Gaudi::DataHandle::Reader, this};
+  // ---
 
   ITracksFromTrackR*   m_veloUTTool       = nullptr;             ///< The tool that does the actual pattern recognition
   // ISequencerTimerTool* m_timerTool        = nullptr;             ///< Timing tool
@@ -298,5 +244,3 @@ private:
 
 
 };
-
-// #endif // PRVELOUT_H
