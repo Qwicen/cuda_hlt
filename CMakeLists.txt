@@ -52,7 +52,7 @@ elseif ( !MC_CHECK )
 endif()
 
 file(GLOB magnet_sources "PrUTMagnetTool/*cpp")
-find_package(ROOT REQUIRED COMPONENTS  Matrix Physics MathCore Thread GenVector)
+find_package(ROOT REQUIRED COMPONENTS  Matrix Physics MathCore Thread GenVector) 
 add_executable(magnet_test ${magnet_sources})
 target_compile_options(magnet_test PRIVATE "-Wall")
 target_link_libraries(magnet_test ${ROOT_LIBRARIES}  )

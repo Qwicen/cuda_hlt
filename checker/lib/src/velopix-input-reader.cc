@@ -14,7 +14,10 @@
 #include <cmath>
 #include <dirent.h>
 
+#include "TFile.h"
+
 #include "velopix-input-reader.h"
+
 
 VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEvent) {
     uint8_t* input = (uint8_t*) event.data();
@@ -218,98 +221,100 @@ bool sortFiles( std::string s1, std::string s2 ) {
   return int1 < int2;
 }
 
+std::vector< std::string > VelopixEventReader::getFolderContents(
+  const std::string& foldername,
+  uint nFiles
+  ) {
+  
+  std::vector<std::string> folderContents;
+  DIR *dir;
+  struct dirent *ent;
+  
+  if ((dir = opendir(foldername.c_str())) != NULL) {
+    /* print all the files and directories within directory */
+    while ((ent = readdir(dir)) != NULL) {
+      std::string filename = std::string(ent->d_name);
+      if (filename.find(".bin") != std::string::npos) {
+	folderContents.push_back(filename);
+      }
+    }
+    closedir(dir);
+    if (folderContents.size() == 0) {
+      std::cerr << "No binary files found in folder " << foldername << std::endl;
+      exit(-1);
+    } else {
+      std::cout << "Found " << folderContents.size() << " binary files" << std::endl;
+    }
+  } else {
+    std::cerr << "Folder could not be opened" << std::endl;
+    exit(-1);
+  }
+  
+  std::sort( folderContents.begin(), folderContents.end(), sortFiles );
+ 
+  return folderContents;
+}
+  
 std::vector<VelopixEvent> VelopixEventReader::readFolder (
         const std::string& foldername,
         uint nFiles,
         const bool checkEvents
         ) {
-    std::vector<std::string> folderContents;
-    DIR *dir;
-    struct dirent *ent;
 
-    if ((dir = opendir(foldername.c_str())) != NULL) {
-        /* print all the files and directories within directory */
-        while ((ent = readdir(dir)) != NULL) {
-            std::string filename = std::string(ent->d_name);
-            if (filename.find(".bin") != std::string::npos) {
-                folderContents.push_back(filename);
-            }
-        }
-        closedir(dir);
-        if (folderContents.size() == 0) {
-            std::cerr << "No binary files found in folder " << foldername << std::endl;
-            exit(-1);
-        } else {
-            std::cout << "Found " << folderContents.size() << " binary files" << std::endl;
-        }
-    } else {
-        std::cerr << "Folder could not be opened" << std::endl;
-        exit(-1);
+  std::vector< std::string > folderContents = getFolderContents( foldername, nFiles );
+
+  uint requestedFiles = nFiles==0 ? folderContents.size() : nFiles;
+  std::cout << "Requested " << requestedFiles << " files" << std::endl;
+  
+  if ( requestedFiles > folderContents.size() ) {
+    std::cout << "ERROR: requested " << requestedFiles << " files, but only " << folderContents.size() << " files are present" << std::endl;
+    exit(-1);
+  }
+   
+  std::vector<VelopixEvent> input;
+  int readFiles = 0;
+  for (uint i=0; i<requestedFiles; ++i) {
+    // Read event #i in the list and add it to the inputs
+    // if more files are requested than present in folder, read them again
+    std::string readingFile = folderContents[i % folderContents.size()];
+    std::cout << "Reading MC event " << readingFile << std::endl;
+    
+    std::vector<uint8_t> inputContents;
+    readFileIntoVector(foldername + "/" + readingFile, inputContents);
+    //std::cout << "vector size = " << inputContents.size() << std::endl;
+    
+    // Check the number of sensors is correct, otherwise ignore it
+    VelopixEvent event {inputContents, checkEvents};
+    if ( i == 0 )
+      event.print();
+    
+    // Sanity check
+    if (event.numberOfModules == VelopixEventReader::numberOfModules) {
+      input.emplace_back(event);
     }
+    else
+      printf("ERROR: number of sensors should be %u, but it is %u \n", VelopixEventReader::numberOfModules, event.numberOfModules);  
     
-    std::sort( folderContents.begin(), folderContents.end(), sortFiles );
     
-    uint requestedFiles = nFiles==0 ? folderContents.size() : nFiles;
-    std::cout << "Requested " << requestedFiles << " files" << std::endl;
-
-    if ( requestedFiles > folderContents.size() ) {
-      std::cout << "ERROR: requested " << requestedFiles << " files, but only " << folderContents.size() << " files are present" << std::endl;
-      exit(-1);
-    }
-    
-    std::vector<VelopixEvent> input;
-    int readFiles = 0;
-    for (uint i=0; i<requestedFiles; ++i) {
-        // Read event #i in the list and add it to the inputs
-        // if more files are requested than present in folder, read them again
-        std::string readingFile = folderContents[i % folderContents.size()];
-	std::cout << "Reading MC event " << readingFile << std::endl;
-	
-        std::vector<uint8_t> inputContents;
-        readFileIntoVector(foldername + "/" + readingFile, inputContents);
-	//std::cout << "vector size = " << inputContents.size() << std::endl;
-	
-        // Check the number of sensors is correct, otherwise ignore it
-        VelopixEvent event {inputContents, checkEvents};
-	if ( i == 0 )
-	  event.print();
-	
-        // Sanity check
-        if (event.numberOfModules == VelopixEventReader::numberOfModules) {
-            input.emplace_back(event);
-        }
-	else
-	  printf("ERROR: number of sensors should be %u, but it is %u \n", VelopixEventReader::numberOfModules, event.numberOfModules);  
-	     
-
         readFiles++;
         if ((readFiles % 100) == 0) {
-            std::cout << "." << std::flush;
+	  std::cout << "." << std::flush;
         }
-
-	/* dump first event */
-	// if ( i == 0 ) {
-
-	//   std::ofstream out_file_reco;
-	//   out_file_reco.open("first_event_reco_tracks_from_input.txt");
-	//   for ( auto id : event.hit_IDs )
-	//     out_file_reco << std::hex << id << std::endl;
-	  
-	//   std::ofstream out_file;
-	//   out_file.open("first_event_MC_tracks.txt");
-	//   //printf("# of mcps = %u \n", event.mcps.size() );
-	//   for ( auto mcp : event.mcps ) {
-	//      if ( mcp.hits.size() != mcp.numHits ) 
-	//        printf("ATTENTION: size of hits = %u, num hits = %u \n", mcp.hits.size(), mcp.numHits );
-	//      //printf("# of hits = %u \n", mcp.numHits );
-	//      for ( auto id : mcp.hits )
-	//        out_file << std::hex << id << std::endl;
-	//    }
-	//   out_file.close();
-
-	// }
-    }
-
-    std::cout << std::endl << input.size() << " files read" << std::endl << std::endl;
-    return input;
+	
+  }
+  
+  std::cout << std::endl << input.size() << " files read" << std::endl << std::endl;
+  return input;
 }
+
+std::vector<VelopixEvent> VelopixEventReader::get_mcps_from_ntuple( const std::string& foldername, uint nFiles ) {
+
+  std::vector<VelopixEvent> events;
+
+  /* Read input ROOT file */
+  //TFile *f = new TFile();
+  
+  return events;
+}
+
+		     

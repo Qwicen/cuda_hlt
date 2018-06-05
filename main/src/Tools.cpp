@@ -1,9 +1,9 @@
 #include "../include/Tools.h"
 
-#include "../../checker/lib/include/velopix-input-reader.h"
 #include "../../checker/lib/include/TrackChecker.h"
-
 #include "../../checker/lib/include/MCParticle.h"
+#include "../../checker/lib/include/velopix-input-reader.h"
+
 
 /**
  * @brief Read files into vectors.
@@ -247,7 +247,8 @@ void readFolder(
     number_of_files = folderContents.size();
   }
 
-  std::cout << "Requested " << number_of_files << " files" << std::endl;
+  info_cout << "Requested " << number_of_files << " files" << std::endl;
+
   int readFiles = 0;
 
   // Read all requested events
@@ -503,11 +504,19 @@ void check_roughly( const trackChecker::Tracks& tracks, const std::vector<uint32
         
 }
 
+// std::vector<VelopixEvent> get_mcps_from_ntuple( const std::string folder_name_MC, const int n_events ) {
+
+//   std::vector<VelopixEvent> mcps;
+
+//   return mcps;
+// }
+
 void call_PrChecker( const std::vector< trackChecker::Tracks > all_tracks, const std::string folder_name_MC ) {
 
   /* MC information */
   int n_events = all_tracks.size();
-  std::vector<VelopixEvent> events = VelopixEventReader::readFolder(folder_name_MC, n_events, true );
+  //std::vector<VelopixEvent> events = VelopixEventReader::readFolder(folder_name_MC, n_events, true );
+  std::vector<VelopixEvent> events = VelopixEventReader::get_mcps_from_ntuple( folder_name_MC, n_events );
   
   TrackChecker trackChecker;
   uint64_t evnum = 1;
@@ -519,7 +528,7 @@ void call_PrChecker( const std::vector< trackChecker::Tracks > all_tracks, const
     MCAssociator mcassoc(mcps);
 
     trackChecker::Tracks tracks = all_tracks[evnum-1];
-    std::cout << "INFO: found " << tracks.size() << " reconstructed tracks" <<
+    info_cout << "found " << tracks.size() << " reconstructed tracks" <<
      " and " << mcps.size() << " MC particles " << std::endl;
 
     trackChecker(tracks, mcassoc, mcps);
