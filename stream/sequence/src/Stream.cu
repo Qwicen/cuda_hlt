@@ -134,22 +134,19 @@ cudaError_t Stream::operator()(
     // searchByTriplet.print_output(number_of_events);
 
 
-    ////////////////////////////////////////
-    // Optional: Simplified Kalman filter //
-    // DvB: should not be optional, at least not
-    // the state at the last measurement  //
-    ////////////////////////////////////////
+    //////////////////////////////
+    // Simplified Kalman filter //
+    //////////////////////////////
 
-    if (do_simplified_kalman_filter) {
-      Helper::invoke(
-        simplifiedKalmanFilter,
-        "Simplified Kalman filter",
-        times,
-        cuda_event_start,
-        cuda_event_stop,
-        print_individual_rates
-      );
-    }
+    Helper::invoke(
+      simplifiedKalmanFilter,
+      "Simplified Kalman filter",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+     );
+  
     
     ////////////////////////
     // Consolidate tracks //
@@ -176,6 +173,7 @@ cudaError_t Stream::operator()(
       int total_number_of_tracks = host_accumulated_tracks[ number_of_events - 1 ] + host_number_of_tracks_pinned[ number_of_events - 1];
       //cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, total_number_of_tracks * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_velo_states, consolidateTracks.dev_velo_states_out, total_number_of_tracks * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
       
       cudaEventRecord(cuda_generic_event, stream);
       cudaEventSynchronize(cuda_generic_event);

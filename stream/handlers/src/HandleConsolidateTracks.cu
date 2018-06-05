@@ -6,6 +6,8 @@ void ConsolidateTracks::operator()() {
     dev_atomics_storage,
     dev_tracks,
     dev_output_tracks,
+    dev_velo_states,
+    dev_velo_states_out,
     dev_velo_cluster_container,
     dev_module_cluster_start,
     dev_module_cluster_num

@@ -55,7 +55,6 @@ struct Stream {
   bool transmit_host_to_device;
   bool transmit_device_to_host;
   bool do_check;
-  bool do_simplified_kalman_filter;
   bool print_individual_rates;
   // Varying cluster container size
   uint velo_cluster_container_size;
@@ -64,7 +63,8 @@ struct Stream {
   // Data back transmission
   int* host_number_of_tracks_pinned;
   int* host_accumulated_tracks;
-  Track <do_mc_check> * host_tracks_pinned;
+  Track <do_mc_check> *host_tracks_pinned;
+  VeloState* host_velo_states;
   Stream() = default;
 
   std::string folder_name_MC;
@@ -78,7 +78,6 @@ struct Stream {
     const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
-    const bool param_do_simplified_kalman_filter,
     const bool param_print_individual_rates,
     const std::string param_folder_name_MC,
     const uint param_stream_number

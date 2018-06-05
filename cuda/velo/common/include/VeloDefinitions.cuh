@@ -65,7 +65,7 @@ namespace VeloTracking {
   static constexpr uint ttf_modulo = 2000;
 
   // Constants for filters
-  static constexpr uint states_per_track = 3;
+  static constexpr uint states_per_track = 1; 
   static constexpr float param_w = 3966.94f;
   static constexpr float param_w_inverted = 0.000252083f;
 }
@@ -139,7 +139,7 @@ struct Hit <false> : public HitBase {
 };
 
 /* Structure containing indices to hits within hit array */
-struct TrackHits { // 4 + 26 * 4 = 116 B
+struct TrackHits { // 2 + 26 * 2 = 54 B
   unsigned short hitsNum;
   unsigned short hits[VeloTracking::max_track_size];
 
@@ -160,7 +160,7 @@ struct TrackHits { // 4 + 26 * 4 = 116 B
    Contains information needed later on in the HLT chain
    and / or for truth matching */
 template <bool MCCheck>   
-struct Track { // 4 + 26 * 16 = 420 B
+struct Track { // 2 + 26 * 16 = 418 B
   unsigned short hitsNum;
   Hit <MCCheck> hits[VeloTracking::max_track_size];
   

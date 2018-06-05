@@ -124,11 +124,10 @@ void read_ut_events_into_arrays( VeloUTTracking::Hits hits_layers_events[],
       n_hits_layers_events[i_event][i_layer] = *((uint32_t*)raw_input);
       n_hits_total += n_hits_layers_events[i_event][i_layer];
       raw_input += sizeof(uint32_t);
-      //printf("At event %u, in layer %u, # of hits = %u \n", i_event, i, n_hits_layers_events[i_event][i_layer] );
       assert( n_hits_layers_events[i_event][i_layer] < VeloUTTracking::max_numhits_per_layer );
       accumulated_hits_layers[i_layer] = accumulated_hits;
       accumulated_hits += n_hits_layers_events[i_event][i_layer];
-      printf("At event %u, accumulated hits in layer %u = %u \n", i_event, i_layer, accumulated_hits_layers[i_layer]);
+      debug_cout << "At event " << i_event <<  " accumulated hits in layer " << i_layer << "  = " << accumulated_hits_layers[i_layer] << std::endl;
     }
     // then the hit variables, sorted by layer
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
@@ -176,7 +175,7 @@ void check_ut_events( const VeloUTTracking::Hits hits_layers_events[],
       accumulated_hits += n_hits_layers_events[i_event][i_layer];
     }
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      printf("checks on layer %u, with %u hits \n", i_layer, n_hits_layers_events[i_event][i_layer]);
+      debug_cout << "checks on layer " << i_layer << ", with " << n_hits_layers_events[i_event][i_layer] << " hits" << std::endl;
       number_of_hits += n_hits_layers_events[i_event][i_layer];
       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
 	int layer_offset = accumulated_hits_layers[i_layer];
@@ -196,12 +195,12 @@ void check_ut_events( const VeloUTTracking::Hits hits_layers_events[],
 
     
     average_number_of_hits_per_event += number_of_hits;
-    printf("# of UT hits = %f \n", number_of_hits);
+    debug_cout << "# of UT hits = " << number_of_hits << std::endl;
     
   }
 
   average_number_of_hits_per_event = average_number_of_hits_per_event / n_events;
-  printf("average # of UT hits / event = %f \n", average_number_of_hits_per_event);
+  debug_cout << "average # of UT hits / event = " << average_number_of_hits_per_event << std::endl;
     
   
 }

@@ -41,7 +41,6 @@ void printUsage(char* argv[]){
     << std::endl << " [-a {transmit host to device}=1]"
     << std::endl << " [-b {transmit device to host}=1]"
     << std::endl << " [-c {run checkers}=0]"
-    << std::endl << " [-k {simplified kalman filter}=0]"
     << std::endl << " [-v {verbosity}=3 (info)]"
     << std::endl << " [-p (print rates)]"
     << std::endl;
@@ -63,10 +62,9 @@ int main(int argc, char *argv[])
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
   bool do_check = false;
-  bool do_simplified_kalman_filter = false;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:g:e:n:t:r:pha:b:d:v:c:k:")) != -1) {
+  while ((c = getopt(argc, argv, "f:g:e:n:t:r:pha:b:d:v:c:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_velopix_raw = std::string(optarg);
@@ -94,9 +92,6 @@ int main(int argc, char *argv[])
       break;
     case 'c':
       do_check = atoi(optarg);
-      break;
-    case 'k':
-      do_simplified_kalman_filter = atoi(optarg);
       break;
     case 'v':
       verbosity = atoi(optarg);
@@ -156,7 +151,6 @@ int main(int argc, char *argv[])
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
     << " run checkers (-c): " << do_check << std::endl
-    << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " print rates (-p): " << print_individual_rates << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
@@ -194,7 +188,7 @@ int main(int argc, char *argv[])
   read_ut_events_into_arrays( ut_hits_events, ut_n_hits_layers_events,
 			      ut_events, ut_event_offsets, number_of_events );
 
-  check_ut_events( ut_hits_events, ut_n_hits_layers_events, number_of_events );
+  //check_ut_events( ut_hits_events, ut_n_hits_layers_events, number_of_events );
 
   
   // // Call clustering
@@ -272,7 +266,6 @@ int main(int argc, char *argv[])
       transmit_host_to_device,
       transmit_device_to_host,
       do_check,
-      do_simplified_kalman_filter,
       print_individual_rates,
       folder_name_MC,
       i
