@@ -25,7 +25,7 @@ namespace VeloUTTracking {
   
   /* Cut-offs */
   static constexpr uint max_numhits_per_layer = 500;
-  static constexpr uint max_numhits_per_event = 1500; // to do: find optimal value for this cut-off
+  static constexpr uint max_numhits_per_event = 3000; 
 
   /* SoA for hit variables
      The hits for every layer are written behind each other, the offsets 
