@@ -27,6 +27,8 @@ struct Hit : public HitBase {
     float m_second_x;
     float m_second_z;
 
+    bool m_cluster_threshold;
+
     Hit(){}
     Hit(
       const float _x,
@@ -38,7 +40,9 @@ struct Hit : public HitBase {
     inline float cos() const { return m_cos; }
     inline float cosT() const { return ( fabs( m_xAtYEq0 ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + m_dxDy * m_dxDy ) : cos(); }
     inline float dxDy() const { return m_dxDy; }
+    // TODO get the proper (boolean) for highThreshold
     // inline bool highThreshold() const { return m_cluster.highThreshold(); }
+    inline bool highThreshold() const { m_cluster_threshold = true; return m_cluster_threshold; }
     inline bool isYCompatible( const float y, const float tol ) const { return yMin() - tol <= y && y <= yMax() + tol; }
     inline bool isNotYCompatible( const float y, const float tol ) const { return yMin() - tol > y || y > yMax() + tol; }
     // inline LHCb::LHCbID lhcbID() const { return LHCb::LHCbID( m_cluster.channelID() ); }

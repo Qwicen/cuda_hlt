@@ -1,15 +1,11 @@
-// Include files
-// From LHCb - Kernel/LHCbKernel/Kernel/
-#include "include/STLExtensions.h"
-
-// local
 #include "PrVeloUT.h"
 #include "../PrUTMagnetTool/PrUTMagnetTool.h"
 //-----------------------------------------------------------------------------
 // Implementation file for class : PrVeloUT
 //
-// 2007-05-08 : Mariusz Witek
+// 2007-05-08: Mariusz Witek
 // 2017-03-01: Christoph Hasse (adapt to future framework)
+// 2018-05-05: Plácido Fernández
 //-----------------------------------------------------------------------------
 
 namespace {
@@ -34,26 +30,12 @@ namespace {
   constexpr std::array<float,4> dxDyHelper = { 0.0, 1.0, -1.0, 0.0 };
 }
 
-
-// Declaration of the Algorithm Factory
-// DECLARE_COMPONENT( PrVeloUT )
-//=============================================================================
-// Standard constructor, initializes variables
-//=============================================================================
-// PrVeloUT::PrVeloUT(const std::string& name,
-//                    ISvcLocator* pSvcLocator) :
-// Transformer(name, pSvcLocator,
-//             KeyValue{"InputTracksName", LHCb::TrackLocation::Velo} ,
-//             KeyValue{"OutputTracksName", LHCb::TrackLocation::VeloTT}){
-// }
-
-
 //=============================================================================
 // Initialization
 //=============================================================================
 int PrVeloUT::initialize() {
 
-  // TODO not used?
+  // TODO not used? old version?
   // m_veloUTTool = tool<ITracksFromTrackR>("PrVeloUTTool", this );
 
   std::vector<std::string> filenames; //  TODO init filenames
@@ -100,7 +82,7 @@ std::vector<Track> PrVeloUT::operator()(const std::vector<Track>& inputTracks) c
 
     // for( auto& it : hitsInLayers ) it.clear();
 
-    if( !getHits(hitsInLayers, iteratorsLayers, hh, fudgeFactors, trState) ) continue;
+    if( !getHits(hitsInLayers, /*inputHits, */fudgeFactors, trState) ) continue;
 
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
@@ -259,17 +241,20 @@ bool PrVeloUT::getHits(
 //=========================================================================
 // Form clusters
 //=========================================================================
-bool PrVeloUT::formClusters(const std::array<std::vector<Hit>,4>& hitsInLayers, TrackHelper& helper) const {
+bool PrVeloUT::formClusters(
+  const std::array<std::vector<Hit>,4>& hitsInLayers, 
+  TrackHelper& helper ) const 
+{
 
   bool fourLayerSolution = false;
 
-  for(const auto& hit0 : hitsInLayers[0]){
+  for(const auto& hit0 : hitsInLayers[0]) {
 
     const float xhitLayer0 = hit0.x;
     const float zhitLayer0 = hit0.z;
 
     // Loop over Second Layer
-    for(const auto& hit2 : hitsInLayers[2]){
+    for(const auto& hit2 : hitsInLayers[2]) {
 
       const float xhitLayer2 = hit2.x;
       const float zhitLayer2 = hit2.z;
@@ -278,9 +263,9 @@ bool PrVeloUT::formClusters(const std::array<std::vector<Hit>,4>& hitsInLayers, 
 
       if( std::abs(tx-helper.state.tx) > m_deltaTx2 ) continue;
 
-      const Hit* bestHit1 = nullptr;
+      Hit& bestHit1 = nullptr;
       float hitTol = m_hitTol2;
-      for( auto& hit1 : hitsInLayers[1]){
+      for(const auto& hit1 : hitsInLayers[1]) {
 
         const float xhitLayer1 = hit1.x;
         const float zhitLayer1 = hit1.z;
@@ -288,15 +273,15 @@ bool PrVeloUT::formClusters(const std::array<std::vector<Hit>,4>& hitsInLayers, 
         const float xextrapLayer1 = xhitLayer0 + tx*(zhitLayer1-zhitLayer0);
         if(std::abs(xhitLayer1 - xextrapLayer1) < hitTol){
           hitTol = std::abs(xhitLayer1 - xextrapLayer1);
-          bestHit1 = &hit1;
+          bestHit1 = hit1;
         }
       }
 
       if( fourLayerSolution && !bestHit1) continue;
 
-      const UT::Mut::Hit* bestHit3 = nullptr;
+      const Hit& bestHit3 = nullptr;
       hitTol = m_hitTol2;
-      for( auto& hit3 : hitsInLayers[3]){
+      for( auto& hit3 : hitsInLayers[3]) {
 
         const float xhitLayer3 = hit3.x;
         const float zhitLayer3 = hit3.z;
@@ -305,13 +290,15 @@ bool PrVeloUT::formClusters(const std::array<std::vector<Hit>,4>& hitsInLayers, 
 
         if(std::abs(xhitLayer3 - xextrapLayer3) < hitTol){
           hitTol = std::abs(xhitLayer3 - xextrapLayer3);
-          bestHit3 = &hit3;
+          bestHit3 = hit3;
         }
       }
 
       // -- All hits found
       if( bestHit1 && bestHit3 ){
-        simpleFit( LHCb::make_array( &hit0, bestHit1, &hit2, bestHit3 ), helper);
+        // TODO avoid the copy
+        std::array<Hit, 4> hits4fit= [hit0, bestHit1, hit2, bestHit3];
+        simpleFit(hits4fit, helper);
 
         if(!fourLayerSolution && helper.bestHits[0]){
           fourLayerSolution = true;
@@ -321,12 +308,14 @@ bool PrVeloUT::formClusters(const std::array<std::vector<Hit>,4>& hitsInLayers, 
 
       // -- Nothing found in layer 3
       if( !fourLayerSolution && bestHit1 ){
-        simpleFit( LHCb::make_array( &hit0, bestHit1, &hit2 ),  helper);
+        std::array<Hit, 3> hits4fit= [hit0, bestHit1, hit2];
+        simpleFit(hits4fit,  helper);
         continue;
       }
       // -- Noting found in layer 1
       if( !fourLayerSolution && bestHit3 ){
-        simpleFit( LHCb::make_array( &hit0, bestHit3, &hit2 ), helper);
+        std::array<Hit, 3> hits4fit= [hit0, bestHit3, hit2];
+        simpleFit(hits4fit, helper);
         continue;
       }
     }

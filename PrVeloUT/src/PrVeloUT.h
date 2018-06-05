@@ -155,11 +155,11 @@ private:
   // -- 2 helper functions for fit
   // -- Pseudo chi2 fit, templated for 3 or 4 hits
   // ===========================================================================================
-  void addHit( float* mat, float* rhs, const Hit* hit)const{
-    const float ui = hit->x;
-    const float ci = hit->HitPtr->cosT();
-    const float dz = 0.001*(hit->z - m_zMidUT);
-    const float wi = hit->HitPtr->weight();
+  void addHit( float* mat, float* rhs, const Hit& hit) const {
+    const float ui = hit.x;
+    const float ci = hit.cosT();
+    const float dz = 0.001*(hit.z - m_zMidUT);
+    const float wi = hit->HitPtr.weight();
     mat[0] += wi * ci;
     mat[1] += wi * ci * dz;
     mat[2] += wi * ci * dz * dz;
@@ -167,17 +167,20 @@ private:
     rhs[1] += wi * ui * dz;
   }
 
-  void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const Hit* hit)const{
-    const float zd    = hit->z;
+  void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const Hit& hit) const {
+    const float zd    = hit.z;
     const float xd    = xTTFit + xSlopeTTFit*(zd-m_zMidUT);
-    const float du    = xd - hit->x;
-    chi2 += (du*du)*hit->HitPtr->weight();
+    const float du    = xd - hit.x;
+    chi2 += (du*du)*hit.weight();
   }
 
 
 
   template <std::size_t N>
-  void simpleFit( std::array<const Hit*,N> hits, TrackHelper& helper) const {
+  void simpleFit(
+    std::array<Hit,N>& hits, 
+    TrackHelper& helper ) const 
+  {
     assert( N==3||N==4 );
 
     // -- Scale the z-component, to not run into numerical problems
@@ -187,17 +190,16 @@ private:
     float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
 
     const int nHighThres = std::count_if( hits.begin(),  hits.end(),
-                                          []( const Hit* hit ){ return hit && hit->HitPtr->highThreshold(); });
-
+                                          []( const Hit& hit ){ return hit && hit.highThreshold(); });
 
     // -- Veto hit combinations with no high threshold hit
     // -- = likely spillover
     if( nHighThres < m_minHighThres ) return;
 
-    std::for_each( hits.begin(), hits.end(), [&](const auto* h) { this->addHit(mat,rhs,h); } );
+    std::for_each( hits.begin(), hits.end(), [&](const Hit& h) { this->addHit(mat,rhs,h); } );
 
     ROOT::Math::CholeskyDecomp<float, 2> decomp(mat);
-    if( UNLIKELY(!decomp)) return;
+    if( !decomp ) return;
 
     decomp.Solve(rhs);
 
@@ -211,7 +213,7 @@ private:
 
     float chi2TT = chi2VeloSlope*chi2VeloSlope;
 
-    std::for_each( hits.begin(), hits.end(), [&](const auto* h) { this->addChi2(xTTFit,xSlopeTTFit, chi2TT, h); } );
+    std::for_each( hits.begin(), hits.end(), [&](const Hit& h) { this->addChi2(xTTFit,xSlopeTTFit, chi2TT, h); } );
 
     chi2TT /= (N + 1 - 2);
 
@@ -232,10 +234,10 @@ private:
 
   // ---
 
-  ITracksFromTrackR*   m_veloUTTool       = nullptr;             ///< The tool that does the actual pattern recognition
+  // ITracksFromTrackR*   m_veloUTTool       = nullptr;             ///< The tool that does the actual pattern recognition
   // ISequencerTimerTool* m_timerTool        = nullptr;             ///< Timing tool
-  int                  m_veloUTTime       = 0;                   ///< Counter for timing tool
-  PrUTMagnetTool*      m_PrUTMagnetTool   = nullptr;             ///< Multipupose tool for Bdl and deflection
+  // int                  m_veloUTTime       = 0;                   ///< Counter for timing tool
+  PrUTMagnetTool       m_PrUTMagnetTool   = nullptr;             ///< Multipupose tool for Bdl and deflection
   float                m_zMidUT;
   float                m_distToMomentum;
   float                m_zKink;
