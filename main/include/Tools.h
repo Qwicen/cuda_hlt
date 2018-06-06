@@ -88,17 +88,16 @@ void writeBinaryTrack(
   std::ofstream& outstream
 );
 
-void call_PrChecker(
-  const std::vector< trackChecker::Tracks > all_tracks,
-  const std::string folder_name_MC,
-  const bool fromNtuple
-);
-
-void checkTracks(
+std::vector< trackChecker::Tracks > prepareTracks(
   Track <true> * host_tracks_pinned,
   int * host_accumulated_tracks,
   int * host_number_of_tracks_pinned,
-  const int &number_of_events,
+  const int &number_of_events
+);
+
+void callPrChecker(
+  const std::vector< trackChecker::Tracks >& all_tracks,
   const std::string& folder_name_MC,
-  const bool fromNtuple
+  const bool& fromNtuple,
+  const std::string& trackType
 );

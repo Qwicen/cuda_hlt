@@ -84,7 +84,7 @@ public:
       const std::string& foldername, const bool fromNtuple, uint nFiles = 0 );
   
     static std::vector<VelopixEvent> readFolder(
-      const std::string& foldername, const bool fronNtuple, uint nFiles = 0, const bool checkFiles = true);
+						const std::string& foldername, const bool& fronNtuple, const std::string& trackType, uint nFiles = 0, const bool checkFiles = true);
 
-    static void readNtupleIntoVelopixEvent(const std::string& filename, VelopixEvent& event);
+  static void readNtupleIntoVelopixEvent(const std::string& filename, const std::string& trackType, VelopixEvent& event);
 };

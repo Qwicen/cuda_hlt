@@ -432,15 +432,16 @@ void check_roughly(
         
 }
 
-void call_PrChecker(
-  const std::vector< trackChecker::Tracks > all_tracks,
-  const std::string folder_name_MC,
-  const bool fromNtuple
+void callPrChecker(
+  const std::vector< trackChecker::Tracks >& all_tracks,
+  const std::string& folder_name_MC,
+  const bool& fromNtuple,
+  const std::string& trackType
 ) {
 
   /* MC information */
   int n_events = all_tracks.size();
-  std::vector<VelopixEvent> events = VelopixEventReader::readFolder(folder_name_MC, fromNtuple, n_events, true );
+  std::vector<VelopixEvent> events = VelopixEventReader::readFolder(folder_name_MC, fromNtuple, trackType, n_events, true );
     
   TrackChecker trackChecker;
   uint64_t evnum = 1;
@@ -462,14 +463,13 @@ void call_PrChecker(
   }
 }
 
-void checkTracks(
+std::vector< trackChecker::Tracks > prepareTracks(
   Track <true> * host_tracks_pinned,
   int * host_accumulated_tracks,
   int * host_number_of_tracks_pinned,
-  const int &number_of_events,
-  const std::string& folder_name_MC,
-  const bool fromNtuple
-){
+  const int &number_of_events
+) {
+  
   /* Tracks to be checked, save in format for checker */
   std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
   for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
@@ -491,7 +491,6 @@ void checkTracks(
     
     all_tracks.push_back( tracks );
   } // events
-  
-  call_PrChecker( all_tracks, folder_name_MC, fromNtuple );
-}
 
+  return all_tracks;
+}

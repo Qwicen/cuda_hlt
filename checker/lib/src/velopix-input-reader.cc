@@ -278,6 +278,7 @@ std::vector< std::string > VelopixEventReader::getFolderContents(
 */
 void VelopixEventReader::readNtupleIntoVelopixEvent(
   const std::string& filename,
+  const std::string& trackType,
   VelopixEvent& event							    
  ) {
 
@@ -384,8 +385,9 @@ void VelopixEventReader::readNtupleIntoVelopixEvent(
     fChain->GetTree()->GetEntry(entry);
     if( p<0) continue;  // Hits not associated to an MCP are stored with p < 0
     //Velo
-    if ( !hasVelo ) continue;
-    
+    if ( trackType == "Velo" && !hasVelo ) continue;
+    if ( trackType == "VeloUT" && !(hasVelo && hasUT) ) continue;
+        
     VelopixEvent::MCP mcp;
     mcp.key = key;
     mcp.id = pid;
@@ -418,7 +420,8 @@ void VelopixEventReader::readNtupleIntoVelopixEvent(
 
 std::vector<VelopixEvent> VelopixEventReader::readFolder (
   const std::string& foldername,
-  const bool fromNtuple, 
+  const bool& fromNtuple,
+  const std::string& trackType,
   uint nFiles,
   const bool checkEvents
   ) {
@@ -448,7 +451,7 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
       event = VelopixEvent(inputContents, checkEvents);
     }
     else if ( fromNtuple )
-      readNtupleIntoVelopixEvent(foldername + "/" + readingFile, event);
+      readNtupleIntoVelopixEvent(foldername + "/" + readingFile, trackType, event);
       
     if ( i == 0 )
       event.print();

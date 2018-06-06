@@ -190,16 +190,19 @@ cudaError_t Stream::operator()(
       cudaEventRecord(cuda_generic_event, stream);
       cudaEventSynchronize(cuda_generic_event);
 
-      const bool fromNtuple = true;
-      checkTracks(
+      const std::vector< trackChecker::Tracks > tracks_events = prepareTracks(
         host_tracks_pinned,
       	host_accumulated_tracks,
       	host_number_of_tracks_pinned,
-      	number_of_events,
+      	number_of_events);
+      
+      const bool fromNtuple = true;
+      const std::string trackType = "Velo";
+      callPrChecker(
+	tracks_events,
       	folder_name_MC,
-      	fromNtuple);
-
-         
+      	fromNtuple,
+	trackType);
     }
 #endif
   }
