@@ -159,7 +159,7 @@ cudaError_t Stream::operator()(
       cuda_event_stop,
       print_individual_rates
     );
-        
+    
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
@@ -180,7 +180,7 @@ cudaError_t Stream::operator()(
     ///////////////////////
 
 #ifdef MC_CHECK
-    if (repetitions == 0) {  // only check efficiencies once
+    if (repetitions == 0) { // only check efficiencies once
       // Fetch data
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
@@ -194,7 +194,7 @@ cudaError_t Stream::operator()(
         number_of_events,
 		    folder_name_MC);
     }
-#endif    
+#endif
   }
   return cudaSuccess;
 }
