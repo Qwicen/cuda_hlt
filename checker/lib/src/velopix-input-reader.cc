@@ -14,7 +14,11 @@
 #include <cmath>
 #include <dirent.h>
 
+// for Ntuple reading
 #include "TFile.h"
+#include "TTree.h"
+#include "TBranch.h"
+#include "TChain.h"
 
 #include "velopix-input-reader.h"
 
@@ -115,15 +119,15 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
 
 void VelopixEvent::print() const {
     std::cout << "Event" << std::endl
-        << " numberOfModules " << numberOfModules << std::endl
-        << " numberOfHits " << numberOfHits << std::endl
-        << " module_Zs " << strVector(module_Zs, numberOfModules) << std::endl
-        << " module_hitStarts " << strVector(module_hitStarts, numberOfModules) << std::endl
-        << " module_hitNums " << strVector(module_hitNums, numberOfModules) << std::endl
-        << " hit_IDs " << strVector(hit_IDs, numberOfHits) << std::endl
-        << " hit_Xs " << strVector(hit_Xs, numberOfHits) << std::endl
-        << " hit_Ys " << strVector(hit_Ys, numberOfHits) << std::endl
-        << " hit_Zs " << strVector(hit_Zs, numberOfHits) << std::endl
+        // << " numberOfModules " << numberOfModules << std::endl
+        // << " numberOfHits " << numberOfHits << std::endl
+        // << " module_Zs " << strVector(module_Zs, numberOfModules) << std::endl
+        // << " module_hitStarts " << strVector(module_hitStarts, numberOfModules) << std::endl
+        // << " module_hitNums " << strVector(module_hitNums, numberOfModules) << std::endl
+        // << " hit_IDs " << strVector(hit_IDs, numberOfHits) << std::endl
+        // << " hit_Xs " << strVector(hit_Xs, numberOfHits) << std::endl
+        // << " hit_Ys " << strVector(hit_Ys, numberOfHits) << std::endl
+        // << " hit_Zs " << strVector(hit_Zs, numberOfHits) << std::endl
         << " #MC particles " << mcps.size() << std::endl;
 
     // Print first MCP
@@ -223,6 +227,7 @@ bool sortFiles( std::string s1, std::string s2 ) {
 
 std::vector< std::string > VelopixEventReader::getFolderContents(
   const std::string& foldername,
+  const bool fromNtuple,
   uint nFiles
   ) {
   
@@ -234,13 +239,20 @@ std::vector< std::string > VelopixEventReader::getFolderContents(
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
       std::string filename = std::string(ent->d_name);
-      if (filename.find(".bin") != std::string::npos) {
-	folderContents.push_back(filename);
+      if ( !fromNtuple ) {
+	if (filename.find(".bin") != std::string::npos) {
+	  folderContents.push_back(filename);
+	}
+      }
+      else if ( fromNtuple ) {
+	if (filename.find(".root") != std::string::npos) {
+	  folderContents.push_back(filename);
+	}
       }
     }
     closedir(dir);
     if (folderContents.size() == 0) {
-      std::cerr << "No binary files found in folder " << foldername << std::endl;
+      std::cerr << "No binary / root files found in folder " << foldername << std::endl;
       exit(-1);
     } else {
       std::cout << "Found " << folderContents.size() << " binary files" << std::endl;
@@ -254,14 +266,160 @@ std::vector< std::string > VelopixEventReader::getFolderContents(
  
   return folderContents;
 }
-  
-std::vector<VelopixEvent> VelopixEventReader::readFolder (
-        const std::string& foldername,
-        uint nFiles,
-        const bool checkEvents
-        ) {
 
-  std::vector< std::string > folderContents = getFolderContents( foldername, nFiles );
+/* Use Ntuple created by PrTrackerDumper tool, 
+   written by Renato Quagliani,
+   Use code from https://gitlab.cern.ch/rquaglia/PrOfflineStudies
+   by Renato Quagliani to read the input
+*/
+void VelopixEventReader::readNtupleIntoVelopixEvent(
+  const std::string& filename,
+  VelopixEvent& event							    
+ ) {
+
+  // Check if file exists
+  if (!VelopixEventReader::fileExists(filename)){
+    throw StrException("Error: File " + filename + " does not exist.");
+  }
+  
+  TFile file(filename.data(),"READ");
+  TTree *tree = (TTree*)file.Get("Hits_detectors");
+  assert( tree);
+
+  // MCP information
+  TBranch        *b_fullInfo;   //!
+  TBranch        *b_hasSciFi;   //!
+  TBranch        *b_hasUT;   //!
+  TBranch        *b_hasVelo;   //!
+  TBranch        *b_isDown;   //!
+  TBranch        *b_isDown_noVelo;   //!
+  TBranch        *b_isLong;   //!
+  TBranch        *b_key;   //!
+  TBranch        *b_isLong_andUT;   //!
+  TBranch        *b_p;   //!
+  TBranch        *b_pt;   //!
+  TBranch        *b_pid;   //!
+  TBranch        *b_eta;   //!
+  TBranch        *b_ovtx_x;   //!
+  TBranch        *b_ovtx_y;   //!
+  TBranch        *b_ovtx_z;   //!
+  TBranch        *b_fromBeautyDecay;   //!
+  TBranch        *b_fromCharmDecay;   //!
+  TBranch        *b_fromStrangeDecay;   //!
+  TBranch        *b_DecayOriginMother_pid;   //!
+
+  // LHCbIDs of hits in Velo
+  TBranch        *b_Velo_lhcbID;   //!
+  // LHCbIDs of hits in UT
+  TBranch        *b_UT_lhcbID;   //!
+  //LHCbIDs of hits in SciFi (FT)
+  TBranch        *b_FT_lhcbID;   //!
+  
+  TTree* fChain = tree;
+
+  // Declare variables to store Tree variables in
+  std::vector<unsigned int> *Velo_lhcbID;
+  std::vector<unsigned int> *FT_lhcbID;
+  std::vector<unsigned int> *UT_lhcbID;
+
+  Bool_t          fullInfo;
+  Bool_t          hasSciFi;
+  Bool_t          hasUT;
+  Bool_t          hasVelo;
+  Bool_t          isDown;
+  Bool_t          isDown_noVelo;
+  Bool_t          isLong;
+  Int_t           key;
+  Bool_t          isLong_andUT;
+  Double_t        p;
+  Double_t        pt;
+  Int_t           pid;
+  Double_t        eta;
+  Double_t        ovtx_x;
+  Double_t        ovtx_y;
+  Double_t        ovtx_z;
+  Bool_t          fromBeautyDecay;
+  Bool_t          fromCharmDecay;
+  Bool_t          fromStrangeDecay;
+  Int_t           DecayOriginMother_pid;
+  
+  // Set branch addresses and branch pointers
+  fChain->SetBranchAddress("fullInfo", &fullInfo, &b_fullInfo);
+  fChain->SetBranchAddress("hasSciFi", &hasSciFi, &b_hasSciFi);
+  fChain->SetBranchAddress("hasUT", &hasUT, &b_hasUT);
+  fChain->SetBranchAddress("hasVelo", &hasVelo, &b_hasVelo);
+  fChain->SetBranchAddress("isDown", &isDown, &b_isDown);
+  fChain->SetBranchAddress("isDown_noVelo", &isDown_noVelo, &b_isDown_noVelo);
+  fChain->SetBranchAddress("isLong", &isLong, &b_isLong);
+  fChain->SetBranchAddress("key", &key, &b_key);
+  fChain->SetBranchAddress("isLong_andUT", &isLong_andUT, &b_isLong_andUT);
+  fChain->SetBranchAddress("p", &p, &b_p);
+  fChain->SetBranchAddress("pt", &pt, &b_pt);
+  fChain->SetBranchAddress("pid", &pid, &b_pid);
+  fChain->SetBranchAddress("eta", &eta, &b_eta);
+  fChain->SetBranchAddress("ovtx_x", &ovtx_x, &b_ovtx_x);
+  fChain->SetBranchAddress("ovtx_y", &ovtx_y, &b_ovtx_y);
+  fChain->SetBranchAddress("ovtx_z", &ovtx_z, &b_ovtx_z);
+  fChain->SetBranchAddress("fromBeautyDecay", &fromBeautyDecay, &b_fromBeautyDecay);
+  fChain->SetBranchAddress("fromCharmDecay", &fromCharmDecay, &b_fromCharmDecay);
+  fChain->SetBranchAddress("fromStrangeDecay", &fromStrangeDecay, &b_fromStrangeDecay);
+  fChain->SetBranchAddress("DecayOriginMother_pid", &DecayOriginMother_pid, &b_DecayOriginMother_pid);
+
+  
+  fChain->SetBranchAddress("UT_lhcbID", &UT_lhcbID, &b_UT_lhcbID);
+  fChain->SetBranchAddress("FT_lhcbID", &FT_lhcbID, &b_FT_lhcbID);
+  fChain->SetBranchAddress("Velo_lhcbID", &Velo_lhcbID, &b_Velo_lhcbID);
+   
+  Velo_lhcbID = 0;
+  FT_lhcbID = 0;
+  UT_lhcbID = 0;
+
+  // Loop over tree containing MCPs of one event
+  Long64_t maxEntries = fChain->GetTree()->GetEntries();
+  for(Long64_t entry = 0; entry< maxEntries ; ++entry){
+    fChain->GetTree()->GetEntry(entry);
+    if( p<0) continue;  // Hits not associated to an MCP are stored with p < 0
+    //Velo
+    if ( !hasVelo ) continue;
+    
+    VelopixEvent::MCP mcp;
+    mcp.key = key;
+    mcp.id = pid;
+    mcp.p = p;
+    mcp.pt = pt;
+    mcp.eta = eta;
+    //mcp.phi = phi; // not yet available in Ntuple
+    mcp.islong = isLong;
+    mcp.isdown = isDown;
+    mcp.isvelo = hasVelo;
+    mcp.isut = hasUT;
+    mcp.strangelong = fromStrangeDecay && isLong;
+    mcp.strangedown = fromStrangeDecay && isDown;
+    mcp.fromb = fromBeautyDecay;
+    mcp.fromd = fromCharmDecay;
+    
+    std::vector<uint32_t> hits;
+    for(int index = 0; index < Velo_lhcbID->size(); index++) {
+      hits.push_back( Velo_lhcbID->at(index) );
+    }
+    mcp.numHits = (uint32_t)hits.size();
+    mcp.hits = hits;
+    
+    event.mcps.push_back( mcp );
+
+  } // loop over MCPs
+  
+}
+					 
+
+std::vector<VelopixEvent> VelopixEventReader::readFolder (
+  const std::string& foldername,
+  const bool fromNtuple, 
+  uint nFiles,
+  const bool checkEvents
+  ) {
+
+  std::vector< std::string > folderContents = getFolderContents( foldername, fromNtuple, nFiles );
 
   uint requestedFiles = nFiles==0 ? folderContents.size() : nFiles;
   std::cout << "Requested " << requestedFiles << " files" << std::endl;
@@ -279,42 +437,29 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
     std::string readingFile = folderContents[i % folderContents.size()];
     std::cout << "Reading MC event " << readingFile << std::endl;
     
-    std::vector<uint8_t> inputContents;
-    readFileIntoVector(foldername + "/" + readingFile, inputContents);
-    //std::cout << "vector size = " << inputContents.size() << std::endl;
-    
-    // Check the number of sensors is correct, otherwise ignore it
-    VelopixEvent event {inputContents, checkEvents};
+    VelopixEvent event;
+    if ( !fromNtuple ) {
+      std::vector<uint8_t> inputContents;
+      readFileIntoVector(foldername + "/" + readingFile, inputContents);
+      event = VelopixEvent(inputContents, checkEvents);
+    }
+    else if ( fromNtuple )
+      readNtupleIntoVelopixEvent(foldername + "/" + readingFile, event);
+      
     if ( i == 0 )
       event.print();
-    
-    // Sanity check
-    if (event.numberOfModules == VelopixEventReader::numberOfModules) {
-      input.emplace_back(event);
+       
+    input.emplace_back(event);
+        
+    readFiles++;
+    if ((readFiles % 100) == 0) {
+      std::cout << "." << std::flush;
     }
-    else
-      printf("ERROR: number of sensors should be %u, but it is %u \n", VelopixEventReader::numberOfModules, event.numberOfModules);  
     
-    
-        readFiles++;
-        if ((readFiles % 100) == 0) {
-	  std::cout << "." << std::flush;
-        }
-	
   }
   
   std::cout << std::endl << input.size() << " files read" << std::endl << std::endl;
   return input;
-}
-
-std::vector<VelopixEvent> VelopixEventReader::get_mcps_from_ntuple( const std::string& foldername, uint nFiles ) {
-
-  std::vector<VelopixEvent> events;
-
-  /* Read input ROOT file */
-  //TFile *f = new TFile();
-  
-  return events;
 }
 
 		     

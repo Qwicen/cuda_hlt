@@ -61,6 +61,7 @@ public:
     std::vector<MCP> mcps;
 
     // Constructor
+    VelopixEvent() {};
     VelopixEvent(const std::vector<uint8_t>& _event, const bool checkFile = true);
 
     void print() const;
@@ -80,13 +81,12 @@ public:
     static void readFileIntoVector(const std::string& filename, std::vector<uint8_t>& output);
 
     static std::vector< std::string > getFolderContents (
-      const std::string& foldername, uint nFiles = 0 );
+      const std::string& foldername, const bool fromNtuple, uint nFiles = 0 );
   
     static std::vector<VelopixEvent> readFolder(
-      const std::string& foldername, uint nFiles = 0, const bool checkFiles = true);
+      const std::string& foldername, const bool fronNtuple, uint nFiles = 0, const bool checkFiles = true);
 
-    static std::vector<VelopixEvent> get_mcps_from_ntuple(
-      const std::string& foldername, uint nFiles = 0 );
+    static void readNtupleIntoVelopixEvent(const std::string& filename, VelopixEvent& event);
 };
 
 // vim: sw=4:tw=78:ft=cpp:et

@@ -120,7 +120,8 @@ cudaError_t checkSorting(
 
 void call_PrChecker(
   const std::vector< trackChecker::Tracks > all_tracks,
-  const std::string folder_name_MC
+  const std::string folder_name_MC,
+  const bool fromNtuple
 );
 
 void checkTracks(
@@ -128,5 +129,6 @@ void checkTracks(
   int * host_accumulated_tracks,
   int * host_number_of_tracks_pinned,
   const int &number_of_events,
-  const std::string folder_name_MC
+  const std::string folder_name_MC,
+  const bool fromNtuple
 );
