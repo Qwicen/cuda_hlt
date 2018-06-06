@@ -88,5 +88,3 @@ public:
 
     static void readNtupleIntoVelopixEvent(const std::string& filename, VelopixEvent& event);
 };
-
-// vim: sw=4:tw=78:ft=cpp:et

@@ -24,50 +24,50 @@
 
 
 VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEvent) {
-    uint8_t* input = (uint8_t*) event.data();
+  uint8_t* input = (uint8_t*) event.data();
 
-    // Event
-    numberOfModules  = *((uint32_t*)input); input += sizeof(uint32_t);
-    numberOfHits     = *((uint32_t*)input); input += sizeof(uint32_t);
-    std::copy_n((float*) input, numberOfModules, std::back_inserter(module_Zs)); input += sizeof(float) * numberOfModules;
-    std::copy_n((uint32_t*) input, numberOfModules, std::back_inserter(module_hitStarts)); input += sizeof(uint32_t) * numberOfModules;
-    std::copy_n((uint32_t*) input, numberOfModules, std::back_inserter(module_hitNums)); input += sizeof(uint32_t) * numberOfModules;
-    std::copy_n((uint32_t*) input, numberOfHits, std::back_inserter(hit_IDs)); input += sizeof(uint32_t) * numberOfHits;
-    std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Xs)); input += sizeof(float) * numberOfHits;
-    std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Ys)); input += sizeof(float) * numberOfHits;
-    std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Zs)); input += sizeof(float) * numberOfHits;
+  // Event
+  numberOfModules  = *((uint32_t*)input); input += sizeof(uint32_t);
+  numberOfHits   = *((uint32_t*)input); input += sizeof(uint32_t);
+  std::copy_n((float*) input, numberOfModules, std::back_inserter(module_Zs)); input += sizeof(float) * numberOfModules;
+  std::copy_n((uint32_t*) input, numberOfModules, std::back_inserter(module_hitStarts)); input += sizeof(uint32_t) * numberOfModules;
+  std::copy_n((uint32_t*) input, numberOfModules, std::back_inserter(module_hitNums)); input += sizeof(uint32_t) * numberOfModules;
+  std::copy_n((uint32_t*) input, numberOfHits, std::back_inserter(hit_IDs)); input += sizeof(uint32_t) * numberOfHits;
+  std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Xs)); input += sizeof(float) * numberOfHits;
+  std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Ys)); input += sizeof(float) * numberOfHits;
+  std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Zs)); input += sizeof(float) * numberOfHits;
 
-    // Monte Carlo
-    uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
-    //std::cout << "n mc particles = " << number_mcp << std::endl;
-    for (uint32_t i=0; i<number_mcp; ++i) {
-        MCP p;
-        p.key          = *((uint32_t*)  input); input += sizeof(uint32_t);
-        p.id           = *((uint32_t*)  input); input += sizeof(uint32_t);
-        p.p            = *((float*)  input); input += sizeof(float);
-        p.pt           = *((float*)  input); input += sizeof(float);
-        p.eta          = *((float*)  input); input += sizeof(float);
-        p.phi          = *((float*)  input); input += sizeof(float);
-        p.islong       = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-        p.isdown       = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-        p.isvelo       = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-        p.isut         = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-        p.strangelong  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-        p.strangedown  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-        p.fromb        = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-        p.fromd        = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-        p.numHits      = *((uint32_t*)  input); input += sizeof(uint32_t);
+  // Monte Carlo
+  uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
+  //std::cout << "n mc particles = " << number_mcp << std::endl;
+  for (uint32_t i=0; i<number_mcp; ++i) {
+    MCP p;
+    p.key      = *((uint32_t*)  input); input += sizeof(uint32_t);
+    p.id       = *((uint32_t*)  input); input += sizeof(uint32_t);
+    p.p      = *((float*)  input); input += sizeof(float);
+    p.pt       = *((float*)  input); input += sizeof(float);
+    p.eta      = *((float*)  input); input += sizeof(float);
+    p.phi      = *((float*)  input); input += sizeof(float);
+    p.islong     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.isdown     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.isvelo     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.isut     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.strangelong  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.strangedown  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.fromb    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.fromd    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.numHits    = *((uint32_t*)  input); input += sizeof(uint32_t);
 	//std::cout << "numHits = " << p.numHits << std::endl;
-        std::copy_n((uint32_t*) input, p.numHits, std::back_inserter(p.hits)); input += sizeof(uint32_t) * p.numHits;
-        mcps.push_back(p);
-    }
+    std::copy_n((uint32_t*) input, p.numHits, std::back_inserter(p.hits)); input += sizeof(uint32_t) * p.numHits;
+    mcps.push_back(p);
+  }
 
-    size = input - (uint8_t*) event.data();
+  size = input - (uint8_t*) event.data();
 
-    if (size != event.size()) {
-        throw StrException("Size mismatch in event deserialization: " +
-                std::to_string(size) + " vs " + std::to_string(event.size()));
-    }
+  if (size != event.size()) {
+    throw StrException("Size mismatch in event deserialization: " +
+        std::to_string(size) + " vs " + std::to_string(event.size()));
+  }
 
     if (checkEvent) {
         // Check all floats are valid
@@ -101,24 +101,25 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
             //     }
             // }
         }
-        // Check all hitStarts are monotonically increasing (>=)
-        // and that they correspond with hitNums
-        uint32_t hitStart = 0;
-        for (size_t i=0; i<numberOfModules; ++i) {
-            if (module_hitNums[i] > 0) {
-                if (module_hitStarts[i] < hitStart) {
-                    throw StrException("module_hitStarts are not monotonically increasing "
-                        + std::to_string(hitStart) + " " + std::to_string(module_hitStarts[i]) + ".");
-                }
-                hitStart = module_hitStarts[i];
-            }
-        }
-	
     }
+    
+    // Check all hitStarts are monotonically increasing (>=)
+    // and that they correspond with hitNums
+    uint32_t hitStart = 0;
+    for (size_t i=0; i<numberOfModules; ++i) {
+      if (module_hitNums[i] > 0) {
+        if (module_hitStarts[i] < hitStart) {
+          throw StrException("module_hitStarts are not monotonically increasing "
+			     + std::to_string(hitStart) + " " + std::to_string(module_hitStarts[i]) + ".");
+        }
+        hitStart = module_hitStarts[i];
+      }
+    }
+
 }
 
 void VelopixEvent::print() const {
-    std::cout << "Event" << std::endl
+  std::cout << "Event" << std::endl
         // << " numberOfModules " << numberOfModules << std::endl
         // << " numberOfHits " << numberOfHits << std::endl
         // << " module_Zs " << strVector(module_Zs, numberOfModules) << std::endl
@@ -130,46 +131,46 @@ void VelopixEvent::print() const {
         // << " hit_Zs " << strVector(hit_Zs, numberOfHits) << std::endl
         << " #MC particles " << mcps.size() << std::endl;
 
-    // Print first MCP
-    if (mcps.size() > 0) {
-        auto& p = mcps[0];
-        std::cout << " First MC particle" << std::endl
-            << "  key " << p.key << std::endl
-            << "  id " << p.id << std::endl
-            << "  p " << p.p << std::endl
-            << "  pt " << p.pt << std::endl
-            << "  eta " << p.eta << std::endl
-            << "  phi " << p.phi << std::endl
-            << "  islong " << p.islong << std::endl
-            << "  isdown " << p.isdown << std::endl
-            << "  isvelo " << p.isvelo << std::endl
-            << "  isut " << p.isut << std::endl
-            << "  strangelong " << p.strangelong << std::endl
-            << "  strangedown " << p.strangedown << std::endl
-            << "  fromb " << p.fromb << std::endl
-            << "  fromd " << p.fromd << std::endl
-            << "  numHits " << p.numHits << std::endl
-            << "  hits " << strVector(p.hits, p.numHits) << std::endl;
-    }
+  // Print first MCP
+  if (mcps.size() > 0) {
+    auto& p = mcps[0];
+    std::cout << " First MC particle" << std::endl
+      << "  key " << p.key << std::endl
+      << "  id " << p.id << std::endl
+      << "  p " << p.p << std::endl
+      << "  pt " << p.pt << std::endl
+      << "  eta " << p.eta << std::endl
+      << "  phi " << p.phi << std::endl
+      << "  islong " << p.islong << std::endl
+      << "  isdown " << p.isdown << std::endl
+      << "  isvelo " << p.isvelo << std::endl
+      << "  isut " << p.isut << std::endl
+      << "  strangelong " << p.strangelong << std::endl
+      << "  strangedown " << p.strangedown << std::endl
+      << "  fromb " << p.fromb << std::endl
+      << "  fromd " << p.fromd << std::endl
+      << "  numHits " << p.numHits << std::endl
+      << "  hits " << strVector(p.hits, p.numHits) << std::endl;
+  }
 }
 
 /// get hits into a format we like (should ultimately go away, or just be a view)
 VeloPixels VelopixEvent::soaHits() const
 {
-    VeloPixels retVal;
-    retVal.reserve(numberOfHits);
-    for (std::size_t i = 0; i < numberOfHits; ++i) {
-        retVal.emplace_back(hit_Xs[i], hit_Ys[i], hit_Zs[i], hit_IDs[i]);
-    }
-    return retVal;
+  VeloPixels retVal;
+  retVal.reserve(numberOfHits);
+  for (std::size_t i = 0; i < numberOfHits; ++i) {
+    retVal.emplace_back(hit_Xs[i], hit_Ys[i], hit_Zs[i], hit_IDs[i]);
+  }
+  return retVal;
 }
 
 MCParticles VelopixEvent::mcparticles() const
 {
-    using Flags = MCParticleDesc::Flags;
-    MCParticles retVal;
-    retVal.reserve(mcps.size());
-    for (const auto& mcp: mcps) {
+  using Flags = MCParticleDesc::Flags;
+  MCParticles retVal;
+  retVal.reserve(mcps.size());
+  for (const auto& mcp: mcps) {
 	retVal.emplace_back(mcp.p, mcp.pt, mcp.eta, mcp.phi,
 		mcp.id, mcp.key, mcp.numHits,
 		SomeLHCbIDs(mcp.hits.begin(), mcp.hits.end()),
@@ -181,38 +182,38 @@ MCParticles VelopixEvent::mcparticles() const
 		(mcp.strangedown ? Flags::StrangeDown : 0) |
 		(mcp.fromb ? Flags::FromB : 0) |
 		(mcp.fromd ? Flags::FromD : 0));
-    }
-    return retVal;
+  }
+  return retVal;
 }
 
 bool VelopixEventReader::fileExists (const std::string& name) {
-    if (FILE *file = fopen(name.c_str(), "r")) {
-        fclose(file);
-        return true;
-    } else {
-        return false;
-    }
+  if (FILE *file = fopen(name.c_str(), "r")) {
+    fclose(file);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void VelopixEventReader::readFileIntoVector(const std::string& filename, std::vector<uint8_t>& output) {
-    // Check if file exists
-    if (!VelopixEventReader::fileExists(filename)){
-        throw StrException("Error: File " + filename + " does not exist.");
-    }
+  // Check if file exists
+  if (!VelopixEventReader::fileExists(filename)){
+    throw StrException("Error: File " + filename + " does not exist.");
+  }
 
-    std::ifstream infile(filename.c_str(), std::ifstream::binary);
-    infile.seekg(0, std::ios::end);
-    auto end = infile.tellg();
-    infile.seekg(0, std::ios::beg);
-    auto dataSize = end - infile.tellg();
-    // read content of infile with a vector
-    output.resize(dataSize);
-    infile.read((char*) output.data(), dataSize);
-    // check that file size and data in file about its payload size match
-    const auto currpos = infile.tellg();
-    infile.seekg(0, std::ios_base::end);
-    const auto endpos = infile.tellg();
-    assert(endpos == currpos);
+  std::ifstream infile(filename.c_str(), std::ifstream::binary);
+  infile.seekg(0, std::ios::end);
+  auto end = infile.tellg();
+  infile.seekg(0, std::ios::beg);
+  auto dataSize = end - infile.tellg();
+  // read content of infile with a vector
+  output.resize(dataSize);
+  infile.read((char*) output.data(), dataSize);
+  // check that file size and data in file about its payload size match
+  const auto currpos = infile.tellg();
+  infile.seekg(0, std::ios_base::end);
+  const auto endpos = infile.tellg();
+  assert(endpos == currpos);
 }
 
 bool sortFiles( std::string s1, std::string s2 ) {
@@ -252,7 +253,10 @@ std::vector< std::string > VelopixEventReader::getFolderContents(
     }
     closedir(dir);
     if (folderContents.size() == 0) {
-      std::cerr << "No binary / root files found in folder " << foldername << std::endl;
+      if ( fromNtuple )
+	std::cerr << "No root files found in folder " << foldername << std::endl;
+      else if ( !fromNtuple )
+	std::cerr << "No binary files found in folder " << foldername << std::endl;
       exit(-1);
     } else {
       std::cout << "Found " << folderContents.size() << " binary files" << std::endl;

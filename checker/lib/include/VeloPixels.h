@@ -27,5 +27,3 @@ namespace VeloPixelDesc {
 
 using VeloPixels = SOA::Container<std::vector, VeloPixelDesc::Skin>;
 using VeloPixelsRange = boost::iterator_range<VeloPixels::iterator>;
-
-// vim: sw=4:tw=78:ft=cpp:et

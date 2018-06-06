@@ -76,7 +76,7 @@ __global__ void estimate_input_size(
             
             // Add the found clusters
             uint current_estimated_module_size = atomicAdd(estimated_module_size, number_of_clusters);
-	    assert( current_estimated_module_size < VeloTracking::max_numhits_in_module);
+            assert( current_estimated_module_size < VeloTracking::max_numhits_in_module);
           } else {
             // Find candidates that follow this condition:
             // For pixel o, all pixels x should *not* be populated
@@ -183,8 +183,8 @@ __global__ void estimate_input_size(
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)
                 | k;
-	      assert( current_cluster_candidate < number_of_events * VeloClustering::max_candidates_event );
-	      cluster_candidates[current_cluster_candidate] = candidate;
+              assert( current_cluster_candidate < number_of_events * VeloClustering::max_candidates_event );
+              cluster_candidates[current_cluster_candidate] = candidate;
               ++found_cluster_candidates;
             }
 
@@ -195,7 +195,7 @@ __global__ void estimate_input_size(
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)
                 | k;
-	      assert( current_cluster_candidate < number_of_events * VeloClustering::max_candidates_event );
+              assert( current_cluster_candidate < number_of_events * VeloClustering::max_candidates_event );
               cluster_candidates[current_cluster_candidate] = candidate;
               ++found_cluster_candidates;
             }
@@ -203,7 +203,7 @@ __global__ void estimate_input_size(
             // Add the found cluster candidates
             if (found_cluster_candidates > 0) {
               uint current_estimated_module_size = atomicAdd(estimated_module_size, found_cluster_candidates);
-	      assert( current_estimated_module_size < VeloTracking::max_numhits_in_module);
+              assert( current_estimated_module_size < VeloTracking::max_numhits_in_module);
             }
           }
         }

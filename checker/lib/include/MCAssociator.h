@@ -210,5 +210,3 @@ class MCAssociator
             return buildResult(assoc, total);
         }
 };
-
-// vim: sw=4:tw=78:ft=cpp:et

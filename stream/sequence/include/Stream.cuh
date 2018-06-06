@@ -74,7 +74,6 @@ struct Stream {
     const std::vector<uint>& event_offsets,
     const std::vector<char>& geometry,
     const uint number_of_events,
-    const size_t param_starting_events_size,
     const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
@@ -110,7 +109,6 @@ struct Stream {
     size_t host_event_offsets_pinned_size,
     const VeloUTTracking::Hits hits_layers_events[],
     const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
-    uint start_event,
     uint number_of_events,
     uint number_of_repetitions
   );

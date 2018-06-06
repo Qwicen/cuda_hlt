@@ -10,13 +10,12 @@ How to create the input
 In the current development stage, the input is created by running Brunel. 
 On one hand, the raw bank / hit information is written to binary files; 
 on the other hand, the MC truth information is written to binary files to be 
-able to run the PrChecker. Use the branch 
+able to run the checker. Use the branch 
 dovombru_output_for_CUDA_HLT1 (branched from Brunel v53r1)
 of the Rec repository to create the input by following these steps on lxplus:
 
 Compilation:
 
-    fresh shell
     source /cvmfs/lhcb.cern.ch/group_login.sh
     lb-dev Brunel/v53r1
     cd BrunelDev_v53r1
@@ -58,10 +57,9 @@ The build process doesn't differ from standard cmake projects:
 There are some cmake options to configure the build process:
 
    * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DBUILD_TYPE=Debug ..`
-   * The option to run the PrChecker can be turned on and off with `-DMC_CHECK=ON/OFF`. 
+   * The option to run the validation can be turned on and off with `-DMC_CHECK`. 
    
-Some binary input files are included with the project for testing. [To do: include
-MC truth and raw binaries once they are in the final format.]
+Some binary input files are included with the project for testing.
 A run of the program with no arguments will let you know the basic options:
 
     Usage: ./cu_hlt
@@ -78,7 +76,6 @@ A run of the program with no arguments will let you know the basic options:
      [-v {verbosity}=3 (info)]
      [-p (print rates)]
 
-
 Here are some example run options:
 
     # Run all input files once
@@ -93,5 +90,6 @@ Here are some example run options:
     # Run twelve streams, each with 3500 events, 40 repetitions
     ./cu_hlt -f ../velopix_minbias_raw -n 3500 -t 12 -r 40
 
-    # Run clustering efficiency checker and PrChecker, no repetitions or multiple threads needed
-    ./cu_hlt -f ../velopix_minbias_raw -g ../velopix_minbias_MC -n 10 -t 1 -r 1 -c 1
+    # Run clustering and Velopix efficiency validations, no repetitions or multiple threads needed
+    # Note: cu_hlt must have been compiled with -DMC_CHECK
+    ./cu_hlt -f ../minbias_raw -g ../minbias_MC -n 10 -t 1 -r 1 -c 1

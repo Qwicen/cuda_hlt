@@ -83,5 +83,3 @@ class TrackChecker
                 const MCAssociator& mcassoc,
                 const MCParticles& mcps);
 };
-
-// vim: sw=4:tw=78:ft=cpp:et

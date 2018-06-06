@@ -8,8 +8,9 @@
 #include "VeloDefinitions.cuh"
 
 namespace VeloClustering {
-
-  static constexpr uint32_t max_candidates_event = 2000; 
+  // Adjusted to minbias events. In the future, it should
+  // be adjusted on the go.
+  static constexpr uint32_t max_candidates_event = 2100;
 
   extern __constant__ uint8_t sp_patterns [256];
   extern __constant__ uint8_t candidate_ks [9];
