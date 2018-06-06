@@ -1,4 +1,4 @@
-# pragma once
+#pragma once
 
 #include <cmath>
 
@@ -24,7 +24,7 @@
    *  @update for A-Team framework 2007-08-20 SHM
    *
    *  2017-03-01: Christoph Hasse (adapt to future framework)
-   *  2018-05-05: Plácido Fernández
+   *  2018-05-05: Plácido Fernández (make standalone)
    */
 
 struct TrackHelper{
@@ -51,10 +51,9 @@ struct TrackHelper{
 class PrVeloUT {
 
 public:
-  /// Standard constructor
-  PrVeloUT();
-  virtual int initialize() override;    ///< Algorithm initialization
-  LHCb::Tracks operator()(const std::vector<Track>& inputTracks) const override;
+
+  virtual int initialize();
+  std::vector<TrackVelo> operator()(const std::vector<TrackVelo>& inputTracks) const;
 
 private:
 
@@ -80,18 +79,23 @@ private:
 
   // typedef MultiIndexedHitContainer<Hit, UT::Info::kNStations, UT::Info::kNLayers>::HitRange HitRange;
 
-  bool getState(const Track* iTr, VeloState& trState, Track& outputTracks) const;
+  bool getState(
+    const TrackVelo& iTr, 
+    VeloState& trState, 
+    std::vector<TrackVelo>& outputTracks ) const;
 
-  bool getHits(std::array<std::vector<Hit>,4>& hitsInLayers,  const std::array<std::array<HitRange::const_iterator,85>,4>& iteratorsLayers,
-               const UT::HitHandler* hh,
-               const std::vector<float>& fudgeFactors, VeloState& trState ) const;
+  bool getHits(
+    std::array<std::vector<Hit>,4>& hitsInLayers, 
+    const std::array<std::vector<Hit>,4>& inputHits,
+    const std::vector<float>& fudgeFactors, 
+    VeloState& trState ) const;
 
   bool formClusters(const std::array<std::vector<Hit>,4>& hitsInLayers, TrackHelper& helper) const;
 
-  void prepareOutputTrack(const Track* veloTrack,
+  void prepareOutputTrack(const TrackVelo& veloTrack,
                           const TrackHelper& helper,
                           const std::array<std::vector<Hit>,4>& hitsInLayers,
-                          std::vector<Track>& outputTracks,
+                          std::vector<TrackVelo>& outputTracks,
                           const std::vector<float>& bdlTable) const;
 
   // ==============================================================================

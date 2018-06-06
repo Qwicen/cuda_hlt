@@ -4,13 +4,24 @@
 
 int main() {
 
-  // Tracks from Dorothea (check her branch)
-  // Magnet things from Florian (check his branch)
+  // Create fake tracks
+  const int nb_tracks = 10;
+  const int nb_states = 20;
 
-  std::vector< trackChecker::Tracks > tracks;
+  Tracks tracks;
+  for (int i=0; i<nb_tracks; ++i) {
+    Track tr;
+    for (int j=0; j<nb_states; ++j) {
+      VeloState st;
+      tr.emplace_back(st);
+    }
+    tracks.emplace_back(tr);
+  }
 
-  trackChecker::Tracks PrVeloUT()
-
-  // Pass the tracks to the VeloUT
+  // Call the veloUT
+  PrVeloUT velout;
+  if ( velout::initialize() ) {
+    velout(tracks);    
+  }
  
 }

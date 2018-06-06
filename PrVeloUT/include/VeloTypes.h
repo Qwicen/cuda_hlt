@@ -27,7 +27,9 @@ struct Hit : public HitBase {
     float m_second_x;
     float m_second_z;
 
-    bool m_cluster_threshold;
+    bool  m_cluster_threshold;
+    int   m_cluster_station;
+    int   m_cluster_layer;
 
     Hit(){}
     Hit(
@@ -45,8 +47,12 @@ struct Hit : public HitBase {
     inline bool highThreshold() const { m_cluster_threshold = true; return m_cluster_threshold; }
     inline bool isYCompatible( const float y, const float tol ) const { return yMin() - tol <= y && y <= yMax() + tol; }
     inline bool isNotYCompatible( const float y, const float tol ) const { return yMin() - tol > y || y > yMax() + tol; }
+    // TODO is this correct?
     // inline LHCb::LHCbID lhcbID() const { return LHCb::LHCbID( m_cluster.channelID() ); }
+    inline LHCb::LHCbID lhcbID() const { return LHCbID ); }
+    // TODO we have this?
     // inline int planeCode() const { return 2 * ( m_cluster.station() - 1 ) + ( m_cluster.layer() - 1 ) % 2; }
+    inline int planeCode() const { return 2 * ( m_cluster_station() - 1 ) + ( m_cluster_layer() - 1 ) % 2; }
     inline float sinT() const { return tanT() * cosT(); }
     // inline int size() const { return m_cluster.pseudoSize(); }
     inline float tanT() const { return -m_dxDy; }
@@ -123,4 +129,6 @@ struct VeloState { // 48 B
   float chi2;
   float z;
 };
+
+typedef std::vector<VeloState> TrackVelo;
 
