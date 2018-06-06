@@ -37,8 +37,7 @@ int PrVeloUT::initialize() {
   // TODO not used? old version?
   // m_veloUTTool = tool<ITracksFromTrackR>("PrVeloUTTool", this );
 
-  std::vector<std::string> filenames; //  TODO init filenames
-  m_PrUTMagnetTool = PrUTMagnetTool(filenames);
+  // m_PrUTMagnetTool = PrUTMagnetTool(filenames);
 
   // m_zMidUT is a position of normalization plane which should to be close to z middle of UT ( +- 5 cm ).
   // Cashed once in PrVeloUTTool at initialization. No need to update with small UT movement.
@@ -63,18 +62,18 @@ std::vector<TrackVelo> PrVeloUT::operator() (
   std::vector<TrackVelo> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
-  // fillIterators(hh, iteratorsLayers);
-
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
   std::array<std::vector<Hit>,4> hitsInLayers;
+  // TODO get the proper hits
+  const std::array<std::vector<Hit>,4> inputHits;
 
   for(const TrackVelo& veloTr : inputTracks) {
 
     VeloState trState;
     if( !getState(veloTr, trState, outputTracks)) continue;
-    if( !getHits(hitsInLayers, /*inputHits, */fudgeFactors, trState) ) continue;
+    if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState) ) continue;
 
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
@@ -111,11 +110,11 @@ bool PrVeloUT::getState(
   const VeloState state = iTr.back();
 
   // -- reject tracks outside of acceptance or pointing to the beam pipe
-  trState.tx = state.tx();
-  trState.ty = state.ty();
-  trState.x = state.x();
-  trState.y = state.y();
-  trState.z = state.z();
+  trState.tx = state.tx;
+  trState.ty = state.ty;
+  trState.x = state.x;
+  trState.y = state.y;
+  trState.z = state.z;
 
   // m_zMidUT comes from MagnetTool
   const float xMidUT =  trState.x + trState.tx*( m_zMidUT - trState.z);
@@ -164,7 +163,7 @@ bool PrVeloUT::getHits(
 
   // -- this 500 seems a little odd...
   const float invTheta = std::min(500.,1.0/std::sqrt(trState.tx*trState.tx+trState.ty*trState.ty));
-  const float minMom   = std::max(m_minPT.value()*invTheta, m_minMomentum.value());
+  const float minMom   = std::max(m_minPT*invTheta, m_minMomentum);
   const float xTol     = std::abs(1. / ( m_distToMomentum * minMom ));
   const float yTol     = m_yTol + m_yTolSlope * xTol;
 
@@ -255,7 +254,7 @@ bool PrVeloUT::formClusters(
 
       if( std::abs(tx-helper.state.tx) > m_deltaTx2 ) continue;
 
-      Hit& bestHit1 = nullptr;
+      const Hit* bestHit1 = nullptr;
       float hitTol = m_hitTol2;
       for(const auto& hit1 : hitsInLayers[1]) {
 
@@ -265,13 +264,13 @@ bool PrVeloUT::formClusters(
         const float xextrapLayer1 = xhitLayer0 + tx*(zhitLayer1-zhitLayer0);
         if(std::abs(xhitLayer1 - xextrapLayer1) < hitTol){
           hitTol = std::abs(xhitLayer1 - xextrapLayer1);
-          bestHit1 = hit1;
+          bestHit1 = &hit1;
         }
       }
 
       if( fourLayerSolution && !bestHit1) continue;
 
-      const Hit& bestHit3 = nullptr;
+      const Hit* bestHit3 = nullptr;
       hitTol = m_hitTol2;
       for( auto& hit3 : hitsInLayers[3]) {
 
@@ -282,14 +281,13 @@ bool PrVeloUT::formClusters(
 
         if(std::abs(xhitLayer3 - xextrapLayer3) < hitTol){
           hitTol = std::abs(xhitLayer3 - xextrapLayer3);
-          bestHit3 = hit3;
+          bestHit3 = &hit3;
         }
       }
 
       // -- All hits found
       if( bestHit1 && bestHit3 ){
-        // TODO avoid the copy
-        std::array<Hit, 4> hits4fit= [hit0, bestHit1, hit2, bestHit3];
+        std::array<const Hit*,4> hits4fit = {&hit0, bestHit1, &hit2, bestHit3};
         simpleFit(hits4fit, helper);
 
         if(!fourLayerSolution && helper.bestHits[0]){
@@ -300,13 +298,13 @@ bool PrVeloUT::formClusters(
 
       // -- Nothing found in layer 3
       if( !fourLayerSolution && bestHit1 ){
-        std::array<Hit, 3> hits4fit= [hit0, bestHit1, hit2];
+        std::array<const Hit*,3> hits4fit = {&hit0, bestHit1, &hit2};
         simpleFit(hits4fit,  helper);
         continue;
       }
       // -- Noting found in layer 1
       if( !fourLayerSolution && bestHit3 ){
-        std::array<Hit, 3> hits4fit= [hit0, bestHit3, hit2];
+        std::array<const Hit*,3> hits4fit = {&hit0, bestHit3, &hit2};
         simpleFit(hits4fit, helper);
         continue;
       }
@@ -382,7 +380,8 @@ void PrVeloUT::prepareOutputTrack(const TrackVelo& veloTrack,
     // -- only the last one can be a nullptr.
     if( !hit ) break;
 
-    outputTracks.back().UTIDs.push_back(hit->lhcbID());
+    // TODO add a TrackStructure with UTIDs
+    // outputTracks.back().UTIDs.push_back(hit->lhcbID());
 
     const float xhit = hit->x;
     const float zhit = hit->z;
@@ -395,7 +394,8 @@ void PrVeloUT::prepareOutputTrack(const TrackVelo& veloTrack,
       const float xextrap = xhit + txUT*(zhit-zohit);
       if( xohit-xextrap < -m_overlapTol) continue;
       if( xohit-xextrap > m_overlapTol) break;
-      outputTracks.back().UTIDs.push_back(ohit.lhcbID());
+      // TODO add a TrackStructure with UTIDs
+      // outputTracks.back().UTIDs.push_back(ohit.lhcbID());
       // -- only one overlap hit
       break;
     }
@@ -408,9 +408,10 @@ void PrVeloUT::prepareOutputTrack(const TrackVelo& veloTrack,
   outTr.tx = helper.state.tx;
   outTr.ty = helper.state.ty;
   */
-  // TODO add this to a track?
-  outputTracks.back().qOverP = qop;
-  outputTracks.back().veloTr = veloTrack;
+
+  // TODO add this to a track structure
+  // outputTracks.back().qOverP = qop;
+  // outputTracks.back().veloTr = veloTrack;
 
 
 // #endif

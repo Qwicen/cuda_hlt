@@ -1,6 +1,5 @@
-#include "../../include/Tracks.h"
-
-#include "PrVUTTrack.h"
+#include "../include/VeloTypes.h"
+#include "../src/PrVeloUT.h"
 
 int main() {
 
@@ -8,9 +7,9 @@ int main() {
   const int nb_tracks = 10;
   const int nb_states = 20;
 
-  Tracks tracks;
+  std::vector<TrackVelo> tracks;
   for (int i=0; i<nb_tracks; ++i) {
-    Track tr;
+    TrackVelo tr;
     for (int j=0; j<nb_states; ++j) {
       VeloState st;
       tr.emplace_back(st);
@@ -20,7 +19,7 @@ int main() {
 
   // Call the veloUT
   PrVeloUT velout;
-  if ( velout::initialize() ) {
+  if ( velout.initialize() ) {
     velout(tracks);    
   }
  

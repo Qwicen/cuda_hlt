@@ -1,14 +1,19 @@
 #pragma once
 
 #include <cmath>
+#include <array>
+#include <vector>
+#include <algorithm>
 
-#include "PrUTMagnetTool.h"
+#include <cassert>
+
+// #include "../PrUTMagnetTool/PrUTMagnetTool.h"
 
 // Math from ROOT
-#include "CholeskyDecomp.h"
+#include "../include/CholeskyDecomp.h"
 
-#include "include/VeloTypes.h"
-#include "include/SystemOfUnits.h"
+#include "../include/VeloTypes.h"
+#include "../include/SystemOfUnits.h"
 
 /** @class PrVeloUT PrVeloUT.h
    *
@@ -26,6 +31,19 @@
    *  2017-03-01: Christoph Hasse (adapt to future framework)
    *  2018-05-05: Plácido Fernández (make standalone)
    */
+
+// TODO Fake MagnetTool
+struct PrUTMagnetTool {
+  const float m_zMidUT = 0.0;
+  const float m_averageDist2mom = 0.0;
+  const std::vector<float> dxLayTable = {0.0, 0.0, 0.0};
+  const std::vector<float> bdlTable = {0.0, 0.0, 0.0};
+
+  float zMidUT() { return m_zMidUT; }
+  float averageDist2mom() { return m_averageDist2mom; }
+  std::vector<float> returnDxLayTable() const { return dxLayTable; }
+  std::vector<float> returnBdlTable() const { return bdlTable; }
+};
 
 struct TrackHelper{
   VeloState state;
@@ -88,7 +106,7 @@ private:
     std::array<std::vector<Hit>,4>& hitsInLayers, 
     const std::array<std::vector<Hit>,4>& inputHits,
     const std::vector<float>& fudgeFactors, 
-    VeloState& trState ) const;
+    const VeloState& trState ) const;
 
   bool formClusters(const std::array<std::vector<Hit>,4>& hitsInLayers, TrackHelper& helper) const;
 
@@ -151,11 +169,11 @@ private:
   // -- 2 helper functions for fit
   // -- Pseudo chi2 fit, templated for 3 or 4 hits
   // ===========================================================================================
-  void addHit( float* mat, float* rhs, const Hit& hit) const {
-    const float ui = hit.x;
-    const float ci = hit.cosT();
-    const float dz = 0.001*(hit.z - m_zMidUT);
-    const float wi = hit->HitPtr.weight();
+  void addHit( float* mat, float* rhs, const Hit* hit) const {
+    const float ui = hit->x;
+    const float ci = hit->cosT();
+    const float dz = 0.001*(hit->z - m_zMidUT);
+    const float wi = hit->weight();
     mat[0] += wi * ci;
     mat[1] += wi * ci * dz;
     mat[2] += wi * ci * dz * dz;
@@ -163,18 +181,16 @@ private:
     rhs[1] += wi * ui * dz;
   }
 
-  void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const Hit& hit) const {
-    const float zd    = hit.z;
+  void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const Hit* hit) const {
+    const float zd    = hit->z;
     const float xd    = xTTFit + xSlopeTTFit*(zd-m_zMidUT);
-    const float du    = xd - hit.x;
-    chi2 += (du*du)*hit.weight();
+    const float du    = xd - hit->x;
+    chi2 += (du*du)*hit->weight();
   }
-
-
 
   template <std::size_t N>
   void simpleFit(
-    std::array<Hit,N>& hits, 
+    std::array<const Hit*,N>& hits, 
     TrackHelper& helper ) const 
   {
     assert( N==3||N==4 );
@@ -185,14 +201,17 @@ private:
     float mat[3] = { helper.wb, helper.wb*zDiff, helper.wb*zDiff*zDiff };
     float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
 
-    const int nHighThres = std::count_if( hits.begin(),  hits.end(),
-                                          []( const Hit& hit ){ return hit && hit.highThreshold(); });
+    // TODO uncomment
+    // const int nHighThres = std::count_if( hits.begin(),  hits.end(),
+    //                                       []( Hit* hit ) { return hit && hit->highThreshold(); });
+
+    const int nHighThres = 2;
 
     // -- Veto hit combinations with no high threshold hit
     // -- = likely spillover
     if( nHighThres < m_minHighThres ) return;
 
-    std::for_each( hits.begin(), hits.end(), [&](const Hit& h) { this->addHit(mat,rhs,h); } );
+    std::for_each( hits.begin(), hits.end(), [&](const Hit* h) { this->addHit(mat,rhs,h); } );
 
     ROOT::Math::CholeskyDecomp<float, 2> decomp(mat);
     if( !decomp ) return;
@@ -209,7 +228,7 @@ private:
 
     float chi2TT = chi2VeloSlope*chi2VeloSlope;
 
-    std::for_each( hits.begin(), hits.end(), [&](const Hit& h) { this->addChi2(xTTFit,xSlopeTTFit, chi2TT, h); } );
+    std::for_each( hits.begin(), hits.end(), [&](const Hit* h) { this->addChi2(xTTFit,xSlopeTTFit, chi2TT, h); } );
 
     chi2TT /= (N + 1 - 2);
 
@@ -230,10 +249,7 @@ private:
 
   // ---
 
-  // ITracksFromTrackR*   m_veloUTTool       = nullptr;             ///< The tool that does the actual pattern recognition
-  // ISequencerTimerTool* m_timerTool        = nullptr;             ///< Timing tool
-  // int                  m_veloUTTime       = 0;                   ///< Counter for timing tool
-  PrUTMagnetTool       m_PrUTMagnetTool   = nullptr;             ///< Multipupose tool for Bdl and deflection
+  PrUTMagnetTool       m_PrUTMagnetTool;                            ///< Multipupose tool for Bdl and deflection
   float                m_zMidUT;
   float                m_distToMomentum;
   float                m_zKink;
