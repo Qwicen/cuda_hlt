@@ -27,15 +27,15 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
   uint8_t* input = (uint8_t*) event.data();
 
   // Event
-  numberOfModules  = *((uint32_t*)input); input += sizeof(uint32_t);
-  numberOfHits   = *((uint32_t*)input); input += sizeof(uint32_t);
-  std::copy_n((float*) input, numberOfModules, std::back_inserter(module_Zs)); input += sizeof(float) * numberOfModules;
-  std::copy_n((uint32_t*) input, numberOfModules, std::back_inserter(module_hitStarts)); input += sizeof(uint32_t) * numberOfModules;
-  std::copy_n((uint32_t*) input, numberOfModules, std::back_inserter(module_hitNums)); input += sizeof(uint32_t) * numberOfModules;
-  std::copy_n((uint32_t*) input, numberOfHits, std::back_inserter(hit_IDs)); input += sizeof(uint32_t) * numberOfHits;
-  std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Xs)); input += sizeof(float) * numberOfHits;
-  std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Ys)); input += sizeof(float) * numberOfHits;
-  std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Zs)); input += sizeof(float) * numberOfHits;
+  // numberOfModules  = *((uint32_t*)input); input += sizeof(uint32_t);
+  // numberOfHits   = *((uint32_t*)input); input += sizeof(uint32_t);
+  // std::copy_n((float*) input, numberOfModules, std::back_inserter(module_Zs)); input += sizeof(float) * numberOfModules;
+  // std::copy_n((uint32_t*) input, numberOfModules, std::back_inserter(module_hitStarts)); input += sizeof(uint32_t) * numberOfModules;
+  // std::copy_n((uint32_t*) input, numberOfModules, std::back_inserter(module_hitNums)); input += sizeof(uint32_t) * numberOfModules;
+  // std::copy_n((uint32_t*) input, numberOfHits, std::back_inserter(hit_IDs)); input += sizeof(uint32_t) * numberOfHits;
+  // std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Xs)); input += sizeof(float) * numberOfHits;
+  // std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Ys)); input += sizeof(float) * numberOfHits;
+  // std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Zs)); input += sizeof(float) * numberOfHits;
 
   // Monte Carlo
   uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
@@ -103,16 +103,16 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
     
     // Check all hitStarts are monotonically increasing (>=)
     // and that they correspond with hitNums
-    uint32_t hitStart = 0;
-    for (size_t i=0; i<numberOfModules; ++i) {
-      if (module_hitNums[i] > 0) {
-        if (module_hitStarts[i] < hitStart) {
-          throw StrException("module_hitStarts are not monotonically increasing "
-			     + std::to_string(hitStart) + " " + std::to_string(module_hitStarts[i]) + ".");
-        }
-        hitStart = module_hitStarts[i];
-      }
-    }
+    // uint32_t hitStart = 0;
+    // for (size_t i=0; i<numberOfModules; ++i) {
+    //   if (module_hitNums[i] > 0) {
+    //     if (module_hitStarts[i] < hitStart) {
+    //       throw StrException("module_hitStarts are not monotonically increasing "
+    // 			     + std::to_string(hitStart) + " " + std::to_string(module_hitStarts[i]) + ".");
+    //     }
+    //     hitStart = module_hitStarts[i];
+    //   }
+    // }
 
 }
 
@@ -447,7 +447,7 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
     if ( !fromNtuple ) {
       std::vector<uint8_t> inputContents;
       readFileIntoVector(foldername + "/" + readingFile, inputContents);
-      event = VelopixEvent(inputContents, checkEvents);
+      event = VelopixEvent(inputContents, false);
     }
     else if ( fromNtuple )
       readNtupleIntoVelopixEvent(foldername + "/" + readingFile, trackType, event);
