@@ -1,7 +1,7 @@
 #include "../include/Stream.cuh"
 #include "../../../main/include/Common.h"
 
-#include "../../../PrVeloUT/include/VeloTypes.h"
+#include "../../../PrVeloUT/src/PrVeloUT.h"
 
 cudaError_t Stream::operator()(
   const char* host_events_pinned,
@@ -208,26 +208,25 @@ cudaError_t Stream::operator()(
       }
     }
 
-    /* Plugin VeloUT CPU code here */
+    /* Plugin VeloUT CPU code here 
+       ATTENTION: assumes we run with 1 stream only
+     */
     // Fill Velo states into vector
+    PrVeloUT velout;
+    if ( velout.initialize() ) {
+      for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
+	VeloState* velo_states_event = host_velo_states + host_accumulated_tracks[i_event];
+	std::vector<VeloUTTracking::TrackVelo> tracks;
+	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+	  VeloUTTracking::TrackVelo states;
+	  states.push_back( velo_states_event[i_track] );
+	  tracks.push_back( states );
+	}
+	velout(tracks); 
+      }
+    }
 
-    // std::vector<TrackVelo> tracks;
-    // for (int i=0; i<nb_tracks; ++i) {
-    //   VeloUTTracking::TrackVelo tr;
-    //   for (int j=0; j<nb_states; ++j) {
-    // 	VeloUTTracking::VeloState st;
-    // 	tr.emplace_back(st);
-    //   }
-    //   tracks.emplace_back(tr);
-    // }
-    // // Call the veloUT
-    // PrVeloUT velout;
-    // if ( velout.initialize() ) {
-    //   velout(tracks);    
-    // }
-    
-    VeloUTTracking::TrackVelo states;
-    
+       
     
   }
   return cudaSuccess;

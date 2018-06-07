@@ -67,6 +67,6 @@ namespace VeloUTTracking {
   
   typedef std::vector<Hit> Hits;
 
-  typedef std::vector<VeloState> TrackVelo;
+  typedef std::vector<VeloState> TrackVelo;  // DvB: we only have one state: at the last measurement point 
   
 }
