@@ -9,39 +9,41 @@ How to create the input
 
 In the current development stage, the input is created by running Brunel. 
 On one hand, the raw bank / hit information is written to binary files; 
-on the other hand, the MC truth information is written to binary files to be 
-able to run the checker. Use the branch 
-dovombru_output_for_CUDA_HLT1 (branched from Brunel v53r1)
-of the Rec repository to create the input by following these steps on lxplus:
+on the other hand, the MC truth information is written to ROOT files to be 
+able to run the checker. For this, Renato Quagliani's tool PrTrackerDumper is 
+used.
+Use the branch 
+dovombru_TrackerDumper_forGPUInput (on current master branch)
+of the Rec repository to create the input by following these steps:
+
+Login to lxplus:
+
+    ssh -XY dovombru@lxplus7.cern.ch
+    LbLogin -c x86_64-centos7-gcc7-opt
 
 Compilation:
-
-    source /cvmfs/lhcb.cern.ch/group_login.sh
-    lb-dev Brunel/v53r1
-    cd BrunelDev_v53r1
+    lb-dev --nightly lhcb-head Brunel/HEAD
+    cd BrunelDev_HEAD/
     git lb-use Rec
-    git lb-checkout Rec/dovombru_output_for_CUDA_HLT1 Pr/PrPixel
-    git lb-checkout Rec/dovombru_output_for_CUDA_HLT1 Pr/PrEventDumper
+    git lb-checkout Rec/dovombru_TrackerDumper_forGPUInput Pr/PrPixel
+    git lb-checkout Rec/dovombru_TrackerDumper_forGPUInput Pr/PrMCTools
     make
     
-Copy the files `options.py`, `upgrade-minbias-magdown.py` and `upgrade-minbias-magdown.xml`
-from the Brunel_config directory of this repository into the BrunelDev_v53r1 
-directory on lxplus, then you can run.
+The files `options.py`, `upgrade-minbias-magdown.py` and `upgrade-minbias-magdown.xml`
+are available in the `config` directory of the dovombru_TrackerDumper_forGPUInput
+branch. Copy these to your BrunelDev_HEAD directory and use them to run Rec.
     
 Running:
     
     mkdir velopix_raw
-    mkdir velopix_MC
+    mkdir TrackerDumper
     mkdir ut_hits
     ./run gaudirun.py options.py upgrade-minbias-magdown.py
     
-One file per event is created and stored in the velopix_raw, velopix_MC and ut_hits
+One file per event is created and stored in the velopix_raw, TrackerDumper and ut_hits
 directories, which need to be copied to folders in the CUDA_HLT1 project
 to be used as input there. 
     
-Caution with the bsphipi data also provided in the Brunel_config directory. The
-occupancies are about twice as high. Currently, the velo clustering algorithm can 
-not handle these high occupancies.
 
 How to run it
 -------------
@@ -59,12 +61,16 @@ There are some cmake options to configure the build process:
    * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DBUILD_TYPE=Debug ..`
    * The option to run the validation can be turned on and off with `-DMC_CHECK`. 
    
+
+The MC validation is a standalone version of the PrChecker, it was written by
+Manuel Schiller, Rainer Schwemmer and Daniel Cámpora.
+
 Some binary input files are included with the project for testing.
 A run of the program with no arguments will let you know the basic options:
 
     Usage: ./cu_hlt
      -f {folder containing .bin files with velopix raw bank information}
-     -g {folder containing .bin files with velopix MC truth information}
+     -g {folder containing .root files with velopix MC truth information}
      -e {folder containing .bin files with ut hit information}
      [-n {number of files to process}=0 (all)]
      [-t {number of threads / streams}=3]
@@ -92,4 +98,4 @@ Here are some example run options:
 
     # Run clustering and Velopix efficiency validations, no repetitions or multiple threads needed
     # Note: cu_hlt must have been compiled with -DMC_CHECK
-    ./cu_hlt -f ../minbias_raw -g ../minbias_MC -n 10 -t 1 -r 1 -c 1
+    ./cu_hlt -f ../velopix_minbias_raw -g ../TrackerDumper -e ../ut_hits -n 10 -t 1 -r 1 -c 1
