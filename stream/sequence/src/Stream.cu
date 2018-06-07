@@ -188,7 +188,7 @@ cudaError_t Stream::operator()(
         cudaEventRecord(cuda_generic_event, stream);
         cudaEventSynchronize(cuda_generic_event);
 
-        checkTracks(host_tracks_pinned,
+        checkTracks(reinterpret_cast<Track<true>*>(host_tracks_pinned),
           host_accumulated_tracks,
   		    host_number_of_tracks_pinned,
           number_of_events,
