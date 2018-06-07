@@ -32,7 +32,6 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
 
   // Monte Carlo
   uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
-  //std::cout << "n mc particles = " << number_mcp << std::endl;
   for (uint32_t i=0; i<number_mcp; ++i) {
     MCP p;
     p.key      = *((uint32_t*)  input); input += sizeof(uint32_t);
@@ -50,7 +49,6 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
     p.fromb    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
     p.fromd    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
     p.numHits    = *((uint32_t*)  input); input += sizeof(uint32_t);
-	//std::cout << "numHits = " << p.numHits << std::endl;
     std::copy_n((uint32_t*) input, p.numHits, std::back_inserter(p.hits)); input += sizeof(uint32_t) * p.numHits;
     mcps.push_back(p);
   }
@@ -88,7 +86,6 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
       // Check all IDs in MC particles exist in hit_IDs
       for (size_t i=0; i<mcp.numHits; ++i) {
         auto hit = mcp.hits[i];
-		//printf("checking hit %u \n", hit );
         if (std::find(hit_IDs.begin(), hit_IDs.end(), hit) == hit_IDs.end()) {
           throw StrException("The following MC particle hit ID was not found in hit_IDs: " + std::to_string(hit));
         }
@@ -240,7 +237,7 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
       std::cerr << "No binary files found in folder " << foldername << std::endl;
       exit(-1);
     } else {
-      std::cout << "Found " << folderContents.size() << " binary files" << std::endl;
+      info_cout << "Found " << folderContents.size() << " binary files" << std::endl;
     }
   } else {
     std::cerr << "Folder could not be opened" << std::endl;
@@ -250,10 +247,10 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
   std::sort( folderContents.begin(), folderContents.end(), sortFiles );
   
   uint requestedFiles = nFiles==0 ? folderContents.size() : nFiles;
-  std::cout << "Requested " << requestedFiles << " files" << std::endl;
+  info_cout << "Requested " << requestedFiles << " files" << std::endl;
 
   if ( requestedFiles > folderContents.size() ) {
-    std::cout << "ERROR: requested " << requestedFiles << " files, but only " << folderContents.size() << " files are present" << std::endl;
+    error_cout << "ERROR: requested " << requestedFiles << " files, but only " << folderContents.size() << " files are present" << std::endl;
     exit(-1);
   }
   
@@ -263,7 +260,7 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
     // Read event #i in the list and add it to the inputs
     // if more files are requested than present in folder, read them again
     std::string readingFile = folderContents[i % folderContents.size()];
-	std::cout << "Reading MC event " << readingFile << std::endl;
+    debug_cout << "Reading MC event " << readingFile << std::endl;
 	
     std::vector<uint8_t> inputContents;
     readFileIntoVector(foldername + "/" + readingFile, inputContents);
@@ -271,9 +268,9 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
 	
     // Check the number of sensors is correct, otherwise ignore it
     VelopixEvent event {inputContents, checkEvents};
-	if ( i == 0 )
-	  event.print();
-	
+    // if ( i == 0 )
+    //   event.print();
+    
     // Sanity check
     if (event.numberOfModules == VelopixEventReader::numberOfModules) {
       input.emplace_back(event);
@@ -287,29 +284,8 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
       std::cout << "." << std::flush;
     }
 
-	/* dump first event */
-	if ( i == 0 ) {
-
-	  std::ofstream out_file_reco;
-	  out_file_reco.open("first_event_reco_tracks_from_input.txt");
-	  for ( auto id : event.hit_IDs )
-	  out_file_reco << std::hex << id << std::endl;
-	  
-	  std::ofstream out_file;
-	  out_file.open("first_event_MC_tracks.txt");
-	  //printf("# of mcps = %u \n", event.mcps.size() );
-	  for ( auto mcp : event.mcps ) {
-	   if ( mcp.hits.size() != mcp.numHits ) 
-	     printf("ATTENTION: size of hits = %u, num hits = %u \n", mcp.hits.size(), mcp.numHits );
-	   //printf("# of hits = %u \n", mcp.numHits );
-	   for ( auto id : mcp.hits )
-	     out_file << std::hex << id << std::endl;
-	   }
-	  out_file.close();
-
-	}
   }
 
-  std::cout << std::endl << input.size() << " files read" << std::endl << std::endl;
+  info_cout << std::endl << input.size() << " files read" << std::endl << std::endl;
   return input;
 }

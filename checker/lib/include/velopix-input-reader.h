@@ -8,6 +8,7 @@
 #include "MCParticle.h"
 
 #include "../../../main/include/Common.h"
+#include "../../../main/include/Logger.h"
 
 class VelopixEvent {
 private:
