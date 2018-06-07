@@ -103,7 +103,7 @@ void check_velopix_events(
   // printf("average # of sps per event = %f \n", n_sps_average);
 }
 
-void read_ut_events_into_arrays( VeloUTTracking::Hits hits_layers_events[],
+void read_ut_events_into_arrays( VeloUTTracking::HitsSoA hits_layers_events[],
 				 uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 				 const std::vector<char> events,
 				 const std::vector<unsigned int> event_offsets,
@@ -158,7 +158,7 @@ void read_ut_events_into_arrays( VeloUTTracking::Hits hits_layers_events[],
 }
 
 
-void check_ut_events( const VeloUTTracking::Hits hits_layers_events[],
+void check_ut_events( const VeloUTTracking::HitsSoA hits_layers_events[],
 		      const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 		      const int n_events ) {
 

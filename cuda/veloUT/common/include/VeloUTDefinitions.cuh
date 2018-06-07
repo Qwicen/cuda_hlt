@@ -32,7 +32,7 @@ namespace VeloUTTracking {
      are stored for access;
      one Hits structure exists per event
    */
-  struct Hits {
+  struct HitsSoA {
     float cos[max_numhits_per_event];
     float yBegin[max_numhits_per_event];
     float yEnd[max_numhits_per_event];

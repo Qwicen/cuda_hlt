@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
 	      ut_events, ut_event_offsets );
 
   
-  VeloUTTracking::Hits ut_hits_events[number_of_events];
+  VeloUTTracking::HitsSoA ut_hits_events[number_of_events];
   uint32_t ut_n_hits_layers_events[number_of_events][VeloUTTracking::n_layers];
   read_ut_events_into_arrays( ut_hits_events, ut_n_hits_layers_events,
 			      ut_events, ut_event_offsets, number_of_events );

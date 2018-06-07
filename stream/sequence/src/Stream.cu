@@ -1,14 +1,14 @@
 #include "../include/Stream.cuh"
 #include "../../../main/include/Common.h"
 
-//#include "../../../PrVeloUT/include/VeloTypes.h"
+#include "../../../PrVeloUT/include/VeloTypes.h"
 
 cudaError_t Stream::operator()(
   const char* host_events_pinned,
   const uint* host_event_offsets_pinned,
   size_t host_events_pinned_size,
   size_t host_event_offsets_pinned_size,
-  const VeloUTTracking::Hits hits_layers_events[],
+  const VeloUTTracking::HitsSoA hits_layers_events[],
   const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
   uint number_of_events,
   uint number_of_repetitions
