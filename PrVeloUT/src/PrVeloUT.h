@@ -7,7 +7,7 @@
 
 #include <cassert>
 
-// #include "../PrUTMagnetTool/PrUTMagnetTool.h"
+#include "../../PrUTMagnetTool/PrUTMagnetTool.h"
 
 // Math from ROOT
 #include "../include/CholeskyDecomp.h"
@@ -33,17 +33,17 @@
    */
 
 // TODO Fake MagnetTool
-struct PrUTMagnetTool {
-  const float m_zMidUT = 0.0;
-  const float m_averageDist2mom = 0.0;
-  const std::vector<float> dxLayTable = {0.0, 0.0, 0.0};
-  const std::vector<float> bdlTable = {0.0, 0.0, 0.0};
+// struct PrUTMagnetTool {
+//   const float m_zMidUT = 0.0;
+//   const float m_averageDist2mom = 0.0;
+//   const std::vector<float> dxLayTable = {0.0, 0.0, 0.0};
+//   const std::vector<float> bdlTable = {0.0, 0.0, 0.0};
 
-  float zMidUT() { return m_zMidUT; }
-  float averageDist2mom() { return m_averageDist2mom; }
-  std::vector<float> returnDxLayTable() const { return dxLayTable; }
-  std::vector<float> returnBdlTable() const { return bdlTable; }
-};
+//   float zMidUT() { return m_zMidUT; }
+//   float averageDist2mom() { return m_averageDist2mom; }
+//   std::vector<float> returnDxLayTable() const { return dxLayTable; }
+//   std::vector<float> returnBdlTable() const { return bdlTable; }
+// };
 
 struct TrackHelper{
   VeloState state;
@@ -70,6 +70,7 @@ class PrVeloUT {
 
 public:
 
+  std::vector<std::string> GetFieldMaps();
   virtual int initialize();
   std::vector<VeloUTTracking::TrackVelo> operator()(const std::vector<VeloUTTracking::TrackVelo>& inputTracks) const;
 

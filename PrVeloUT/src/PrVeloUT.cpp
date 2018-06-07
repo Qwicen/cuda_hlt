@@ -32,12 +32,26 @@ namespace {
 //=============================================================================
 // Initialization
 //=============================================================================
+std::vector<std::string> PrVeloUT::GetFieldMaps() {
+  
+  vector<std::string> filenames;
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c1.down.cdf");
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c2.down.cdf");
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c3.down.cdf");
+  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c4.down.cdf");
+
+  return filenames;
+}
+
 int PrVeloUT::initialize() {
 
   // TODO not used? old version?
   // m_veloUTTool = tool<ITracksFromTrackR>("PrVeloUTTool", this );
 
-  // m_PrUTMagnetTool = PrUTMagnetTool(filenames);
+  std::vector<std::string> filenames = GetFieldMaps();
+  m_PrUTMagnetTool = PrUTMagnetTool(filenames);
+  m_PrUTMagnetTool.prepareBdlTables();
+  m_PrUTMagnetTool.prepareDeflectionTables();
 
   // m_zMidUT is a position of normalization plane which should to be close to z middle of UT ( +- 5 cm ).
   // Cashed once in PrVeloUTTool at initialization. No need to update with small UT movement.
