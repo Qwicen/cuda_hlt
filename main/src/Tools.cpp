@@ -161,6 +161,8 @@ void readFolder(
     if ((readFiles % 100) == 0) {
       info_cout << "." << std::flush;
     }
+
+    verbose_cout << "Read " << readingFile << std::endl;
   }
 
   // Add last offset

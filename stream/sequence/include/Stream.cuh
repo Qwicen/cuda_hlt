@@ -27,7 +27,6 @@ class Timer;
 
 struct Stream {
   // Limiting constants for preallocation
-  constexpr static uint average_number_of_hits_per_event = VeloTracking::ttf_modulo;
   constexpr static uint max_tracks_in_event = VeloTracking::max_tracks;
   constexpr static uint max_numhits_in_module = VeloTracking::max_numhits_in_module;
   // DvB: why + 1? sizes should be understandable

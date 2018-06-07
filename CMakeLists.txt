@@ -15,6 +15,17 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 
+# option to do MC truth matching
+if(NOT MC_CHECK)
+  set(MC_CHECK Off)
+endif(NOT MC_CHECK)
+if(${MC_CHECK} STREQUAL On OR ${MC_CHECK} STREQUAL ON)
+  MESSAGE(STATUS "MC_CHECK: On")
+  add_definitions( -DMC_CHECK )
+else(${MC_CHECK} STREQUAL On OR ${MC_CHECK} STREQUAL ON)
+  MESSAGE(STATUS "MC_CHECK: Off")
+endif(${MC_CHECK} STREQUAL On OR ${MC_CHECK} STREQUAL ON)
+
 find_package(CUDA REQUIRED)
 set(CUDA_HOST_COMPILER "g++")
 set(CUDA_SEPARABLE_COMPILATION ON)
@@ -41,12 +52,4 @@ file(GLOB main_sources "main/src/*cpp")
 
 cuda_add_executable(cu_hlt ${main_sources})
 
-target_link_libraries(cu_hlt tbb libcuVelo libStream libx86Clustering libTrackChecking libCheckClustering)
-
-# option to do MC truth matching
-if(MC_CHECK)
-  MESSAGE(STATUS "MC_CHECK: ON")
-  add_definitions( -DMC_CHECK )
-elseif(!MC_CHECK)
-  MESSAGE(STATUS "MC_CHECK: OFF")
-endif(MC_CHECK)
+target_link_libraries(cu_hlt tbb Velo Stream x86Clustering TrackChecking CheckClustering)

@@ -42,6 +42,8 @@ __device__ void calculatePhiSide(
     const auto hit_start = module_hitStarts[module];
     const auto hit_num = module_hitNums[module];
 
+    assert(hit_num < VeloTracking::max_numhits_in_module);
+
     // Calculate phis
     for (unsigned int i=0; i<(hit_num + blockDim.x - 1) / blockDim.x; ++i) {
       const auto hit_rel_id = i*blockDim.x + threadIdx.x;
