@@ -75,8 +75,8 @@ public:
   void prepareDeflectionTables();
   void updateField() ;
 
-  std::vector<float> returnDxLayTable();
-  std::vector<float> returnBdlTable();
+  std::vector<float> returnDxLayTable() const;
+  std::vector<float> returnBdlTable() const;
   
 PrTableForFunction* m_lutBdl;
 protected:

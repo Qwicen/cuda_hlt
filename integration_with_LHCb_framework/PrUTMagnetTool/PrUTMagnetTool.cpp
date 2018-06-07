@@ -334,7 +334,7 @@ void PrUTMagnetTool::f_bdl( float slopeY, float zOrigin,
 //=========================================================================
 //  return the DxTable
 //=========================================================================
-std::vector<float> PrUTMagnetTool::returnDxLayTable(){
+std::vector<float> PrUTMagnetTool::returnDxLayTable() const {
   std::vector<float> deflection_vals;
   float deflection;
   ifstream deflectionfile;
@@ -365,7 +365,7 @@ std::vector<float> PrUTMagnetTool::returnDxLayTable(){
 //=========================================================================
 //  return the Bdl Table
 //=========================================================================
-std::vector<float> PrUTMagnetTool::returnBdlTable(){
+std::vector<float> PrUTMagnetTool::returnBdlTable() const{
   std::cout << "here's the BDl LUT " << std::endl;
   for (auto i = m_lutBdl->returnTable().begin(); i != m_lutBdl->returnTable().end(); ++i)
     std::cout << *i << ' ' << std::endl;
