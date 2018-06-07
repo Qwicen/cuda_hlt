@@ -3,7 +3,7 @@
 #include "../../common/include/VeloDefinitions.cuh"
 
 __device__ void processModules(
-  Module* module_data,
+  VeloTracking:: Module* module_data,
   float* shared_best_fits,
   const uint starting_module,
   const uint stride,
@@ -22,8 +22,8 @@ __device__ void processModules(
   uint* tracks_insert_pointer,
   uint* tracks_to_follow,
   uint* weak_tracks,
-  TrackHits* tracklets,
-  TrackHits* tracks,
+  VeloTracking::TrackHits* tracklets,
+  VeloTracking::TrackHits* tracks,
   const uint number_of_hits,
   unsigned short* h1_rel_indices,
   uint* local_number_of_hits,

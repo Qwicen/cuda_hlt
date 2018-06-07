@@ -53,4 +53,4 @@ file(GLOB main_sources "main/src/*cpp")
 
 cuda_add_executable(cu_hlt ${main_sources})
 
-target_link_libraries(cu_hlt tbb Velo Stream x86Clustering TrackChecking CheckClustering)
+target_link_libraries(cu_hlt tbb Velo VeloUT Stream x86Clustering TrackChecking CheckClustering)

@@ -62,7 +62,7 @@ struct Stream {
   // Data back transmission
   int* host_number_of_tracks_pinned;
   int* host_accumulated_tracks;
-  Track <do_mc_check> *host_tracks_pinned;
+  VeloTracking::Track <do_mc_check> *host_tracks_pinned;
   VeloState* host_velo_states;
   Stream() = default;
 

@@ -7,7 +7,7 @@ __device__ void means_square_fit(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
-  const TrackHits& track,
+  const VeloTracking::TrackHits& track,
   TrackFitParameters& parameters,
   VeloState* velo_state
 ) {
@@ -166,7 +166,7 @@ __device__ void simplified_fit(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
-  const TrackHits& track,
+  const VeloTracking::TrackHits& track,
   const TrackFitParameters& parameters,
   VeloState* velo_state
 ) {
@@ -235,7 +235,7 @@ __global__ void velo_fit(
   const uint32_t* dev_velo_cluster_container,
   const uint* dev_module_cluster_start,
   const int* dev_atomics_storage,
-  const TrackHits* dev_tracks,
+  const VeloTracking::TrackHits* dev_tracks,
   VeloState* dev_velo_states
 ) {
   /* Data initialization */
@@ -253,7 +253,7 @@ __global__ void velo_fit(
   const float* hit_Xs = (float*) (dev_velo_cluster_container + 5 * number_of_hits);
 
   // Reconstructed tracks
-  const TrackHits* tracks = dev_tracks + tracks_offset;
+  const VeloTracking::TrackHits* tracks = dev_tracks + tracks_offset;
   const uint number_of_tracks = dev_atomics_storage[event_number];
   VeloState* velo_states = dev_velo_states;
 

@@ -11,12 +11,12 @@ __device__ void trackSeedingFirst(
   float* shared_best_fits,
   const float* hit_Xs,
   const float* hit_Ys,
-  const Module* module_data,
+  const VeloTracking::Module* module_data,
   const short* h0_candidates,
   const short* h2_candidates,
   uint* tracklets_insertPointer,
   uint* ttf_insertPointer,
-  TrackHits* tracklets,
+  VeloTracking::TrackHits* tracklets,
   uint* tracks_to_follow
 ) {
   // Some constants of the calculation below
@@ -76,7 +76,7 @@ __device__ void trackSeedingFirst(
     if (h1_rel_index < number_of_hits_h1) {
       // Fetch h1
       h1_index = module_data[1].hitStart + h1_rel_index;
-      const HitXY h1 {hit_Xs[h1_index], hit_Ys[h1_index]};
+      const VeloTracking::HitXY h1 {hit_Xs[h1_index], hit_Ys[h1_index]};
 
       // Iterate over all h0, h2 combinations
       // Ignore used hits
@@ -92,14 +92,14 @@ __device__ void trackSeedingFirst(
         if (h0_rel_candidate < h0_num_candidates) {
           const auto h0_index = h0_first_candidate + h0_rel_candidate;
           // Fetch h0
-          const HitXY h0 {hit_Xs[h0_index], hit_Ys[h0_index]};
+          const VeloTracking::HitXY h0 {hit_Xs[h0_index], hit_Ys[h0_index]};
 
           // Finally, iterate over all h2 indices
           for (auto h2_index=h2_first_candidate; h2_index<h2_last_candidate; ++h2_index) {
             // Our triplet is h0_index, h1_index, h2_index
             // Fit it and check if it's better than what this thread had
             // for any triplet with h1
-            const HitXY h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
+            const VeloTracking::HitXY h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
 
             // Calculate prediction
             const auto x = h0.x + (h1.x - h0.x) * z2_tz;
@@ -148,7 +148,7 @@ __device__ void trackSeedingFirst(
       // Add the track to the bag of tracks
       const auto trackP = atomicAdd(tracklets_insertPointer, 1);
       assert(trackP < VeloTracking::ttf_modulo );
-      tracklets[trackP] = TrackHits {3, best_h0, h1_index, best_h2};
+      tracklets[trackP] = VeloTracking::TrackHits {3, best_h0, h1_index, best_h2};
 
       // Add the tracks to the bag of tracks to_follow
       // Note: The first bit flag marks this is a tracklet (hitsNum == 3),

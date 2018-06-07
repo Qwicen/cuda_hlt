@@ -69,22 +69,21 @@ namespace VeloTracking {
   static constexpr uint states_per_track = 1; 
   static constexpr float param_w = 3966.94f;
   static constexpr float param_w_inverted = 0.000252083f;
-}
 
-struct Module {
+  struct Module {
     uint hitStart;
     uint hitNums;
     float z;
-
+    
     __device__ Module(){}
     __device__ Module(
       const uint _hitStart,
       const uint _hitNums,
       const float _z
     ) : hitStart(_hitStart), hitNums(_hitNums), z(_z) {}
-};
+  };
 
-struct HitXY {
+  struct HitXY {
     float x;
     float y;
 
@@ -93,9 +92,9 @@ struct HitXY {
       const float _x,
       const float _y
     ) : x(_x), y(_y) {}
-};
+  };
 
-struct HitBase { // 3 * 4 = 12 B
+  struct HitBase { // 3 * 4 = 12 B
     float x;
     float y;
     float z;
@@ -106,13 +105,13 @@ struct HitBase { // 3 * 4 = 12 B
       const float _y,
       const float _z
     ) : x(_x), y(_y), z(_z) {}
-};
+  };
 
-template <bool MCCheck>
-struct Hit;
+  template <bool MCCheck>
+  struct Hit;
 
-template <>
-struct Hit <true> : public HitBase { // 4 * 4 = 16 B
+  template <>
+  struct Hit <true> : public HitBase { // 4 * 4 = 16 B
     uint32_t LHCbID;
     
     __device__ Hit(){}
@@ -122,57 +121,58 @@ struct Hit <true> : public HitBase { // 4 * 4 = 16 B
       const float _z,
       const uint32_t _LHCbID
     ) : HitBase( _x, _y, _z ), LHCbID( _LHCbID ) {}
-};
+  };
 
-template <>
-struct Hit <false> : public HitBase { // 4 * 3 = 12 B
+  template <>
+  struct Hit <false> : public HitBase { // 4 * 3 = 12 B
      __device__ Hit(){}
      __device__ Hit(
        const float _x,
        const float _y,
        const float _z
     ) : HitBase( _x, _y, _z) {}
-};
+  };
 
-/* Structure containing indices to hits within hit array */
-struct TrackHits { // 2 + 26 * 2 = 54 B
+  /* Structure containing indices to hits within hit array */
+  struct TrackHits { // 2 + 26 * 2 = 54 B
   unsigned short hitsNum;
   unsigned short hits[VeloTracking::max_track_size];
+    
+    __device__ TrackHits(){}
+    __device__ TrackHits(
+      const unsigned short _hitsNum,
+      const unsigned short _h0,
+      const unsigned short _h1,
+      const unsigned short _h2
+    ) : hitsNum(_hitsNum) {
+      hits[0] = _h0;
+      hits[1] = _h1;
+      hits[2] = _h2;
+    }
+  };
 
-  __device__ TrackHits(){}
-  __device__ TrackHits(
-    const unsigned short _hitsNum,
-    const unsigned short _h0,
-    const unsigned short _h1,
-    const unsigned short _h2
-  ) : hitsNum(_hitsNum) {
-    hits[0] = _h0;
-    hits[1] = _h1;
-    hits[2] = _h2;
-  }
-};
 
-/* Structure to save final track
-   Contains information needed later on in the HLT chain
-   and / or for truth matching
-
-   Without MC: 4 + 26 * 12 = 316 B
-   With MC:    4 + 26 * 16 = 420 B */
-template <bool MCCheck>   
-struct Track {
-  unsigned short hitsNum;
-  Hit <MCCheck> hits[VeloTracking::max_track_size];
+  /* Structure to save final track
+     Contains information needed later on in the HLT chain
+     and / or for truth matching
+     
+     Without MC: 4 + 26 * 12 = 316 B
+     With MC:    4 + 26 * 16 = 420 B */
+  template <bool MCCheck>   
+  struct Track {
+    unsigned short hitsNum;
+    Hit <MCCheck> hits[VeloTracking::max_track_size];
   
-  __device__ Track(){
-  hitsNum = 0;
-  }
- 
-  __device__ void addHit( Hit <MCCheck> _h ){
-    hits[ hitsNum ] = _h;
-    hitsNum++;
-  }
-
-} ; 
+    __device__ Track(){
+      hitsNum = 0;
+    }
+    
+    __device__ void addHit( Hit <MCCheck> _h ){
+      hits[ hitsNum ] = _h;
+      hitsNum++;
+    }
+  };
+} // VeloTracking namespace
 
 /**
  * @brief A simplified state for the Velo

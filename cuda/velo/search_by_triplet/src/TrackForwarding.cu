@@ -8,8 +8,8 @@
  *          returns FLT_MAX.
  */
 __device__ float fitHitToTrack(
-  const HitXY& h0,
-  const HitXY& h2,
+  const VeloTracking::HitXY& h0,
+  const VeloTracking::HitXY& h2,
   const float predx,
   const float predy,
   const float scatterDenom2
@@ -44,13 +44,13 @@ __device__ void trackForwarding(
   uint* tracks_insertPointer,
   uint* ttf_insertPointer,
   uint* weaktracks_insertPointer,
-  const Module* module_data,
+  const VeloTracking::Module* module_data,
   const uint diff_ttf,
   uint* tracks_to_follow,
   uint* weak_tracks,
   const uint prev_ttf,
-  TrackHits* tracklets,
-  TrackHits* tracks,
+  VeloTracking::TrackHits* tracklets,
+  VeloTracking::TrackHits* tracks,
   const uint number_of_hits
 ) {
   // Assign a track to follow to each thread
@@ -62,7 +62,7 @@ __device__ void trackForwarding(
       const auto skipped_modules = (fulltrackno & 0x70000000) >> 28;
       auto trackno = fulltrackno & 0x0FFFFFFF;
 
-      const TrackHits* track_pointer = track_flag ? tracklets : tracks;
+      const VeloTracking::TrackHits* track_pointer = track_flag ? tracklets : tracks;
       
       assert(track_pointer==tracklets ? trackno < number_of_hits : true);
       assert(track_pointer==tracks ? trackno < VeloTracking::max_tracks : true);
@@ -74,11 +74,11 @@ __device__ void trackForwarding(
       const auto h1_num = t.hits[t.hitsNum - 1];
 
       assert(h0_num < number_of_hits);
-      const HitXY h0 {hit_Xs[h0_num], hit_Ys[h0_num]};
+      const VeloTracking::HitXY h0 {hit_Xs[h0_num], hit_Ys[h0_num]};
       const auto h0_z = hit_Zs[h0_num];
 
       assert(h1_num < number_of_hits);
-      const HitXY h1 {hit_Xs[h1_num], hit_Ys[h1_num]};
+      const VeloTracking::HitXY h1 {hit_Xs[h1_num], hit_Ys[h1_num]};
       const auto h1_z = hit_Zs[h1_num];
 
       // Track forwarding over t, for all hits in the next module
@@ -102,7 +102,7 @@ __device__ void trackForwarding(
 
       for (auto j=0; j<module_data[2].hitNums; ++j) {
         const auto h2_index = module_data[2].hitStart + j;
-        const HitXY h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
+        const VeloTracking::HitXY h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
         const auto fit = fitHitToTrack(
           h0,
           h2,

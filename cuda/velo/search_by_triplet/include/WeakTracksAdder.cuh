@@ -7,8 +7,8 @@ __device__ void weakTracksAdder(
   unsigned int* weaktracks_insertPointer,
   unsigned int* tracks_insertPointer,
   unsigned int* weak_tracks,
-  TrackHits* tracklets,
-  TrackHits* tracks,
+  VeloTracking::TrackHits* tracklets,
+  VeloTracking::TrackHits* tracks,
   bool* hit_used
 );
 
@@ -17,7 +17,7 @@ __device__ void weakTracksAdderShared(
   unsigned int* weaktracks_insertPointer,
   unsigned int* tracks_insertPointer,
   unsigned int* weak_tracks,
-  TrackHits* tracklets,
-  TrackHits* tracks,
+  VeloTracking::TrackHits* tracklets,
+  VeloTracking::TrackHits* tracks,
   bool* hit_used
 );

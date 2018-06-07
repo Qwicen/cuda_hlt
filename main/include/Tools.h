@@ -68,14 +68,14 @@ std::map<std::string, float> calcResults(
 
 template <bool mc_check>
 void printTrack(
-  Track<mc_check>* tracks,
+  VeloTracking::Track<mc_check>* tracks,
   const int trackNumber,
   std::ofstream& outstream
 );
 
 template <bool mc_check>
 void printTracks(
-  Track<mc_check>* tracks,
+  VeloTracking::Track<mc_check>* tracks,
   int* n_tracks,
   int n_events,
   std::ofstream& outstream
@@ -84,12 +84,12 @@ void printTracks(
 template <bool mc_check>
 void writeBinaryTrack(
   const unsigned int* hit_IDs,
-  const Track <mc_check> & track,
+  const VeloTracking::Track <mc_check> & track,
   std::ofstream& outstream
 );
 
 std::vector< trackChecker::Tracks > prepareTracks(
-  Track <true> * host_tracks_pinned,
+  VeloTracking::Track <true> * host_tracks_pinned,
   int * host_accumulated_tracks,
   int * host_number_of_tracks_pinned,
   const int &number_of_events

@@ -316,13 +316,13 @@ std::map<std::string, float> calcResults(std::vector<float>& times){
 template <bool mc_check>
 void writeBinaryTrack(
   const unsigned int* hit_IDs,
-  const Track <mc_check> & track,
+  const VeloTracking::Track <mc_check> & track,
   std::ofstream& outstream
 ) {
   uint32_t hitsNum = track.hitsNum;
   outstream.write((char*) &hitsNum, sizeof(uint32_t));
   for (int i=0; i<track.hitsNum; ++i) {
-    const Hit <mc_check> hit = track.hits[i];
+    const VeloTracking::Hit <mc_check> hit = track.hits[i];
     outstream.write((char*) &hit.LHCbID, sizeof(uint32_t));
   }
 }
@@ -337,15 +337,15 @@ void writeBinaryTrack(
  */
 template <bool mc_check>
 void printTrack(
-  Track <mc_check> * tracks,
+  VeloTracking::Track <mc_check> * tracks,
   const int trackNumber,
   std::ofstream& outstream
 ) {
-  const Track<mc_check> t = tracks[trackNumber];
+  const VeloTracking::Track<mc_check> t = tracks[trackNumber];
   outstream << "Track #" << trackNumber << ", length " << (int) t.hitsNum << std::endl;
 
   for(int i=0; i<t.hitsNum; ++i){
-    const Hit <mc_check> hit = t.hits[i];
+    const VeloTracking::Hit <mc_check> hit = t.hits[i];
     const float x = hit.x;
     const float y = hit.y;
     const float z = hit.z;
@@ -364,22 +364,22 @@ void printTrack(
 
 template <bool mc_check>
 void printTracks(
-  Track <mc_check> * tracks,
+  VeloTracking::Track <mc_check> * tracks,
   int* n_tracks,
   int n_events,
   std::ofstream& outstream 
 ) {
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
-    Track <mc_check> * tracks_event = tracks + i_event * VeloTracking::max_tracks;
+    VeloTracking::Track <mc_check> * tracks_event = tracks + i_event * VeloTracking::max_tracks;
     int n_tracks_event = n_tracks[ i_event ];
     outstream << i_event << std::endl;
     outstream << n_tracks_event << std::endl;
 
     for ( int i_track = 0; i_track < n_tracks_event; ++i_track ) {
-      const Track <mc_check> t = tracks_event[i_track];
+      const VeloTracking::Track <mc_check> t = tracks_event[i_track];
       outstream << t.hitsNum << std::endl;
       for ( int i_hit = 0; i_hit < t.hitsNum; ++i_hit ) {
-        Hit <mc_check> hit = t.hits[ i_hit ];
+        VeloTracking::Hit <mc_check> hit = t.hits[ i_hit ];
         outstream << hit.LHCbID << std::endl;
       }
     }
@@ -466,7 +466,7 @@ void callPrChecker(
 }
 
 std::vector< trackChecker::Tracks > prepareTracks(
-  Track <true> * host_tracks_pinned,
+  VeloTracking::Track <true> * host_tracks_pinned,
   int * host_accumulated_tracks,
   int * host_number_of_tracks_pinned,
   const int &number_of_events
@@ -475,15 +475,15 @@ std::vector< trackChecker::Tracks > prepareTracks(
   /* Tracks to be checked, save in format for checker */
   std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
   for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
-    Track<true>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
+    VeloTracking::Track<true>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
     trackChecker::Tracks tracks; // all tracks within one event
     
     for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
       trackChecker::Track t;
-      const Track<true> track = tracks_event[i_track];
+      const VeloTracking::Track<true> track = tracks_event[i_track];
       
       for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
-        Hit<true> hit = track.hits[ i_hit ];
+        VeloTracking::Hit<true> hit = track.hits[ i_hit ];
         LHCbID lhcb_id( hit.LHCbID );
         t.addId( lhcb_id );
       } // hits

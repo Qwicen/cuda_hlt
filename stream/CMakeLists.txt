@@ -10,4 +10,4 @@ cuda_add_library(Stream STATIC
   ${stream_sequence} 
   )
 
-target_link_libraries(Stream Velo)
+target_link_libraries(Stream Velo VeloUT)
