@@ -12,6 +12,7 @@
 
 #include <array>
 #include <cstdint>
+#include <cmath>
 
 #include "boost/range/iterator_range.hpp"
 
@@ -32,11 +33,28 @@ class LHCbID {
         /// convert back to integer
         constexpr operator uint32_t() const noexcept { return m_id; }
         /// ordering of LHCbIDs
-        constexpr bool operator==(const LHCbID& other) const noexcept
-        { return m_id == other.m_id; }
+        bool operator==(const LHCbID& other) const noexcept
+        {
+            // dcampora: Relaxed check:
+            // if (m_id == other.m_id) {
+            //     return true;
+            // } else if ((m_id & 0xFFFF0000) == (other.m_id & 0xFFFF0000)) {
+            //     const uint row = m_id & 0xFF;
+            //     const uint col = (m_id >> 8) & 0xFF;
+            //     const uint other_row = other.m_id & 0xFF;
+            //     const uint other_col = (other.m_id >> 8) & 0xFF;
+            //     const float distance = (row - other_row) * (row - other_row) + 
+            //                            (col - other_col) * (col - other_col);
+            //     if (std::sqrt(distance) < 2.0) {
+            //       return true;
+            //     }
+            // }
+            // return false;
+            return m_id == other.m_id;
+        }
         /// ordering of LHCbIDs
-        constexpr bool operator!=(const LHCbID& other) const noexcept
-        { return m_id != other.m_id; }
+        bool operator!=(const LHCbID& other) const noexcept
+        { return !this->operator==(other); }
         /// ordering of LHCbIDs
         constexpr bool operator<(const LHCbID& other) const noexcept
         { return m_id < other.m_id; }

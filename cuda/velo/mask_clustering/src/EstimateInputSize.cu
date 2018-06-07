@@ -162,6 +162,8 @@ __global__ void estimate_input_size(
             // 
             uint found_cluster_candidates = 0;
 
+            assert(raw_bank_number < VeloTracking::n_sensors);
+
             const uint32_t sp_inside_pixel = pixels & 0x3CF;
             const uint32_t mask = (sp_inside_pixel << 1)
               | (sp_inside_pixel << 5)
@@ -178,7 +180,8 @@ __global__ void estimate_input_size(
 
             // Add candidates 0-3
             if (candidates_uint8 & 0xF) {
-              const uint8_t k = VeloClustering::candidate_ks[candidates_uint8 & 0xF]; // ?
+              // Decode the candidate number (ie. find out the active bit)
+              const uint8_t k = VeloClustering::candidate_ks[candidates_uint8 & 0xF];
               auto current_cluster_candidate = atomicAdd(event_candidate_num, 1);
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)

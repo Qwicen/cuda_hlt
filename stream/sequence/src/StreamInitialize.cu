@@ -78,7 +78,7 @@ cudaError_t Stream::initialize(
   // - temporary
   // 
   // The temporary is required to do the sortinge in an efficient manner
-  velo_cluster_container_size = number_of_events * VeloClustering::max_candidates_event * 6;
+  velo_cluster_container_size = number_of_events * VeloClustering::max_candidates_event * 2 * 6;
 
   // Data preparation
   // Populate velo geometry
@@ -98,34 +98,36 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_velo_cluster_container, velo_cluster_container_size * sizeof(uint)));
 
   // phi and sort
-  cudaCheck(cudaMalloc((void**)&dev_hit_permutation, average_number_of_hits_per_event * number_of_events * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_hit_permutation, VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(uint)));
 
   // sbt
-  // cudaCheck(cudaMalloc((void**)&dev_tracks_to_follow, number_of_events * VeloTracking::ttf_modulo * sizeof(uint)));
-  dev_tracks_to_follow = dev_cluster_candidates;
+  cudaCheck(cudaMalloc((void**)&dev_tracks_to_follow, number_of_events * VeloTracking::ttf_modulo * sizeof(uint)));
+  // Note: Don't reuse buffers unless we are on a "performance" branch
+  // dev_tracks_to_follow = dev_cluster_candidates;
   
   cudaCheck(cudaMalloc((void**)&dev_tracks, number_of_events * max_tracks_in_event * sizeof(TrackHits)));
-  cudaCheck(cudaMalloc((void**)&dev_weak_tracks, average_number_of_hits_per_event * number_of_events * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_weak_tracks, VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(uint)));
   
-  cudaCheck(cudaMalloc((void**)&dev_tracklets, average_number_of_hits_per_event * number_of_events * sizeof(TrackHits)));
+  cudaCheck(cudaMalloc((void**)&dev_tracklets, VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(TrackHits)));
   cudaCheck(cudaMalloc((void**)&dev_output_tracks, max_tracks_in_event * number_of_events * sizeof(Track<do_mc_check>)));
 
-  // std::cout << average_number_of_hits_per_event << " " << number_of_events << " " << sizeof(TrackHits)
-  //   << " = " << average_number_of_hits_per_event * number_of_events * sizeof(TrackHits) << std::endl
+  // Note: This is buffer reuse, as the above
+  // std::cout << VeloTracking::max_number_of_hits_per_event << " " << number_of_events << " " << sizeof(TrackHits)
+  //   << " = " << VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(TrackHits) << std::endl
   //   << (max_tracks_in_event / 3) << " " << number_of_events << " " << sizeof(Track<do_mc_check>) << " = "
   //   << (max_tracks_in_event / 3) * number_of_events * sizeof(Track<do_mc_check>) << std::endl;
 
-  // const auto tracklets_size = average_number_of_hits_per_event * number_of_events * sizeof(TrackHits);
+  // const auto tracklets_size = VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(TrackHits);
   // const auto output_tracks_size = ((tracklets_size / sizeof(Track<do_mc_check>)) + 1) * sizeof(Track<do_mc_check>);
   // std::cout << output_tracks_size << std::endl;
 
   // cudaCheck(cudaMalloc((void**)&dev_output_tracks, output_tracks_size));
   // dev_tracklets = (TrackHits*) dev_output_tracks;
 
-  cudaCheck(cudaMalloc((void**)&dev_hit_used, average_number_of_hits_per_event * number_of_events * sizeof(bool)));
+  cudaCheck(cudaMalloc((void**)&dev_hit_used, VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(bool)));
   cudaCheck(cudaMalloc((void**)&dev_atomics_storage, number_of_events * atomic_space * sizeof(int)));
-  cudaCheck(cudaMalloc((void**)&dev_h0_candidates, 2 * average_number_of_hits_per_event * number_of_events * sizeof(short)));
-  cudaCheck(cudaMalloc((void**)&dev_h2_candidates, 2 * average_number_of_hits_per_event * number_of_events * sizeof(short)));
+  cudaCheck(cudaMalloc((void**)&dev_h0_candidates, 2 * VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(short)));
+  cudaCheck(cudaMalloc((void**)&dev_h2_candidates, 2 * VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(short)));
   cudaCheck(cudaMalloc((void**)&dev_rel_indices, number_of_events * max_numhits_in_module * sizeof(unsigned short)));
 
   cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * VeloTracking::states_per_track * sizeof(VeloState)));

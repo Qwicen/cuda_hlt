@@ -5,8 +5,8 @@ add_subdirectory(lib)
 
 file(GLOB clustering "clustering/src/*cpp")
 include_directories(clustering/include)
-cuda_add_library(libCheckClustering STATIC
+cuda_add_library(CheckClustering STATIC
   ${clustering}
 )
 
-target_link_libraries(libCheckClustering libx86Clustering)
+target_link_libraries(CheckClustering x86Clustering)

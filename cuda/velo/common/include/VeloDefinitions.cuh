@@ -55,12 +55,15 @@ namespace VeloTracking {
   static constexpr uint num_atomics = 4;
 
   // Constants for requested storage on device
-  static constexpr uint max_tracks = 1000;
+  static constexpr uint max_tracks = 2200;
   static constexpr uint max_track_size = 26;
   static constexpr uint max_numhits_in_module = 300; 
 
   // Maximum number of tracks to follow at a time
-  static constexpr uint ttf_modulo = 2000;
+  static constexpr uint ttf_modulo = 2200;
+
+  // High number of hits per event
+  static constexpr uint max_number_of_hits_per_event = 4000;
 
   // Constants for filters
   static constexpr uint states_per_track = 1; 
@@ -122,7 +125,7 @@ struct Hit <true> : public HitBase { // 4 * 4 = 16 B
 };
 
 template <>
-struct Hit <false> : public HitBase {
+struct Hit <false> : public HitBase { // 4 * 3 = 12 B
      __device__ Hit(){}
      __device__ Hit(
        const float _x,

@@ -29,7 +29,7 @@ std::vector<uint32_t> cuda_array_clustering(
     unsigned int no_sp_count = 0;
     unsigned int approximation_number_of_clusters = 0;
 
-    VeloRawEvent e (events.data() + event_offsets[i-1], event_offsets[i] - event_offsets[i-1]);
+    VeloRawEvent e (events.data() + event_offsets[i-1]);
 
     for (unsigned int raw_bank=0; raw_bank<e.number_of_raw_banks; ++raw_bank) {
       std::vector<uint32_t> cluster_candidates;

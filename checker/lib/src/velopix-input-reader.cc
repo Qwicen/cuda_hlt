@@ -39,7 +39,6 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
 
   // Monte Carlo
   uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
-  //std::cout << "n mc particles = " << number_mcp << std::endl;
   for (uint32_t i=0; i<number_mcp; ++i) {
     MCP p;
     p.key      = *((uint32_t*)  input); input += sizeof(uint32_t);
@@ -57,7 +56,6 @@ VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEv
     p.fromb    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
     p.fromd    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
     p.numHits    = *((uint32_t*)  input); input += sizeof(uint32_t);
-	//std::cout << "numHits = " << p.numHits << std::endl;
     std::copy_n((uint32_t*) input, p.numHits, std::back_inserter(p.hits)); input += sizeof(uint32_t) * p.numHits;
     mcps.push_back(p);
   }
@@ -259,7 +257,7 @@ std::vector< std::string > VelopixEventReader::getFolderContents(
 	std::cerr << "No binary files found in folder " << foldername << std::endl;
       exit(-1);
     } else {
-      std::cout << "Found " << folderContents.size() << " binary files" << std::endl;
+      info_cout << "Found " << folderContents.size() << " binary files" << std::endl;
     }
   } else {
     std::cerr << "Folder could not be opened" << std::endl;
@@ -429,10 +427,11 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
   std::vector< std::string > folderContents = getFolderContents( foldername, fromNtuple, nFiles );
 
   uint requestedFiles = nFiles==0 ? folderContents.size() : nFiles;
-  std::cout << "Requested " << requestedFiles << " files" << std::endl;
-  
+
+  info_cout << "Requested " << requestedFiles << " files" << std::endl;
+
   if ( requestedFiles > folderContents.size() ) {
-    std::cout << "ERROR: requested " << requestedFiles << " files, but only " << folderContents.size() << " files are present" << std::endl;
+    error_cout << "ERROR: requested " << requestedFiles << " files, but only " << folderContents.size() << " files are present" << std::endl;
     exit(-1);
   }
    
@@ -442,7 +441,7 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
     // Read event #i in the list and add it to the inputs
     // if more files are requested than present in folder, read them again
     std::string readingFile = folderContents[i % folderContents.size()];
-    std::cout << "Reading MC event " << readingFile << std::endl;
+    debug_cout << "Reading MC event " << readingFile << std::endl;
     
     VelopixEvent event;
     if ( !fromNtuple ) {
@@ -462,10 +461,10 @@ std::vector<VelopixEvent> VelopixEventReader::readFolder (
     if ((readFiles % 100) == 0) {
       std::cout << "." << std::flush;
     }
-    
+
   }
-  
-  std::cout << std::endl << input.size() << " files read" << std::endl << std::endl;
+
+  info_cout << std::endl << input.size() << " files read" << std::endl << std::endl;
   return input;
 }
 

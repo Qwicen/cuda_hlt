@@ -32,8 +32,9 @@
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
-    << std::endl << " -f {folder containing .bin files with velopix raw bank information}"
-    << std::endl << " -g {folder containing .bin files with MC truth information}"
+    << std::endl << " -f {folder containing .bin files with raw bank information}"
+    << std::endl << (do_mc_check ? " " : " [") << "-g {folder containing .bin files with MC truth information}"
+    << (do_mc_check ? "" : " ]")
     << std::endl << " -e {folder containing, bin files with UT hit information}"
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=3]"

@@ -1,4 +1,5 @@
 #include "../include/Stream.cuh"
+#include "../../../main/include/Common.h"
 
 cudaError_t Stream::operator()(
   const char* host_events_pinned,
@@ -10,7 +11,7 @@ cudaError_t Stream::operator()(
   uint number_of_events,
   uint number_of_repetitions
 ) {
-  for (uint repetitions=0; repetitions<number_of_repetitions; ++repetitions) {
+  for (uint repetition=0; repetition<number_of_repetitions; ++repetition) {
     std::vector<std::pair<std::string, float>> times;
     Timer t_total;
 
@@ -145,7 +146,6 @@ cudaError_t Stream::operator()(
       print_individual_rates
      );
   
-    
     ////////////////////////
     // Consolidate tracks //
     ////////////////////////
@@ -180,31 +180,31 @@ cudaError_t Stream::operator()(
     // Monte Carlo Check //
     ///////////////////////
 
-#ifdef MC_CHECK
-    if (repetitions == 0) { // only check efficiencies once
-      // Fetch data
-      cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_velo_states, consolidateTracks.dev_velo_states_out, number_of_events * max_tracks_in_event * VeloTracking::states_per_track * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
-      cudaEventRecord(cuda_generic_event, stream);
-      cudaEventSynchronize(cuda_generic_event);
 
-      const std::vector< trackChecker::Tracks > tracks_events = prepareTracks(
-        host_tracks_pinned,
-      	host_accumulated_tracks,
-      	host_number_of_tracks_pinned,
-      	number_of_events);
+    if (do_mc_check) {
+      if (repetition == 0) { // only check efficiencies once
+        // Fetch data
+        cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
+        cudaEventRecord(cuda_generic_event, stream);
+        cudaEventSynchronize(cuda_generic_event);
+
+        const std::vector< trackChecker::Tracks > tracks_events = prepareTracks(
+          host_tracks_pinned,
+      	  host_accumulated_tracks,
+      	  host_number_of_tracks_pinned,
+      	  number_of_events);
       
-      const bool fromNtuple = true;
-      const std::string trackType = "Velo";
-      callPrChecker(
-	tracks_events,
-      	folder_name_MC,
-      	fromNtuple,
-	trackType);
+        const bool fromNtuple = true;
+        const std::string trackType = "Velo";
+        callPrChecker(
+	  tracks_events,
+      	  folder_name_MC,
+	  fromNtuple,
+	  trackType);
+      }
     }
-#endif
   }
   return cudaSuccess;
 }

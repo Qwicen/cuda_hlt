@@ -266,6 +266,8 @@ void readFolder(
     if ((readFiles % 100) == 0) {
       info_cout << "." << std::flush;
     }
+
+    verbose_cout << "Read " << readingFile << std::endl;
   }
 
   // Add last offset
@@ -446,14 +448,14 @@ void callPrChecker(
   TrackChecker trackChecker;
   uint64_t evnum = 1;
   for (const auto& ev: events) {
-    std::cout << "Event " << evnum << std::endl;
+    debug_cout << "Event " << evnum << std::endl;
     auto mcps = ev.mcparticles();
     std::vector< uint32_t > hit_IDs = ev.hit_IDs;
     std::vector<VelopixEvent::MCP> mcps_vector = ev.mcps;
     MCAssociator mcassoc(mcps);
 
     trackChecker::Tracks tracks = all_tracks[evnum-1];
-    info_cout << "found " << tracks.size() << " reconstructed tracks" <<
+    debug_cout << "INFO: found " << tracks.size() << " reconstructed tracks" <<
      " and " << mcps.size() << " MC particles " << std::endl;
 
     trackChecker(tracks, mcassoc, mcps);
@@ -473,7 +475,6 @@ std::vector< trackChecker::Tracks > prepareTracks(
   /* Tracks to be checked, save in format for checker */
   std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
   for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
-    //Track<true>* tracks_event = host_tracks_pinned + i_event * max_tracks_in_event;
     Track<true>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
     trackChecker::Tracks tracks; // all tracks within one event
     
