@@ -33,15 +33,15 @@ namespace VeloUTTracking {
      one Hits structure exists per event
    */
   struct Hits {
-    float x[max_numhits_per_event];
-    float z[max_numhits_per_event];
-    float yMin[max_numhits_per_event];
-    float yMax[max_numhits_per_event];
-    float dxdy[max_numhits_per_event];
-    float zAtyEq0[max_numhits_per_event];
+    float cos[max_numhits_per_event];
+    float yBegin[max_numhits_per_event];
+    float yEnd[max_numhits_per_event];
+    float dxDy[max_numhits_per_event];
+    float zAtYEq0[max_numhits_per_event];
+    float xAtYEq0[max_numhits_per_event];
     float weight[max_numhits_per_event];
-    int   planeCode[max_numhits_per_event];
     int   highThreshold[max_numhits_per_event];
+    unsigned int LHCbID[max_numhits_per_event];
   };
 
 

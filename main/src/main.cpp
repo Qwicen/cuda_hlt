@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
   read_ut_events_into_arrays( ut_hits_events, ut_n_hits_layers_events,
 			      ut_events, ut_event_offsets, number_of_events );
 
-  //check_ut_events( ut_hits_events, ut_n_hits_layers_events, number_of_events );
+  check_ut_events( ut_hits_events, ut_n_hits_layers_events, number_of_events );
 
   // Initialize detector constants on GPU
   initializeConstants();

@@ -132,7 +132,7 @@ bool PrVeloUT::getState(
     // outTr->addToAncestors( iTr );
     // outputTracks.insert(outTr.release());
 
-    outputTracks.emplace_back(iTr);
+    outputTracks.emplace_back(iTr);  // DvB: is this to save Velo tracks that don't make it to the UT?
 
     return false;
   }

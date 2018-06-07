@@ -133,24 +133,24 @@ void read_ut_events_into_arrays( VeloUTTracking::Hits hits_layers_events[],
     // then the hit variables, sorted by layer
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       int layer_offset = accumulated_hits_layers[i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &( hits_layers_events[i_event].x[ layer_offset ]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &( hits_layers_events[i_event].cos[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].z[ layer_offset ]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].yBegin[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].yMin[ layer_offset ]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].yEnd[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].yMax[ layer_offset ]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].dxDy[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].dxdy[ layer_offset ]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].zAtYEq0[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].zAtyEq0[ layer_offset ]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].xAtYEq0[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
       std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].weight[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].planeCode[ layer_offset ]) );
-      raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer];
       std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].highThreshold[ layer_offset ]) );
-      raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer]; 
+      raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((unsigned int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].LHCbID[ layer_offset ]) );
+      raw_input += sizeof(unsigned int) * n_hits_layers_events[i_event][i_layer];
     }
  
   
@@ -180,17 +180,17 @@ void check_ut_events( const VeloUTTracking::Hits hits_layers_events[],
       number_of_hits += n_hits_layers_events[i_event][i_layer];
       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
 	int layer_offset = accumulated_hits_layers[i_layer];
-	printf("\t at hit %u, x = %f, z = %f, yMin = %f, yMax = %f, dxdy = %f, zAtyEq0 = %f, weight = %f, planeCode = %u, highThreshold = %u \n",
+	printf("\t at hit %u, cos = %f, yBegin = %f, yEnd = %f, dxDy = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight = %f, highThreshold = %u, LHCbID = %u \n",
 	       i_hit,
-	       hits_layers_events[i_event].x[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].z[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].yMin[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].yMax[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].dxdy[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].zAtyEq0[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].cos[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].yBegin[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].yEnd[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].dxDy[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].zAtYEq0[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].xAtYEq0[ layer_offset + i_hit ],
 	       hits_layers_events[i_event].weight[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].planeCode[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].highThreshold[ layer_offset + i_hit ] );
+	       hits_layers_events[i_event].highThreshold[ layer_offset + i_hit ],
+               hits_layers_events[i_event].LHCbID[ layer_offset + i_hit ] );
       }
     }
 

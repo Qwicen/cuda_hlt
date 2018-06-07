@@ -11,14 +11,14 @@ struct Hit {
   float y;
   float z;
 
-  float m_cos;
+  float m_cos;     
   float m_dxDy;    ///< The dx/dy value
   float m_weight;  ///< The hit weight (1/error)
   float m_xAtYEq0; ///< The value of x at the point y=0
   float m_yBegin;  ///< The y value at the start point of the line
   float m_yEnd;    ///< The y value at the end point of the line
   float m_zAtYEq0; ///< The value of z at the point y=0
-  float m_x;
+  //  float m_x;   // not used
 
   float m_second_x;
   float m_second_z;
@@ -49,7 +49,7 @@ struct Hit {
   inline float weight() const { return m_weight * m_weight; }
   inline float xAt( const float globalY ) const { return m_xAtYEq0 + globalY * m_dxDy; }
   inline float xAtYEq0() const { return m_xAtYEq0; }
-  inline float xAtYMid() const { return m_x; }
+  //inline float xAtYMid() const { return m_x; }  // not used
   inline float xMax() const { return std::max( xAt( yBegin() ), xAt( yEnd() ) ); }
   inline float xMin() const { return std::min( xAt( yBegin() ), xAt( yEnd() ) ); }
   inline float xT() const { return cos(); }
