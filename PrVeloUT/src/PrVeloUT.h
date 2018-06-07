@@ -46,13 +46,13 @@ struct PrUTMagnetTool {
 };
 
 struct TrackHelper{
-  VeloState state;
-  std::array<const Hit*, 4> bestHits = { nullptr, nullptr, nullptr, nullptr};
+  VeloUTTracking::VeloState state;
+  std::array<const VeloUTTracking::Hit*, 4> bestHits = { nullptr, nullptr, nullptr, nullptr};
   std::array<float, 4> bestParams;
   float wb, invKinkVeloDist, xMidField;
 
   TrackHelper(
-    const VeloState& miniState, 
+    const VeloUTTracking::VeloState& miniState, 
     const float zKink, 
     const float sigmaVeloSlope, 
     const float maxPseudoChi2
@@ -71,7 +71,7 @@ class PrVeloUT {
 public:
 
   virtual int initialize();
-  std::vector<TrackVelo> operator()(const std::vector<TrackVelo>& inputTracks) const;
+  std::vector<VeloUTTracking::TrackVelo> operator()(const std::vector<VeloUTTracking::TrackVelo>& inputTracks) const;
 
 private:
 
@@ -98,33 +98,33 @@ private:
   // typedef MultiIndexedHitContainer<Hit, UT::Info::kNStations, UT::Info::kNLayers>::HitRange HitRange;
 
   bool getState(
-    const TrackVelo& iTr, 
-    VeloState& trState, 
-    std::vector<TrackVelo>& outputTracks ) const;
+    const VeloUTTracking::TrackVelo& iTr, 
+    VeloUTTracking::VeloState& trState, 
+    std::vector<VeloUTTracking::TrackVelo>& outputTracks ) const;
 
   bool getHits(
-    std::array<std::vector<Hit>,4>& hitsInLayers, 
-    const std::array<std::vector<Hit>,4>& inputHits,
+    std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
+    const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
     const std::vector<float>& fudgeFactors, 
-    const VeloState& trState ) const;
+    const VeloUTTracking::VeloState& trState ) const;
 
-  bool formClusters(const std::array<std::vector<Hit>,4>& hitsInLayers, TrackHelper& helper) const;
+  bool formClusters(const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, TrackHelper& helper) const;
 
-  void prepareOutputTrack(const TrackVelo& veloTrack,
+  void prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
                           const TrackHelper& helper,
-                          const std::array<std::vector<Hit>,4>& hitsInLayers,
-                          std::vector<TrackVelo>& outputTracks,
+                          const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+                          std::vector<VeloUTTracking::TrackVelo>& outputTracks,
                           const std::vector<float>& bdlTable) const;
 
   // ==============================================================================
   // -- Method that finds the hits in a given layer within a certain range
   // ==============================================================================
   inline void findHits( 
-    const std::vector<Hit>& inputHits,
-    const VeloState& myState, 
+    const std::vector<VeloUTTracking::Hit>& inputHits,
+    const VeloUTTracking::VeloState& myState, 
     const float xTolNormFact,
     const float invNormFact,
-    std::vector<Hit>& outHits ) const 
+    std::vector<VeloUTTracking::Hit>& outHits ) const 
   {
     const auto zInit = inputHits.at(0).zAtYEq0();
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
@@ -141,7 +141,7 @@ private:
 
     for (int i=pos; i<inputHits.size(); ++i) {
 
-      const Hit& hit = inputHits[pos];
+      const VeloUTTracking::Hit& hit = inputHits[pos];
 
       const auto xx = hit.xAt(yApprox);
       const auto dx = xx - xOnTrackProto;
@@ -157,7 +157,7 @@ private:
       const auto xx2 = hit.xAt(yy);
 
       // TODO avoid the copy - remove the const?
-      Hit temp_hit = hit;
+      VeloUTTracking::Hit temp_hit = hit;
       temp_hit.m_second_x = xx2;
       temp_hit.m_second_z = zz;
 
@@ -169,7 +169,7 @@ private:
   // -- 2 helper functions for fit
   // -- Pseudo chi2 fit, templated for 3 or 4 hits
   // ===========================================================================================
-  void addHit( float* mat, float* rhs, const Hit* hit) const {
+  void addHit( float* mat, float* rhs, const VeloUTTracking::Hit* hit) const {
     const float ui = hit->x;
     const float ci = hit->cosT();
     const float dz = 0.001*(hit->z - m_zMidUT);
@@ -181,7 +181,7 @@ private:
     rhs[1] += wi * ui * dz;
   }
 
-  void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const Hit* hit) const {
+  void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const VeloUTTracking::Hit* hit) const {
     const float zd    = hit->z;
     const float xd    = xTTFit + xSlopeTTFit*(zd-m_zMidUT);
     const float du    = xd - hit->x;
@@ -190,7 +190,7 @@ private:
 
   template <std::size_t N>
   void simpleFit(
-    std::array<const Hit*,N>& hits, 
+    std::array<const VeloUTTracking::Hit*,N>& hits, 
     TrackHelper& helper ) const 
   {
     assert( N==3||N==4 );
@@ -203,7 +203,7 @@ private:
 
     // TODO uncomment
     // const int nHighThres = std::count_if( hits.begin(),  hits.end(),
-    //                                       []( Hit* hit ) { return hit && hit->highThreshold(); });
+    //                                       []( VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
 
     const int nHighThres = 2;
 
@@ -211,7 +211,7 @@ private:
     // -- = likely spillover
     if( nHighThres < m_minHighThres ) return;
 
-    std::for_each( hits.begin(), hits.end(), [&](const Hit* h) { this->addHit(mat,rhs,h); } );
+    std::for_each( hits.begin(), hits.end(), [&](const VeloUTTracking::Hit* h) { this->addHit(mat,rhs,h); } );
 
     ROOT::Math::CholeskyDecomp<float, 2> decomp(mat);
     if( !decomp ) return;
@@ -228,7 +228,7 @@ private:
 
     float chi2TT = chi2VeloSlope*chi2VeloSlope;
 
-    std::for_each( hits.begin(), hits.end(), [&](const Hit* h) { this->addChi2(xTTFit,xSlopeTTFit, chi2TT, h); } );
+    std::for_each( hits.begin(), hits.end(), [&](const VeloUTTracking::Hit* h) { this->addChi2(xTTFit,xSlopeTTFit, chi2TT, h); } );
 
     chi2TT /= (N + 1 - 2);
 

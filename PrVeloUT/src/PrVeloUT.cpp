@@ -55,23 +55,23 @@ int PrVeloUT::initialize() {
 //=============================================================================
 // Main execution
 //=============================================================================
-std::vector<TrackVelo> PrVeloUT::operator() (
-  const std::vector<TrackVelo>& inputTracks) const 
+std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
+  const std::vector<VeloUTTracking::TrackVelo>& inputTracks) const 
 {
 
-  std::vector<TrackVelo> outputTracks;
+  std::vector<VeloUTTracking::TrackVelo> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
-  std::array<std::vector<Hit>,4> hitsInLayers;
+  std::array<std::vector<VeloUTTracking::Hit>,4> hitsInLayers;
   // TODO get the proper hits
-  const std::array<std::vector<Hit>,4> inputHits;
+  const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits;
 
-  for(const TrackVelo& veloTr : inputTracks) {
+  for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
 
-    VeloState trState;
+    VeloUTTracking::VeloState trState;
     if( !getState(veloTr, trState, outputTracks)) continue;
     if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState) ) continue;
 
@@ -100,14 +100,14 @@ std::vector<TrackVelo> PrVeloUT::operator() (
 // Get the state, do some cuts
 //=============================================================================
 bool PrVeloUT::getState(
-  const TrackVelo& iTr, 
-  VeloState& trState, 
-  std::vector<TrackVelo>& outputTracks ) const 
+  const VeloUTTracking::TrackVelo& iTr, 
+  VeloUTTracking::VeloState& trState, 
+  std::vector<VeloUTTracking::TrackVelo>& outputTracks ) const 
 {
   // const VeloState* s = iTr.stateAt(LHCb::State::EndVelo);
   // const VeloState& state = s ? *s : (iTr.closestState(LHCb::State::EndVelo));
   // TODO get the closest state not the last
-  const VeloState state = iTr.back();
+  const VeloUTTracking::VeloState state = iTr.back();
 
   // -- reject tracks outside of acceptance or pointing to the beam pipe
   trState.tx = state.tx;
@@ -145,10 +145,10 @@ bool PrVeloUT::getState(
 // Find the hits
 //=============================================================================
 bool PrVeloUT::getHits(
-  std::array<std::vector<Hit>,4>& hitsInLayers,
-  const std::array<std::vector<Hit>,4>& inputHits,
+  std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+  const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
   const std::vector<float>& fudgeFactors, 
-  const VeloState& trState ) const 
+  const VeloUTTracking::VeloState& trState ) const 
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
@@ -177,7 +177,7 @@ bool PrVeloUT::getHits(
       if( iStation == 1 && iLayer == 1 && nLayers < 2 ) return false;
 
       int layer = 2*iStation+iLayer;
-      const std::vector<Hit>& hits = inputHits[layer];
+      const std::vector<VeloUTTracking::Hit>& hits = inputHits[layer];
 
       // UNLIKELY is a MACRO for `__builtin_expect` compiler hint of GCC
       if( hits.empty() ) continue;
@@ -233,7 +233,7 @@ bool PrVeloUT::getHits(
 // Form clusters
 //=========================================================================
 bool PrVeloUT::formClusters(
-  const std::array<std::vector<Hit>,4>& hitsInLayers, 
+  const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
   TrackHelper& helper ) const 
 {
 
@@ -254,7 +254,7 @@ bool PrVeloUT::formClusters(
 
       if( std::abs(tx-helper.state.tx) > m_deltaTx2 ) continue;
 
-      const Hit* bestHit1 = nullptr;
+      const VeloUTTracking::Hit* bestHit1 = nullptr;
       float hitTol = m_hitTol2;
       for(const auto& hit1 : hitsInLayers[1]) {
 
@@ -270,7 +270,7 @@ bool PrVeloUT::formClusters(
 
       if( fourLayerSolution && !bestHit1) continue;
 
-      const Hit* bestHit3 = nullptr;
+      const VeloUTTracking::Hit* bestHit3 = nullptr;
       hitTol = m_hitTol2;
       for( auto& hit3 : hitsInLayers[3]) {
 
@@ -287,7 +287,7 @@ bool PrVeloUT::formClusters(
 
       // -- All hits found
       if( bestHit1 && bestHit3 ){
-        std::array<const Hit*,4> hits4fit = {&hit0, bestHit1, &hit2, bestHit3};
+        std::array<const VeloUTTracking::Hit*,4> hits4fit = {&hit0, bestHit1, &hit2, bestHit3};
         simpleFit(hits4fit, helper);
 
         if(!fourLayerSolution && helper.bestHits[0]){
@@ -298,13 +298,13 @@ bool PrVeloUT::formClusters(
 
       // -- Nothing found in layer 3
       if( !fourLayerSolution && bestHit1 ){
-        std::array<const Hit*,3> hits4fit = {&hit0, bestHit1, &hit2};
+        std::array<const VeloUTTracking::Hit*,3> hits4fit = {&hit0, bestHit1, &hit2};
         simpleFit(hits4fit,  helper);
         continue;
       }
       // -- Noting found in layer 1
       if( !fourLayerSolution && bestHit3 ){
-        std::array<const Hit*,3> hits4fit = {&hit0, bestHit3, &hit2};
+        std::array<const VeloUTTracking::Hit*,3> hits4fit = {&hit0, bestHit3, &hit2};
         simpleFit(hits4fit, helper);
         continue;
       }
@@ -316,10 +316,10 @@ bool PrVeloUT::formClusters(
 //=========================================================================
 // Create the Velo-TU tracks
 //=========================================================================
-void PrVeloUT::prepareOutputTrack(const TrackVelo& veloTrack,
+void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
                                   const TrackHelper& helper,
-                                  const std::array<std::vector<Hit>,4>& hitsInLayers,
-                                  std::vector<TrackVelo>& outputTracks,
+                                  const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+                                  std::vector<VeloUTTracking::TrackVelo>& outputTracks,
                                   const std::vector<float>& bdlTable) const {
 
   //== Handle states. copy Velo one, add TT.
