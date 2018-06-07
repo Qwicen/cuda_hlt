@@ -46,13 +46,13 @@ struct PrUTMagnetTool {
 };
 
 struct TrackHelper{
-  VeloUTTracking::VeloState state;
+  VeloState state;
   std::array<const VeloUTTracking::Hit*, 4> bestHits = { nullptr, nullptr, nullptr, nullptr};
   std::array<float, 4> bestParams;
   float wb, invKinkVeloDist, xMidField;
 
   TrackHelper(
-    const VeloUTTracking::VeloState& miniState, 
+    const VeloState& miniState, 
     const float zKink, 
     const float sigmaVeloSlope, 
     const float maxPseudoChi2
@@ -99,14 +99,14 @@ private:
 
   bool getState(
     const VeloUTTracking::TrackVelo& iTr, 
-    VeloUTTracking::VeloState& trState, 
+    VeloState& trState, 
     std::vector<VeloUTTracking::TrackVelo>& outputTracks ) const;
 
   bool getHits(
     std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
     const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
     const std::vector<float>& fudgeFactors, 
-    const VeloUTTracking::VeloState& trState ) const;
+    const VeloState& trState ) const;
 
   bool formClusters(const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, TrackHelper& helper) const;
 
@@ -121,7 +121,7 @@ private:
   // ==============================================================================
   inline void findHits( 
     const std::vector<VeloUTTracking::Hit>& inputHits,
-    const VeloUTTracking::VeloState& myState, 
+    const VeloState& myState, 
     const float xTolNormFact,
     const float invNormFact,
     std::vector<VeloUTTracking::Hit>& outHits ) const 

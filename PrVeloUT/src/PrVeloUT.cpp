@@ -71,7 +71,7 @@ std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
 
   for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
 
-    VeloUTTracking::VeloState trState;
+    VeloState trState;
     if( !getState(veloTr, trState, outputTracks)) continue;
     if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState) ) continue;
 
@@ -101,13 +101,13 @@ std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
 //=============================================================================
 bool PrVeloUT::getState(
   const VeloUTTracking::TrackVelo& iTr, 
-  VeloUTTracking::VeloState& trState, 
+  VeloState& trState, 
   std::vector<VeloUTTracking::TrackVelo>& outputTracks ) const 
 {
   // const VeloState* s = iTr.stateAt(LHCb::State::EndVelo);
   // const VeloState& state = s ? *s : (iTr.closestState(LHCb::State::EndVelo));
   // TODO get the closest state not the last
-  const VeloUTTracking::VeloState state = iTr.back();
+  const VeloState state = iTr.back();
 
   // -- reject tracks outside of acceptance or pointing to the beam pipe
   trState.tx = state.tx;
@@ -148,7 +148,7 @@ bool PrVeloUT::getHits(
   std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
   const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
   const std::vector<float>& fudgeFactors, 
-  const VeloUTTracking::VeloState& trState ) const 
+  const VeloState& trState ) const 
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong

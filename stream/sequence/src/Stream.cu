@@ -210,7 +210,23 @@ cudaError_t Stream::operator()(
 
     /* Plugin VeloUT CPU code here */
     // Fill Velo states into vector
-    //TrackVelo states;
+
+    // std::vector<TrackVelo> tracks;
+    // for (int i=0; i<nb_tracks; ++i) {
+    //   VeloUTTracking::TrackVelo tr;
+    //   for (int j=0; j<nb_states; ++j) {
+    // 	VeloUTTracking::VeloState st;
+    // 	tr.emplace_back(st);
+    //   }
+    //   tracks.emplace_back(tr);
+    // }
+    // // Call the veloUT
+    // PrVeloUT velout;
+    // if ( velout.initialize() ) {
+    //   velout(tracks);    
+    // }
+    
+    VeloUTTracking::TrackVelo states;
     
     
   }
