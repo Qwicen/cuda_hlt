@@ -2,7 +2,7 @@
 #include "../../../cuda/velo/consolidate_tracks/include/ConsolidateTracks.cuh"
 
 void ConsolidateTracks::operator()() {
-  consolidate_tracks <do_mc_check> <<<num_blocks, num_threads, 0, *stream>>>(
+  consolidate_tracks<mc_check_enabled> <<<num_blocks, num_threads, 0, *stream>>>(
     dev_atomics_storage,
     dev_tracks,
     dev_output_tracks,

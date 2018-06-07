@@ -15,9 +15,9 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 
-# option to do MC truth matching
+# MC truth matching
 if(NOT MC_CHECK)
-  set(MC_CHECK Off)
+  set(MC_CHECK On)
 endif(NOT MC_CHECK)
 if(${MC_CHECK} STREQUAL On OR ${MC_CHECK} STREQUAL ON)
   MESSAGE(STATUS "MC_CHECK: On")
