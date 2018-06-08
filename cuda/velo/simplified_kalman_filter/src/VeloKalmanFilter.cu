@@ -273,14 +273,14 @@ __global__ void velo_fit(
       TrackFitParameters parameters;
 
       // State at beam line
-      // means_square_fit(
-      //   hit_Xs,
-      //   hit_Ys,
-      //   hit_Zs,
-      //   track,
-      //   parameters,
-      //   velo_state_base
-      // );
+      means_square_fit(
+        hit_Xs,
+        hit_Ys,
+        hit_Zs,
+        track,
+        parameters,
+        velo_state_base
+      );
 
       // Always calculate two simplified Kalman fits and store their results to VeloState:
       // Downstream and upstream
@@ -299,8 +299,7 @@ __global__ void velo_fit(
         hit_Zs,
         track,
         parameters,
-	velo_state_base
-        //velo_state_base + 1
+	velo_state_base + 1
       );
 
       // Upstream fit

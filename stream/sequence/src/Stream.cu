@@ -166,7 +166,8 @@ cudaError_t Stream::operator()(
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(VeloTracking::Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_velo_states, consolidateTracks.dev_velo_states_out, number_of_events * max_tracks_in_event * VeloTracking::states_per_track * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
+      // only copy one velo state back -> don't need VeloTracking::states_per_track
+      cudaCheck(cudaMemcpyAsync(host_velo_states, consolidateTracks.dev_velo_states_out, number_of_events * max_tracks_in_event * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
     }
 
     cudaEventRecord(cuda_generic_event, stream);
@@ -232,15 +233,22 @@ cudaError_t Stream::operator()(
 	      
 	      inputHits[i_layer].push_back( hit );
 	    }
+	    // sort hits according to xAtYEq0
+	    std::sort( inputHits[i_layer].begin(), inputHits[i_layer].end(), [](VeloUTTracking::Hit a, VeloUTTracking::Hit b) { return a.xAtYEq0() > b.xAtYEq0(); } );
 	  }
 	  
 	  // Prepare Velo tracks
 	  VeloState* velo_states_event = host_velo_states + host_accumulated_tracks[i_event];
 	  VeloTracking::Track<true>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
 	  std::vector<VeloUTTracking::TrackVelo> tracks;
+	  int n_states = 0;
 	  for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
 	    VeloUTTracking::TrackVelo track;
 	    track.state = ( velo_states_event[i_track] );
+	    if ( velo_states_event[i_track].x != 0 ) {
+	      debug_cout << "x = " << velo_states_event[i_track].x << ", z = " << velo_states_event[i_track].z << std::endl;
+	      n_states++;
+	    }
 	    VeloUTTracking::TrackUT ut_track;
 	    const VeloTracking::Track<true> velo_track = tracks_event[i_track];
 	    ut_track.hitsNum = velo_track.hitsNum;
@@ -250,7 +258,7 @@ cudaError_t Stream::operator()(
 	    track.track = ut_track;
 	    tracks.push_back( track );
 	  }
-	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " velo states and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
+	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << n_states << " velo states and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
 	  
 	  std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, inputHits);
 	  debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;

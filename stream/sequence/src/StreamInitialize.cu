@@ -131,6 +131,7 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_rel_indices, number_of_events * max_numhits_in_module * sizeof(unsigned short)));
 
   cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * VeloTracking::states_per_track * sizeof(VeloState)));
+  cudaCheck(cudaMalloc((void**)&dev_velo_states_out, number_of_events * max_tracks_in_event * sizeof(VeloState)));
   
   // Memory allocations for host memory (copy back)
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks_pinned, number_of_events * sizeof(int)));
@@ -215,7 +216,7 @@ cudaError_t Stream::initialize(
      - max_tracks_in_event <= average_num_hits_in_event 
      - only one Velo state is saved (size_of(state) = 48 B, size_of(VeloTracking::TrackHits) = 54 B)
   */
-  dev_velo_states_out = (VeloState*)dev_tracklets;
+  //dev_velo_states_out = (VeloState*)dev_tracklets;
   
   consolidateTracks.setParameters(
     dev_atomics_storage,

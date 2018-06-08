@@ -99,12 +99,13 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
   std::array<std::vector<VeloUTTracking::Hit>,4> hitsInLayers;
-
+  debug_cout << "hits size = " << inputHits[0].size() << std::endl;
   for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
 
     VeloState trState;
     if( !getState(veloTr, trState)) continue;
     if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState) ) continue;
+    std::cout << "got hits " << std::endl;
 
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
@@ -117,6 +118,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     }
 
     if( helper.bestHits[0]){
+      std::cout << "going into prepareTracks " << std::endl;
       prepareOutputTrack(veloTr, helper, hitsInLayers, outputTracks, bdlTable);
     }
 
@@ -138,7 +140,8 @@ bool PrVeloUT::getState(
   // const VeloState& state = s ? *s : (iTr.closestState(LHCb::State::EndVelo));
   // TODO get the closest state not the last
   const VeloState state = iTr.state;
-
+  //std::cout << "state z = " << state.z << std::endl;
+  
   // -- reject tracks outside of acceptance or pointing to the beam pipe
   trState.tx = state.tx;
   trState.ty = state.ty;
@@ -212,6 +215,7 @@ bool PrVeloUT::getHits(
       // UNLIKELY is a MACRO for `__builtin_expect` compiler hint of GCC
       if( hits.empty() ) continue;
 
+      
       const float dxDy   = hits.front().dxDy();
       const float zLayer = hits.front().zAtYEq0();
 

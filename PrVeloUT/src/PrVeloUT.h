@@ -9,6 +9,7 @@
 #include <cassert>
 
 //#include "../../PrUTMagnetTool/PrUTMagnetTool.h"
+#include "../../main/include/Logger.h"
 
 // Math from ROOT
 #include "../include/CholeskyDecomp.h"
@@ -139,7 +140,8 @@ private:
         ++pos;
       }
     }
-
+    //std::cout << "position =  " << pos << ", size = " << inputHits.size() << std::endl;
+    
     const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
     const auto yyProto =       myState.y - myState.ty*myState.z;
 
@@ -150,8 +152,12 @@ private:
       const auto xx = hit.xAt(yApprox);
       const auto dx = xx - xOnTrackProto;
 
+      //std::cout << "dx = " << dx << ", xTolNormFact = " << xTolNormFact << std::endl;
+
       if( dx < -xTolNormFact ) continue;
       if( dx >  xTolNormFact ) break;
+      //std::cout << "position =  " << pos << std::endl;
+	    
 
       // -- Now refine the tolerance in Y
       if( hit.isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
@@ -164,6 +170,7 @@ private:
       VeloUTTracking::Hit temp_hit = hit;
       temp_hit.m_second_x = xx2;
       temp_hit.m_second_z = zz;
+
 
       outHits.emplace_back(temp_hit);
     }
