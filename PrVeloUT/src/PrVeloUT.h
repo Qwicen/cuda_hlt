@@ -4,10 +4,11 @@
 #include <array>
 #include <vector>
 #include <algorithm>
+#include <fstream>
 
 #include <cassert>
 
-#include "../../PrUTMagnetTool/PrUTMagnetTool.h"
+//#include "../../PrUTMagnetTool/PrUTMagnetTool.h"
 
 // Math from ROOT
 #include "../include/CholeskyDecomp.h"
@@ -250,7 +251,7 @@ private:
 
   // ---
 
-  PrUTMagnetTool       m_PrUTMagnetTool;                            ///< Multipupose tool for Bdl and deflection
+  //PrUTMagnetTool       m_PrUTMagnetTool;                            ///< Multipupose tool for Bdl and deflection
   float                m_zMidUT;
   float                m_distToMomentum;
   float                m_zKink;
