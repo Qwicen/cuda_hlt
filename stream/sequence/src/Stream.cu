@@ -212,42 +212,52 @@ cudaError_t Stream::operator()(
        Adjust input types to match PrVeloUT code
        ATTENTION: assumes we run with 1 stream only
      */
-
-    PrVeloUT velout;
-    if ( velout.initialize() ) {
-      for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
-	// Prepare hits
-	std::array<std::vector<VeloUTTracking::Hit>,VeloUTTracking::n_layers> inputHits;
-	for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-	  for ( int i_hit = 0; i_hit < n_hits_layers_events[i_event][i_layer]; ++i_hit ) {
-	    VeloUTTracking::Hit hit;
-	    hit.m_cos = hits_layers_events[i_event].cos[i_hit];
-	    hit.m_dxDy = hits_layers_events[i_event].dxDy[i_hit];
-	    hit.m_weight = hits_layers_events[i_event].weight[i_hit];
-	    hit.m_xAtYEq0 = hits_layers_events[i_event].xAtYEq0[i_hit];
-	    hit.m_yBegin = hits_layers_events[i_event].yBegin[i_hit];
-	    hit.m_yEnd = hits_layers_events[i_event].yEnd[i_hit];
-	    hit.m_zAtYEq0 = hits_layers_events[i_event].zAtYEq0[i_hit];
-	    
-	    inputHits[i_layer].push_back( hit );
+    if (do_mc_check) {
+      PrVeloUT velout;
+      if ( velout.initialize() ) {
+	for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
+	  // Prepare hits
+	  std::array<std::vector<VeloUTTracking::Hit>,VeloUTTracking::n_layers> inputHits;
+	  for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+	    for ( int i_hit = 0; i_hit < n_hits_layers_events[i_event][i_layer]; ++i_hit ) {
+	      VeloUTTracking::Hit hit;
+	      hit.m_cos = hits_layers_events[i_event].cos[i_hit];
+	      hit.m_dxDy = hits_layers_events[i_event].dxDy[i_hit];
+	      hit.m_weight = hits_layers_events[i_event].weight[i_hit];
+	      hit.m_xAtYEq0 = hits_layers_events[i_event].xAtYEq0[i_hit];
+	      hit.m_yBegin = hits_layers_events[i_event].yBegin[i_hit];
+	      hit.m_yEnd = hits_layers_events[i_event].yEnd[i_hit];
+	      hit.m_zAtYEq0 = hits_layers_events[i_event].zAtYEq0[i_hit];
+	      hit.m_LHCbID = hits_layers_events[i_event].LHCbID[i_hit];
+	      
+	      inputHits[i_layer].push_back( hit );
+	    }
 	  }
+	  
+	  // Prepare Velo tracks
+	  VeloState* velo_states_event = host_velo_states + host_accumulated_tracks[i_event];
+	  VeloTracking::Track<true>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
+	  std::vector<VeloUTTracking::TrackVelo> tracks;
+	  for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+	    VeloUTTracking::TrackVelo track;
+	    track.state = ( velo_states_event[i_track] );
+	    VeloUTTracking::TrackUT ut_track;
+	    const VeloTracking::Track<true> velo_track = tracks_event[i_track];
+	    ut_track.hitsNum = velo_track.hitsNum;
+	    for ( int i_hit = 0; i_hit < velo_track.hitsNum; ++i_hit ) {
+	      ut_track.LHCbIDs.push_back( velo_track.hits[i_hit].LHCbID );
+	    }
+	    track.track = ut_track;
+	    tracks.push_back( track );
+	  }
+	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " velo states and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
+	  
+	  std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, inputHits);
+	  debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
 	}
-	
-	// Prepare Velo states
-	VeloState* velo_states_event = host_velo_states + host_accumulated_tracks[i_event];
-	std::vector<VeloUTTracking::TrackVelo> tracks;
-	for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
-	  VeloUTTracking::TrackVelo states;
-	  states.push_back( velo_states_event[i_track] );
-	  tracks.push_back( states );
-	}
-	debug_cout << "at event " << i_event << ", pass " << tracks.size() << " velo states and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
-	
-	velout(tracks, inputHits); 
       }
-    }
-
-       
+      
+    } // do_mc_check 
     
   }
   return cudaSuccess;

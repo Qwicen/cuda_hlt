@@ -88,15 +88,12 @@ int PrVeloUT::initialize() {
 //=============================================================================
 // Main execution
 //=============================================================================
-std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
+std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   const std::vector<VeloUTTracking::TrackVelo>& inputTracks, const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits) const
 {
 
-  std::vector<VeloUTTracking::TrackVelo> outputTracks;
+  std::vector<VeloUTTracking::TrackUT> outputTracks;
   outputTracks.reserve(inputTracks.size());
-
-
-  
 
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
@@ -106,7 +103,7 @@ std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
   for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
 
     VeloState trState;
-    if( !getState(veloTr, trState, outputTracks)) continue;
+    if( !getState(veloTr, trState)) continue;
     if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState) ) continue;
 
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
@@ -135,13 +132,12 @@ std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
 //=============================================================================
 bool PrVeloUT::getState(
   const VeloUTTracking::TrackVelo& iTr, 
-  VeloState& trState, 
-  std::vector<VeloUTTracking::TrackVelo>& outputTracks ) const 
+  VeloState& trState ) const 
 {
   // const VeloState* s = iTr.stateAt(LHCb::State::EndVelo);
   // const VeloState& state = s ? *s : (iTr.closestState(LHCb::State::EndVelo));
   // TODO get the closest state not the last
-  const VeloState state = iTr.back();
+  const VeloState state = iTr.state;
 
   // -- reject tracks outside of acceptance or pointing to the beam pipe
   trState.tx = state.tx;
@@ -166,7 +162,7 @@ bool PrVeloUT::getState(
     // outTr->addToAncestors( iTr );
     // outputTracks.insert(outTr.release());
 
-    outputTracks.emplace_back(iTr);  // DvB: is this to save Velo tracks that don't make it to the UT?
+    //outputTracks.emplace_back(iTr);  // DvB: is this to save Velo tracks that don't make it to the UT?
 
     return false;
   }
@@ -353,7 +349,7 @@ bool PrVeloUT::formClusters(
 void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
                                   const TrackHelper& helper,
                                   const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
-                                  std::vector<VeloUTTracking::TrackVelo>& outputTracks,
+                                  std::vector<VeloUTTracking::TrackUT>& outputTracks,
                                   const std::vector<float>& bdlTable) const {
 
   //== Handle states. copy Velo one, add TT.
@@ -405,7 +401,7 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
 
   const float txUT = helper.bestParams[3];
 
-  outputTracks.emplace_back();
+  outputTracks.emplace_back( veloTrack.track );
   //outputTracks.back().UTIDs.reserve(8);
 
   // Adding overlap hits
@@ -416,6 +412,8 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
 
     // TODO add a TrackStructure with UTIDs
     // outputTracks.back().UTIDs.push_back(hit->lhcbID());
+    
+    outputTracks.back().addLHCbID( hit->lhcbID() );
 
     const float xhit = hit->x;
     const float zhit = hit->z;
@@ -430,6 +428,9 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
       if( xohit-xextrap > m_overlapTol) break;
       // TODO add a TrackStructure with UTIDs
       // outputTracks.back().UTIDs.push_back(ohit.lhcbID());
+
+      outputTracks.back().addLHCbID( hit->lhcbID() );
+      
       // -- only one overlap hit
       break;
     }

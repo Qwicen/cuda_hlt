@@ -76,7 +76,7 @@ public:
 
   std::vector<std::string> GetFieldMaps();
   virtual int initialize();
-  std::vector<VeloUTTracking::TrackVelo> operator()(const std::vector<VeloUTTracking::TrackVelo>& inputTracks, const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits) const;
+  std::vector<VeloUTTracking::TrackUT> operator()(const std::vector<VeloUTTracking::TrackVelo>& inputTracks, const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits) const;
 
 private:
 
@@ -104,8 +104,7 @@ private:
 
   bool getState(
     const VeloUTTracking::TrackVelo& iTr, 
-    VeloState& trState, 
-    std::vector<VeloUTTracking::TrackVelo>& outputTracks ) const;
+    VeloState& trState ) const;
 
   bool getHits(
     std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
@@ -118,7 +117,7 @@ private:
   void prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
                           const TrackHelper& helper,
                           const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
-                          std::vector<VeloUTTracking::TrackVelo>& outputTracks,
+                          std::vector<VeloUTTracking::TrackUT>& outputTracks,
                           const std::vector<float>& bdlTable) const;
 
   // ==============================================================================
