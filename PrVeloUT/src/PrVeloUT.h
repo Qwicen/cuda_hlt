@@ -76,7 +76,7 @@ public:
 
   std::vector<std::string> GetFieldMaps();
   virtual int initialize();
-  std::vector<VeloUTTracking::TrackVelo> operator()(const std::vector<VeloUTTracking::TrackVelo>& inputTracks) const;
+  std::vector<VeloUTTracking::TrackVelo> operator()(const std::vector<VeloUTTracking::TrackVelo>& inputTracks, const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits) const;
 
 private:
 

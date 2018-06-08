@@ -89,7 +89,7 @@ int PrVeloUT::initialize() {
 // Main execution
 //=============================================================================
 std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
-  const std::vector<VeloUTTracking::TrackVelo>& inputTracks) const 
+  const std::vector<VeloUTTracking::TrackVelo>& inputTracks, const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits) const
 {
 
   std::vector<VeloUTTracking::TrackVelo> outputTracks;
@@ -101,12 +101,7 @@ std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
-  std::cout << "fudge factors = " << fudgeFactors[0] << ", " << fudgeFactors[1] << std::endl;
-   std::cout << "bdl table = " << bdlTable[0] << ", " << bdlTable[1] << std::endl;
-
   std::array<std::vector<VeloUTTracking::Hit>,4> hitsInLayers;
-  // TODO get the proper hits
-  const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits;
 
   for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
 

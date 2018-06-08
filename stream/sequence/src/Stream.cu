@@ -213,9 +213,6 @@ cudaError_t Stream::operator()(
        ATTENTION: assumes we run with 1 stream only
      */
 
-    //const VeloUTTracking::HitsSoA hits_layers_events[];
-    //const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers];
-    
     PrVeloUT velout;
     if ( velout.initialize() ) {
       for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
@@ -245,7 +242,8 @@ cudaError_t Stream::operator()(
 	  tracks.push_back( states );
 	}
 	debug_cout << "at event " << i_event << ", pass " << tracks.size() << " velo states and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
-	velout(tracks); 
+	
+	velout(tracks, inputHits); 
       }
     }
 
