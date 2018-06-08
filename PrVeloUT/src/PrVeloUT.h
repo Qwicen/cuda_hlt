@@ -34,17 +34,20 @@
    */
 
 // TODO Fake MagnetTool
-// struct PrUTMagnetTool {
-//   const float m_zMidUT = 0.0;
-//   const float m_averageDist2mom = 0.0;
-//   const std::vector<float> dxLayTable = {0.0, 0.0, 0.0};
-//   const std::vector<float> bdlTable = {0.0, 0.0, 0.0};
+struct PrUTMagnetTool {
+  //const float m_zMidUT = 0.0;
+  //const float m_averageDist2mom = 0.0;
+  std::vector<float> dxLayTable;
+  std::vector<float> bdlTable;
 
-//   float zMidUT() { return m_zMidUT; }
-//   float averageDist2mom() { return m_averageDist2mom; }
-//   std::vector<float> returnDxLayTable() const { return dxLayTable; }
-//   std::vector<float> returnBdlTable() const { return bdlTable; }
-// };
+  PrUTMagnetTool(){}
+  PrUTMagnetTool( const std::vector<float> _dxLayTable, const std::vector<float> _bdlTable ) : dxLayTable(_dxLayTable), bdlTable(_bdlTable) {}
+  
+  //float zMidUT() { return m_zMidUT; }
+  //float averageDist2mom() { return m_averageDist2mom; }
+  std::vector<float> returnDxLayTable() const { return dxLayTable; }
+  std::vector<float> returnBdlTable() const { return bdlTable; }
+};
 
 struct TrackHelper{
   VeloState state;
@@ -251,7 +254,7 @@ private:
 
   // ---
 
-  //PrUTMagnetTool       m_PrUTMagnetTool;                            ///< Multipupose tool for Bdl and deflection
+  PrUTMagnetTool       m_PrUTMagnetTool;                            ///< Multipupose tool for Bdl and deflection
   float                m_zMidUT;
   float                m_distToMomentum;
   float                m_zKink;

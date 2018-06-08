@@ -45,12 +45,33 @@ std::vector<std::string> PrVeloUT::GetFieldMaps() {
 
 int PrVeloUT::initialize() {
 
-  // TODO not used? old version?
-  // m_veloUTTool = tool<ITracksFromTrackR>("PrVeloUTTool", this );
-
-  std::vector<std::string> filenames = GetFieldMaps();
+  //load the deflection and Bdl values from a text file
+  std::vector<float> deflection_vals;
+  float deflection;
+  std::ifstream deflectionfile;
+  deflectionfile.open("../PrUTMagnetTool/deflection.txt");
+  if (deflectionfile.is_open()) {
+    while (!deflectionfile.eof()) {
+      deflectionfile >> deflection;
+      deflection_vals.push_back(deflection);
+      
+    }
+  }
   
+  std::vector<float> bdl_vals;
+  float bdl;
+  std::ifstream bdlfile;
+  bdlfile.open("../PrUTMagnetTool/bdl.txt");
+  if (bdlfile.is_open()) {
+    while (!bdlfile.eof()) {
+      bdlfile >> bdl;
+      bdl_vals.push_back(bdl);
+      
+    }
+  }
+  m_PrUTMagnetTool = PrUTMagnetTool( deflection_vals, bdl_vals );
 
+  
   // m_zMidUT is a position of normalization plane which should to be close to z middle of UT ( +- 5 cm ).
   // Cashed once in PrVeloUTTool at initialization. No need to update with small UT movement.
   m_zMidUT    = 2484.6;
@@ -75,33 +96,13 @@ std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
   outputTracks.reserve(inputTracks.size());
 
 
-  //load the deflection and Bdl values from a text file
-  std::vector<float> deflection_vals;
-  float deflection;
-  std::ifstream deflectionfile;
-  deflectionfile.open("../PrUTMagnetTool/deflection.txt");
-  if (deflectionfile.is_open()) {
-    while (!deflectionfile.eof()) {
-      deflectionfile >> deflection;
-      deflection_vals.push_back(deflection);
+  
 
-    }
-  }
+  const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
+  const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
-  std::vector<float> bdl_vals;
-  float bdl;
-  std::ifstream bdlfile;
-  bdlfile.open("../PrUTMagnetTool/bdl.txt");
-  if (bdlfile.is_open()) {
-    while (!bdlfile.eof()) {
-      bdlfile >> bdl;
-      bdl_vals.push_back(bdl);
-
-    }
-  }
-
-  const std::vector<float> fudgeFactors = deflection_vals;
-  const std::vector<float> bdlTable     = bdl_vals;
+  std::cout << "fudge factors = " << fudgeFactors[0] << ", " << fudgeFactors[1] << std::endl;
+   std::cout << "bdl table = " << bdlTable[0] << ", " << bdlTable[1] << std::endl;
 
   std::array<std::vector<VeloUTTracking::Hit>,4> hitsInLayers;
   // TODO get the proper hits
