@@ -246,7 +246,6 @@ cudaError_t Stream::operator()(
 	    VeloUTTracking::TrackVelo track;
 	    track.state = ( velo_states_event[i_track] );
 	    if ( velo_states_event[i_track].x != 0 ) {
-	      debug_cout << "x = " << velo_states_event[i_track].x << ", z = " << velo_states_event[i_track].z << std::endl;
 	      n_states++;
 	    }
 	    VeloUTTracking::TrackUT ut_track;

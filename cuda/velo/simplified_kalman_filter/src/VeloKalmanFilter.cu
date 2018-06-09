@@ -255,11 +255,11 @@ __global__ void velo_fit(
   // Reconstructed tracks
   const VeloTracking::TrackHits* tracks = dev_tracks + tracks_offset;
   const uint number_of_tracks = dev_atomics_storage[event_number];
-  VeloState* velo_states = dev_velo_states;
+  VeloState* velo_states = dev_velo_states + tracks_offset * VeloTracking::states_per_track; 
 
   // The location of the track
-  const uint track_start = dev_atomics_storage[number_of_events + event_number];
-  velo_states += track_start * VeloTracking::states_per_track;
+  //const uint track_start = dev_atomics_storage[number_of_events + event_number];
+  //velo_states += track_start * VeloTracking::states_per_track; // DvB: how does this work?
   
   // Iterate over the tracks and calculate fits
   for (uint i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {

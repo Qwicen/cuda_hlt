@@ -96,10 +96,6 @@ __global__ void consolidate_tracks(
       int state_index = VeloTracking::states_per_track * element + 1; 
       
       destination_velo_states[element] = velo_states[state_index];
-      // if ( (threadIdx.x == 0 || threadIdx.x == 2 || threadIdx.x == 3 || threadIdx.x == 4) && blockIdx.x == 0 ) {
-      // 	printf("state x = %f, z = %f \n", destination_velo_states[element].x, destination_velo_states[element].z);
-      // 	printf("track numhits = %u \n", track.hitsNum);
-      // }
     }
   }
 }
