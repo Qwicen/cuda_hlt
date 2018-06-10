@@ -225,7 +225,7 @@ cudaError_t Stream::operator()(
       TTree *t_ut_hits = new TTree("ut_hits","ut_hits");
       TTree *t_velo_states = new TTree("velo_states", "velo_states");
       float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
-      float x, y, tx, ty, chi2, z;
+      float x, y, tx, ty, chi2, z, r;
       unsigned int LHCbID;
       int highThreshold;
       int backward;
@@ -246,6 +246,7 @@ cudaError_t Stream::operator()(
       t_velo_states->Branch("chi2", &chi2);
       t_velo_states->Branch("z", &z);
       t_velo_states->Branch("backward", &backward);
+      t_velo_states->Branch("r", &r);
 			
       if ( velout.initialize() ) {
 	for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
@@ -291,7 +292,7 @@ cudaError_t Stream::operator()(
 
 	    VeloUTTracking::TrackUT ut_track;
 	    const VeloTracking::Track<true> velo_track = tracks_event[i_track];
-	    //if ( velo_track.backward ) continue;
+	    if ( velo_track.backward ) continue;
 	    backward = (int)velo_track.backward;
 	    ut_track.hitsNum = velo_track.hitsNum;
 	    for ( int i_hit = 0; i_hit < velo_track.hitsNum; ++i_hit ) {
@@ -313,6 +314,12 @@ cudaError_t Stream::operator()(
 	    ty = track.state.ty;
 	    chi2 = track.state.chi2;
 	    z = track.state.z;
+	    // study (sign of) (dr/dz) -> track moving away from beamline?
+	    // drop 1/sqrt(x^2+y^2) to avoid sqrt calculation, no effect on sign
+	    float dx = velo_track.hits[velo_track.hitsNum - 1].x - velo_track.hits[0].x;
+	    float dy = velo_track.hits[velo_track.hitsNum - 1].y - velo_track.hits[0].y;
+	    float dz = velo_track.hits[velo_track.hitsNum - 1].z - velo_track.hits[0].z;
+	    r = velo_track.hits[0].x * dx/dz + velo_track.hits[0].y * dy/dz;
 	    t_velo_states->Fill();
 	  }
 	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << n_states << " velo states and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
