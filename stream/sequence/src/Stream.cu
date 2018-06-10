@@ -228,6 +228,7 @@ cudaError_t Stream::operator()(
       float x, y, tx, ty, chi2, z;
       unsigned int LHCbID;
       int highThreshold;
+      int backward;
 
       t_ut_hits->Branch("cos", &cos);
       t_ut_hits->Branch("yBegin", &yBegin);
@@ -244,6 +245,7 @@ cudaError_t Stream::operator()(
       t_velo_states->Branch("ty", &ty);
       t_velo_states->Branch("chi2", &chi2);
       t_velo_states->Branch("z", &z);
+      t_velo_states->Branch("backward", &backward);
 			
       if ( velout.initialize() ) {
 	for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
@@ -284,18 +286,24 @@ cudaError_t Stream::operator()(
 	  std::vector<VeloUTTracking::TrackVelo> tracks;
 	  int n_states = 0;
 	  for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+
 	    VeloUTTracking::TrackVelo track;
-	    track.state = ( velo_states_event[i_track] );
-	    if ( velo_states_event[i_track].x != 0 ) {
-	      n_states++;
-	    }
+
 	    VeloUTTracking::TrackUT ut_track;
 	    const VeloTracking::Track<true> velo_track = tracks_event[i_track];
+	    //if ( velo_track.backward ) continue;
+	    backward = (int)velo_track.backward;
 	    ut_track.hitsNum = velo_track.hitsNum;
 	    for ( int i_hit = 0; i_hit < velo_track.hitsNum; ++i_hit ) {
 	      ut_track.LHCbIDs.push_back( velo_track.hits[i_hit].LHCbID );
 	    }
 	    track.track = ut_track;
+	    
+	    track.state = ( velo_states_event[i_track] );
+	    if ( velo_states_event[i_track].x != 0 ) {
+	      n_states++;
+	    }
+	    
 	    tracks.push_back( track );
 
 	    // For tree filling
