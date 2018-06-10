@@ -3,6 +3,10 @@
 
 #include "../../../PrVeloUT/src/PrVeloUT.h"
 
+#include "TH1D.h"
+#include "TFile.h"
+#include "TTree.h"
+
 cudaError_t Stream::operator()(
   const char* host_events_pinned,
   const uint* host_event_offsets_pinned,
@@ -215,6 +219,32 @@ cudaError_t Stream::operator()(
      */
     if (do_mc_check) {
       PrVeloUT velout;
+
+      // Histograms only for checking and debugging
+      TFile *f = new TFile("veloUT.root", "RECREATE");
+      TTree *t_ut_hits = new TTree("ut_hits","ut_hits");
+      TTree *t_velo_states = new TTree("velo_states", "velo_states");
+      float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
+      float x, y, tx, ty, chi2, z;
+      unsigned int LHCbID;
+      int highThreshold;
+
+      t_ut_hits->Branch("cos", &cos);
+      t_ut_hits->Branch("yBegin", &yBegin);
+      t_ut_hits->Branch("yEnd", &yEnd);
+      t_ut_hits->Branch("dxDy", &dxDy);
+      t_ut_hits->Branch("zAtYEq0", &zAtYEq0);
+      t_ut_hits->Branch("xAtYEq0", &xAtYEq0);
+      t_ut_hits->Branch("weight", &weight);
+      t_ut_hits->Branch("LHCbID", &LHCbID);
+      t_ut_hits->Branch("highThreshold", &highThreshold);
+      t_velo_states->Branch("x", &x);
+      t_velo_states->Branch("y", &y);
+      t_velo_states->Branch("tx", &tx);
+      t_velo_states->Branch("ty", &ty);
+      t_velo_states->Branch("chi2", &chi2);
+      t_velo_states->Branch("z", &z);
+			
       if ( velout.initialize() ) {
 	for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
 	  // Prepare hits
@@ -232,6 +262,17 @@ cudaError_t Stream::operator()(
 	      hit.m_LHCbID = hits_layers_events[i_event].LHCbID[i_hit];
 	      
 	      inputHits[i_layer].push_back( hit );
+
+	      // For tree filling
+	      cos = hit.m_cos;
+	      yBegin = hit.m_yBegin;
+	      yEnd = hit.m_yEnd;
+	      dxDy = hit.m_dxDy;
+	      zAtYEq0 = hit.m_zAtYEq0;
+	      xAtYEq0 = hit.m_xAtYEq0;
+	      weight = hit.m_weight;
+	      LHCbID = hit.m_LHCbID;
+	      t_ut_hits->Fill();
 	    }
 	    // sort hits according to xAtYEq0
 	    std::sort( inputHits[i_layer].begin(), inputHits[i_layer].end(), [](VeloUTTracking::Hit a, VeloUTTracking::Hit b) { return a.xAtYEq0() > b.xAtYEq0(); } );
@@ -256,12 +297,23 @@ cudaError_t Stream::operator()(
 	    }
 	    track.track = ut_track;
 	    tracks.push_back( track );
+
+	    // For tree filling
+	    x = track.state.x;
+	    y = track.state.y;
+	    tx = track.state.tx;
+	    ty = track.state.ty;
+	    chi2 = track.state.chi2;
+	    z = track.state.z;
+	    t_velo_states->Fill();
 	  }
 	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << n_states << " velo states and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
 	  
 	  std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, inputHits);
 	  debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
 	}
+	f->Write();
+	f->Close();
       }
       
     } // do_mc_check 

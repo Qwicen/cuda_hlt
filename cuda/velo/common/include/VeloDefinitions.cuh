@@ -189,6 +189,10 @@ namespace VeloTracking {
  *                    c33 0.f
  *                        0.f
  */
+
+// DvB: we should check whether the covariance matrix elements are needed
+// for the propagation, otherwise we don't have to store them longer than
+// the Velo scope and we could make a reduced VeloState
 struct VeloState { // 48 B
   float x, y, tx, ty;
   float c00, c20, c22, c11, c31, c33;

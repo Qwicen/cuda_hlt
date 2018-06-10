@@ -125,10 +125,9 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA hits_layers_events[],
       n_hits_layers_events[i_event][i_layer] = *((uint32_t*)raw_input);
       n_hits_total += n_hits_layers_events[i_event][i_layer];
       raw_input += sizeof(uint32_t);
-      assert( n_hits_layers_events[i_event][i_layer] < VeloUTTracking::max_numhits_per_layer );
+      assert( n_hits_total < VeloUTTracking::max_numhits_per_event );
       accumulated_hits_layers[i_layer] = accumulated_hits;
       accumulated_hits += n_hits_layers_events[i_event][i_layer];
-      debug_cout << "At event " << i_event <<  " accumulated hits in layer " << i_layer << "  = " << accumulated_hits_layers[i_layer] << std::endl;
     }
     // then the hit variables, sorted by layer
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {

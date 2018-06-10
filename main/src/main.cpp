@@ -152,6 +152,7 @@ int main(int argc, char *argv[])
   // Read folder contents
   std::vector<char> velopix_events;
   std::vector<unsigned int> velopix_event_offsets;
+  verbose_cout << "Reading velopix raw events" << std::endl;
   readFolder(
     folder_name_velopix_raw,
     number_of_files,
@@ -174,6 +175,7 @@ int main(int argc, char *argv[])
 
   std::vector<char> ut_events;
   std::vector<unsigned int> ut_event_offsets;
+  verbose_cout << "Reading UT hits " << std::endl;
   readFolder( folder_name_ut_hits, number_of_files,
 	      ut_events, ut_event_offsets );
 

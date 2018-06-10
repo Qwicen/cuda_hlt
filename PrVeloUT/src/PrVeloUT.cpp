@@ -98,14 +98,16 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
+  int n_cand_tracks = 0;
   std::array<std::vector<VeloUTTracking::Hit>,4> hitsInLayers;
   debug_cout << "hits size = " << inputHits[0].size() << std::endl;
   for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
 
     VeloState trState;
     if( !getState(veloTr, trState)) continue;
+    n_cand_tracks++;
     if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState) ) continue;
-    std::cout << "got hits " << std::endl;
+    //std::cout << "got hits " << std::endl;
 
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
@@ -124,6 +126,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
 
   }
 
+  debug_cout << " # of candidate tracks = " << n_cand_tracks << std::endl;
   // counter("#tracks") += outputTracks.size();
 
   return outputTracks;

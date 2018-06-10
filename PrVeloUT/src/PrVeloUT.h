@@ -140,7 +140,7 @@ private:
         ++pos;
       }
     }
-    //std::cout << "position =  " << pos << ", size = " << inputHits.size() << std::endl;
+    //debug_cout << "position =  " << pos << ", size = " << inputHits.size() << std::endl;
     
     const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
     const auto yyProto =       myState.y - myState.ty*myState.z;
@@ -152,15 +152,16 @@ private:
       const auto xx = hit.xAt(yApprox);
       const auto dx = xx - xOnTrackProto;
 
-      //std::cout << "dx = " << dx << ", xTolNormFact = " << xTolNormFact << std::endl;
+      // debug_cout << "dx = " << dx << ", xTolNormFact = " << xTolNormFact << std::endl;
 
       if( dx < -xTolNormFact ) continue;
-      if( dx >  xTolNormFact ) break;
-      //std::cout << "position =  " << pos << std::endl;
+      if( dx >  xTolNormFact ) continue; // DvB: changed from break;
 	    
 
       // -- Now refine the tolerance in Y
+      //debug_cout << "yApprox = " << yApprox << " tol = " << m_yTolSlope * std::abs(dx*invNormFact) << ", invNormFact = " << invNormFact << ", yMin - tol = " << hit.yMin() - m_yTol + m_yTolSlope * std::abs(dx*invNormFact) << std::endl;
       if( hit.isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
+      //std::cout << "past y criteria " << std::endl;
 
       const auto zz = hit.zAtYEq0();
       const auto yy = yyProto +  myState.ty*zz;
