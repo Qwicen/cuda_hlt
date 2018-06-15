@@ -16,7 +16,7 @@
 #include <initializer_list>
 #include <type_traits>
 
-#include "boost/range/iterator_range.hpp"
+// #include "boost/range/iterator_range.hpp"
 
 #include "SOATypelist.h"
 #include "SOATypelistUtils.h"
@@ -942,92 +942,92 @@ namespace SOA {
                     std::get<memberno<MEMBER>()>(m_storage).crend())
             { return std::get<memberno<MEMBER>()>(m_storage).crend(); }
 
-            /// return a const reference to the underlying SOA storage range MEMBERNO
-            template <size_type MEMBERNO>
-            auto range() const noexcept -> decltype(
-                        boost::make_iterator_range(
-                            std::get<MEMBERNO>(m_storage).begin(),
-                            std::get<MEMBERNO>(m_storage).end()))
-            {
-                return boost::make_iterator_range(
-                        std::get<MEMBERNO>(m_storage).begin(),
-                        std::get<MEMBERNO>(m_storage).end());
-            }
-            /// return a reference to the underlying SOA storage range MEMBERNO
-            template <size_type MEMBERNO>
-            auto range() noexcept -> decltype(
-                        boost::make_iterator_range(
-                            std::get<MEMBERNO>(m_storage).begin(),
-                            std::get<MEMBERNO>(m_storage).end()))
-            {
-                return boost::make_iterator_range(
-                        std::get<MEMBERNO>(m_storage).begin(),
-                        std::get<MEMBERNO>(m_storage).end());
-            }
-            /// return a const reference to the underlying SOA storage range MEMBER
-            template <typename MEMBER>
-            auto range() const noexcept -> decltype(boost::make_iterator_range(
-                            std::get<memberno<MEMBER>()>(m_storage).begin(),
-                            std::get<memberno<MEMBER>()>(m_storage).end()))
-            {
-                return boost::make_iterator_range(
-                        std::get<memberno<MEMBER>()>(m_storage).begin(),
-                        std::get<memberno<MEMBER>()>(m_storage).end());
-            }
-            /// return a reference to the underlying SOA storage range MEMBER
-            template <typename MEMBER>
-            auto range() noexcept -> decltype(boost::make_iterator_range(
-                            std::get<memberno<MEMBER>()>(m_storage).begin(),
-                            std::get<memberno<MEMBER>()>(m_storage).end()))
-            {
-                return boost::make_iterator_range(
-                        std::get<memberno<MEMBER>()>(m_storage).begin(),
-                        std::get<memberno<MEMBER>()>(m_storage).end());
-            }
-            /// return a reference to the underlying SOA storage range MEMBERNO
-            template <size_type MEMBERNO>
-            auto range(iterator first, iterator last) noexcept -> decltype(
-                        boost::make_iterator_range(
-                            std::get<MEMBERNO>(m_storage).begin() + (first - std::declval<iterator>()),
-                            std::get<MEMBERNO>(m_storage).begin() + (last - std::declval<iterator>())))
-            {
-                return boost::make_iterator_range(
-                        std::get<MEMBERNO>(m_storage).begin() + (first - begin()),
-                        std::get<MEMBERNO>(m_storage).begin() + (last - begin()));
-            }
-            /// return a const reference to the underlying SOA storage range MEMBERNO
-            template <size_type MEMBERNO>
-            auto range(const_iterator first, const_iterator last) const noexcept -> decltype(
-                        boost::make_iterator_range(
-                            std::get<MEMBERNO>(m_storage).begin() + (first - std::declval<const_iterator>()),
-                            std::get<MEMBERNO>(m_storage).begin() + (last - std::declval<const_iterator>())))
-            {
-                return boost::make_iterator_range(
-                        std::get<MEMBERNO>(m_storage).begin() + (first - begin()),
-                        std::get<MEMBERNO>(m_storage).begin() + (last - begin()));
-            }
-            /// return a reference to the underlying SOA storage range MEMBER
-            template <typename MEMBER>
-            auto range(iterator first, iterator last) noexcept -> decltype(
-                        boost::make_iterator_range(
-                            std::get<memberno<MEMBER>()>(m_storage).begin() + (first - std::declval<iterator>()),
-                            std::get<memberno<MEMBER>()>(m_storage).begin() + (last - std::declval<iterator>())))
-            {
-                return boost::make_iterator_range(
-                        std::get<memberno<MEMBER>()>(m_storage).begin() + (first - begin()),
-                        std::get<memberno<MEMBER>()>(m_storage).begin() + (last - begin()));
-            }
-            /// return a const reference to the underlying SOA storage range MEMBER
-            template <typename MEMBER>
-            auto range(const_iterator first, const_iterator last) const noexcept -> decltype(
-                        boost::make_iterator_range(
-                            std::get<memberno<MEMBER>()>(m_storage).begin() + (first - std::declval<const_iterator>()),
-                            std::get<memberno<MEMBER>()>(m_storage).begin() + (last - std::declval<const_iterator>())))
-            {
-                return boost::make_iterator_range(
-                        std::get<memberno<MEMBER>()>(m_storage).begin() + (first - begin()),
-                        std::get<memberno<MEMBER>()>(m_storage).begin() + (last - begin()));
-            }
+            // /// return a const reference to the underlying SOA storage range MEMBERNO
+            // template <size_type MEMBERNO>
+            // auto range() const noexcept -> decltype(
+            //             boost::make_iterator_range(
+            //                 std::get<MEMBERNO>(m_storage).begin(),
+            //                 std::get<MEMBERNO>(m_storage).end()))
+            // {
+            //     return boost::make_iterator_range(
+            //             std::get<MEMBERNO>(m_storage).begin(),
+            //             std::get<MEMBERNO>(m_storage).end());
+            // }
+            // /// return a reference to the underlying SOA storage range MEMBERNO
+            // template <size_type MEMBERNO>
+            // auto range() noexcept -> decltype(
+            //             boost::make_iterator_range(
+            //                 std::get<MEMBERNO>(m_storage).begin(),
+            //                 std::get<MEMBERNO>(m_storage).end()))
+            // {
+            //     return boost::make_iterator_range(
+            //             std::get<MEMBERNO>(m_storage).begin(),
+            //             std::get<MEMBERNO>(m_storage).end());
+            // }
+            // /// return a const reference to the underlying SOA storage range MEMBER
+            // template <typename MEMBER>
+            // auto range() const noexcept -> decltype(boost::make_iterator_range(
+            //                 std::get<memberno<MEMBER>()>(m_storage).begin(),
+            //                 std::get<memberno<MEMBER>()>(m_storage).end()))
+            // {
+            //     return boost::make_iterator_range(
+            //             std::get<memberno<MEMBER>()>(m_storage).begin(),
+            //             std::get<memberno<MEMBER>()>(m_storage).end());
+            // }
+            // /// return a reference to the underlying SOA storage range MEMBER
+            // template <typename MEMBER>
+            // auto range() noexcept -> decltype(boost::make_iterator_range(
+            //                 std::get<memberno<MEMBER>()>(m_storage).begin(),
+            //                 std::get<memberno<MEMBER>()>(m_storage).end()))
+            // {
+            //     return boost::make_iterator_range(
+            //             std::get<memberno<MEMBER>()>(m_storage).begin(),
+            //             std::get<memberno<MEMBER>()>(m_storage).end());
+            // }
+            // /// return a reference to the underlying SOA storage range MEMBERNO
+            // template <size_type MEMBERNO>
+            // auto range(iterator first, iterator last) noexcept -> decltype(
+            //             boost::make_iterator_range(
+            //                 std::get<MEMBERNO>(m_storage).begin() + (first - std::declval<iterator>()),
+            //                 std::get<MEMBERNO>(m_storage).begin() + (last - std::declval<iterator>())))
+            // {
+            //     return boost::make_iterator_range(
+            //             std::get<MEMBERNO>(m_storage).begin() + (first - begin()),
+            //             std::get<MEMBERNO>(m_storage).begin() + (last - begin()));
+            // }
+            // /// return a const reference to the underlying SOA storage range MEMBERNO
+            // template <size_type MEMBERNO>
+            // auto range(const_iterator first, const_iterator last) const noexcept -> decltype(
+            //             boost::make_iterator_range(
+            //                 std::get<MEMBERNO>(m_storage).begin() + (first - std::declval<const_iterator>()),
+            //                 std::get<MEMBERNO>(m_storage).begin() + (last - std::declval<const_iterator>())))
+            // {
+            //     return boost::make_iterator_range(
+            //             std::get<MEMBERNO>(m_storage).begin() + (first - begin()),
+            //             std::get<MEMBERNO>(m_storage).begin() + (last - begin()));
+            // }
+            // /// return a reference to the underlying SOA storage range MEMBER
+            // template <typename MEMBER>
+            // auto range(iterator first, iterator last) noexcept -> decltype(
+            //             boost::make_iterator_range(
+            //                 std::get<memberno<MEMBER>()>(m_storage).begin() + (first - std::declval<iterator>()),
+            //                 std::get<memberno<MEMBER>()>(m_storage).begin() + (last - std::declval<iterator>())))
+            // {
+            //     return boost::make_iterator_range(
+            //             std::get<memberno<MEMBER>()>(m_storage).begin() + (first - begin()),
+            //             std::get<memberno<MEMBER>()>(m_storage).begin() + (last - begin()));
+            // }
+            // /// return a const reference to the underlying SOA storage range MEMBER
+            // template <typename MEMBER>
+            // auto range(const_iterator first, const_iterator last) const noexcept -> decltype(
+            //             boost::make_iterator_range(
+            //                 std::get<memberno<MEMBER>()>(m_storage).begin() + (first - std::declval<const_iterator>()),
+            //                 std::get<memberno<MEMBER>()>(m_storage).begin() + (last - std::declval<const_iterator>())))
+            // {
+            //     return boost::make_iterator_range(
+            //             std::get<memberno<MEMBER>()>(m_storage).begin() + (first - begin()),
+            //             std::get<memberno<MEMBER>()>(m_storage).begin() + (last - begin()));
+            // }
 
             /// assign the vector to contain count copies of val
             void assign(size_type count, const value_type& val)
