@@ -3,8 +3,8 @@
 #include "../../common/include/VeloDefinitions.cuh"
 #include <stdint.h>
 
-template<bool do_mc_check>
-__device__ Track <do_mc_check> createTrack(
+template<bool mc_check_enabled>
+__device__ Track <mc_check_enabled> createTrack(
   const TrackHits &track,
   const float* hit_Xs,
   const float* hit_Ys,
@@ -12,10 +12,10 @@ __device__ Track <do_mc_check> createTrack(
   const uint32_t* hit_IDs
 ) {
 
-  Track <do_mc_check> t;
+  Track <mc_check_enabled> t;
   for ( int i = 0; i < track.hitsNum; ++i ) {
     const auto hit_index = track.hits[i];
-    Hit <do_mc_check> hit;
+    Hit <mc_check_enabled> hit;
 #ifdef MC_CHECK
     hit = { hit_Xs[ hit_index ],
 	    hit_Ys[ hit_index ],
@@ -33,11 +33,11 @@ __device__ Track <do_mc_check> createTrack(
   return t;
 }
 
-template <bool do_mc_check>
+template <bool mc_check_enabled>
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
   const TrackHits* dev_tracks,
-  Track <do_mc_check> * dev_output_tracks,
+  Track <mc_check_enabled> * dev_output_tracks,
   uint32_t* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num
@@ -76,14 +76,14 @@ __global__ void consolidate_tracks(
   
   // Consolidate tracks in dev_output_tracks
   const unsigned int number_of_tracks = dev_atomics_storage[event_number];
-  Track <do_mc_check> * destination_tracks = dev_output_tracks + accumulated_tracks;
+  Track <mc_check_enabled> * destination_tracks = dev_output_tracks + accumulated_tracks;
   /* don't do consolidation now -> easier to check tracks offline */
-  //Track <do_mc_check> * destination_tracks = dev_output_tracks + event_number * VeloTracking::max_tracks;
+  //Track <mc_check_enabled> * destination_tracks = dev_output_tracks + event_number * VeloTracking::max_tracks;
   for (unsigned int j=0; j<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++j) {
     const unsigned int element = j * blockDim.x + threadIdx.x;
     if (element < number_of_tracks) {
       const TrackHits track = event_tracks[element];
-      Track <do_mc_check> t = createTrack <do_mc_check> ( track, hit_Xs, hit_Ys, hit_Zs, hit_IDs );
+      Track <mc_check_enabled> t = createTrack <mc_check_enabled> ( track, hit_Xs, hit_Ys, hit_Zs, hit_IDs );
       destination_tracks[element] = t;
     }
   }

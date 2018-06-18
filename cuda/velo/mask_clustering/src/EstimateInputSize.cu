@@ -8,7 +8,6 @@ __global__ void estimate_input_size(
   uint* dev_event_candidate_num,
   uint32_t* dev_cluster_candidates
 ) {
-  const uint number_of_events = blockDim.x;
   const uint event_number = blockIdx.x;
   const uint raw_bank_starting_chunk = threadIdx.y; // up to 26
   const uint raw_bank_chunk_size = VeloTracking::n_sensors / blockDim.y; // blockDim.y = 26 -> chunk_size = 8
@@ -186,7 +185,7 @@ __global__ void estimate_input_size(
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)
                 | k;
-              assert( current_cluster_candidate < number_of_events * VeloClustering::max_candidates_event );
+              assert( current_cluster_candidate < blockDim.x * VeloClustering::max_candidates_event );
               cluster_candidates[current_cluster_candidate] = candidate;
               ++found_cluster_candidates;
             }
@@ -198,7 +197,7 @@ __global__ void estimate_input_size(
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)
                 | k;
-              assert( current_cluster_candidate < number_of_events * VeloClustering::max_candidates_event );
+              assert( current_cluster_candidate < blockDim.x * VeloClustering::max_candidates_event );
               cluster_candidates[current_cluster_candidate] = candidate;
               ++found_cluster_candidates;
             }

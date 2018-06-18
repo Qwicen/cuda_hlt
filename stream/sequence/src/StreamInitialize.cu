@@ -62,7 +62,7 @@ cudaError_t Stream::initialize(
   int* dev_atomics_storage;
   TrackHits* dev_tracklets;
   uint* dev_weak_tracks;
-  Track<do_mc_check>* dev_output_tracks;
+  Track<mc_check_enabled>* dev_output_tracks;
   short* dev_h0_candidates;
   short* dev_h2_candidates;
   unsigned short* dev_rel_indices;
@@ -110,16 +110,16 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_weak_tracks, VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(uint)));
   
   cudaCheck(cudaMalloc((void**)&dev_tracklets, VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(TrackHits)));
-  cudaCheck(cudaMalloc((void**)&dev_output_tracks, max_tracks_in_event * number_of_events * sizeof(Track<do_mc_check>)));
+  cudaCheck(cudaMalloc((void**)&dev_output_tracks, max_tracks_in_event * number_of_events * sizeof(Track<mc_check_enabled>)));
 
   // Note: This is buffer reuse, as the above
   // std::cout << VeloTracking::max_number_of_hits_per_event << " " << number_of_events << " " << sizeof(TrackHits)
   //   << " = " << VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(TrackHits) << std::endl
-  //   << (max_tracks_in_event / 3) << " " << number_of_events << " " << sizeof(Track<do_mc_check>) << " = "
-  //   << (max_tracks_in_event / 3) * number_of_events * sizeof(Track<do_mc_check>) << std::endl;
+  //   << (max_tracks_in_event / 3) << " " << number_of_events << " " << sizeof(Track<mc_check_enabled>) << " = "
+  //   << (max_tracks_in_event / 3) * number_of_events * sizeof(Track<mc_check_enabled>) << std::endl;
 
   // const auto tracklets_size = VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(TrackHits);
-  // const auto output_tracks_size = ((tracklets_size / sizeof(Track<do_mc_check>)) + 1) * sizeof(Track<do_mc_check>);
+  // const auto output_tracks_size = ((tracklets_size / sizeof(Track<mc_check_enabled>)) + 1) * sizeof(Track<mc_check_enabled>);
   // std::cout << output_tracks_size << std::endl;
 
   // cudaCheck(cudaMalloc((void**)&dev_output_tracks, output_tracks_size));
@@ -139,7 +139,7 @@ cudaError_t Stream::initialize(
   // Memory allocations for host memory (copy back)
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks_pinned, number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_tracks, number_of_events * sizeof(int)));
-  cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * max_tracks_in_event * sizeof(Track<do_mc_check>)));
+  cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * max_tracks_in_event * sizeof(Track<mc_check_enabled>)));
   // Pre-populate raw_input data, in case the user requested -a 0
   cudaCheck(cudaMemcpyAsync(dev_raw_input, raw_events.data(), raw_events.size(), cudaMemcpyHostToDevice, stream));
   cudaCheck(cudaMemcpyAsync(dev_raw_input_offsets, event_offsets.data(), event_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice, stream));

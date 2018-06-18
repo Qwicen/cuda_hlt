@@ -33,8 +33,8 @@ void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
     << std::endl << " -f {folder containing .bin files with raw bank information}"
-    << std::endl << (do_mc_check ? " " : " [") << "-g {folder containing .bin files with MC truth information}"
-    << (do_mc_check ? "" : " ]")
+    << std::endl << (mc_check_enabled ? " " : " [") << "-g {folder containing .bin files with MC truth information}"
+    << (mc_check_enabled ? "" : " ]")
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=3]"
     << std::endl << " [-r {number of repetitions per thread / stream}=10]"
@@ -58,7 +58,8 @@ int main(int argc, char *argv[])
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
-  bool do_check = false;
+  // By default, do_check will be true when mc_check is enabled
+  bool do_check = mc_check_enabled;
   bool do_simplified_kalman_filter = false;
    
   signed char c;
@@ -113,7 +114,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  if(folder_name_MC.empty() && do_mc_check){
+  if(folder_name_MC.empty() && mc_check_enabled){
     std::cerr << "No MC folder specified, but MC CHECK turned on" << std::endl;
     printUsage(argv);
     return -1;
@@ -130,18 +131,20 @@ int main(int argc, char *argv[])
   // Show call options
   std::cout << "Requested options:" << std::endl
     << " folder with raw bank input (-f): " << folder_name_raw << std::endl
-    << " folder with MC truth input (-g): " << folder_name_MC << std::endl
-    << " MC check (compile opt): " << do_mc_check << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
-    << " run checkers (-c): " << do_check << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " print rates (-p): " << print_individual_rates << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
+    << std::endl;
+
+  std::cout << "MC check (compile opt): " << (mc_check_enabled ? "On" : "Off") << std::endl
+    << " folder with MC truth input (-g): " << folder_name_MC << std::endl
+    << " run checkers (-c): " << do_check << std::endl
     << std::endl;
 
   // Read folder contents

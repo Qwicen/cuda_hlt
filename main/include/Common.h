@@ -7,9 +7,9 @@
 
 // MC Check
 #ifdef MC_CHECK
-constexpr bool do_mc_check = true;
+constexpr bool mc_check_enabled = true;
 #else
-constexpr bool do_mc_check = false;
+constexpr bool mc_check_enabled = false;
 #endif
 
 /**

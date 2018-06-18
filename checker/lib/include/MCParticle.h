@@ -13,8 +13,6 @@
 #include <cstdint>
 #include <array>
 
-#include "boost/range/iterator_range.hpp"
-
 #include "../SOAContainer/include/SOAContainer.h"
 #include "LHCbID.h"
 
@@ -55,20 +53,7 @@ namespace MCParticleDesc {
 
     SOASKIN(Skin, p, pt, eta, phi, pid, key, nIDs, allids, flags) {
         SOASKIN_INHERIT_DEFAULT_METHODS(Skin);
-                ConstSomeLHCbIDRange ids() const noexcept
-        {
-            return boost::make_iterator_range(
-                    this->allids().begin(),
-                    this->allids().begin() + this->nIDs());
-        }
-        SomeLHCbIDRange ids() noexcept
-        {
-            return boost::make_iterator_range(
-                    this->allids().begin(),
-                    this->allids().begin() + this->nIDs());
-        }
     };
 }
 
 using MCParticles = SOA::Container<std::vector, MCParticleDesc::Skin>;
-using MCParticleRange = boost::iterator_range<MCParticles::iterator>;
