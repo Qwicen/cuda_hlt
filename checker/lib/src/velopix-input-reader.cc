@@ -214,7 +214,7 @@ void VelopixEventReader::readFileIntoVector(const std::string& filename, std::ve
   assert(endpos == currpos);
 }
 
-bool sortFiles( std::string s1, std::string s2 ) {
+bool VelopixEventReader::sortFiles( std::string s1, std::string s2 ) {
   size_t lastindex1 = s1.find_last_of("."); 
   std::string raw1 = s1.substr(0, lastindex1);
   size_t lastindex2 = s2.find_last_of("."); 
@@ -285,8 +285,8 @@ void VelopixEventReader::readNtupleIntoVelopixEvent(
     throw StrException("Error: File " + filename + " does not exist.");
   }
   
-  TFile file(filename.data(),"READ");
-  TTree *tree = (TTree*)file.Get("Hits_detectors");
+  TFile *file = new TFile(filename.data(),"READ");
+  TTree *tree = (TTree*)file->Get("Hits_detectors");
   assert( tree);
 
   // MCP information
@@ -412,7 +412,9 @@ void VelopixEventReader::readNtupleIntoVelopixEvent(
     event.mcps.push_back( mcp );
 
   } // loop over MCPs
-  
+
+  file->Close();
+  delete file;
 }
 					 
 

@@ -81,6 +81,8 @@ public:
 
     static void readFileIntoVector(const std::string& filename, std::vector<uint8_t>& output);
 
+    static bool sortFiles( std::string s1, std::string s2 );
+  
     static std::vector< std::string > getFolderContents (
       const std::string& foldername, const bool fromNtuple, uint nFiles = 0 );
   

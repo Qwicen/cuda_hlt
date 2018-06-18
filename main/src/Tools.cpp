@@ -241,7 +241,7 @@ void readFolder(
   }
 
   // Sort folder contents (file names)
-  std::sort(folderContents.begin(), folderContents.end()); 
+  std::sort(folderContents.begin(), folderContents.end(), VelopixEventReader::sortFiles); 
 
   if (number_of_files == 0) {
     number_of_files = folderContents.size();
