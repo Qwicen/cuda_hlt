@@ -292,7 +292,6 @@ cudaError_t Stream::operator()(
 
 	    VeloUTTracking::TrackUT ut_track;
 	    const VeloTracking::Track<true> velo_track = tracks_event[i_track];
-	    if ( velo_track.backward ) continue;
 	    backward = (int)velo_track.backward;
 	    ut_track.hitsNum = velo_track.hitsNum;
 	    for ( int i_hit = 0; i_hit < velo_track.hitsNum; ++i_hit ) {
@@ -305,8 +304,6 @@ cudaError_t Stream::operator()(
 	      n_states++;
 	    }
 	    
-	    tracks.push_back( track );
-
 	    // For tree filling
 	    x = track.state.x;
 	    y = track.state.y;
@@ -321,6 +318,9 @@ cudaError_t Stream::operator()(
 	    float dz = velo_track.hits[velo_track.hitsNum - 1].z - velo_track.hits[0].z;
 	    r = velo_track.hits[0].x * dx/dz + velo_track.hits[0].y * dy/dz;
 	    t_velo_states->Fill();
+
+	    if ( velo_track.backward ) continue;
+	    tracks.push_back( track );
 	  }
 	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << n_states << " velo states and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
 	  

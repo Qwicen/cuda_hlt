@@ -17,6 +17,9 @@
 #include "../include/VeloTypes.h"
 #include "../include/SystemOfUnits.h"
 
+//#include "TTree.h"
+//#include "TFile.h"
+
 /** @class PrVeloUT PrVeloUT.h
    *
    *  PrVeloUT algorithm. This is just a wrapper,
@@ -111,7 +114,7 @@ private:
     std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
     const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
     const std::vector<float>& fudgeFactors, 
-    const VeloState& trState ) const;
+    const VeloState& trState ) const; 
 
   bool formClusters(const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, TrackHelper& helper) const;
 
@@ -154,8 +157,11 @@ private:
 
       // debug_cout << "dx = " << dx << ", xTolNormFact = " << xTolNormFact << std::endl;
 
+      //tree->Branch("dx", &dx );
+      //tree->Fill();
+      
       if( dx < -xTolNormFact ) continue;
-      if( dx >  xTolNormFact ) continue; // DvB: changed from break;
+      if( dx >  xTolNormFact ) break; 
 	    
 
       // -- Now refine the tolerance in Y

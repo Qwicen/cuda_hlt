@@ -92,6 +92,9 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   const std::vector<VeloUTTracking::TrackVelo>& inputTracks, const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits) const
 {
 
+  //TFile *f = new TFile("PrveloUT.root", "RECREATE");
+  //TTree *tree = new TTree("tree","tree");
+  
   std::vector<VeloUTTracking::TrackUT> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
@@ -106,8 +109,8 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     VeloState trState;
     if( !getState(veloTr, trState)) continue;
     n_cand_tracks++;
-    if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState) ) continue;
-    //std::cout << "got hits " << std::endl;
+    if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState ) ) continue;
+    std::cout << "got hits " << std::endl;
 
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
@@ -129,6 +132,9 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   debug_cout << " # of candidate tracks = " << n_cand_tracks << std::endl;
   // counter("#tracks") += outputTracks.size();
 
+  //f->Write();
+  //f->Close();
+  
   return outputTracks;
 }
 
