@@ -12,6 +12,8 @@
 
 #include <cstdint>
 
+#include "boost/range/iterator_range.hpp"
+
 #include "../SOAContainer/include/SOAContainer.h"
 #include "LHCbID.h"
 
@@ -24,3 +26,4 @@ namespace VeloPixelDesc {
 }
 
 using VeloPixels = SOA::Container<std::vector, VeloPixelDesc::Skin>;
+using VeloPixelsRange = boost::iterator_range<VeloPixels::iterator>;

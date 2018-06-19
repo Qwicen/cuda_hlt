@@ -56,7 +56,7 @@ The build process doesn't differ from standard cmake projects:
 There are some cmake options to configure the build process:
 
    * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DBUILD_TYPE=Debug ..`
-   * The option to run the validation can be turned on and off with `-DMC_CHECK`. 
+   * The option to run the validation, on by default, can be turned off with `-DMC_CHECK=Off`. 
    
 Some binary input files are included with the project for testing.
 A run of the program with no arguments will let you know the basic options:

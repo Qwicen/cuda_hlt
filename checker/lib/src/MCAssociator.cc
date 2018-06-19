@@ -23,11 +23,8 @@ MCAssociator::MCAssociator(const MCParticles& mcps) :
   // build association LHCbID -> MCParticle index
   std::size_t idx = 0;
   for (auto mcp: mcps) {
-    for (int i=0; i<mcp.nIDs(); ++i) {
-      auto id = mcp.allids()[i];
+    for (auto id: mcp.ids())
       m_map.emplace_back(id, idx);
-    }
-
     ++idx;
   }
   //printf("map has size %u \n", m_map.size() );
