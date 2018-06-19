@@ -109,7 +109,8 @@ struct Stream {
     const VeloUTTracking::HitsSoA *hits_layers_events,
     const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
     uint number_of_events,
-    uint number_of_repetitions
+    uint number_of_repetitions,
+    uint i_stream
   );
 
   void print_timing(

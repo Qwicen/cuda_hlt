@@ -231,7 +231,8 @@ int main(int argc, char *argv[])
 	ut_hits_events,
 	ut_n_hits_layers_events,
         number_of_events,
-        number_of_repetitions
+        number_of_repetitions,
+	i
       );
     }
   );

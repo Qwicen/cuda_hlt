@@ -15,7 +15,8 @@ cudaError_t Stream::operator()(
   const VeloUTTracking::HitsSoA *hits_layers_events,
   const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
   uint number_of_events,
-  uint number_of_repetitions
+  uint number_of_repetitions,
+  uint i_stream
 ) {
   for (uint repetition=0; repetition<number_of_repetitions; ++repetition) {
     std::vector<std::pair<std::string, float>> times;
@@ -188,7 +189,7 @@ cudaError_t Stream::operator()(
     ///////////////////////
 
 
-    if (do_mc_check) {
+    if (do_mc_check && i_stream == 0) {
       if (repetition == 0) { // only check efficiencies once
         // Fetch data
         cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
@@ -206,18 +207,17 @@ cudaError_t Stream::operator()(
         const bool fromNtuple = true;
         const std::string trackType = "Velo";
         callPrChecker(
-	  tracks_events,
+    	  tracks_events,
       	  folder_name_MC,
-	  fromNtuple,
-	  trackType);
+    	  fromNtuple,
+    	  trackType);
       }
     }
 
     /* Plugin VeloUT CPU code here 
        Adjust input types to match PrVeloUT code
-       ATTENTION: assumes we run with 1 stream only
-     */
-    if (do_mc_check) {
+    */
+    if (do_mc_check && i_stream == 0) {
       PrVeloUT velout;
 
       // Histograms only for checking and debugging
@@ -331,7 +331,7 @@ cudaError_t Stream::operator()(
     	f->Close();
       }
       
-    } // do_mc_check   
+    } // do_mc_check      
     
   }
   return cudaSuccess;

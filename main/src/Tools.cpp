@@ -125,7 +125,6 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
       n_hits_layers_events[i_event][i_layer] = *((uint32_t*)raw_input);
       n_hits_total += n_hits_layers_events[i_event][i_layer];
       raw_input += sizeof(uint32_t);
-      debug_cout << "n_hits_total = " << n_hits_total << " > max numhits " << VeloUTTracking::max_numhits_per_event << std::endl;
       assert( n_hits_total < VeloUTTracking::max_numhits_per_event );
       accumulated_hits_layers[i_layer] = accumulated_hits;
       accumulated_hits += n_hits_layers_events[i_event][i_layer];
