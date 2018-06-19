@@ -103,7 +103,7 @@ void check_velopix_events(
   // printf("average # of sps per event = %f \n", n_sps_average);
 }
 
-void read_ut_events_into_arrays( VeloUTTracking::HitsSoA hits_layers_events[],
+void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
 				 uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 				 const std::vector<char> events,
 				 const std::vector<unsigned int> event_offsets,
@@ -125,6 +125,7 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA hits_layers_events[],
       n_hits_layers_events[i_event][i_layer] = *((uint32_t*)raw_input);
       n_hits_total += n_hits_layers_events[i_event][i_layer];
       raw_input += sizeof(uint32_t);
+      debug_cout << "n_hits_total = " << n_hits_total << " > max numhits " << VeloUTTracking::max_numhits_per_event << std::endl;
       assert( n_hits_total < VeloUTTracking::max_numhits_per_event );
       accumulated_hits_layers[i_layer] = accumulated_hits;
       accumulated_hits += n_hits_layers_events[i_event][i_layer];
@@ -157,7 +158,7 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA hits_layers_events[],
 }
 
 
-void check_ut_events( const VeloUTTracking::HitsSoA hits_layers_events[],
+void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
 		      const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 		      const int n_events ) {
 

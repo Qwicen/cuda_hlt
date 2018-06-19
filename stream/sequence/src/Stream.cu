@@ -12,7 +12,7 @@ cudaError_t Stream::operator()(
   const uint* host_event_offsets_pinned,
   size_t host_events_pinned_size,
   size_t host_event_offsets_pinned_size,
-  const VeloUTTracking::HitsSoA hits_layers_events[],
+  const VeloUTTracking::HitsSoA *hits_layers_events,
   const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
   uint number_of_events,
   uint number_of_repetitions
@@ -249,89 +249,89 @@ cudaError_t Stream::operator()(
       t_velo_states->Branch("r", &r);
 			
       if ( velout.initialize() ) {
-	for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
-	  // Prepare hits
-	  std::array<std::vector<VeloUTTracking::Hit>,VeloUTTracking::n_layers> inputHits;
-	  for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-	    for ( int i_hit = 0; i_hit < n_hits_layers_events[i_event][i_layer]; ++i_hit ) {
-	      VeloUTTracking::Hit hit;
-	      hit.m_cos = hits_layers_events[i_event].cos[i_hit];
-	      hit.m_dxDy = hits_layers_events[i_event].dxDy[i_hit];
-	      hit.m_weight = hits_layers_events[i_event].weight[i_hit];
-	      hit.m_xAtYEq0 = hits_layers_events[i_event].xAtYEq0[i_hit];
-	      hit.m_yBegin = hits_layers_events[i_event].yBegin[i_hit];
-	      hit.m_yEnd = hits_layers_events[i_event].yEnd[i_hit];
-	      hit.m_zAtYEq0 = hits_layers_events[i_event].zAtYEq0[i_hit];
-	      hit.m_LHCbID = hits_layers_events[i_event].LHCbID[i_hit];
+    	for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
+    	  // Prepare hits
+    	  std::array<std::vector<VeloUTTracking::Hit>,VeloUTTracking::n_layers> inputHits;
+    	  for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+    	    for ( int i_hit = 0; i_hit < n_hits_layers_events[i_event][i_layer]; ++i_hit ) {
+    	      VeloUTTracking::Hit hit;
+    	      hit.m_cos = hits_layers_events[i_event].cos[i_hit];
+    	      hit.m_dxDy = hits_layers_events[i_event].dxDy[i_hit];
+    	      hit.m_weight = hits_layers_events[i_event].weight[i_hit];
+    	      hit.m_xAtYEq0 = hits_layers_events[i_event].xAtYEq0[i_hit];
+    	      hit.m_yBegin = hits_layers_events[i_event].yBegin[i_hit];
+    	      hit.m_yEnd = hits_layers_events[i_event].yEnd[i_hit];
+    	      hit.m_zAtYEq0 = hits_layers_events[i_event].zAtYEq0[i_hit];
+    	      hit.m_LHCbID = hits_layers_events[i_event].LHCbID[i_hit];
 	      
-	      inputHits[i_layer].push_back( hit );
+    	      inputHits[i_layer].push_back( hit );
 
-	      // For tree filling
-	      cos = hit.m_cos;
-	      yBegin = hit.m_yBegin;
-	      yEnd = hit.m_yEnd;
-	      dxDy = hit.m_dxDy;
-	      zAtYEq0 = hit.m_zAtYEq0;
-	      xAtYEq0 = hit.m_xAtYEq0;
-	      weight = hit.m_weight;
-	      LHCbID = hit.m_LHCbID;
-	      t_ut_hits->Fill();
-	    }
-	    // sort hits according to xAtYEq0
-	    std::sort( inputHits[i_layer].begin(), inputHits[i_layer].end(), [](VeloUTTracking::Hit a, VeloUTTracking::Hit b) { return a.xAtYEq0() > b.xAtYEq0(); } );
-	  }
+    	      // For tree filling
+    	      cos = hit.m_cos;
+    	      yBegin = hit.m_yBegin;
+    	      yEnd = hit.m_yEnd;
+    	      dxDy = hit.m_dxDy;
+    	      zAtYEq0 = hit.m_zAtYEq0;
+    	      xAtYEq0 = hit.m_xAtYEq0;
+    	      weight = hit.m_weight;
+    	      LHCbID = hit.m_LHCbID;
+    	      t_ut_hits->Fill();
+    	    }
+    	    // sort hits according to xAtYEq0
+    	    std::sort( inputHits[i_layer].begin(), inputHits[i_layer].end(), [](VeloUTTracking::Hit a, VeloUTTracking::Hit b) { return a.xAtYEq0() > b.xAtYEq0(); } );
+    	  }
 	  
-	  // Prepare Velo tracks
-	  VeloState* velo_states_event = host_velo_states + host_accumulated_tracks[i_event];
-	  VeloTracking::Track<true>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
-	  std::vector<VeloUTTracking::TrackVelo> tracks;
-	  int n_states = 0;
-	  for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+    	  // Prepare Velo tracks
+    	  VeloState* velo_states_event = host_velo_states + host_accumulated_tracks[i_event];
+    	  VeloTracking::Track<true>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
+    	  std::vector<VeloUTTracking::TrackVelo> tracks;
+    	  int n_states = 0;
+    	  for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
 
-	    VeloUTTracking::TrackVelo track;
+    	    VeloUTTracking::TrackVelo track;
 
-	    VeloUTTracking::TrackUT ut_track;
-	    const VeloTracking::Track<true> velo_track = tracks_event[i_track];
-	    backward = (int)velo_track.backward;
-	    ut_track.hitsNum = velo_track.hitsNum;
-	    for ( int i_hit = 0; i_hit < velo_track.hitsNum; ++i_hit ) {
-	      ut_track.LHCbIDs.push_back( velo_track.hits[i_hit].LHCbID );
-	    }
-	    track.track = ut_track;
+    	    VeloUTTracking::TrackUT ut_track;
+    	    const VeloTracking::Track<true> velo_track = tracks_event[i_track];
+    	    backward = (int)velo_track.backward;
+    	    ut_track.hitsNum = velo_track.hitsNum;
+    	    for ( int i_hit = 0; i_hit < velo_track.hitsNum; ++i_hit ) {
+    	      ut_track.LHCbIDs.push_back( velo_track.hits[i_hit].LHCbID );
+    	    }
+    	    track.track = ut_track;
 	    
-	    track.state = ( velo_states_event[i_track] );
-	    if ( velo_states_event[i_track].x != 0 ) {
-	      n_states++;
-	    }
+    	    track.state = ( velo_states_event[i_track] );
+    	    if ( velo_states_event[i_track].x != 0 ) {
+    	      n_states++;
+    	    }
 	    
-	    // For tree filling
-	    x = track.state.x;
-	    y = track.state.y;
-	    tx = track.state.tx;
-	    ty = track.state.ty;
-	    chi2 = track.state.chi2;
-	    z = track.state.z;
-	    // study (sign of) (dr/dz) -> track moving away from beamline?
-	    // drop 1/sqrt(x^2+y^2) to avoid sqrt calculation, no effect on sign
-	    float dx = velo_track.hits[velo_track.hitsNum - 1].x - velo_track.hits[0].x;
-	    float dy = velo_track.hits[velo_track.hitsNum - 1].y - velo_track.hits[0].y;
-	    float dz = velo_track.hits[velo_track.hitsNum - 1].z - velo_track.hits[0].z;
-	    r = velo_track.hits[0].x * dx/dz + velo_track.hits[0].y * dy/dz;
-	    t_velo_states->Fill();
+    	    // For tree filling
+    	    x = track.state.x;
+    	    y = track.state.y;
+    	    tx = track.state.tx;
+    	    ty = track.state.ty;
+    	    chi2 = track.state.chi2;
+    	    z = track.state.z;
+    	    // study (sign of) (dr/dz) -> track moving away from beamline?
+    	    // drop 1/sqrt(x^2+y^2) to avoid sqrt calculation, no effect on sign
+    	    float dx = velo_track.hits[velo_track.hitsNum - 1].x - velo_track.hits[0].x;
+    	    float dy = velo_track.hits[velo_track.hitsNum - 1].y - velo_track.hits[0].y;
+    	    float dz = velo_track.hits[velo_track.hitsNum - 1].z - velo_track.hits[0].z;
+    	    r = velo_track.hits[0].x * dx/dz + velo_track.hits[0].y * dy/dz;
+    	    t_velo_states->Fill();
 
-	    if ( velo_track.backward ) continue;
-	    tracks.push_back( track );
-	  }
-	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << n_states << " velo states and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
+    	    if ( velo_track.backward ) continue;
+    	    tracks.push_back( track );
+    	  }
+    	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << n_states << " velo states and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
 	  
-	  std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, inputHits);
-	  debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
-	}
-	f->Write();
-	f->Close();
+    	  std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, inputHits);
+    	  debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
+    	}
+    	f->Write();
+    	f->Close();
       }
       
-    } // do_mc_check 
+    } // do_mc_check   
     
   }
   return cudaSuccess;

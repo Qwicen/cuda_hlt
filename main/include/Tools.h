@@ -44,13 +44,13 @@ void check_velopix_events(
   int n_events
 );
 
-void read_ut_events_into_arrays(  VeloUTTracking::HitsSoA ut_hits_events[],
+void read_ut_events_into_arrays(  VeloUTTracking::HitsSoA *ut_hits_events,
 				  uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 				  const std::vector<char> events,
 				  const std::vector<unsigned int> event_offsets,
 				  int n_events );
 
-void check_ut_events( const VeloUTTracking::HitsSoA hits_layers_events[],
+void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
 		      const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 		      const int n_events
 		      );

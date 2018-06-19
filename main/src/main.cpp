@@ -175,15 +175,15 @@ int main(int argc, char *argv[])
 
   std::vector<char> ut_events;
   std::vector<unsigned int> ut_event_offsets;
-  verbose_cout << "Reading UT hits " << std::endl;
+  verbose_cout << "Reading UT hits for " << number_of_events << " events " << std::endl;
   readFolder( folder_name_ut_hits, number_of_files,
-	      ut_events, ut_event_offsets );
+  	      ut_events, ut_event_offsets );
 
   
-  VeloUTTracking::HitsSoA ut_hits_events[number_of_events];
+  VeloUTTracking::HitsSoA *ut_hits_events = new VeloUTTracking::HitsSoA[number_of_events];
   uint32_t ut_n_hits_layers_events[number_of_events][VeloUTTracking::n_layers];
   read_ut_events_into_arrays( ut_hits_events, ut_n_hits_layers_events,
-			      ut_events, ut_event_offsets, number_of_events );
+  			      ut_events, ut_event_offsets, number_of_events );
 
   //check_ut_events( ut_hits_events, ut_n_hits_layers_events, number_of_events );
 
@@ -237,6 +237,8 @@ int main(int argc, char *argv[])
   );
   t.stop();
 
+  delete ut_hits_events;
+  
   std::cout << (number_of_events * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
