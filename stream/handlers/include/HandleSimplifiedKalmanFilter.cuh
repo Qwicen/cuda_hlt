@@ -8,7 +8,7 @@ struct SimplifiedKalmanFilter : public Handler {
   uint32_t* dev_velo_cluster_container;
   uint* dev_module_cluster_start;
   int* dev_atomics_storage;
-  Track* dev_tracks;
+  TrackHits* dev_tracks;
   VeloState* dev_velo_states;
 
   SimplifiedKalmanFilter() = default;
@@ -17,7 +17,7 @@ struct SimplifiedKalmanFilter : public Handler {
     uint32_t* param_dev_velo_cluster_container,
     uint* param_dev_module_cluster_start,
     int* param_dev_atomics_storage,
-    Track* param_dev_tracks,
+    TrackHits* param_dev_tracks,
     VeloState* param_dev_velo_states
   ) {
     dev_velo_cluster_container = param_dev_velo_cluster_container;

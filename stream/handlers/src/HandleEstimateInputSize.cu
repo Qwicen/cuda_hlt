@@ -1,4 +1,4 @@
-#include "../include/EstimateInputSize.cuh"
+#include "HandleEstimateInputSize.cuh"
 
 void EstimateInputSize::operator()() {
   estimate_input_size<<<num_blocks, num_threads, 0, *stream>>>(

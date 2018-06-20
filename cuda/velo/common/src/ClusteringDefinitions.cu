@@ -6,8 +6,7 @@ __constant__ float VeloClustering::sp_fx [512];
 __constant__ float VeloClustering::sp_fy [512];
 
 __device__ __host__ VeloRawEvent::VeloRawEvent(
-  const char* event,
-  uint
+  const char* event
 ) {
   const char* p = event;
   number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
@@ -16,8 +15,7 @@ __device__ __host__ VeloRawEvent::VeloRawEvent(
 }
 
 __device__ __host__ VeloRawBank::VeloRawBank(
-  const char* raw_bank,
-  uint
+  const char* raw_bank
 ) {
   const char* p = raw_bank;
   sensor_index = *((uint32_t*)p); p += sizeof(uint32_t);

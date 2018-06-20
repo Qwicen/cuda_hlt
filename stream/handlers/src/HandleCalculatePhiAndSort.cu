@@ -1,4 +1,4 @@
-#include "../include/CalculatePhiAndSort.cuh"
+#include "HandleCalculatePhiAndSort.cuh"
 
 void CalculatePhiAndSort::operator()() {
   calculatePhiAndSort<<<num_blocks, num_threads, 0, *stream>>>(
@@ -13,8 +13,8 @@ void CalculatePhiAndSort::print_output(
   const uint number_of_events,
   const int print_max_per_module
 ) {
-  std::vector<uint> module_cluster_start (number_of_events * 52 + 1);
-  std::vector<uint> module_cluster_num (number_of_events * 52);
+  std::vector<uint> module_cluster_start (number_of_events * VeloTracking::n_modules + 1);
+  std::vector<uint> module_cluster_num (number_of_events * VeloTracking::n_modules);
   cudaCheck(cudaMemcpyAsync(module_cluster_start.data(), dev_module_cluster_start, module_cluster_start.size() * sizeof(uint), cudaMemcpyDeviceToHost, *stream));
   cudaCheck(cudaMemcpyAsync(module_cluster_num.data(), dev_module_cluster_num, module_cluster_num.size() * sizeof(uint), cudaMemcpyDeviceToHost, *stream));
 
@@ -30,10 +30,10 @@ void CalculatePhiAndSort::print_output(
 
   for (uint i=0; i<number_of_events; ++i) {
     std::cout << "Event " << i << std::endl;
-    for (uint module=0; module<52; ++module) {
+    for (uint module=0; module<VeloTracking::n_modules; ++module) {
       std::cout << " Module " << module << ":";
-      const auto mod_start = module_cluster_start[52*i + module];
-      for (uint cluster=0; cluster<module_cluster_num[52*i + module]; ++cluster) {
+      const auto mod_start = module_cluster_start[VeloTracking::n_modules*i + module];
+      for (uint cluster=0; cluster<module_cluster_num[VeloTracking::n_modules*i + module]; ++cluster) {
         if (print_max_per_module != -1 && cluster >= print_max_per_module) break;
 
         const auto x = cluster_xs[mod_start + cluster];
@@ -51,9 +51,9 @@ void CalculatePhiAndSort::print_output(
 
   // for (uint i=0; i<number_of_events; ++i) {
   //   float phi_sum = 0.f;
-  //   for (uint module=0; module<52; ++module) {
-  //     const auto mod_start = module_cluster_start[52*i + module];
-  //     for (uint cluster=0; cluster<module_cluster_num[52*i + module]; ++cluster) {
+  //   for (uint module=0; module<VeloTracking::n_modules; ++module) {
+  //     const auto mod_start = module_cluster_start[VeloTracking::n_modules*i + module];
+  //     for (uint cluster=0; cluster<module_cluster_num[VeloTracking::n_modules*i + module]; ++cluster) {
   //       if (print_max_per_module != -1 && cluster >= print_max_per_module) break;
   //       phi_sum += cluster_phis[mod_start + cluster];
   //     }

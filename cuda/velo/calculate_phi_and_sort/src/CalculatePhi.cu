@@ -38,9 +38,11 @@ __device__ void calculatePhiSide(
   const unsigned int starting_module,
   T calculate_hit_phi
 ) {
-  for (unsigned int module=starting_module; module<52; module += 2) {
+  for (unsigned int module=starting_module; module<VeloTracking::n_modules; module += 2) {
     const auto hit_start = module_hitStarts[module];
     const auto hit_num = module_hitNums[module];
+
+    assert(hit_num < VeloTracking::max_numhits_in_module);
 
     // Calculate phis
     for (unsigned int i=0; i<(hit_num + blockDim.x - 1) / blockDim.x; ++i) {

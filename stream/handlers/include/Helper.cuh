@@ -19,6 +19,7 @@ struct Helper {
     if (!do_print_timing) {
       // Invoke algorithm
       t();
+      cudaCheck(cudaPeekAtLastError());
     } else {
       float time;
       cudaEventRecord(cuda_event_start, *(t.stream));

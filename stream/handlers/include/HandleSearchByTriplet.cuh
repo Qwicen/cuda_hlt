@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
+#include "../../../cuda/velo/common/include/ClusteringDefinitions.cuh"
 #include "../../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
 #include "../../../main/include/CudaCommon.h"
 #include "Handler.cuh"
@@ -12,8 +13,8 @@ struct SearchByTriplet : public Handler {
   uint32_t* dev_velo_cluster_container;
   uint* dev_module_cluster_start;
   uint* dev_module_cluster_num;
-  Track* dev_tracks;
-  Track* dev_tracklets;
+  TrackHits* dev_tracks;
+  TrackHits* dev_tracklets;
   uint* dev_tracks_to_follow;
   uint* dev_weak_tracks;
   bool* dev_hit_used;
@@ -28,8 +29,8 @@ struct SearchByTriplet : public Handler {
     uint32_t* param_dev_velo_cluster_container,
     uint* param_dev_module_cluster_start,
     uint* param_dev_module_cluster_num,
-    Track* param_dev_tracks,
-    Track* param_dev_tracklets,
+    TrackHits* param_dev_tracks,
+    TrackHits* param_dev_tracklets,
     uint* param_dev_tracks_to_follow,
     uint* param_dev_weak_tracks,
     bool* param_dev_hit_used,

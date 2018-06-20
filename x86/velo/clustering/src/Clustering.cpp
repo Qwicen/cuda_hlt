@@ -23,7 +23,7 @@ std::vector<std::vector<uint32_t>> clustering(
   for (size_t i=1; i<event_offsets.size(); ++i) {
     std::vector<unsigned int> lhcb_ids;
 
-    VeloRawEvent e (events.data() + event_offsets[i-1], event_offsets[i] - event_offsets[i-1]);
+    VeloRawEvent e (events.data() + event_offsets[i-1]);
 
     auto total_sp_count = 0;
 

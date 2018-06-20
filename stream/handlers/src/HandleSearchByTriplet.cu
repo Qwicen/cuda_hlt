@@ -1,4 +1,4 @@
-#include "../include/SearchByTriplet.cuh"
+#include "HandleSearchByTriplet.cuh"
 
 void SearchByTriplet::operator()() {
   searchByTriplet<<<num_blocks, num_threads, num_threads.x, *stream>>>(
@@ -21,13 +21,13 @@ void SearchByTriplet::print_output(
   const uint number_of_events
 ) {
   // Fetch clusters
-  std::vector<uint> module_cluster_start (number_of_events * 52 + 1);
-  std::vector<uint> module_cluster_num (number_of_events * 52);
+  std::vector<uint> module_cluster_start (number_of_events * VeloTracking::n_modules + 1);
+  std::vector<uint> module_cluster_num (number_of_events * VeloTracking::n_modules);
   cudaCheck(cudaMemcpy(module_cluster_start.data(), dev_module_cluster_start, module_cluster_start.size() * sizeof(uint), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(module_cluster_num.data(), dev_module_cluster_num, module_cluster_num.size() * sizeof(uint), cudaMemcpyDeviceToHost));
 
-  std::vector<short> h0_candidates (2 * 2000 * number_of_events);
-  std::vector<short> h2_candidates (2 * 2000 * number_of_events);
+  std::vector<short> h0_candidates (2 * VeloClustering::max_candidates_event * number_of_events);
+  std::vector<short> h2_candidates (2 * VeloClustering::max_candidates_event * number_of_events);
   cudaCheck(cudaMemcpy(h0_candidates.data(), dev_h0_candidates, h0_candidates.size() * sizeof(short), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(h2_candidates.data(), dev_h2_candidates, h2_candidates.size() * sizeof(short), cudaMemcpyDeviceToHost));
 
@@ -35,9 +35,9 @@ void SearchByTriplet::print_output(
   for (int i=0; i<number_of_events; ++i) {
     int sum_h0 = 0;
     int sum_h2 = 0;
-    for (int module=0; module<52; ++module) {
-      const auto h_start = module_cluster_start[52*i + module];
-      for (int n=0; n<module_cluster_num[52*i + module]; ++n) {
+    for (int module=0; module<VeloTracking::n_modules; ++module) {
+      const auto h_start = module_cluster_start[VeloTracking::n_modules*i + module];
+      for (int n=0; n<module_cluster_num[VeloTracking::n_modules*i + module]; ++n) {
         sum_h0 += h0_candidates[2*(h_start + n)];
         sum_h0 += h0_candidates[2*(h_start + n) + 1];
         sum_h2 += h2_candidates[2*(h_start + n)];

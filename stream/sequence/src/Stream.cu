@@ -5,11 +5,10 @@ cudaError_t Stream::operator()(
   const uint* host_event_offsets_pinned,
   size_t host_events_pinned_size,
   size_t host_event_offsets_pinned_size,
-  uint start_event,
   uint number_of_events,
   uint number_of_repetitions
 ) {
-  for (uint repetitions=0; repetitions<number_of_repetitions; ++repetitions) {
+  for (uint repetition=0; repetition<number_of_repetitions; ++repetition) {
     std::vector<std::pair<std::string, float>> times;
     Timer t_total;
 
@@ -62,16 +61,16 @@ cudaError_t Stream::operator()(
 
     // // Fetch the number of hits we require
     // uint number_of_hits;
-    // cudaCheck(cudaMemcpyAsync(&number_of_hits, dev_estimated_input_size + number_of_events * 52, sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    // cudaCheck(cudaMemcpyAsync(&number_of_hits, estimateInputSize.dev_estimated_input_size + number_of_events * VeloTracking::n_modules, sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    // const auto required_size = number_of_hits * 6;
 
-    // if (number_of_hits * 6 * sizeof(uint32_t) > velo_cluster_container_size) {
+    // if (required_size > velo_cluster_container_size) {
     //   warning_cout << "Number of hits: " << number_of_hits << std::endl
     //     << "Size of velo cluster container is larger than previously accomodated." << std::endl
-    //     << "Resizing from " << velo_cluster_container_size << " to " << number_of_hits * 6 * sizeof(uint) << " B" << std::endl;
+    //     << "Resizing from " << velo_cluster_container_size * sizeof(uint) << " to " << required_size * sizeof(uint) << " B" << std::endl;
 
-    //   cudaCheck(cudaFree(dev_velo_cluster_container));
-    //   velo_cluster_container_size = number_of_hits * 6 * sizeof(uint32_t);
-    //   cudaCheck(cudaMalloc((void**)&dev_velo_cluster_container, velo_cluster_container_size));
+    //   cudaCheck(cudaFree(maskedVeloClustering.dev_velo_cluster_container));
+    //   cudaCheck(cudaMalloc((void**)&maskedVeloClustering.dev_velo_cluster_container, required_size * sizeof(uint)));
     // }
 
     // Invoke clustering
@@ -126,11 +125,28 @@ cudaError_t Stream::operator()(
       cuda_event_start,
       cuda_event_stop,
       print_individual_rates
-    );
+     );
 
     // Print output
     // searchByTriplet.print_output(number_of_events);
 
+    // ////////////////////////////////////////
+    // // Optional: Simplified Kalman filter //
+    // // DvB: should not be optional, at least not
+    // // the state at the last measurement  //
+    // ////////////////////////////////////////
+
+    if (do_simplified_kalman_filter) {
+      Helper::invoke(
+        simplifiedKalmanFilter,
+        "Simplified Kalman filter",
+        times,
+        cuda_event_start,
+        cuda_event_stop,
+        print_individual_rates
+      );
+    }
+    
     ////////////////////////
     // Consolidate tracks //
     ////////////////////////
@@ -143,56 +159,43 @@ cudaError_t Stream::operator()(
       cuda_event_stop,
       print_individual_rates
     );
-
-    ////////////////////////////////////////
-    // Optional: Simplified Kalman filter //
-    ////////////////////////////////////////
-
-    if (do_simplified_kalman_filter) {
-      Helper::invoke(
-        simplifiedKalmanFilter,
-        "Simplified Kalman filter",
-        times,
-        cuda_event_start,
-        cuda_event_stop,
-        print_individual_rates
-      );
-    }
-
+    
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      
-      // Copy the whole consolidated tracks container
-      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, number_of_events * max_tracks_in_event * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-
-      cudaEventRecord(cuda_generic_event, stream);
-      cudaEventSynchronize(cuda_generic_event);
-
-      // std::cout << "Number of tracks found per event:" << std::endl;
-      // for (int i=0; i<number_of_events; ++i) {
-      //   std::cout << i << ": " << host_number_of_tracks_pinned[i] << std::endl;
-      // }
-      
-      // Calculating the sum on CPU (the code below) slows down the CUDA stream
-      // If we do this on CPU, it should happen concurrently to some CUDA stream
-      // if (do_consolidate) {
-      //   // Calculate number of tracks (prefix sum) and fetch consolidated tracks
-      //   int total_number_of_tracks = 0;
-      //   for (int i=0; i<number_of_events; ++i) {
-      //     total_number_of_tracks += host_number_of_tracks_pinned[i];
-      //   }
-      //   cudaCheck(cudaMemcpyAsync(host_tracks_pinned, searchByTriplet.dev_tracklets, total_number_of_tracks * sizeof(Track), cudaMemcpyDeviceToHost, stream));
-      // }
+      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
     }
+
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
 
     if (print_individual_rates) {
       t_total.stop();
       times.emplace_back("total", t_total.get());
       print_timing(number_of_events, times);
     }
-  }
 
+    ///////////////////////
+    // Monte Carlo Check //
+    ///////////////////////
+
+    if (mc_check_enabled) {
+      if (repetition == 0 && do_check) { // only check efficiencies once
+        // Fetch data
+        cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
+        cudaEventRecord(cuda_generic_event, stream);
+        cudaEventSynchronize(cuda_generic_event);
+
+        checkTracks(reinterpret_cast<Track<true>*>(host_tracks_pinned),
+          host_accumulated_tracks,
+  		    host_number_of_tracks_pinned,
+          number_of_events,
+  		    folder_name_MC);
+      }
+    }
+  }
   return cudaSuccess;
 }
 

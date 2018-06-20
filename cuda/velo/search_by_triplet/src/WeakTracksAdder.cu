@@ -6,8 +6,8 @@ __device__ void weakTracksAdder(
   uint* weaktracks_insert_pointer,
   uint* tracks_insert_pointer,
   uint* weak_tracks,
-  Track* tracklets,
-  Track* tracks,
+  TrackHits* tracklets,
+  TrackHits* tracks,
   bool* hit_used
 ) {
   // Compute the weak tracks
@@ -16,7 +16,8 @@ __device__ void weakTracksAdder(
     const auto weaktrack_no = blockDim.x * i + threadIdx.x;
     if (weaktrack_no < weaktracks_total) {
       // Load the tracks from the tracklets
-      const Track t = tracklets[weak_tracks[weaktrack_no]];
+      assert( weaktrack_no < VeloTracking::ttf_modulo );
+      const TrackHits t = tracklets[weak_tracks[weaktrack_no]];
       const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
 
       // Store them in the tracks bag
@@ -41,8 +42,8 @@ __device__ void weakTracksAdderShared(
   uint* weaktracks_insert_pointer,
   uint* tracks_insert_pointer,
   uint* weak_tracks,
-  Track* tracklets,
-  Track* tracks,
+  TrackHits* tracklets,
+  TrackHits* tracks,
   bool* hit_used
 ) {
   const auto weaktracks_total = weaktracks_insert_pointer[0];
@@ -51,7 +52,7 @@ __device__ void weakTracksAdderShared(
     // Shared checking mechanism
     shared_hits[threadIdx.x] = -1;
     if (weaktrack_no < weaktracks_total) {
-      const Track t = tracklets[weak_tracks[weaktrack_no]];
+      const TrackHits t = tracklets[weak_tracks[weaktrack_no]];
       bool clone = hit_used[t.hits[0]] || hit_used[t.hits[1]] && hit_used[t.hits[2]];
       if (!clone) {
         for (int h=0; h<3; ++h) {

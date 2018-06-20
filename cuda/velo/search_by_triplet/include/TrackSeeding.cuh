@@ -12,7 +12,7 @@ __device__ void trackSeeding(
   bool* hit_used,
   unsigned int* tracklets_insertPointer,
   unsigned int* ttf_insertPointer,
-  Track* tracklets,
+  TrackHits* tracklets,
   unsigned int* tracks_to_follow,
   unsigned short* h1_rel_indices,
   unsigned int* local_number_of_hits

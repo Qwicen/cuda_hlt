@@ -4,8 +4,6 @@
 #include <stdexcept>
 
 /// For sanity check of input
-#define NUMBER_OF_SENSORS 52
-
 /**
  * @brief Macro to check cuda calls.
  */

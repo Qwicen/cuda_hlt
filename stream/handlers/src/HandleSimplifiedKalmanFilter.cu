@@ -1,4 +1,4 @@
-#include "../include/SimplifiedKalmanFilter.cuh"
+#include "HandleSimplifiedKalmanFilter.cuh"
 
 void SimplifiedKalmanFilter::operator()() {
   velo_fit<<<num_blocks, num_threads, 0, *stream>>>(
