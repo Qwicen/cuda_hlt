@@ -17,9 +17,6 @@
 
 /** @class PrVeloUT PrVeloUT.h
    *
-   *  PrVeloUT algorithm. This is just a wrapper,
-   *  the actual pattern recognition is done in the 'PrVeloUTTool'.
-   *
    *  - InputTracksName: Input location for Velo tracks
    *  - OutputTracksName: Output location for VeloTT tracks
    *  - TimingMeasurement: Do a timing measurement?
@@ -32,7 +29,7 @@
    *  2018-05-05: Plácido Fernández (make standalone)
    */
 
-// TODO Fake MagnetTool
+// TODO Fake MagnetTool just to make it compile
 struct PrUTMagnetTool {
   const float m_zMidUT = 0.0;
   const float m_averageDist2mom = 0.0;
@@ -117,24 +114,23 @@ private:
                           const std::vector<float>& bdlTable) const;
 
   // ==============================================================================
-  // -- Method that finds the hits in a given layer within a certain range
+  // -- Finds the hits in a given layer within a certain range
   // ==============================================================================
   inline void findHits( 
     const std::vector<Hit>& inputHits,
+    const int startpos,
     const VeloState& myState, 
     const float xTolNormFact,
     const float invNormFact,
     std::vector<Hit>& outHits ) const 
   {
-    const auto zInit = inputHits.at(0).zAtYEq0();
+    const auto zInit = inputHits.at(startpos).zAtYEq0();
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
 
-    int pos = 0;
-    for (auto& hit : inputHits) {
-      if ( hit.isNotYCompatible(yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact)) ) {
-        ++pos;
-      }
-    }
+    int pos = startpos;
+    while ( pos <= inputHits.size() && 
+      inputHits[pos].isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) ) 
+    ) { ++pos; }
 
     const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
     const auto yyProto =       myState.y - myState.ty*myState.z;

@@ -8,12 +8,6 @@
 //-----------------------------------------------------------------------------
 
 namespace {
-  // bool rejectTrack(const Track* track){
-  //   return track->checkFlag( Track::Backward )
-  //     || track->checkFlag( Track::Invalid );
-  // }
-
-
   // -- These things are all hardcopied from the PrTableForFunction
   // -- and PrUTMagnetTool
   // -- If the granularity or whatever changes, this will give wrong results
@@ -33,10 +27,6 @@ namespace {
 // Initialization
 //=============================================================================
 int PrVeloUT::initialize() {
-
-  // TODO not used? old version?
-  // m_veloUTTool = tool<ITracksFromTrackR>("PrVeloUTTool", this );
-
   // m_PrUTMagnetTool = PrUTMagnetTool(filenames);
 
   // m_zMidUT is a position of normalization plane which should to be close to z middle of UT ( +- 5 cm ).
@@ -72,15 +62,14 @@ std::vector<TrackVelo> PrVeloUT::operator() (
   for(const TrackVelo& veloTr : inputTracks) {
 
     VeloState trState;
-    if( !getState(veloTr, trState, outputTracks)) continue;
+    if( !getState(veloTr, trState, outputTracks) ) continue;
     if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState) ) continue;
 
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
-    //counter("formingClusters")++;
     if( !formClusters(hitsInLayers, helper) ){
       std::reverse(hitsInLayers.begin(),hitsInLayers.end());
-      //counter("reversing")++;
+      
       formClusters(hitsInLayers, helper);
       std::reverse(hitsInLayers.begin(),hitsInLayers.end());
     }
@@ -88,10 +77,7 @@ std::vector<TrackVelo> PrVeloUT::operator() (
     if( helper.bestHits[0]){
       prepareOutputTrack(veloTr, helper, hitsInLayers, outputTracks, bdlTable);
     }
-
   }
-
-  // counter("#tracks") += outputTracks.size();
 
   return outputTracks;
 }
@@ -125,14 +111,8 @@ bool PrVeloUT::getState(
 
   if(m_passTracks && std::abs(xMidUT) < m_passHoleSize && std::abs(yMidUT) < m_passHoleSize) {
 
-    // TODO confirm this
-    // std::unique_ptr<LHCb::Track> outTr{ new LHCb::Track() };
-    // outTr->reset();
-    // outTr->copy(*iTr);
-    // outTr->addToAncestors( iTr );
-    // outputTracks.insert(outTr.release());
-
-    outputTracks.emplace_back(iTr);
+    TrackVelo outTr = iTr;
+    outputTracks.emplace_back(outTr);
 
     return false;
   }
@@ -187,40 +167,19 @@ bool PrVeloUT::getHits(
 
       const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
       const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
-      const float yLayer = yAtZ + yTol*dxDyHelper[layer];
+      const float yLayer = yAtZ + yTol*dxDyHelper[2*iStation+iLayer];
 
       const float normFactNum = normFact[layer];
       const float invNormFact = 1.0/normFactNum;
 
-      // -- Get the (approximate) x position at y=0. For stereo layers, we need to take
-      // -- dx/dy into account and shift along a strip.
-      // -- last term is to take different z positions of modules into account
-      // -- max distance between strips in a layer => 15mm
-      // -- Hits are sorted at y=0
-      //
-      // -- It turns out that putting iterators at certain positions
-      // -- and then do a linear search is faster than binary
-      // -- searching the whole range (or binary searching)
-      // -- starting from the iterator positions.
+      const float lowerBoundX =
+        (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(trState.tx)*m_intraLayerDist;
 
-      // const float lowerBoundX =
-      //   (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(trState.tx)*m_intraLayerDist;
-      // const float upperBoundX =
-      //   (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(trState.tx)*m_intraLayerDist;
+      int pos = 0;
+      while ( (hits[pos].xAtYEq0() < lowerBoundX) && (pos != hits.size()) ) ++pos;
+      if (pos == hits.size()) continue;
 
-      // const int indexLowProto = lowerBoundX > 0 ? std::sqrt( std::abs(lowerBoundX)*2.0 ) + 42 : 42 - std::sqrt( std::abs(lowerBoundX)*2.0 );
-      // const int indexHiProto  = upperBoundX > 0 ? std::sqrt( std::abs(upperBoundX)*2.0 ) + 43 : 43 - std::sqrt( std::abs(upperBoundX)*2.0 );
-
-      // const int indexLow  = std::max( indexLowProto, 0 );
-      // const int indexHi   = std::min( indexHiProto, 84);
-
-      // HitRange::const_iterator itBeg = iteratorsLayers[layer][ indexLow ];
-      // HitRange::const_iterator itEnd = iteratorsLayers[layer][ indexHi  ];
-
-      // while( (*itBeg).xAtYEq0() < lowerBoundX && itBeg != itEnd) ++itBeg;
-      // if(itBeg == itEnd) continue;
-
-      findHits(hits, trState, xTol*invNormFact, invNormFact, hitsInLayers[layer]);
+      findHits(hits, pos, trState, xTol*invNormFact, invNormFact, hitsInLayers[layer]);
 
       nLayers += int(!hitsInLayers[layer].empty());
     }
