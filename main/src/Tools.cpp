@@ -4,6 +4,19 @@
 #include "../../checker/lib/include/MCParticle.h"
 
 /**
+ * @brief Natural ordering for strings.
+ */
+bool naturalOrder(const std::string& s1, const std::string& s2 ) {
+  size_t lastindex1 = s1.find_last_of("."); 
+  std::string raw1 = s1.substr(0, lastindex1);
+  size_t lastindex2 = s2.find_last_of("."); 
+  std::string raw2 = s2.substr(0, lastindex2);
+  int int1 = stoi(raw1, nullptr, 0);
+  int int2 = stoi(raw2, nullptr, 0);
+  return int1 < int2;
+}
+
+/**
  * @brief Read files into vectors.
  */
 void readFileIntoVector(
@@ -101,14 +114,8 @@ void check_events(
   // printf("average # of sps per event = %f \n", n_sps_average);
 }
 
-/**
- * @brief Reads a number of events from a folder name.
- */
-void readFolder(
-  const std::string& foldername,
-  unsigned int number_of_files,
-  std::vector<char>& events,
-  std::vector<unsigned int>& event_offsets
+std::vector<std::string> list_folder(
+  const std::string& foldername
 ) {
   std::vector<std::string> folderContents;
   DIR *dir;
@@ -129,7 +136,7 @@ void readFolder(
       error_cout << "No binary files found in folder " << foldername << std::endl;
       exit(-1);
     } else {
-      info_cout << "Found " << folderContents.size() << " binary files" << std::endl;
+      verbose_cout << "Found " << folderContents.size() << " binary files" << std::endl;
     }
   } else {
     error_cout << "Folder could not be opened" << std::endl;
@@ -137,7 +144,20 @@ void readFolder(
   }
 
   // Sort folder contents (file names)
-  std::sort(folderContents.begin(), folderContents.end()); 
+  std::sort(folderContents.begin(), folderContents.end(), naturalOrder);
+  return folderContents;
+}
+
+/**
+ * @brief Reads a number of events from a folder name.
+ */
+void read_folder(
+  const std::string& foldername,
+  uint number_of_files,
+  std::vector<char>& events,
+  std::vector<uint>& event_offsets
+) {
+  std::vector<std::string> folderContents = list_folder(foldername);
 
   if (number_of_files == 0) {
     number_of_files = folderContents.size();
@@ -172,6 +192,57 @@ void readFolder(
 
   check_events( events, event_offsets, number_of_files );
 }
+
+std::vector<VelopixEvent> read_mc_folder (
+  const std::string& foldername,
+  uint number_of_files,
+  const bool checkEvents
+) {
+  std::vector<std::string> folderContents = list_folder(foldername);
+  
+  uint requestedFiles = number_of_files==0 ? folderContents.size() : number_of_files;
+  verbose_cout << "Requested " << requestedFiles << " files" << std::endl;
+
+  if ( requestedFiles > folderContents.size() ) {
+    error_cout << "ERROR: requested " << requestedFiles << " files, but only " << folderContents.size() << " files are present" << std::endl;
+    exit(-1);
+  }
+  
+  info_cout << "Reading Monte Carlo data" << std::endl;
+  std::vector<VelopixEvent> input;
+  int readFiles = 0;
+  for (uint i=0; i<requestedFiles; ++i) {
+    // Read event #i in the list and add it to the inputs
+    // if more files are requested than present in folder, read them again
+    std::string readingFile = folderContents[i % folderContents.size()];
+    verbose_cout << "Reading MC event " << readingFile << std::endl;
+  
+    std::vector<char> inputContents;
+    readFileIntoVector(foldername + "/" + readingFile, inputContents);
+  
+    // Check the number of sensors is correct, otherwise ignore it
+    VelopixEvent event {inputContents, checkEvents};
+
+    // Sanity check
+    if (event.numberOfModules == VeloTracking::n_modules) {
+      input.emplace_back(event);
+    }
+    else {
+      error_cout << "ERROR: number of sensors should be " << VeloTracking::n_modules
+        << ", but it is " << event.numberOfModules << std::endl;
+    }
+
+    readFiles++;
+    if ((readFiles % 100) == 0) {
+      info_cout << "." << std::flush;
+    }
+  }
+
+  info_cout << std::endl << input.size() << " files read" << std::endl << std::endl;
+  return input;
+}
+
+
 
 /**
  * @brief Obtains results statistics.
@@ -280,7 +351,6 @@ void printTracks(
       }
     }
   }
-  
 }
 
 void check_roughly(
@@ -294,15 +364,13 @@ void check_roughly(
     
     for ( LHCbID id : track.ids() ) {
       uint32_t id_int = uint32_t( id );
-      
       // find associated IDs from mcps
       for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
-          VelopixEvent::MCP part = mcps[i_mcp];
-          auto it = find( part.hits.begin(), part.hits.end(), id_int );
-          if ( it != part.hits.end() ) {
-            mcp_ids.push_back( i_mcp );
-            //matched++;
-          }
+        VelopixEvent::MCP part = mcps[i_mcp];
+        auto it = find( part.hits.begin(), part.hits.end(), id_int );
+        if ( it != part.hits.end() ) {
+          mcp_ids.push_back( i_mcp );
+        }
       }
     }
     
@@ -327,7 +395,6 @@ void check_roughly(
   }
   
   printf("efficiency = %f \n", float(matched) / long_tracks );
-        
 }
 
 void call_PrChecker(
@@ -336,24 +403,23 @@ void call_PrChecker(
 ) {
   /* MC information */
   int n_events = all_tracks.size();
-  std::vector<VelopixEvent> events = VelopixEventReader::readFolder(folder_name_MC, n_events, true );
+  std::vector<VelopixEvent> events = read_mc_folder(folder_name_MC, n_events, true );
   
-  TrackChecker trackChecker;
-  uint64_t evnum = 1;
+  TrackChecker trackChecker {};
+  uint64_t evnum = 0;
   for (const auto& ev: events) {
-    debug_cout << "Event " << evnum << std::endl;
+    debug_cout << "Event " << (evnum+1) << std::endl;
     auto mcps = ev.mcparticles();
     std::vector< uint32_t > hit_IDs = ev.hit_IDs;
     std::vector<VelopixEvent::MCP> mcps_vector = ev.mcps;
     MCAssociator mcassoc(mcps);
 
-    trackChecker::Tracks tracks = all_tracks[evnum-1];
-    debug_cout << "INFO: found " << tracks.size() << " reconstructed tracks" <<
+    debug_cout << "Found " << all_tracks[evnum].size() << " reconstructed tracks" <<
      " and " << mcps.size() << " MC particles " << std::endl;
 
-    trackChecker(tracks, mcassoc, mcps);
+    trackChecker(all_tracks[evnum], mcassoc, mcps);
     //check_roughly(tracks, hit_IDs, mcps_vector);
-        
+
     ++evnum;
   }
 }
@@ -383,8 +449,8 @@ void checkTracks(
       tracks.push_back( t );
     } // tracks
     
-    all_tracks.push_back( tracks );
+    all_tracks.emplace_back( tracks );
   } // events
-  
+
   call_PrChecker( all_tracks, folder_name_MC );
 }

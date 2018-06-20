@@ -62,24 +62,11 @@ public:
     std::vector<MCP> mcps;
 
     // Constructor
-    VelopixEvent(const std::vector<uint8_t>& _event, const bool checkFile = true);
+    VelopixEvent(const std::vector<char>& _event, const bool checkFile = true);
 
     void print() const;
 
     /// get hits into a format we like (should ultimately go away, or just be a view)
     VeloPixels soaHits() const;
     MCParticles mcparticles() const;
-};
-
-class VelopixEventReader {
-private:
-    constexpr static int numberOfModules = 52;
-
-public:
-    static bool fileExists (const std::string& name);
-
-    static void readFileIntoVector(const std::string& filename, std::vector<uint8_t>& output);
-
-    static std::vector<VelopixEvent> readFolder(
-      const std::string& foldername, uint nFiles = 0, const bool checkFiles = true);
 };

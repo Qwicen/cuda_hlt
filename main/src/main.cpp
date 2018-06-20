@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
   std::vector<uint> velopix_event_offsets;
   std::vector<char> ut_events;
   std::vector<uint> ut_event_offsets;
-  readFolder(
+  read_folder(
     folder_name_raw,
     number_of_files,
 	  velopix_events,

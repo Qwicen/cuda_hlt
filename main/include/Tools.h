@@ -17,9 +17,10 @@
 #include "../../cuda/velo/common/include/ClusteringDefinitions.cuh"
 #include "../../checker/lib/include/Tracks.h"
 
-/**
- * Generic StrException launcher
- */
+bool naturalOrder(
+  const std::string& s1,
+  const std::string& s2
+);
 
 void readFileIntoVector(
   const std::string& filename,
@@ -43,7 +44,18 @@ void check_events(
   int n_events
 );
 
-void readFolder(
+std::vector<std::string> list_folder(
+  const std::string& foldername
+);
+
+void read_folder(
+  const std::string& foldername,
+  unsigned int fileNumber,
+  std::vector<char>& events,
+  std::vector<unsigned int>& event_offsets
+);
+
+void read_mc_folder(
   const std::string& foldername,
   unsigned int fileNumber,
   std::vector<char>& events,
