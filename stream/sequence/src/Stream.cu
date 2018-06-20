@@ -225,7 +225,8 @@ cudaError_t Stream::operator()(
       TTree *t_ut_hits = new TTree("ut_hits","ut_hits");
       TTree *t_velo_states = new TTree("velo_states", "velo_states");
       float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
-      float x, y, tx, ty, chi2, z, r;
+      float x, y, tx, ty, chi2, z, drdz;
+      float first_z, last_z;
       unsigned int LHCbID;
       int highThreshold;
       int backward;
@@ -246,7 +247,9 @@ cudaError_t Stream::operator()(
       t_velo_states->Branch("chi2", &chi2);
       t_velo_states->Branch("z", &z);
       t_velo_states->Branch("backward", &backward);
-      t_velo_states->Branch("r", &r);
+      t_velo_states->Branch("drdz", &drdz);
+      t_velo_states->Branch("first_z", &first_z);
+      t_velo_states->Branch("last_z", &last_z);
 			
       if ( velout.initialize() ) {
     	for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
@@ -311,12 +314,14 @@ cudaError_t Stream::operator()(
     	    ty = track.state.ty;
     	    chi2 = track.state.chi2;
     	    z = track.state.z;
+	    first_z = velo_track.first_z;
+	    last_z = velo_track.last_z;
     	    // study (sign of) (dr/dz) -> track moving away from beamline?
     	    // drop 1/sqrt(x^2+y^2) to avoid sqrt calculation, no effect on sign
     	    float dx = velo_track.hits[velo_track.hitsNum - 1].x - velo_track.hits[0].x;
     	    float dy = velo_track.hits[velo_track.hitsNum - 1].y - velo_track.hits[0].y;
     	    float dz = velo_track.hits[velo_track.hitsNum - 1].z - velo_track.hits[0].z;
-    	    r = velo_track.hits[0].x * dx/dz + velo_track.hits[0].y * dy/dz;
+    	    drdz = velo_track.hits[0].x * dx/dz + velo_track.hits[0].y * dy/dz;
     	    t_velo_states->Fill();
 
     	    if ( velo_track.backward ) continue;

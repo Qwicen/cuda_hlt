@@ -66,7 +66,7 @@ namespace VeloTracking {
   static constexpr uint max_number_of_hits_per_event = 4000;
 
   // Constants for filters
-  static constexpr uint states_per_track = 2; 
+  static constexpr uint states_per_track = 3; 
   static constexpr float param_w = 3966.94f;
   static constexpr float param_w_inverted = 0.000252083f;
 
@@ -162,6 +162,7 @@ namespace VeloTracking {
   struct Track {
     bool backward;
     unsigned short hitsNum;
+    float first_z, last_z;
     Hit <MCCheck> hits[VeloTracking::max_track_size];
   
     __device__ Track(){

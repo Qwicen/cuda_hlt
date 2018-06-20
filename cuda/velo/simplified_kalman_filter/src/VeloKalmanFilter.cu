@@ -231,6 +231,23 @@ __device__ void simplified_fit(
   *velo_state = state;
 }
 
+__device__ void getStateAtEndVelo(
+  VeloState *velo_state_base
+) {
+  // State at end of Velo (z=770 mm)
+  // only propagate x, y, z; covariance matrix is not needed
+  // store state at end of Velo as third state
+  // Downstream state is saved as second state
+  *(velo_state_base + 2) = *(velo_state_base + 1);
+  VeloState *state_endVelo = velo_state_base + 2;
+  
+  const float z_endVelo = 770;
+  const float dz = z_endVelo - (velo_state_base + 1)->z;
+  state_endVelo->x += dz * state_endVelo->tx;
+  state_endVelo->y += dz * state_endVelo->ty;
+  state_endVelo->z = z_endVelo;
+}
+  
 __global__ void velo_fit(
   const uint32_t* dev_velo_cluster_container,
   const uint* dev_module_cluster_start,
@@ -292,25 +309,28 @@ __global__ void velo_fit(
       // Upstream is equivalent to
       // (m_stateClosestToBeamKalmanFit || m_addStateFirstLastMeasurementKalmanFit)
       
-      // Downstream fit
+      // Downstream fit ("away from interaction region")
       simplified_fit<false>(
         hit_Xs,
         hit_Ys,
         hit_Zs,
         track,
         parameters,
-	velo_state_base + 1
+      	velo_state_base + 1
       );
 
-      // Careful: when uncommenting this, the states_per_track needs to be increased to 3!      // Upstream fit
+      // Careful: when uncommenting this, the states_per_track needs to be increased to 3!      Upstream fit ("into interaction region")
       // simplified_fit<true>(
       //   hit_Xs,
       //   hit_Ys,
       //   hit_Zs,
       //   track,
       //   parameters,
-      //   velo_state_base + 2
+      //   velo_state_base + 1
       // );
+
+      getStateAtEndVelo(velo_state_base);
+
     }
   }
 }

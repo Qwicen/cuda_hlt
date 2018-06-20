@@ -32,7 +32,10 @@ __device__ VeloTracking::Track <do_mc_check> createTrack(
     t.addHit( hit );
     if ( i == 0 ) {
       t.backward = state_at_beam_line.z > hit.z;
+      t.first_z = hit.z;
     }
+    if ( i == track.hitsNum-1 )
+      t.last_z = hit.z;
   }
   
   return t;
@@ -93,9 +96,9 @@ __global__ void consolidate_tracks(
     const unsigned int element = j * blockDim.x + threadIdx.x;
     if (element < number_of_tracks) {
       // state at beam line is stored in first element,
-      // state at last measurement is stored in second element of velo_states
+      // state at end of Velo is stored in third element of velo_states
       int state_index = VeloTracking::states_per_track * element; 
-      destination_velo_states[element] = velo_states[state_index +  1];
+      destination_velo_states[element] = velo_states[state_index +  2];
       
       const VeloTracking::TrackHits track = event_tracks[element];
       VeloTracking::Track <do_mc_check> t = createTrack <do_mc_check> ( track, hit_Xs, hit_Ys, hit_Zs, hit_IDs, velo_states[ state_index ] );
