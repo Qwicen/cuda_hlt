@@ -230,19 +230,19 @@ __device__ void simplified_fit(
   // finally, store the state
   *velo_state = state;
 }
-
+/* Propagate from state to the end of the Velo */
 __device__ void getStateAtEndVelo(
-  VeloState *velo_state_base
+  VeloState *state,
+  VeloState *state_endVelo
 ) {
   // State at end of Velo (z=770 mm)
   // only propagate x, y, z; covariance matrix is not needed
   // store state at end of Velo as third state
   // Downstream state is saved as second state
-  *(velo_state_base + 2) = *(velo_state_base + 1);
-  VeloState *state_endVelo = velo_state_base + 2;
+  *(state_endVelo) = *(state);
   
   const float z_endVelo = 770;
-  const float dz = z_endVelo - (velo_state_base + 1)->z;
+  const float dz = z_endVelo - state->z;
   state_endVelo->x += dz * state_endVelo->tx;
   state_endVelo->y += dz * state_endVelo->ty;
   state_endVelo->z = z_endVelo;
@@ -329,7 +329,7 @@ __global__ void velo_fit(
       //   velo_state_base + 1
       // );
 
-      getStateAtEndVelo(velo_state_base);
+      getStateAtEndVelo(velo_state_base, velo_state_base+2);
 
     }
   }
