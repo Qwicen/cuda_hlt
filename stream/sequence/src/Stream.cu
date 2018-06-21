@@ -152,6 +152,15 @@ cudaError_t Stream::operator()(
     ////////////////////////
     
     Helper::invoke(
+      copyAndPrefixSumSingleBlock,
+      "Calculate accumulated tracks",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+     );
+
+    Helper::invoke(
       consolidateTracks,
       "Consolidate tracks",
       times,

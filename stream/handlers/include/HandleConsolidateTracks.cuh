@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../cuda/velo/consolidate_tracks/include/ConsolidateTracks.cuh"
+#include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "Handler.cuh"
 
 struct ConsolidateTracks : public Handler {
@@ -28,7 +28,6 @@ struct ConsolidateTracks : public Handler {
     dev_velo_cluster_container = param_dev_velo_cluster_container;
     dev_module_cluster_start = param_dev_module_cluster_start;
     dev_module_cluster_num =  param_dev_module_cluster_num;
-
   }
 
    void operator()();

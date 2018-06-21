@@ -37,6 +37,7 @@ cudaError_t Stream::initialize(
   maskedVeloClustering.set(  dim3(number_of_events),    dim3(256),    stream);
   calculatePhiAndSort.set(   dim3(number_of_events),    dim3(64),     stream);
   searchByTriplet.set(       dim3(number_of_events),    dim3(32),     stream);
+  copyAndPrefixSumSingleBlock.set(dim3(number_of_events), dim3(1024), stream);
   consolidateTracks.set(     dim3(number_of_events),    dim3(32),     stream);
   simplifiedKalmanFilter.set(dim3(number_of_events),    dim3(1024),   stream);
 
@@ -204,13 +205,12 @@ cudaError_t Stream::initialize(
     dev_h2_candidates,
     dev_rel_indices
   );
-  
-  simplifiedKalmanFilter.setParameters(
-    dev_velo_cluster_container,
-    dev_estimated_input_size,
-    dev_atomics_storage,
-    dev_tracks,
-    dev_velo_states
+
+  copyAndPrefixSumSingleBlock.setParameters(
+    (uint*) dev_atomics_storage + number_of_events*2,
+    (uint*) dev_atomics_storage,
+    (uint*) dev_atomics_storage + number_of_events,
+    number_of_events
   );
 
   consolidateTracks.setParameters(
@@ -220,6 +220,14 @@ cudaError_t Stream::initialize(
     dev_velo_cluster_container,
     dev_estimated_input_size,
     dev_module_cluster_num
+  );
+  
+  simplifiedKalmanFilter.setParameters(
+    dev_velo_cluster_container,
+    dev_estimated_input_size,
+    dev_atomics_storage,
+    dev_tracks,
+    dev_velo_states
   );
 
   return cudaSuccess;

@@ -242,8 +242,6 @@ std::vector<VelopixEvent> read_mc_folder (
   return input;
 }
 
-
-
 /**
  * @brief Obtains results statistics.
  */

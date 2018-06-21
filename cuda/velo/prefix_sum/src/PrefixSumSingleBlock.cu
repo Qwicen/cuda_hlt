@@ -39,7 +39,7 @@ __device__ void down_sweep_2048(
   }
 }
 
-__global__ void prefix_sum_single_block(
+__device__ void prefix_sum_single_block_implementation(
   uint* dev_total_sum,
   uint* dev_array,
   const uint array_size
@@ -119,4 +119,34 @@ __global__ void prefix_sum_single_block(
       dev_array[elem_index + 1] = data_block[2*threadIdx.x + 1] + prev_last_elem;
     }
   }
+}
+
+__global__ void prefix_sum_single_block(
+  uint* dev_total_sum,
+  uint* dev_array,
+  const uint array_size
+) {
+  prefix_sum_single_block_implementation(dev_total_sum,
+    dev_array, array_size);
+}
+
+__global__ void copy_and_prefix_sum_single_block(
+  uint* dev_total_sum,
+  uint* dev_input_array,
+  uint* dev_output_array,
+  const uint array_size
+) {
+  // Copy the input array into the output array
+  for (uint i=0; i<(array_size + blockDim.x - 1) / blockDim.x; ++i) {
+    const auto element = i*blockDim.x + threadIdx.x;
+    if (element < array_size) {
+      dev_output_array[element] = dev_input_array[element];
+    }
+  }
+
+  __syncthreads();
+
+  // Perform prefix_sum over output array
+  prefix_sum_single_block_implementation(dev_total_sum,
+    dev_output_array, array_size);
 }

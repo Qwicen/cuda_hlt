@@ -70,6 +70,10 @@ namespace VeloTracking {
   static constexpr uint states_per_track = 3;
   static constexpr float param_w = 3966.94f;
   static constexpr float param_w_inverted = 0.000252083f;
+
+  // Max chi2
+  static constexpr float max_chi2 = 20.0;
+  // static constexpr float max_chi2_long = 1000.0;
 }
 
 struct Module {
