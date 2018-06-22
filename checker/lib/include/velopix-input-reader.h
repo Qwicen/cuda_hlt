@@ -9,6 +9,7 @@
 
 #include "../../../main/include/Common.h"
 #include "../../../main/include/Logger.h"
+#include "../../../main/include/InputTools.h"
 
 class VelopixEvent {
 private:
@@ -63,7 +64,7 @@ public:
 
     // Constructor
     VelopixEvent() {};
-    VelopixEvent(const std::vector<uint8_t>& _event, const bool checkFile = true);
+    VelopixEvent(const std::vector<char>& _event, const bool checkFile = true);
 
     void print() const;
 
@@ -72,22 +73,13 @@ public:
     MCParticles mcparticles() const;
 };
 
-class VelopixEventReader {
-private:
-    constexpr static int numberOfModules = 52;
-
-public:
-    static bool fileExists (const std::string& name);
-
-    static void readFileIntoVector(const std::string& filename, std::vector<uint8_t>& output);
-
-    static bool sortFiles( std::string s1, std::string s2 );
-  
-    static std::vector< std::string > getFolderContents (
-      const std::string& foldername, const bool fromNtuple, uint nFiles = 0 );
-  
-    static std::vector<VelopixEvent> readFolder(
-						const std::string& foldername, const bool& fronNtuple, const std::string& trackType, uint nFiles = 0, const bool checkFiles = true);
-
-  static void readNtupleIntoVelopixEvent(const std::string& filename, const std::string& trackType, VelopixEvent& event);
-};
+void readNtupleIntoVelopixEvent(const std::string& filename, const std::string& trackType, VelopixEvent& event);
+ 
+std::vector<VelopixEvent> read_mc_folder(
+  const std::string& foldername,
+  const bool& fromNtuple,
+  const std::string& trackType,
+  uint number_of_files,
+  const bool checkEvents = false
+);
+ 

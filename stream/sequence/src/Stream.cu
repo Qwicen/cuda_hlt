@@ -169,7 +169,7 @@ cudaError_t Stream::operator()(
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(VeloTracking::Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(VeloTracking::Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       // only copy one velo state back -> don't need VeloTracking::states_per_track
       cudaCheck(cudaMemcpyAsync(host_velo_states, consolidateTracks.dev_velo_states_out, number_of_events * max_tracks_in_event * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
@@ -189,12 +189,12 @@ cudaError_t Stream::operator()(
     ///////////////////////
 
 
-    if (do_mc_check && i_stream == 0) {
+    if (mc_check_enabled && i_stream == 0) {
       if (repetition == 0) { // only check efficiencies once
         // Fetch data
         cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
         cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(VeloTracking::Track<do_mc_check>), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(VeloTracking::Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
         cudaEventRecord(cuda_generic_event, stream);
         cudaEventSynchronize(cuda_generic_event);
 
@@ -217,11 +217,11 @@ cudaError_t Stream::operator()(
     /* Plugin VeloUT CPU code here 
        Adjust input types to match PrVeloUT code
     */
-    if (do_mc_check && i_stream == 0) {
+    if (mc_check_enabled && i_stream == 0) {
       PrVeloUT velout;
 
       // Histograms only for checking and debugging
-      TFile *f = new TFile("veloUT.root", "RECREATE");
+      TFile *f = new TFile("../output/veloUT.root", "RECREATE");
       TTree *t_ut_hits = new TTree("ut_hits","ut_hits");
       TTree *t_velo_states = new TTree("velo_states", "velo_states");
       float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
@@ -336,7 +336,7 @@ cudaError_t Stream::operator()(
     	f->Close();
       }
       
-    } // do_mc_check      
+    } // mc_check_enabled      
     
   }
   return cudaSuccess;

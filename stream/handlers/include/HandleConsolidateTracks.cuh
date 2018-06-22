@@ -7,7 +7,7 @@ struct ConsolidateTracks : public Handler {
   // Call parameters
   int* dev_atomics_storage;
   VeloTracking::TrackHits* dev_tracks;
-  VeloTracking::Track <do_mc_check> * dev_output_tracks;
+  VeloTracking::Track <mc_check_enabled> * dev_output_tracks;
   VeloState* dev_velo_states;
   VeloState* dev_velo_states_out;
   uint32_t* dev_velo_cluster_container;
@@ -19,7 +19,7 @@ struct ConsolidateTracks : public Handler {
   void setParameters(
     int* param_dev_atomics_storage,
     VeloTracking::TrackHits* param_dev_tracks,
-    VeloTracking::Track <do_mc_check> * param_dev_output_tracks,
+    VeloTracking::Track <mc_check_enabled> * param_dev_output_tracks,
     VeloState* param_dev_velo_states,
     VeloState* param_dev_velo_states_out,
     uint32_t* param_dev_velo_cluster_container,

@@ -4,49 +4,6 @@
 #include "../../checker/lib/include/MCParticle.h"
 #include "../../checker/lib/include/velopix-input-reader.h"
 
-
-/**
- * @brief Read files into vectors.
- */
-void readFileIntoVector(
-  const std::string& filename,
-  std::vector<char>& events
-) {
-  std::ifstream infile(filename.c_str(), std::ifstream::binary);
-  infile.seekg(0, std::ios::end);
-  auto end = infile.tellg();
-  infile.seekg(0, std::ios::beg);
-  auto dataSize = end - infile.tellg();
-
-  events.resize(dataSize);
-  infile.read((char*) &(events[0]), dataSize);
-  infile.close();
-}
-
-/**
- * @brief Appends a file to a vector of char.
- *        It can also be used to read a file to a vector,
- *        returning the event_size.
- */
-void appendFileToVector(
-  const std::string& filename,
-  std::vector<char>& events,
-  std::vector<unsigned int>& event_sizes
-) {
-  std::ifstream infile(filename.c_str(), std::ifstream::binary);
-  infile.seekg(0, std::ios::end);
-  auto end = infile.tellg();
-  infile.seekg(0, std::ios::beg);
-  auto dataSize = end - infile.tellg();
-
-  // read content of infile with a vector
-  const size_t previous_size = events.size();
-  events.resize(events.size() + dataSize);
-  infile.read(events.data() + previous_size, dataSize);
-  event_sizes.push_back(dataSize);
-  infile.close();
-}
-
 void readGeometry(
   const std::string& foldername,
   std::vector<char>& geometry
@@ -205,76 +162,6 @@ void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
   
 }
 
-/**
- * @brief Reads a number of events from a folder name.
- */
-void readFolder(
-  const std::string& foldername,
-  unsigned int number_of_files,
-  std::vector<char>& events,
-  std::vector<unsigned int>& event_offsets
-) {
-  std::vector<std::string> folderContents;
-  DIR *dir;
-  struct dirent *ent;
-
-  // Find out folder contents
-  if ((dir = opendir(foldername.c_str())) != NULL) {
-    /* print all the files and directories within directory */
-    while ((ent = readdir(dir)) != NULL) {
-      std::string filename = std::string(ent->d_name);
-      if (filename.find(".bin") != std::string::npos &&
-        filename.find("geometry") == std::string::npos) {
-        folderContents.push_back(filename);
-      }
-    }
-    closedir(dir);
-    if (folderContents.size() == 0) {
-      error_cout << "No binary files found in folder " << foldername << std::endl;
-      exit(-1);
-    } else {
-      info_cout << "Found " << folderContents.size() << " binary files" << std::endl;
-    }
-  } else {
-    error_cout << "Folder could not be opened" << std::endl;
-    exit(-1);
-  }
-
-  // Sort folder contents (file names)
-  std::sort(folderContents.begin(), folderContents.end(), VelopixEventReader::sortFiles); 
-
-  if (number_of_files == 0) {
-    number_of_files = folderContents.size();
-  }
-
-  info_cout << "Requested " << number_of_files << " files" << std::endl;
-  int readFiles = 0;
-
-  // Read all requested events
-  unsigned int accumulated_size=0;
-  std::vector<unsigned int> event_sizes;
-  for (int i=0; i<number_of_files; ++i) {
-    // Read event #i in the list and add it to the inputs
-    std::string readingFile = folderContents[i % folderContents.size()];
-    appendFileToVector(foldername + "/" + readingFile, events, event_sizes);
-
-    event_offsets.push_back(accumulated_size);
-    accumulated_size += event_sizes.back();
-    
-    readFiles++;
-    if ((readFiles % 100) == 0) {
-      info_cout << "." << std::flush;
-    }
-
-    verbose_cout << "Read " << readingFile << std::endl;
-  }
-
-  // Add last offset
-  event_offsets.push_back(accumulated_size);
-
-  info_cout << std::endl << (event_offsets.size() - 1) << " files read" << std::endl << std::endl;
-
-}
 
 /**
  * @brief Obtains results statistics.
@@ -383,7 +270,6 @@ void printTracks(
       }
     }
   }
-  
 }
 
 void check_roughly(
@@ -397,15 +283,13 @@ void check_roughly(
     
     for ( LHCbID id : track.ids() ) {
       uint32_t id_int = uint32_t( id );
-      
       // find associated IDs from mcps
       for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
-          VelopixEvent::MCP part = mcps[i_mcp];
-          auto it = find( part.hits.begin(), part.hits.end(), id_int );
-          if ( it != part.hits.end() ) {
-            mcp_ids.push_back( i_mcp );
-            //matched++;
-          }
+        VelopixEvent::MCP part = mcps[i_mcp];
+        auto it = find( part.hits.begin(), part.hits.end(), id_int );
+        if ( it != part.hits.end() ) {
+          mcp_ids.push_back( i_mcp );
+        }
       }
     }
     
@@ -430,7 +314,6 @@ void check_roughly(
   }
   
   printf("efficiency = %f \n", float(matched) / long_tracks );
-        
 }
 
 void callPrChecker(
@@ -442,24 +325,24 @@ void callPrChecker(
 
   /* MC information */
   int n_events = all_tracks.size();
-  std::vector<VelopixEvent> events = VelopixEventReader::readFolder(folder_name_MC, fromNtuple, trackType, n_events, true );
-    
-  TrackChecker trackChecker;
-  uint64_t evnum = 1;
+    std::vector<VelopixEvent> events = read_mc_folder(folder_name_MC, fromNtuple, trackType, n_events, true );
+  
+  TrackChecker trackChecker {};
+  uint64_t evnum = 0; // DvB: check, was 1 before!!
+
   for (const auto& ev: events) {
-    debug_cout << "Event " << evnum << std::endl;
+    debug_cout << "Event " << (evnum+1) << std::endl;
     auto mcps = ev.mcparticles();
     std::vector< uint32_t > hit_IDs = ev.hit_IDs;
     std::vector<VelopixEvent::MCP> mcps_vector = ev.mcps;
     MCAssociator mcassoc(mcps);
 
-    trackChecker::Tracks tracks = all_tracks[evnum-1];
-    debug_cout << "INFO: found " << tracks.size() << " reconstructed tracks" <<
+    debug_cout << "Found " << all_tracks[evnum].size() << " reconstructed tracks" <<
      " and " << mcps.size() << " MC particles " << std::endl;
 
-    trackChecker(tracks, mcassoc, mcps);
+    trackChecker(all_tracks[evnum], mcassoc, mcps);
     //check_roughly(tracks, hit_IDs, mcps_vector);
-        
+
     ++evnum;
   }
 }
@@ -489,7 +372,7 @@ std::vector< trackChecker::Tracks > prepareTracks(
       tracks.push_back( t );
     } // tracks
     
-    all_tracks.push_back( tracks );
+    all_tracks.emplace_back( tracks );
   } // events
 
   return all_tracks;

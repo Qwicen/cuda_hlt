@@ -3,8 +3,8 @@
 #include "../../common/include/VeloDefinitions.cuh"
 #include <stdint.h>
 
-template<bool do_mc_check>
-__device__ VeloTracking::Track <do_mc_check> createTrack(
+template<bool mc_check_enabled>
+__device__ VeloTracking::Track <mc_check_enabled> createTrack(
   const VeloTracking::TrackHits &track,
   const float* hit_Xs,
   const float* hit_Ys,
@@ -13,10 +13,10 @@ __device__ VeloTracking::Track <do_mc_check> createTrack(
   const VeloState& state_at_beam_line 
 ) {
 
-  VeloTracking::Track <do_mc_check> t;
+  VeloTracking::Track <mc_check_enabled> t;
   for ( int i = 0; i < track.hitsNum; ++i ) {
     const auto hit_index = track.hits[i];
-    VeloTracking::Hit <do_mc_check> hit;
+    VeloTracking::Hit <mc_check_enabled> hit;
 #ifdef MC_CHECK
     hit = { hit_Xs[ hit_index ],
 	    hit_Ys[ hit_index ],
@@ -41,11 +41,11 @@ __device__ VeloTracking::Track <do_mc_check> createTrack(
   return t;
 }
 
-template <bool do_mc_check>
+template <bool mc_check_enabled>
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
   const VeloTracking::TrackHits* dev_tracks,
-  VeloTracking::Track <do_mc_check> * dev_output_tracks,
+  VeloTracking::Track <mc_check_enabled> * dev_output_tracks,
   VeloState* dev_velo_states,
   VeloState* dev_velo_states_out,
   uint32_t* dev_velo_cluster_container,
@@ -87,11 +87,11 @@ __global__ void consolidate_tracks(
   
   // Consolidate tracks in dev_output_tracks
   const unsigned int number_of_tracks = dev_atomics_storage[event_number];
-  VeloTracking::Track <do_mc_check> * destination_tracks = dev_output_tracks + accumulated_tracks;
+  VeloTracking::Track <mc_check_enabled> * destination_tracks = dev_output_tracks + accumulated_tracks;
   // only write out one state: at the last measurement
   VeloState* destination_velo_states = dev_velo_states_out + accumulated_tracks;
   /* don't do consolidation now -> easier to check tracks offline */
-  //Track <do_mc_check> * destination_tracks = dev_output_tracks + event_number * VeloTracking::max_tracks;
+  //Track <mc_check_enabled> * destination_tracks = dev_output_tracks + event_number * VeloTracking::max_tracks;
   for (unsigned int j=0; j<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++j) {
     const unsigned int element = j * blockDim.x + threadIdx.x;
     if (element < number_of_tracks) {
@@ -101,7 +101,8 @@ __global__ void consolidate_tracks(
       destination_velo_states[element] = velo_states[state_index +  2];
       
       const VeloTracking::TrackHits track = event_tracks[element];
-      VeloTracking::Track <do_mc_check> t = createTrack <do_mc_check> ( track, hit_Xs, hit_Ys, hit_Zs, hit_IDs, velo_states[ state_index ] );
+      VeloTracking::Track <mc_check_enabled> t = createTrack <mc_check_enabled> ( track, hit_Xs, hit_Ys, hit_Zs, hit_IDs, velo_states[ state_index ] );
+
       destination_tracks[element] = t;
       
     }

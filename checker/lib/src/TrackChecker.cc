@@ -136,13 +136,16 @@ TrackChecker::TrackEffReport::~TrackEffReport()
   auto clonerate = 0.f, eff = 0.f;
   if (m_nfound) clonerate = float(m_nclones) / float(m_nfound + m_nfound);
   if (m_naccept) eff = float(m_nfound) / float(m_naccept);
-  std::printf("%-23s: %9lu/%9lu %6.2f%% (%6.2f%%), "
-      "%9lu (%6.2f%%) clones, hit eff %6.2f%% pur %6.2f%%\n",
-      m_name.c_str(), m_nfound, m_naccept,
-      100.f * eff,
-      100.f * m_effperevt, m_nclones,
-      100.f * clonerate,
-      100.f * m_hiteff, 100.f * m_hitpur);
+
+  if (m_naccept > 0) {
+    std::printf("%-23s: %9lu/%9lu %6.2f%% (%6.2f%%), "
+        "%9lu (%6.2f%%) clones, hit eff %6.2f%% pur %6.2f%%\n",
+        m_name.c_str(), m_nfound, m_naccept,
+        100.f * eff,
+        100.f * m_effperevt, m_nclones,
+        100.f * clonerate,
+        100.f * m_hiteff, 100.f * m_hitpur);
+  }
 }
 
 void TrackChecker::operator()(const trackChecker::Tracks& tracks,
