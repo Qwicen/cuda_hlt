@@ -134,14 +134,15 @@ private:
   // -- The last element is an "end" iterator, to make sure we never go out of bound
   // ==============================================================================
   inline void fillIterators(
-    const UT::HitHandler*hh, 
+    const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
     std::array<std::array<int,85>,4>& posLayers) const
   {
     
     for(int iStation = 0; iStation < 2; ++iStation){
       for(int iLayer = 0; iLayer < 2; ++iLayer){
-        const HitRange& hits = hh->hits( iStation, iLayer );
         int layer = 2*iStation + iLayer;
+        // const HitRange& hits = hh->hits( iStation, iLayer );
+        const std::vector<VeloUTTracking::Hit>& hits = inputHits[layer];
 
         size_t pos = 0;
         posLayers[layer].fill(pos);
@@ -151,7 +152,7 @@ private:
 
         // TODO add bounds checking
         for ( ; pos != hits.size(); ++pos) {
-          while( hits[pos].xAtYEq0() > val){
+          while( hits.at(pos).xAtYEq0() > val){
             posLayers[layer][bound+42] = pos;
             ++bound;
             val = std::copysign(bound*bound/2.0, bound);
@@ -173,14 +174,13 @@ private:
   inline void findHits( 
     const size_t posBeg,
     const size_t posEnd,
-    const std::vector<Hit>& inputHits,
     const std::vector<VeloUTTracking::Hit>& inputHits,
     const VeloState& myState, 
     const float xTolNormFact,
     const float invNormFact,
     std::vector<VeloUTTracking::Hit>& outHits ) const 
   {
-    const auto zInit = inputHits.at(startpos).zAtYEq0();
+    const auto zInit = inputHits.at(posBeg).zAtYEq0();
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
 
     size_t pos = posBeg;

@@ -82,7 +82,8 @@ int PrVeloUT::initialize() {
 // Main execution
 //=============================================================================
 std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
-  const std::vector<VeloUTTracking::TrackVelo>& inputTracks, const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits) const
+  const std::vector<VeloUTTracking::TrackVelo>& inputTracks, 
+  const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits) const
 {
 
   //TFile *f = new TFile("PrveloUT.root", "RECREATE");
@@ -92,7 +93,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   outputTracks.reserve(inputTracks.size());
 
   std::array<std::array<int,85>,4> posLayers;
-  fillIterators(hh, posLayers);
+  fillIterators(inputHits, posLayers);
 
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
@@ -237,7 +238,7 @@ bool PrVeloUT::getHits(
       while ( (hits[posBeg].xAtYEq0() < lowerBoundX) && (posBeg != hits.size()) ) ++posBeg;
       if (posBeg == hits.size()) continue;
 
-      findHits(posBeg, posEnd, hits trState, xTol*invNormFact, invNormFact, hitsInLayers[layer]);
+      findHits(posBeg, posEnd, hits, trState, xTol*invNormFact, invNormFact, hitsInLayers[layer]);
 
       nLayers += int(!hitsInLayers[layer].empty());
     }
