@@ -7,7 +7,7 @@ __device__ void means_square_fit(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
-  const Track& track,
+  const VeloTracking::TrackHits& track,
   TrackFitParameters& parameters,
   VeloState* velo_state
 ) {
@@ -166,7 +166,7 @@ __device__ void simplified_fit(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
-  const Track& track,
+  const VeloTracking::TrackHits& track,
   const TrackFitParameters& parameters,
   VeloState* velo_state
 ) {
@@ -230,12 +230,29 @@ __device__ void simplified_fit(
   // finally, store the state
   *velo_state = state;
 }
-
+/* Propagate from state to the end of the Velo */
+__device__ void getStateAtEndVelo(
+  VeloState *state,
+  VeloState *state_endVelo
+) {
+  // State at end of Velo (z=770 mm)
+  // only propagate x, y, z; covariance matrix is not needed
+  // store state at end of Velo as third state
+  // Downstream state is saved as second state
+  *(state_endVelo) = *(state);
+  
+  const float z_endVelo = 770;
+  const float dz = z_endVelo - state->z;
+  state_endVelo->x += dz * state_endVelo->tx;
+  state_endVelo->y += dz * state_endVelo->ty;
+  state_endVelo->z = z_endVelo;
+}
+  
 __global__ void velo_fit(
   const uint32_t* dev_velo_cluster_container,
   const uint* dev_module_cluster_start,
   const int* dev_atomics_storage,
-  const Track* dev_tracks,
+  const VeloTracking::TrackHits* dev_tracks,
   VeloState* dev_velo_states
 ) {
   /* Data initialization */
@@ -245,7 +262,7 @@ __global__ void velo_fit(
   const uint tracks_offset = event_number * VeloTracking::max_tracks;
 
   // Pointers to data within the event
-  const uint number_of_hits = dev_module_cluster_start[52 * number_of_events];
+  const uint number_of_hits = dev_module_cluster_start[VeloTracking::n_modules * number_of_events];
   
   // Order has changed since SortByPhi
   const float* hit_Ys = (float*) (dev_velo_cluster_container);
@@ -253,13 +270,13 @@ __global__ void velo_fit(
   const float* hit_Xs = (float*) (dev_velo_cluster_container + 5 * number_of_hits);
 
   // Reconstructed tracks
-  const Track* tracks = dev_tracks + tracks_offset;
+  const VeloTracking::TrackHits* tracks = dev_tracks + tracks_offset;
   const uint number_of_tracks = dev_atomics_storage[event_number];
-  VeloState* velo_states = dev_velo_states;
+  VeloState* velo_states = dev_velo_states + tracks_offset * VeloTracking::states_per_track; 
 
   // The location of the track
-  const uint track_start = dev_atomics_storage[number_of_events + event_number];
-  velo_states += track_start * VeloTracking::states_per_track;
+  //const uint track_start = dev_atomics_storage[number_of_events + event_number];
+  //velo_states += track_start * VeloTracking::states_per_track; // DvB: how does this work?
   
   // Iterate over the tracks and calculate fits
   for (uint i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
@@ -292,25 +309,28 @@ __global__ void velo_fit(
       // Upstream is equivalent to
       // (m_stateClosestToBeamKalmanFit || m_addStateFirstLastMeasurementKalmanFit)
       
-      // Downstream fit
+      // Downstream fit ("away from interaction region")
       simplified_fit<false>(
         hit_Xs,
         hit_Ys,
         hit_Zs,
         track,
         parameters,
-        velo_state_base + 1
+      	velo_state_base + 1
       );
 
-      // Upstream fit
-      simplified_fit<true>(
-        hit_Xs,
-        hit_Ys,
-        hit_Zs,
-        track,
-        parameters,
-        velo_state_base + 2
-      );
+      // Careful: when uncommenting this, the states_per_track needs to be increased to 3!      Upstream fit ("into interaction region")
+      // simplified_fit<true>(
+      //   hit_Xs,
+      //   hit_Ys,
+      //   hit_Zs,
+      //   track,
+      //   parameters,
+      //   velo_state_base + 1
+      // );
+
+      getStateAtEndVelo(velo_state_base, velo_state_base+2);
+
     }
   }
 }

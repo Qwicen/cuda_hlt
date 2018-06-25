@@ -71,13 +71,13 @@ __global__ void masked_velo_clustering(
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
   const char* raw_input = dev_raw_input + dev_raw_input_offsets[event_number];
-  const uint* module_cluster_start = dev_module_cluster_start + event_number * 52;
-  uint* module_cluster_num = dev_module_cluster_num + event_number * 52;
+  const uint* module_cluster_start = dev_module_cluster_start + event_number * VeloTracking::n_modules;
+  uint* module_cluster_num = dev_module_cluster_num + event_number * VeloTracking::n_modules;
   uint number_of_candidates = dev_event_candidate_num[event_number];
   uint32_t* cluster_candidates = (uint32_t*) &dev_cluster_candidates[event_number * VeloClustering::max_candidates_event];
 
   // Local pointers to dev_velo_cluster_container
-  const uint estimated_number_of_clusters = dev_module_cluster_start[52 * number_of_events];
+  const uint estimated_number_of_clusters = dev_module_cluster_start[VeloTracking::n_modules * number_of_events];
   float* cluster_xs = (float*) &dev_velo_cluster_container[0];
   float* cluster_ys = (float*) &dev_velo_cluster_container[estimated_number_of_clusters];
   float* cluster_zs = (float*) &dev_velo_cluster_container[2 * estimated_number_of_clusters];
@@ -185,6 +185,8 @@ __global__ void masked_velo_clustering(
       const uint8_t raw_bank_number = (candidate >> 3) & 0xFF;
       const uint32_t module_number = raw_bank_number >> 2;
       const uint8_t candidate_k = candidate & 0x7;
+
+      assert(raw_bank_number < VeloTracking::n_sensors);
 
       const auto raw_bank = VeloRawBank(raw_event.payload + raw_event.raw_bank_offset[raw_bank_number]);
       const float* ltg = g.ltg + 16 * raw_bank.sensor_index;
@@ -463,6 +465,8 @@ __global__ void masked_velo_clustering(
         const uint cluster_start = module_cluster_start[module_number];
 
         const auto lhcb_id = get_lhcb_id(cid);
+
+        assert((cluster_start + cluster_num) < estimated_number_of_clusters);
 
         cluster_xs[cluster_start + cluster_num] = gx;
         cluster_ys[cluster_start + cluster_num] = gy;

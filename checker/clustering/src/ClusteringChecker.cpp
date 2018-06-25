@@ -92,7 +92,6 @@ void checkClustering(
         ++number_of_ghosts;
       }
     }
-
     // Find clones: First create a set out of the vector
     std::set<uint32_t> s (found_clusters[i].begin(), found_clusters[i].end());
     for (auto lhcb_id : s) {

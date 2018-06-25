@@ -4,16 +4,21 @@
 #include <array>
 #include <vector>
 #include <algorithm>
+#include <fstream>
 
 #include <cassert>
 
-// #include "../PrUTMagnetTool/PrUTMagnetTool.h"
+//#include "../../PrUTMagnetTool/PrUTMagnetTool.h"
+#include "../../main/include/Logger.h"
 
 // Math from ROOT
 #include "../include/CholeskyDecomp.h"
 
 #include "../include/VeloTypes.h"
 #include "../include/SystemOfUnits.h"
+
+//#include "TTree.h"
+//#include "TFile.h"
 
 /** @class PrVeloUT PrVeloUT.h
    *
@@ -31,20 +36,23 @@
 
 // TODO Fake MagnetTool just to make it compile
 struct PrUTMagnetTool {
-  const float m_zMidUT = 0.0;
-  const float m_averageDist2mom = 0.0;
-  const std::vector<float> dxLayTable = {0.0, 0.0, 0.0};
-  const std::vector<float> bdlTable = {0.0, 0.0, 0.0};
+  //const float m_zMidUT = 0.0;
+  //const float m_averageDist2mom = 0.0;
+  std::vector<float> dxLayTable;
+  std::vector<float> bdlTable;
 
-  float zMidUT() { return m_zMidUT; }
-  float averageDist2mom() { return m_averageDist2mom; }
+  PrUTMagnetTool(){}
+  PrUTMagnetTool( const std::vector<float> _dxLayTable, const std::vector<float> _bdlTable ) : dxLayTable(_dxLayTable), bdlTable(_bdlTable) {}
+  
+  //float zMidUT() { return m_zMidUT; }
+  //float averageDist2mom() { return m_averageDist2mom; }
   std::vector<float> returnDxLayTable() const { return dxLayTable; }
   std::vector<float> returnBdlTable() const { return bdlTable; }
 };
 
 struct TrackHelper{
   VeloState state;
-  std::array<const Hit*, 4> bestHits = { nullptr, nullptr, nullptr, nullptr};
+  std::array<const VeloUTTracking::Hit*, 4> bestHits = { nullptr, nullptr, nullptr, nullptr};
   std::array<float, 4> bestParams;
   float wb, invKinkVeloDist, xMidField;
 
@@ -67,8 +75,9 @@ class PrVeloUT {
 
 public:
 
+  std::vector<std::string> GetFieldMaps();
   virtual int initialize();
-  std::vector<TrackVelo> operator()(const std::vector<TrackVelo>& inputTracks) const;
+  std::vector<VeloUTTracking::TrackUT> operator()(const std::vector<VeloUTTracking::TrackVelo>& inputTracks, const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits) const;
 
 private:
 
@@ -95,22 +104,21 @@ private:
   // typedef MultiIndexedHitContainer<Hit, UT::Info::kNStations, UT::Info::kNLayers>::HitRange HitRange;
 
   bool getState(
-    const TrackVelo& iTr, 
-    VeloState& trState, 
-    std::vector<TrackVelo>& outputTracks ) const;
+    const VeloUTTracking::TrackVelo& iTr, 
+    VeloState& trState ) const;
 
   bool getHits(
-    std::array<std::vector<Hit>,4>& hitsInLayers, 
-    const std::array<std::vector<Hit>,4>& inputHits,
+    std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
+    const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
     const std::vector<float>& fudgeFactors, 
-    const VeloState& trState ) const;
+    const VeloState& trState ) const; 
 
-  bool formClusters(const std::array<std::vector<Hit>,4>& hitsInLayers, TrackHelper& helper) const;
+  bool formClusters(const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, TrackHelper& helper) const;
 
-  void prepareOutputTrack(const TrackVelo& veloTrack,
+  void prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
                           const TrackHelper& helper,
-                          const std::array<std::vector<Hit>,4>& hitsInLayers,
-                          std::vector<TrackVelo>& outputTracks,
+                          const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+                          std::vector<VeloUTTracking::TrackUT>& outputTracks,
                           const std::vector<float>& bdlTable) const;
 
   // ==============================================================================
@@ -118,11 +126,12 @@ private:
   // ==============================================================================
   inline void findHits( 
     const std::vector<Hit>& inputHits,
+    const std::vector<VeloUTTracking::Hit>& inputHits,
     const int startpos,
     const VeloState& myState, 
     const float xTolNormFact,
     const float invNormFact,
-    std::vector<Hit>& outHits ) const 
+    std::vector<VeloUTTracking::Hit>& outHits ) const 
   {
     const auto zInit = inputHits.at(startpos).zAtYEq0();
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
@@ -137,25 +146,34 @@ private:
 
     for (int i=pos; i<inputHits.size(); ++i) {
 
-      const Hit& hit = inputHits[pos];
+      const VeloUTTracking::Hit& hit = inputHits[pos];
 
       const auto xx = hit.xAt(yApprox);
       const auto dx = xx - xOnTrackProto;
 
+      // debug_cout << "dx = " << dx << ", xTolNormFact = " << xTolNormFact << std::endl;
+
+      //tree->Branch("dx", &dx );
+      //tree->Fill();
+      
       if( dx < -xTolNormFact ) continue;
-      if( dx >  xTolNormFact ) break;
+      if( dx >  xTolNormFact ) break; 
+	    
 
       // -- Now refine the tolerance in Y
+      //debug_cout << "yApprox = " << yApprox << " tol = " << m_yTolSlope * std::abs(dx*invNormFact) << ", invNormFact = " << invNormFact << ", yMin - tol = " << hit.yMin() - m_yTol + m_yTolSlope * std::abs(dx*invNormFact) << std::endl;
       if( hit.isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
+      //std::cout << "past y criteria " << std::endl;
 
       const auto zz = hit.zAtYEq0();
       const auto yy = yyProto +  myState.ty*zz;
       const auto xx2 = hit.xAt(yy);
 
       // TODO avoid the copy - remove the const?
-      Hit temp_hit = hit;
+      VeloUTTracking::Hit temp_hit = hit;
       temp_hit.m_second_x = xx2;
       temp_hit.m_second_z = zz;
+
 
       outHits.emplace_back(temp_hit);
     }
@@ -165,7 +183,7 @@ private:
   // -- 2 helper functions for fit
   // -- Pseudo chi2 fit, templated for 3 or 4 hits
   // ===========================================================================================
-  void addHit( float* mat, float* rhs, const Hit* hit) const {
+  void addHit( float* mat, float* rhs, const VeloUTTracking::Hit* hit) const {
     const float ui = hit->x;
     const float ci = hit->cosT();
     const float dz = 0.001*(hit->z - m_zMidUT);
@@ -177,7 +195,7 @@ private:
     rhs[1] += wi * ui * dz;
   }
 
-  void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const Hit* hit) const {
+  void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const VeloUTTracking::Hit* hit) const {
     const float zd    = hit->z;
     const float xd    = xTTFit + xSlopeTTFit*(zd-m_zMidUT);
     const float du    = xd - hit->x;
@@ -186,7 +204,7 @@ private:
 
   template <std::size_t N>
   void simpleFit(
-    std::array<const Hit*,N>& hits, 
+    std::array<const VeloUTTracking::Hit*,N>& hits, 
     TrackHelper& helper ) const 
   {
     assert( N==3||N==4 );
@@ -199,7 +217,7 @@ private:
 
     // TODO uncomment
     // const int nHighThres = std::count_if( hits.begin(),  hits.end(),
-    //                                       []( Hit* hit ) { return hit && hit->highThreshold(); });
+    //                                       []( VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
 
     const int nHighThres = 2;
 
@@ -207,7 +225,7 @@ private:
     // -- = likely spillover
     if( nHighThres < m_minHighThres ) return;
 
-    std::for_each( hits.begin(), hits.end(), [&](const Hit* h) { this->addHit(mat,rhs,h); } );
+    std::for_each( hits.begin(), hits.end(), [&](const VeloUTTracking::Hit* h) { this->addHit(mat,rhs,h); } );
 
     ROOT::Math::CholeskyDecomp<float, 2> decomp(mat);
     if( !decomp ) return;
@@ -224,7 +242,7 @@ private:
 
     float chi2TT = chi2VeloSlope*chi2VeloSlope;
 
-    std::for_each( hits.begin(), hits.end(), [&](const Hit* h) { this->addChi2(xTTFit,xSlopeTTFit, chi2TT, h); } );
+    std::for_each( hits.begin(), hits.end(), [&](const VeloUTTracking::Hit* h) { this->addChi2(xTTFit,xSlopeTTFit, chi2TT, h); } );
 
     chi2TT /= (N + 1 - 2);
 

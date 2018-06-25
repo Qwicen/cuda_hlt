@@ -8,9 +8,9 @@ __global__ void prefix_sum_scan(
   // Note: The first block is already correctly populated.
   //       Start on the second block.
   const uint element = (blockIdx.x + 1) * blockDim.x + threadIdx.x;
-  const uint cluster_offset = dev_cluster_offset[blockIdx.x + 1];
 
   if (element < array_size) {
+    const uint cluster_offset = dev_cluster_offset[blockIdx.x + 1];
     dev_estimated_input_size[element] += cluster_offset;
   }
 }

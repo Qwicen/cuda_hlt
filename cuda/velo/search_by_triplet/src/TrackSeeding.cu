@@ -8,13 +8,13 @@ __device__ void trackSeeding(
   float* shared_best_fits,
   const float* hit_Xs,
   const float* hit_Ys,
-  const Module* module_data,
+  const VeloTracking::Module* module_data,
   const short* h0_candidates,
   const short* h2_candidates,
   bool* hit_used,
   uint* tracklets_insertPointer,
   uint* ttf_insertPointer,
-  Track* tracklets,
+  VeloTracking::TrackHits* tracklets,
   uint* tracks_to_follow,
   unsigned short* h1_rel_indices,
   uint* local_number_of_hits
@@ -94,7 +94,7 @@ __device__ void trackSeeding(
       // Fetch h1
       const auto h1_rel_index = h1_rel_indices[h1_rel_rel_index];
       h1_index = module_data[1].hitStart + h1_rel_index;
-      const Hit h1 {hit_Xs[h1_index], hit_Ys[h1_index]};
+      const VeloTracking::HitXY h1 {hit_Xs[h1_index], hit_Ys[h1_index]};
 
       // Iterate over all h0, h2 combinations
       // Ignore used hits
@@ -111,7 +111,7 @@ __device__ void trackSeeding(
           const auto h0_index = h0_first_candidate + h0_rel_candidate;
           if (!hit_used[h0_index]) {
             // Fetch h0
-            const Hit h0 {hit_Xs[h0_index], hit_Ys[h0_index]};
+            const VeloTracking::HitXY h0 {hit_Xs[h0_index], hit_Ys[h0_index]};
 
             // Finally, iterate over all h2 indices
             for (auto h2_index=h2_first_candidate; h2_index<h2_last_candidate; ++h2_index) {
@@ -121,7 +121,7 @@ __device__ void trackSeeding(
                 // Our triplet is h0_index, h1_index, h2_index
                 // Fit it and check if it's better than what this thread had
                 // for any triplet with h1
-                const Hit h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
+                const VeloTracking::HitXY h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
 
                 // Calculate prediction
                 const auto x = h0.x + (h1.x - h0.x) * z2_tz;
@@ -171,8 +171,8 @@ __device__ void trackSeeding(
     if (threadIdx.x == winner_thread) {
       // Add the track to the bag of tracks
       const auto trackP = atomicAdd(tracklets_insertPointer, 1);
-      // assert(trackP < number_of_hits);
-      tracklets[trackP] = Track {3, best_h0, h1_index, best_h2};
+      assert(trackP < VeloTracking::ttf_modulo );
+      tracklets[trackP] = VeloTracking::TrackHits {3, best_h0, h1_index, best_h2};
 
       // Add the tracks to the bag of tracks to_follow
       // Note: The first bit flag marks this is a tracklet (hitsNum == 3),

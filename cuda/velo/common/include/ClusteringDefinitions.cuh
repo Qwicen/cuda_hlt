@@ -5,7 +5,13 @@
 #include <vector>
 #include <iostream>
 
+#include "VeloDefinitions.cuh"
+
 namespace VeloClustering {
+  // Adjusted to minbias events. In the future, it should
+  // be adjusted on the go.
+  static constexpr uint32_t max_candidates_event = 3000;
+
   extern __constant__ uint8_t sp_patterns [256];
   extern __constant__ uint8_t candidate_ks [9];
   extern __constant__ float sp_fx [512];
@@ -18,7 +24,6 @@ namespace VeloClustering {
   static constexpr uint32_t mask_ltr_top_right   = 0x7FFF0000;
   static constexpr uint32_t mask_rtl_bottom_left = 0x0000FFFE;
   static constexpr uint32_t max_clustering_iterations = 12;
-  static constexpr uint32_t max_candidates_event = 2000;
 }
 
 namespace LHCb {
@@ -57,7 +62,7 @@ namespace LHCb {
 }
 
 namespace VP {
-  static constexpr uint NModules = 52;
+  static constexpr uint NModules = VeloTracking::n_modules;
   static constexpr uint NSensorsPerModule = 4;
   static constexpr uint NSensors = NModules * NSensorsPerModule;
   static constexpr uint NChipsPerSensor = 3;
@@ -75,8 +80,7 @@ struct VeloRawEvent {
   char* payload;
 
   __device__ __host__ VeloRawEvent(
-    const char* event,
-    uint = 0
+    const char* event
   );
 };
 
@@ -86,8 +90,7 @@ struct VeloRawBank {
   uint32_t* sp_word;
 
   __device__ __host__ VeloRawBank(
-    const char* raw_bank,
-    uint = 0
+    const char* raw_bank
   );
 };
 

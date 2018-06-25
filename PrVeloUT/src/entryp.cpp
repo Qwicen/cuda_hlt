@@ -9,9 +9,9 @@ int main() {
 
   std::vector<TrackVelo> tracks;
   for (int i=0; i<nb_tracks; ++i) {
-    TrackVelo tr;
+    VeloUTTracking::TrackVelo tr;
     for (int j=0; j<nb_states; ++j) {
-      VeloState st;
+      VeloUTTracking::VeloState st;
       tr.emplace_back(st);
     }
     tracks.emplace_back(tr);

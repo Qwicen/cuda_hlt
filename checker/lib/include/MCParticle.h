@@ -15,7 +15,7 @@
 
 #include "boost/range/iterator_range.hpp"
 
-#include "SOAContainer.h"
+#include "../SOAContainer/include/SOAContainer.h"
 #include "LHCbID.h"
 
 namespace MCParticleDesc {
@@ -72,5 +72,3 @@ namespace MCParticleDesc {
 
 using MCParticles = SOA::Container<std::vector, MCParticleDesc::Skin>;
 using MCParticleRange = boost::iterator_range<MCParticles::iterator>;
-
-// vim: sw=4:tw=78:ft=cpp:et

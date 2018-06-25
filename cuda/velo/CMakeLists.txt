@@ -12,7 +12,7 @@ include_directories(calculate_phi_and_sort/include)
 include_directories(search_by_triplet/include)
 include_directories(simplified_kalman_filter/include) 
 
-cuda_add_library( libcuVelo STATIC
+cuda_add_library(Velo STATIC
   ${velo_common}
   ${velo_clustering_sources}
   ${velo_phi_and_sort}
@@ -20,3 +20,8 @@ cuda_add_library( libcuVelo STATIC
   ${velo_simplified_kalman_filter}
   ${velo_consolidate_tracks}
   )
+
+if ( MC_CHECK )
+  target_compile_definitions(Velo PUBLIC MC_CHECK)
+endif()
+ 
