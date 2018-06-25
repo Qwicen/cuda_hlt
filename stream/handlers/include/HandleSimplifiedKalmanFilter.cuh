@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../../../cuda/velo/simplified_kalman_filter/include/VeloKalmanFilter.cuh"
+#include <stdint.h>
+#include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "Handler.cuh"
 
 struct SimplifiedKalmanFilter : public Handler {
@@ -8,7 +9,7 @@ struct SimplifiedKalmanFilter : public Handler {
   uint32_t* dev_velo_cluster_container;
   uint* dev_module_cluster_start;
   int* dev_atomics_storage;
-  TrackHits* dev_tracks;
+  Track<mc_check_enabled>* dev_tracks;
   VeloState* dev_velo_states;
 
   SimplifiedKalmanFilter() = default;
@@ -17,7 +18,7 @@ struct SimplifiedKalmanFilter : public Handler {
     uint32_t* param_dev_velo_cluster_container,
     uint* param_dev_module_cluster_start,
     int* param_dev_atomics_storage,
-    TrackHits* param_dev_tracks,
+    Track<mc_check_enabled>* param_dev_tracks,
     VeloState* param_dev_velo_states
   ) {
     dev_velo_cluster_container = param_dev_velo_cluster_container;

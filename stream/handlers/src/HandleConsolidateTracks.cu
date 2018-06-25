@@ -8,6 +8,7 @@ void ConsolidateTracks::operator()() {
     dev_output_tracks,
     dev_velo_cluster_container,
     dev_module_cluster_start,
-    dev_module_cluster_num
+    dev_module_cluster_num,
+    dev_velo_states
   );
 }

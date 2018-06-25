@@ -45,7 +45,8 @@ void check_events(
 );
 
 std::vector<std::string> list_folder(
-  const std::string& foldername
+  const std::string& foldername,
+  const bool print_num_elems = false
 );
 
 void read_folder(

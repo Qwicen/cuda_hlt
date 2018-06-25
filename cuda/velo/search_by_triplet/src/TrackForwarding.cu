@@ -64,7 +64,7 @@ __device__ void trackForwarding(
 
       const TrackHits* track_pointer = track_flag ? tracklets : tracks;
       
-      assert(track_pointer==tracklets ? trackno < number_of_hits : true);
+      assert(track_pointer==tracklets ? trackno < VeloTracking::ttf_modulo : true);
       assert(track_pointer==tracks ? trackno < VeloTracking::max_tracks : true);
       auto t = track_pointer[trackno];
 
@@ -143,7 +143,7 @@ __device__ void trackForwarding(
         }
 
         // Copy the track into tracks
-        assert( trackno < VeloTracking::max_tracks );
+        assert(trackno < VeloTracking::max_tracks);
         tracks[trackno] = t;
 
         // Add the tracks to the bag of tracks to_follow

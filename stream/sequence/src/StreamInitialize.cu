@@ -37,7 +37,7 @@ cudaError_t Stream::initialize(
   maskedVeloClustering.set(  dim3(number_of_events),    dim3(256),    stream);
   calculatePhiAndSort.set(   dim3(number_of_events),    dim3(64),     stream);
   searchByTriplet.set(       dim3(number_of_events),    dim3(32),     stream);
-  copyAndPrefixSumSingleBlock.set(dim3(number_of_events), dim3(1024), stream);
+  copyAndPrefixSumSingleBlock.set(dim3(1),              dim3(1024), stream);
   consolidateTracks.set(     dim3(number_of_events),    dim3(32),     stream);
   simplifiedKalmanFilter.set(dim3(number_of_events),    dim3(1024),   stream);
 
@@ -132,9 +132,11 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_h2_candidates, 2 * VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(short)));
   cudaCheck(cudaMalloc((void**)&dev_rel_indices, number_of_events * max_numhits_in_module * sizeof(unsigned short)));
 
+  // simplified kalman filter
   if (do_simplified_kalman_filter) {
-    // simplified kalman filter
     cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * VeloTracking::states_per_track * sizeof(VeloState)));
+  } else {
+    cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * sizeof(VeloState)));
   }
 
   // Memory allocations for host memory (copy back)
@@ -219,14 +221,15 @@ cudaError_t Stream::initialize(
     dev_output_tracks,
     dev_velo_cluster_container,
     dev_estimated_input_size,
-    dev_module_cluster_num
+    dev_module_cluster_num,
+    dev_velo_states
   );
   
   simplifiedKalmanFilter.setParameters(
     dev_velo_cluster_container,
     dev_estimated_input_size,
     dev_atomics_storage,
-    dev_tracks,
+    dev_output_tracks,
     dev_velo_states
   );
 
