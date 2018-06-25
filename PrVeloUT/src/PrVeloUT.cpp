@@ -91,15 +91,20 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   std::vector<VeloUTTracking::TrackUT> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
+  std::array<std::array<int,85>,4> posLayers;
+  fillIterators(hh, posLayers);
+
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
   std::array<std::vector<VeloUTTracking::Hit>,4> hitsInLayers;
+  for( auto& it : hitsInLayers ) it.reserve(8); // TODO check this number
   for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
 
     VeloState trState;
     if( !getState(veloTr, trState)) continue;
-    if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState ) ) continue;
+    for( auto& it : hitsInLayers ) it.clear();
+    if( !getHits(hitsInLayers, posLayers, inputHits, fudgeFactors, trState ) ) continue;
 
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
@@ -168,6 +173,7 @@ bool PrVeloUT::getState(
 //=============================================================================
 bool PrVeloUT::getHits(
   std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+  const std::array<std::array<int,85>,4>& posLayers,
   const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
   const std::vector<float>& fudgeFactors, 
   const VeloState& trState ) const 
@@ -204,7 +210,6 @@ bool PrVeloUT::getHits(
       // UNLIKELY is a MACRO for `__builtin_expect` compiler hint of GCC
       if( hits.empty() ) continue;
 
-      
       const float dxDy   = hits.front().dxDy();
       const float zLayer = hits.front().zAtYEq0();
 
@@ -212,17 +217,27 @@ bool PrVeloUT::getHits(
       const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
       const float yLayer = yAtZ + yTol*dxDyHelper[2*iStation+iLayer];
 
-      const float normFactNum = normFact[layer];
+      const float normFactNum = normFact[2*iStation + iLayer];
       const float invNormFact = 1.0/normFactNum;
 
       const float lowerBoundX =
         (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(trState.tx)*m_intraLayerDist;
+      const float upperBoundX =
+        (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(trState.tx)*m_intraLayerDist;
 
-      int pos = 0;
-      while ( (hits[pos].xAtYEq0() < lowerBoundX) && (pos != hits.size()) ) ++pos;
-      if (pos == hits.size()) continue;
+      const int indexLowProto = lowerBoundX > 0 ? std::sqrt( std::abs(lowerBoundX)*2.0 ) + 42 : 42 - std::sqrt( std::abs(lowerBoundX)*2.0 );
+      const int indexHiProto  = upperBoundX > 0 ? std::sqrt( std::abs(upperBoundX)*2.0 ) + 43 : 43 - std::sqrt( std::abs(upperBoundX)*2.0 );
 
-      findHits(hits, pos, trState, xTol*invNormFact, invNormFact, hitsInLayers[layer]);
+      const int indexLow  = std::max( indexLowProto, 0 );
+      const int indexHi   = std::min( indexHiProto, 84);
+
+      size_t posBeg = posLayers[layer][ indexLow ];
+      size_t posEnd = posLayers[layer][ indexHi  ];
+
+      while ( (hits[posBeg].xAtYEq0() < lowerBoundX) && (posBeg != hits.size()) ) ++posBeg;
+      if (posBeg == hits.size()) continue;
+
+      findHits(posBeg, posEnd, hits trState, xTol*invNormFact, invNormFact, hitsInLayers[layer]);
 
       nLayers += int(!hitsInLayers[layer].empty());
     }

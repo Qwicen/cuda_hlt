@@ -109,6 +109,7 @@ private:
 
   bool getHits(
     std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
+    const std::array<std::array<int,85>,4>& posLayers,
     const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
     const std::vector<float>& fudgeFactors, 
     const VeloState& trState ) const; 
@@ -122,12 +123,58 @@ private:
                           const std::vector<float>& bdlTable) const;
 
   // ==============================================================================
+  // -- Method to cache some starting points for the search
+  // -- This is actually faster than binary searching the full array
+  // -- Granularity hardcoded for the moment.
+  // -- Idea is: UTb has dimensions in x (at y = 0) of about -860mm -> 860mm
+  // -- The indices go from 0 -> 84, and shift by -42, leading to -42 -> 42
+  // -- Taking the higher density of hits in the center into account, the positions of the iterators are
+  // -- calculated as index*index/2, where index = [ -42, 42 ], leading to
+  // -- -882mm -> 882mm
+  // -- The last element is an "end" iterator, to make sure we never go out of bound
+  // ==============================================================================
+  inline void fillIterators(
+    const UT::HitHandler*hh, 
+    std::array<std::array<int,85>,4>& posLayers) const
+  {
+    
+    for(int iStation = 0; iStation < 2; ++iStation){
+      for(int iLayer = 0; iLayer < 2; ++iLayer){
+        const HitRange& hits = hh->hits( iStation, iLayer );
+        int layer = 2*iStation + iLayer;
+
+        size_t pos = 0;
+        posLayers[layer].fill(pos);
+
+        float bound = -42.0;
+        float val = std::copysign(bound*bound/2.0, bound);
+
+        // TODO add bounds checking
+        for ( ; pos != hits.size(); ++pos) {
+          while( hits[pos].xAtYEq0() > val){
+            posLayers[layer][bound+42] = pos;
+            ++bound;
+            val = std::copysign(bound*bound/2.0, bound);
+          }
+        }
+
+        std::fill(
+          posLayers[layer].begin() + 42 + int(bound), 
+          posLayers[layer].end(), hits.size()
+        );
+
+      }
+    }
+  }
+
+  // ==============================================================================
   // -- Finds the hits in a given layer within a certain range
   // ==============================================================================
   inline void findHits( 
+    const size_t posBeg,
+    const size_t posEnd,
     const std::vector<Hit>& inputHits,
     const std::vector<VeloUTTracking::Hit>& inputHits,
-    const int startpos,
     const VeloState& myState, 
     const float xTolNormFact,
     const float invNormFact,
@@ -136,44 +183,34 @@ private:
     const auto zInit = inputHits.at(startpos).zAtYEq0();
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
 
-    int pos = startpos;
-    while ( pos <= inputHits.size() && 
+    size_t pos = posBeg;
+    while ( 
+      pos <= posEnd && 
       inputHits[pos].isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) ) 
     ) { ++pos; }
 
     const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
     const auto yyProto =       myState.y - myState.ty*myState.z;
 
-    for (int i=pos; i<inputHits.size(); ++i) {
+    for (int i=pos; i<posEnd; ++i) {
 
-      const VeloUTTracking::Hit& hit = inputHits[pos];
-
-      const auto xx = hit.xAt(yApprox);
+      const auto xx = inputHits.at(i).xAt(yApprox);
       const auto dx = xx - xOnTrackProto;
-
-      // debug_cout << "dx = " << dx << ", xTolNormFact = " << xTolNormFact << std::endl;
-
-      //tree->Branch("dx", &dx );
-      //tree->Fill();
       
       if( dx < -xTolNormFact ) continue;
       if( dx >  xTolNormFact ) break; 
-	    
 
       // -- Now refine the tolerance in Y
-      //debug_cout << "yApprox = " << yApprox << " tol = " << m_yTolSlope * std::abs(dx*invNormFact) << ", invNormFact = " << invNormFact << ", yMin - tol = " << hit.yMin() - m_yTol + m_yTolSlope * std::abs(dx*invNormFact) << std::endl;
-      if( hit.isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
-      //std::cout << "past y criteria " << std::endl;
+      if( inputHits.at(i).isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
 
-      const auto zz = hit.zAtYEq0();
+      const auto zz = inputHits.at(i).zAtYEq0();
       const auto yy = yyProto +  myState.ty*zz;
-      const auto xx2 = hit.xAt(yy);
+      const auto xx2 = inputHits.at(i).xAt(yy);
 
       // TODO avoid the copy - remove the const?
-      VeloUTTracking::Hit temp_hit = hit;
+      VeloUTTracking::Hit temp_hit = inputHits.at(i);
       temp_hit.m_second_x = xx2;
       temp_hit.m_second_z = zz;
-
 
       outHits.emplace_back(temp_hit);
     }
