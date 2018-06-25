@@ -110,7 +110,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     if( !getState(veloTr, trState)) continue;
     n_cand_tracks++;
     if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState ) ) continue;
-    std::cout << "got hits " << std::endl;
+    debug_cout << "got hits " << std::endl;
 
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
