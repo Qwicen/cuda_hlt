@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
   );
   t.stop();
 
-  delete ut_hits_events;
+  delete [] ut_hits_events;
   
   std::cout << (number_of_events * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;

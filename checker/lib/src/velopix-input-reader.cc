@@ -368,8 +368,8 @@ std::vector<VelopixEvent> read_mc_folder (
     else if ( fromNtuple )
       readNtupleIntoVelopixEvent(foldername + "/" + readingFile, trackType, event);
       
-    if ( i == 0 )
-      event.print();
+    // if ( i == 0 )
+    //   event.print();
        
     input.emplace_back(event);
 

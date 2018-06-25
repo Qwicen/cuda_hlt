@@ -224,12 +224,14 @@ cudaError_t Stream::operator()(
       TFile *f = new TFile("../output/veloUT.root", "RECREATE");
       TTree *t_ut_hits = new TTree("ut_hits","ut_hits");
       TTree *t_velo_states = new TTree("velo_states", "velo_states");
+      TTree *t_track_hits = new TTree("track_hits", "track_hits");
       float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
       float x, y, tx, ty, chi2, z, drdz;
       float first_z, last_z;
       unsigned int LHCbID;
       int highThreshold;
       int backward;
+      float x_hit, y_hit, z_hit;
 
       t_ut_hits->Branch("cos", &cos);
       t_ut_hits->Branch("yBegin", &yBegin);
@@ -250,7 +252,10 @@ cudaError_t Stream::operator()(
       t_velo_states->Branch("drdz", &drdz);
       t_velo_states->Branch("first_z", &first_z);
       t_velo_states->Branch("last_z", &last_z);
-			
+      t_track_hits->Branch("x", &x_hit);
+      t_track_hits->Branch("y", &y_hit);
+      t_track_hits->Branch("z", &z_hit);
+      
       if ( velout.initialize() ) {
     	for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
     	  // Prepare hits
@@ -324,6 +329,15 @@ cudaError_t Stream::operator()(
     	    drdz = velo_track.hits[0].x * dx/dz + velo_track.hits[0].y * dy/dz;
     	    t_velo_states->Fill();
 
+	    /* Get hits on track */
+	    for ( int i_hit = 0; i_hit < velo_track.hitsNum; ++i_hit ) {
+	      x_hit = velo_track.hits[i_hit].x;
+	      y_hit = velo_track.hits[i_hit].y;
+	      z_hit = velo_track.hits[i_hit].z;
+
+	      t_track_hits->Fill();
+	    }
+	    
     	    if ( velo_track.backward ) continue;
     	    tracks.push_back( track );
     	  }

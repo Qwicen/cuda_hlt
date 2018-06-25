@@ -98,7 +98,7 @@ __global__ void consolidate_tracks(
       // state at beam line is stored in first element,
       // state at end of Velo is stored in third element of velo_states
       int state_index = VeloTracking::states_per_track * element; 
-      destination_velo_states[element] = velo_states[state_index +  2];
+      destination_velo_states[element] = velo_states[state_index];
       
       const VeloTracking::TrackHits track = event_tracks[element];
       VeloTracking::Track <mc_check_enabled> t = createTrack <mc_check_enabled> ( track, hit_Xs, hit_Ys, hit_Zs, hit_IDs, velo_states[ state_index ] );

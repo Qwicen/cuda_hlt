@@ -319,7 +319,7 @@ __global__ void velo_fit(
       	velo_state_base + 1
       );
 
-      // Careful: when uncommenting this, the states_per_track needs to be increased to 3!      Upstream fit ("into interaction region")
+      //  Upstream fit ("into interaction region")
       // simplified_fit<true>(
       //   hit_Xs,
       //   hit_Ys,
