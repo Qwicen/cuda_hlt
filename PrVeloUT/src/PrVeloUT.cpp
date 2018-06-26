@@ -114,7 +114,6 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     }
 
     if( helper.bestHits[0]){
-      debug_cout << "found track" << std::endl;
       prepareOutputTrack(veloTr, helper, hitsInLayers, outputTracks, bdlTable);
     }
   }
@@ -402,7 +401,7 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
 
     const float xhit = hit->x;
     const float zhit = hit->z;
-
+    
     for( auto& ohit : hitsInLayers[hit->planeCode()]){
       const float zohit = ohit.z;
       if(zohit==zhit) continue;
@@ -418,10 +417,10 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
       
       // -- only one overlap hit
       break;
-    }
+    } 
   }
-
-  /*
+ 
+   /*
   outTr.x = helper.state.x;
   outTr.y = helper.state.y;
   outTr.z = helper.state.z;

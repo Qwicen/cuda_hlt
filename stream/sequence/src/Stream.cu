@@ -302,6 +302,7 @@ cudaError_t Stream::operator()(
     	      hit.m_yEnd = hits_layers_events[i_event].yEnd[layer_offset + i_hit];
     	      hit.m_zAtYEq0 = hits_layers_events[i_event].zAtYEq0[layer_offset + i_hit];
     	      hit.m_LHCbID = hits_layers_events[i_event].LHCbID[layer_offset + i_hit];
+	      hit.m_planeCode = i_layer;
 	      
     	      inputHits[i_layer].push_back( hit );
 
