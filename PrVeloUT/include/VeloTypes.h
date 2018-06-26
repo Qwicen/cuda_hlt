@@ -22,9 +22,6 @@ namespace VeloUTTracking {
     float m_zAtYEq0; ///< The value of z at the point y=0
     unsigned int m_LHCbID;
     
-    float m_second_x;
-    float m_second_z;
-    
     bool  m_cluster_threshold;
     int   m_cluster_station;
     int   m_cluster_layer;

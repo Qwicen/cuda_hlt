@@ -103,7 +103,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     if( !getState(veloTr, trState)) continue;
     for( auto& it : hitsInLayers ) it.clear();
     if( !getHits(hitsInLayers, posLayers, inputHits, fudgeFactors, trState ) ) continue;
-
+        
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
     if( !formClusters(hitsInLayers, helper) ){
@@ -114,6 +114,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     }
 
     if( helper.bestHits[0]){
+      debug_cout << "found track" << std::endl;
       prepareOutputTrack(veloTr, helper, hitsInLayers, outputTracks, bdlTable);
     }
   }
@@ -267,7 +268,7 @@ bool PrVeloUT::formClusters(
       const float tx = (xhitLayer2 - xhitLayer0)/(zhitLayer2 - zhitLayer0);
 
       if( std::abs(tx-helper.state.tx) > m_deltaTx2 ) continue;
-
+      
       const VeloUTTracking::Hit* bestHit1 = nullptr;
       float hitTol = m_hitTol2;
       for(const auto& hit1 : hitsInLayers[1]) {

@@ -289,7 +289,8 @@ cudaError_t Stream::operator()(
 	  }
 	  // Prepare hits
 	  std::array<std::vector<VeloUTTracking::Hit>,VeloUTTracking::n_layers> inputHits;
-    	  for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+	  for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+	    inputHits[i_layer].clear();
 	    int layer_offset = accumulated_hits_layers[i_layer];
     	    for ( int i_hit = 0; i_hit < n_hits_layers_events[i_event][i_layer]; ++i_hit ) {
     	      VeloUTTracking::Hit hit;
