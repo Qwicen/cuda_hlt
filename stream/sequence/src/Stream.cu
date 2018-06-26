@@ -182,8 +182,12 @@ cudaError_t Stream::operator()(
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(VeloTracking::Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      // only copy one velo state back -> don't need VeloTracking::states_per_track
-      cudaCheck(cudaMemcpyAsync(host_velo_states, consolidateTracks.dev_velo_states, number_of_events * max_tracks_in_event * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
+      if ( do_simplified_kalman_filter ) {
+	cudaCheck(cudaMemcpyAsync(host_velo_states, consolidateTracks.dev_velo_states, number_of_events * max_tracks_in_event * VeloTracking::states_per_track * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
+      }
+      else {
+	cudaCheck(cudaMemcpyAsync(host_velo_states, consolidateTracks.dev_velo_states, number_of_events * max_tracks_in_event * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
+      }
     }
 
     cudaEventRecord(cuda_generic_event, stream);
@@ -263,8 +267,6 @@ cudaError_t Stream::operator()(
       t_velo_states->Branch("z", &z);
       t_velo_states->Branch("backward", &backward);
       t_velo_states->Branch("drdz", &drdz);
-      // t_velo_states->Branch("first_z", &first_z);
-      // t_velo_states->Branch("last_z", &last_z);
       t_track_hits->Branch("x", &x_hit);
       t_track_hits->Branch("y", &y_hit);
       t_track_hits->Branch("z", &z_hit);
@@ -338,9 +340,7 @@ cudaError_t Stream::operator()(
     	    ty = track.state.ty;
     	    chi2 = track.state.chi2;
     	    z = track.state.z;
-	    //first_z = velo_track.first_z;
-	    //last_z = velo_track.last_z;
-    	    // study (sign of) (dr/dz) -> track moving away from beamline?
+	    // study (sign of) (dr/dz) -> track moving away from beamline?
     	    // drop 1/sqrt(x^2+y^2) to avoid sqrt calculation, no effect on sign
     	    float dx = velo_track.hits[velo_track.hitsNum - 1].x - velo_track.hits[0].x;
     	    float dy = velo_track.hits[velo_track.hitsNum - 1].y - velo_track.hits[0].y;
