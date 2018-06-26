@@ -104,8 +104,6 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     for( auto& it : hitsInLayers ) it.clear();
     if( !getHits(hitsInLayers, posLayers, inputHits, fudgeFactors, trState ) ) continue;
 
-    debug_cout << "got hits " << std::endl;
-    
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
     if( !formClusters(hitsInLayers, helper) ){

@@ -171,7 +171,11 @@ int main(int argc, char *argv[])
     velopix_event_offsets );
   
   check_velopix_events( velopix_events, velopix_event_offsets, number_of_files );
-  
+
+  if ( !fileExists(folder_name_velopix_raw + "/geometry.bin") ) {
+    error_cout << "no geometry file found in " << folder_name_velopix_raw << std::endl;
+    return -1;
+  }
   std::vector<char> geometry;
   readGeometry(folder_name_velopix_raw, geometry);
 

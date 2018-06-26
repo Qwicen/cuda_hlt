@@ -244,7 +244,7 @@ cudaError_t Stream::operator()(
       float x, y, tx, ty, chi2, z, drdz;
       //float first_z, last_z;
       unsigned int LHCbID;
-      int highThreshold;
+      int highThreshold, layer;
       int backward;
       float x_hit, y_hit, z_hit;
       float first_x, first_y, first_z;
@@ -259,6 +259,7 @@ cudaError_t Stream::operator()(
       t_ut_hits->Branch("weight", &weight);
       t_ut_hits->Branch("LHCbID", &LHCbID);
       t_ut_hits->Branch("highThreshold", &highThreshold);
+      t_ut_hits->Branch("layer", &layer);
       t_velo_states->Branch("x", &x);
       t_velo_states->Branch("y", &y);
       t_velo_states->Branch("tx", &tx);
@@ -304,6 +305,8 @@ cudaError_t Stream::operator()(
     	      xAtYEq0 = hit.m_xAtYEq0;
     	      weight = hit.m_weight;
     	      LHCbID = hit.m_LHCbID;
+	      layer = i_layer;
+	      
     	      t_ut_hits->Fill();
     	    }
     	    // sort hits according to xAtYEq0
@@ -367,7 +370,7 @@ cudaError_t Stream::operator()(
     	    if ( velo_track.backward ) continue;
     	    tracks.push_back( track );
     	  }
-    	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
+    	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0, " << inputHits[1].size() << " hits in layer 1, " << inputHits[2].size() << " hits in layer 2, " << inputHits[3].size() << " in layer 3 to velout" << std::endl;
 	  
     	  std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, inputHits);
     	  debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
