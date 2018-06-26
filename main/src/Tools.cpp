@@ -115,7 +115,8 @@ void check_events(
 }
 
 std::vector<std::string> list_folder(
-  const std::string& foldername
+  const std::string& foldername,
+  const bool print_num_elems
 ) {
   std::vector<std::string> folderContents;
   DIR *dir;
@@ -136,7 +137,11 @@ std::vector<std::string> list_folder(
       error_cout << "No binary files found in folder " << foldername << std::endl;
       exit(-1);
     } else {
-      verbose_cout << "Found " << folderContents.size() << " binary files" << std::endl;
+      if (print_num_elems) {
+        info_cout << "Found " << folderContents.size() << " binary files" << std::endl;
+      } else {
+        verbose_cout << "Found " << folderContents.size() << " binary files" << std::endl;
+      }
     }
   } else {
     error_cout << "Folder could not be opened" << std::endl;
@@ -157,7 +162,7 @@ void read_folder(
   std::vector<char>& events,
   std::vector<uint>& event_offsets
 ) {
-  std::vector<std::string> folderContents = list_folder(foldername);
+  std::vector<std::string> folderContents = list_folder(foldername, true);
 
   if (number_of_files == 0) {
     number_of_files = folderContents.size();
@@ -225,7 +230,7 @@ std::vector<VelopixEvent> read_mc_folder (
 
     // Sanity check
     if (event.numberOfModules == VeloTracking::n_modules) {
-      input.emplace_back(event);
+      input.push_back(event);
     }
     else {
       error_cout << "ERROR: number of sensors should be " << VeloTracking::n_modules
@@ -241,8 +246,6 @@ std::vector<VelopixEvent> read_mc_folder (
   info_cout << std::endl << input.size() << " files read" << std::endl << std::endl;
   return input;
 }
-
-
 
 /**
  * @brief Obtains results statistics.
@@ -403,15 +406,15 @@ void call_PrChecker(
 ) {
   /* MC information */
   int n_events = all_tracks.size();
-  std::vector<VelopixEvent> events = read_mc_folder(folder_name_MC, n_events, true );
+  std::vector<VelopixEvent> events = read_mc_folder(folder_name_MC, n_events, false);
   
   TrackChecker trackChecker {};
   uint64_t evnum = 0;
   for (const auto& ev: events) {
     debug_cout << "Event " << (evnum+1) << std::endl;
-    auto mcps = ev.mcparticles();
-    std::vector< uint32_t > hit_IDs = ev.hit_IDs;
-    std::vector<VelopixEvent::MCP> mcps_vector = ev.mcps;
+    const auto& mcps = ev.mcparticles();
+    const std::vector<uint32_t>& hit_IDs = ev.hit_IDs;
+    const std::vector<VelopixEvent::MCP>& mcps_vector = ev.mcps;
     MCAssociator mcassoc(mcps);
 
     debug_cout << "Found " << all_tracks[evnum].size() << " reconstructed tracks" <<

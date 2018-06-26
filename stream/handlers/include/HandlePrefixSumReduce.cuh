@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../cuda/velo/mask_clustering/include/PrefixSum.cuh"
+#include "../../../cuda/velo/prefix_sum/include/PrefixSum.cuh"
 #include "Handler.cuh"
 
 struct PrefixSumReduce : public Handler {

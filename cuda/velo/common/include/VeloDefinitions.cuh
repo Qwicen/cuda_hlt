@@ -57,7 +57,7 @@ namespace VeloTracking {
 
   // Constants for requested storage on device
   static constexpr uint max_tracks = 2200;
-  static constexpr uint max_track_size = 26;
+  static constexpr uint max_track_size = 27;
   static constexpr uint max_numhits_in_module = 300; 
 
   // Maximum number of tracks to follow at a time
@@ -70,6 +70,9 @@ namespace VeloTracking {
   static constexpr uint states_per_track = 3;
   static constexpr float param_w = 3966.94f;
   static constexpr float param_w_inverted = 0.000252083f;
+
+  // Max chi2
+  static constexpr float max_chi2 = 20.0;
 }
 
 struct Module {
@@ -109,10 +112,10 @@ struct HitBase { // 3 * 4 = 12 B
     ) : x(_x), y(_y), z(_z) {}
 };
 
-template <bool MCCheck>
+template<bool MCCheck>
 struct Hit;
 
-template <>
+template<>
 struct Hit <true> : public HitBase { // 4 * 4 = 16 B
     uint32_t LHCbID;
     
@@ -125,8 +128,8 @@ struct Hit <true> : public HitBase { // 4 * 4 = 16 B
     ) : HitBase( _x, _y, _z ), LHCbID( _LHCbID ) {}
 };
 
-template <>
-struct Hit <false> : public HitBase { // 4 * 3 = 12 B
+template<>
+struct Hit<false> : public HitBase { // 4 * 3 = 12 B
      __device__ Hit(){}
      __device__ Hit(
        const float _x,
@@ -159,20 +162,19 @@ struct TrackHits { // 4 + 26 * 4 = 116 B
 
    Without MC: 4 + 26 * 12 = 316 B
    With MC:    4 + 26 * 16 = 420 B */
-template <bool MCCheck>   
+template<bool MCCheck>   
 struct Track {
   unsigned short hitsNum;
-  Hit <MCCheck> hits[VeloTracking::max_track_size];
+  Hit<MCCheck> hits[VeloTracking::max_track_size];
   
   __device__ Track(){
-  hitsNum = 0;
+    hitsNum = 0;
   }
  
-  __device__ void addHit( Hit <MCCheck> _h ){
-    hits[ hitsNum ] = _h;
+  __device__ void addHit(Hit <MCCheck> _h){
+    hits[hitsNum] = _h;
     hitsNum++;
   }
-
 }; 
 
 /**

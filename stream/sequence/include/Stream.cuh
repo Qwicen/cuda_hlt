@@ -15,6 +15,7 @@
 #include "../../handlers/include/HandleEstimateInputSize.cuh"
 #include "../../handlers/include/HandlePrefixSumReduce.cuh"
 #include "../../handlers/include/HandlePrefixSumSingleBlock.cuh"
+#include "../../handlers/include/HandleCopyAndPrefixSumSingleBlock.cuh"
 #include "../../handlers/include/HandlePrefixSumScan.cuh"
 #include "../../handlers/include/HandleMaskedVeloClustering.cuh"
 #include "../../handlers/include/HandleCalculatePhiAndSort.cuh"
@@ -48,6 +49,7 @@ struct Stream {
   MaskedVeloClustering maskedVeloClustering;
   CalculatePhiAndSort calculatePhiAndSort;
   SearchByTriplet searchByTriplet;
+  CopyAndPrefixSumSingleBlock copyAndPrefixSumSingleBlock;
   ConsolidateTracks consolidateTracks;
   SimplifiedKalmanFilter simplifiedKalmanFilter;
   // Launch options

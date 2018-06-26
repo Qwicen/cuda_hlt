@@ -86,17 +86,17 @@ cudaError_t Stream::operator()(
     // Print output
     // maskedVeloClustering.print_output(number_of_events, 3);
 
-    if (do_check) {
-      // Check results
-      maskedVeloClustering.check(
-        host_events_pinned,
-        host_event_offsets_pinned,
-        host_events_pinned_size,
-        host_event_offsets_pinned_size,
-        geometry,
-        number_of_events
-      );
-    }
+    // if (do_check) {
+    //   // Check results
+    //   maskedVeloClustering.check(
+    //     host_events_pinned,
+    //     host_event_offsets_pinned,
+    //     host_events_pinned_size,
+    //     host_event_offsets_pinned_size,
+    //     geometry,
+    //     number_of_events
+    //   );
+    // }
 
     /////////////////////////
     // CalculatePhiAndSort //
@@ -129,12 +129,32 @@ cudaError_t Stream::operator()(
 
     // Print output
     // searchByTriplet.print_output(number_of_events);
+    
+    ////////////////////////
+    // Consolidate tracks //
+    ////////////////////////
+    
+    Helper::invoke(
+      copyAndPrefixSumSingleBlock,
+      "Calculate accumulated tracks",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+     );
 
-    // ////////////////////////////////////////
-    // // Optional: Simplified Kalman filter //
-    // // DvB: should not be optional, at least not
-    // // the state at the last measurement  //
-    // ////////////////////////////////////////
+    Helper::invoke(
+      consolidateTracks,
+      "Consolidate tracks",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+    );
+
+    ////////////////////////////////////////
+    // Optional: Simplified Kalman filter //
+    ////////////////////////////////////////
 
     if (do_simplified_kalman_filter) {
       Helper::invoke(
@@ -146,19 +166,6 @@ cudaError_t Stream::operator()(
         print_individual_rates
       );
     }
-    
-    ////////////////////////
-    // Consolidate tracks //
-    ////////////////////////
-    
-    Helper::invoke(
-      consolidateTracks,
-      "Consolidate tracks",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
     
     // Transmission device to host
     if (transmit_device_to_host) {
