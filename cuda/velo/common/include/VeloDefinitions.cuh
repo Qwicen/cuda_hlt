@@ -162,7 +162,7 @@ namespace VeloTracking {
   struct Track {
     bool backward;
     unsigned short hitsNum;
-    float first_z, last_z;
+    //float first_z, last_z;
     Hit <MCCheck> hits[VeloTracking::max_track_size];
   
     __device__ Track(){

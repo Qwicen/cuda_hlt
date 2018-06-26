@@ -227,11 +227,13 @@ cudaError_t Stream::operator()(
       TTree *t_track_hits = new TTree("track_hits", "track_hits");
       float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
       float x, y, tx, ty, chi2, z, drdz;
-      float first_z, last_z;
+      //float first_z, last_z;
       unsigned int LHCbID;
       int highThreshold;
       int backward;
       float x_hit, y_hit, z_hit;
+      float first_x, first_y, first_z;
+      float last_x, last_y, last_z;
 
       t_ut_hits->Branch("cos", &cos);
       t_ut_hits->Branch("yBegin", &yBegin);
@@ -250,11 +252,17 @@ cudaError_t Stream::operator()(
       t_velo_states->Branch("z", &z);
       t_velo_states->Branch("backward", &backward);
       t_velo_states->Branch("drdz", &drdz);
-      t_velo_states->Branch("first_z", &first_z);
-      t_velo_states->Branch("last_z", &last_z);
+      // t_velo_states->Branch("first_z", &first_z);
+      // t_velo_states->Branch("last_z", &last_z);
       t_track_hits->Branch("x", &x_hit);
       t_track_hits->Branch("y", &y_hit);
       t_track_hits->Branch("z", &z_hit);
+      t_velo_states->Branch("first_x", &first_x);
+      t_velo_states->Branch("first_y", &first_y);
+      t_velo_states->Branch("first_z", &first_z); 
+      t_velo_states->Branch("last_x", &last_x);
+      t_velo_states->Branch("last_y", &last_y);
+      t_velo_states->Branch("last_z", &last_z); 
       
       if ( velout.initialize() ) {
     	for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
@@ -319,14 +327,22 @@ cudaError_t Stream::operator()(
     	    ty = track.state.ty;
     	    chi2 = track.state.chi2;
     	    z = track.state.z;
-	    first_z = velo_track.first_z;
-	    last_z = velo_track.last_z;
+	    //first_z = velo_track.first_z;
+	    //last_z = velo_track.last_z;
     	    // study (sign of) (dr/dz) -> track moving away from beamline?
     	    // drop 1/sqrt(x^2+y^2) to avoid sqrt calculation, no effect on sign
     	    float dx = velo_track.hits[velo_track.hitsNum - 1].x - velo_track.hits[0].x;
     	    float dy = velo_track.hits[velo_track.hitsNum - 1].y - velo_track.hits[0].y;
     	    float dz = velo_track.hits[velo_track.hitsNum - 1].z - velo_track.hits[0].z;
     	    drdz = velo_track.hits[0].x * dx/dz + velo_track.hits[0].y * dy/dz;
+
+	    first_x = velo_track.hits[0].x;
+	    first_y = velo_track.hits[0].y;
+	    first_z = velo_track.hits[0].z;
+	    last_x = velo_track.hits[velo_track.hitsNum-1].x;
+	    last_y = velo_track.hits[velo_track.hitsNum-1].y;
+	    last_z = velo_track.hits[velo_track.hitsNum-1].z;
+	    
     	    t_velo_states->Fill();
 
 	    /* Get hits on track */
@@ -337,6 +353,7 @@ cudaError_t Stream::operator()(
 
 	      t_track_hits->Fill();
 	    }
+	    
 	    
     	    if ( velo_track.backward ) continue;
     	    tracks.push_back( track );

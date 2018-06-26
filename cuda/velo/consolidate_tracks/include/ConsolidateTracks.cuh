@@ -32,10 +32,10 @@ __device__ VeloTracking::Track <mc_check_enabled> createTrack(
     t.addHit( hit );
     if ( i == 0 ) {
       t.backward = state_at_beam_line.z > hit.z;
-      t.first_z = hit.z;
+      //t.first_z = hit.z;
     }
-    if ( i == track.hitsNum-1 )
-      t.last_z = hit.z;
+    // if ( i == track.hitsNum-1 )
+    //   t.last_z = hit.z;
   }
   
   return t;

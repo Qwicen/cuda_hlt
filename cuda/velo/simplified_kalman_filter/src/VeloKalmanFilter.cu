@@ -54,7 +54,18 @@ __device__ void means_square_fit(
     state.ty = (uyz * u0 - uy * uz) * denu;
     state.y = (uy * uz2 - uyz * uz) * denu;
 
+    //if ( state.tx != 0.0 || state.ty != 0.0 ) {
     state.z = -(state.x * state.tx + state.y * state.ty) / (state.tx * state.tx + state.ty * state.ty);
+    //}
+    // else { // never happens (?)
+    //   // edge case if the track is parallel to the beam
+    //   state.z = 0.0;
+    //   for (unsigned short h=0; h<track.hitsNum; ++h) {
+    // 	const auto hitno = track.hits[h];
+    // 	state.z += hit_Zs[hitno];
+    //   }
+    //   state.z /= track.hitsNum;
+    // }
     parameters.backward = state.z > hit_Zs[track.hits[0]];
   }
 
