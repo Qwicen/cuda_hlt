@@ -43,6 +43,7 @@ void printUsage(char* argv[]){
     << std::endl << " [-a {transmit host to device}=1]"
     << std::endl << " [-b {transmit device to host}=1]"
     << std::endl << " [-c {run checkers}=0]"
+    << std::endl << " [-k {simplified kalman filter}=0]"
     << std::endl << " [-v {verbosity}=3 (info)]"
     << std::endl << " [-p (print rates)]"
     << std::endl;
@@ -62,9 +63,10 @@ int main(int argc, char *argv[])
   bool transmit_device_to_host = true;
   // By default, do_check will be true when mc_check is enabled 
   bool do_check = mc_check_enabled;
+  bool do_simplified_kalman_filter = false;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:g:e:n:t:r:pha:b:d:v:c:")) != -1) {
+  while ((c = getopt(argc, argv, "f:g:e:n:t:r:pha:b:d:v:c:k:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_velopix_raw = std::string(optarg);
@@ -92,6 +94,9 @@ int main(int argc, char *argv[])
       break;
     case 'c':
       do_check = atoi(optarg);
+      break;
+    case 'k':
+      do_simplified_kalman_filter = atoi(optarg);
       break;
     case 'v':
       verbosity = atoi(optarg);
@@ -207,6 +212,7 @@ int main(int argc, char *argv[])
       transmit_host_to_device,
       transmit_device_to_host,
       do_check,
+      do_simplified_kalman_filter, 
       print_individual_rates,
       folder_name_MC,
       i

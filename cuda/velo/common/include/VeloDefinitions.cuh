@@ -56,7 +56,7 @@ namespace VeloTracking {
 
   // Constants for requested storage on device
   static constexpr uint max_tracks = 2200;
-  static constexpr uint max_track_size = 26;
+  static constexpr uint max_track_size = 27;
   static constexpr uint max_numhits_in_module = 300; 
 
   // Maximum number of tracks to follow at a time
@@ -69,6 +69,9 @@ namespace VeloTracking {
   static constexpr uint states_per_track = 3; 
   static constexpr float param_w = 3966.94f;
   static constexpr float param_w_inverted = 0.000252083f;
+
+  // Max chi2
+  static constexpr float max_chi2 = 20.0;
 
   struct Module {
     uint hitStart;

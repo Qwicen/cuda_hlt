@@ -96,17 +96,17 @@ cudaError_t Stream::operator()(
     // Print output
     // maskedVeloClustering.print_output(number_of_events, 3);
 
-    if (do_check) {
-      // Check results
-      maskedVeloClustering.check(
-        host_events_pinned,
-        host_event_offsets_pinned,
-        host_events_pinned_size,
-        host_event_offsets_pinned_size,
-        geometry,
-        number_of_events
-      );
-    }
+    // if (do_check) {
+    //   // Check results
+    //   maskedVeloClustering.check(
+    //     host_events_pinned,
+    //     host_event_offsets_pinned,
+    //     host_events_pinned_size,
+    //     host_event_offsets_pinned_size,
+    //     geometry,
+    //     number_of_events
+    //   );
+    // }
 
     /////////////////////////
     // CalculatePhiAndSort //
@@ -140,23 +140,19 @@ cudaError_t Stream::operator()(
     // Print output
     // searchByTriplet.print_output(number_of_events);
 
-    //////////////////////////////
-    // Simplified Kalman filter //
-    //////////////////////////////
-
+    ////////////////////////
+    // Consolidate tracks //
+    ////////////////////////
+    
     Helper::invoke(
-      simplifiedKalmanFilter,
-      "Simplified Kalman filter",
+      copyAndPrefixSumSingleBlock,
+      "Calculate accumulated tracks",
       times,
       cuda_event_start,
       cuda_event_stop,
       print_individual_rates
      );
-  
-    ////////////////////////
-    // Consolidate tracks //
-    ////////////////////////
-    
+
     Helper::invoke(
       consolidateTracks,
       "Consolidate tracks",
@@ -165,6 +161,21 @@ cudaError_t Stream::operator()(
       cuda_event_stop,
       print_individual_rates
     );
+
+    ////////////////////////////////////////
+    // Optional: Simplified Kalman filter //
+    ////////////////////////////////////////
+
+    if (do_simplified_kalman_filter) {
+      Helper::invoke(
+        simplifiedKalmanFilter,
+        "Simplified Kalman filter",
+        times,
+        cuda_event_start,
+        cuda_event_stop,
+        print_individual_rates
+      );
+    }
     
     // Transmission device to host
     if (transmit_device_to_host) {
@@ -172,7 +183,7 @@ cudaError_t Stream::operator()(
       cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(VeloTracking::Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       // only copy one velo state back -> don't need VeloTracking::states_per_track
-      cudaCheck(cudaMemcpyAsync(host_velo_states, consolidateTracks.dev_velo_states_out, number_of_events * max_tracks_in_event * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_velo_states, consolidateTracks.dev_velo_states, number_of_events * max_tracks_in_event * sizeof(VeloState), cudaMemcpyDeviceToHost, stream));
     }
 
     cudaEventRecord(cuda_generic_event, stream);

@@ -15,6 +15,7 @@
 #include "../../handlers/include/HandleEstimateInputSize.cuh"
 #include "../../handlers/include/HandlePrefixSumReduce.cuh"
 #include "../../handlers/include/HandlePrefixSumSingleBlock.cuh"
+#include "../../handlers/include/HandleCopyAndPrefixSumSingleBlock.cuh"
 #include "../../handlers/include/HandlePrefixSumScan.cuh"
 #include "../../handlers/include/HandleMaskedVeloClustering.cuh"
 #include "../../handlers/include/HandleCalculatePhiAndSort.cuh"
@@ -48,12 +49,14 @@ struct Stream {
   MaskedVeloClustering maskedVeloClustering;
   CalculatePhiAndSort calculatePhiAndSort;
   SearchByTriplet searchByTriplet;
+  CopyAndPrefixSumSingleBlock copyAndPrefixSumSingleBlock;
   ConsolidateTracks consolidateTracks;
   SimplifiedKalmanFilter simplifiedKalmanFilter;
   // Launch options
   bool transmit_host_to_device;
   bool transmit_device_to_host;
   bool do_check;
+  bool do_simplified_kalman_filter;
   bool print_individual_rates;
   // Varying cluster container size
   uint velo_cluster_container_size;
@@ -77,6 +80,7 @@ struct Stream {
     const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
+    const bool param_do_simplified_kalman_filter,
     const bool param_print_individual_rates,
     const std::string param_folder_name_MC,
     const uint param_stream_number

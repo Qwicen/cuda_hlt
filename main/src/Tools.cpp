@@ -162,7 +162,6 @@ void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
   
 }
 
-
 /**
  * @brief Obtains results statistics.
  */
@@ -332,9 +331,9 @@ void callPrChecker(
 
   for (const auto& ev: events) {
     debug_cout << "Event " << (evnum+1) << std::endl;
-    auto mcps = ev.mcparticles();
-    std::vector< uint32_t > hit_IDs = ev.hit_IDs;
-    std::vector<VelopixEvent::MCP> mcps_vector = ev.mcps;
+    const auto& mcps = ev.mcparticles();
+    const std::vector<uint32_t>& hit_IDs = ev.hit_IDs;
+    const std::vector<VelopixEvent::MCP>& mcps_vector = ev.mcps;
     MCAssociator mcassoc(mcps);
 
     debug_cout << "Found " << all_tracks[evnum].size() << " reconstructed tracks" <<
