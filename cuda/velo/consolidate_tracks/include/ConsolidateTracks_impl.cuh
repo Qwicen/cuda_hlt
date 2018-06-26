@@ -189,11 +189,6 @@ __global__ void consolidate_tracks(
         state
       );
 
-      // Note: With the state, the following parameters can be calculated:
-      // backward = state.z > track.hits[0].z;
-      // tx = state.tx;
-      // ty = state.ty;
-
       if (
         // Require chi2 under threshold for 3-hit tracks
         (track.hitsNum == 3 && state.chi2 < VeloTracking::max_chi2) || 
@@ -203,6 +198,7 @@ __global__ void consolidate_tracks(
         assert(track_number < number_of_tracks);
 
         VeloTracking::Track<mc_check_enabled> t = createTrack<mc_check_enabled>(track, hit_Xs, hit_Ys, hit_Zs, hit_IDs);
+	t.backward = state.z > t.hits[0].z;
         destination_tracks[track_number] = t;
         destination_states[track_number] = state;
       }
