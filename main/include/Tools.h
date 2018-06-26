@@ -18,7 +18,7 @@
 #include "../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
 #include "../../checker/lib/include/Tracks.h"
 #include "../include/InputTools.h"
-
+#include "../../PrVeloUT/include/VeloTypes.h"
 
 void readGeometry(
   const std::string& foldername,
@@ -73,6 +73,10 @@ std::vector< trackChecker::Tracks > prepareTracks(
   int * host_accumulated_tracks,
   int * host_number_of_tracks_pinned,
   const int &number_of_events
+);
+
+trackChecker::Tracks prepareVeloUTTracks(
+  std::vector< VeloUTTracking::TrackUT > ut_tracks
 );
 
 void callPrChecker(

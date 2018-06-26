@@ -366,3 +366,20 @@ std::vector< trackChecker::Tracks > prepareTracks(
 
   return all_tracks;
 }
+
+
+trackChecker::Tracks prepareVeloUTTracks(
+  std::vector< VeloUTTracking::TrackUT > ut_tracks
+) {
+  trackChecker::Tracks checker_tracks;
+  for ( VeloUTTracking::TrackUT ut_track : ut_tracks ) {
+    trackChecker::Track checker_track;
+    for ( int i_hit = 0; i_hit < ut_track.hitsNum; ++i_hit ) {
+      LHCbID lhcb_id( ut_track.LHCbIDs[i_hit] );
+      checker_track.addId( lhcb_id );
+    }
+    checker_tracks.push_back( checker_track );
+  }
+
+  return checker_tracks;
+}

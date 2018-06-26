@@ -213,6 +213,8 @@ cudaError_t Stream::operator()(
         cudaEventRecord(cuda_generic_event, stream);
         cudaEventSynchronize(cuda_generic_event);
 
+	info_cout << "CHECKING VELO TRACKS " << std::endl;
+	
         const std::vector< trackChecker::Tracks > tracks_events = prepareTracks(
           host_tracks_pinned,
       	  host_accumulated_tracks,
@@ -225,7 +227,7 @@ cudaError_t Stream::operator()(
     	  tracks_events,
       	  folder_name_MC,
     	  fromNtuple,
-    	  trackType);
+    	  trackType); 
       }
     }
 
@@ -234,7 +236,8 @@ cudaError_t Stream::operator()(
     */
     if (mc_check_enabled && i_stream == 0) {
       PrVeloUT velout;
-
+      std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
+      
       // Histograms only for checking and debugging
       TFile *f = new TFile("../output/veloUT.root", "RECREATE");
       TTree *t_ut_hits = new TTree("ut_hits","ut_hits");
@@ -384,9 +387,26 @@ cudaError_t Stream::operator()(
 	  
     	  std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, inputHits);
     	  debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
+
+	  // save in format for track checker
+	  trackChecker::Tracks checker_tracks = prepareVeloUTTracks( ut_tracks );
+	  ut_tracks_events->emplace_back( checker_tracks );
+	  
     	}
+	
+	info_cout << "CHECKING VeloUT TRACKS" << std::endl;
+	const bool fromNtuple = true;
+        const std::string trackType = "VeloUT";
+        callPrChecker(
+    	  *ut_tracks_events,
+      	  folder_name_MC,
+    	  fromNtuple,
+    	  trackType); 
+	
     	f->Write();
     	f->Close();
+	
+	delete ut_tracks_events;
       }
       
     } // mc_check_enabled      
