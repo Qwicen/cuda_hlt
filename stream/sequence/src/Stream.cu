@@ -204,7 +204,7 @@ cudaError_t Stream::operator()(
     ///////////////////////
 
 
-    if (mc_check_enabled && i_stream == 0) {
+    if (do_check && i_stream == 0) {
       if (repetition == 0) { // only check efficiencies once
         // Fetch data
         cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
