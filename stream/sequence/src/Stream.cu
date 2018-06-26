@@ -280,19 +280,27 @@ cudaError_t Stream::operator()(
       
       if ( velout.initialize() ) {
     	for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
-    	  // Prepare hits
-    	  std::array<std::vector<VeloUTTracking::Hit>,VeloUTTracking::n_layers> inputHits;
+	  // find out offsets for every layer
+	  int accumulated_hits = 0;
+	  int accumulated_hits_layers[4];
+	  for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+	    accumulated_hits_layers[i_layer] = accumulated_hits;
+	    accumulated_hits += n_hits_layers_events[i_event][i_layer];
+	  }
+	  // Prepare hits
+	  std::array<std::vector<VeloUTTracking::Hit>,VeloUTTracking::n_layers> inputHits;
     	  for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+	    int layer_offset = accumulated_hits_layers[i_layer];
     	    for ( int i_hit = 0; i_hit < n_hits_layers_events[i_event][i_layer]; ++i_hit ) {
     	      VeloUTTracking::Hit hit;
-    	      hit.m_cos = hits_layers_events[i_event].cos[i_hit];
-    	      hit.m_dxDy = hits_layers_events[i_event].dxDy[i_hit];
-    	      hit.m_weight = hits_layers_events[i_event].weight[i_hit];
-    	      hit.m_xAtYEq0 = hits_layers_events[i_event].xAtYEq0[i_hit];
-    	      hit.m_yBegin = hits_layers_events[i_event].yBegin[i_hit];
-    	      hit.m_yEnd = hits_layers_events[i_event].yEnd[i_hit];
-    	      hit.m_zAtYEq0 = hits_layers_events[i_event].zAtYEq0[i_hit];
-    	      hit.m_LHCbID = hits_layers_events[i_event].LHCbID[i_hit];
+    	      hit.m_cos = hits_layers_events[i_event].cos[layer_offset + i_hit];
+    	      hit.m_dxDy = hits_layers_events[i_event].dxDy[layer_offset + i_hit];
+    	      hit.m_weight = hits_layers_events[i_event].weight[layer_offset + i_hit];
+    	      hit.m_xAtYEq0 = hits_layers_events[i_event].xAtYEq0[layer_offset + i_hit];
+    	      hit.m_yBegin = hits_layers_events[i_event].yBegin[layer_offset + i_hit];
+    	      hit.m_yEnd = hits_layers_events[i_event].yEnd[layer_offset + i_hit];
+    	      hit.m_zAtYEq0 = hits_layers_events[i_event].zAtYEq0[layer_offset + i_hit];
+    	      hit.m_LHCbID = hits_layers_events[i_event].LHCbID[layer_offset + i_hit];
 	      
     	      inputHits[i_layer].push_back( hit );
 

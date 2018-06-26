@@ -24,11 +24,8 @@ void check_velopix_events(
     uint32_t number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
     uint32_t* raw_bank_offset = (uint32_t*) p; p += number_of_raw_banks * sizeof(uint32_t);
 
-    //printf("at event %u, # of raw banks = %u, first offset = %u, second offset = %u \n", i_event, number_of_raw_banks, raw_bank_offset[0], raw_bank_offset[1]);
-    
     uint32_t sensor =  *((uint32_t*)p);  p += sizeof(uint32_t);
     uint32_t sp_count =  *((uint32_t*)p); p += sizeof(uint32_t);
-    //printf("sensor = %u, sp_count = %u \n", sensor, sp_count);
 
     const auto raw_event = VeloRawEvent(raw_input);
     int n_sps_event = 0;
@@ -38,7 +35,6 @@ void check_velopix_events(
       if ( i_raw_bank != raw_bank.sensor_index ) {
         error_cout << "at raw bank " << i_raw_bank << ", but index = " << raw_bank.sensor_index << std::endl;
       }
-      //printf("\t sensor = %u, sp_count = %u \n",  raw_bank.sensor_index, raw_bank.sp_count);
       if ( raw_bank.sp_count > 0 ) {
         uint32_t sp_word = raw_bank.sp_word[0];
         uint8_t sp = sp_word & 0xFFU;
@@ -47,17 +43,11 @@ void check_velopix_events(
         const uint32_t sp_row = sp_addr & 0x3FU;
         const uint32_t sp_col = (sp_addr >> 6);
         const uint32_t no_sp_neighbours = sp_word & 0x80000000U;
-        //printf("\t first sp col = %u, row = %u \n", sp_col, sp_row);
       }
       
     }
     n_sps_all_events += n_sps_event;
-    //printf("# of sps in this event = %u\n", n_sps_event);
   }
-
-  // printf("total # of sps = %u \n", n_sps_all_events);
-  // float n_sps_average = (float)n_sps_all_events / n_events;
-  // printf("average # of sps per event = %f \n", n_sps_average);
 }
 
 void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
@@ -134,8 +124,8 @@ void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       debug_cout << "checks on layer " << i_layer << ", with " << n_hits_layers_events[i_event][i_layer] << " hits" << std::endl;
       number_of_hits += n_hits_layers_events[i_event][i_layer];
+      int layer_offset = accumulated_hits_layers[i_layer];
       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
-	int layer_offset = accumulated_hits_layers[i_layer];
 	printf("\t at hit %u, cos = %f, yBegin = %f, yEnd = %f, dxDy = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight = %f, highThreshold = %u, LHCbID = %u \n",
 	       i_hit,
 	       hits_layers_events[i_event].cos[ layer_offset + i_hit ],
