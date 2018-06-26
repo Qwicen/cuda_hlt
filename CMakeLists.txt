@@ -15,6 +15,8 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 
+include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/ROOT/6.12.06-0f687/x86_64-slc6-gcc62-opt/include/")
+
 # MC truth matching
 if("${MC_CHECK}" STREQUAL Off OR "${MC_CHECK}" STREQUAL OFF)
   MESSAGE(STATUS "MC_CHECK: Off")
