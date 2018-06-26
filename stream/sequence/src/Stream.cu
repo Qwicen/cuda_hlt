@@ -307,15 +307,14 @@ cudaError_t Stream::operator()(
     	      t_ut_hits->Fill();
     	    }
     	    // sort hits according to xAtYEq0
-    	    std::sort( inputHits[i_layer].begin(), inputHits[i_layer].end(), [](VeloUTTracking::Hit a, VeloUTTracking::Hit b) { return a.xAtYEq0() > b.xAtYEq0(); } );
+    	    std::sort( inputHits[i_layer].begin(), inputHits[i_layer].end(), [](VeloUTTracking::Hit a, VeloUTTracking::Hit b) { return a.xAtYEq0() < b.xAtYEq0(); } );
     	  }
 	  
     	  // Prepare Velo tracks
     	  VeloState* velo_states_event = host_velo_states + host_accumulated_tracks[i_event];
     	  VeloTracking::Track<true>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
     	  std::vector<VeloUTTracking::TrackVelo> tracks;
-    	  int n_states = 0;
-    	  for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+	  for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
 
     	    VeloUTTracking::TrackVelo track;
 
@@ -329,11 +328,10 @@ cudaError_t Stream::operator()(
     	    track.track = ut_track;
 	    
     	    track.state = ( velo_states_event[i_track] );
-    	    if ( velo_states_event[i_track].x != 0 ) {
-    	      n_states++;
-    	    }
-	    
+
+	    //////////////////////
     	    // For tree filling
+	    //////////////////////
     	    x = track.state.x;
     	    y = track.state.y;
     	    tx = track.state.tx;
@@ -369,7 +367,7 @@ cudaError_t Stream::operator()(
     	    if ( velo_track.backward ) continue;
     	    tracks.push_back( track );
     	  }
-    	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << n_states << " velo states and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
+    	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0 to velout" << std::endl;
 	  
     	  std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, inputHits);
     	  debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;

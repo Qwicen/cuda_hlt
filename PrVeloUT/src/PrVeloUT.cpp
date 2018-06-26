@@ -85,9 +85,6 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   const std::vector<VeloUTTracking::TrackVelo>& inputTracks, 
   const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits) const
 {
-
-  //TFile *f = new TFile("PrveloUT.root", "RECREATE");
-  //TTree *tree = new TTree("tree","tree");
   
   std::vector<VeloUTTracking::TrackUT> outputTracks;
   outputTracks.reserve(inputTracks.size());
@@ -107,6 +104,8 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     for( auto& it : hitsInLayers ) it.clear();
     if( !getHits(hitsInLayers, posLayers, inputHits, fudgeFactors, trState ) ) continue;
 
+    debug_cout << "got hits " << std::endl;
+    
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
     if( !formClusters(hitsInLayers, helper) ){
@@ -135,7 +134,6 @@ bool PrVeloUT::getState(
   // const VeloState& state = s ? *s : (iTr.closestState(LHCb::State::EndVelo));
   // TODO get the closest state not the last
   const VeloState state = iTr.state;
-  //std::cout << "state z = " << state.z << std::endl;
   
   // -- reject tracks outside of acceptance or pointing to the beam pipe
   trState.tx = state.tx;
