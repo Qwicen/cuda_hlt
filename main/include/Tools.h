@@ -79,7 +79,7 @@ trackChecker::Tracks prepareVeloUTTracks(
   std::vector< VeloUTTracking::TrackUT > ut_tracks
 );
 
-void callPrChecker(
+void call_pr_checker(
   const std::vector< trackChecker::Tracks >& all_tracks,
   const std::string& folder_name_MC,
   const bool& fromNtuple,

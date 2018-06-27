@@ -3,6 +3,7 @@
 
 #include "../../../PrVeloUT/src/PrVeloUT.h"
 
+
 #include "TH1D.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -223,11 +224,11 @@ cudaError_t Stream::operator()(
       
         const bool fromNtuple = true;
         const std::string trackType = "Velo";
-        callPrChecker(
-    	  tracks_events,
+      	call_pr_checker (
+	  tracks_events,
       	  folder_name_MC,
     	  fromNtuple,
-    	  trackType); 
+    	  trackType);
       }
     }
 
@@ -397,7 +398,7 @@ cudaError_t Stream::operator()(
 	info_cout << "CHECKING VeloUT TRACKS" << std::endl;
 	const bool fromNtuple = true;
         const std::string trackType = "VeloUT";
-        callPrChecker(
+        call_pr_checker (
     	  *ut_tracks_events,
       	  folder_name_MC,
     	  fromNtuple,

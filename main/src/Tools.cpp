@@ -2,7 +2,6 @@
 #include "../../checker/lib/include/velopix-input-reader.h"
 #include "../../checker/lib/include/TrackChecker.h"
 #include "../../checker/lib/include/MCParticle.h"
-#include "../../checker/lib/include/velopix-input-reader.h"
 
 void readGeometry(
   const std::string& foldername,
@@ -305,36 +304,7 @@ void check_roughly(
   printf("efficiency = %f \n", float(matched) / long_tracks );
 }
 
-void callPrChecker(
-  const std::vector< trackChecker::Tracks >& all_tracks,
-  const std::string& folder_name_MC,
-  const bool& fromNtuple,
-  const std::string& trackType
-) {
 
-  /* MC information */
-  int n_events = all_tracks.size();
-    std::vector<VelopixEvent> events = read_mc_folder(folder_name_MC, fromNtuple, trackType, n_events, true );
-  
-  TrackChecker trackChecker {};
-  uint64_t evnum = 0; // DvB: check, was 1 before!!
-
-  for (const auto& ev: events) {
-    debug_cout << "Event " << (evnum+1) << std::endl;
-    const auto& mcps = ev.mcparticles();
-    const std::vector<uint32_t>& hit_IDs = ev.hit_IDs;
-    const std::vector<VelopixEvent::MCP>& mcps_vector = ev.mcps;
-    MCAssociator mcassoc(mcps);
-
-    debug_cout << "Found " << all_tracks[evnum].size() << " reconstructed tracks" <<
-     " and " << mcps.size() << " MC particles " << std::endl;
-
-    trackChecker(all_tracks[evnum], mcassoc, mcps);
-    //check_roughly(tracks, hit_IDs, mcps_vector);
-
-    ++evnum;
-  }
-}
 
 std::vector< trackChecker::Tracks > prepareTracks(
   VeloTracking::Track <true> * host_tracks_pinned,
@@ -383,3 +353,30 @@ trackChecker::Tracks prepareVeloUTTracks(
 
   return checker_tracks;
 }
+
+
+void call_pr_checker(
+  const std::vector< trackChecker::Tracks >& all_tracks,
+  const std::string& folder_name_MC,
+  const bool& fromNtuple,
+  const std::string& trackType
+) {
+  if ( trackType == "Velo" ) {
+    callPrChecker< TrackCheckerVelo> (
+      all_tracks,
+      folder_name_MC,
+      fromNtuple,
+      trackType);
+  }
+  else if ( trackType == "VeloUT" ) {
+    callPrChecker< TrackCheckerVeloUT> (
+      all_tracks,
+      folder_name_MC,
+      fromNtuple,
+      trackType);
+  }
+  else {
+    error_cout << "unknown track type: " << trackType << std::endl;
+  }
+}
+

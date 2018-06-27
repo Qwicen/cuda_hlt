@@ -298,8 +298,8 @@ void readNtupleIntoVelopixEvent(
     fChain->GetTree()->GetEntry(entry);
     if( p<0) continue;  // Hits not associated to an MCP are stored with p < 0
     //Velo
-    if ( trackType == "Velo" && !hasVelo ) continue;
-    if ( trackType == "VeloUT" && !(hasVelo && hasUT) ) continue;
+    //if ( trackType == "Velo" && !hasVelo ) continue;
+    //if ( trackType == "VeloUT" && !(hasVelo && hasUT) ) continue;
         
     VelopixEvent::MCP mcp;
     mcp.key = key;
@@ -382,4 +382,3 @@ std::vector<VelopixEvent> read_mc_folder (
   info_cout << std::endl << input.size() << " files read" << std::endl << std::endl;
   return input;
 }
- 

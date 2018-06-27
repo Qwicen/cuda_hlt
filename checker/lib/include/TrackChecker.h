@@ -20,7 +20,7 @@
 
 class TrackChecker
 {
-    private:
+   protected:
         using AcceptFn = std::function<bool (const MCParticles::const_reference&)>;
         struct TrackEffReport {
             std::string m_name;
@@ -77,9 +77,29 @@ class TrackChecker
         float m_ghostperevent = 0.f;
 
     public:
-        TrackChecker();
+        TrackChecker() {};
         ~TrackChecker();
         void operator()(const trackChecker::Tracks& tracks,
                 const MCAssociator& mcassoc,
                 const MCParticles& mcps);
+};
+
+class TrackCheckerVelo : public TrackChecker
+{
+  public:
+      void SetCategories();
+      TrackCheckerVelo() {
+        SetCategories();
+      };
+  
+};
+
+class TrackCheckerVeloUT : public TrackChecker
+{
+  public:
+      void SetCategories();
+      TrackCheckerVeloUT() {
+        SetCategories();
+      };
+  
 };

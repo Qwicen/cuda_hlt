@@ -12,16 +12,16 @@
 
 #include "TrackChecker.h"
 
-TrackChecker::TrackChecker() :
-  m_categories({ // define which categories to monitor
+void TrackCheckerVelo::SetCategories() {
+  m_categories = {{ // define which categories to monitor
     TrackEffReport({ "Velo",
         [] (const MCParticles::const_reference& mcp)
         { return mcp.isVelo() && 11 != std::abs(mcp.pid()); },
         }),
-    TrackEffReport({ "Velo, p > 5 GeV",
-        [] (const MCParticles::const_reference& mcp)
-        { return mcp.isVelo() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
-        }),
+    // TrackEffReport({ "Velo, p > 5 GeV",
+    //     [] (const MCParticles::const_reference& mcp)
+    //     { return mcp.isVelo() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
+    //     }),
     TrackEffReport({ "Long",
         [] (const MCParticles::const_reference& mcp)
         { return mcp.isLong() && 11 != std::abs(mcp.pid()); },
@@ -29,22 +29,6 @@ TrackChecker::TrackChecker() :
     TrackEffReport({ "Long, p > 5 GeV",
         [] (const MCParticles::const_reference& mcp)
         { return mcp.isLong() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
-        }),
-    TrackEffReport({ "Long from B",
-        [] (const MCParticles::const_reference& mcp)
-        { return mcp.isLong() && mcp.isFromB() && 11 != std::abs(mcp.pid()); },
-        }),
-    TrackEffReport({ "Long from B, p > 5 GeV",
-        [] (const MCParticles::const_reference& mcp)
-        { return mcp.isLong() && mcp.isFromB() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
-        }),
-    TrackEffReport({ "Long from D",
-        [] (const MCParticles::const_reference& mcp)
-        { return mcp.isLong() && mcp.isFromD() && 11 != std::abs(mcp.pid()); },
-        }),
-    TrackEffReport({ "Long from D, p > 5 GeV",
-        [] (const MCParticles::const_reference& mcp)
-        { return mcp.isLong() && mcp.isFromD() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
         }),
     TrackEffReport({ "Long strange",
         [] (const MCParticles::const_reference& mcp)
@@ -54,24 +38,87 @@ TrackChecker::TrackChecker() :
         [] (const MCParticles::const_reference& mcp)
         { return mcp.isStrangeLong() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
         }),
-    TrackEffReport({ "Down",
+    TrackEffReport({ "Long from B",
         [] (const MCParticles::const_reference& mcp)
-        { return mcp.isDown() && 11 != std::abs(mcp.pid()); },
+        { return mcp.isLong() && mcp.isFromB() && 11 != std::abs(mcp.pid()); },
         }),
-    TrackEffReport({ "Down, p > 5 GeV",
+    TrackEffReport({ "Long from B, p > 5 GeV",
         [] (const MCParticles::const_reference& mcp)
-        { return mcp.isDown() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
-        }),
-    TrackEffReport({ "Down strange",
+        { return mcp.isLong() && mcp.isFromB() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
+        })
+    // TrackEffReport({ "Long from D",
+    //     [] (const MCParticles::const_reference& mcp)
+    //     { return mcp.isLong() && mcp.isFromD() && 11 != std::abs(mcp.pid()); },
+    //     }),
+    // TrackEffReport({ "Long from D, p > 5 GeV",
+    //     [] (const MCParticles::const_reference& mcp)
+    //     { return mcp.isLong() && mcp.isFromD() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
+    //     }),
+    // TrackEffReport({ "Down",
+    //     [] (const MCParticles::const_reference& mcp)
+    //     { return mcp.isDown() && 11 != std::abs(mcp.pid()); },
+    //     }),
+    // TrackEffReport({ "Down, p > 5 GeV",
+    //     [] (const MCParticles::const_reference& mcp)
+    //     { return mcp.isDown() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
+    //     }),
+    // TrackEffReport({ "Down strange",
+    //     [] (const MCParticles::const_reference& mcp)
+    //     { return mcp.isStrangeDown() && 11 != std::abs(mcp.pid()); },
+    //     }),
+    // TrackEffReport({ "Down strange, p > 5 GeV",
+    //     [] (const MCParticles::const_reference& mcp)
+    //     { return mcp.isStrangeDown() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
+    // 	})
+    }}; 
+};
+
+
+void TrackCheckerVeloUT::SetCategories() {
+  m_categories = {{ // define which categories to monitor
+    TrackEffReport({ "Velo",
         [] (const MCParticles::const_reference& mcp)
-        { return mcp.isStrangeDown() && 11 != std::abs(mcp.pid()); },
+	  { return mcp.isVelo() && 11 != std::abs(mcp.pid()); },
         }),
-    TrackEffReport({ "Down strange, p > 5 GeV",
+    TrackEffReport({ "Velo + UT",
         [] (const MCParticles::const_reference& mcp)
-        { return mcp.isStrangeDown() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
+	  { return mcp.isVelo() && mcp.isUT() && 11 != std::abs(mcp.pid()); },
         }),
-    })
-{}
+    TrackEffReport({ "Velo + UT, p > 5 GeV",
+	[] (const MCParticles::const_reference& mcp)
+	  { return mcp.isVelo() && mcp.isUT() && mcp.p() > 5e3 && 11 != std::abs(mcp.pid()) ; },
+	}),
+    TrackEffReport({ "Velo + not long",
+        [] (const MCParticles::const_reference& mcp)
+	  { return mcp.isVelo() && !mcp.isLong() && 11 != std::abs(mcp.pid()); },
+        }),
+    TrackEffReport({ "Velo + UT + not long",
+        [] (const MCParticles::const_reference& mcp)
+	  { return mcp.isVelo() && mcp.isUT() && !mcp.isLong() && 11 != std::abs(mcp.pid()); },
+	  }),
+    TrackEffReport({ "Velo + UT + not long, p > 5 GeV",
+        [] (const MCParticles::const_reference& mcp)
+	  { return mcp.isVelo() && mcp.isUT() && !mcp.isLong() && mcp.p() > 5e3 && 11 != std::abs(mcp.pid()); },
+	  }),
+    TrackEffReport({ "Long",
+	  [] (const MCParticles::const_reference& mcp)
+	    { return mcp.isLong() && 11 != std::abs(mcp.pid()); },
+	  }),
+    TrackEffReport({ "Long, p > 5 GeV",
+	  [] (const MCParticles::const_reference& mcp)
+	    { return mcp.isLong() && mcp.p() > 5e3 && 11 != std::abs(mcp.pid()); },
+	  }),
+    TrackEffReport({ "Long from B",
+	  [] (const MCParticles::const_reference& mcp)
+	    { return mcp.isLong() && mcp.isFromB() && 11 != std::abs(mcp.pid()); },
+	  }),
+    TrackEffReport({ "Long from B, p > 5 GeV",
+	  [] (const MCParticles::const_reference& mcp)
+	    { return mcp.isLong() && mcp.isFromB() && mcp.p() > 5e3 && 11 != std::abs(mcp.pid()); },
+	  })
+    }}; 
+}; 
+
 
 TrackChecker::~TrackChecker()
 {
