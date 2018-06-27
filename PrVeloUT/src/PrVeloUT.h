@@ -209,8 +209,8 @@ private:
 
       // TODO avoid the copy - remove the const?
       VeloUTTracking::Hit temp_hit = inputHits.at(i);
-      temp_hit.m_second_x = xx2;
-      temp_hit.m_second_z = zz;
+      temp_hit.x = xx2;
+      temp_hit.z = zz;
 
       outHits.emplace_back(temp_hit);
     }

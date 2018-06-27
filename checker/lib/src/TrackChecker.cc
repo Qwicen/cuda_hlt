@@ -75,7 +75,6 @@ TrackChecker::TrackChecker() :
 
 TrackChecker::~TrackChecker()
 {
-  std::printf("\n");
   std::printf("%-23s: %9lu/%9lu %6.2f%% (%6.2f%%) ghosts\n",
       "TrackChecker output",
       m_nghosts, m_ntracks,

@@ -85,9 +85,6 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   const std::vector<VeloUTTracking::TrackVelo>& inputTracks, 
   const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits) const
 {
-
-  //TFile *f = new TFile("PrveloUT.root", "RECREATE");
-  //TTree *tree = new TTree("tree","tree");
   
   std::vector<VeloUTTracking::TrackUT> outputTracks;
   outputTracks.reserve(inputTracks.size());
@@ -106,7 +103,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     if( !getState(veloTr, trState)) continue;
     for( auto& it : hitsInLayers ) it.clear();
     if( !getHits(hitsInLayers, posLayers, inputHits, fudgeFactors, trState ) ) continue;
-
+        
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
     if( !formClusters(hitsInLayers, helper) ){
@@ -135,7 +132,6 @@ bool PrVeloUT::getState(
   // const VeloState& state = s ? *s : (iTr.closestState(LHCb::State::EndVelo));
   // TODO get the closest state not the last
   const VeloState state = iTr.state;
-  //std::cout << "state z = " << state.z << std::endl;
   
   // -- reject tracks outside of acceptance or pointing to the beam pipe
   trState.tx = state.tx;
@@ -271,7 +267,7 @@ bool PrVeloUT::formClusters(
       const float tx = (xhitLayer2 - xhitLayer0)/(zhitLayer2 - zhitLayer0);
 
       if( std::abs(tx-helper.state.tx) > m_deltaTx2 ) continue;
-
+      
       const VeloUTTracking::Hit* bestHit1 = nullptr;
       float hitTol = m_hitTol2;
       for(const auto& hit1 : hitsInLayers[1]) {
@@ -405,7 +401,7 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
 
     const float xhit = hit->x;
     const float zhit = hit->z;
-
+    
     for( auto& ohit : hitsInLayers[hit->planeCode()]){
       const float zohit = ohit.z;
       if(zohit==zhit) continue;
@@ -421,10 +417,10 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
       
       // -- only one overlap hit
       break;
-    }
+    } 
   }
-
-  /*
+ 
+   /*
   outTr.x = helper.state.x;
   outTr.y = helper.state.y;
   outTr.z = helper.state.z;

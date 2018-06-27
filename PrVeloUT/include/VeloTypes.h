@@ -21,9 +21,7 @@ namespace VeloUTTracking {
     float m_yEnd;    ///< The y value at the end point of the line
     float m_zAtYEq0; ///< The value of z at the point y=0
     unsigned int m_LHCbID;
-    
-    float m_second_x;
-    float m_second_z;
+    int m_planeCode;
     
     bool  m_cluster_threshold;
     int   m_cluster_station;
@@ -44,7 +42,8 @@ namespace VeloUTTracking {
     inline int lhcbID() const { return m_LHCbID; }
     // TODO we have this?
     // inline int planeCode() const { return 2 * ( m_cluster.station() - 1 ) + ( m_cluster.layer() - 1 ) % 2; }
-    inline int planeCode() const { return 2 * ( m_cluster_station - 1 ) + ( m_cluster_layer - 1 ) % 2; }
+    //inline int planeCode() const { return 2 * ( m_cluster_station - 1 ) + ( m_cluster_layer - 1 ) % 2; }
+    inline int planeCode() const { return m_planeCode; }
     inline float sinT() const { return tanT() * cosT(); }
     // inline int size() const { return m_cluster.pseudoSize(); }
     inline float tanT() const { return -m_dxDy; }
