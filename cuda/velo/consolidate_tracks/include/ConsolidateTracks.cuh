@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../common/include/VeloDefinitions.cuh"
+#include "../../../../main/include/Common.h"
 #include <stdint.h>
 
 __device__ void means_square_fit(
@@ -11,7 +12,6 @@ __device__ void means_square_fit(
   VeloState& state
 );
 
-template<bool mc_check_enabled>
 __device__ Track<mc_check_enabled> createTrack(
   const TrackHits &track,
   const float* hit_Xs,
@@ -20,7 +20,6 @@ __device__ Track<mc_check_enabled> createTrack(
   const uint32_t* hit_IDs
 );
 
-template<bool mc_check_enabled>
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
   const TrackHits* dev_tracks,
@@ -30,5 +29,3 @@ __global__ void consolidate_tracks(
   uint* dev_module_cluster_num,
   VeloState* dev_velo_states
 );
-
-#include "ConsolidateTracks_impl.cuh"

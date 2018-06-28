@@ -1,3 +1,5 @@
+#include "../include/ConsolidateTracks.cuh"
+
 /**
  * @brief Calculates the parameters according to a root means square fit
  */
@@ -105,7 +107,6 @@
   state.y = state.y + state.ty * state.z;
 }
 
-template<bool mc_check_enabled>
 __device__ Track<mc_check_enabled> createTrack(
   const TrackHits &track,
   const float* hit_Xs,
@@ -127,7 +128,6 @@ __device__ Track<mc_check_enabled> createTrack(
   return t;
 }
 
-template<bool mc_check_enabled>
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
   const TrackHits* dev_tracks,
@@ -202,7 +202,7 @@ __global__ void consolidate_tracks(
         const int track_number = atomicAdd(tracks_insert_pointer, 1);
         assert(track_number < number_of_tracks);
 
-        Track<mc_check_enabled> t = createTrack<mc_check_enabled>(track, hit_Xs, hit_Ys, hit_Zs, hit_IDs);
+        Track<mc_check_enabled> t = createTrack(track, hit_Xs, hit_Ys, hit_Zs, hit_IDs);
         destination_tracks[track_number] = t;
         destination_states[track_number] = state;
       }

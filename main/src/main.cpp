@@ -25,9 +25,8 @@
 #include "../include/Logger.h"
 #include "../include/Tools.h"
 #include "../include/Timer.h"
-#include "../../stream/sequence/include/Stream.cuh"
+#include "../../stream/sequence/include/StreamWrapper.cuh"
 #include "../../stream/sequence/include/InitializeConstants.cuh"
-#include "../../x86/velo/clustering/include/Clustering.h"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
@@ -174,32 +173,21 @@ int main(int argc, char *argv[])
   initializeConstants();
 
   // Create streams
+  StreamWrapper stream_wrapper;
   const auto number_of_events = velopix_event_offsets.size() - 1;
-  std::vector<Stream> streams (tbb_threads);
-  for (int i=0; i<streams.size(); ++i) {
-    streams[i].initialize(
-      velopix_events,
-      velopix_event_offsets,
-      geometry,
-      number_of_events,
-      transmit_host_to_device,
-      transmit_device_to_host,
-      do_check,
-      do_simplified_kalman_filter,
-      print_individual_rates,
-      folder_name_MC,
-      i
-    );
-
-    // Memory consumption
-    size_t free_byte ;
-    size_t total_byte ;
-    cudaCheck( cudaMemGetInfo( &free_byte, &total_byte ) );
-    float free_percent = (float)free_byte / total_byte * 100;
-    float used_percent = (float)(total_byte - free_byte) / total_byte * 100;
-    verbose_cout << "GPU memory: " << free_percent << " percent free, "
-      << used_percent << " percent used " << std::endl;
-  }
+  stream_wrapper.initialize_streams(
+    tbb_threads,
+    velopix_events,
+    velopix_event_offsets,
+    geometry,
+    number_of_events,
+    transmit_host_to_device,
+    transmit_device_to_host,
+    do_check,
+    do_simplified_kalman_filter,
+    print_individual_rates,
+    folder_name_MC
+  );
   
   // Attempt to execute all in one go
   Timer t;
@@ -207,8 +195,8 @@ int main(int argc, char *argv[])
     static_cast<uint>(0),
     static_cast<uint>(tbb_threads),
     [&] (uint i) {
-      auto& s = streams[i];
-      s(
+      stream_wrapper.run_stream(
+        i,
         host_velopix_events_pinned,
         host_velopix_event_offsets_pinned,
         velopix_events.size(),

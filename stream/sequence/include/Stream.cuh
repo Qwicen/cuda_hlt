@@ -4,25 +4,22 @@
 #include <vector>
 #include <numeric>
 #include <algorithm>
+#include <tuple>
 
 #include "../../../main/include/Common.h"
 #include "../../../main/include/CudaCommon.h"
 #include "../../../main/include/Logger.h"
 #include "../../../main/include/Timer.h"
 #include "../../../main/include/Tools.h"
-#include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
-#include "../../../cuda/velo/common/include/ClusteringDefinitions.cuh"
-#include "../../handlers/include/HandleEstimateInputSize.cuh"
-#include "../../handlers/include/HandlePrefixSumReduce.cuh"
-#include "../../handlers/include/HandlePrefixSumSingleBlock.cuh"
-#include "../../handlers/include/HandleCopyAndPrefixSumSingleBlock.cuh"
-#include "../../handlers/include/HandlePrefixSumScan.cuh"
-#include "../../handlers/include/HandleMaskedVeloClustering.cuh"
-#include "../../handlers/include/HandleCalculatePhiAndSort.cuh"
-#include "../../handlers/include/HandleSearchByTriplet.cuh"
-#include "../../handlers/include/HandleConsolidateTracks.cuh"
-#include "../../handlers/include/HandleSimplifiedKalmanFilter.cuh"
+#include "../../handlers/include/Handler.cuh"
 #include "../../handlers/include/Helper.cuh"
+#include "../../../cuda/velo/calculate_phi_and_sort/include/CalculatePhiAndSort.cuh"
+#include "../../../cuda/velo/consolidate_tracks/include/ConsolidateTracks.cuh"
+#include "../../../cuda/velo/mask_clustering/include/MaskedVeloClustering.cuh"
+#include "../../../cuda/velo/mask_clustering/include/EstimateInputSize.cuh"
+#include "../../../cuda/velo/prefix_sum/include/PrefixSum.cuh"
+#include "../../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
+#include "../../../cuda/velo/simplified_kalman_filter/include/VeloKalmanFilter.cuh"
 
 class Timer;
 
@@ -42,16 +39,16 @@ struct Stream {
   cudaEvent_t cuda_event_stop;
   uint stream_number;
   // Algorithms
-  EstimateInputSize estimateInputSize;
-  PrefixSumReduce prefixSumReduce;
-  PrefixSumScan prefixSumScan;
-  PrefixSumSingleBlock prefixSumSingleBlock;
-  MaskedVeloClustering maskedVeloClustering;
-  CalculatePhiAndSort calculatePhiAndSort;
-  SearchByTriplet searchByTriplet;
-  CopyAndPrefixSumSingleBlock copyAndPrefixSumSingleBlock;
-  ConsolidateTracks consolidateTracks;
-  SimplifiedKalmanFilter simplifiedKalmanFilter;
+  decltype(generate_handler(estimate_input_size)) estimateInputSize = generate_handler(estimate_input_size);
+  decltype(generate_handler(prefix_sum_reduce)) prefixSumReduce = generate_handler(prefix_sum_reduce);
+  decltype(generate_handler(prefix_sum_scan)) prefixSumScan = generate_handler(prefix_sum_scan);
+  decltype(generate_handler(prefix_sum_single_block)) prefixSumSingleBlock = generate_handler(prefix_sum_single_block);
+  decltype(generate_handler(masked_velo_clustering)) maskedVeloClustering = generate_handler(masked_velo_clustering);
+  decltype(generate_handler(calculatePhiAndSort)) calculatePhiAndSort_handler = generate_handler(calculatePhiAndSort);
+  decltype(generate_handler(searchByTriplet)) searchByTriplet_handler = generate_handler(searchByTriplet);
+  decltype(generate_handler(copy_and_prefix_sum_single_block)) copyAndPrefixSumSingleBlock = generate_handler(copy_and_prefix_sum_single_block);
+  decltype(generate_handler(consolidate_tracks)) consolidateTracks = generate_handler(consolidate_tracks);
+  decltype(generate_handler(velo_fit)) simplifiedKalmanFilter = generate_handler(velo_fit);
   // Launch options
   bool transmit_host_to_device;
   bool transmit_device_to_host;

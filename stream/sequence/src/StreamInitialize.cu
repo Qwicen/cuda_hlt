@@ -30,16 +30,16 @@ cudaError_t Stream::initialize(
   const uint prefixSumBlocks = (VeloTracking::n_modules * number_of_events + 511) / 512;
   const uint prefixSumScanBlocks = prefixSumBlocks==1 ? 1 : (prefixSumBlocks-1);
 
-  estimateInputSize.set(     dim3(number_of_events),    dim3(32, 26), stream);
-  prefixSumReduce.set(       dim3(prefixSumBlocks),     dim3(256),    stream);
-  prefixSumSingleBlock.set(  dim3(1),                   dim3(1024),   stream);
-  prefixSumScan.set(         dim3(prefixSumScanBlocks), dim3(512),    stream);
-  maskedVeloClustering.set(  dim3(number_of_events),    dim3(256),    stream);
-  calculatePhiAndSort.set(   dim3(number_of_events),    dim3(64),     stream);
-  searchByTriplet.set(       dim3(number_of_events),    dim3(32),     stream);
-  copyAndPrefixSumSingleBlock.set(dim3(1),              dim3(1024), stream);
-  consolidateTracks.set(     dim3(number_of_events),    dim3(32),     stream);
-  simplifiedKalmanFilter.set(dim3(number_of_events),    dim3(1024),   stream);
+  estimateInputSize.set_opts(     dim3(number_of_events),    dim3(32, 26), stream);
+  prefixSumReduce.set_opts(       dim3(prefixSumBlocks),     dim3(256),    stream);
+  prefixSumSingleBlock.set_opts(  dim3(1),                   dim3(1024),   stream);
+  prefixSumScan.set_opts(         dim3(prefixSumScanBlocks), dim3(512),    stream);
+  maskedVeloClustering.set_opts(  dim3(number_of_events),    dim3(256),    stream);
+  calculatePhiAndSort_handler.set_opts(   dim3(number_of_events),    dim3(64),     stream);
+  searchByTriplet_handler.set_opts(       dim3(number_of_events),    dim3(32),     stream, 32);
+  copyAndPrefixSumSingleBlock.set_opts(dim3(1),              dim3(1024),   stream);
+  consolidateTracks.set_opts(     dim3(number_of_events),    dim3(32),     stream);
+  simplifiedKalmanFilter.set_opts(dim3(number_of_events),    dim3(1024),   stream);
 
   // Datatypes for definitions below
   // Note: The malloc'ing could be eventually moved to each handler, together
@@ -148,7 +148,7 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMemcpyAsync(dev_raw_input_offsets, event_offsets.data(), event_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice, stream));
 
   // Prepare kernels
-  estimateInputSize.setParameters(
+  estimateInputSize.set_arguments(
     dev_raw_input,
     dev_raw_input_offsets,
     dev_estimated_input_size,
@@ -157,25 +157,25 @@ cudaError_t Stream::initialize(
     dev_cluster_candidates
   );
 
-  prefixSumReduce.setParameters(
+  prefixSumReduce.set_arguments(
     dev_estimated_input_size,
     dev_cluster_offset,
     VeloTracking::n_modules * number_of_events
   );
 
-  prefixSumSingleBlock.setParameters(
+  prefixSumSingleBlock.set_arguments(
     dev_estimated_input_size + VeloTracking::n_modules * number_of_events,
     dev_cluster_offset,
     prefixSumBlocks
   );
 
-  prefixSumScan.setParameters(
+  prefixSumScan.set_arguments(
     dev_estimated_input_size,
     dev_cluster_offset,
     VeloTracking::n_modules * number_of_events
   );
 
-  maskedVeloClustering.setParameters(
+  maskedVeloClustering.set_arguments(
     dev_raw_input,
     dev_raw_input_offsets,
     dev_estimated_input_size,
@@ -186,14 +186,14 @@ cudaError_t Stream::initialize(
     dev_velo_geometry
   );
 
-  calculatePhiAndSort.setParameters(
+  calculatePhiAndSort_handler.set_arguments(
     dev_estimated_input_size,
     dev_module_cluster_num,
     dev_velo_cluster_container,
     dev_hit_permutation
   );
 
-  searchByTriplet.setParameters(
+  searchByTriplet_handler.set_arguments(
     dev_velo_cluster_container,
     dev_estimated_input_size,
     dev_module_cluster_num,
@@ -208,14 +208,14 @@ cudaError_t Stream::initialize(
     dev_rel_indices
   );
 
-  copyAndPrefixSumSingleBlock.setParameters(
+  copyAndPrefixSumSingleBlock.set_arguments(
     (uint*) dev_atomics_storage + number_of_events*2,
     (uint*) dev_atomics_storage,
     (uint*) dev_atomics_storage + number_of_events,
     number_of_events
   );
 
-  consolidateTracks.setParameters(
+  consolidateTracks.set_arguments(
     dev_atomics_storage,
     dev_tracks,
     dev_output_tracks,
@@ -225,7 +225,7 @@ cudaError_t Stream::initialize(
     dev_velo_states
   );
   
-  simplifiedKalmanFilter.setParameters(
+  simplifiedKalmanFilter.set_arguments(
     dev_velo_cluster_container,
     dev_estimated_input_size,
     dev_atomics_storage,
