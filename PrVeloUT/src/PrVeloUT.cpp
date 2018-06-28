@@ -386,6 +386,8 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
   const float txUT = helper.bestParams[3];
 
   outputTracks.emplace_back( veloTrack.track );
+  outputTracks.back().set_qop( qop );
+  
   //outputTracks.back().UTIDs.reserve(8);
 
   // Adding overlap hits
@@ -394,9 +396,6 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
     // -- only the last one can be a nullptr.
     if( !hit ) break;
 
-    // TODO add a TrackStructure with UTIDs
-    // outputTracks.back().UTIDs.push_back(hit->lhcbID());
-    
     outputTracks.back().addLHCbID( hit->lhcbID() );
 
     const float xhit = hit->x;
@@ -410,9 +409,7 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
       const float xextrap = xhit + txUT*(zhit-zohit);
       if( xohit-xextrap < -m_overlapTol) continue;
       if( xohit-xextrap > m_overlapTol) break;
-      // TODO add a TrackStructure with UTIDs
-      // outputTracks.back().UTIDs.push_back(ohit.lhcbID());
-
+    
       outputTracks.back().addLHCbID( hit->lhcbID() );
       
       // -- only one overlap hit

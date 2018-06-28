@@ -244,16 +244,17 @@ cudaError_t Stream::operator()(
       TTree *t_ut_hits = new TTree("ut_hits","ut_hits");
       TTree *t_velo_states = new TTree("velo_states", "velo_states");
       TTree *t_track_hits = new TTree("track_hits", "track_hits");
+      TTree *t_veloUT_tracks = new TTree("veloUT_tracks", "veloUT_tracks");
       float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
       float x, y, tx, ty, chi2, z, drdz;
-      //float first_z, last_z;
       unsigned int LHCbID;
       int highThreshold, layer;
       int backward;
       float x_hit, y_hit, z_hit;
       float first_x, first_y, first_z;
       float last_x, last_y, last_z;
-
+      float qop;
+      
       t_ut_hits->Branch("cos", &cos);
       t_ut_hits->Branch("yBegin", &yBegin);
       t_ut_hits->Branch("yEnd", &yEnd);
@@ -281,6 +282,7 @@ cudaError_t Stream::operator()(
       t_velo_states->Branch("last_x", &last_x);
       t_velo_states->Branch("last_y", &last_y);
       t_velo_states->Branch("last_z", &last_z); 
+      t_veloUT_tracks->Branch("qop", &qop);
       
       if ( velout.initialize() ) {
     	for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
@@ -389,8 +391,23 @@ cudaError_t Stream::operator()(
     	  std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, inputHits);
     	  debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
 
+	  // store qop in tree
+	  for ( auto veloUT_track : ut_tracks ) {
+	    qop = veloUT_track.qop;
+	    t_veloUT_tracks->Fill();
+	  }
+	  
 	  // save in format for track checker
 	  trackChecker::Tracks checker_tracks = prepareVeloUTTracks( ut_tracks );
+	  debug_cout << "Passing " << checker_tracks.size() << " tracks to PrChecker" << std::endl;
+	  int i_track = 0;
+	  for ( auto ch_track : checker_tracks ) {
+	    debug_cout << "\t at track " << i_track << std::endl;
+	    i_track++;
+	    for ( auto id : ch_track.ids() ) {
+	      debug_cout << "\t id = " << uint32_t(id)   << std::endl;
+	    }
+	  }
 	  ut_tracks_events->emplace_back( checker_tracks );
 	  
     	}
