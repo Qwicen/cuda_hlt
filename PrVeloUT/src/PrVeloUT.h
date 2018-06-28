@@ -258,8 +258,7 @@ private:
 
     const int nHighThres = std::count_if( 
       hits.begin(),  hits.end(), []( const VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
-    debug_cout << "nHighThresh = " << nHighThres << std::endl;
-
+    
     // -- Veto hit combinations with no high threshold hit
     // -- = likely spillover
     if( nHighThres < m_minHighThres ) return;
