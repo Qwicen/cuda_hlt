@@ -97,21 +97,35 @@ void callPrChecker(
 
     
   t_checker trackChecker {};
-  uint64_t evnum = 0; // DvB: check, was 1 before!!
+  uint64_t evnum = 0; 
 
   for (const auto& ev: events) {
-    //debug_cout << "Event " << (evnum+1) << std::endl;
     const auto& mcps = ev.mcparticles();
-    const std::vector<uint32_t>& hit_IDs = ev.hit_IDs;
     const std::vector<VelopixEvent::MCP>& mcps_vector = ev.mcps;
     MCAssociator mcassoc(mcps);
 
-    //debug_cout << "Found " << all_tracks[evnum].size() << " reconstructed tracks" <<
-    // " and " << mcps.size() << " MC particles " << std::endl;
-
     trackChecker(all_tracks[evnum], mcassoc, mcps);
-    //check_roughly(tracks, hit_IDs, mcps_vector);
 
+    // /* Check for double counting of hits */
+    // for ( auto ch_track : all_tracks[evnum] ) {
+    //   for ( auto ida : ch_track.ids() ) {
+    // 	int counted_IDs = 0;
+    // 	for ( auto idb : ch_track.ids() ) {
+    // 	  if ( uint32_t(ida) == uint32_t(idb) )
+    // 	    counted_IDs++;
+    // 	}
+
+    // 	if ( counted_IDs > 1  ) {
+    // 	  warning_cout << "ATTENTION: counted " << counted_IDs << " same IDs on one track" << std::endl;
+    // 	  for ( auto id : ch_track.ids() ) {
+    // 	    warning_cout << std::hex << "\t " << id << std::endl;
+    // 	  }
+    // 	}
+	
+    //   }
+    // }
+		
+    
     ++evnum;
   }
 }

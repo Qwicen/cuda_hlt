@@ -345,7 +345,7 @@ cudaError_t Stream::operator()(
     	    ut_track.hitsNum = velo_track.hitsNum;
     	    for ( int i_hit = 0; i_hit < velo_track.hitsNum; ++i_hit ) {
     	      ut_track.LHCbIDs.push_back( velo_track.hits[i_hit].LHCbID );
-    	    }
+	    }
     	    track.track = ut_track;
 	    
     	    track.state = ( velo_states_event[i_track] );
@@ -388,10 +388,10 @@ cudaError_t Stream::operator()(
     	    if ( velo_track.backward ) continue;
     	    tracks.push_back( track );
     	  }
-    	  debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0, " << inputHits[1].size() << " hits in layer 1, " << inputHits[2].size() << " hits in layer 2, " << inputHits[3].size() << " in layer 3 to velout" << std::endl;
+    	  //debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0, " << inputHits[1].size() << " hits in layer 1, " << inputHits[2].size() << " hits in layer 2, " << inputHits[3].size() << " in layer 3 to velout" << std::endl;
 	  
     	  std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, inputHits);
-    	  debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
+    	  //debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
 
 	  // store qop in tree
 	  for ( auto veloUT_track : ut_tracks ) {
@@ -401,15 +401,8 @@ cudaError_t Stream::operator()(
 	  
 	  // save in format for track checker
 	  trackChecker::Tracks checker_tracks = prepareVeloUTTracks( ut_tracks );
-	  debug_cout << "Passing " << checker_tracks.size() << " tracks to PrChecker" << std::endl;
-	  // int i_track = 0;
-	  // for ( auto ch_track : checker_tracks ) {
-	  //   debug_cout << "\t at track " << i_track << std::endl;
-	  //   i_track++;
-	  //   for ( auto id : ch_track.ids() ) {
-	  //     debug_cout << "\t id = " << uint32_t(id)   << std::endl;
-	  //   }
-	  // }
+	  //debug_cout << "Passing " << checker_tracks.size() << " tracks to PrChecker" << std::endl;
+
 	  ut_tracks_events->emplace_back( checker_tracks );
 	  
     	}

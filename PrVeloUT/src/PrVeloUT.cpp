@@ -412,11 +412,11 @@ void PrVeloUT::prepareOutputTrack(
       if( xohit-xextrap < -m_overlapTol) continue;
       if( xohit-xextrap > m_overlapTol) break;
     
-      outputTracks.back().addLHCbID( hit->lhcbID() );
-      
+      outputTracks.back().addLHCbID( ohit.lhcbID() );
+
       // -- only one overlap hit
       break;
-    } 
+    }
   }
  
    /*
