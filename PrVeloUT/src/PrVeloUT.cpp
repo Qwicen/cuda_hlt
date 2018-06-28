@@ -8,12 +8,6 @@
 //-----------------------------------------------------------------------------
 
 namespace {
-  // bool rejectTrack(const Track* track){
-  //   return track->checkFlag( Track::Backward )
-  //     || track->checkFlag( Track::Invalid );
-  // }
-
-
   // -- These things are all hardcopied from the PrTableForFunction
   // -- and PrUTMagnetTool
   // -- If the granularity or whatever changes, this will give wrong results
@@ -32,32 +26,50 @@ namespace {
 //=============================================================================
 // Initialization
 //=============================================================================
-std::vector<std::string> PrVeloUT::GetFieldMaps() {
+// std::vector<std::string> PrVeloUT::GetFieldMaps() {
   
-  vector<std::string> filenames;
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c1.down.cdf");
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c2.down.cdf");
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c3.down.cdf");
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c4.down.cdf");
+//   std::vector<std::string> filenames;
+//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c1.down.cdf");
+//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c2.down.cdf");
+//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c3.down.cdf");
+//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c4.down.cdf");
 
-  return filenames;
-}
+//   return filenames;
+// }
 
 int PrVeloUT::initialize() {
 
-  // TODO not used? old version?
-  // m_veloUTTool = tool<ITracksFromTrackR>("PrVeloUTTool", this );
-
-  std::vector<std::string> filenames = GetFieldMaps();
-  m_PrUTMagnetTool = PrUTMagnetTool(filenames);
-  m_PrUTMagnetTool.prepareBdlTables();
-  m_PrUTMagnetTool.prepareDeflectionTables();
-
+  //load the deflection and Bdl values from a text file
+  std::vector<float> deflection_vals;
+  float deflection;
+  std::ifstream deflectionfile;
+  deflectionfile.open("../PrUTMagnetTool/deflection.txt");
+  if (deflectionfile.is_open()) {
+    while (!deflectionfile.eof()) {
+      deflectionfile >> deflection;
+      deflection_vals.push_back(deflection);
+      
+    }
+  }
+  
+  std::vector<float> bdl_vals;
+  float bdl;
+  std::ifstream bdlfile;
+  bdlfile.open("../PrUTMagnetTool/bdl.txt");
+  if (bdlfile.is_open()) {
+    while (!bdlfile.eof()) {
+      bdlfile >> bdl;
+      bdl_vals.push_back(bdl);
+      
+    }
+  }
+  m_PrUTMagnetTool = PrUTMagnetTool( deflection_vals, bdl_vals );
+  
   // m_zMidUT is a position of normalization plane which should to be close to z middle of UT ( +- 5 cm ).
   // Cashed once in PrVeloUTTool at initialization. No need to update with small UT movement.
-  m_zMidUT    = m_PrUTMagnetTool.zMidUT();
+  m_zMidUT    = 2484.6;
   //  zMidField and distToMomentum isproperly recalculated in PrUTMagnetTool when B field changes
-  m_distToMomentum = m_PrUTMagnetTool.averageDist2mom();
+  m_distToMomentum = 4.0212e-05;
 
   m_sigmaVeloSlope = 0.10*Gaudi::Units::mrad;
   m_invSigmaVeloSlope = 1.0/m_sigmaVeloSlope;
@@ -69,32 +81,35 @@ int PrVeloUT::initialize() {
 //=============================================================================
 // Main execution
 //=============================================================================
-std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
-  const std::vector<VeloUTTracking::TrackVelo>& inputTracks) const 
+std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
+  const std::vector<VeloUTTracking::TrackVelo>& inputTracks, 
+  const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits) const
 {
-
-  std::vector<VeloUTTracking::TrackVelo> outputTracks;
+  
+  std::vector<VeloUTTracking::TrackUT> outputTracks;
   outputTracks.reserve(inputTracks.size());
+
+  std::array<std::array<int,85>,4> posLayers;
+  fillIterators(inputHits, posLayers);
 
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
   std::array<std::vector<VeloUTTracking::Hit>,4> hitsInLayers;
-  // TODO get the proper hits
-  const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits;
+  for( auto& it : hitsInLayers ) it.reserve(8); // TODO check this number
 
   for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
 
     VeloState trState;
-    if( !getState(veloTr, trState, outputTracks)) continue;
-    if( !getHits(hitsInLayers, inputHits, fudgeFactors, trState) ) continue;
-
+    if( !getState(veloTr, trState)) continue;
+    for( auto& it : hitsInLayers ) it.clear();
+    if( !getHits(hitsInLayers, posLayers, inputHits, fudgeFactors, trState ) ) continue;
+        
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
-    //counter("formingClusters")++;
     if( !formClusters(hitsInLayers, helper) ){
       std::reverse(hitsInLayers.begin(),hitsInLayers.end());
-      //counter("reversing")++;
+      
       formClusters(hitsInLayers, helper);
       std::reverse(hitsInLayers.begin(),hitsInLayers.end());
     }
@@ -102,10 +117,7 @@ std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
     if( helper.bestHits[0]){
       prepareOutputTrack(veloTr, helper, hitsInLayers, outputTracks, bdlTable);
     }
-
   }
-
-  // counter("#tracks") += outputTracks.size();
 
   return outputTracks;
 }
@@ -115,14 +127,13 @@ std::vector<VeloUTTracking::TrackVelo> PrVeloUT::operator() (
 //=============================================================================
 bool PrVeloUT::getState(
   const VeloUTTracking::TrackVelo& iTr, 
-  VeloState& trState, 
-  std::vector<VeloUTTracking::TrackVelo>& outputTracks ) const 
+  VeloState& trState ) const 
 {
   // const VeloState* s = iTr.stateAt(LHCb::State::EndVelo);
   // const VeloState& state = s ? *s : (iTr.closestState(LHCb::State::EndVelo));
   // TODO get the closest state not the last
-  const VeloState state = iTr.back();
-
+  const VeloState state = iTr.state;
+  
   // -- reject tracks outside of acceptance or pointing to the beam pipe
   trState.tx = state.tx;
   trState.ty = state.ty;
@@ -146,7 +157,7 @@ bool PrVeloUT::getState(
     // outTr->addToAncestors( iTr );
     // outputTracks.insert(outTr.release());
 
-    outputTracks.emplace_back(iTr);  // DvB: is this to save Velo tracks that don't make it to the UT?
+    //outputTracks.emplace_back(iTr);  // DvB: is this to save Velo tracks that don't make it to the UT?
 
     return false;
   }
@@ -160,9 +171,10 @@ bool PrVeloUT::getState(
 //=============================================================================
 bool PrVeloUT::getHits(
   std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
-  const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
+  const std::array<std::array<int,85>,4>& posLayers,
+  const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits,
   const std::vector<float>& fudgeFactors, 
-  const VeloState& trState ) const 
+  VeloState& trState ) const 
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
@@ -201,40 +213,29 @@ bool PrVeloUT::getHits(
 
       const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
       const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
-      const float yLayer = yAtZ + yTol*dxDyHelper[layer];
+      const float yLayer = yAtZ + yTol*dxDyHelper[2*iStation+iLayer];
 
-      const float normFactNum = normFact[layer];
+      const float normFactNum = normFact[2*iStation + iLayer];
       const float invNormFact = 1.0/normFactNum;
 
-      // -- Get the (approximate) x position at y=0. For stereo layers, we need to take
-      // -- dx/dy into account and shift along a strip.
-      // -- last term is to take different z positions of modules into account
-      // -- max distance between strips in a layer => 15mm
-      // -- Hits are sorted at y=0
-      //
-      // -- It turns out that putting iterators at certain positions
-      // -- and then do a linear search is faster than binary
-      // -- searching the whole range (or binary searching)
-      // -- starting from the iterator positions.
+      const float lowerBoundX =
+        (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(trState.tx)*m_intraLayerDist;
+      const float upperBoundX =
+        (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(trState.tx)*m_intraLayerDist;
 
-      // const float lowerBoundX =
-      //   (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(trState.tx)*m_intraLayerDist;
-      // const float upperBoundX =
-      //   (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(trState.tx)*m_intraLayerDist;
+      const int indexLowProto = lowerBoundX > 0 ? std::sqrt( std::abs(lowerBoundX)*2.0 ) + 42 : 42 - std::sqrt( std::abs(lowerBoundX)*2.0 );
+      const int indexHiProto  = upperBoundX > 0 ? std::sqrt( std::abs(upperBoundX)*2.0 ) + 43 : 43 - std::sqrt( std::abs(upperBoundX)*2.0 );
 
-      // const int indexLowProto = lowerBoundX > 0 ? std::sqrt( std::abs(lowerBoundX)*2.0 ) + 42 : 42 - std::sqrt( std::abs(lowerBoundX)*2.0 );
-      // const int indexHiProto  = upperBoundX > 0 ? std::sqrt( std::abs(upperBoundX)*2.0 ) + 43 : 43 - std::sqrt( std::abs(upperBoundX)*2.0 );
+      const int indexLow  = std::max( indexLowProto, 0 );
+      const int indexHi   = std::min( indexHiProto, 84);
 
-      // const int indexLow  = std::max( indexLowProto, 0 );
-      // const int indexHi   = std::min( indexHiProto, 84);
+      size_t posBeg = posLayers[layer][ indexLow ];
+      size_t posEnd = posLayers[layer][ indexHi  ];
 
-      // HitRange::const_iterator itBeg = iteratorsLayers[layer][ indexLow ];
-      // HitRange::const_iterator itEnd = iteratorsLayers[layer][ indexHi  ];
+      while ( (hits[posBeg].xAtYEq0() < lowerBoundX) && (posBeg != hits.size()) ) ++posBeg;
+      if (posBeg == hits.size()) continue;
 
-      // while( (*itBeg).xAtYEq0() < lowerBoundX && itBeg != itEnd) ++itBeg;
-      // if(itBeg == itEnd) continue;
-
-      findHits(hits, trState, xTol*invNormFact, invNormFact, hitsInLayers[layer]);
+      findHits(posBeg, posEnd, hits, trState, xTol*invNormFact, invNormFact, hitsInLayers[layer]);
 
       nLayers += int(!hitsInLayers[layer].empty());
     }
@@ -267,7 +268,7 @@ bool PrVeloUT::formClusters(
       const float tx = (xhitLayer2 - xhitLayer0)/(zhitLayer2 - zhitLayer0);
 
       if( std::abs(tx-helper.state.tx) > m_deltaTx2 ) continue;
-
+      
       const VeloUTTracking::Hit* bestHit1 = nullptr;
       float hitTol = m_hitTol2;
       for(const auto& hit1 : hitsInLayers[1]) {
@@ -330,11 +331,12 @@ bool PrVeloUT::formClusters(
 //=========================================================================
 // Create the Velo-TU tracks
 //=========================================================================
-void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
-                                  const TrackHelper& helper,
-                                  const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
-                                  std::vector<VeloUTTracking::TrackVelo>& outputTracks,
-                                  const std::vector<float>& bdlTable) const {
+void PrVeloUT::prepareOutputTrack(
+  const VeloUTTracking::TrackVelo& veloTrack,
+  const TrackHelper& helper,
+  const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+  std::vector<VeloUTTracking::TrackUT>& outputTracks,
+  const std::vector<float>& bdlTable) const {
 
   //== Handle states. copy Velo one, add TT.
   const float zOrigin = (std::fabs(helper.state.ty) > 0.001)
@@ -385,7 +387,9 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
 
   const float txUT = helper.bestParams[3];
 
-  outputTracks.emplace_back();
+  outputTracks.emplace_back( veloTrack.track );
+  outputTracks.back().set_qop( qop );
+  
   //outputTracks.back().UTIDs.reserve(8);
 
   // Adding overlap hits
@@ -394,12 +398,11 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
     // -- only the last one can be a nullptr.
     if( !hit ) break;
 
-    // TODO add a TrackStructure with UTIDs
-    // outputTracks.back().UTIDs.push_back(hit->lhcbID());
+    outputTracks.back().addLHCbID( hit->lhcbID() );
 
     const float xhit = hit->x;
     const float zhit = hit->z;
-
+    
     for( auto& ohit : hitsInLayers[hit->planeCode()]){
       const float zohit = ohit.z;
       if(zohit==zhit) continue;
@@ -408,14 +411,15 @@ void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
       const float xextrap = xhit + txUT*(zhit-zohit);
       if( xohit-xextrap < -m_overlapTol) continue;
       if( xohit-xextrap > m_overlapTol) break;
-      // TODO add a TrackStructure with UTIDs
-      // outputTracks.back().UTIDs.push_back(ohit.lhcbID());
+    
+      outputTracks.back().addLHCbID( hit->lhcbID() );
+      
       // -- only one overlap hit
       break;
-    }
+    } 
   }
-
-  /*
+ 
+   /*
   outTr.x = helper.state.x;
   outTr.y = helper.state.y;
   outTr.z = helper.state.z;

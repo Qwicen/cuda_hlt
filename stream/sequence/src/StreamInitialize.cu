@@ -8,6 +8,7 @@ cudaError_t Stream::initialize(
   const bool param_transmit_host_to_device,
   const bool param_transmit_device_to_host,
   const bool param_do_check,
+  const bool param_do_simplified_kalman_filter,
   const bool param_print_individual_rates,
   const std::string param_folder_name_MC,
   const uint param_stream_number
@@ -19,6 +20,7 @@ cudaError_t Stream::initialize(
   stream_number = param_stream_number;
   transmit_host_to_device = param_transmit_host_to_device;
   transmit_device_to_host = param_transmit_device_to_host;
+  do_simplified_kalman_filter = param_do_simplified_kalman_filter;
   do_check = param_do_check;
   print_individual_rates = param_print_individual_rates;
   geometry = param_geometry;
@@ -35,6 +37,7 @@ cudaError_t Stream::initialize(
   maskedVeloClustering.set(  dim3(number_of_events),    dim3(256),    stream);
   calculatePhiAndSort.set(   dim3(number_of_events),    dim3(64),     stream);
   searchByTriplet.set(       dim3(number_of_events),    dim3(32),     stream);
+  copyAndPrefixSumSingleBlock.set(dim3(1),              dim3(1024), stream);
   consolidateTracks.set(     dim3(number_of_events),    dim3(32),     stream);
   simplifiedKalmanFilter.set(dim3(number_of_events),    dim3(1024),   stream);
 
@@ -60,14 +63,13 @@ cudaError_t Stream::initialize(
   int* dev_atomics_storage;
   VeloTracking::TrackHits* dev_tracklets;
   uint* dev_weak_tracks;
-  VeloTracking::Track<do_mc_check>* dev_output_tracks;
+  VeloTracking::Track<mc_check_enabled>* dev_output_tracks;
   short* dev_h0_candidates;
   short* dev_h2_candidates;
   unsigned short* dev_rel_indices;
   uint* dev_hit_permutation;
   // Velo states
   VeloState* dev_velo_states;
-  VeloState* dev_velo_states_out; // consolidated array of Velo states
 
   // velo cluster container contains:
   // - cluster_xs
@@ -109,16 +111,16 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_weak_tracks, VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(uint)));
   
   cudaCheck(cudaMalloc((void**)&dev_tracklets, VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(VeloTracking::TrackHits)));
-  cudaCheck(cudaMalloc((void**)&dev_output_tracks, max_tracks_in_event * number_of_events * sizeof(VeloTracking::Track<do_mc_check>)));
+  cudaCheck(cudaMalloc((void**)&dev_output_tracks, max_tracks_in_event * number_of_events * sizeof(VeloTracking::Track<mc_check_enabled>)));
 
   // Note: This is buffer reuse, as the above
   // std::cout << VeloTracking::max_number_of_hits_per_event << " " << number_of_events << " " << sizeof(VeloTracking::TrackHits)
   //   << " = " << VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(TrackHits) << std::endl
-  //   << (max_tracks_in_event / 3) << " " << number_of_events << " " << sizeof(VeloTracking::Track<do_mc_check>) << " = "
-  //   << (max_tracks_in_event / 3) * number_of_events * sizeof(VeloTracking::Track<do_mc_check>) << std::endl;
+  //   << (max_tracks_in_event / 3) << " " << number_of_events << " " << sizeof(VeloTracking::Track<mc_check_enabled>) << " = "
+  //   << (max_tracks_in_event / 3) * number_of_events * sizeof(VeloTracking::Track<mc_check_enabled>) << std::endl;
 
   // const auto tracklets_size = VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(VeloTracking::TrackHits);
-  // const auto output_tracks_size = ((tracklets_size / sizeof(VeloTracking::Track<do_mc_check>)) + 1) * sizeof(VeloTracking::Track<do_mc_check>);
+  // const auto output_tracks_size = ((tracklets_size / sizeof(VeloTracking::Track<mc_check_enabled>)) + 1) * sizeof(VeloTracking::Track<mc_check_enabled>);
   // std::cout << output_tracks_size << std::endl;
 
   // cudaCheck(cudaMalloc((void**)&dev_output_tracks, output_tracks_size));
@@ -130,13 +132,19 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_h2_candidates, 2 * VeloTracking::max_number_of_hits_per_event * number_of_events * sizeof(short)));
   cudaCheck(cudaMalloc((void**)&dev_rel_indices, number_of_events * max_numhits_in_module * sizeof(unsigned short)));
 
-  cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * VeloTracking::states_per_track * sizeof(VeloState)));
+  // simplified kalman filter
+  if (do_simplified_kalman_filter) {
+    cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * VeloTracking::states_per_track * sizeof(VeloState)));
+  } else {
+    cudaCheck(cudaMalloc((void**)&dev_velo_states, number_of_events * max_tracks_in_event * sizeof(VeloState)));
+  }
   
   // Memory allocations for host memory (copy back)
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks_pinned, number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_tracks, number_of_events * sizeof(int)));
-  cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * max_tracks_in_event * sizeof(VeloTracking::Track<do_mc_check>)));
+  cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * max_tracks_in_event * sizeof(VeloTracking::Track<mc_check_enabled>)));
   cudaCheck(cudaMallocHost((void**)&host_velo_states, number_of_events * max_tracks_in_event * sizeof(VeloState)));
+
   // Pre-populate raw_input data, in case the user requested -a 0
   cudaCheck(cudaMemcpyAsync(dev_raw_input, raw_events.data(), raw_events.size(), cudaMemcpyHostToDevice, stream));
   cudaCheck(cudaMemcpyAsync(dev_raw_input_offsets, event_offsets.data(), event_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice, stream));
@@ -201,31 +209,30 @@ cudaError_t Stream::initialize(
     dev_h2_candidates,
     dev_rel_indices
   );
+
+  copyAndPrefixSumSingleBlock.setParameters(
+    (uint*) dev_atomics_storage + number_of_events*2,
+    (uint*) dev_atomics_storage,
+    (uint*) dev_atomics_storage + number_of_events,
+    number_of_events
+  );
+
+  consolidateTracks.setParameters(
+    dev_atomics_storage,
+    dev_tracks,
+    dev_output_tracks,
+    dev_velo_cluster_container,
+    dev_estimated_input_size,
+    dev_module_cluster_num,
+    dev_velo_states
+  );
   
   simplifiedKalmanFilter.setParameters(
     dev_velo_cluster_container,
     dev_estimated_input_size,
     dev_atomics_storage,
-    dev_tracks,
-    dev_velo_states
-  );
-
-  /* Caution: re-use of container: 
-     works if 
-     - max_tracks_in_event <= average_num_hits_in_event 
-     - only one Velo state is saved (size_of(state) = 48 B, size_of(VeloTracking::TrackHits) = 54 B)
-  */
-  dev_velo_states_out = (VeloState*)dev_tracklets;
-  
-  consolidateTracks.setParameters(
-    dev_atomics_storage,
-    dev_tracks,
     dev_output_tracks,
-    dev_velo_states,
-    dev_velo_states_out,
-    dev_velo_cluster_container,
-    dev_estimated_input_size,
-    dev_module_cluster_num
+    dev_velo_states
   );
 
   return cudaSuccess;

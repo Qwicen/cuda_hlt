@@ -9,6 +9,8 @@
 
 #include "../../../main/include/Common.h"
 #include "../../../main/include/Logger.h"
+#include "../../../main/include/InputTools.h"
+#include "TrackChecker.h"
 
 class VelopixEvent {
 private:
@@ -63,7 +65,7 @@ public:
 
     // Constructor
     VelopixEvent() {};
-    VelopixEvent(const std::vector<uint8_t>& _event, const bool checkFile = true);
+    VelopixEvent(const std::vector<char>& _event, const bool checkFile = true);
 
     void print() const;
 
@@ -72,20 +74,44 @@ public:
     MCParticles mcparticles() const;
 };
 
-class VelopixEventReader {
-private:
-    constexpr static int numberOfModules = 52;
+void readNtupleIntoVelopixEvent(const std::string& filename, const std::string& trackType, VelopixEvent& event);
+ 
+std::vector<VelopixEvent> read_mc_folder(
+  const std::string& foldername,
+  const bool& fromNtuple,
+  const std::string& trackType,
+  uint number_of_files,
+  const bool checkEvents = false
+);
+ 
+template< typename t_checker >
+void callPrChecker(
+  const std::vector< trackChecker::Tracks >& all_tracks,
+  const std::string& folder_name_MC,
+  const bool& fromNtuple,
+  const std::string& trackType
+) {
+   /* MC information */
+  int n_events = all_tracks.size();
+    std::vector<VelopixEvent> events = read_mc_folder(folder_name_MC, fromNtuple, trackType, n_events, true );
 
-public:
-    static bool fileExists (const std::string& name);
+    
+  t_checker trackChecker {};
+  uint64_t evnum = 0; // DvB: check, was 1 before!!
 
-    static void readFileIntoVector(const std::string& filename, std::vector<uint8_t>& output);
+  for (const auto& ev: events) {
+    //debug_cout << "Event " << (evnum+1) << std::endl;
+    const auto& mcps = ev.mcparticles();
+    const std::vector<uint32_t>& hit_IDs = ev.hit_IDs;
+    const std::vector<VelopixEvent::MCP>& mcps_vector = ev.mcps;
+    MCAssociator mcassoc(mcps);
 
-    static std::vector< std::string > getFolderContents (
-      const std::string& foldername, const bool fromNtuple, uint nFiles = 0 );
-  
-    static std::vector<VelopixEvent> readFolder(
-						const std::string& foldername, const bool& fronNtuple, const std::string& trackType, uint nFiles = 0, const bool checkFiles = true);
+    //debug_cout << "Found " << all_tracks[evnum].size() << " reconstructed tracks" <<
+    // " and " << mcps.size() << " MC particles " << std::endl;
 
-  static void readNtupleIntoVelopixEvent(const std::string& filename, const std::string& trackType, VelopixEvent& event);
-};
+    trackChecker(all_tracks[evnum], mcassoc, mcps);
+    //check_roughly(tracks, hit_IDs, mcps_vector);
+
+    ++evnum;
+  }
+}

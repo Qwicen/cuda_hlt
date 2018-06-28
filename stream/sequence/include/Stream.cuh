@@ -15,6 +15,7 @@
 #include "../../handlers/include/HandleEstimateInputSize.cuh"
 #include "../../handlers/include/HandlePrefixSumReduce.cuh"
 #include "../../handlers/include/HandlePrefixSumSingleBlock.cuh"
+#include "../../handlers/include/HandleCopyAndPrefixSumSingleBlock.cuh"
 #include "../../handlers/include/HandlePrefixSumScan.cuh"
 #include "../../handlers/include/HandleMaskedVeloClustering.cuh"
 #include "../../handlers/include/HandleCalculatePhiAndSort.cuh"
@@ -48,12 +49,14 @@ struct Stream {
   MaskedVeloClustering maskedVeloClustering;
   CalculatePhiAndSort calculatePhiAndSort;
   SearchByTriplet searchByTriplet;
+  CopyAndPrefixSumSingleBlock copyAndPrefixSumSingleBlock;
   ConsolidateTracks consolidateTracks;
   SimplifiedKalmanFilter simplifiedKalmanFilter;
   // Launch options
   bool transmit_host_to_device;
   bool transmit_device_to_host;
   bool do_check;
+  bool do_simplified_kalman_filter;
   bool print_individual_rates;
   // Varying cluster container size
   uint velo_cluster_container_size;
@@ -62,8 +65,9 @@ struct Stream {
   // Data back transmission
   int* host_number_of_tracks_pinned;
   int* host_accumulated_tracks;
-  VeloTracking::Track <do_mc_check> *host_tracks_pinned;
+  VeloTracking::Track <mc_check_enabled> *host_tracks_pinned;
   VeloState* host_velo_states;
+
   Stream() = default;
 
   std::string folder_name_MC;
@@ -76,6 +80,7 @@ struct Stream {
     const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
+    const bool param_do_simplified_kalman_filter,
     const bool param_print_individual_rates,
     const std::string param_folder_name_MC,
     const uint param_stream_number
@@ -106,10 +111,11 @@ struct Stream {
     const uint* host_event_offsets_pinned,
     size_t host_events_pinned_size,
     size_t host_event_offsets_pinned_size,
-    const VeloUTTracking::HitsSoA hits_layers_events[],
+    const VeloUTTracking::HitsSoA *hits_layers_events,
     const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
     uint number_of_events,
-    uint number_of_repetitions
+    uint number_of_repetitions,
+    uint i_stream
   );
 
   void print_timing(

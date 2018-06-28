@@ -2,50 +2,6 @@
 #include "../../checker/lib/include/velopix-input-reader.h"
 #include "../../checker/lib/include/TrackChecker.h"
 #include "../../checker/lib/include/MCParticle.h"
-#include "../../checker/lib/include/velopix-input-reader.h"
-
-
-/**
- * @brief Read files into vectors.
- */
-void readFileIntoVector(
-  const std::string& filename,
-  std::vector<char>& events
-) {
-  std::ifstream infile(filename.c_str(), std::ifstream::binary);
-  infile.seekg(0, std::ios::end);
-  auto end = infile.tellg();
-  infile.seekg(0, std::ios::beg);
-  auto dataSize = end - infile.tellg();
-
-  events.resize(dataSize);
-  infile.read((char*) &(events[0]), dataSize);
-  infile.close();
-}
-
-/**
- * @brief Appends a file to a vector of char.
- *        It can also be used to read a file to a vector,
- *        returning the event_size.
- */
-void appendFileToVector(
-  const std::string& filename,
-  std::vector<char>& events,
-  std::vector<unsigned int>& event_sizes
-) {
-  std::ifstream infile(filename.c_str(), std::ifstream::binary);
-  infile.seekg(0, std::ios::end);
-  auto end = infile.tellg();
-  infile.seekg(0, std::ios::beg);
-  auto dataSize = end - infile.tellg();
-
-  // read content of infile with a vector
-  const size_t previous_size = events.size();
-  events.resize(events.size() + dataSize);
-  infile.read(events.data() + previous_size, dataSize);
-  event_sizes.push_back(dataSize);
-  infile.close();
-}
 
 void readGeometry(
   const std::string& foldername,
@@ -67,11 +23,8 @@ void check_velopix_events(
     uint32_t number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
     uint32_t* raw_bank_offset = (uint32_t*) p; p += number_of_raw_banks * sizeof(uint32_t);
 
-    //printf("at event %u, # of raw banks = %u, first offset = %u, second offset = %u \n", i_event, number_of_raw_banks, raw_bank_offset[0], raw_bank_offset[1]);
-    
     uint32_t sensor =  *((uint32_t*)p);  p += sizeof(uint32_t);
     uint32_t sp_count =  *((uint32_t*)p); p += sizeof(uint32_t);
-    //printf("sensor = %u, sp_count = %u \n", sensor, sp_count);
 
     const auto raw_event = VeloRawEvent(raw_input);
     int n_sps_event = 0;
@@ -81,7 +34,6 @@ void check_velopix_events(
       if ( i_raw_bank != raw_bank.sensor_index ) {
         error_cout << "at raw bank " << i_raw_bank << ", but index = " << raw_bank.sensor_index << std::endl;
       }
-      //printf("\t sensor = %u, sp_count = %u \n",  raw_bank.sensor_index, raw_bank.sp_count);
       if ( raw_bank.sp_count > 0 ) {
         uint32_t sp_word = raw_bank.sp_word[0];
         uint8_t sp = sp_word & 0xFFU;
@@ -90,20 +42,14 @@ void check_velopix_events(
         const uint32_t sp_row = sp_addr & 0x3FU;
         const uint32_t sp_col = (sp_addr >> 6);
         const uint32_t no_sp_neighbours = sp_word & 0x80000000U;
-        //printf("\t first sp col = %u, row = %u \n", sp_col, sp_row);
       }
       
     }
     n_sps_all_events += n_sps_event;
-    //printf("# of sps in this event = %u\n", n_sps_event);
   }
-
-  // printf("total # of sps = %u \n", n_sps_all_events);
-  // float n_sps_average = (float)n_sps_all_events / n_events;
-  // printf("average # of sps per event = %f \n", n_sps_average);
 }
 
-void read_ut_events_into_arrays( VeloUTTracking::HitsSoA hits_layers_events[],
+void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
 				 uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 				 const std::vector<char> events,
 				 const std::vector<unsigned int> event_offsets,
@@ -125,10 +71,9 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA hits_layers_events[],
       n_hits_layers_events[i_event][i_layer] = *((uint32_t*)raw_input);
       n_hits_total += n_hits_layers_events[i_event][i_layer];
       raw_input += sizeof(uint32_t);
-      assert( n_hits_layers_events[i_event][i_layer] < VeloUTTracking::max_numhits_per_layer );
+      assert( n_hits_total < VeloUTTracking::max_numhits_per_event );
       accumulated_hits_layers[i_layer] = accumulated_hits;
       accumulated_hits += n_hits_layers_events[i_event][i_layer];
-      debug_cout << "At event " << i_event <<  " accumulated hits in layer " << i_layer << "  = " << accumulated_hits_layers[i_layer] << std::endl;
     }
     // then the hit variables, sorted by layer
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
@@ -158,7 +103,7 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA hits_layers_events[],
 }
 
 
-void check_ut_events( const VeloUTTracking::HitsSoA hits_layers_events[],
+void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
 		      const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 		      const int n_events ) {
 
@@ -178,8 +123,8 @@ void check_ut_events( const VeloUTTracking::HitsSoA hits_layers_events[],
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       debug_cout << "checks on layer " << i_layer << ", with " << n_hits_layers_events[i_event][i_layer] << " hits" << std::endl;
       number_of_hits += n_hits_layers_events[i_event][i_layer];
+      int layer_offset = accumulated_hits_layers[i_layer];
       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
-	int layer_offset = accumulated_hits_layers[i_layer];
 	printf("\t at hit %u, cos = %f, yBegin = %f, yEnd = %f, dxDy = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight = %f, highThreshold = %u, LHCbID = %u \n",
 	       i_hit,
 	       hits_layers_events[i_event].cos[ layer_offset + i_hit ],
@@ -204,77 +149,6 @@ void check_ut_events( const VeloUTTracking::HitsSoA hits_layers_events[],
   debug_cout << "average # of UT hits / event = " << average_number_of_hits_per_event << std::endl;
     
   
-}
-
-/**
- * @brief Reads a number of events from a folder name.
- */
-void readFolder(
-  const std::string& foldername,
-  unsigned int number_of_files,
-  std::vector<char>& events,
-  std::vector<unsigned int>& event_offsets
-) {
-  std::vector<std::string> folderContents;
-  DIR *dir;
-  struct dirent *ent;
-
-  // Find out folder contents
-  if ((dir = opendir(foldername.c_str())) != NULL) {
-    /* print all the files and directories within directory */
-    while ((ent = readdir(dir)) != NULL) {
-      std::string filename = std::string(ent->d_name);
-      if (filename.find(".bin") != std::string::npos &&
-        filename.find("geometry") == std::string::npos) {
-        folderContents.push_back(filename);
-      }
-    }
-    closedir(dir);
-    if (folderContents.size() == 0) {
-      error_cout << "No binary files found in folder " << foldername << std::endl;
-      exit(-1);
-    } else {
-      info_cout << "Found " << folderContents.size() << " binary files" << std::endl;
-    }
-  } else {
-    error_cout << "Folder could not be opened" << std::endl;
-    exit(-1);
-  }
-
-  // Sort folder contents (file names)
-  std::sort(folderContents.begin(), folderContents.end()); 
-
-  if (number_of_files == 0) {
-    number_of_files = folderContents.size();
-  }
-
-  info_cout << "Requested " << number_of_files << " files" << std::endl;
-  int readFiles = 0;
-
-  // Read all requested events
-  unsigned int accumulated_size=0;
-  std::vector<unsigned int> event_sizes;
-  for (int i=0; i<number_of_files; ++i) {
-    // Read event #i in the list and add it to the inputs
-    std::string readingFile = folderContents[i % folderContents.size()];
-    appendFileToVector(foldername + "/" + readingFile, events, event_sizes);
-
-    event_offsets.push_back(accumulated_size);
-    accumulated_size += event_sizes.back();
-    
-    readFiles++;
-    if ((readFiles % 100) == 0) {
-      info_cout << "." << std::flush;
-    }
-
-    verbose_cout << "Read " << readingFile << std::endl;
-  }
-
-  // Add last offset
-  event_offsets.push_back(accumulated_size);
-
-  info_cout << std::endl << (event_offsets.size() - 1) << " files read" << std::endl << std::endl;
-
 }
 
 /**
@@ -384,7 +258,6 @@ void printTracks(
       }
     }
   }
-  
 }
 
 void check_roughly(
@@ -398,15 +271,13 @@ void check_roughly(
     
     for ( LHCbID id : track.ids() ) {
       uint32_t id_int = uint32_t( id );
-      
       // find associated IDs from mcps
       for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
-          VelopixEvent::MCP part = mcps[i_mcp];
-          auto it = find( part.hits.begin(), part.hits.end(), id_int );
-          if ( it != part.hits.end() ) {
-            mcp_ids.push_back( i_mcp );
-            //matched++;
-          }
+        VelopixEvent::MCP part = mcps[i_mcp];
+        auto it = find( part.hits.begin(), part.hits.end(), id_int );
+        if ( it != part.hits.end() ) {
+          mcp_ids.push_back( i_mcp );
+        }
       }
     }
     
@@ -431,39 +302,9 @@ void check_roughly(
   }
   
   printf("efficiency = %f \n", float(matched) / long_tracks );
-        
 }
 
-void callPrChecker(
-  const std::vector< trackChecker::Tracks >& all_tracks,
-  const std::string& folder_name_MC,
-  const bool& fromNtuple,
-  const std::string& trackType
-) {
 
-  /* MC information */
-  int n_events = all_tracks.size();
-  std::vector<VelopixEvent> events = VelopixEventReader::readFolder(folder_name_MC, fromNtuple, trackType, n_events, true );
-    
-  TrackChecker trackChecker;
-  uint64_t evnum = 1;
-  for (const auto& ev: events) {
-    debug_cout << "Event " << evnum << std::endl;
-    auto mcps = ev.mcparticles();
-    std::vector< uint32_t > hit_IDs = ev.hit_IDs;
-    std::vector<VelopixEvent::MCP> mcps_vector = ev.mcps;
-    MCAssociator mcassoc(mcps);
-
-    trackChecker::Tracks tracks = all_tracks[evnum-1];
-    debug_cout << "INFO: found " << tracks.size() << " reconstructed tracks" <<
-     " and " << mcps.size() << " MC particles " << std::endl;
-
-    trackChecker(tracks, mcassoc, mcps);
-    //check_roughly(tracks, hit_IDs, mcps_vector);
-        
-    ++evnum;
-  }
-}
 
 std::vector< trackChecker::Tracks > prepareTracks(
   VeloTracking::Track <true> * host_tracks_pinned,
@@ -490,8 +331,52 @@ std::vector< trackChecker::Tracks > prepareTracks(
       tracks.push_back( t );
     } // tracks
     
-    all_tracks.push_back( tracks );
+    all_tracks.emplace_back( tracks );
   } // events
 
   return all_tracks;
 }
+
+
+trackChecker::Tracks prepareVeloUTTracks(
+  std::vector< VeloUTTracking::TrackUT > ut_tracks
+) {
+  trackChecker::Tracks checker_tracks;
+  for ( VeloUTTracking::TrackUT ut_track : ut_tracks ) {
+    trackChecker::Track checker_track;
+    for ( int i_hit = 0; i_hit < ut_track.hitsNum; ++i_hit ) {
+      LHCbID lhcb_id( ut_track.LHCbIDs[i_hit] );
+      checker_track.addId( lhcb_id );
+    }
+    checker_tracks.push_back( checker_track );
+  }
+
+  return checker_tracks;
+}
+
+
+void call_pr_checker(
+  const std::vector< trackChecker::Tracks >& all_tracks,
+  const std::string& folder_name_MC,
+  const bool& fromNtuple,
+  const std::string& trackType
+) {
+  if ( trackType == "Velo" ) {
+    callPrChecker< TrackCheckerVelo> (
+      all_tracks,
+      folder_name_MC,
+      fromNtuple,
+      trackType);
+  }
+  else if ( trackType == "VeloUT" ) {
+    callPrChecker< TrackCheckerVeloUT> (
+      all_tracks,
+      folder_name_MC,
+      fromNtuple,
+      trackType);
+  }
+  else {
+    error_cout << "unknown track type: " << trackType << std::endl;
+  }
+}
+

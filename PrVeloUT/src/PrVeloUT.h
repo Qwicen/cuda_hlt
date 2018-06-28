@@ -4,10 +4,12 @@
 #include <array>
 #include <vector>
 #include <algorithm>
+#include <fstream>
 
 #include <cassert>
 
-#include "../../PrUTMagnetTool/PrUTMagnetTool.h"
+// #include "../../PrUTMagnetTool/PrUTMagnetTool.h"
+#include "../../main/include/Logger.h"
 
 // Math from ROOT
 #include "../include/CholeskyDecomp.h"
@@ -15,10 +17,10 @@
 #include "../include/VeloTypes.h"
 #include "../include/SystemOfUnits.h"
 
+//#include "TTree.h"
+//#include "TFile.h"
+
 /** @class PrVeloUT PrVeloUT.h
-   *
-   *  PrVeloUT algorithm. This is just a wrapper,
-   *  the actual pattern recognition is done in the 'PrVeloUTTool'.
    *
    *  - InputTracksName: Input location for Velo tracks
    *  - OutputTracksName: Output location for VeloTT tracks
@@ -32,18 +34,23 @@
    *  2018-05-05: Plácido Fernández (make standalone)
    */
 
-// TODO Fake MagnetTool
-// struct PrUTMagnetTool {
-//   const float m_zMidUT = 0.0;
-//   const float m_averageDist2mom = 0.0;
-//   const std::vector<float> dxLayTable = {0.0, 0.0, 0.0};
-//   const std::vector<float> bdlTable = {0.0, 0.0, 0.0};
+// TODO Fake MagnetTool just to make it compile
+struct PrUTMagnetTool {
+  //const float m_zMidUT = 0.0;
+  //const float m_averageDist2mom = 0.0;
+  std::vector<float> dxLayTable;
+  std::vector<float> bdlTable;
 
-//   float zMidUT() { return m_zMidUT; }
-//   float averageDist2mom() { return m_averageDist2mom; }
-//   std::vector<float> returnDxLayTable() const { return dxLayTable; }
-//   std::vector<float> returnBdlTable() const { return bdlTable; }
-// };
+  PrUTMagnetTool(){}
+  PrUTMagnetTool( 
+    const std::vector<float> _dxLayTable, 
+    const std::vector<float> _bdlTable ) : dxLayTable(_dxLayTable), bdlTable(_bdlTable) {}
+  
+  //float zMidUT() { return m_zMidUT; }
+  //float averageDist2mom() { return m_averageDist2mom; }
+  std::vector<float> returnDxLayTable() const { return dxLayTable; }
+  std::vector<float> returnBdlTable() const { return bdlTable; }
+};
 
 struct TrackHelper{
   VeloState state;
@@ -70,97 +77,144 @@ class PrVeloUT {
 
 public:
 
-  std::vector<std::string> GetFieldMaps();
+  // std::vector<std::string> GetFieldMaps();
   virtual int initialize();
-  std::vector<VeloUTTracking::TrackVelo> operator()(const std::vector<VeloUTTracking::TrackVelo>& inputTracks) const;
+  std::vector<VeloUTTracking::TrackUT> operator()(
+    const std::vector<VeloUTTracking::TrackVelo>& inputTracks, 
+    const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits ) const;
 
 private:
 
-  const float m_minMomentum = 1.5*Gaudi::Units::GeV;
-  const float m_minPT = 0.3*Gaudi::Units::GeV;
-  const float m_maxPseudoChi2 = 1280.;
-  const float m_yTol = 0.5  * Gaudi::Units::mm;
-  const float m_yTolSlope = 0.08;
-  const float m_hitTol1 = 6.0 * Gaudi::Units::mm;
-  const float m_hitTol2 = 0.8 * Gaudi::Units::mm;
-  const float m_deltaTx1 = 0.035;
-  const float m_deltaTx2 = 0.018;
-  const float m_maxXSlope = 0.350;
-  const float m_maxYSlope = 0.300;
-  const float m_centralHoleSize = 33. * Gaudi::Units::mm;
-  const float m_intraLayerDist = 15.0 * Gaudi::Units::mm;
-  const float m_overlapTol = 0.7 * Gaudi::Units::mm;
-  const float m_passHoleSize = 40. * Gaudi::Units::mm;
-  const int   m_minHighThres = 1;
-  const bool  m_printVariables = false;
-  const bool  m_passTracks = false;
-  const bool  m_doTiming = false;
+  const float m_minMomentum =       1.5*Gaudi::Units::GeV;
+  const float m_minPT =             0.3*Gaudi::Units::GeV;
+  const float m_maxPseudoChi2 =     1280.;
+  const float m_yTol =              0.5 * Gaudi::Units::mm;
+  const float m_yTolSlope =         0.08;
+  const float m_hitTol1 =           6.0 * Gaudi::Units::mm;
+  const float m_hitTol2 =           0.8 * Gaudi::Units::mm;
+  const float m_deltaTx1 =          0.035;
+  const float m_deltaTx2 =          0.018;
+  const float m_maxXSlope =         0.350;
+  const float m_maxYSlope =         0.300;
+  const float m_centralHoleSize =   33. * Gaudi::Units::mm;
+  const float m_intraLayerDist =    15.0 * Gaudi::Units::mm;
+  const float m_overlapTol =        0.7 * Gaudi::Units::mm;
+  const float m_passHoleSize =      40. * Gaudi::Units::mm;
+  const int   m_minHighThres =      1;
+  const bool  m_printVariables =    false;
+  const bool  m_passTracks =        false;
+  const bool  m_doTiming =          false;
 
   // typedef MultiIndexedHitContainer<Hit, UT::Info::kNStations, UT::Info::kNLayers>::HitRange HitRange;
 
   bool getState(
     const VeloUTTracking::TrackVelo& iTr, 
-    VeloState& trState, 
-    std::vector<VeloUTTracking::TrackVelo>& outputTracks ) const;
+    VeloState& trState ) const;
 
   bool getHits(
     std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
-    const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
+    const std::array<std::array<int,85>,4>& posLayers,
+    const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits,
     const std::vector<float>& fudgeFactors, 
-    const VeloState& trState ) const;
+    VeloState& trState ) const; 
 
   bool formClusters(const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, TrackHelper& helper) const;
 
-  void prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
-                          const TrackHelper& helper,
-                          const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
-                          std::vector<VeloUTTracking::TrackVelo>& outputTracks,
-                          const std::vector<float>& bdlTable) const;
+  void prepareOutputTrack(
+    const VeloUTTracking::TrackVelo& veloTrack,
+    const TrackHelper& helper,
+    const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+    std::vector<VeloUTTracking::TrackUT>& outputTracks,
+    const std::vector<float>& bdlTable) const;
 
   // ==============================================================================
-  // -- Method that finds the hits in a given layer within a certain range
+  // -- Method to cache some starting points for the search
+  // -- This is actually faster than binary searching the full array
+  // -- Granularity hardcoded for the moment.
+  // -- Idea is: UTb has dimensions in x (at y = 0) of about -860mm -> 860mm
+  // -- The indices go from 0 -> 84, and shift by -42, leading to -42 -> 42
+  // -- Taking the higher density of hits in the center into account, the positions of the iterators are
+  // -- calculated as index*index/2, where index = [ -42, 42 ], leading to
+  // -- -882mm -> 882mm
+  // -- The last element is an "end" iterator, to make sure we never go out of bound
+  // ==============================================================================
+  inline void fillIterators(
+    const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
+    std::array<std::array<int,85>,4>& posLayers) const
+  {
+    
+    for(int iStation = 0; iStation < 2; ++iStation){
+      for(int iLayer = 0; iLayer < 2; ++iLayer){
+        int layer = 2*iStation + iLayer;
+        const std::vector<VeloUTTracking::Hit>& hits = inputHits[layer];
+
+        size_t pos = 0;
+        posLayers[layer].fill(pos);
+
+        float bound = -42.0;
+        float val = std::copysign(bound*bound/2.0, bound);
+
+        // TODO add bounds checking
+        for ( ; pos != hits.size(); ++pos) {
+          while( hits.at(pos).xAtYEq0() > val){
+            posLayers[layer][bound+42] = pos;
+            ++bound;
+            val = std::copysign(bound*bound/2.0, bound);
+          }
+        }
+
+        std::fill(
+          posLayers[layer].begin() + 42 + int(bound), 
+          posLayers[layer].end(), hits.size()
+        );
+      }
+    }
+  }
+
+  // ==============================================================================
+  // -- Finds the hits in a given layer within a certain range
   // ==============================================================================
   inline void findHits( 
+    const size_t posBeg,
+    const size_t posEnd,
     const std::vector<VeloUTTracking::Hit>& inputHits,
     const VeloState& myState, 
     const float xTolNormFact,
     const float invNormFact,
     std::vector<VeloUTTracking::Hit>& outHits ) const 
   {
-    const auto zInit = inputHits.at(0).zAtYEq0();
+    const auto zInit = inputHits.at(posBeg).zAtYEq0();
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
 
-    int pos = 0;
-    for (auto& hit : inputHits) {
-      if ( hit.isNotYCompatible(yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact)) ) {
-        ++pos;
-      }
-    }
+    size_t pos = posBeg;
+    while ( 
+      pos <= posEnd && 
+      inputHits[pos].isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) ) 
+    ) { ++pos; }
 
     const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
     const auto yyProto =       myState.y - myState.ty*myState.z;
 
-    for (int i=pos; i<inputHits.size(); ++i) {
+    for (int i=pos; i<posEnd; ++i) {
 
-      const VeloUTTracking::Hit& hit = inputHits[pos];
-
-      const auto xx = hit.xAt(yApprox);
+      const auto xx = inputHits.at(i).xAt(yApprox);
       const auto dx = xx - xOnTrackProto;
-
+      
       if( dx < -xTolNormFact ) continue;
-      if( dx >  xTolNormFact ) break;
+      if( dx >  xTolNormFact ) break; 
 
       // -- Now refine the tolerance in Y
-      if( hit.isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
+      if( inputHits.at(i).isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
 
-      const auto zz = hit.zAtYEq0();
+      const auto zz = inputHits.at(i).zAtYEq0();
       const auto yy = yyProto +  myState.ty*zz;
-      const auto xx2 = hit.xAt(yy);
+      const auto xx2 = inputHits.at(i).xAt(yy);
 
       // TODO avoid the copy - remove the const?
-      VeloUTTracking::Hit temp_hit = hit;
-      temp_hit.m_second_x = xx2;
-      temp_hit.m_second_z = zz;
+      // XXX this could be a source of error?
+      VeloUTTracking::Hit temp_hit = inputHits.at(i);
+      temp_hit.x = xx2;
+      temp_hit.z = zz;
 
       outHits.emplace_back(temp_hit);
     }
@@ -175,6 +229,7 @@ private:
     const float ci = hit->cosT();
     const float dz = 0.001*(hit->z - m_zMidUT);
     const float wi = hit->weight();
+
     mat[0] += wi * ci;
     mat[1] += wi * ci * dz;
     mat[2] += wi * ci * dz * dz;
@@ -202,12 +257,9 @@ private:
     float mat[3] = { helper.wb, helper.wb*zDiff, helper.wb*zDiff*zDiff };
     float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
 
-    // TODO uncomment
-    // const int nHighThres = std::count_if( hits.begin(),  hits.end(),
-    //                                       []( VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
-
-    const int nHighThres = 2;
-
+    const int nHighThres = std::count_if( 
+      hits.begin(),  hits.end(), []( const VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
+    
     // -- Veto hit combinations with no high threshold hit
     // -- = likely spillover
     if( nHighThres < m_minHighThres ) return;

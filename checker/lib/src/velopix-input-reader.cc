@@ -22,8 +22,7 @@
 
 #include "velopix-input-reader.h"
 
-
-VelopixEvent::VelopixEvent(const std::vector<uint8_t>& event, const bool checkEvent) {
+VelopixEvent::VelopixEvent(const std::vector<char>& event, const bool checkEvent) {
   uint8_t* input = (uint8_t*) event.data();
 
   // Event
@@ -184,109 +183,25 @@ MCParticles VelopixEvent::mcparticles() const
   return retVal;
 }
 
-bool VelopixEventReader::fileExists (const std::string& name) {
-  if (FILE *file = fopen(name.c_str(), "r")) {
-    fclose(file);
-    return true;
-  } else {
-    return false;
-  }
-}
-
-void VelopixEventReader::readFileIntoVector(const std::string& filename, std::vector<uint8_t>& output) {
-  // Check if file exists
-  if (!VelopixEventReader::fileExists(filename)){
-    throw StrException("Error: File " + filename + " does not exist.");
-  }
-
-  std::ifstream infile(filename.c_str(), std::ifstream::binary);
-  infile.seekg(0, std::ios::end);
-  auto end = infile.tellg();
-  infile.seekg(0, std::ios::beg);
-  auto dataSize = end - infile.tellg();
-  // read content of infile with a vector
-  output.resize(dataSize);
-  infile.read((char*) output.data(), dataSize);
-  // check that file size and data in file about its payload size match
-  const auto currpos = infile.tellg();
-  infile.seekg(0, std::ios_base::end);
-  const auto endpos = infile.tellg();
-  assert(endpos == currpos);
-}
-
-bool sortFiles( std::string s1, std::string s2 ) {
-  size_t lastindex1 = s1.find_last_of("."); 
-  std::string raw1 = s1.substr(0, lastindex1);
-  size_t lastindex2 = s2.find_last_of("."); 
-  std::string raw2 = s2.substr(0, lastindex2);
-  int int1 = stoi(raw1, nullptr, 0);
-  int int2 = stoi(raw2, nullptr, 0);
-  return int1 < int2;
-}
-
-std::vector< std::string > VelopixEventReader::getFolderContents(
-  const std::string& foldername,
-  const bool fromNtuple,
-  uint nFiles
-  ) {
-  
-  std::vector<std::string> folderContents;
-  DIR *dir;
-  struct dirent *ent;
-  
-  if ((dir = opendir(foldername.c_str())) != NULL) {
-    /* print all the files and directories within directory */
-    while ((ent = readdir(dir)) != NULL) {
-      std::string filename = std::string(ent->d_name);
-      if ( !fromNtuple ) {
-	if (filename.find(".bin") != std::string::npos) {
-	  folderContents.push_back(filename);
-	}
-      }
-      else if ( fromNtuple ) {
-	if (filename.find(".root") != std::string::npos) {
-	  folderContents.push_back(filename);
-	}
-      }
-    }
-    closedir(dir);
-    if (folderContents.size() == 0) {
-      if ( fromNtuple )
-	std::cerr << "No root files found in folder " << foldername << std::endl;
-      else if ( !fromNtuple )
-	std::cerr << "No binary files found in folder " << foldername << std::endl;
-      exit(-1);
-    } else {
-      info_cout << "Found " << folderContents.size() << " binary files" << std::endl;
-    }
-  } else {
-    std::cerr << "Folder could not be opened" << std::endl;
-    exit(-1);
-  }
-  
-  std::sort( folderContents.begin(), folderContents.end(), sortFiles );
- 
-  return folderContents;
-}
 
 /* Use Ntuple created by PrTrackerDumper tool, 
    written by Renato Quagliani,
    Use code from https://gitlab.cern.ch/rquaglia/PrOfflineStudies
    by Renato Quagliani to read the input
 */
-void VelopixEventReader::readNtupleIntoVelopixEvent(
+void readNtupleIntoVelopixEvent(
   const std::string& filename,
   const std::string& trackType,
   VelopixEvent& event							    
  ) {
 
   // Check if file exists
-  if (!VelopixEventReader::fileExists(filename)){
+  if (!fileExists(filename)){
     throw StrException("Error: File " + filename + " does not exist.");
   }
-  
-  TFile file(filename.data(),"READ");
-  TTree *tree = (TTree*)file.Get("Hits_detectors");
+   
+  TFile *file = new TFile(filename.data(),"READ");
+  TTree *tree = (TTree*)file->Get("Hits_detectors");
   assert( tree);
 
   // MCP information
@@ -383,8 +298,8 @@ void VelopixEventReader::readNtupleIntoVelopixEvent(
     fChain->GetTree()->GetEntry(entry);
     if( p<0) continue;  // Hits not associated to an MCP are stored with p < 0
     //Velo
-    if ( trackType == "Velo" && !hasVelo ) continue;
-    if ( trackType == "VeloUT" && !(hasVelo && hasUT) ) continue;
+    //if ( trackType == "Velo" && !hasVelo ) continue;
+    //if ( trackType == "VeloUT" && !(hasVelo && hasUT) ) continue;
         
     VelopixEvent::MCP mcp;
     mcp.key = key;
@@ -412,60 +327,56 @@ void VelopixEventReader::readNtupleIntoVelopixEvent(
     event.mcps.push_back( mcp );
 
   } // loop over MCPs
-  
-}
-					 
 
-std::vector<VelopixEvent> VelopixEventReader::readFolder (
+  file->Close();
+  delete file;
+}
+ 
+
+std::vector<VelopixEvent> read_mc_folder (
   const std::string& foldername,
   const bool& fromNtuple,
   const std::string& trackType,
-  uint nFiles,
+  uint number_of_files,
   const bool checkEvents
-  ) {
-
-  std::vector< std::string > folderContents = getFolderContents( foldername, fromNtuple, nFiles );
-
-  uint requestedFiles = nFiles==0 ? folderContents.size() : nFiles;
-
-  info_cout << "Requested " << requestedFiles << " files" << std::endl;
+) {
+  std::vector<std::string> folderContents = list_folder(foldername, fromNtuple);
+  
+  uint requestedFiles = number_of_files==0 ? folderContents.size() : number_of_files;
+  verbose_cout << "Requested " << requestedFiles << " files" << std::endl;
 
   if ( requestedFiles > folderContents.size() ) {
     error_cout << "ERROR: requested " << requestedFiles << " files, but only " << folderContents.size() << " files are present" << std::endl;
     exit(-1);
   }
-   
+  
   std::vector<VelopixEvent> input;
   int readFiles = 0;
   for (uint i=0; i<requestedFiles; ++i) {
     // Read event #i in the list and add it to the inputs
     // if more files are requested than present in folder, read them again
     std::string readingFile = folderContents[i % folderContents.size()];
-    debug_cout << "Reading MC event " << readingFile << std::endl;
-    
+  
     VelopixEvent event;
     if ( !fromNtuple ) {
-      std::vector<uint8_t> inputContents;
+      std::vector<char> inputContents;
       readFileIntoVector(foldername + "/" + readingFile, inputContents);
-      event = VelopixEvent(inputContents, false);
+      event = VelopixEvent(inputContents, checkEvents);
     }
     else if ( fromNtuple )
       readNtupleIntoVelopixEvent(foldername + "/" + readingFile, trackType, event);
       
-    if ( i == 0 )
-      event.print();
+    // if ( i == 0 )
+    //   event.print();
        
     input.emplace_back(event);
-        
+
     readFiles++;
     if ((readFiles % 100) == 0) {
-      std::cout << "." << std::flush;
+      info_cout << "." << std::flush;
     }
-
   }
 
   info_cout << std::endl << input.size() << " files read" << std::endl << std::endl;
   return input;
 }
-
-		     

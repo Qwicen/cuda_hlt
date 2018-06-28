@@ -56,7 +56,7 @@ namespace VeloTracking {
 
   // Constants for requested storage on device
   static constexpr uint max_tracks = 2200;
-  static constexpr uint max_track_size = 26;
+  static constexpr uint max_track_size = 27;
   static constexpr uint max_numhits_in_module = 300; 
 
   // Maximum number of tracks to follow at a time
@@ -66,9 +66,12 @@ namespace VeloTracking {
   static constexpr uint max_number_of_hits_per_event = 4000;
 
   // Constants for filters
-  static constexpr uint states_per_track = 1; 
+  static constexpr uint states_per_track = 3; 
   static constexpr float param_w = 3966.94f;
   static constexpr float param_w_inverted = 0.000252083f;
+
+  // Max chi2
+  static constexpr float max_chi2 = 20.0;
 
   struct Module {
     uint hitStart;
@@ -137,7 +140,7 @@ namespace VeloTracking {
   struct TrackHits { // 2 + 26 * 2 = 54 B
   unsigned short hitsNum;
   unsigned short hits[VeloTracking::max_track_size];
-    
+     
     __device__ TrackHits(){}
     __device__ TrackHits(
       const unsigned short _hitsNum,
@@ -160,7 +163,9 @@ namespace VeloTracking {
      With MC:    4 + 26 * 16 = 420 B */
   template <bool MCCheck>   
   struct Track {
+    bool backward;
     unsigned short hitsNum;
+    //float first_z, last_z;
     Hit <MCCheck> hits[VeloTracking::max_track_size];
   
     __device__ Track(){
@@ -188,6 +193,10 @@ namespace VeloTracking {
  *                    c33 0.f
  *                        0.f
  */
+
+// DvB: we should check whether the covariance matrix elements are needed
+// for the propagation, otherwise we don't have to store them longer than
+// the Velo scope and we could make a reduced VeloState
 struct VeloState { // 48 B
   float x, y, tx, ty;
   float c00, c20, c22, c11, c31, c33;

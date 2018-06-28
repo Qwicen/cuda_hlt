@@ -24,6 +24,7 @@
 #include "../include/CudaCommon.h"
 #include "../include/Logger.h"
 #include "../include/Tools.h"
+#include "../include/InputTools.h"
 #include "../include/Timer.h"
 #include "../../stream/sequence/include/Stream.cuh"
 #include "../../stream/sequence/include/InitializeConstants.cuh"
@@ -33,8 +34,8 @@ void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
     << std::endl << " -f {folder containing .bin files with raw bank information}"
-    << std::endl << (do_mc_check ? " " : " [") << "-g {folder containing .root files with MC truth information}"
-    << (do_mc_check ? "" : " ]")
+    << std::endl << (mc_check_enabled ? " " : " [") << "-g {folder containing .root files with MC truth information}"
+    << (mc_check_enabled ? "" : " ]")
     << std::endl << " -e {folder containing, bin files with UT hit information}"
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=3]"
@@ -42,6 +43,7 @@ void printUsage(char* argv[]){
     << std::endl << " [-a {transmit host to device}=1]"
     << std::endl << " [-b {transmit device to host}=1]"
     << std::endl << " [-c {run checkers}=0]"
+    << std::endl << " [-k {simplified kalman filter}=0]"
     << std::endl << " [-v {verbosity}=3 (info)]"
     << std::endl << " [-p (print rates)]"
     << std::endl;
@@ -59,10 +61,12 @@ int main(int argc, char *argv[])
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
-  bool do_check = false;
+  // By default, do_check will be true when mc_check is enabled 
+  bool do_check = mc_check_enabled;
+  bool do_simplified_kalman_filter = false;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:g:e:n:t:r:pha:b:d:v:c:")) != -1) {
+  while ((c = getopt(argc, argv, "f:g:e:n:t:r:pha:b:d:v:c:k:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_velopix_raw = std::string(optarg);
@@ -91,6 +95,9 @@ int main(int argc, char *argv[])
     case 'c':
       do_check = atoi(optarg);
       break;
+    case 'k':
+      do_simplified_kalman_filter = atoi(optarg);
+      break;
     case 'v':
       verbosity = atoi(optarg);
       break;
@@ -118,7 +125,7 @@ int main(int argc, char *argv[])
     return -1;
   }
   
-  if(folder_name_MC.empty() && do_mc_check){
+  if(folder_name_MC.empty() && do_check){
     std::cerr << "No MC folder specified, but MC CHECK turned on" << std::endl;
     printUsage(argv);
     return -1;
@@ -137,7 +144,6 @@ int main(int argc, char *argv[])
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
     << " folder with MC truth input (-g): " << folder_name_MC << std::endl
     << " folder with ut hits input (-e): " << folder_name_ut_hits << std::endl
-    << " MC check (compile opt): " << do_mc_check << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
@@ -149,17 +155,27 @@ int main(int argc, char *argv[])
     << " device: " << device_properties.name << std::endl
     << std::endl;
 
+  std::cout << "MC check (compile opt): " << (mc_check_enabled ? "On" : "Off") << std::endl
+    << " folder with MC truth input (-g): " << folder_name_MC << std::endl
+    << " run checkers (-c): " << do_check << std::endl
+    << std::endl;
+
   // Read folder contents
   std::vector<char> velopix_events;
   std::vector<unsigned int> velopix_event_offsets;
-  readFolder(
+  verbose_cout << "Reading velopix raw events" << std::endl;
+  read_folder(
     folder_name_velopix_raw,
     number_of_files,
     velopix_events,
     velopix_event_offsets );
   
   check_velopix_events( velopix_events, velopix_event_offsets, number_of_files );
-  
+
+  if ( !fileExists(folder_name_velopix_raw + "/geometry.bin") ) {
+    error_cout << "no geometry file found in " << folder_name_velopix_raw << std::endl;
+    return -1;
+  }
   std::vector<char> geometry;
   readGeometry(folder_name_velopix_raw, geometry);
 
@@ -174,14 +190,15 @@ int main(int argc, char *argv[])
 
   std::vector<char> ut_events;
   std::vector<unsigned int> ut_event_offsets;
-  readFolder( folder_name_ut_hits, number_of_files,
-	      ut_events, ut_event_offsets );
+  verbose_cout << "Reading UT hits for " << number_of_events << " events " << std::endl;
+  read_folder( folder_name_ut_hits, number_of_files,
+  	      ut_events, ut_event_offsets );
 
   
-  VeloUTTracking::HitsSoA ut_hits_events[number_of_events];
+  VeloUTTracking::HitsSoA *ut_hits_events = new VeloUTTracking::HitsSoA[number_of_events];
   uint32_t ut_n_hits_layers_events[number_of_events][VeloUTTracking::n_layers];
   read_ut_events_into_arrays( ut_hits_events, ut_n_hits_layers_events,
-			      ut_events, ut_event_offsets, number_of_events );
+  			      ut_events, ut_event_offsets, number_of_events );
 
   //check_ut_events( ut_hits_events, ut_n_hits_layers_events, number_of_events );
 
@@ -199,6 +216,7 @@ int main(int argc, char *argv[])
       transmit_host_to_device,
       transmit_device_to_host,
       do_check,
+      do_simplified_kalman_filter, 
       print_individual_rates,
       folder_name_MC,
       i
@@ -229,12 +247,15 @@ int main(int argc, char *argv[])
 	ut_hits_events,
 	ut_n_hits_layers_events,
         number_of_events,
-        number_of_repetitions
+        number_of_repetitions,
+	i
       );
     }
   );
   t.stop();
 
+  delete [] ut_hits_events;
+  
   std::cout << (number_of_events * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 

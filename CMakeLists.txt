@@ -15,16 +15,17 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 
-# option to do MC truth matching
-if(NOT MC_CHECK)
-  set(MC_CHECK Off)
-endif(NOT MC_CHECK)
-if(${MC_CHECK} STREQUAL On OR ${MC_CHECK} STREQUAL ON)
+# include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/ROOT/6.12.06-51921/x86_64-centos7-gcc62-opt/include/")
+include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/ROOT/6.08.06-d7e12/x86_64-centos7-gcc62-opt/include/")
+include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/include")
+
+# MC truth matching
+if("${MC_CHECK}" STREQUAL Off OR "${MC_CHECK}" STREQUAL OFF)
+  MESSAGE(STATUS "MC_CHECK: Off")
+else("${MC_CHECK}" STREQUAL Off OR "${MC_CHECK}" STREQUAL OFF)
   MESSAGE(STATUS "MC_CHECK: On")
   add_definitions( -DMC_CHECK )
-else(${MC_CHECK} STREQUAL On OR ${MC_CHECK} STREQUAL ON)
-  MESSAGE(STATUS "MC_CHECK: Off")
-endif(${MC_CHECK} STREQUAL On OR ${MC_CHECK} STREQUAL ON)
+endif("${MC_CHECK}" STREQUAL Off OR "${MC_CHECK}" STREQUAL OFF)
 
 find_package(CUDA REQUIRED)
 set(CUDA_HOST_COMPILER "g++")

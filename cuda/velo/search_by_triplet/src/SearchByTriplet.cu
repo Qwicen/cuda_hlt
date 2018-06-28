@@ -35,7 +35,7 @@ __global__ void searchByTriplet(
   const float* hit_Zs = (float*) (dev_velo_cluster_container + number_of_hits + hit_offset);
   const float* hit_Phis = (float*) (dev_velo_cluster_container + 4 * number_of_hits + hit_offset);
   const float* hit_Xs = (float*) (dev_velo_cluster_container + 5 * number_of_hits + hit_offset);
-  const float* hit_IDs = (float*) (dev_velo_cluster_container + 2 * number_of_hits + hit_offset);
+  // const float* hit_IDs = (float*) (dev_velo_cluster_container + 2 * number_of_hits + hit_offset);
 
   // Per event datatypes
   VeloTracking::TrackHits* tracks = dev_tracks + tracks_offset;
