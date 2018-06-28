@@ -214,7 +214,7 @@ cudaError_t Stream::operator()(
         cudaEventRecord(cuda_generic_event, stream);
         cudaEventSynchronize(cuda_generic_event);
 
-	info_cout << "CHECKING VELO TRACKS " << std::endl;
+	std::cout << "CHECKING VELO TRACKS " << std::endl;
 	
         const std::vector< trackChecker::Tracks > tracks_events = prepareTracks(
           host_tracks_pinned,
@@ -309,6 +309,7 @@ cudaError_t Stream::operator()(
     	      hit.m_zAtYEq0 = hits_layers_events[i_event].zAtYEq0[layer_offset + i_hit];
     	      hit.m_LHCbID = hits_layers_events[i_event].LHCbID[layer_offset + i_hit];
 	      hit.m_planeCode = i_layer;
+	      hit.m_cluster_threshold = hits_layers_events[i_event].highThreshold[layer_offset + i_hit];
 	      
     	      inputHits[i_layer].push_back( hit );
 
@@ -321,6 +322,7 @@ cudaError_t Stream::operator()(
     	      xAtYEq0 = hit.m_xAtYEq0;
     	      weight = hit.m_weight;
     	      LHCbID = hit.m_LHCbID;
+	      highThreshold = hit.m_cluster_threshold;
 	      layer = i_layer;
 	      
     	      t_ut_hits->Fill();
@@ -400,19 +402,19 @@ cudaError_t Stream::operator()(
 	  // save in format for track checker
 	  trackChecker::Tracks checker_tracks = prepareVeloUTTracks( ut_tracks );
 	  debug_cout << "Passing " << checker_tracks.size() << " tracks to PrChecker" << std::endl;
-	  int i_track = 0;
-	  for ( auto ch_track : checker_tracks ) {
-	    debug_cout << "\t at track " << i_track << std::endl;
-	    i_track++;
-	    for ( auto id : ch_track.ids() ) {
-	      debug_cout << "\t id = " << uint32_t(id)   << std::endl;
-	    }
-	  }
+	  // int i_track = 0;
+	  // for ( auto ch_track : checker_tracks ) {
+	  //   debug_cout << "\t at track " << i_track << std::endl;
+	  //   i_track++;
+	  //   for ( auto id : ch_track.ids() ) {
+	  //     debug_cout << "\t id = " << uint32_t(id)   << std::endl;
+	  //   }
+	  // }
 	  ut_tracks_events->emplace_back( checker_tracks );
 	  
     	}
 	
-	info_cout << "CHECKING VeloUT TRACKS" << std::endl;
+	std::cout << "CHECKING VeloUT TRACKS" << std::endl;
 	const bool fromNtuple = true;
         const std::string trackType = "VeloUT";
         call_pr_checker (

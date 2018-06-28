@@ -143,7 +143,6 @@ void read_folder(
       info_cout << "." << std::flush;
     }
 
-    verbose_cout << "Read " << readingFile << std::endl;
   }
 
   // Add last offset

@@ -350,14 +350,12 @@ std::vector<VelopixEvent> read_mc_folder (
     exit(-1);
   }
   
-  info_cout << "Reading Monte Carlo data" << std::endl;
   std::vector<VelopixEvent> input;
   int readFiles = 0;
   for (uint i=0; i<requestedFiles; ++i) {
     // Read event #i in the list and add it to the inputs
     // if more files are requested than present in folder, read them again
     std::string readingFile = folderContents[i % folderContents.size()];
-    verbose_cout << "Reading MC event " << readingFile << std::endl;
   
     VelopixEvent event;
     if ( !fromNtuple ) {

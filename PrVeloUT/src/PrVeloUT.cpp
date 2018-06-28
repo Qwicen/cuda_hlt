@@ -114,6 +114,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     }
 
     if( helper.bestHits[0]){
+      debug_cout << "preparing track" << std::endl;
       prepareOutputTrack(veloTr, helper, hitsInLayers, outputTracks, bdlTable);
     }
   }

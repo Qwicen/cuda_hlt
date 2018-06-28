@@ -253,10 +253,10 @@ private:
     float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
 
     // TODO uncomment
-    // const int nHighThres = std::count_if( hits.begin(),  hits.end(),
-    //                                       []( VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
-
-    const int nHighThres = 2;
+    const int nHighThres = std::count_if( hits.begin(),  hits.end(),
+                                          []( VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
+    // debug_cout << "nHighThresh = " << nHighThres << std::endl;
+    //const int nHighThres = 2;
 
     // -- Veto hit combinations with no high threshold hit
     // -- = likely spillover
