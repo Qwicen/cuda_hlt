@@ -324,8 +324,8 @@ cudaError_t Stream::operator()(
     	      LHCbID = hit.m_LHCbID;
 	      highThreshold = hit.m_cluster_threshold;
 	      layer = i_layer;
-	      
-    	      t_ut_hits->Fill();
+
+	      t_ut_hits->Fill();
     	    }
     	    // sort hits according to xAtYEq0
     	    std::sort( inputHits[i_layer].begin(), inputHits[i_layer].end(), [](VeloUTTracking::Hit a, VeloUTTracking::Hit b) { return a.xAtYEq0() < b.xAtYEq0(); } );

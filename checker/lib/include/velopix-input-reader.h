@@ -100,14 +100,14 @@ void callPrChecker(
   uint64_t evnum = 0; // DvB: check, was 1 before!!
 
   for (const auto& ev: events) {
-    debug_cout << "Event " << (evnum+1) << std::endl;
+    //debug_cout << "Event " << (evnum+1) << std::endl;
     const auto& mcps = ev.mcparticles();
     const std::vector<uint32_t>& hit_IDs = ev.hit_IDs;
     const std::vector<VelopixEvent::MCP>& mcps_vector = ev.mcps;
     MCAssociator mcassoc(mcps);
 
-    debug_cout << "Found " << all_tracks[evnum].size() << " reconstructed tracks" <<
-     " and " << mcps.size() << " MC particles " << std::endl;
+    //debug_cout << "Found " << all_tracks[evnum].size() << " reconstructed tracks" <<
+    // " and " << mcps.size() << " MC particles " << std::endl;
 
     trackChecker(all_tracks[evnum], mcassoc, mcps);
     //check_roughly(tracks, hit_IDs, mcps_vector);

@@ -229,6 +229,7 @@ private:
     const float ci = hit->cosT();
     const float dz = 0.001*(hit->z - m_zMidUT);
     const float wi = hit->weight();
+
     mat[0] += wi * ci;
     mat[1] += wi * ci * dz;
     mat[2] += wi * ci * dz * dz;
