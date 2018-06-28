@@ -8,7 +8,7 @@
 
 #include <cassert>
 
-//#include "../../PrUTMagnetTool/PrUTMagnetTool.h"
+// #include "../../PrUTMagnetTool/PrUTMagnetTool.h"
 #include "../../main/include/Logger.h"
 
 // Math from ROOT
@@ -42,7 +42,9 @@ struct PrUTMagnetTool {
   std::vector<float> bdlTable;
 
   PrUTMagnetTool(){}
-  PrUTMagnetTool( const std::vector<float> _dxLayTable, const std::vector<float> _bdlTable ) : dxLayTable(_dxLayTable), bdlTable(_bdlTable) {}
+  PrUTMagnetTool( 
+    const std::vector<float> _dxLayTable, 
+    const std::vector<float> _bdlTable ) : dxLayTable(_dxLayTable), bdlTable(_bdlTable) {}
   
   //float zMidUT() { return m_zMidUT; }
   //float averageDist2mom() { return m_averageDist2mom; }
@@ -75,31 +77,33 @@ class PrVeloUT {
 
 public:
 
-  std::vector<std::string> GetFieldMaps();
+  // std::vector<std::string> GetFieldMaps();
   virtual int initialize();
-  std::vector<VeloUTTracking::TrackUT> operator()(const std::vector<VeloUTTracking::TrackVelo>& inputTracks, const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits) const;
+  std::vector<VeloUTTracking::TrackUT> operator()(
+    const std::vector<VeloUTTracking::TrackVelo>& inputTracks, 
+    const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits ) const;
 
 private:
 
-  const float m_minMomentum = 1.5*Gaudi::Units::GeV;
-  const float m_minPT = 0.3*Gaudi::Units::GeV;
-  const float m_maxPseudoChi2 = 1280.;
-  const float m_yTol = 0.5  * Gaudi::Units::mm;
-  const float m_yTolSlope = 0.08;
-  const float m_hitTol1 = 6.0 * Gaudi::Units::mm;
-  const float m_hitTol2 = 0.8 * Gaudi::Units::mm;
-  const float m_deltaTx1 = 0.035;
-  const float m_deltaTx2 = 0.018;
-  const float m_maxXSlope = 0.350;
-  const float m_maxYSlope = 0.300;
-  const float m_centralHoleSize = 33. * Gaudi::Units::mm;
-  const float m_intraLayerDist = 15.0 * Gaudi::Units::mm;
-  const float m_overlapTol = 0.7 * Gaudi::Units::mm;
-  const float m_passHoleSize = 40. * Gaudi::Units::mm;
-  const int   m_minHighThres = 1;
-  const bool  m_printVariables = false;
-  const bool  m_passTracks = false;
-  const bool  m_doTiming = false;
+  const float m_minMomentum =       1.5*Gaudi::Units::GeV;
+  const float m_minPT =             0.3*Gaudi::Units::GeV;
+  const float m_maxPseudoChi2 =     1280.;
+  const float m_yTol =              0.5 * Gaudi::Units::mm;
+  const float m_yTolSlope =         0.08;
+  const float m_hitTol1 =           6.0 * Gaudi::Units::mm;
+  const float m_hitTol2 =           0.8 * Gaudi::Units::mm;
+  const float m_deltaTx1 =          0.035;
+  const float m_deltaTx2 =          0.018;
+  const float m_maxXSlope =         0.350;
+  const float m_maxYSlope =         0.300;
+  const float m_centralHoleSize =   33. * Gaudi::Units::mm;
+  const float m_intraLayerDist =    15.0 * Gaudi::Units::mm;
+  const float m_overlapTol =        0.7 * Gaudi::Units::mm;
+  const float m_passHoleSize =      40. * Gaudi::Units::mm;
+  const int   m_minHighThres =      1;
+  const bool  m_printVariables =    false;
+  const bool  m_passTracks =        false;
+  const bool  m_doTiming =          false;
 
   // typedef MultiIndexedHitContainer<Hit, UT::Info::kNStations, UT::Info::kNLayers>::HitRange HitRange;
 
@@ -110,17 +114,18 @@ private:
   bool getHits(
     std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
     const std::array<std::array<int,85>,4>& posLayers,
-    const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
+    const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits,
     const std::vector<float>& fudgeFactors, 
-    const VeloState& trState ) const; 
+    VeloState& trState ) const; 
 
   bool formClusters(const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, TrackHelper& helper) const;
 
-  void prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
-                          const TrackHelper& helper,
-                          const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
-                          std::vector<VeloUTTracking::TrackUT>& outputTracks,
-                          const std::vector<float>& bdlTable) const;
+  void prepareOutputTrack(
+    const VeloUTTracking::TrackVelo& veloTrack,
+    const TrackHelper& helper,
+    const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+    std::vector<VeloUTTracking::TrackUT>& outputTracks,
+    const std::vector<float>& bdlTable) const;
 
   // ==============================================================================
   // -- Method to cache some starting points for the search
@@ -141,7 +146,6 @@ private:
     for(int iStation = 0; iStation < 2; ++iStation){
       for(int iLayer = 0; iLayer < 2; ++iLayer){
         int layer = 2*iStation + iLayer;
-        // const HitRange& hits = hh->hits( iStation, iLayer );
         const std::vector<VeloUTTracking::Hit>& hits = inputHits[layer];
 
         size_t pos = 0;
@@ -163,7 +167,6 @@ private:
           posLayers[layer].begin() + 42 + int(bound), 
           posLayers[layer].end(), hits.size()
         );
-
       }
     }
   }
@@ -208,6 +211,7 @@ private:
       const auto xx2 = inputHits.at(i).xAt(yy);
 
       // TODO avoid the copy - remove the const?
+      // XXX this could be a source of error?
       VeloUTTracking::Hit temp_hit = inputHits.at(i);
       temp_hit.x = xx2;
       temp_hit.z = zz;
@@ -252,11 +256,9 @@ private:
     float mat[3] = { helper.wb, helper.wb*zDiff, helper.wb*zDiff*zDiff };
     float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
 
-    // TODO uncomment
-    const int nHighThres = std::count_if( hits.begin(),  hits.end(),
-                                          []( VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
-    // debug_cout << "nHighThresh = " << nHighThres << std::endl;
-    //const int nHighThres = 2;
+    const int nHighThres = std::count_if( 
+      hits.begin(),  hits.end(), []( const VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
+    debug_cout << "nHighThresh = " << nHighThres << std::endl;
 
     // -- Veto hit combinations with no high threshold hit
     // -- = likely spillover

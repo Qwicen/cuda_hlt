@@ -26,16 +26,16 @@ namespace {
 //=============================================================================
 // Initialization
 //=============================================================================
-std::vector<std::string> PrVeloUT::GetFieldMaps() {
+// std::vector<std::string> PrVeloUT::GetFieldMaps() {
   
-  std::vector<std::string> filenames;
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c1.down.cdf");
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c2.down.cdf");
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c3.down.cdf");
-  filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c4.down.cdf");
+//   std::vector<std::string> filenames;
+//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c1.down.cdf");
+//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c2.down.cdf");
+//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c3.down.cdf");
+//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c4.down.cdf");
 
-  return filenames;
-}
+//   return filenames;
+// }
 
 int PrVeloUT::initialize() {
 
@@ -97,6 +97,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
 
   std::array<std::vector<VeloUTTracking::Hit>,4> hitsInLayers;
   for( auto& it : hitsInLayers ) it.reserve(8); // TODO check this number
+
   for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
 
     VeloState trState;
@@ -172,9 +173,9 @@ bool PrVeloUT::getState(
 bool PrVeloUT::getHits(
   std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
   const std::array<std::array<int,85>,4>& posLayers,
-  const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
+  const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits,
   const std::vector<float>& fudgeFactors, 
-  const VeloState& trState ) const 
+  VeloState& trState ) const 
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
@@ -331,11 +332,12 @@ bool PrVeloUT::formClusters(
 //=========================================================================
 // Create the Velo-TU tracks
 //=========================================================================
-void PrVeloUT::prepareOutputTrack(const VeloUTTracking::TrackVelo& veloTrack,
-                                  const TrackHelper& helper,
-                                  const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
-                                  std::vector<VeloUTTracking::TrackUT>& outputTracks,
-                                  const std::vector<float>& bdlTable) const {
+void PrVeloUT::prepareOutputTrack(
+  const VeloUTTracking::TrackVelo& veloTrack,
+  const TrackHelper& helper,
+  const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+  std::vector<VeloUTTracking::TrackUT>& outputTracks,
+  const std::vector<float>& bdlTable) const {
 
   //== Handle states. copy Velo one, add TT.
   const float zOrigin = (std::fabs(helper.state.ty) > 0.001)

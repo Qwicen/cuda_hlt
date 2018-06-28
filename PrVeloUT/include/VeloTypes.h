@@ -34,7 +34,7 @@ namespace VeloUTTracking {
     inline float dxDy() const { return m_dxDy; }
     // TODO get the proper (boolean) for highThreshold
     // inline bool highThreshold() const { return m_cluster.highThreshold(); }
-    inline bool highThreshold() { m_cluster_threshold = true; return m_cluster_threshold; }
+    inline bool highThreshold() const { return m_cluster_threshold; }
     inline bool isYCompatible( const float y, const float tol ) const { return yMin() - tol <= y && y <= yMax() + tol; }
     inline bool isNotYCompatible( const float y, const float tol ) const { return yMin() - tol > y || y > yMax() + tol; }
     // TODO is this correct?
