@@ -106,24 +106,24 @@ void callPrChecker(
 
     trackChecker(all_tracks[evnum], mcassoc, mcps);
 
-    // /* Check for double counting of hits */
-    // for ( auto ch_track : all_tracks[evnum] ) {
-    //   for ( auto ida : ch_track.ids() ) {
-    // 	int counted_IDs = 0;
-    // 	for ( auto idb : ch_track.ids() ) {
-    // 	  if ( uint32_t(ida) == uint32_t(idb) )
-    // 	    counted_IDs++;
-    // 	}
+    /* Check for double counting of hits */
+    for ( auto ch_track : all_tracks[evnum] ) {
+      for ( auto ida : ch_track.ids() ) {
+    	int counted_IDs = 0;
+    	for ( auto idb : ch_track.ids() ) {
+    	  if ( uint32_t(ida) == uint32_t(idb) )
+    	    counted_IDs++;
+    	}
 
-    // 	if ( counted_IDs > 1  ) {
-    // 	  warning_cout << "ATTENTION: counted " << counted_IDs << " same IDs on one track" << std::endl;
-    // 	  for ( auto id : ch_track.ids() ) {
-    // 	    warning_cout << std::hex << "\t " << id << std::endl;
-    // 	  }
-    // 	}
+    	if ( counted_IDs > 1  ) {
+    	  warning_cout << "ATTENTION: counted " << counted_IDs << " same IDs on one track" << std::endl;
+    	  for ( auto id : ch_track.ids() ) {
+    	    warning_cout << std::hex << "\t " << id << std::endl;
+    	  }
+    	}
 	
-    //   }
-    // }
+      }
+    }
 		
     
     ++evnum;
