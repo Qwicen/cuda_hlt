@@ -89,44 +89,14 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const bool checkEvent
             assert(!std::isinf(mcp.pt));
             assert(!std::isinf(mcp.eta));
             assert(!std::isinf(mcp.phi));
-            // Check all IDs in MC particles exist in hit_IDs
-            // for (size_t i=0; i<mcp.numHits; ++i) {
-            //     auto hit = mcp.hits[i];
-	    // 	//printf("checking hit %u \n", hit );
-            //     if (std::find(hit_IDs.begin(), hit_IDs.end(), hit) == hit_IDs.end()) {
-            //         throw StrException("The following MC particle hit ID was not found in hit_IDs: " + std::to_string(hit));
-            //     }
-            // }
-        }
+	}
     }
     
-    // Check all hitStarts are monotonically increasing (>=)
-    // and that they correspond with hitNums
-    // uint32_t hitStart = 0;
-    // for (size_t i=0; i<numberOfModules; ++i) {
-    //   if (module_hitNums[i] > 0) {
-    //     if (module_hitStarts[i] < hitStart) {
-    //       throw StrException("module_hitStarts are not monotonically increasing "
-    // 			     + std::to_string(hitStart) + " " + std::to_string(module_hitStarts[i]) + ".");
-    //     }
-    //     hitStart = module_hitStarts[i];
-    //   }
-    // }
-
+ 
 }
 
 void VelopixEvent::print() const {
-  std::cout << "Event" << std::endl
-        // << " numberOfModules " << numberOfModules << std::endl
-        // << " numberOfHits " << numberOfHits << std::endl
-        // << " module_Zs " << strVector(module_Zs, numberOfModules) << std::endl
-        // << " module_hitStarts " << strVector(module_hitStarts, numberOfModules) << std::endl
-        // << " module_hitNums " << strVector(module_hitNums, numberOfModules) << std::endl
-        // << " hit_IDs " << strVector(hit_IDs, numberOfHits) << std::endl
-        // << " hit_Xs " << strVector(hit_Xs, numberOfHits) << std::endl
-        // << " hit_Ys " << strVector(hit_Ys, numberOfHits) << std::endl
-        // << " hit_Zs " << strVector(hit_Zs, numberOfHits) << std::endl
-        << " #MC particles " << mcps.size() << std::endl;
+  std::cout << " #MC particles " << mcps.size() << std::endl;
 
   // Print first MCP
   if (mcps.size() > 0) {
@@ -298,8 +268,8 @@ void readNtupleIntoVelopixEvent(
     fChain->GetTree()->GetEntry(entry);
     if( p<0) continue;  // Hits not associated to an MCP are stored with p < 0
     //Velo
-    //if ( trackType == "Velo" && !hasVelo ) continue;
-    //if ( trackType == "VeloUT" && !(hasVelo && hasUT) ) continue;
+    // if ( trackType == "Velo" && !hasVelo ) continue;
+    // if ( trackType == "VeloUT" && !(hasVelo && hasUT) ) continue;
         
     VelopixEvent::MCP mcp;
     mcp.key = key;
