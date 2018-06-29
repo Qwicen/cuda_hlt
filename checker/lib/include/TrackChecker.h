@@ -17,6 +17,7 @@
 
 #include "Tracks.h"
 #include "MCAssociator.h"
+#include "../../../main/include/Logger.h"
 
 class TrackChecker
 {

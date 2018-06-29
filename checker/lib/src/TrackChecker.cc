@@ -80,23 +80,23 @@ void TrackCheckerVeloUT::SetCategories() {
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && 11 != std::abs(mcp.pid()); },
         }),
-    TrackEffReport({ "Velo + UT",
+    TrackEffReport({ "Velo+UT",
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && mcp.isUT() && 11 != std::abs(mcp.pid()); },
         }),
-    TrackEffReport({ "Velo + UT, p > 5 GeV",
+    TrackEffReport({ "Velo+UT, p > 5 GeV",
 	[] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && mcp.isUT() && mcp.p() > 5e3 && 11 != std::abs(mcp.pid()) ; },
 	}),
-    TrackEffReport({ "Velo + not long",
+    TrackEffReport({ "Velo, not long",
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && !mcp.isLong() && 11 != std::abs(mcp.pid()); },
         }),
-    TrackEffReport({ "Velo + UT + not long",
+    TrackEffReport({ "Velo+UT, not long",
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && mcp.isUT() && !mcp.isLong() && 11 != std::abs(mcp.pid()); },
 	  }),
-    TrackEffReport({ "Velo + UT + not long, p > 5 GeV",
+    TrackEffReport({ "Velo+UT, not long, p > 5 GeV",
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && mcp.isUT() && !mcp.isLong() && mcp.p() > 5e3 && 11 != std::abs(mcp.pid()); },
 	  }),

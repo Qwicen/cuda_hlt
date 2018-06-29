@@ -318,9 +318,21 @@ void readNtupleIntoVelopixEvent(
     mcp.fromd = fromCharmDecay;
     
     std::vector<uint32_t> hits;
-    for(int index = 0; index < Velo_lhcbID->size(); index++) {
-      hits.push_back( Velo_lhcbID->at(index) );
-    }
+    if ( trackType == "Velo" || trackType == "VeloUT" || trackType == "SciFi" )
+      for(int index = 0; index < Velo_lhcbID->size(); index++) {
+	hits.push_back( Velo_lhcbID->at(index) );
+      }
+
+    if ( trackType == "VeloUT" || trackType == "SciFi" )
+      for(int index = 0; index < UT_lhcbID->size(); index++) {
+	hits.push_back( UT_lhcbID->at(index) );
+      }
+    
+    if ( trackType == "SciFi" )
+      for(int index = 0; index < FT_lhcbID->size(); index++) {
+	hits.push_back( FT_lhcbID->at(index) );
+      }
+        
     mcp.numHits = (uint32_t)hits.size();
     mcp.hits = hits;
     

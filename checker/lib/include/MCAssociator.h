@@ -199,13 +199,11 @@ class MCAssociator
             std::size_t total = 0;
             // count how often each particle appears
             for (; last != first; ++first) {
-	      //printf("working on lhcb id %u \n", uint32_t( *first ) );
-                auto it = find(*first);
+	      auto it = find(*first);
                 if (m_map.end() == it) continue;
                 ++assoc[it->second];
                 ++total;
-		//printf("total = %u \n", total);
-            }
+	    }
             // bring the map into a more compact format
             return buildResult(assoc, total);
         }
