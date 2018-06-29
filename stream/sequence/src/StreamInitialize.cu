@@ -196,7 +196,12 @@ cudaError_t Stream::initialize(
   auto schedule = scheduler.solve();
 
   // Malloc required GPU memory
-  info_cout << "A total of " << (((float) std::get<0>(schedule)) / (1024*1024)) << " MiB are required" << std::endl;
+  auto total_memory_required = std::accumulate(argument_sizes.begin(), argument_sizes.end(), 0);
+  float used_memory = std::get<0>(schedule);
+
+  info_cout << "A total of " << (used_memory / (1024*1024)) << " MiB are required"
+    << " (we saved " << (100.f * ((total_memory_required - used_memory) / total_memory_required)) << "%)"
+    << std::endl << std::endl;
 
   char* dev_base_pointer;
   cudaCheck(cudaMalloc((void**)&dev_base_pointer, std::get<0>(schedule)));
