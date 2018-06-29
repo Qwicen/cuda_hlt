@@ -18,7 +18,6 @@ cudaError_t Stream::operator()(
 
     if (transmit_host_to_device) {
       cudaCheck(cudaMemcpyAsync(std::get<0>(sequence.item<seq::estimate_input_size>().arguments), host_events_pinned, host_events_pinned_size, cudaMemcpyHostToDevice, stream));
-      // cudaCheck(cudaMemcpyAsync(std::get<0>(std::get<0>(sequence.algorithms).arguments), host_events_pinned, host_events_pinned_size, cudaMemcpyHostToDevice, stream));
       cudaCheck(cudaMemcpyAsync(std::get<1>(sequence.item<seq::estimate_input_size>().arguments), host_event_offsets_pinned, host_event_offsets_pinned_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
     }
 
@@ -171,7 +170,7 @@ cudaError_t Stream::operator()(
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, std::get<8>(sequence.item<seq::search_by_triplet>().arguments), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, std::get<2>(sequence.item<seq::consolidate_tracks>().arguments), number_of_events * max_tracks_in_event * sizeof(Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, std::get<2>(sequence.item<seq::consolidate_tracks>().arguments), number_of_events * VeloTracking::max_tracks * sizeof(Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
     }
 
     cudaEventRecord(cuda_generic_event, stream);
@@ -192,7 +191,7 @@ cudaError_t Stream::operator()(
         // Fetch data
         cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, std::get<8>(sequence.item<seq::search_by_triplet>().arguments), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
         cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(std::get<8>(sequence.item<seq::search_by_triplet>().arguments) + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, std::get<2>(sequence.item<seq::consolidate_tracks>().arguments), number_of_events * max_tracks_in_event * sizeof(Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, std::get<2>(sequence.item<seq::consolidate_tracks>().arguments), number_of_events * VeloTracking::max_tracks * sizeof(Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
 
         cudaEventRecord(cuda_generic_event, stream);
         cudaEventSynchronize(cuda_generic_event);

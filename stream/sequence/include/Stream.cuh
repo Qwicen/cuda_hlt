@@ -66,9 +66,6 @@ enum arg_enum_t {
 }
 
 struct Stream {
-  // Limiting constants for preallocation
-  constexpr static uint max_tracks_in_event = VeloTracking::max_tracks;
-  constexpr static uint max_numhits_in_module = VeloTracking::max_numhits_in_module;
   // Stream datatypes
   cudaStream_t stream;
   cudaEvent_t cuda_generic_event;

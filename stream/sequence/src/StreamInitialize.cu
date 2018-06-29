@@ -45,7 +45,7 @@ cudaError_t Stream::initialize(
   // Memory allocations for host memory (copy back)
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks_pinned, number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_tracks, number_of_events * sizeof(int)));
-  cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * max_tracks_in_event * sizeof(Track<mc_check_enabled>)));
+  cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * VeloTracking::max_tracks * sizeof(Track<mc_check_enabled>)));
 
   // Define sequence of algorithms to execute
   sequence = generate_sequence(
@@ -83,10 +83,10 @@ cudaError_t Stream::initialize(
 
   // Define all arguments, with their type and size
   velo_cluster_container_size = number_of_events * VeloClustering::max_candidates_event * 2 * 6;
-  size_t velo_states_size = number_of_events * max_tracks_in_event;
+  size_t velo_states_size = number_of_events * VeloTracking::max_tracks;
   // size_t velo_states_size = do_simplified_kalman_filter ?
-  //   number_of_events * max_tracks_in_event * VeloTracking::states_per_track : 
-  //   number_of_events * max_tracks_in_event;
+  //   number_of_events * VeloTracking::max_tracks * VeloTracking::states_per_track : 
+  //   number_of_events * VeloTracking::max_tracks;
 
   // All arguments, with their type (without the *), name string, and size
   auto arguments = generate_tuple(
@@ -98,16 +98,16 @@ cudaError_t Stream::initialize(
     Argument<uint>{"dev_cluster_offset", number_of_events},
     Argument<uint>{"dev_cluster_candidates", number_of_events * VeloClustering::max_candidates_event},
     Argument<uint>{"dev_velo_cluster_container", velo_cluster_container_size},
-    Argument<TrackHits>{"dev_tracks", number_of_events * max_tracks_in_event},
+    Argument<TrackHits>{"dev_tracks", number_of_events * VeloTracking::max_tracks},
     Argument<uint>{"dev_tracks_to_follow", number_of_events * VeloTracking::ttf_modulo},
     Argument<bool>{"dev_hit_used", VeloTracking::max_number_of_hits_per_event * number_of_events},
     Argument<int>{"dev_atomics_storage", number_of_events * VeloTracking::num_atomics},
     Argument<TrackHits>{"dev_tracklets", (VeloTracking::max_number_of_hits_per_event / 2) * number_of_events},
     Argument<uint>{"dev_weak_tracks", VeloTracking::max_number_of_hits_per_event * number_of_events},
-    Argument<Track<mc_check_enabled>>{"dev_output_tracks", max_tracks_in_event * number_of_events},
+    Argument<Track<mc_check_enabled>>{"dev_output_tracks", VeloTracking::max_tracks * number_of_events},
     Argument<short>{"dev_h0_candidates", 2 * VeloTracking::max_number_of_hits_per_event * number_of_events},
     Argument<short>{"dev_h2_candidates", 2 * VeloTracking::max_number_of_hits_per_event * number_of_events},
-    Argument<unsigned short>{"dev_rel_indices", number_of_events * max_numhits_in_module},
+    Argument<unsigned short>{"dev_rel_indices", number_of_events * VeloTracking::max_numhits_in_module},
     Argument<uint>{"dev_hit_permutation", VeloTracking::max_number_of_hits_per_event * number_of_events},
     Argument<VeloState>{"dev_velo_states", velo_states_size}
   );
@@ -115,6 +115,7 @@ cudaError_t Stream::initialize(
   // Fetch argument sizes
   // Note: The enum indices hold in the vector datatype
   std::vector<size_t> argument_sizes = generate_argument_sizes(arguments);
+  std::vector<std::string> argument_names = generate_argument_names(arguments);
 
   // Set dependencies for each algorithm
   std::vector<std::vector<uint>> sequence_arguments
@@ -191,7 +192,7 @@ cudaError_t Stream::initialize(
   // - vector of offsets (one per each argument)
 
   // Run preferred scheduler
-  auto scheduler = BaseScheduler(argument_sizes, sequence_arguments);
+  auto scheduler = BaseScheduler(argument_sizes, argument_names, sequence_arguments);
   auto schedule = scheduler.solve();
 
   // Malloc required GPU memory

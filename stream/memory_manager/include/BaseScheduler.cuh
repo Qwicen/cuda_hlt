@@ -20,13 +20,16 @@ struct BaseScheduler {
 
   MemoryManager* memory_manager;
   std::vector<size_t> argument_sizes;
+  std::vector<std::string> argument_names;
   std::vector<std::vector<uint>> sequence_arguments;
 
   BaseScheduler() = default;
 
   BaseScheduler(std::vector<size_t> param_argument_sizes,
+    std::vector<std::string> param_argument_names,
     std::vector<std::vector<uint>> param_sequence_arguments)
     : argument_sizes(param_argument_sizes),
+    argument_names(param_argument_names),
     sequence_arguments(param_sequence_arguments) {
     // By default, use base MemoryManager
     memory_manager = new MemoryManager();
@@ -65,8 +68,8 @@ struct BaseScheduler {
       if (argument.first_algorithm == -1 ||
         argument.last_algorithm == -1) {
         throw StrException("Generate arguments: At least one argument has " +
-          std::string("first / last algorithm not populated (argument #") +
-          std::to_string(argument.tag) + ")");
+          std::string("first / last algorithm not populated (argument ") +
+          argument_names[argument.tag] + ")");
       }
     }
   }
@@ -100,8 +103,7 @@ struct BaseScheduler {
         }
       }
 
-      info_cout << "BaseScheduler sequence " << i << ":" << std::endl;
-      memory_manager->print();
+      memory_manager->print(argument_names, i);
 
       // Free memory for types not used anymore after this algorithm
       for (auto& argument : arguments) {

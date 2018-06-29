@@ -90,3 +90,20 @@ std::vector<size_t> generate_argument_sizes(const T& tuple) {
   using indices = typename tuple_indices<T>::type;
   return generate_argument_sizes_impl(tuple, indices());
 }
+
+/**
+ * @brief Generates a std::vector with the names of all arguments.
+ */
+template<typename T, unsigned long... Is>
+std::vector<std::string> generate_argument_names_impl(
+  const T& tuple,
+  std::index_sequence<Is...>
+) {
+  return {std::get<Is>(tuple).name...};
+}
+
+template<typename T>
+std::vector<std::string> generate_argument_names(const T& tuple) {
+  using indices = typename tuple_indices<T>::type;
+  return generate_argument_names_impl(tuple, indices());
+}

@@ -115,10 +115,13 @@ struct MemoryManager {
     }
   }
 
-  void print() {
-    info_cout << "MemoryManager segments (MiB): ";
+  void print(const std::vector<std::string>& argument_names, const int step = -1) {
+    if (step!=-1) { info_cout << "Sequence step " << step << " memory segments (MiB): "; }
+    else { info_cout << "MemoryManager segments (MiB): "; }
+
     for (auto& segment : memory_segments) {
-      info_cout << segment.tag << " (" << ((float) segment.size) / (1024 * 1024) << "), ";
+      std::string name = segment.tag==-1 ? "unused" : argument_names[segment.tag];
+      info_cout << name << " (" << ((float) segment.size) / (1024 * 1024) << "), ";
     }
     info_cout << std::endl;
   }
