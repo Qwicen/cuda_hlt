@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
   }
 
   // Set verbosity level
-  std::cout << std::fixed << std::setprecision(6);
+  std::cout << std::fixed << std::setprecision(2);
   logger::ll.verbosityLevel = verbosity;
 
   // Get device properties

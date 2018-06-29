@@ -53,7 +53,7 @@ namespace VeloTracking {
 
   // Total number of atomics required
   // This is just a constant
-  static constexpr uint num_atomics = 4;
+  static constexpr uint num_atomics = 5;
 
   // Constants for requested storage on device
   static constexpr uint max_tracks = 2200;
@@ -64,7 +64,7 @@ namespace VeloTracking {
   static constexpr uint ttf_modulo = 2200;
 
   // High number of hits per event
-  static constexpr uint max_number_of_hits_per_event = 4000;
+  static constexpr uint max_number_of_hits_per_event = 6000;
 
   // Constants for filters
   static constexpr uint states_per_track = 3;

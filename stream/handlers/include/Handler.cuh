@@ -6,7 +6,7 @@
 #include <utility>
 
 template<typename Tuple>
-struct call_indices {
+struct tuple_indices {
   using type = decltype(std::make_index_sequence<std::tuple_size<Tuple>::value>());
 };
 
@@ -32,7 +32,7 @@ auto call(
   cudaStream_t* stream,
   Tuple args
 ) {
-  using indices = typename call_indices<Tuple>::type;
+  using indices = typename tuple_indices<Tuple>::type;
   return call_impl(fn, num_blocks, num_threads, shared_memory_size,
     stream, args, indices());
 }

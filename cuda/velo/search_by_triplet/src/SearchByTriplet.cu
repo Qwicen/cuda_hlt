@@ -29,6 +29,7 @@ __global__ void searchByTriplet(
   const uint* module_hitStarts = dev_module_cluster_start + event_number * VeloTracking::n_modules;
   const uint* module_hitNums = dev_module_cluster_num + event_number * VeloTracking::n_modules;
   const uint hit_offset = module_hitStarts[0];
+  assert((module_hitStarts[52] - module_hitStarts[0]) < VeloTracking::max_number_of_hits_per_event);
   
   // Order has changed since SortByPhi
   const float* hit_Ys = (float*) (dev_velo_cluster_container + hit_offset);
@@ -53,7 +54,7 @@ __global__ void searchByTriplet(
 
   // Initialize variables according to event number and module side
   // Insert pointers (atomics)
-  const int ip_shift = number_of_events + event_number * VeloTracking::num_atomics;
+  const int ip_shift = number_of_events + event_number * (VeloTracking::num_atomics - 1);
   uint* weaktracks_insert_pointer = (uint*) dev_atomics_storage + ip_shift;
   uint* tracklets_insert_pointer = (uint*) dev_atomics_storage + ip_shift + 1;
   uint* ttf_insert_pointer = (uint*) dev_atomics_storage + ip_shift + 2;
@@ -73,7 +74,7 @@ __global__ void searchByTriplet(
   }
   // Initialize atomics
   tracks_insert_pointer[0] = 0;
-  if (threadIdx.x < VeloTracking::num_atomics) {
+  if (threadIdx.x < (VeloTracking::num_atomics - 1)) {
     dev_atomics_storage[ip_shift + threadIdx.x] = 0;
   }
 

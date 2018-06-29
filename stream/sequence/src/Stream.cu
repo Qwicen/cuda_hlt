@@ -17,15 +17,14 @@ cudaError_t Stream::operator()(
     ////////////////
 
     if (transmit_host_to_device) {
-      cudaCheck(cudaMemcpyAsync(std::get<0>(estimateInputSize.arguments), host_events_pinned, host_events_pinned_size, cudaMemcpyHostToDevice, stream));
-      cudaCheck(cudaMemcpyAsync(std::get<1>(estimateInputSize.arguments), host_event_offsets_pinned, host_event_offsets_pinned_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
-      // cudaCheck(cudaMemcpyAsync(estimateInputSize.dev_raw_input, host_events_pinned, host_events_pinned_size, cudaMemcpyHostToDevice, stream));
-      // cudaCheck(cudaMemcpyAsync(estimateInputSize.dev_raw_input_offsets, host_event_offsets_pinned, host_event_offsets_pinned_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
+      cudaCheck(cudaMemcpyAsync(std::get<0>(sequence.item<seq::estimate_input_size>().arguments), host_events_pinned, host_events_pinned_size, cudaMemcpyHostToDevice, stream));
+      // cudaCheck(cudaMemcpyAsync(std::get<0>(std::get<0>(sequence.algorithms).arguments), host_events_pinned, host_events_pinned_size, cudaMemcpyHostToDevice, stream));
+      cudaCheck(cudaMemcpyAsync(std::get<1>(sequence.item<seq::estimate_input_size>().arguments), host_event_offsets_pinned, host_event_offsets_pinned_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
     }
 
     // Estimate the input size of each module
     Helper::invoke(
-      estimateInputSize,
+      sequence.item<seq::estimate_input_size>(),
       "Estimate input size",
       times,
       cuda_event_start,
@@ -35,7 +34,7 @@ cudaError_t Stream::operator()(
 
     // Convert the estimated sizes to module hit start format (offsets)
     Helper::invoke(
-      prefixSumReduce,
+      sequence.item<seq::prefix_sum_reduce>(),
       "Prefix sum reduce",
       times,
       cuda_event_start,
@@ -44,7 +43,7 @@ cudaError_t Stream::operator()(
     );
 
     Helper::invoke(
-      prefixSumSingleBlock,
+      sequence.item<seq::prefix_sum_single_block>(),
       "Prefix sum single block",
       times,
       cuda_event_start,
@@ -53,7 +52,7 @@ cudaError_t Stream::operator()(
     );
 
     Helper::invoke(
-      prefixSumScan,
+      sequence.item<seq::prefix_sum_scan>(),
       "Prefix sum scan",
       times,
       cuda_event_start,
@@ -77,7 +76,7 @@ cudaError_t Stream::operator()(
 
     // Invoke clustering
     Helper::invoke(
-      maskedVeloClustering,
+      sequence.item<seq::masked_velo_clustering>(),
       "Masked velo clustering",
       times,
       cuda_event_start,
@@ -105,7 +104,7 @@ cudaError_t Stream::operator()(
     /////////////////////////
 
     Helper::invoke(
-      calculatePhiAndSort_handler,
+      sequence.item<seq::calculate_phi_and_sort>(),
       "Calculate phi and sort",
       times,
       cuda_event_start,
@@ -121,7 +120,7 @@ cudaError_t Stream::operator()(
     /////////////////////
 
     Helper::invoke(
-      searchByTriplet_handler,
+      sequence.item<seq::search_by_triplet>(),
       "Search by triplet",
       times,
       cuda_event_start,
@@ -137,7 +136,7 @@ cudaError_t Stream::operator()(
     ////////////////////////
     
     Helper::invoke(
-      copyAndPrefixSumSingleBlock,
+      sequence.item<seq::copy_and_prefix_sum_single_block>(),
       "Calculate accumulated tracks",
       times,
       cuda_event_start,
@@ -146,7 +145,7 @@ cudaError_t Stream::operator()(
      );
 
     Helper::invoke(
-      consolidateTracks,
+      sequence.item<seq::consolidate_tracks>(),
       "Consolidate tracks",
       times,
       cuda_event_start,
@@ -158,21 +157,21 @@ cudaError_t Stream::operator()(
     // Optional: Simplified Kalman filter //
     ////////////////////////////////////////
 
-    if (do_simplified_kalman_filter) {
-      Helper::invoke(
-        simplifiedKalmanFilter,
-        "Simplified Kalman filter",
-        times,
-        cuda_event_start,
-        cuda_event_stop,
-        print_individual_rates
-      );
-    }
+    // if (do_simplified_kalman_filter) {
+    //   Helper::invoke(
+    //     simplifiedKalmanFilter,
+    //     "Simplified Kalman filter",
+    //     times,
+    //     cuda_event_start,
+    //     cuda_event_stop,
+    //     print_individual_rates
+    //   );
+    // }
     
     // Transmission device to host
     if (transmit_device_to_host) {
-      cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, std::get<8>(searchByTriplet_handler.arguments), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, std::get<2>(consolidateTracks.arguments), number_of_events * max_tracks_in_event * sizeof(Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, std::get<8>(sequence.item<seq::search_by_triplet>().arguments), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_tracks_pinned, std::get<2>(sequence.item<seq::consolidate_tracks>().arguments), number_of_events * max_tracks_in_event * sizeof(Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
     }
 
     cudaEventRecord(cuda_generic_event, stream);
@@ -191,12 +190,9 @@ cudaError_t Stream::operator()(
     if (mc_check_enabled) {
       if (repetition == 0 && do_check) { // only check efficiencies once
         // Fetch data
-        // cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, searchByTriplet.dev_atomics_storage, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-        // cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(searchByTriplet.dev_atomics_storage + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-        // cudaCheck(cudaMemcpyAsync(host_tracks_pinned, consolidateTracks.dev_output_tracks, number_of_events * max_tracks_in_event * sizeof(Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
-        cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, std::get<8>(searchByTriplet_handler.arguments), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-        cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(std::get<8>(searchByTriplet_handler.arguments) + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, std::get<2>(consolidateTracks.arguments), number_of_events * max_tracks_in_event * sizeof(Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, std::get<8>(sequence.item<seq::search_by_triplet>().arguments), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, (void*)(std::get<8>(sequence.item<seq::search_by_triplet>().arguments) + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_tracks_pinned, std::get<2>(sequence.item<seq::consolidate_tracks>().arguments), number_of_events * max_tracks_in_event * sizeof(Track<mc_check_enabled>), cudaMemcpyDeviceToHost, stream));
 
         cudaEventRecord(cuda_generic_event, stream);
         cudaEventSynchronize(cuda_generic_event);

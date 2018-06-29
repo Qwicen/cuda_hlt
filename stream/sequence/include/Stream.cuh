@@ -12,6 +12,7 @@
 #include "../../../main/include/Timer.h"
 #include "../../../main/include/Tools.h"
 #include "../../handlers/include/Handler.cuh"
+#include "../../handlers/include/Sequence.cuh"
 #include "../../handlers/include/Helper.cuh"
 #include "../../../cuda/velo/calculate_phi_and_sort/include/CalculatePhiAndSort.cuh"
 #include "../../../cuda/velo/consolidate_tracks/include/ConsolidateTracks.cuh"
@@ -23,32 +24,57 @@
 
 class Timer;
 
+// Unfortunately, enum classes are not bare integers
+// and would require an explicit static_cast upon usage.
+namespace seq {
+enum seq_enum_t {
+  estimate_input_size,
+  prefix_sum_reduce,
+  prefix_sum_single_block,
+  prefix_sum_scan,
+  masked_velo_clustering,
+  calculate_phi_and_sort,
+  search_by_triplet,
+  copy_and_prefix_sum_single_block,
+  consolidate_tracks
+};
+}
+
+namespace arg {
+enum arg_enum_t {
+  dev_raw_input,
+  dev_raw_input_offsets,
+  dev_estimated_input_size,
+  dev_module_cluster_num,
+  dev_module_candidate_num,
+  dev_cluster_offset,
+  dev_cluster_candidates,
+  dev_velo_cluster_container,
+  dev_tracks,
+  dev_tracks_to_follow,
+  dev_hit_used,
+  dev_atomics_storage,
+  dev_tracklets,
+  dev_weak_tracks,
+  dev_output_tracks,
+  dev_h0_candidates,
+  dev_h2_candidates,
+  dev_rel_indices,
+  dev_hit_permutation,
+  dev_velo_states
+};
+}
+
 struct Stream {
   // Limiting constants for preallocation
   constexpr static uint max_tracks_in_event = VeloTracking::max_tracks;
   constexpr static uint max_numhits_in_module = VeloTracking::max_numhits_in_module;
-  // DvB: why + 1? sizes should be understandable
-  // because this array first contains the track counters for all events
-  // then an array of size number_of_events of structures of the num_atomics counters
-  // this is not easily understandable
-  constexpr static uint atomic_space = VeloTracking::num_atomics + 1;
   // Stream datatypes
   cudaStream_t stream;
   cudaEvent_t cuda_generic_event;
   cudaEvent_t cuda_event_start;
   cudaEvent_t cuda_event_stop;
   uint stream_number;
-  // Algorithms
-  decltype(generate_handler(estimate_input_size)) estimateInputSize = generate_handler(estimate_input_size);
-  decltype(generate_handler(prefix_sum_reduce)) prefixSumReduce = generate_handler(prefix_sum_reduce);
-  decltype(generate_handler(prefix_sum_scan)) prefixSumScan = generate_handler(prefix_sum_scan);
-  decltype(generate_handler(prefix_sum_single_block)) prefixSumSingleBlock = generate_handler(prefix_sum_single_block);
-  decltype(generate_handler(masked_velo_clustering)) maskedVeloClustering = generate_handler(masked_velo_clustering);
-  decltype(generate_handler(calculatePhiAndSort)) calculatePhiAndSort_handler = generate_handler(calculatePhiAndSort);
-  decltype(generate_handler(searchByTriplet)) searchByTriplet_handler = generate_handler(searchByTriplet);
-  decltype(generate_handler(copy_and_prefix_sum_single_block)) copyAndPrefixSumSingleBlock = generate_handler(copy_and_prefix_sum_single_block);
-  decltype(generate_handler(consolidate_tracks)) consolidateTracks = generate_handler(consolidate_tracks);
-  decltype(generate_handler(velo_fit)) simplifiedKalmanFilter = generate_handler(velo_fit);
   // Launch options
   bool transmit_host_to_device;
   bool transmit_device_to_host;
@@ -63,6 +89,20 @@ struct Stream {
   int* host_number_of_tracks_pinned;
   int* host_accumulated_tracks;
   Track <mc_check_enabled> * host_tracks_pinned;
+  
+  // Sequence
+  decltype(generate_sequence(
+    generate_handler(estimate_input_size),
+    generate_handler(prefix_sum_reduce),
+    generate_handler(prefix_sum_single_block),
+    generate_handler(prefix_sum_scan),
+    generate_handler(masked_velo_clustering),
+    generate_handler(calculatePhiAndSort),
+    generate_handler(searchByTriplet),
+    generate_handler(copy_and_prefix_sum_single_block),
+    generate_handler(consolidate_tracks)
+  )) sequence;
+
   Stream() = default;
 
   std::string folder_name_MC;
