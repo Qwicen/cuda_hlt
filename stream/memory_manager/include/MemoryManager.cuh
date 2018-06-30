@@ -4,7 +4,7 @@
 #include "../../../main/include/Logger.h"
 
 struct MemoryManager {
-  constexpr static size_t max_available_memory = (size_t) 2 * 1024 * 1024 * 1024; // 2 GiB
+  constexpr static size_t max_available_memory = (size_t) 8 * 1024 * 1024 * 1024; // 8 GiB
   constexpr static uint guarantee_alignment = 256;
 
   /**
