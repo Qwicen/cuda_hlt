@@ -48,8 +48,8 @@ __global__ void searchByTriplet(
   short* h2_candidates = dev_h2_candidates + 2*hit_offset;
 
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * VeloTracking::ttf_modulo;
-  uint* weak_tracks = dev_weak_tracks + hit_offset;
-  TrackHits* tracklets = dev_tracklets + hit_offset;
+  uint* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
+  TrackHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
   unsigned short* h1_rel_indices = dev_rel_indices + event_number * VeloTracking::max_numhits_in_module;
 
   // Initialize variables according to event number and module side
@@ -115,18 +115,5 @@ __global__ void searchByTriplet(
     h1_rel_indices,
     local_number_of_hits,
     hit_offset
-  );
-
-  __syncthreads();
-
-  // Process left weak tracks
-  weakTracksAdder(
-    (int*) &shared_best_fits[0],
-    weaktracks_insert_pointer,
-    tracks_insert_pointer,
-    weak_tracks,
-    tracklets,
-    tracks,
-    hit_used
   );
 }
