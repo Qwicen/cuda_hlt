@@ -64,8 +64,8 @@ cudaError_t Stream::initialize(
 
   // Set options for each algorithm
   // (number of blocks, number of threads, stream, dynamic shared memory space)
-  const uint prefixSumBlocks = (VeloTracking::n_modules * number_of_events + 511) / 512;
-  const uint prefixSumScanBlocks = prefixSumBlocks==1 ? 1 : (prefixSumBlocks-1);
+  prefixSumBlocks = (VeloTracking::n_modules * number_of_events + 511) / 512;
+  prefixSumScanBlocks = prefixSumBlocks==1 ? 1 : (prefixSumBlocks-1);
 
   // Note: sequence.item can access the sequence by either the number
   //       of the sequence or the type of the kernel call itself
@@ -94,7 +94,7 @@ cudaError_t Stream::initialize(
   //   number_of_events * VeloTracking::max_tracks;
 
   // All arguments, with their type (without the *), name string, and size
-  auto arguments = generate_tuple(
+  arguments = generate_tuple(
     Argument<char>{"dev_raw_input", raw_events.size()},
     Argument<uint>{"dev_raw_input_offsets", event_offsets.size()},
     Argument<uint>{"dev_estimated_input_size", (number_of_events * VeloTracking::n_modules + 2)},
@@ -195,120 +195,14 @@ cudaError_t Stream::initialize(
     arg::dev_velo_states
   };
 
-  // Run scheduler:
-  // Input:
-  // - arguments
-  // 
-  // Output:
-  // - max memory required
-  // - vector of offsets (one per each argument)
+  // Prepare dynamic scheduler
+  scheduler = BaseDynamicScheduler(argument_names, sequence_arguments);
 
-  // Run preferred scheduler
-  auto scheduler = BaseScheduler(argument_sizes, argument_names, sequence_arguments);
-  auto schedule = scheduler.solve();
+  // TODO: Malloc required GPU memory
+  //       What is required memory here? Do we run the static scheduler?
+  // For now, let's assume 1 GiB
+  cudaCheck(cudaMalloc((void**)&dev_base_pointer, 1024 * 1024 * 1024));
 
-  // Malloc required GPU memory
-  size_t total_memory_required = std::accumulate(argument_sizes.begin(), argument_sizes.end(), (size_t) 0);
-  float used_memory = std::get<0>(schedule);
-
-  info_cout << std::endl << "A total of " << (used_memory / (1024*1024)) << " MiB are required"
-    << " (we saved " << (100.f * ((total_memory_required - used_memory) / total_memory_required)) << "%)"
-    << std::endl << std::endl;
-
-  char* dev_base_pointer;
-  cudaCheck(cudaMalloc((void**)&dev_base_pointer, std::get<0>(schedule)));
-
-  // Generate the arguments and set the sequence
-  ArgumentGenerator<decltype(arguments)> argen {arguments, dev_base_pointer, std::get<1>(schedule)};
-
-  // Set arguments for each algorithm in the sequence
-  // Note: This is not automated since some parameters
-  //       may be passed by value, or require special treatment
-  sequence.item<seq::estimate_input_size>().set_arguments(
-    argen.generate<arg::dev_raw_input>(),
-    argen.generate<arg::dev_raw_input_offsets>(),
-    argen.generate<arg::dev_estimated_input_size>(),
-    argen.generate<arg::dev_module_cluster_num>(),
-    argen.generate<arg::dev_module_candidate_num>(),
-    argen.generate<arg::dev_cluster_candidates>()
-  );
-
-  sequence.item<seq::prefix_sum_reduce>().set_arguments(
-    argen.generate<arg::dev_estimated_input_size>(),
-    argen.generate<arg::dev_cluster_offset>(),
-    VeloTracking::n_modules * number_of_events
-  );
-
-  sequence.item<seq::prefix_sum_single_block>().set_arguments(
-    argen.generate<arg::dev_estimated_input_size>() + VeloTracking::n_modules * number_of_events,
-    argen.generate<arg::dev_cluster_offset>(),
-    prefixSumBlocks
-  );
-
-  sequence.item<seq::prefix_sum_scan>().set_arguments(
-    argen.generate<arg::dev_estimated_input_size>(),
-    argen.generate<arg::dev_cluster_offset>(),
-    VeloTracking::n_modules * number_of_events
-  );
-
-  sequence.item<seq::masked_velo_clustering>().set_arguments(
-    argen.generate<arg::dev_raw_input>(),
-    argen.generate<arg::dev_raw_input_offsets>(),
-    argen.generate<arg::dev_estimated_input_size>(),
-    argen.generate<arg::dev_module_cluster_num>(),
-    argen.generate<arg::dev_module_candidate_num>(),
-    argen.generate<arg::dev_cluster_candidates>(),
-    argen.generate<arg::dev_velo_cluster_container>(),
-    dev_velo_geometry
-  );
-
-  sequence.item<seq::calculate_phi_and_sort>().set_arguments(
-    argen.generate<arg::dev_estimated_input_size>(),
-    argen.generate<arg::dev_module_cluster_num>(),
-    argen.generate<arg::dev_velo_cluster_container>(),
-    argen.generate<arg::dev_hit_permutation>()
-  );
-
-  sequence.item<seq::search_by_triplet>().set_arguments(
-    argen.generate<arg::dev_velo_cluster_container>(),
-    argen.generate<arg::dev_estimated_input_size>(),
-    argen.generate<arg::dev_module_cluster_num>(),
-    argen.generate<arg::dev_tracks>(),
-    argen.generate<arg::dev_tracklets>(),
-    argen.generate<arg::dev_tracks_to_follow>(),
-    argen.generate<arg::dev_weak_tracks>(),
-    argen.generate<arg::dev_hit_used>(),
-    argen.generate<arg::dev_atomics_storage>(),
-    argen.generate<arg::dev_h0_candidates>(),
-    argen.generate<arg::dev_h2_candidates>(),
-    argen.generate<arg::dev_rel_indices>()
-  );
-
-  sequence.item<seq::copy_and_prefix_sum_single_block>().set_arguments(
-    (uint*) argen.generate<arg::dev_atomics_storage>() + number_of_events*2,
-    (uint*) argen.generate<arg::dev_atomics_storage>(),
-    (uint*) argen.generate<arg::dev_atomics_storage>() + number_of_events,
-    number_of_events
-  );
-
-  sequence.item<seq::copy_and_ps_velo_track_hit_number>().set_arguments(
-    argen.generate<arg::dev_tracks>(),
-    argen.generate<arg::dev_atomics_storage>(),
-    argen.generate<arg::dev_velo_track_hit_number>(),
-    number_of_events
-  );
-
-  sequence.item<seq::consolidate_tracks>().set_arguments(
-    argen.generate<arg::dev_atomics_storage>(),
-    argen.generate<arg::dev_tracks>(),
-    argen.generate<arg::dev_velo_track_hit_number>(),
-    argen.generate<arg::dev_velo_cluster_container>(),
-    argen.generate<arg::dev_estimated_input_size>(),
-    argen.generate<arg::dev_module_cluster_num>(),
-    argen.generate<arg::dev_velo_track_hits>(),
-    argen.generate<arg::dev_velo_states>()
-  );
-  
   // velo_kalman_filter_h.set_arguments(
   //   dev_velo_cluster_container,
   //   dev_estimated_input_size,

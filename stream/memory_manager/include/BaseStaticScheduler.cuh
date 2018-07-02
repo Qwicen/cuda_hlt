@@ -1,6 +1,8 @@
+#pragma once
+
 #include "MemoryManager.cuh"
 
-struct BaseScheduler {
+struct BaseStaticScheduler {
   struct MemoryArgument {
     // Argument number
     int tag;
@@ -16,16 +18,16 @@ struct BaseScheduler {
       first_algorithm(param_first_algorithm),
       last_algorithm(param_last_algorithm) {}
   };
-  std::vector<MemoryArgument> arguments;  
+  std::vector<MemoryArgument> arguments;
 
   MemoryManager* memory_manager;
   std::vector<size_t> argument_sizes;
   std::vector<std::string> argument_names;
   std::vector<std::vector<uint>> sequence_arguments;
 
-  BaseScheduler() = default;
+  BaseStaticScheduler() = default;
 
-  BaseScheduler(std::vector<size_t> param_argument_sizes,
+  BaseStaticScheduler(std::vector<size_t> param_argument_sizes,
     std::vector<std::string> param_argument_names,
     std::vector<std::vector<uint>> param_sequence_arguments)
     : argument_sizes(param_argument_sizes),
@@ -37,7 +39,7 @@ struct BaseScheduler {
     generate_arguments_vector();
   }
 
-  ~BaseScheduler() {
+  ~BaseStaticScheduler() {
     if (memory_manager != nullptr) {
       delete memory_manager;
     }

@@ -107,6 +107,41 @@ struct Stream {
     generate_handler(consolidate_tracks)
   )) sequence;
 
+  // Arguments
+  decltype(generate_tuple(
+    Argument<char>{"dev_raw_input", raw_events.size()},
+    Argument<uint>{"dev_raw_input_offsets", event_offsets.size()},
+    Argument<uint>{"dev_estimated_input_size", (number_of_events * VeloTracking::n_modules + 2)},
+    Argument<uint>{"dev_module_cluster_num", number_of_events * VeloTracking::n_modules},
+    Argument<uint>{"dev_module_candidate_num", number_of_events},
+    Argument<uint>{"dev_cluster_offset", number_of_events},
+    Argument<uint>{"dev_cluster_candidates", number_of_events * VeloClustering::max_candidates_event},
+    Argument<uint>{"dev_velo_cluster_container", velo_cluster_container_size},
+    Argument<TrackHits>{"dev_tracks", number_of_events * VeloTracking::max_tracks},
+    Argument<uint>{"dev_tracks_to_follow", number_of_events * VeloTracking::ttf_modulo},
+    Argument<bool>{"dev_hit_used", VeloTracking::max_number_of_hits_per_event * number_of_events},
+    Argument<int>{"dev_atomics_storage", number_of_events * VeloTracking::num_atomics},
+    Argument<TrackHits>{"dev_tracklets", VeloTracking::ttf_modulo * number_of_events},
+    Argument<uint>{"dev_weak_tracks", VeloTracking::ttf_modulo * number_of_events},
+    Argument<short>{"dev_h0_candidates", 2 * VeloTracking::max_number_of_hits_per_event * number_of_events},
+    Argument<short>{"dev_h2_candidates", 2 * VeloTracking::max_number_of_hits_per_event * number_of_events},
+    Argument<unsigned short>{"dev_rel_indices", number_of_events * VeloTracking::max_numhits_in_module},
+    Argument<uint>{"dev_hit_permutation", VeloTracking::max_number_of_hits_per_event * number_of_events},
+    Argument<uint>{"dev_velo_track_hit_number", VeloTracking::max_tracks * number_of_events},
+    Argument<Hit<mc_check_enabled>>{"dev_velo_track_hits", number_of_events * VeloTracking::max_tracks * 20},
+    Argument<VeloState>{"dev_velo_states", velo_states_size}
+  )) arguments;
+
+  // Dynamic scheduler
+  BaseDynamicScheduler scheduler;
+
+  // Base GPU pointer
+  char* dev_base_pointer;
+
+  // Parameters for certain algorithms
+  uint prefixSumBlocks;
+  uint prefixSumScanBlocks;
+
   Stream() = default;
 
   std::string folder_name_MC;

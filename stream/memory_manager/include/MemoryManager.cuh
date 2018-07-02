@@ -115,7 +115,21 @@ struct MemoryManager {
     }
   }
 
+  /**
+   * @brief Frees all memory segments, effectively resetting the
+   *        available space.
+   */
+  void free_all() {
+    memory_segments = std::list<MemorySegment>{{0, max_available_memory, -1}};
+  }
+
+  /**
+   * @brief Prints the current state of the memory segments.
+   */
   void print(const std::vector<std::string>& argument_names, const int step = -1) {
+    info_cout << "Memory Manager max memory required (MiB): "
+      << (total_memory_required) << std::endl;
+
     if (step!=-1) { info_cout << "Sequence step " << step << " memory segments (MiB): "; }
     else { info_cout << "MemoryManager segments (MiB): "; }
 

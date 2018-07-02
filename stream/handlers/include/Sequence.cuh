@@ -52,12 +52,12 @@ std::tuple<T...> generate_tuple(T... t) {
  *        the information provided by the base_pointer and offsets
  */
 template<typename T>
-struct ArgumentGenerator {
+struct StaticArgumentGenerator {
   T& arguments;
   char* base_pointer;
   std::vector<uint> offsets;
 
-  ArgumentGenerator(T& param_arguments,
+  StaticArgumentGenerator(T& param_arguments,
     char* param_base_pointer,
     std::vector<uint> param_offsets)
   : arguments(param_arguments),
@@ -70,6 +70,39 @@ struct ArgumentGenerator {
     auto& argument = std::get<I>(arguments);
     auto pointer = base_pointer + offsets[I];
     return reinterpret_cast<decltype(argument.type_obj)*>(pointer);
+  }
+};
+
+/**
+ * @brief Helper class to generate arguments based on
+ *        the information provided by the base_pointer and offsets
+ */
+template<typename T>
+struct DynamicArgumentGenerator {
+  T& arguments;
+  char* base_pointer;
+
+  DynamicArgumentGenerator(T& param_arguments,
+    char* param_base_pointer)
+  : arguments(param_arguments),
+    base_pointer(param_base_pointer) {}
+
+  template<unsigned I>
+  auto generate(const std::map<uint, uint>& offsets)
+  -> decltype(std::get<I>(arguments).type_obj)* {
+    auto& argument = std::get<I>(arguments);
+    auto pointer = base_pointer + offsets.at(I);
+    return reinterpret_cast<decltype(argument.type_obj)*>(pointer);
+  }
+
+  template<unsigned I>
+  size_t size(const size_t s) {
+    return s * sizeof(std::get<I>(arguments));
+  }
+
+  template<unsigned I>
+  std::pair<uint, size_t> size_pair(const size_t s) {
+    return {I, size<I>(s)};
   }
 };
 
