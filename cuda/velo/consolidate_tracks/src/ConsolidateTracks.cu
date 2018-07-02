@@ -3,13 +3,12 @@
 /**
  * @brief Calculates the parameters according to a root means square fit
  */
- __device__ void means_square_fit(
-  const float* hit_Xs,
-  const float* hit_Ys,
-  const float* hit_Zs,
-  const TrackHits& track,
-  VeloState& state
+ __device__ VeloState means_square_fit(
+  const Hit<mc_check_enabled>* velo_track_hits,
+  const TrackHits& track
 ) {
+  VeloState state;
+
   // Fit parameters
   float s0, sx, sz, sxz, sz2;
   float u0, uy, uz, uyz, uz2;
@@ -18,10 +17,10 @@
   
   // Iterate over hits
   for (unsigned short h=0; h<track.hitsNum; ++h) {
-    const auto hitno = track.hits[h];
-    const auto x = hit_Xs[hitno];
-    const auto y = hit_Ys[hitno];
-    const auto z = hit_Zs[hitno];
+    const auto hit = velo_track_hits[h];
+    const auto x = hit.x;
+    const auto y = hit.y;
+    const auto z = hit.z;
     
     const auto wx = VeloTracking::param_w;
     const auto wx_t_x = wx * x;
@@ -81,14 +80,14 @@
     float ch = 0.0f;
     int nDoF = -4;
     for (uint h=0; h<track.hitsNum; ++h) {
-      const auto hitno = track.hits[h];
+      const auto hit = velo_track_hits[h];
+      const auto z = hit.z;
 
-      const auto z = hit_Zs[hitno];
       const auto x = state.x + state.tx * z;
       const auto y = state.y + state.ty * z;
 
-      const auto dx = x - hit_Xs[hitno];
-      const auto dy = y - hit_Ys[hitno];
+      const auto dx = x - hit.x;
+      const auto dy = y - hit.y;
       
       ch += dx * dx * VeloTracking::param_w + dy * dy * VeloTracking::param_w;
 
@@ -105,36 +104,18 @@
 
   state.x = state.x + state.tx * state.z;
   state.y = state.y + state.ty * state.z;
-}
 
-__device__ Track<mc_check_enabled> createTrack(
-  const TrackHits &track,
-  const float* hit_Xs,
-  const float* hit_Ys,
-  const float* hit_Zs,
-  const uint32_t* hit_IDs
-) {
-  Track<mc_check_enabled> t;
-  for (int i = 0; i < track.hitsNum; ++i) {
-    const auto hit_index = track.hits[i];
-    t.addHit({hit_Xs[hit_index],
-      hit_Ys[hit_index],
-      hit_Zs[hit_index]
-#ifdef MC_CHECK
-      ,hit_IDs[hit_index]
-#endif
-    });
-  }
-  return t;
+  return state;
 }
 
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
   const TrackHits* dev_tracks,
-  Track<mc_check_enabled>* dev_output_tracks,
-  uint32_t* dev_velo_cluster_container,
+  uint* dev_velo_track_hit_number,
+  uint* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
+  Hit<mc_check_enabled>* dev_velo_track_hits,
   VeloState* dev_velo_states
 ) {
   const uint number_of_events = gridDim.x;
@@ -143,13 +124,6 @@ __global__ void consolidate_tracks(
   const TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
   int* tracks_insert_pointer = dev_atomics_storage + event_number;
   const int number_of_tracks = *tracks_insert_pointer;
-  
-  // Due to dev_atomics_storage
-  __syncthreads();
-
-  if (threadIdx.x==0) {
-    *tracks_insert_pointer = 0;
-  }
 
   // Store accumulated tracks after the number of tracks
   // Reusing the previous space for the weak tracks counter,
@@ -166,46 +140,43 @@ __global__ void consolidate_tracks(
   const float* hit_Ys   = (float*) (dev_velo_cluster_container + hit_offset);
   const float* hit_Zs   = (float*) (dev_velo_cluster_container + number_of_hits + hit_offset);
   const float* hit_Xs   = (float*) (dev_velo_cluster_container + 5 * number_of_hits + hit_offset);
-  const uint32_t* hit_IDs  = (uint32_t*) (dev_velo_cluster_container + 2 * number_of_hits + hit_offset);
-  
-  // Due to tracks_insert_pointer
-  __syncthreads();
+  const uint32_t* hit_IDs = (uint32_t*) (dev_velo_cluster_container + 2 * number_of_hits + hit_offset);
 
   // Consolidate tracks in dev_output_tracks
-  Track<mc_check_enabled>* destination_tracks = dev_output_tracks + accumulated_tracks;
-  VeloState* destination_states = dev_velo_states + accumulated_tracks;
+  VeloState* velo_states = dev_velo_states + accumulated_tracks;
 
-  for (uint j=0; j<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++j) {
-    const uint element = j * blockDim.x + threadIdx.x;
+  for (uint i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
+    const uint element = i * blockDim.x + threadIdx.x;
     if (element < number_of_tracks) {
       const TrackHits track = event_tracks[element];
 
-      VeloState state;
-      means_square_fit(
-        hit_Xs,
-        hit_Ys,
-        hit_Zs,
-        track,
-        state
+      // Pointer to velo_track_hit container
+      Hit<mc_check_enabled>* velo_track_hits = dev_velo_track_hits +
+        dev_velo_track_hit_number[accumulated_tracks + element];
+
+      // Store X, Y, Z and ID in consolidated container
+      for (uint j=0; j<track.hitsNum; ++j) {
+        const auto hit_index = track.hits[j];
+        velo_track_hits[j] = Hit<mc_check_enabled>{
+          hit_Xs[hit_index],
+          hit_Ys[hit_index],
+          hit_Zs[hit_index]
+#ifdef MC_CHECK
+          ,hit_IDs[hit_index]
+#endif
+        };
+      }
+
+      // Calculate and store fit in consolidated container
+      velo_states[element] = means_square_fit(
+        velo_track_hits,
+        track
       );
 
       // Note: With the state, the following parameters can be calculated:
       // backward = state.z > track.hits[0].z;
       // tx = state.tx;
       // ty = state.ty;
-
-      if (
-        // Require chi2 under threshold for 3-hit tracks
-        (track.hitsNum == 3 && state.chi2 < VeloTracking::max_chi2) || 
-        (track.hitsNum > 3)
-      ) {
-        const int track_number = atomicAdd(tracks_insert_pointer, 1);
-        assert(track_number < number_of_tracks);
-
-        Track<mc_check_enabled> t = createTrack(track, hit_Xs, hit_Ys, hit_Zs, hit_IDs);
-        destination_tracks[track_number] = t;
-        destination_states[track_number] = state;
-      }
     }
   }
 }

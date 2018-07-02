@@ -95,9 +95,10 @@ void call_PrChecker(
 );
 
 void checkTracks(
-  Track<true>* host_tracks_pinned,
-  int* host_accumulated_tracks,
   int* host_number_of_tracks_pinned,
+  int* host_accumulated_tracks,
+  uint* host_velo_track_hit_number_pinned,
+  Hit<true>* host_velo_track_hits_pinned,
   const int number_of_events,
   const std::string& folder_name_MC
 );

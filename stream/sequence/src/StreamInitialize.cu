@@ -45,7 +45,8 @@ cudaError_t Stream::initialize(
   // Memory allocations for host memory (copy back)
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks_pinned, number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_tracks, number_of_events * sizeof(int)));
-  cudaCheck(cudaMallocHost((void**)&host_tracks_pinned, number_of_events * VeloTracking::max_tracks * sizeof(Track<mc_check_enabled>)));
+  cudaCheck(cudaMallocHost((void**)&host_velo_track_hit_number_pinned, VeloTracking::max_tracks * number_of_events * sizeof(uint)));
+  cudaCheck(cudaMallocHost((void**)&host_velo_track_hits_pinned, number_of_events * VeloTracking::max_tracks * 20 * sizeof(Hit<mc_check_enabled>)));
 
   // Define sequence of algorithms to execute
   sequence = generate_sequence(
@@ -57,6 +58,7 @@ cudaError_t Stream::initialize(
     generate_handler(calculatePhiAndSort),
     generate_handler(searchByTriplet),
     generate_handler(copy_and_prefix_sum_single_block),
+    generate_handler(copy_and_ps_velo_track_hit_number),
     generate_handler(consolidate_tracks)
   );
 
@@ -78,12 +80,15 @@ cudaError_t Stream::initialize(
   sequence.item<seq::calculate_phi_and_sort>().set_opts( dim3(number_of_events),    dim3(64),     stream);
   sequence.item<seq::search_by_triplet>().set_opts(      dim3(number_of_events),    dim3(32),     stream, 32 * sizeof(float));
   sequence.item<seq::copy_and_prefix_sum_single_block>().set_opts(dim3(1),          dim3(1024),   stream);
+  sequence.item<seq::copy_and_ps_velo_track_hit_number>().set_opts(dim3(1),         dim3(1024),   stream);
   sequence.item<seq::consolidate_tracks>().set_opts(     dim3(number_of_events),    dim3(32),     stream);
   // velo_kalman_filter_h.set_opts(dim3(number_of_events),    dim3(1024),   stream);
 
   // Define all arguments, with their type and size
   velo_cluster_container_size = number_of_events * VeloClustering::max_candidates_event * 2 * 6;
   size_t velo_states_size = number_of_events * VeloTracking::max_tracks;
+  consolidate_tracks_average = VeloTracking::max_tracks;
+  
   // size_t velo_states_size = do_simplified_kalman_filter ?
   //   number_of_events * VeloTracking::max_tracks * VeloTracking::states_per_track : 
   //   number_of_events * VeloTracking::max_tracks;
@@ -104,11 +109,12 @@ cudaError_t Stream::initialize(
     Argument<int>{"dev_atomics_storage", number_of_events * VeloTracking::num_atomics},
     Argument<TrackHits>{"dev_tracklets", VeloTracking::ttf_modulo * number_of_events},
     Argument<uint>{"dev_weak_tracks", VeloTracking::ttf_modulo * number_of_events},
-    Argument<Track<mc_check_enabled>>{"dev_output_tracks", VeloTracking::max_tracks * number_of_events},
     Argument<short>{"dev_h0_candidates", 2 * VeloTracking::max_number_of_hits_per_event * number_of_events},
     Argument<short>{"dev_h2_candidates", 2 * VeloTracking::max_number_of_hits_per_event * number_of_events},
     Argument<unsigned short>{"dev_rel_indices", number_of_events * VeloTracking::max_numhits_in_module},
     Argument<uint>{"dev_hit_permutation", VeloTracking::max_number_of_hits_per_event * number_of_events},
+    Argument<uint>{"dev_velo_track_hit_number", VeloTracking::max_tracks * number_of_events},
+    Argument<Hit<mc_check_enabled>>{"dev_velo_track_hits", number_of_events * VeloTracking::max_tracks * 20},
     Argument<VeloState>{"dev_velo_states", velo_states_size}
   );
   
@@ -173,13 +179,19 @@ cudaError_t Stream::initialize(
   sequence_arguments[seq::copy_and_prefix_sum_single_block] = {
     arg::dev_atomics_storage
   };
+  sequence_arguments[seq::copy_and_ps_velo_track_hit_number] = {
+    arg::dev_tracks,
+    arg::dev_atomics_storage,
+    arg::dev_velo_track_hit_number
+  };
   sequence_arguments[seq::consolidate_tracks] = {
     arg::dev_atomics_storage,
     arg::dev_tracks,
-    arg::dev_output_tracks,
+    arg::dev_velo_track_hit_number,
     arg::dev_velo_cluster_container,
     arg::dev_estimated_input_size,
     arg::dev_module_cluster_num,
+    arg::dev_velo_track_hits,
     arg::dev_velo_states
   };
 
@@ -279,13 +291,21 @@ cudaError_t Stream::initialize(
     number_of_events
   );
 
+  sequence.item<seq::copy_and_ps_velo_track_hit_number>().set_arguments(
+    argen.generate<arg::dev_tracks>(),
+    argen.generate<arg::dev_atomics_storage>(),
+    argen.generate<arg::dev_velo_track_hit_number>(),
+    number_of_events
+  );
+
   sequence.item<seq::consolidate_tracks>().set_arguments(
     argen.generate<arg::dev_atomics_storage>(),
     argen.generate<arg::dev_tracks>(),
-    argen.generate<arg::dev_output_tracks>(),
+    argen.generate<arg::dev_velo_track_hit_number>(),
     argen.generate<arg::dev_velo_cluster_container>(),
     argen.generate<arg::dev_estimated_input_size>(),
     argen.generate<arg::dev_module_cluster_num>(),
+    argen.generate<arg::dev_velo_track_hits>(),
     argen.generate<arg::dev_velo_states>()
   );
   
@@ -293,7 +313,6 @@ cudaError_t Stream::initialize(
   //   dev_velo_cluster_container,
   //   dev_estimated_input_size,
   //   dev_atomics_storage,
-  //   dev_output_tracks,
   //   dev_velo_states
   // );
 

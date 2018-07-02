@@ -36,6 +36,7 @@ enum seq_enum_t {
   calculate_phi_and_sort,
   search_by_triplet,
   copy_and_prefix_sum_single_block,
+  copy_and_ps_velo_track_hit_number,
   consolidate_tracks
 };
 }
@@ -56,16 +57,20 @@ enum arg_enum_t {
   dev_atomics_storage,
   dev_tracklets,
   dev_weak_tracks,
-  dev_output_tracks,
   dev_h0_candidates,
   dev_h2_candidates,
   dev_rel_indices,
   dev_hit_permutation,
+  dev_velo_track_hit_number,
+  dev_velo_track_hits,
   dev_velo_states
 };
 }
 
 struct Stream {
+  // Consolidated tracks size is an estimate of an average for each track
+  // Note: If we get over that estimate, things can go wrong
+  uint consolidate_tracks_average;
   // Stream datatypes
   cudaStream_t stream;
   cudaEvent_t cuda_generic_event;
@@ -85,7 +90,8 @@ struct Stream {
   // Data back transmission
   int* host_number_of_tracks_pinned;
   int* host_accumulated_tracks;
-  Track <mc_check_enabled> * host_tracks_pinned;
+  uint* host_velo_track_hit_number_pinned;
+  Hit<mc_check_enabled>* host_velo_track_hits_pinned;
   
   // Sequence
   decltype(generate_sequence(
@@ -97,6 +103,7 @@ struct Stream {
     generate_handler(calculatePhiAndSort),
     generate_handler(searchByTriplet),
     generate_handler(copy_and_prefix_sum_single_block),
+    generate_handler(copy_and_ps_velo_track_hit_number),
     generate_handler(consolidate_tracks)
   )) sequence;
 

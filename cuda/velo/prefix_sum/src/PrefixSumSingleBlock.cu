@@ -150,3 +150,32 @@ __global__ void copy_and_prefix_sum_single_block(
   prefix_sum_single_block_implementation(dev_total_sum,
     dev_output_array, array_size);
 }
+
+__global__ void copy_and_ps_velo_track_hit_number(
+  const TrackHits* dev_tracks,
+  int* dev_atomics_storage,
+  uint* dev_velo_track_hit_number,
+  const uint number_of_events
+) {
+  // Copy the input array into the output array
+  uint accumulated_number_of_tracks = 0;
+  for (uint i=0; i<number_of_events; ++i) {
+    const TrackHits* event_tracks = dev_tracks + i * VeloTracking::max_tracks;
+    const uint number_of_tracks = dev_atomics_storage[i];
+
+    for (uint j=0; j<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++j) {
+      const auto element = j*blockDim.x + threadIdx.x;
+      if (element < number_of_tracks) {
+        dev_velo_track_hit_number[accumulated_number_of_tracks + element] = event_tracks[element].hitsNum;
+      }
+    }
+
+    accumulated_number_of_tracks += number_of_tracks;
+  }
+
+  __syncthreads();
+
+  // Perform prefix_sum over output array
+  prefix_sum_single_block_implementation(dev_velo_track_hit_number + accumulated_number_of_tracks,
+    dev_velo_track_hit_number, accumulated_number_of_tracks);
+}
