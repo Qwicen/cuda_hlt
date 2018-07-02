@@ -150,47 +150,19 @@ void TrackChecker::TrackEffReport::operator()(
   if (!m_keysseen.count(mcp.key())) {
     ++m_nfound, ++m_nfoundperevt;
     m_keysseen.insert(mcp.key());
-    // update purity
-    m_hitpur *= float(m_nfound - 1) / float(m_nfound);
-    m_hitpur += weight / float(m_nfound);
-    // update hit efficiency
-    auto hiteff = track.nIDs() * weight / float(mcp.nIDs());
-    m_hiteff *= float(m_nfound - 1) / float(m_nfound);
-    m_hiteff += hiteff / float(m_nfound);
-    if ( hiteff > 1. ) {
-      warning_cout << "ATTENTION: hit eff > 1. " << std::endl;
-      debug_cout << "hit IDs on track: " << std::endl;
-      for ( auto id : track.ids() ) {
-	debug_cout << std::hex << "\t " << uint32_t(id) << std::endl;
-      }
-      if ( mcp.isUT() )
-	debug_cout << "MCP is UT " << std::endl;
-      debug_cout << "MCP from category " << m_name << ", IDs: " << std::endl;
-      for ( auto id : mcp.ids() ) {
-	debug_cout << std::hex << "\t " << uint32_t(id) << std::endl;
-      }
-    }
   } else {
-    // clone, update total hit efficiency by adding what's missing to
-    // m_hiteff
-    auto hiteff = track.nIDs() * weight / float(mcp.nIDs());
-    m_hiteff += hiteff / float(m_nfound);
     ++m_nclones;
-    if ( hiteff > 1. ) {
-      warning_cout << "ATTENTION: clone track, hit eff > 1. " << std::endl;
-      debug_cout << "hit IDs on track: " << std::endl;
-      for ( auto id : track.ids() ) {
-	debug_cout << std::hex << "\t " << uint32_t(id) << std::endl;
-      }
-      if ( mcp.isUT() )
-	debug_cout << "MCP is UT " << std::endl;
-      debug_cout << "MCP from category " << m_name << ", IDs: " << std::endl;
-      for ( auto id : mcp.ids() ) {
-	debug_cout << std::hex << "\t " << uint32_t(id) << std::endl;
-      }
-    }
   }
   
+  // update purity
+  m_hitpur *= float(m_nfound + m_nclones - 1) / float(m_nfound + m_nclones);
+  m_hitpur += weight / float(m_nfound + m_nclones);
+  // update hit efficiency
+  //auto hiteff = track.nIDs() * weight / float(mcp.nIDs());
+  auto hiteff = track.n_matched_total * weight / float(mcp.nIDs());
+  m_hiteff *= float(m_nfound + m_nclones - 1) / float(m_nfound + m_nclones);
+  m_hiteff += hiteff / float(m_nfound + m_nclones);
+
 }
 
 void TrackChecker::TrackEffReport::evtEnds()
@@ -232,7 +204,7 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
   for (auto track: tracks) {
     // check LHCbIDs for MC association
     const auto& ids = track.ids();
-    const auto assoc = mcassoc(ids.begin(), ids.end());
+    const auto assoc = mcassoc(ids.begin(), ids.end(), track.n_matched_total);
     if (!assoc) {
       ++nghostsperevt;
 	  continue;
@@ -246,7 +218,15 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
     // okay, sufficient to proceed...
     const auto mcp = assoc.front().first;
     // add to various categories
-    for (auto& report: m_categories) report(track, mcp, weight);
+    for (auto& report: m_categories) {
+      // if ( report.m_name == "Velo+UT, not long, p > 5 GeV" ) {
+      // 	debug_cout << "BEFORE calling report: hit eff = " << report.m_hiteff << std::endl;
+      // }
+      report(track, mcp, weight);
+      // if ( report.m_name == "Velo+UT, not long, p > 5 GeV" ) {
+      // 	debug_cout << "AFTER calling report: hit eff = " << report.m_hiteff << std::endl;
+      // }
+  }
   }
   // almost done, notify of end of event...
   ++m_nevents;
