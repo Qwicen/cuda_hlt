@@ -70,9 +70,9 @@ void TrackCheckerVelo::SetCategories() {
     //     [] (const MCParticles::const_reference& mcp)
     //     { return mcp.isStrangeDown() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
     // 	})
-    }}; 
+    }};
 };
-
+ 
 
 void TrackCheckerVeloUT::SetCategories() {
   m_categories = {{ // define which categories to monitor
@@ -157,13 +157,40 @@ void TrackChecker::TrackEffReport::operator()(
     auto hiteff = track.nIDs() * weight / float(mcp.nIDs());
     m_hiteff *= float(m_nfound - 1) / float(m_nfound);
     m_hiteff += hiteff / float(m_nfound);
+    if ( hiteff > 1. ) {
+      warning_cout << "ATTENTION: hit eff > 1. " << std::endl;
+      debug_cout << "hit IDs on track: " << std::endl;
+      for ( auto id : track.ids() ) {
+	debug_cout << std::hex << "\t " << uint32_t(id) << std::endl;
+      }
+      if ( mcp.isUT() )
+	debug_cout << "MCP is UT " << std::endl;
+      debug_cout << "MCP from category " << m_name << ", IDs: " << std::endl;
+      for ( auto id : mcp.ids() ) {
+	debug_cout << std::hex << "\t " << uint32_t(id) << std::endl;
+      }
+    }
   } else {
     // clone, update total hit efficiency by adding what's missing to
     // m_hiteff
     auto hiteff = track.nIDs() * weight / float(mcp.nIDs());
     m_hiteff += hiteff / float(m_nfound);
     ++m_nclones;
+    if ( hiteff > 1. ) {
+      warning_cout << "ATTENTION: clone track, hit eff > 1. " << std::endl;
+      debug_cout << "hit IDs on track: " << std::endl;
+      for ( auto id : track.ids() ) {
+	debug_cout << std::hex << "\t " << uint32_t(id) << std::endl;
+      }
+      if ( mcp.isUT() )
+	debug_cout << "MCP is UT " << std::endl;
+      debug_cout << "MCP from category " << m_name << ", IDs: " << std::endl;
+      for ( auto id : mcp.ids() ) {
+	debug_cout << std::hex << "\t " << uint32_t(id) << std::endl;
+      }
+    }
   }
+  
 }
 
 void TrackChecker::TrackEffReport::evtEnds()
