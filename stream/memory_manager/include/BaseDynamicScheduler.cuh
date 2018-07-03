@@ -14,11 +14,14 @@ struct BaseDynamicScheduler {
   BaseDynamicScheduler() = default;
 
   BaseDynamicScheduler(const std::vector<std::string>& param_argument_names,
-    const std::vector<std::vector<uint>>& param_sequence_arguments)
+    const std::vector<std::vector<uint>>& param_sequence_arguments,
+    const size_t reserved_mb)
     : argument_names(param_argument_names),
     sequence_arguments(param_sequence_arguments) {
     // Generate the helper arguments vector
     generate_tags();
+    // Set max mb to memory_manager
+    memory_manager.set_reserved_memory(reserved_mb);
   }
 
   /**

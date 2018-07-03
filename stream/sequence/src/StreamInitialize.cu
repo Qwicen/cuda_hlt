@@ -16,7 +16,7 @@ cudaError_t Stream::initialize(
   const bool param_do_check,
   const bool param_do_simplified_kalman_filter,
   const bool param_print_individual_rates,
-  const std::string param_folder_name_MC,
+  const std::string& param_folder_name_MC,
   const size_t param_reserve_mb,
   const uint param_stream_number
 ) {
@@ -224,7 +224,7 @@ cudaError_t Stream::initialize(
   };
 
   // Prepare dynamic scheduler
-  scheduler = BaseDynamicScheduler(argument_names, sequence_arguments);
+  scheduler = BaseDynamicScheduler{argument_names, sequence_arguments, reserve_mb * 1024 * 1024};
 
   // TODO: Malloc required GPU memory
   //       What is required memory here? Do we run the static scheduler?

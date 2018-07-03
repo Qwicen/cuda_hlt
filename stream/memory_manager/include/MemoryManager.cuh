@@ -4,7 +4,7 @@
 #include "../../../main/include/Logger.h"
 
 struct MemoryManager {
-  constexpr static size_t max_available_memory = (size_t) 8 * 1024 * 1024 * 1024; // 8 GiB
+  size_t max_available_memory = (size_t) 8 * 1024 * 1024 * 1024; // 8 GiB
   constexpr static uint guarantee_alignment = 256;
 
   /**
@@ -25,6 +25,16 @@ struct MemoryManager {
   MemoryManager() = default;
 
   /**
+   * @brief Sets the max_available_memory of this manager.
+   *        Note: This triggers a free_all to restore the memory_segments
+   *        to a valid state. This operation is very disruptive.
+   */
+  void set_reserved_memory(size_t reserved_memory) {
+    max_available_memory = reserved_memory;
+    free_all();
+  }
+
+  /**
    * @brief Reserves a memory request of size requested_size.
    *        It can be overriden by other memory managers. The
    *        base version finds the first available segment. If
@@ -36,8 +46,10 @@ struct MemoryManager {
     size_t aligned_request = requested_size + guarantee_alignment - 1
       - ((requested_size + guarantee_alignment - 1) % guarantee_alignment);
 
-    debug_cout << "MemoryManager: Requested "
-      << requested_size << " B (" << aligned_request << " B aligned)" << std::endl;
+    if (logger::ll.verbosityLevel >= 4) {
+      debug_cout << "MemoryManager: Requested "
+        << requested_size << " B (" << aligned_request << " B aligned)" << std::endl;
+    }
 
     auto it = memory_segments.begin();
     for (; it!=memory_segments.end(); ++it) {
@@ -47,8 +59,9 @@ struct MemoryManager {
     }
 
     if (it == memory_segments.end()) {
+      print();
       throw StrException("Reserve: Requested size could not be met ("
-        + std::to_string(aligned_request) + " B)");
+        + std::to_string(((float) aligned_request) / (1024*1024)) + " MiB)");
     }
 
     // Start of allocation
@@ -78,7 +91,9 @@ struct MemoryManager {
    * @brief Frees the memory segment occupied by the tag.
    */
   void free(int tag) {
-    debug_cout << "MemoryManager: Requested to free tag " << tag << std::endl;
+    if (logger::ll.verbosityLevel >= 4) {
+      debug_cout << "MemoryManager: Requested to free tag " << tag << std::endl;
+    }
 
     auto it = std::find_if(memory_segments.begin(), memory_segments.end(),
       [&tag] (const MemorySegment& segment) {
