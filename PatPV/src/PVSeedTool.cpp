@@ -2,12 +2,13 @@
 
 // STL
 #include <cmath>
-
+#include <vector>
+#include <algorithm>
 
 // local
 #include "PVSeedTool.h"
 
-namespace {
+
 bool  vtxcomp( vtxCluster *first, vtxCluster *second ) {
     return first->z < second->z;
 }
@@ -28,8 +29,8 @@ struct pair_to_merge final {
 
 bool paircomp( const pair_to_merge &first, const pair_to_merge &second ) {
   return first.chi2dist < second.chi2dist;
-}
 
+}
 
 //void print_clusters(const std::vector<vtxCluster*>& pvclus) {
 //  std::cout << pvclus.size() << " clusters at this iteration" << std::endl;
@@ -40,7 +41,7 @@ bool paircomp( const pair_to_merge &first, const pair_to_merge &second ) {
 //}
 
 constexpr static const int s_p2mstatic = 5000;
-}
+
 
 //-----------------------------------------------------------------------------
 // Implementation file for class : PVSeedTool
@@ -48,28 +49,21 @@ constexpr static const int s_p2mstatic = 5000;
 // 2005-11-19 : Mariusz Witek
 //-----------------------------------------------------------------------------
 
-DECLARE_COMPONENT( PVSeedTool )
+//DECLARE_COMPONENT( PVSeedTool )
 
 //=============================================================================
 // Standard constructor, initializes variables
 //=============================================================================
-PVSeedTool::PVSeedTool( )
-  : base_class ( type, name , parent )
-{
-  m_x0MS.declareUpdateHandler( [=](Property&) {
-    double X0 = this->m_x0MS;
-    this->m_scatCons = (13.6*sqrt(X0)*(1.+0.038*log(X0)));
-  }).useUpdateHandler();
-}
+//PVSeedTool::PVSeedTool() {}
 
 //=============================================================================
 // getSeeds
 //=============================================================================
-std::vector<Gaudi::XYZPoint>
-PVSeedTool::getSeeds(const std::vector<const LHCb::Track*>& inputTracks,
-                     const Gaudi::XYZPoint& beamspot) const {
+std::vector<XYZPoint>
+PVSeedTool::getSeeds(const std::vector< Track*>& inputTracks,
+                     const XYZPoint& beamspot) const {
 
-  std::vector<Gaudi::XYZPoint> seeds;
+  std::vector<XYZPoint> seeds;
   if(inputTracks.size() < 3 ) return seeds;
 
   std::vector<vtxCluster> vclusters;
@@ -79,13 +73,10 @@ PVSeedTool::getSeeds(const std::vector<const LHCb::Track*>& inputTracks,
     double sigsq;
     double zclu;
 
-    if ( trk->type() == LHCb::Track::Types::VeloR) {
-      zclu = trk->firstState().z() - trk->firstState().x()/trk->firstState().tx();
-      errorForPVSeedFinding(trk->firstState().tx(), 0.0, sigsq);
-    } else {
-      zclu = zCloseBeam(trk,beamspot);
-      errorForPVSeedFinding(trk->firstState().tx(), trk->firstState().ty(),sigsq);
-    }
+   
+    zclu = zCloseBeam(trk,beamspot);
+    errorForPVSeedFinding(trk->firstState().tx, trk->firstState().ty,sigsq);
+
     if ( fabs(zclu)>2000.) continue;
     vtxCluster clu;
     clu.z = zclu;
@@ -101,7 +92,7 @@ PVSeedTool::getSeeds(const std::vector<const LHCb::Track*>& inputTracks,
   std::transform( zseeds.begin(), zseeds.end(),
                   std::back_inserter(seeds),
                   [&](double z) {
-    return Gaudi::XYZPoint{ beamspot.X(), beamspot.Y(), z};
+    return XYZPoint{ beamspot.x, beamspot.y, z};
   });
 
   return seeds;
@@ -125,7 +116,7 @@ PVSeedTool::findClusters(std::vector<vtxCluster>& vclus) const {
   }
 
 
-  std::stable_sort(pvclus.begin(),pvclus.end(),vtxcomp);
+  std::sort(pvclus.begin(),pvclus.end(),vtxcomp);
   //  print_clusters(pvclus);
 
   bool more_merging = true;
@@ -159,7 +150,7 @@ PVSeedTool::findClusters(std::vector<vtxCluster>& vclus) const {
       more_merging = false;
     } else {
       // sort if number of pairs reasonable. Sorting increases efficency.
-      if(vecp2m.size()<100) std::stable_sort(vecp2m.begin(), vecp2m.end(), paircomp);
+      if(vecp2m.size()<100) std::sort(vecp2m.begin(), vecp2m.end(), paircomp);
 
       // merge pairs
       for(auto itp2m = vecp2m.begin(); itp2m != vecp2m.end(); itp2m++) {
@@ -200,7 +191,7 @@ PVSeedTool::findClusters(std::vector<vtxCluster>& vclus) const {
 
   // Sort according to multiplicity
 
-  std::stable_sort(pvclus.begin(),pvclus.end(),multcomp);
+  std::sort(pvclus.begin(),pvclus.end(),multcomp);
 
   // Select good clusters.
 
@@ -243,13 +234,13 @@ void PVSeedTool::errorForPVSeedFinding(double tx, double ty, double &sigz2) cons
 
   // the seeding results depend weakly on this eror parametrization
 
-    double pMean = 3000.*Gaudi::Units::MeV;
+    double pMean = 3000.; // unit: MeV
 
     double tanTheta2 =  tx * tx + ty * ty;
     double sinTheta2 =  tanTheta2 / ( 1. + tanTheta2 );
 
     // assume that first hit in VD at 8 mm
-    double distr        = 8.*Gaudi::Units::mm;
+    double distr        = 8.; // unit: mm
     double dist2        = distr*distr/sinTheta2;
     double sigma_ms2    = m_scatCons * m_scatCons * dist2 / (pMean*pMean);
     double fslope2      = 0.0005*0.0005;
@@ -261,21 +252,21 @@ void PVSeedTool::errorForPVSeedFinding(double tx, double ty, double &sigz2) cons
 
 
 
-double PVSeedTool::zCloseBeam(const LHCb::Track* track, const Gaudi::XYZPoint& beamspot) const {
+double PVSeedTool::zCloseBeam( Track* track, const XYZPoint& beamspot) const {
 
-  Gaudi::XYZPoint tpoint = track->position();
-  Gaudi::XYZVector tdir = track->slopes();
+  XYZPoint tpoint = track->position();
+  XYZPoint tdir = track->slopes();
 
-  double wx = ( 1. + tdir.x() * tdir.x() ) / track->firstState().errX2();
-  double wy = ( 1. + tdir.y() * tdir.y() ) / track->firstState().errY2();
+  double wx = ( 1. + tdir.x * tdir.x ) / track->firstState().errX2;
+  double wy = ( 1. + tdir.y * tdir.y ) / track->firstState().errY2;
 
-  double x0 = tpoint.x() - tpoint.z() * tdir.x() - beamspot.X();
-  double y0 = tpoint.y() - tpoint.z() * tdir.y() - beamspot.Y();
-  double den = wx * tdir.x() * tdir.x() + wy * tdir.y() * tdir.y();
-  double zAtBeam = - ( wx * x0 * tdir.x() + wy * y0 * tdir.y() ) / den ;
+  double x0 = tpoint.x - tpoint.z * tdir.x - beamspot.x;
+  double y0 = tpoint.y - tpoint.z * tdir.y - beamspot.y;
+  double den = wx * tdir.x * tdir.x + wy * tdir.y * tdir.y;
+  double zAtBeam = - ( wx * x0 * tdir.x + wy * y0 * tdir.y ) / den ;
 
-  double xb = tpoint.x() + tdir.x() * ( zAtBeam - tpoint.z() ) - beamspot.X();
-  double yb = tpoint.y() + tdir.y() * ( zAtBeam - tpoint.z() ) - beamspot.Y();
+  double xb = tpoint.x + tdir.x * ( zAtBeam - tpoint.z ) - beamspot.x;
+  double yb = tpoint.y + tdir.y * ( zAtBeam - tpoint.z ) - beamspot.y;
   double r2AtBeam = xb*xb + yb*yb ;
 
   return r2AtBeam < 0.5*0.5 ? zAtBeam : 10e8;

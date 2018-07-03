@@ -17,6 +17,43 @@ struct vtxCluster final {
 
 };
 
+struct XYZPoint {
+  double x = 0.;
+  double y = 0.;
+  double z = 0.;
+  XYZPoint(double m_x, double m_y, double m_z) : x(m_x), y(m_y), z(m_z) {}
+
+};
+
+
+struct State {
+  double tx = 0.;
+  double ty = 0.;
+  double x = 0.;
+  double y = 0.;
+  double z = 0.;
+  double errX2 = 0.;
+  double errY2 = 0.;
+
+
+};
+
+//typedef std::vector<State> Track;
+class Track {
+public:
+  std::vector<State> states;
+  State firstState() {
+    return states.at(0);
+  }
+  XYZPoint slopes() {
+    return XYZPoint(states.at(0).tx, states.at(0).ty, 1.);
+  }
+  XYZPoint position() {
+    return XYZPoint(states.at(0).x, states.at(0).y, states.at(0).z);
+  }
+
+};
+
 
 /** @class PVSeedTool PVSeedTool.h tmp/PVSeedTool.h
  *
@@ -30,20 +67,19 @@ public:
   /// Standard constructor
   PVSeedTool( );
 
-  std::vector<Gaudi::XYZPoint>
-  getSeeds(const std::vector<const LHCb::Track*>& inputTracks,
-       const Gaudi::XYZPoint& beamspot) const override;
+  std::vector<XYZPoint> getSeeds(const std::vector<Track*>& inputTracks,
+       const XYZPoint& beamspot) const ;
 
 private:
 
   std::vector<double> findClusters(std::vector<vtxCluster>& vclus) const;
   void errorForPVSeedFinding(double tx, double ty, double &sigzaq) const;
 
-  double zCloseBeam(const LHCb::Track* track, const Gaudi::XYZPoint& beamspot) const;
+  double zCloseBeam( Track* track, const XYZPoint& beamspot) const;
 
   // steering parameters for merging procedure
   double m_maxChi2Merge = 25.;
-  double m_factorToIncreaseErrors 15.;
+  double m_factorToIncreaseErrors = 15.;
 
   // steering parameters for final cluster selection
   int    m_minClusterMult = 3;

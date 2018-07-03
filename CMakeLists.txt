@@ -48,6 +48,7 @@ add_subdirectory(stream)
 add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
 add_subdirectory(PrVeloUT)
+add_subdirectory(PatPV)
 
 # Files from source directories
 file(GLOB main_sources "main/src/*cpp")
