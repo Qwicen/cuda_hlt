@@ -89,6 +89,7 @@ struct Stream {
   bool do_check;
   bool do_simplified_kalman_filter;
   bool print_individual_rates;
+  size_t reserve_mb;
   // Varying cluster container size
   uint velo_cluster_container_size;
   // Geometry of Velo detector
@@ -174,6 +175,7 @@ struct Stream {
     const bool param_do_simplified_kalman_filter,
     const bool param_print_individual_rates,
     const std::string param_folder_name_MC,
+    const size_t param_reserve_mb,
     const uint param_stream_number
   );
   

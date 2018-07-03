@@ -41,6 +41,7 @@ void printUsage(char* argv[]){
     << std::endl << " [-b {transmit device to host}=1]"
     << std::endl << " [-c {run checkers}=0]"
     << std::endl << " [-k {simplified kalman filter}=0]"
+    << std::endl << " [-m {reserve Megabytes}=1024]"
     << std::endl << " [-v {verbosity}=3 (info)]"
     << std::endl << " [-p (print rates)]"
     << std::endl;
@@ -60,15 +61,19 @@ int main(int argc, char *argv[])
   // By default, do_check will be true when mc_check is enabled
   bool do_check = mc_check_enabled;
   bool do_simplified_kalman_filter = false;
+  size_t reserve_mb = 1024;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:g:n:t:r:pha:b:d:v:c:k:")) != -1) {
+  while ((c = getopt(argc, argv, "f:g:n:t:r:pha:b:d:v:c:k:m:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_raw = std::string(optarg);
       break;
     case 'g':
       folder_name_MC = std::string(optarg);
+      break;
+    case 'm':
+      reserve_mb = atoi(optarg);
       break;
     case 'n':
       number_of_files = atoi(optarg);
@@ -136,6 +141,7 @@ int main(int argc, char *argv[])
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
+    << " reserve MB (-m): " << reserve_mb << std::endl
     << " print rates (-p): " << print_individual_rates << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
@@ -186,7 +192,8 @@ int main(int argc, char *argv[])
     do_check,
     do_simplified_kalman_filter,
     print_individual_rates,
-    folder_name_MC
+    folder_name_MC,
+    reserve_mb
   );
   
   // Attempt to execute all in one go

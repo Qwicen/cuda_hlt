@@ -14,7 +14,8 @@ void StreamWrapper::initialize_streams(
   const bool do_check,
   const bool do_simplified_kalman_filter,
   const bool print_individual_rates,
-  const std::string& folder_name_MC
+  const std::string& folder_name_MC,
+  const size_t reserve_mb
 ) {
   for (uint i=0; i<n; ++i) {
     streams.push_back(new Stream());
@@ -32,6 +33,7 @@ void StreamWrapper::initialize_streams(
       do_simplified_kalman_filter,
       print_individual_rates,
       folder_name_MC,
+      reserve_mb,
       i
     );
 

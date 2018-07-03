@@ -17,6 +17,7 @@ cudaError_t Stream::initialize(
   const bool param_do_simplified_kalman_filter,
   const bool param_print_individual_rates,
   const std::string param_folder_name_MC,
+  const size_t param_reserve_mb,
   const uint param_stream_number
 ) {
   // Set stream and events
@@ -34,6 +35,7 @@ cudaError_t Stream::initialize(
   print_individual_rates = param_print_individual_rates;
   geometry = param_geometry;
   folder_name_MC = param_folder_name_MC;
+  reserve_mb = param_reserve_mb;
 
   // Special case
   // Populate velo geometry
@@ -227,7 +229,7 @@ cudaError_t Stream::initialize(
   // TODO: Malloc required GPU memory
   //       What is required memory here? Do we run the static scheduler?
   // For now, let's assume 1 GiB
-  cudaCheck(cudaMalloc((void**)&dev_base_pointer, 1024 * 1024 * 1024));
+  cudaCheck(cudaMalloc((void**)&dev_base_pointer, reserve_mb * 1024 * 1024));
 
   // velo_kalman_filter_h.set_arguments(
   //   dev_velo_cluster_container,

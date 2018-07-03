@@ -35,7 +35,8 @@ struct StreamWrapper {
     const bool do_check,
     const bool do_simplified_kalman_filter,
     const bool print_individual_rates,
-    const std::string& folder_name_MC
+    const std::string& folder_name_MC,
+    const size_t reserve_mb
   );
 
   /**
