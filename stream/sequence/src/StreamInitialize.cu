@@ -41,10 +41,13 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMemcpyAsync(dev_velo_geometry, geometry.data(), geometry.size(), cudaMemcpyHostToDevice, stream));
 
   // Memory allocations for host memory (copy back)
-  cudaCheck(cudaMallocHost((void**)&host_number_of_tracks_pinned, number_of_events * sizeof(int)));
+  cudaCheck(cudaMallocHost((void**)&host_number_of_tracks, number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_tracks, number_of_events * sizeof(int)));
-  cudaCheck(cudaMallocHost((void**)&host_velo_track_hit_number_pinned, VeloTracking::max_tracks * number_of_events * sizeof(uint)));
-  cudaCheck(cudaMallocHost((void**)&host_velo_track_hits_pinned, number_of_events * VeloTracking::max_tracks * 20 * sizeof(Hit<mc_check_enabled>)));
+  cudaCheck(cudaMallocHost((void**)&host_velo_track_hit_number, VeloTracking::max_tracks * number_of_events * sizeof(uint)));
+  cudaCheck(cudaMallocHost((void**)&host_velo_track_hits, number_of_events * VeloTracking::max_tracks * 20 * sizeof(Hit<mc_check_enabled>)));
+  cudaCheck(cudaMallocHost((void**)&host_total_number_of_velo_clusters, sizeof(uint)));
+  cudaCheck(cudaMallocHost((void**)&host_number_of_reconstructed_velo_tracks, sizeof(uint)));
+  cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_hits_in_velo_tracks, sizeof(uint)));
 
   // Define sequence of algorithms to execute
   sequence = generate_sequence(

@@ -93,11 +93,15 @@ struct Stream {
   uint velo_cluster_container_size;
   // Geometry of Velo detector
   std::vector<char> geometry;
-  // Data back transmission
-  int* host_number_of_tracks_pinned;
+
+  // Pinned host datatypes
+  int* host_number_of_tracks;
   int* host_accumulated_tracks;
-  uint* host_velo_track_hit_number_pinned;
-  Hit<mc_check_enabled>* host_velo_track_hits_pinned;
+  uint* host_velo_track_hit_number;
+  Hit<mc_check_enabled>* host_velo_track_hits;
+  uint* host_total_number_of_velo_clusters;
+  uint* host_number_of_reconstructed_velo_tracks;
+  uint* host_accumulated_number_of_hits_in_velo_tracks;
   
   // Sequence
   decltype(generate_sequence(
@@ -174,10 +178,10 @@ struct Stream {
   );
   
   cudaError_t operator()(
-    const char* host_events_pinned,
-    const uint* host_event_offsets_pinned,
-    size_t host_events_pinned_size,
-    size_t host_event_offsets_pinned_size,
+    const char* host_events,
+    const uint* host_event_offsets,
+    size_t host_events_size,
+    size_t host_event_offsets_size,
     uint number_of_events,
     uint number_of_repetitions
   );
