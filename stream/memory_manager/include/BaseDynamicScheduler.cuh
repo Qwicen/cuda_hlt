@@ -3,13 +3,13 @@
 #include "MemoryManager.cuh"
 
 struct BaseDynamicScheduler {
-  MemoryManager* memory_manager;
+  MemoryManager memory_manager;
   std::vector<std::string> argument_names;
   std::vector<std::vector<uint>> sequence_arguments;
   int current_sequence_step = 0;
   // Type that determines the tags to free and initialize on each step
-  std::vector<std::vector<int>> tags_to_initialize;
-  std::vector<std::vector<int>> tags_to_free;
+  std::vector<std::vector<uint>> tags_to_initialize;
+  std::vector<std::vector<uint>> tags_to_free;
 
   BaseDynamicScheduler() = default;
 
@@ -17,16 +17,8 @@ struct BaseDynamicScheduler {
     const std::vector<std::vector<uint>>& param_sequence_arguments)
     : argument_names(param_argument_names),
     sequence_arguments(param_sequence_arguments) {
-    // By default, use base MemoryManager
-    memory_manager = new MemoryManager();
     // Generate the helper arguments vector
     generate_tags();
-  }
-
-  ~BaseDynamicScheduler() {
-    if (memory_manager != nullptr) {
-      delete memory_manager;
-    }
   }
 
   /**
@@ -73,20 +65,9 @@ struct BaseDynamicScheduler {
     }
   }
 
-  /**
-   * @brief Changes the memory manager.
-   */
-  template<typename T>
-  void set_memory_manager() {
-    if (memory_manager != nullptr) {
-      delete memory_manager;
-    }
-    memory_manager = new T();
-  }
-
   void reset() {
     current_sequence_step = 0;
-    memory_manager->free_all();
+    memory_manager.free_all();
   }
 
   /**
@@ -103,7 +84,7 @@ struct BaseDynamicScheduler {
    *        It performs a check on the current sequence item and 
    *        increments the sequence step.
    */
-  virtual void setup_next(
+  void setup_next(
     std::map<uint, size_t> argument_sizes,
     std::map<uint, uint>& offsets,
     const int check_sequence_step = -1,
@@ -115,20 +96,20 @@ struct BaseDynamicScheduler {
     // Free all tags in previous step
     if (current_sequence_step != 0) {
       for (auto tag : tags_to_free[current_sequence_step-1]) {
-        memory_manager->free(tag);
+        memory_manager.free(tag);
         offsets.erase(tag);
       }
     }
 
     // Reserve space for all tags
     // that need to be initialized on this step
-    for (auto tag : tags_to_initialize[current_sequence_step]) {
-      offsets[tag] = memory_manager->reserve(tag, argument_sizes[tag]);
+    for (uint tag : tags_to_initialize[current_sequence_step]) {
+      offsets[tag] = memory_manager.reserve((int) tag, argument_sizes[tag]);
     }
 
     // Print memory manager state
     if (do_print) {
-      memory_manager->print(argument_names, current_sequence_step);
+      memory_manager.print(argument_names, current_sequence_step);
     }
 
     // Move to next step

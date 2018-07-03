@@ -1,5 +1,4 @@
 #include "Stream.cuh"
-#include "../../memory_manager/include/BaseScheduler.cuh"
 
 /**
  * @brief Sets up statically the chain that will be
@@ -38,7 +37,6 @@ cudaError_t Stream::initialize(
 
   // Special case
   // Populate velo geometry
-  char* dev_velo_geometry;
   cudaCheck(cudaMalloc((void**)&dev_velo_geometry, geometry.size()));
   cudaCheck(cudaMemcpyAsync(dev_velo_geometry, geometry.data(), geometry.size(), cudaMemcpyHostToDevice, stream));
 
@@ -58,7 +56,10 @@ cudaError_t Stream::initialize(
     generate_handler(calculatePhiAndSort),
     generate_handler(searchByTriplet),
     generate_handler(copy_and_prefix_sum_single_block),
-    generate_handler(copy_and_ps_velo_track_hit_number),
+    generate_handler(copy_velo_track_hit_number),
+    generate_handler(prefix_sum_reduce),
+    generate_handler(prefix_sum_single_block),
+    generate_handler(prefix_sum_scan),
     generate_handler(consolidate_tracks)
   );
 
@@ -80,7 +81,16 @@ cudaError_t Stream::initialize(
   sequence.item<seq::calculate_phi_and_sort>().set_opts( dim3(number_of_events),    dim3(64),     stream);
   sequence.item<seq::search_by_triplet>().set_opts(      dim3(number_of_events),    dim3(32),     stream, 32 * sizeof(float));
   sequence.item<seq::copy_and_prefix_sum_single_block>().set_opts(dim3(1),          dim3(1024),   stream);
-  sequence.item<seq::copy_and_ps_velo_track_hit_number>().set_opts(dim3(1),         dim3(1024),   stream);
+  sequence.item<seq::copy_velo_track_hit_number>().set_opts(dim3(number_of_events), dim3(512),    stream);
+
+  // Note: This item opt is not known at compile time
+  // seq::prefix_sum_reduce_velo_track_hit_number
+
+  sequence.item<seq::prefix_sum_single_block_velo_track_hit_number>().set_opts(dim3(1), dim3(1024), stream);
+
+  // Note: Not known at compile time
+  // seq::prefix_sum_scan_velo_track_hit_number
+
   sequence.item<seq::consolidate_tracks>().set_opts(     dim3(number_of_events),    dim3(32),     stream);
   // velo_kalman_filter_h.set_opts(dim3(number_of_events),    dim3(1024),   stream);
 
@@ -114,6 +124,7 @@ cudaError_t Stream::initialize(
     Argument<unsigned short>{"dev_rel_indices", number_of_events * VeloTracking::max_numhits_in_module},
     Argument<uint>{"dev_hit_permutation", VeloTracking::max_number_of_hits_per_event * number_of_events},
     Argument<uint>{"dev_velo_track_hit_number", VeloTracking::max_tracks * number_of_events},
+    Argument<uint>{"dev_prefix_sum_auxiliary_array_2", 0},
     Argument<Hit<mc_check_enabled>>{"dev_velo_track_hits", number_of_events * VeloTracking::max_tracks * 20},
     Argument<VeloState>{"dev_velo_states", velo_states_size}
   );
@@ -179,10 +190,22 @@ cudaError_t Stream::initialize(
   sequence_arguments[seq::copy_and_prefix_sum_single_block] = {
     arg::dev_atomics_storage
   };
-  sequence_arguments[seq::copy_and_ps_velo_track_hit_number] = {
+  sequence_arguments[seq::copy_velo_track_hit_number] = {
     arg::dev_tracks,
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number
+  };
+  sequence_arguments[seq::prefix_sum_reduce_velo_track_hit_number] = {
+    arg::dev_velo_track_hit_number,
+    arg::dev_prefix_sum_auxiliary_array_2
+  };
+  sequence_arguments[seq::prefix_sum_single_block_velo_track_hit_number] = {
+    arg::dev_velo_track_hit_number,
+    arg::dev_prefix_sum_auxiliary_array_2
+  };
+  sequence_arguments[seq::prefix_sum_scan_velo_track_hit_number] = {
+    arg::dev_velo_track_hit_number,
+    arg::dev_prefix_sum_auxiliary_array_2
   };
   sequence_arguments[seq::consolidate_tracks] = {
     arg::dev_atomics_storage,

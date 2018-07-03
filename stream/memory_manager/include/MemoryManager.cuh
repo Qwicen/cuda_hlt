@@ -19,7 +19,7 @@ struct MemoryManager {
     int tag;
   };
 
-  std::list<MemorySegment> memory_segments {{0, max_available_memory, -1}};
+  std::list<MemorySegment> memory_segments = {{0, max_available_memory, -1}};
   size_t total_memory_required = 0;
 
   MemoryManager() = default;
@@ -31,9 +31,9 @@ struct MemoryManager {
    *        there are no available segments of the requested size,
    *        it throws an exception.
    */
-  virtual uint reserve(int tag, size_t requested_size) {
+  uint reserve(int tag, size_t requested_size) {
     // Aligned requested size
-    auto aligned_request = requested_size + guarantee_alignment - 1
+    size_t aligned_request = requested_size + guarantee_alignment - 1
       - ((requested_size + guarantee_alignment - 1) % guarantee_alignment);
 
     debug_cout << "MemoryManager: Requested "
@@ -45,6 +45,7 @@ struct MemoryManager {
         break;
       }
     }
+
     if (it == memory_segments.end()) {
       throw StrException("Reserve: Requested size could not be met ("
         + std::to_string(aligned_request) + " B)");
@@ -76,7 +77,9 @@ struct MemoryManager {
   /**
    * @brief Frees the memory segment occupied by the tag.
    */
-  virtual void free(int tag) {
+  void free(int tag) {
+    debug_cout << "MemoryManager: Requested to free tag " << tag << std::endl;
+
     auto it = std::find_if(memory_segments.begin(), memory_segments.end(),
       [&tag] (const MemorySegment& segment) {
         if (segment.tag == tag) {
@@ -126,17 +129,25 @@ struct MemoryManager {
   /**
    * @brief Prints the current state of the memory segments.
    */
-  void print(const std::vector<std::string>& argument_names, const int step = -1) {
+  void print(const std::vector<std::string>& argument_names = {}, const int step = -1) {
     info_cout << "Memory Manager max memory required (MiB): "
-      << (total_memory_required) << std::endl;
+      << (((float) total_memory_required) / (1024 * 1024)) << std::endl;
 
     if (step!=-1) { info_cout << "Sequence step " << step << " memory segments (MiB): "; }
     else { info_cout << "MemoryManager segments (MiB): "; }
 
-    for (auto& segment : memory_segments) {
-      std::string name = segment.tag==-1 ? "unused" : argument_names[segment.tag];
-      info_cout << name << " (" << ((float) segment.size) / (1024 * 1024) << "), ";
+    if (argument_names.empty()) {
+      for (auto& segment : memory_segments) {
+        std::string name = segment.tag==-1 ? "unused" : std::to_string(segment.tag);
+        info_cout << name << " (" << ((float) segment.size) / (1024 * 1024) << "), ";
+      }
+      info_cout << std::endl;
+    } else {
+      for (auto& segment : memory_segments) {
+        std::string name = segment.tag==-1 ? "unused" : argument_names[segment.tag];
+        info_cout << name << " (" << ((float) segment.size) / (1024 * 1024) << "), ";
+      }
+      info_cout << std::endl;
     }
-    info_cout << std::endl;
   }
 };

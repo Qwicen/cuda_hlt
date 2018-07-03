@@ -8,7 +8,7 @@ cudaError_t Stream::operator()(
   uint number_of_events,
   uint number_of_repetitions
 ) {
-  const bool do_print_memory_manager = true;
+  const bool do_print_memory_manager = false;
 
   // Generate object for populating arguments
   DynamicArgumentGenerator<decltype(arguments)> argen {arguments, dev_base_pointer};
@@ -19,19 +19,22 @@ cudaError_t Stream::operator()(
     std::map<uint, uint> offsets;
     uint sequence_step = 0;
 
+    // Reset scheduler
+    scheduler.reset();
+
     ////////////////
     // Clustering //
     ////////////////
 
     // Reserve memory for this step datatypes
     scheduler.setup_next(
-      {
-        {argen.size_pair<arg::dev_raw_input>(host_events_pinned_size)},
-        {argen.size_pair<arg::dev_raw_input_offsets>(host_event_offsets_pinned_size)},
-        {argen.size_pair<arg::dev_estimated_input_size>(number_of_events * VeloTracking::n_modules + 1)},
-        {argen.size_pair<arg::dev_module_cluster_num>(number_of_events * VeloTracking::n_modules)},
-        {argen.size_pair<arg::dev_module_candidate_num>(number_of_events)},
-        {argen.size_pair<arg::dev_cluster_candidates>(number_of_events * VeloClustering::max_candidates_event)}
+      std::map<uint, size_t>{
+        argen.size_pair<arg::dev_raw_input>(host_events_pinned_size),
+        argen.size_pair<arg::dev_raw_input_offsets>(host_event_offsets_pinned_size),
+        argen.size_pair<arg::dev_estimated_input_size>(number_of_events * VeloTracking::n_modules + 1),
+        argen.size_pair<arg::dev_module_cluster_num>(number_of_events * VeloTracking::n_modules),
+        argen.size_pair<arg::dev_module_candidate_num>(number_of_events),
+        argen.size_pair<arg::dev_cluster_candidates>(number_of_events * VeloClustering::max_candidates_event)
       },
       offsets,
       sequence_step++,
@@ -66,7 +69,7 @@ cudaError_t Stream::operator()(
     // Reserve memory
     scheduler.setup_next(
       {
-        {argen.size_pair<arg::dev_cluster_offset>(number_of_events)}
+        argen.size_pair<arg::dev_cluster_offset>(number_of_events)
       },
       offsets,
       sequence_step++,
@@ -140,12 +143,12 @@ cudaError_t Stream::operator()(
 
     // Fetch the number of hits we require
     uint total_number_of_velo_clusters;
-    cudaCheck(cudaMemcpyAsync(&total_number_of_velo_clusters, argen.generate<arg::dev_estimate_input_size>(offsets) + number_of_events * VeloTracking::n_modules, sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(&total_number_of_velo_clusters, argen.generate<arg::dev_estimated_input_size>(offsets) + number_of_events * VeloTracking::n_modules, sizeof(uint), cudaMemcpyDeviceToHost, stream));
 
     // Reserve memory
     scheduler.setup_next(
       {
-        {argen.size_pair<arg::dev_velo_cluster_container>(6 * total_number_of_velo_clusters)}
+        argen.size_pair<arg::dev_velo_cluster_container>(6 * total_number_of_velo_clusters)
       },
       offsets,
       sequence_step++,
@@ -181,7 +184,7 @@ cudaError_t Stream::operator()(
     // Reserve memory
     scheduler.setup_next(
       {
-        {argen.size_pair<arg::dev_hit_permutation>(total_number_of_velo_clusters)}
+        argen.size_pair<arg::dev_hit_permutation>(total_number_of_velo_clusters)
       },
       offsets,
       sequence_step++,
@@ -212,15 +215,15 @@ cudaError_t Stream::operator()(
     // Reserve memory
     scheduler.setup_next(
       {
-        {argen.size_pair<arg::dev_tracks>(number_of_events * VeloTracking::max_tracks)},
-        {argen.size_pair<arg::dev_tracklets>(number_of_events * VeloTracking::ttf_modulo)},
-        {argen.size_pair<arg::dev_tracks_to_follow>(number_of_events * VeloTracking::ttf_modulo)},
-        {argen.size_pair<arg::dev_weak_tracks>(number_of_events * VeloTracking::ttf_modulo)},
-        {argen.size_pair<arg::dev_hit_used>(total_number_of_velo_clusters)},
-        {argen.size_pair<arg::dev_atomics_storage>(number_of_events * VeloTracking::num_atomics)},
-        {argen.size_pair<arg::dev_h0_candidates>(2 * total_number_of_velo_clusters)},
-        {argen.size_pair<arg::dev_h2_candidates>(2 * total_number_of_velo_clusters)},
-        {argen.size_pair<arg::dev_rel_indices>(number_of_events * VeloTracking::max_numhits_in_module)}
+        argen.size_pair<arg::dev_tracks>(number_of_events * VeloTracking::max_tracks),
+        argen.size_pair<arg::dev_tracklets>(number_of_events * VeloTracking::ttf_modulo),
+        argen.size_pair<arg::dev_tracks_to_follow>(number_of_events * VeloTracking::ttf_modulo),
+        argen.size_pair<arg::dev_weak_tracks>(number_of_events * VeloTracking::ttf_modulo),
+        argen.size_pair<arg::dev_hit_used>(total_number_of_velo_clusters),
+        argen.size_pair<arg::dev_atomics_storage>(number_of_events * VeloTracking::num_atomics),
+        argen.size_pair<arg::dev_h0_candidates>(2 * total_number_of_velo_clusters),
+        argen.size_pair<arg::dev_h2_candidates>(2 * total_number_of_velo_clusters),
+        argen.size_pair<arg::dev_rel_indices>(number_of_events * VeloTracking::max_numhits_in_module)
       },
       offsets,
       sequence_step++,
@@ -256,6 +259,8 @@ cudaError_t Stream::operator()(
     // Consolidate tracks //
     ////////////////////////
 
+    // Calculate accumulated tracks
+
     // Reserve memory
     scheduler.setup_next(
       {},
@@ -284,11 +289,18 @@ cudaError_t Stream::operator()(
     // Fetch number of reconstructed tracks
     uint number_of_reconstructed_velo_tracks;
     cudaCheck(cudaMemcpyAsync(&number_of_reconstructed_velo_tracks, argen.generate<arg::dev_atomics_storage>(offsets) + number_of_events * 2, sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    size_t velo_track_hit_number_size = number_of_reconstructed_velo_tracks + 1;
+
+    // Prefix sum of accumulated tracks
+    // 1. Copy velo track hit number to a consecutive container
+    // 2. Reduce
+    // 3. Single block
+    // 4. Scan
 
     // Reserve memory
     scheduler.setup_next(
       {
-        {argen.size_pair<arg::dev_velo_track_hit_number>(number_of_reconstructed_velo_tracks)}
+        argen.size_pair<arg::dev_velo_track_hit_number>(velo_track_hit_number_size)
       },
       offsets,
       sequence_step++,
@@ -296,16 +308,89 @@ cudaError_t Stream::operator()(
     );
 
     // Setup sequence step
-    sequence.item<seq::copy_and_ps_velo_track_hit_number>().set_arguments(
+    sequence.item<seq::copy_velo_track_hit_number>().set_arguments(
       argen.generate<arg::dev_tracks>(offsets),
       argen.generate<arg::dev_atomics_storage>(offsets),
-      argen.generate<arg::dev_velo_track_hit_number>(offsets),
-      number_of_events
+      argen.generate<arg::dev_velo_track_hit_number>(offsets)
     );
 
     Helper::invoke(
-      sequence.item<seq::copy_and_ps_velo_track_hit_number>(),
-      "Calculate accumulated track hit numbers",
+      sequence.item<seq::copy_velo_track_hit_number>(),
+      "Copy Velo track hit number",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+    );
+
+    // Prefix sum in three kernels
+    const size_t prefix_sum_auxiliary_array_2_size = (number_of_reconstructed_velo_tracks + 511) / 512;
+    scheduler.setup_next(
+      {
+        argen.size_pair<arg::dev_prefix_sum_auxiliary_array_2>(prefix_sum_auxiliary_array_2_size)
+      },
+      offsets,
+      sequence_step++,
+      do_print_memory_manager
+    );
+
+    // Setup sequence step
+    sequence.item<seq::prefix_sum_reduce_velo_track_hit_number>().set_arguments(
+      argen.generate<arg::dev_velo_track_hit_number>(offsets),
+      argen.generate<arg::dev_prefix_sum_auxiliary_array_2>(offsets),
+      number_of_reconstructed_velo_tracks
+    );
+
+    // Setup sequence opts
+    sequence.item<seq::prefix_sum_reduce_velo_track_hit_number>().set_opts(dim3(prefix_sum_auxiliary_array_2_size), dim3(256), stream);
+
+    // Convert the estimated sizes to module hit start format (offsets)
+    Helper::invoke(
+      sequence.item<seq::prefix_sum_reduce_velo_track_hit_number>(),
+      "Prefix sum reduce: Velo track hit number",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+    );
+
+    // Reserve memory
+    scheduler.setup_next({}, offsets, sequence_step++, do_print_memory_manager);
+
+    // Setup sequence step
+    sequence.item<seq::prefix_sum_single_block_velo_track_hit_number>().set_arguments(
+      argen.generate<arg::dev_velo_track_hit_number>(offsets) + number_of_reconstructed_velo_tracks,
+      argen.generate<arg::dev_prefix_sum_auxiliary_array_2>(offsets),
+      prefix_sum_auxiliary_array_2_size
+    );
+
+    Helper::invoke(
+      sequence.item<seq::prefix_sum_single_block_velo_track_hit_number>(),
+      "Prefix sum single block: Velo track hit number",
+      times,
+      cuda_event_start,
+      cuda_event_stop,
+      print_individual_rates
+    );
+
+    // Reserve memory
+    scheduler.setup_next({}, offsets, sequence_step++, do_print_memory_manager);
+
+    // Setup sequence step
+    sequence.item<seq::prefix_sum_scan_velo_track_hit_number>().set_arguments(
+      argen.generate<arg::dev_velo_track_hit_number>(offsets),
+      argen.generate<arg::dev_prefix_sum_auxiliary_array_2>(offsets),
+      number_of_reconstructed_velo_tracks
+    );
+
+    // Setup sequence opts
+    const uint pss_velo_track_hit_number_opts =
+      prefix_sum_auxiliary_array_2_size==1 ? 1 : (prefix_sum_auxiliary_array_2_size-1);
+    sequence.item<seq::prefix_sum_scan_velo_track_hit_number>().set_opts(dim3(pss_velo_track_hit_number_opts), dim3(512), stream);
+
+    Helper::invoke(
+      sequence.item<seq::prefix_sum_scan_velo_track_hit_number>(),
+      "Prefix sum scan",
       times,
       cuda_event_start,
       cuda_event_stop,
@@ -322,8 +407,8 @@ cudaError_t Stream::operator()(
     // Reserve memory
     scheduler.setup_next(
       {
-        {argen.size_pair<arg::dev_velo_track_hits>(accumulated_number_of_hits_in_velo_tracks)},
-        {argen.size_pair<arg::dev_velo_states>(number_of_reconstructed_velo_tracks)}
+        argen.size_pair<arg::dev_velo_track_hits>(accumulated_number_of_hits_in_velo_tracks),
+        argen.size_pair<arg::dev_velo_states>(number_of_reconstructed_velo_tracks)
       },
       offsets,
       sequence_step++,
@@ -369,8 +454,8 @@ cudaError_t Stream::operator()(
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, argen.generate<arg::dev_atomics_storage>(offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(offsets) + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream);
-      cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number_pinned, argen.generate<arg::dev_velo_track_hit_number>(offsets), argen.size<arg::dev_velo_track_hit_number>(number_of_reconstructed_velo_tracks), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number_pinned, argen.generate<arg::dev_velo_track_hit_number>(offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_velo_track_hits_pinned, argen.generate<arg::dev_velo_track_hits>(offsets), argen.size<arg::dev_velo_track_hits>(accumulated_number_of_hits_in_velo_tracks), cudaMemcpyDeviceToHost, stream));
     }
 
@@ -391,8 +476,8 @@ cudaError_t Stream::operator()(
       if (repetition == 0 && do_check) { // only check efficiencies once
         // Fetch data
         cudaCheck(cudaMemcpyAsync(host_number_of_tracks_pinned, argen.generate<arg::dev_atomics_storage>(offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-        cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(offsets) + number_of_events), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream);
-        cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number_pinned, argen.generate<arg::dev_velo_track_hit_number>(offsets), argen.size<arg::dev_velo_track_hit_number>(number_of_reconstructed_velo_tracks), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number_pinned, argen.generate<arg::dev_velo_track_hit_number>(offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
         cudaCheck(cudaMemcpyAsync(host_velo_track_hits_pinned, argen.generate<arg::dev_velo_track_hits>(offsets), argen.size<arg::dev_velo_track_hits>(accumulated_number_of_hits_in_velo_tracks), cudaMemcpyDeviceToHost, stream));
         cudaEventRecord(cuda_generic_event, stream);
         cudaEventSynchronize(cuda_generic_event);
@@ -403,7 +488,8 @@ cudaError_t Stream::operator()(
           host_velo_track_hit_number_pinned,
           reinterpret_cast<Hit<true>*>(host_velo_track_hits_pinned),
           number_of_events,
-  		    folder_name_MC);
+          folder_name_MC
+        );
       }
     }
   }

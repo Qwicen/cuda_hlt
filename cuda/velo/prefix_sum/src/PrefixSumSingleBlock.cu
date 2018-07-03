@@ -151,31 +151,27 @@ __global__ void copy_and_prefix_sum_single_block(
     dev_output_array, array_size);
 }
 
-__global__ void copy_and_ps_velo_track_hit_number(
+/**
+ * @brief Copies Velo track hit numbers on a consecutive container
+ */
+__global__ void copy_velo_track_hit_number(
   const TrackHits* dev_tracks,
   int* dev_atomics_storage,
-  uint* dev_velo_track_hit_number,
-  const uint number_of_events
+  uint* dev_velo_track_hit_number
 ) {
-  // Copy the input array into the output array
-  uint accumulated_number_of_tracks = 0;
-  for (uint i=0; i<number_of_events; ++i) {
-    const TrackHits* event_tracks = dev_tracks + i * VeloTracking::max_tracks;
-    const uint number_of_tracks = dev_atomics_storage[i];
+  const uint number_of_events = gridDim.x;
+  const uint event_number = blockIdx.x;
+  const TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
+  const int accumulated_tracks = dev_atomics_storage[number_of_events + event_number];
+  const int number_of_tracks = dev_atomics_storage[event_number];
 
-    for (uint j=0; j<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++j) {
-      const auto element = j*blockDim.x + threadIdx.x;
-      if (element < number_of_tracks) {
-        dev_velo_track_hit_number[accumulated_number_of_tracks + element] = event_tracks[element].hitsNum;
-      }
+  // Pointer to velo_track_hit_number of current event
+  uint* velo_track_hit_number = dev_velo_track_hit_number + accumulated_tracks;
+
+  for (int i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
+    const auto element = i*blockDim.x + threadIdx.x;
+    if (element < number_of_tracks) {
+      velo_track_hit_number[element] = event_tracks[element].hitsNum;
     }
-
-    accumulated_number_of_tracks += number_of_tracks;
   }
-
-  __syncthreads();
-
-  // Perform prefix_sum over output array
-  prefix_sum_single_block_implementation(dev_velo_track_hit_number + accumulated_number_of_tracks,
-    dev_velo_track_hit_number, accumulated_number_of_tracks);
 }

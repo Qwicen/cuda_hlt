@@ -11,9 +11,6 @@
 #include "../../../main/include/Logger.h"
 #include "../../../main/include/Timer.h"
 #include "../../../main/include/Tools.h"
-#include "../../handlers/include/Handler.cuh"
-#include "../../handlers/include/Sequence.cuh"
-#include "../../handlers/include/Helper.cuh"
 #include "../../../cuda/velo/calculate_phi_and_sort/include/CalculatePhiAndSort.cuh"
 #include "../../../cuda/velo/consolidate_tracks/include/ConsolidateTracks.cuh"
 #include "../../../cuda/velo/mask_clustering/include/MaskedVeloClustering.cuh"
@@ -21,6 +18,11 @@
 #include "../../../cuda/velo/prefix_sum/include/PrefixSum.cuh"
 #include "../../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
 #include "../../../cuda/velo/simplified_kalman_filter/include/VeloKalmanFilter.cuh"
+#include "../../handlers/include/Handler.cuh"
+#include "../../handlers/include/Argument.cuh"
+#include "../../handlers/include/Sequence.cuh"
+#include "../../handlers/include/Helper.cuh"
+#include "../../memory_manager/include/BaseDynamicScheduler.cuh"
 
 class Timer;
 
@@ -36,7 +38,10 @@ enum seq_enum_t {
   calculate_phi_and_sort,
   search_by_triplet,
   copy_and_prefix_sum_single_block,
-  copy_and_ps_velo_track_hit_number,
+  copy_velo_track_hit_number,
+  prefix_sum_reduce_velo_track_hit_number,
+  prefix_sum_single_block_velo_track_hit_number,
+  prefix_sum_scan_velo_track_hit_number,
   consolidate_tracks
 };
 }
@@ -62,6 +67,7 @@ enum arg_enum_t {
   dev_rel_indices,
   dev_hit_permutation,
   dev_velo_track_hit_number,
+  dev_prefix_sum_auxiliary_array_2,
   dev_velo_track_hits,
   dev_velo_states
 };
@@ -103,39 +109,44 @@ struct Stream {
     generate_handler(calculatePhiAndSort),
     generate_handler(searchByTriplet),
     generate_handler(copy_and_prefix_sum_single_block),
-    generate_handler(copy_and_ps_velo_track_hit_number),
+    generate_handler(copy_velo_track_hit_number),
+    generate_handler(prefix_sum_reduce),
+    generate_handler(prefix_sum_single_block),
+    generate_handler(prefix_sum_scan),
     generate_handler(consolidate_tracks)
   )) sequence;
 
   // Arguments
   decltype(generate_tuple(
-    Argument<char>{"dev_raw_input", raw_events.size()},
-    Argument<uint>{"dev_raw_input_offsets", event_offsets.size()},
-    Argument<uint>{"dev_estimated_input_size", (number_of_events * VeloTracking::n_modules + 2)},
-    Argument<uint>{"dev_module_cluster_num", number_of_events * VeloTracking::n_modules},
-    Argument<uint>{"dev_module_candidate_num", number_of_events},
-    Argument<uint>{"dev_cluster_offset", number_of_events},
-    Argument<uint>{"dev_cluster_candidates", number_of_events * VeloClustering::max_candidates_event},
-    Argument<uint>{"dev_velo_cluster_container", velo_cluster_container_size},
-    Argument<TrackHits>{"dev_tracks", number_of_events * VeloTracking::max_tracks},
-    Argument<uint>{"dev_tracks_to_follow", number_of_events * VeloTracking::ttf_modulo},
-    Argument<bool>{"dev_hit_used", VeloTracking::max_number_of_hits_per_event * number_of_events},
-    Argument<int>{"dev_atomics_storage", number_of_events * VeloTracking::num_atomics},
-    Argument<TrackHits>{"dev_tracklets", VeloTracking::ttf_modulo * number_of_events},
-    Argument<uint>{"dev_weak_tracks", VeloTracking::ttf_modulo * number_of_events},
-    Argument<short>{"dev_h0_candidates", 2 * VeloTracking::max_number_of_hits_per_event * number_of_events},
-    Argument<short>{"dev_h2_candidates", 2 * VeloTracking::max_number_of_hits_per_event * number_of_events},
-    Argument<unsigned short>{"dev_rel_indices", number_of_events * VeloTracking::max_numhits_in_module},
-    Argument<uint>{"dev_hit_permutation", VeloTracking::max_number_of_hits_per_event * number_of_events},
-    Argument<uint>{"dev_velo_track_hit_number", VeloTracking::max_tracks * number_of_events},
-    Argument<Hit<mc_check_enabled>>{"dev_velo_track_hits", number_of_events * VeloTracking::max_tracks * 20},
-    Argument<VeloState>{"dev_velo_states", velo_states_size}
+    Argument<char>{"dev_raw_input", 0},
+    Argument<uint>{"dev_raw_input_offsets", 0},
+    Argument<uint>{"dev_estimated_input_size", 0},
+    Argument<uint>{"dev_module_cluster_num", 0},
+    Argument<uint>{"dev_module_candidate_num", 0},
+    Argument<uint>{"dev_cluster_offset", 0},
+    Argument<uint>{"dev_cluster_candidates", 0},
+    Argument<uint>{"dev_velo_cluster_container", 0},
+    Argument<TrackHits>{"dev_tracks", 0},
+    Argument<uint>{"dev_tracks_to_follow", 0},
+    Argument<bool>{"dev_hit_used", 0},
+    Argument<int>{"dev_atomics_storage", 0},
+    Argument<TrackHits>{"dev_tracklets", 0},
+    Argument<uint>{"dev_weak_tracks", 0},
+    Argument<short>{"dev_h0_candidates", 0},
+    Argument<short>{"dev_h2_candidates", 0},
+    Argument<unsigned short>{"dev_rel_indices", 0},
+    Argument<uint>{"dev_hit_permutation", 0},
+    Argument<uint>{"dev_velo_track_hit_number", 0},
+    Argument<uint>{"dev_prefix_sum_auxiliary_array_2", 0},
+    Argument<Hit<mc_check_enabled>>{"dev_velo_track_hits", 0},
+    Argument<VeloState>{"dev_velo_states", 0}
   )) arguments;
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;
 
-  // Base GPU pointer
+  // GPU pointers
+  char* dev_velo_geometry;
   char* dev_base_pointer;
 
   // Parameters for certain algorithms
@@ -143,6 +154,8 @@ struct Stream {
   uint prefixSumScanBlocks;
 
   Stream() = default;
+
+  ~Stream() {}
 
   std::string folder_name_MC;
 
@@ -159,26 +172,6 @@ struct Stream {
     const std::string param_folder_name_MC,
     const uint param_stream_number
   );
-
-  ~Stream() {
-    // // Free buffers
-    // cudaCheck(cudaFree(dev_hit_permutation));
-    // cudaCheck(cudaFree(dev_tracks_to_follow));
-    // cudaCheck(cudaFree(dev_hit_used));
-    // cudaCheck(cudaFree(dev_tracklets));
-    // cudaCheck(cudaFree(dev_weak_tracks));
-    // cudaCheck(cudaFree(dev_h0_candidates));
-    // cudaCheck(cudaFree(dev_h2_candidates));
-    // cudaCheck(cudaFree(dev_rel_indices));
-    // cudaCheck(cudaFree(dev_event_offsets));
-    // cudaCheck(cudaFree(dev_events));
-    // cudaCheck(cudaFree(dev_hit_temp));
-    // cudaCheck(cudaFree(dev_atomics_storage));
-    // cudaCheck(cudaFree(dev_tracks));
-
-    // cudaCheck(cudaStreamDestroy(stream));
-    // cudaCheck(cudaStreamDestroy(stream_receive));
-  }
   
   cudaError_t operator()(
     const char* host_events_pinned,
