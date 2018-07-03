@@ -61,7 +61,7 @@ struct DynamicArgumentGenerator {
     base_pointer(param_base_pointer) {}
 
   template<unsigned I>
-  auto generate(const std::map<uint, uint>& offsets)
+  auto generate(const std::array<uint, std::tuple_size<T>::value>& offsets)
   -> decltype(std::get<I>(arguments).type_obj)* {
     auto& argument = std::get<I>(arguments);
     auto pointer = base_pointer + offsets.at(I);
@@ -73,10 +73,10 @@ struct DynamicArgumentGenerator {
     return s * sizeof(std::get<I>(arguments).type_obj);
   }
 
-  template<unsigned I>
-  std::pair<uint, size_t> size_pair(const size_t s) {
-    return {I, size<I>(s)};
-  }
+  // template<unsigned I>
+  // std::pair<uint, size_t> size_pair(const size_t s) {
+  //   return {I, size<I>(s)};
+  // }
 };
 
 /**
