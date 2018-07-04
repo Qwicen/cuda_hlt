@@ -39,8 +39,6 @@ cudaError_t Stream::operator()(
     // Reserve memory for this step datatypes
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
 
-    sequence.item<seq::estimate_input_size>().mymethod();
-
     // Setup arguments for kernel call
     sequence.item<seq::estimate_input_size>().set_arguments(
       argen.generate<arg::dev_raw_input>(argument_offsets),
