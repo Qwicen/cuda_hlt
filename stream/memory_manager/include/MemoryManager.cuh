@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "../../../main/include/Common.h"
 #include "../../../main/include/Logger.h"
+#include "../../sequence/include/SequenceSetup.cuh"
 
 struct MemoryManager {
   size_t max_available_memory = (size_t) 8 * 1024 * 1024 * 1024; // 8 GiB
@@ -81,8 +82,8 @@ struct MemoryManager {
     // Update total memory required
     // Note: This can be done accesing the last element in memory_segments
     //       upon every reserve, and keeping the maximum used memory
-    // total_memory_required = std::max(total_memory_required,
-    //   max_available_memory - memory_segments.back().size);
+    total_memory_required = std::max(total_memory_required,
+      max_available_memory - memory_segments.back().size);
 
     return start;
   }
@@ -141,12 +142,17 @@ struct MemoryManager {
   /**
    * @brief Prints the current state of the memory segments.
    */
-  void print(const std::vector<std::string>& argument_names = {}, const int step = -1) {
-    info_cout << "Memory Manager max memory required (MiB): "
-      << (((float) total_memory_required) / (1024 * 1024)) << std::endl;
-
-    if (step!=-1) { info_cout << "Sequence step " << step << " memory segments (MiB): "; }
-    else { info_cout << "MemoryManager segments (MiB): "; }
+  void print(
+    const std::array<std::string, std::tuple_size<sequence_tuple_t>::value>& sequence_names = {},
+    const std::array<std::string, std::tuple_size<argument_tuple_t>::value>& argument_names = {},
+    const int step = -1
+  ) {
+    if (step!=-1) {
+      info_cout << "Sequence step " << step << " \""
+        << sequence_names[step] << "\" memory segments (MiB):" << std::endl;
+    } else {
+      info_cout << "Memory segments (MiB):" << std::endl;
+    }
 
     if (argument_names.empty()) {
       for (auto& segment : memory_segments) {
@@ -161,5 +167,8 @@ struct MemoryManager {
       }
       info_cout << std::endl;
     }
+
+    info_cout << "Max memory required: "
+      << (((float) total_memory_required) / (1024 * 1024)) << " MiB" << std::endl << std::endl;
   }
 };

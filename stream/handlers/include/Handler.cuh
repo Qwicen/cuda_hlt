@@ -47,8 +47,9 @@ R return_type (R(_)(T...)) {
   return R{};
 }
 
-template<typename R, typename... T>
+template<unsigned long I, typename R, typename... T>
 struct Handler {
+  constexpr static unsigned long i = I;
   dim3 num_blocks, num_threads;
   unsigned shared_memory_size = 0;
   cudaStream_t* stream;
@@ -58,6 +59,7 @@ struct Handler {
   R(*function)(T...);
 
   Handler() = default;
+
   Handler(R(*param_function)(T...)) : function(param_function) {}
 
   void set_arguments(T... param_arguments) {
@@ -82,7 +84,10 @@ struct Handler {
   }
 };
 
-template<typename R, typename... T>
-Handler<R, T...> generate_handler(R(f)(T...)) {
-  return Handler<R, T...>{f};
-}
+template<unsigned long I>
+struct HandlerMaker {
+  template<typename R, typename... T>
+  static Handler<I, R, T...> make_handler(R(f)(T...)) {
+    return Handler<I, R, T...>{f};
+  }
+};

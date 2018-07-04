@@ -1,7 +1,8 @@
 #pragma once
 
-template<typename T>
+template<int I, typename T>
 struct Argument {
+  constexpr static int i = I;
   T type_obj;
   std::string name;
   size_t size;
@@ -11,14 +12,6 @@ struct Argument {
   Argument(const std::string& param_name, const size_t param_size)
     : name(param_name), size(param_size) {}
 };
-
-/**
- * @brief Helper to generate a tuple without specifying its type
- */
-template<typename... T>
-std::tuple<T...> generate_tuple(T... t) {
-  return {t...};
-}
 
 /**
  * @brief Helper class to generate arguments based on

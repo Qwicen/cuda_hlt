@@ -4,8 +4,9 @@
 
 struct BaseDynamicScheduler {
   MemoryManager memory_manager;
-  std::vector<std::string> argument_names;
-  std::vector<std::vector<uint>> sequence_arguments;
+  std::array<std::string, std::tuple_size<sequence_tuple_t>::value> sequence_names;
+  std::array<std::string, std::tuple_size<argument_tuple_t>::value> argument_names;
+  std::vector<std::vector<uint>> sequence_dependencies;
   int current_sequence_step = 0;
   // Type that determines the tags to free and initialize on each step
   std::vector<std::vector<int>> tags_to_initialize;
@@ -13,11 +14,14 @@ struct BaseDynamicScheduler {
 
   BaseDynamicScheduler() = default;
 
-  BaseDynamicScheduler(const std::vector<std::string>& param_argument_names,
-    const std::vector<std::vector<uint>>& param_sequence_arguments,
+  BaseDynamicScheduler(
+    const std::array<std::string, std::tuple_size<sequence_tuple_t>::value>& param_sequence_names,
+    const std::array<std::string, std::tuple_size<argument_tuple_t>::value>& param_argument_names,
+    const std::vector<std::vector<uint>>& param_sequence_dependencies,
     const size_t reserved_mb)
-    : argument_names(param_argument_names),
-    sequence_arguments(param_sequence_arguments) {
+  : sequence_names(param_sequence_names),
+    argument_names(param_argument_names),
+    sequence_dependencies(param_sequence_dependencies) {
     // Generate the helper arguments vector
     generate_tags();
     // Set max mb to memory_manager
@@ -26,7 +30,7 @@ struct BaseDynamicScheduler {
 
   /**
    * @brief Helper function to generate vector of MemoryArgument
-   *        from argument_sizes and sequence_arguments.
+   *        from argument_sizes and sequence_dependencies.
    */
   void generate_tags() {
     tags_to_initialize.clear();
@@ -35,9 +39,9 @@ struct BaseDynamicScheduler {
     std::vector<int> tags_freed;
 
     // Iterate over sequence and populate first appeareance of algorithms
-    for (int i=0; i<sequence_arguments.size(); ++i) {
+    for (int i=0; i<sequence_dependencies.size(); ++i) {
       std::vector<int> initialize;
-      for (int argument_number : sequence_arguments[i]) {
+      for (int argument_number : sequence_dependencies[i]) {
         if (std::find(std::begin(tags_initialized), std::end(tags_initialized), argument_number)
           == std::end(tags_initialized)) {
           initialize.push_back(argument_number);
@@ -48,7 +52,7 @@ struct BaseDynamicScheduler {
     }
 
     // Iterate over sequence in reverse and populate last appeareance of algorithms
-    for (auto it=sequence_arguments.rbegin(); it!=sequence_arguments.rend(); ++it) {
+    for (auto it=sequence_dependencies.rbegin(); it!=sequence_dependencies.rend(); ++it) {
       std::vector<int> freed;
       for (int argument_number : *it) {
         if (std::find(std::begin(tags_freed), std::end(tags_freed), argument_number)
@@ -62,8 +66,8 @@ struct BaseDynamicScheduler {
     std::reverse(std::begin(tags_to_free), std::end(tags_to_free));
 
     // Sanity check
-    if (tags_to_initialize.size() != sequence_arguments.size() ||
-      tags_to_free.size() != sequence_arguments.size()) {
+    if (tags_to_initialize.size() != sequence_dependencies.size() ||
+      tags_to_free.size() != sequence_dependencies.size()) {
       throw StrException("Generate arguments: tags to initialize, tags to free size mismatch.");
     }
   }
@@ -111,7 +115,7 @@ struct BaseDynamicScheduler {
 
     // Print memory manager state
     if (do_print) {
-      memory_manager.print(argument_names, current_sequence_step);
+      memory_manager.print(sequence_names, argument_names, current_sequence_step);
     }
 
     // Move to next step

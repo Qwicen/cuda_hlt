@@ -3,27 +3,35 @@
 #include "Handler.cuh"
 #include <tuple>
 
-template<typename... T>
+template<typename T>
 struct Sequence {
-  std::tuple<T...> algorithms;
+  T algorithms;
 
   Sequence() = default;
-  Sequence(T... param_algorithms) :
-    algorithms(std::tuple<T...>{param_algorithms...}) {}
+  
+  Sequence(T param_algorithms) :
+    algorithms(param_algorithms) {}
 
-  // TODO: For now, let's stick to unsigned i access
-  // template<typename Fn>
-  // auto& item(Fn fn) noexcept {
-  //   return std::get<decltype(generate_handler(fn))>(algorithms);
-  // }
+  template<typename U, unsigned long... Is>
+  void set_helper(
+    U u,
+    std::index_sequence<Is...>
+  ) {
+    // Trick to assign to all elements
+    auto l = {(std::get<Is>(algorithms) = HandlerMaker<Is>::make_handler(std::get<Is>(u)), 0)...};
+  }
 
-  template<unsigned long i>
-  decltype(std::get<i>(algorithms)) item() noexcept {
-    return std::get<i>(algorithms);
+  /**
+   * @brief Populates all elements in the sequence with the
+   *        kernel functions passed.
+   */
+  template<typename... U>
+  void set(U... u) {
+    set_helper(std::make_tuple(u...), std::make_index_sequence<sizeof...(U)>());
+  }
+
+  template<unsigned long I>
+  decltype(std::get<I>(algorithms)) item() noexcept {
+    return std::get<I>(algorithms);
   }
 };
-
-template<typename... T>
-Sequence<T...> generate_sequence(T... t) {
-  return Sequence<T...>{t...};
-}

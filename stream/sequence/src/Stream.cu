@@ -3,19 +3,19 @@
 cudaError_t Stream::operator()(
   const char* host_events,
   const uint* host_event_offsets,
-  size_t host_events_size,
-  size_t host_event_offsets_size,
-  uint number_of_events,
-  uint number_of_repetitions
+  const size_t host_events_size,
+  const size_t host_event_offsets_size,
+  const uint number_of_events,
+  const uint number_of_repetitions
 ) {
-  const bool do_print_memory_manager = false;
+  const bool do_print_memory_manager = true;
 
   // Generate object for populating arguments
-  DynamicArgumentGenerator<decltype(arguments)> argen {arguments, dev_base_pointer};
+  DynamicArgumentGenerator<argument_tuple_t> argen {arguments, dev_base_pointer};
 
   // Sizes and offsets of arguments
-  std::array<size_t, std::tuple_size<decltype(arguments)>::value> argument_sizes;
-  std::array<uint, std::tuple_size<decltype(arguments)>::value> argument_offsets;
+  std::array<size_t, std::tuple_size<argument_tuple_t>::value> argument_sizes;
+  std::array<uint, std::tuple_size<argument_tuple_t>::value> argument_offsets;
 
   for (uint repetition=0; repetition<number_of_repetitions; ++repetition) {
     std::vector<std::pair<std::string, float>> times;
@@ -49,6 +49,9 @@ cudaError_t Stream::operator()(
       argen.generate<arg::dev_cluster_candidates>(argument_offsets)
     );
 
+    // Setup opts for kernel call
+    sequence.item<seq::estimate_input_size>().set_opts(dim3(number_of_events), dim3(32, 26), stream);
+
     if (transmit_host_to_device) {
       cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input>(argument_offsets), host_events, host_events_size, cudaMemcpyHostToDevice, stream));
       cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input_offsets>(argument_offsets), host_event_offsets, host_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
@@ -71,6 +74,10 @@ cudaError_t Stream::operator()(
       VeloTracking::n_modules * number_of_events
     );
 
+    // Setup sequence step opts
+    const auto prefix_sum_blocks = (VeloTracking::n_modules * number_of_events + 511) / 512;
+    sequence.item<seq::prefix_sum_reduce>().set_opts(dim3(prefix_sum_blocks), dim3(256), stream);
+
     // Convert the estimated sizes to module hit start format (argument_offsets)
     sequence.item<seq::prefix_sum_reduce>().invoke();
 
@@ -81,7 +88,7 @@ cudaError_t Stream::operator()(
     sequence.item<seq::prefix_sum_single_block>().set_arguments(
       argen.generate<arg::dev_estimated_input_size>(argument_offsets) + VeloTracking::n_modules * number_of_events,
       argen.generate<arg::dev_cluster_offset>(argument_offsets),
-      prefixSumBlocks
+      prefix_sum_blocks
     );
 
     sequence.item<seq::prefix_sum_single_block>().invoke();
@@ -89,12 +96,16 @@ cudaError_t Stream::operator()(
     // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
 
-    // Setup sequence step
+    // Setup sequence step arguments
     sequence.item<seq::prefix_sum_scan>().set_arguments(
       argen.generate<arg::dev_estimated_input_size>(argument_offsets),
       argen.generate<arg::dev_cluster_offset>(argument_offsets),
       VeloTracking::n_modules * number_of_events
     );
+
+    // Setup sequence step opts
+    const auto prefix_sum_scan_blocks = prefix_sum_blocks==1 ? 1 : (prefix_sum_blocks-1);
+    sequence.item<seq::prefix_sum_scan>().set_opts(dim3(prefix_sum_scan_blocks), dim3(512), stream);
 
     sequence.item<seq::prefix_sum_scan>().invoke();
 
@@ -108,7 +119,7 @@ cudaError_t Stream::operator()(
     // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
 
-    // Setup sequence step
+    // Setup sequence step arguments
     sequence.item<seq::masked_velo_clustering>().set_arguments(
       argen.generate<arg::dev_raw_input>(argument_offsets),
       argen.generate<arg::dev_raw_input_offsets>(argument_offsets),
@@ -119,6 +130,9 @@ cudaError_t Stream::operator()(
       argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
       dev_velo_geometry
     );
+
+    // Setup sequence step opts
+    sequence.item<seq::masked_velo_clustering>().set_opts(dim3(number_of_events), dim3(256), stream);
 
     // Invoke clustering
     sequence.item<seq::masked_velo_clustering>().invoke();
@@ -132,13 +146,16 @@ cudaError_t Stream::operator()(
     // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
 
-    // Setup sequence step
+    // Setup sequence step arguments
     sequence.item<seq::calculate_phi_and_sort>().set_arguments(
       argen.generate<arg::dev_estimated_input_size>(argument_offsets),
       argen.generate<arg::dev_module_cluster_num>(argument_offsets),
       argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
       argen.generate<arg::dev_hit_permutation>(argument_offsets)
     );
+
+    // Setup sequence step opts
+    sequence.item<seq::calculate_phi_and_sort>().set_opts(dim3(number_of_events), dim3(64), stream);
 
     sequence.item<seq::calculate_phi_and_sort>().invoke();
 
@@ -159,7 +176,7 @@ cudaError_t Stream::operator()(
     // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
 
-    // Setup sequence step
+    // Setup sequence step arguments
     sequence.item<seq::search_by_triplet>().set_arguments(
       argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
       argen.generate<arg::dev_estimated_input_size>(argument_offsets),
@@ -175,6 +192,9 @@ cudaError_t Stream::operator()(
       argen.generate<arg::dev_rel_indices>(argument_offsets)
     );
 
+    // Setup sequence step opts
+    sequence.item<seq::search_by_triplet>().set_opts(dim3(number_of_events), dim3(32), stream, 32 * sizeof(float));
+
     sequence.item<seq::search_by_triplet>().invoke();
     
     ////////////////////////
@@ -182,7 +202,6 @@ cudaError_t Stream::operator()(
     ////////////////////////
 
     // Calculate accumulated tracks
-
     // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
 
@@ -213,12 +232,15 @@ cudaError_t Stream::operator()(
     // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
 
-    // Setup sequence step
+    // Setup sequence step arguments
     sequence.item<seq::copy_velo_track_hit_number>().set_arguments(
       argen.generate<arg::dev_tracks>(argument_offsets),
       argen.generate<arg::dev_atomics_storage>(argument_offsets),
       argen.generate<arg::dev_velo_track_hit_number>(argument_offsets)
     );
+
+    // Setup sequence step opts
+    sequence.item<seq::copy_velo_track_hit_number>().set_opts(dim3(number_of_events), dim3(512), stream);
 
     sequence.item<seq::copy_velo_track_hit_number>().invoke();
 
@@ -284,7 +306,7 @@ cudaError_t Stream::operator()(
     // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
 
-    // Setup sequence step
+    // Setup sequence step arguments
     sequence.item<seq::consolidate_tracks>().set_arguments(
       argen.generate<arg::dev_atomics_storage>(argument_offsets),
       argen.generate<arg::dev_tracks>(argument_offsets),
@@ -294,7 +316,10 @@ cudaError_t Stream::operator()(
       argen.generate<arg::dev_module_cluster_num>(argument_offsets),
       argen.generate<arg::dev_velo_track_hits>(argument_offsets),
       argen.generate<arg::dev_velo_states>(argument_offsets)
-    );    
+    );
+
+    // Setup sequence step opts
+    sequence.item<seq::consolidate_tracks>().set_opts(dim3(number_of_events), dim3(32), stream);
 
     sequence.item<seq::consolidate_tracks>().invoke();
 
