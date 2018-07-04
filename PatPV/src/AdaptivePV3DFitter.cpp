@@ -2,9 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include "AdaptivePV3DFitter.h"
-
-
-
+#include "../../PrVeloUT/include/CholeskyDecomp.h"
 
 
 
@@ -102,7 +100,9 @@ bool AdaptivePV3DFitter::fitVertex(const XYZPoint& seedPoint,
 
     // compute the new vertex covariance
     for(int i = 0; i < 6; i++) vtxcov[i] = halfD2Chi2DX2[i] ;
-    
+    ROOT::Math::CholeskyDecomp<float, 3> decomp(vtxcov);
+    if( !decomp ) return false;
+    decomp.Invert(vtxcov);
 
     //big piece missing: inversion of vtxcov!!!!
 
