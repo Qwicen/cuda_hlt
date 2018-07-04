@@ -57,14 +57,7 @@ cudaError_t Stream::operator()(
     }
 
     // Estimate the input size of each module
-    Helper::invoke(
-      sequence.item<seq::estimate_input_size>(),
-      "Estimate input size",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::estimate_input_size>().invoke();
 
     argument_sizes[arg::dev_cluster_offset] = argen.size<arg::dev_cluster_offset>(number_of_events);
 
@@ -79,14 +72,7 @@ cudaError_t Stream::operator()(
     );
 
     // Convert the estimated sizes to module hit start format (argument_offsets)
-    Helper::invoke(
-      sequence.item<seq::prefix_sum_reduce>(),
-      "Prefix sum reduce",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::prefix_sum_reduce>().invoke();
 
     // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
@@ -98,14 +84,7 @@ cudaError_t Stream::operator()(
       prefixSumBlocks
     );
 
-    Helper::invoke(
-      sequence.item<seq::prefix_sum_single_block>(),
-      "Prefix sum single block",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::prefix_sum_single_block>().invoke();
 
     // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
@@ -117,14 +96,7 @@ cudaError_t Stream::operator()(
       VeloTracking::n_modules * number_of_events
     );
 
-    Helper::invoke(
-      sequence.item<seq::prefix_sum_scan>(),
-      "Prefix sum scan",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::prefix_sum_scan>().invoke();
 
     // Fetch the number of hits we require
     cudaCheck(cudaMemcpyAsync(host_total_number_of_velo_clusters, argen.generate<arg::dev_estimated_input_size>(argument_offsets) + number_of_events * VeloTracking::n_modules, sizeof(uint), cudaMemcpyDeviceToHost, stream));
@@ -149,14 +121,7 @@ cudaError_t Stream::operator()(
     );
 
     // Invoke clustering
-    Helper::invoke(
-      sequence.item<seq::masked_velo_clustering>(),
-      "Masked velo clustering",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::masked_velo_clustering>().invoke();
 
     /////////////////////////
     // CalculatePhiAndSort //
@@ -175,14 +140,7 @@ cudaError_t Stream::operator()(
       argen.generate<arg::dev_hit_permutation>(argument_offsets)
     );
 
-    Helper::invoke(
-      sequence.item<seq::calculate_phi_and_sort>(),
-      "Calculate phi and sort",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::calculate_phi_and_sort>().invoke();
 
     /////////////////////
     // SearchByTriplet //
@@ -217,14 +175,7 @@ cudaError_t Stream::operator()(
       argen.generate<arg::dev_rel_indices>(argument_offsets)
     );
 
-    Helper::invoke(
-      sequence.item<seq::search_by_triplet>(),
-      "Search by triplet",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::search_by_triplet>().invoke();
     
     ////////////////////////
     // Consolidate tracks //
@@ -243,14 +194,7 @@ cudaError_t Stream::operator()(
       number_of_events
     );
     
-    Helper::invoke(
-      sequence.item<seq::copy_and_prefix_sum_single_block>(),
-      "Calculate accumulated tracks",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::copy_and_prefix_sum_single_block>().invoke();
 
     // Fetch number of reconstructed tracks
     cudaCheck(cudaMemcpyAsync(host_number_of_reconstructed_velo_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets) + number_of_events * 2, sizeof(uint), cudaMemcpyDeviceToHost, stream));
@@ -276,14 +220,7 @@ cudaError_t Stream::operator()(
       argen.generate<arg::dev_velo_track_hit_number>(argument_offsets)
     );
 
-    Helper::invoke(
-      sequence.item<seq::copy_velo_track_hit_number>(),
-      "Copy Velo track hit number",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::copy_velo_track_hit_number>().invoke();
 
     // Prefix sum in three kernels
     const size_t prefix_sum_auxiliary_array_2_size = (host_number_of_reconstructed_velo_tracks[0] + 511) / 512;
@@ -302,14 +239,7 @@ cudaError_t Stream::operator()(
     sequence.item<seq::prefix_sum_reduce_velo_track_hit_number>().set_opts(dim3(prefix_sum_auxiliary_array_2_size), dim3(256), stream);
 
     // Convert the estimated sizes to module hit start format (argument_offsets)
-    Helper::invoke(
-      sequence.item<seq::prefix_sum_reduce_velo_track_hit_number>(),
-      "Prefix sum reduce: Velo track hit number",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::prefix_sum_reduce_velo_track_hit_number>().invoke();
 
     // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
@@ -321,14 +251,7 @@ cudaError_t Stream::operator()(
       prefix_sum_auxiliary_array_2_size
     );
 
-    Helper::invoke(
-      sequence.item<seq::prefix_sum_single_block_velo_track_hit_number>(),
-      "Prefix sum single block: Velo track hit number",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::prefix_sum_single_block_velo_track_hit_number>().invoke();
 
     // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
@@ -345,14 +268,7 @@ cudaError_t Stream::operator()(
       prefix_sum_auxiliary_array_2_size==1 ? 1 : (prefix_sum_auxiliary_array_2_size-1);
     sequence.item<seq::prefix_sum_scan_velo_track_hit_number>().set_opts(dim3(pss_velo_track_hit_number_opts), dim3(512), stream);
 
-    Helper::invoke(
-      sequence.item<seq::prefix_sum_scan_velo_track_hit_number>(),
-      "Prefix sum scan",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::prefix_sum_scan_velo_track_hit_number>().invoke();
 
     // Fetch total number of hits accumulated
     // with all tracks
@@ -380,14 +296,7 @@ cudaError_t Stream::operator()(
       argen.generate<arg::dev_velo_states>(argument_offsets)
     );    
 
-    Helper::invoke(
-      sequence.item<seq::consolidate_tracks>(),
-      "Consolidate tracks",
-      times,
-      cuda_event_start,
-      cuda_event_stop,
-      print_individual_rates
-    );
+    sequence.item<seq::consolidate_tracks>().invoke();
 
     ////////////////////////////////////////
     // Optional: Simplified Kalman filter //
@@ -421,9 +330,9 @@ cudaError_t Stream::operator()(
       print_timing(number_of_events, times);
     }
 
-    ///////////////////////
-    // Monte Carlo Check //
-    ///////////////////////
+    // ///////////////////////
+    // // Monte Carlo Check //
+    // ///////////////////////
 
     if (mc_check_enabled) {
       if (repetition == 0 && do_check) { // only check efficiencies once

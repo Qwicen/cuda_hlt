@@ -72,11 +72,6 @@ struct DynamicArgumentGenerator {
   size_t size(const size_t s) {
     return s * sizeof(std::get<I>(arguments).type_obj);
   }
-
-  // template<unsigned I>
-  // std::pair<uint, size_t> size_pair(const size_t s) {
-  //   return {I, size<I>(s)};
-  // }
 };
 
 /**

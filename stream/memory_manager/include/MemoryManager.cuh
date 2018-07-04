@@ -43,7 +43,7 @@ struct MemoryManager {
    */
   uint reserve(int tag, size_t requested_size) {
     // Aligned requested size
-    size_t aligned_request = requested_size + guarantee_alignment - 1
+    const size_t aligned_request = requested_size + guarantee_alignment - 1
       - ((requested_size + guarantee_alignment - 1) % guarantee_alignment);
 
     if (logger::ll.verbosityLevel >= 4) {
@@ -81,8 +81,8 @@ struct MemoryManager {
     // Update total memory required
     // Note: This can be done accesing the last element in memory_segments
     //       upon every reserve, and keeping the maximum used memory
-    total_memory_required = std::max(total_memory_required,
-      max_available_memory - memory_segments.back().size);
+    // total_memory_required = std::max(total_memory_required,
+    //   max_available_memory - memory_segments.back().size);
 
     return start;
   }
@@ -97,10 +97,7 @@ struct MemoryManager {
 
     auto it = std::find_if(memory_segments.begin(), memory_segments.end(),
       [&tag] (const MemorySegment& segment) {
-        if (segment.tag == tag) {
-          return true;
-        }
-        return false;
+        return segment.tag == tag;
     });
 
     if (it == memory_segments.end()) {

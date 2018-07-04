@@ -8,8 +8,8 @@ struct BaseDynamicScheduler {
   std::vector<std::vector<uint>> sequence_arguments;
   int current_sequence_step = 0;
   // Type that determines the tags to free and initialize on each step
-  std::vector<std::vector<uint>> tags_to_initialize;
-  std::vector<std::vector<uint>> tags_to_free;
+  std::vector<std::vector<int>> tags_to_initialize;
+  std::vector<std::vector<int>> tags_to_free;
 
   BaseDynamicScheduler() = default;
 
@@ -31,13 +31,13 @@ struct BaseDynamicScheduler {
   void generate_tags() {
     tags_to_initialize.clear();
     tags_to_free.clear();
-    std::vector<uint> tags_initialized;
-    std::vector<uint> tags_freed;
+    std::vector<int> tags_initialized;
+    std::vector<int> tags_freed;
 
     // Iterate over sequence and populate first appeareance of algorithms
     for (int i=0; i<sequence_arguments.size(); ++i) {
-      std::vector<uint> initialize;
-      for (uint argument_number : sequence_arguments[i]) {
+      std::vector<int> initialize;
+      for (int argument_number : sequence_arguments[i]) {
         if (std::find(std::begin(tags_initialized), std::end(tags_initialized), argument_number)
           == std::end(tags_initialized)) {
           initialize.push_back(argument_number);
@@ -49,8 +49,8 @@ struct BaseDynamicScheduler {
 
     // Iterate over sequence in reverse and populate last appeareance of algorithms
     for (auto it=sequence_arguments.rbegin(); it!=sequence_arguments.rend(); ++it) {
-      std::vector<uint> freed;
-      for (uint argument_number : *it) {
+      std::vector<int> freed;
+      for (int argument_number : *it) {
         if (std::find(std::begin(tags_freed), std::end(tags_freed), argument_number)
           == std::end(tags_freed)) {
           freed.push_back(argument_number);
@@ -105,8 +105,8 @@ struct BaseDynamicScheduler {
 
     // Reserve space for all tags
     // that need to be initialized on this step
-    for (uint tag : tags_to_initialize[current_sequence_step]) {
-      argument_offsets[tag] = memory_manager.reserve((int) tag, argument_sizes[tag]);
+    for (auto tag : tags_to_initialize[current_sequence_step]) {
+      argument_offsets[tag] = memory_manager.reserve(tag, argument_sizes[tag]);
     }
 
     // Print memory manager state

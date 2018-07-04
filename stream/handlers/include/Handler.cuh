@@ -17,7 +17,7 @@ auto call_impl(
   const dim3& num_threads,
   const unsigned shared_memory_size,
   cudaStream_t* stream,
-  Tuple&& t,
+  const Tuple& t,
   std::index_sequence<I...>
 ) -> decltype(fn(std::get<I>(t)...)) {
   return fn<<<num_blocks, num_threads, shared_memory_size, *stream>>>(std::get<I>(t)...);
@@ -30,7 +30,7 @@ auto call(
   const dim3& num_threads,
   const unsigned shared_memory_size,
   cudaStream_t* stream,
-  Tuple args
+  const Tuple& args
 ) {
   using indices = typename tuple_indices<Tuple>::type;
   return call_impl(fn, num_blocks, num_threads, shared_memory_size,
@@ -64,7 +64,7 @@ struct Handler {
     arguments = std::tuple<T...>{param_arguments...};
   }
 
-  void operator()() {
+  void invoke() {
     call(function, num_blocks, num_threads,
       shared_memory_size, stream, arguments);
   }
