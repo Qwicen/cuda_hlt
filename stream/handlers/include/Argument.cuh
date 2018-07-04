@@ -1,5 +1,8 @@
 #pragma once
 
+#include <tuple>
+#include "Handler.cuh"
+
 template<int I, typename T>
 struct Argument {
   constexpr static int i = I;

@@ -83,11 +83,3 @@ struct Handler {
     shared_memory_size = param_shared_memory_size;
   }
 };
-
-template<unsigned long I>
-struct HandlerMaker {
-  template<typename R, typename... T>
-  static Handler<I, R, T...> make_handler(R(f)(T...)) {
-    return Handler<I, R, T...>{f};
-  }
-};
