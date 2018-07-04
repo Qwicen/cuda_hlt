@@ -3,13 +3,6 @@
 #include <iostream>
 
 
-struct XYZPoint {
-  double x = 0.;
-  double y = 0.;
-  double z = 0.;
-  XYZPoint(double m_x, double m_y, double m_z) : x(m_x), y(m_y), z(m_z) {}
-
-};
 
 struct State {
   double tx = 0.;
@@ -19,11 +12,16 @@ struct State {
   double z = 0.;
   double errX2 = 1.;
   double errY2 = 1.;
+};
 
+struct XYZPoint {
+  double x = 0.;
+  double y = 0.;
+  double z = 0.;
+  XYZPoint(double m_x, double m_y, double m_z) : x(m_x), y(m_y), z(m_z) {}
 
 };
 
-//typedef std::vector<State> Track;
 class Track {
 public:
   std::vector<State> states;
@@ -39,38 +37,16 @@ public:
 
 };
 
-struct RecVertex {
 
 
-};
-
-class AdaptivePV3DFitter  {
-
-public:
-  // Standard constructor
-  AdaptivePV3DFitter();
-  // Fitting
-  bool fitVertex(const XYZPoint& seedPoint,
-                       const std::vector<Track*>& tracks,
-                       XYZPoint& vtx,
-                       std::vector<Track*>& tracks2remove) const;
-private:
-  size_t m_minTr = 4;
-  int    m_Iterations = 20;
-  int    m_minIter = 5;
-  double m_maxDeltaZ = 0.0005; // unit:: mm
-  double m_minTrackWeight = 0.00000001;
-  double m_TrackErrorScaleFactor = 1.0;
-  double m_maxChi2 = 400.0;
-  double m_trackMaxChi2 = 12.;
-  double m_trackChi ;     // sqrt of trackMaxChi2
-  double m_trackMaxChi2Remove = 25.;
-  double m_maxDeltaZCache = 1.; //unit: mm
 
 
-  // Get Tukey's weight
-  double getTukeyWeight(double trchi2, int iter) const;
-};
+
+
+
+
+
+
 
 struct Vector2 {
   double x;
@@ -174,6 +150,76 @@ struct Vector2 {
   }
 
 
+
+class Vertex {
+  public:
+    Vertex() {};
+    XYZPoint pos{0.,0.,0.};
+    double chi2;
+    int ndof;
+    double cov[6];
+    std::vector<Track*> tracks;
+    std::vector<double> weights;
+    void setChi2AndDoF(double m_chi2, int m_ndof) {
+      chi2 = m_chi2;
+      ndof = m_ndof;
+    }
+    void setPosition(XYZPoint& point) {
+      pos.x = point.x;
+      pos.y = point.y;
+      pos.z = point.z;
+    }
+    void setCovMatrix(double * m_cov) {
+      cov[0] = m_cov[0];
+      cov[1] = m_cov[1];
+      cov[2] = m_cov[2];
+      cov[3] = m_cov[3];
+      cov[4] = m_cov[4];
+      cov[5] = m_cov[5];
+    }
+
+    void clearTracks() {
+      tracks.clear();
+      weights.clear();
+    };
+    void addToTracks(Track* track, double weight) {
+      tracks.push_back(track);
+      weights.push_back(weight);
+    };
+};
+
+
+class AdaptivePV3DFitter  {
+
+public:
+  // Standard constructor
+  AdaptivePV3DFitter();
+  // Fitting
+  bool fitVertex(const XYZPoint& seedPoint,
+                       const std::vector<Track*>& tracks,
+                       Vertex& vtx,
+                       std::vector<Track*>& tracks2remove) const;
+private:
+  size_t m_minTr = 4;
+  int    m_Iterations = 20;
+  int    m_minIter = 5;
+  double m_maxDeltaZ = 0.0005; // unit:: mm
+  double m_minTrackWeight = 0.00000001;
+  double m_TrackErrorScaleFactor = 1.0;
+  double m_maxChi2 = 400.0;
+  double m_trackMaxChi2 = 12.;
+  double m_trackChi ;     // sqrt of trackMaxChi2
+  double m_trackMaxChi2Remove = 25.;
+  double m_maxDeltaZCache = 1.; //unit: mm
+
+
+  // Get Tukey's weight
+  double getTukeyWeight(double trchi2, int iter) const;
+};
+
+
+
+
 //=============================================================================
 // Standard constructor, initializes variables
 //=============================================================================
@@ -190,7 +236,7 @@ AdaptivePV3DFitter::AdaptivePV3DFitter()
 //=============================================================================
 bool AdaptivePV3DFitter::fitVertex(const XYZPoint& seedPoint,
              const std::vector<Track*>& rTracks,
-             XYZPoint& vtx,
+             Vertex& vtx,
              std::vector<Track*>& tracks2remove) const
 {
   tracks2remove.clear();
@@ -287,7 +333,7 @@ bool AdaptivePV3DFitter::fitVertex(const XYZPoint& seedPoint,
     vtxpos.x = ( refpos.x + delta.x ) ;
     vtxpos.y = ( refpos.y + delta.y ) ;
     vtxpos.z = ( refpos.z + delta.z ) ;
-    //vtx.setChi2AndDoF( chi2, 2*ntrin-3 ) ;
+    vtx.setChi2AndDoF( chi2, 2*ntrin-3 ) ;
 
     // loose convergence criteria if close to end of iterations
     if ( 1.*nbIter > 0.8*m_Iterations ) maxdz = 10.*m_maxDeltaZ;
@@ -296,7 +342,7 @@ bool AdaptivePV3DFitter::fitVertex(const XYZPoint& seedPoint,
   } // end iteration loop
   if(!converged) return false;
 
-  /*
+  
   // set position and covariance
   vtx.setPosition( vtxpos ) ;
   vtx.setCovMatrix( vtxcov ) ;
@@ -309,9 +355,9 @@ bool AdaptivePV3DFitter::fitVertex(const XYZPoint& seedPoint,
     if( trk.chi2(vtxpos) < m_trackMaxChi2Remove)
       tracks2remove.push_back( trk.track() );
   }
-  vtx.setTechnique(RecVertex::RecVertexType::Primary);
+  
 
-  */
+  
   return true;
 }
 
