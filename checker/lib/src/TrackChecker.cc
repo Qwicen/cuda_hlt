@@ -219,14 +219,9 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
     const auto mcp = assoc.front().first;
     // add to various categories
     for (auto& report: m_categories) {
-      // if ( report.m_name == "Velo+UT, not long, p > 5 GeV" ) {
-      // 	debug_cout << "BEFORE calling report: hit eff = " << report.m_hiteff << std::endl;
-      // }
       report(track, mcp, weight);
-      // if ( report.m_name == "Velo+UT, not long, p > 5 GeV" ) {
-      // 	debug_cout << "AFTER calling report: hit eff = " << report.m_hiteff << std::endl;
-      // }
-  }
+      
+    }
   }
   // almost done, notify of end of event...
   ++m_nevents;

@@ -207,13 +207,9 @@ class MCAssociator
                 if (m_map.end() == it) continue;
 		++n_matched_total;
                 ++assoc[it->second];
-                //++total;
 	    }
 
-	    //if ( n_matched > m_map.size() )
-	    //	    debug_cout << "ATTENTION: # of matched hits = " << std::dec << n_matched_total << ", # of hits on MCP: " << m_map.size() << std::endl;
-	    
-            // bring the map into a more compact format
+	    // bring the map into a more compact format
             return buildResult(assoc, n_matched_total);
         }
 };

@@ -267,7 +267,7 @@ void readNtupleIntoVelopixEvent(
   for(Long64_t entry = 0; entry< maxEntries ; ++entry){
     fChain->GetTree()->GetEntry(entry);
     if( p<0) continue;  // Hits not associated to an MCP are stored with p < 0
-    //Velo
+   
     // if ( trackType == "Velo" && !hasVelo ) continue;
     // if ( trackType == "VeloUT" && !(hasVelo && hasUT) ) continue;
         
