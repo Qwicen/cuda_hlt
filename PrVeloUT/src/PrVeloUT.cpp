@@ -82,15 +82,18 @@ int PrVeloUT::initialize() {
 // Main execution
 //=============================================================================
 std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
-  const std::vector<VeloUTTracking::TrackVelo>& inputTracks, 
-  const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits) const
+  const std::vector<VeloUTTracking::TrackVelo>& inputTracks,
+  const VeloUTTracking::HitsSoA &hits_layers,
+  const uint32_t n_hits_layers[VeloUTTracking::n_layers]
+  //const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits
+) const
 {
   
   std::vector<VeloUTTracking::TrackUT> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
   std::array<std::array<int,85>,4> posLayers;
-  fillIterators(inputHits, posLayers);
+  fillIterators(hits_layers, n_hits_layers, posLayers);
 
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
@@ -103,7 +106,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     VeloState trState;
     if( !getState(veloTr, trState)) continue;
     for( auto& it : hitsInLayers ) it.clear();
-    if( !getHits(hitsInLayers, posLayers, inputHits, fudgeFactors, trState ) ) continue;
+    if( !getHits(hitsInLayers, posLayers, hits_layers, n_hits_layers, fudgeFactors, trState ) ) continue;
         
     TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
 
@@ -172,7 +175,9 @@ bool PrVeloUT::getState(
 bool PrVeloUT::getHits(
   std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
   const std::array<std::array<int,85>,4>& posLayers,
-  const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits,
+  //const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits,
+  const VeloUTTracking::HitsSoA &hits_layers,
+  const uint32_t n_hits_layers[VeloUTTracking::n_layers],
   const std::vector<float>& fudgeFactors, 
   VeloState& trState ) const 
 {
@@ -203,13 +208,14 @@ bool PrVeloUT::getHits(
       if( iStation == 1 && iLayer == 1 && nLayers < 2 ) return false;
 
       int layer = 2*iStation+iLayer;
-      const std::vector<VeloUTTracking::Hit>& hits = inputHits[layer];
+      int layer_offset = hits_layers.layer_offset[layer];
+      //const std::vector<VeloUTTracking::Hit>& hits = inputHits[layer];
 
       // UNLIKELY is a MACRO for `__builtin_expect` compiler hint of GCC
-      if( hits.empty() ) continue;
+      if( n_hits_layers[layer] == 0 ) continue;
 
-      const float dxDy   = hits.front().dxDy();
-      const float zLayer = hits.front().zAtYEq0();
+      const float dxDy   = hits_layers.dxDy(layer_offset + 0); //hits.front().dxDy();
+      const float zLayer = hits_layers.zAtYEq0(layer_offset + 0); //hits.front().zAtYEq0();
 
       const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
       const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
@@ -232,10 +238,11 @@ bool PrVeloUT::getHits(
       size_t posBeg = posLayers[layer][ indexLow ];
       size_t posEnd = posLayers[layer][ indexHi  ];
 
-      while ( (hits[posBeg].xAtYEq0() < lowerBoundX) && (posBeg != hits.size()) ) ++posBeg;
-      if (posBeg == hits.size()) continue;
+      while ( (hits_layers.xAtYEq0(layer_offset + posBeg) < lowerBoundX) && (posBeg != n_hits_layers[layer] ) )
+	++posBeg;
+      if (posBeg == n_hits_layers[layer]) continue;
 
-      findHits(posBeg, posEnd, hits, trState, xTol*invNormFact, invNormFact, hitsInLayers[layer]);
+      findHits(posBeg, posEnd, hits_layers, n_hits_layers, layer_offset, trState, xTol*invNormFact, invNormFact, hitsInLayers[layer]);
 
       nLayers += int(!hitsInLayers[layer].empty());
     }

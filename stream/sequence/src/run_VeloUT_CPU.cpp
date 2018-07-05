@@ -220,7 +220,7 @@ int run_veloUT_on_CPU (
     }
     //debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0, " << inputHits[1].size() << " hits in layer 1, " << inputHits[2].size() << " hits in layer 2, " << inputHits[3].size() << " in layer 3 to velout" << std::endl;
     
-    std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, inputHits);
+    std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, hits_layers_events[i_event], n_hits_layers_events[i_event]);
     //debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
     
     // store qop in tree

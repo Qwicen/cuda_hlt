@@ -17,8 +17,7 @@
 #include "../include/VeloTypes.h"
 #include "../include/SystemOfUnits.h"
 
-//#include "TTree.h"
-//#include "TFile.h"
+#include "../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
 
 /** @class PrVeloUT PrVeloUT.h
    *
@@ -80,8 +79,11 @@ public:
   // std::vector<std::string> GetFieldMaps();
   virtual int initialize();
   std::vector<VeloUTTracking::TrackUT> operator()(
-    const std::vector<VeloUTTracking::TrackVelo>& inputTracks, 
-    const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits ) const;
+    const std::vector<VeloUTTracking::TrackVelo>& inputTracks,
+    const VeloUTTracking::HitsSoA &hits_layers_events,
+    const uint32_t n_hits_layers_events[VeloUTTracking::n_layers]
+    //const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits
+  ) const;
 
 private:
 
@@ -114,7 +116,9 @@ private:
   bool getHits(
     std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
     const std::array<std::array<int,85>,4>& posLayers,
-    const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits,
+    //const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits,
+    const VeloUTTracking::HitsSoA &hits_layers,
+    const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     const std::vector<float>& fudgeFactors, 
     VeloState& trState ) const; 
 
@@ -139,15 +143,17 @@ private:
   // -- The last element is an "end" iterator, to make sure we never go out of bound
   // ==============================================================================
   inline void fillIterators(
-    const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
+    //const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
+    const VeloUTTracking::HitsSoA &hits_layers,
+    const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     std::array<std::array<int,85>,4>& posLayers) const
   {
     
     for(int iStation = 0; iStation < 2; ++iStation){
       for(int iLayer = 0; iLayer < 2; ++iLayer){
         int layer = 2*iStation + iLayer;
-        const std::vector<VeloUTTracking::Hit>& hits = inputHits[layer];
-
+       	int layer_offset = hits_layers.layer_offset[layer];
+	
         size_t pos = 0;
         posLayers[layer].fill(pos);
 
@@ -155,17 +161,19 @@ private:
         float val = std::copysign(bound*bound/2.0, bound);
 
         // TODO add bounds checking
-        for ( ; pos != hits.size(); ++pos) {
-          while( hits.at(pos).xAtYEq0() > val){
+        for ( ; pos != n_hits_layers[layer]; ++pos) {
+          while( hits_layers.xAtYEq0( layer_offset + pos ) > val){
             posLayers[layer][bound+42] = pos;
             ++bound;
             val = std::copysign(bound*bound/2.0, bound);
           }
         }
 
+	// DvB: why overwrite value from before?
         std::fill(
           posLayers[layer].begin() + 42 + int(bound), 
-          posLayers[layer].end(), hits.size()
+          posLayers[layer].end(),
+	  n_hits_layers[layer]
         );
       }
     }
@@ -177,19 +185,23 @@ private:
   inline void findHits( 
     const size_t posBeg,
     const size_t posEnd,
-    const std::vector<VeloUTTracking::Hit>& inputHits,
+    //const std::vector<VeloUTTracking::Hit>& inputHits,
+    const VeloUTTracking::HitsSoA &hits_layers,
+    const uint32_t n_hits_layers[VeloUTTracking::n_layers],
+    const int layer_offset,
     const VeloState& myState, 
     const float xTolNormFact,
     const float invNormFact,
     std::vector<VeloUTTracking::Hit>& outHits ) const 
   {
-    const auto zInit = inputHits.at(posBeg).zAtYEq0();
+    const auto zInit = hits_layers.zAtYEq0( layer_offset + posBeg ); //inputHits.at(posBeg).zAtYEq0();
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
 
     size_t pos = posBeg;
     while ( 
       pos <= posEnd && 
-      inputHits[pos].isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) ) 
+      //inputHits[pos].isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) )
+      hits_layers.isNotYCompatible( layer_offset + pos, yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) )
     ) { ++pos; }
 
     const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
@@ -197,22 +209,34 @@ private:
 
     for (int i=pos; i<posEnd; ++i) {
 
-      const auto xx = inputHits.at(i).xAt(yApprox);
+      const auto xx = hits_layers.xAt( layer_offset + i, yApprox ); //inputHits.at(i).xAt(yApprox);
       const auto dx = xx - xOnTrackProto;
       
       if( dx < -xTolNormFact ) continue;
       if( dx >  xTolNormFact ) break; 
 
       // -- Now refine the tolerance in Y
-      if( inputHits.at(i).isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
-
-      const auto zz = inputHits.at(i).zAtYEq0();
+      //if( inputHits.at(i).isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
+      if ( hits_layers.isNotYCompatible( layer_offset + i, yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
+      
+      
+      const auto zz = hits_layers.zAtYEq0( layer_offset + i ); //inputHits.at(i).zAtYEq0();
       const auto yy = yyProto +  myState.ty*zz;
-      const auto xx2 = inputHits.at(i).xAt(yy);
+      const auto xx2 = hits_layers.xAt( layer_offset + i, yy ); //inputHits.at(i).xAt(yy);
 
       // TODO avoid the copy - remove the const?
       // XXX this could be a source of error?
-      VeloUTTracking::Hit temp_hit = inputHits.at(i);
+      VeloUTTracking::Hit temp_hit; //inputHits.at(i);
+      temp_hit.m_cos = hits_layers.cos(layer_offset + i);
+      temp_hit.m_yBegin = hits_layers.yBegin(layer_offset + i);
+      temp_hit.m_yEnd = hits_layers.yEnd(layer_offset + i);
+      temp_hit.m_dxDy = hits_layers.dxDy(layer_offset + i);
+      temp_hit.m_zAtYEq0 = hits_layers.zAtYEq0(layer_offset + i);
+      temp_hit.m_xAtYEq0 = hits_layers.xAtYEq0(layer_offset + i);
+      temp_hit.m_weight = hits_layers.weight(layer_offset + i);
+      temp_hit.m_cluster_threshold = hits_layers.highThreshold(layer_offset + i);
+      temp_hit.m_LHCbID = hits_layers.lhcbID(layer_offset + i);
+      temp_hit.m_planeCode = hits_layers.planeCode(layer_offset + i);
       temp_hit.x = xx2;
       temp_hit.z = zz;
 
