@@ -44,6 +44,9 @@ add_subdirectory(stream)
 add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
 
+# Include directory
+include_directories(main/include)
+
 # Files from source directories
 file(GLOB main_sources "main/src/*")
 

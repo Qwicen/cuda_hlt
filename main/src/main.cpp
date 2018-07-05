@@ -21,10 +21,10 @@
 #include <unistd.h>
 #include "tbb/tbb.h"
 #include "cuda_runtime.h"
-#include "../include/CudaCommon.h"
-#include "../include/Logger.h"
-#include "../include/Tools.h"
-#include "../include/Timer.h"
+#include "CudaCommon.h"
+#include "Logger.h"
+#include "Tools.h"
+#include "Timer.h"
 #include "../../stream/sequence/include/StreamWrapper.cuh"
 #include "../../stream/sequence/include/InitializeConstants.cuh"
 

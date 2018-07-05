@@ -13,6 +13,24 @@
 #include "../../gear/include/TupleIndicesChecker.cuh"
 #include "SequenceArgumentEnum.cuh"
 
+constexpr auto sequence_arguments() {
+  return std::make_tuple(
+    estimate_input_size,
+    prefix_sum_reduce,
+    prefix_sum_single_block,
+    prefix_sum_scan,
+    masked_velo_clustering,
+    calculatePhiAndSort,
+    searchByTriplet,
+    copy_and_prefix_sum_single_block,
+    copy_velo_track_hit_number,
+    prefix_sum_reduce,
+    prefix_sum_single_block,
+    prefix_sum_scan,
+    consolidate_tracks
+  );
+}
+
 /**
  * @brief Sequence tuple definition. All algorithms in the sequence
  *        should be added here in the same order as seq_enum_t (checked
@@ -21,21 +39,23 @@
  *        make_handler receives as argument the kernel function itself and
  *        deduces its return type (void) and datatypes.
  */
-using sequence_tuple_t = std::tuple<
-  decltype(HandlerMaker<seq::estimate_input_size>::make_handler(estimate_input_size)),
-  decltype(HandlerMaker<seq::prefix_sum_reduce>::make_handler(prefix_sum_reduce)),
-  decltype(HandlerMaker<seq::prefix_sum_single_block>::make_handler(prefix_sum_single_block)),
-  decltype(HandlerMaker<seq::prefix_sum_scan>::make_handler(prefix_sum_scan)),
-  decltype(HandlerMaker<seq::masked_velo_clustering>::make_handler(masked_velo_clustering)),
-  decltype(HandlerMaker<seq::calculate_phi_and_sort>::make_handler(calculatePhiAndSort)),
-  decltype(HandlerMaker<seq::search_by_triplet>::make_handler(searchByTriplet)),
-  decltype(HandlerMaker<seq::copy_and_prefix_sum_single_block>::make_handler(copy_and_prefix_sum_single_block)),
-  decltype(HandlerMaker<seq::copy_velo_track_hit_number>::make_handler(copy_velo_track_hit_number)),
-  decltype(HandlerMaker<seq::prefix_sum_reduce_velo_track_hit_number>::make_handler(prefix_sum_reduce)),
-  decltype(HandlerMaker<seq::prefix_sum_single_block_velo_track_hit_number>::make_handler(prefix_sum_single_block)),
-  decltype(HandlerMaker<seq::prefix_sum_scan_velo_track_hit_number>::make_handler(prefix_sum_scan)),
-  decltype(HandlerMaker<seq::consolidate_tracks>::make_handler(consolidate_tracks))
->;
+using sequence_tuple_t = decltype(make_sequence_tuple(sequence_arguments());
+
+// std::tuple<
+//   decltype(HandlerMaker<seq::estimate_input_size>::make_handler(estimate_input_size)),
+//   decltype(HandlerMaker<seq::prefix_sum_reduce>::make_handler(prefix_sum_reduce)),
+//   decltype(HandlerMaker<seq::prefix_sum_single_block>::make_handler(prefix_sum_single_block)),
+//   decltype(HandlerMaker<seq::prefix_sum_scan>::make_handler(prefix_sum_scan)),
+//   decltype(HandlerMaker<seq::masked_velo_clustering>::make_handler(masked_velo_clustering)),
+//   decltype(HandlerMaker<seq::calculate_phi_and_sort>::make_handler(calculatePhiAndSort)),
+//   decltype(HandlerMaker<seq::search_by_triplet>::make_handler(searchByTriplet)),
+//   decltype(HandlerMaker<seq::copy_and_prefix_sum_single_block>::make_handler(copy_and_prefix_sum_single_block)),
+//   decltype(HandlerMaker<seq::copy_velo_track_hit_number>::make_handler(copy_velo_track_hit_number)),
+//   decltype(HandlerMaker<seq::prefix_sum_reduce_velo_track_hit_number>::make_handler(prefix_sum_reduce)),
+//   decltype(HandlerMaker<seq::prefix_sum_single_block_velo_track_hit_number>::make_handler(prefix_sum_single_block)),
+//   decltype(HandlerMaker<seq::prefix_sum_scan_velo_track_hit_number>::make_handler(prefix_sum_scan)),
+//   decltype(HandlerMaker<seq::consolidate_tracks>::make_handler(consolidate_tracks))
+// >;
 
 /**
  * Sequence type.

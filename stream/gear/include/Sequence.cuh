@@ -35,3 +35,24 @@ struct Sequence {
     return std::get<I>(algorithms);
   }
 };
+
+template<typename U, unsigned long... Is>
+void make_sequence_tuple_helper(
+  U u,
+  std::index_sequence<Is...>
+) {
+  // Trick to assign to all elements
+  auto l = {(std::get<Is>(algorithms) = HandlerMaker<Is>::make_handler(std::get<Is>(u)), 0)...};
+}
+
+/**
+ * @brief Populates all elements in the sequence with the
+ *        kernel functions passed.
+ */
+template<typename U>
+void make_sequence_tuple(U u) {
+  make_sequence_tuple_helper(
+    u,
+    std::make_index_sequence<std::tuple_size<U>::value>()
+  );
+}
