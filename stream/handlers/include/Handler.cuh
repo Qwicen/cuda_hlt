@@ -4,11 +4,7 @@
 #include <ostream>
 #include <tuple>
 #include <utility>
-
-template<typename Tuple>
-struct tuple_indices {
-  using type = decltype(std::make_index_sequence<std::tuple_size<Tuple>::value>());
-};
+#include "../../gear/include/Common.cuh"
 
 template<class Fn, class Tuple, unsigned long... I>
 auto call_impl(

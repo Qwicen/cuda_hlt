@@ -3,7 +3,7 @@
 #include "HandlerDispatcher.cuh"
 
 // Note: Add here additional custom handlers
-#include "HandlerEstimateInputSize.cuh"
+#include "HandlerCalculatePhiAndSort.cuh"
 
 template<unsigned long I>
 struct HandlerMaker {

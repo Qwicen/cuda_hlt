@@ -66,7 +66,7 @@ cudaError_t Stream::initialize(
 
   // Prepare dynamic scheduler
   scheduler = BaseDynamicScheduler{sequence_names, argument_names,
-    sequence_dependencies, reserve_mb * 1024 * 1024};
+    sequence_dependencies, reserve_mb * 1024 * 1024, do_print_memory_manager};
 
   // Malloc a configurable reserved memory
   cudaCheck(cudaMalloc((void**)&dev_base_pointer, reserve_mb * 1024 * 1024));

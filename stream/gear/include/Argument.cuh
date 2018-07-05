@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tuple>
-#include "../../handlers/include/Handler.cuh"
+#include "Common.cuh"
 
 template<int I, typename T>
 struct Argument {

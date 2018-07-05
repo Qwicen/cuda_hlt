@@ -8,6 +8,7 @@ struct BaseDynamicScheduler {
   std::array<std::string, std::tuple_size<argument_tuple_t>::value> argument_names;
   std::vector<std::vector<uint>> sequence_dependencies;
   int current_sequence_step = 0;
+  bool do_print = false;
   // Type that determines the tags to free and initialize on each step
   std::vector<std::vector<int>> tags_to_initialize;
   std::vector<std::vector<int>> tags_to_free;
@@ -18,10 +19,12 @@ struct BaseDynamicScheduler {
     const std::array<std::string, std::tuple_size<algorithm_tuple_t>::value>& param_sequence_names,
     const std::array<std::string, std::tuple_size<argument_tuple_t>::value>& param_argument_names,
     const std::vector<std::vector<uint>>& param_sequence_dependencies,
-    const size_t reserved_mb)
+    const size_t reserved_mb,
+    const bool param_do_print)
   : sequence_names(param_sequence_names),
     argument_names(param_argument_names),
-    sequence_dependencies(param_sequence_dependencies) {
+    sequence_dependencies(param_sequence_dependencies),
+    do_print(param_do_print) {
     // Generate the helper arguments vector
     generate_tags();
     // Set max mb to memory_manager
@@ -91,12 +94,10 @@ struct BaseDynamicScheduler {
    *        It performs a check on the current sequence item and 
    *        increments the sequence step.
    */
-  template<unsigned long N>
   void setup_next(
-    const std::array<size_t, N>& argument_sizes,
-    std::array<uint, N>& argument_offsets,
-    const int check_sequence_step = -1,
-    const bool do_print = false
+    const std::array<size_t, std::tuple_size<argument_tuple_t>::value>& argument_sizes,
+    std::array<uint, std::tuple_size<argument_tuple_t>::value>& argument_offsets,
+    const int check_sequence_step = -1
   ) {
     assert(check_sequence_step==-1 || (current_sequence_step == check_sequence_step));
 
