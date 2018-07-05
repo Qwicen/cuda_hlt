@@ -15,7 +15,7 @@ cudaError_t Stream::initialize(
   const bool param_transmit_device_to_host,
   const bool param_do_check,
   const bool param_do_simplified_kalman_filter,
-  const bool param_print_individual_rates,
+  const bool param_do_print_memory_manager,
   const std::string& param_folder_name_MC,
   const size_t reserve_mb,
   const uint param_stream_number
@@ -32,7 +32,7 @@ cudaError_t Stream::initialize(
   transmit_device_to_host = param_transmit_device_to_host;
   do_check = param_do_check;
   do_simplified_kalman_filter = param_do_simplified_kalman_filter;
-  print_individual_rates = param_print_individual_rates;
+  do_print_memory_manager = param_do_print_memory_manager;
   folder_name_MC = param_folder_name_MC;
 
   // Special case
@@ -79,87 +79,7 @@ cudaError_t Stream::initialize(
   sequence.item<seq::prefix_sum_single_block_velo_track_hit_number>().set_opts(dim3(1), dim3(1024), stream);
 
   // Set dependencies for each algorithm
-  std::vector<std::vector<uint>> sequence_dependencies (std::tuple_size<argument_tuple_t>::value);
-
-  sequence_dependencies[seq::estimate_input_size] = {
-    arg::dev_raw_input,
-    arg::dev_raw_input_offsets,
-    arg::dev_estimated_input_size,
-    arg::dev_module_cluster_num,
-    arg::dev_module_candidate_num,
-    arg::dev_cluster_candidates
-  };
-  sequence_dependencies[seq::prefix_sum_reduce] = {
-    arg::dev_estimated_input_size,
-    arg::dev_cluster_offset
-  };
-  sequence_dependencies[seq::prefix_sum_single_block] = {
-    arg::dev_estimated_input_size,
-    arg::dev_cluster_offset
-  };
-  sequence_dependencies[seq::prefix_sum_scan] = {
-    arg::dev_estimated_input_size,
-    arg::dev_cluster_offset
-  };
-  sequence_dependencies[seq::masked_velo_clustering] = {
-    arg::dev_raw_input,
-    arg::dev_raw_input_offsets,
-    arg::dev_estimated_input_size,
-    arg::dev_module_cluster_num,
-    arg::dev_module_candidate_num,
-    arg::dev_cluster_candidates,
-    arg::dev_velo_cluster_container
-  };
-  sequence_dependencies[seq::calculate_phi_and_sort] = {
-    arg::dev_estimated_input_size,
-    arg::dev_module_cluster_num,
-    arg::dev_velo_cluster_container,
-    arg::dev_hit_permutation
-  };
-  sequence_dependencies[seq::search_by_triplet] = {
-    arg::dev_velo_cluster_container,
-    arg::dev_estimated_input_size,
-    arg::dev_module_cluster_num,
-    arg::dev_tracks,
-    arg::dev_tracklets,
-    arg::dev_tracks_to_follow,
-    arg::dev_weak_tracks,
-    arg::dev_hit_used,
-    arg::dev_atomics_storage,
-    arg::dev_h0_candidates,
-    arg::dev_h2_candidates,
-    arg::dev_rel_indices
-  };
-  sequence_dependencies[seq::copy_and_prefix_sum_single_block] = {
-    arg::dev_atomics_storage
-  };
-  sequence_dependencies[seq::copy_velo_track_hit_number] = {
-    arg::dev_tracks,
-    arg::dev_atomics_storage,
-    arg::dev_velo_track_hit_number
-  };
-  sequence_dependencies[seq::prefix_sum_reduce_velo_track_hit_number] = {
-    arg::dev_velo_track_hit_number,
-    arg::dev_prefix_sum_auxiliary_array_2
-  };
-  sequence_dependencies[seq::prefix_sum_single_block_velo_track_hit_number] = {
-    arg::dev_velo_track_hit_number,
-    arg::dev_prefix_sum_auxiliary_array_2
-  };
-  sequence_dependencies[seq::prefix_sum_scan_velo_track_hit_number] = {
-    arg::dev_velo_track_hit_number,
-    arg::dev_prefix_sum_auxiliary_array_2
-  };
-  sequence_dependencies[seq::consolidate_tracks] = {
-    arg::dev_atomics_storage,
-    arg::dev_tracks,
-    arg::dev_velo_track_hit_number,
-    arg::dev_velo_cluster_container,
-    arg::dev_estimated_input_size,
-    arg::dev_module_cluster_num,
-    arg::dev_velo_track_hits,
-    arg::dev_velo_states
-  };
+  std::vector<std::vector<uint>> sequence_dependencies = get_sequence_dependencies();
 
   // Prepare dynamic scheduler
   scheduler = BaseDynamicScheduler{sequence_names, argument_names,

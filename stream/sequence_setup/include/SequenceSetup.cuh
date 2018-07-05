@@ -7,10 +7,10 @@
 #include "../../../cuda/velo/prefix_sum/include/PrefixSum.cuh"
 #include "../../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
 #include "../../../cuda/velo/simplified_kalman_filter/include/VeloKalmanFilter.cuh"
-#include "../../handlers/include/Argument.cuh"
-#include "../../handlers/include/Sequence.cuh"
-#include "../../handlers/include/TupleIndicesChecker.cuh"
 #include "../../handlers/include/HandlerMaker.cuh"
+#include "../../gear/include/Argument.cuh"
+#include "../../gear/include/Sequence.cuh"
+#include "../../gear/include/TupleIndicesChecker.cuh"
 #include "SequenceArgumentEnum.cuh"
 
 /**
@@ -81,6 +81,19 @@ std::array<std::string, std::tuple_size<sequence_tuple_t>::value> get_sequence_n
  * @brief Returns an array with names for every argument.
  */
 std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_names();
+
+/**
+ * @brief Retrieves the sequence dependencies.
+ * @details The sequence dependencies specifies for each algorithm
+ *          in the sequence the datatypes it depends on from the arguments.
+ *          
+ *          Note that this vector of arguments may vary from the actual
+ *          arguments in the kernel invocation: ie. some cases:
+ *          * if something is passed by value
+ *          * if a pointer is set to point somewhere different from the beginning
+ *          * if an argument is repeated in the argument list.
+ */
+std::vector<std::vector<uint>> get_sequence_dependencies();
 
 /**
  * @brief Checks the sequence tuple is defined sequentially and

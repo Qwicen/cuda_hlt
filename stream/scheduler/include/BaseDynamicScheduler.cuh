@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MemoryManager.cuh"
+#include "../../memory_manager/include/MemoryManager.cuh"
 
 struct BaseDynamicScheduler {
   MemoryManager memory_manager;

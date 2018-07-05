@@ -1,5 +1,5 @@
-#include "../include/StreamWrapper.cuh"
-#include "../include/Stream.cuh"
+#include "StreamWrapper.cuh"
+#include "Stream.cuh"
 #include "../../../main/include/Logger.h"
 #include "../../../main/include/Common.h"
 
@@ -58,7 +58,7 @@ void StreamWrapper::run_stream(
   const uint number_of_repetitions
 ) {
   auto& s = *(streams[i]);
-  s(
+  s.run_sequence(
     host_velopix_events_pinned,
     host_velopix_event_offsets_pinned,
     velopix_events_size,

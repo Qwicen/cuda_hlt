@@ -1,6 +1,6 @@
-#include "../include/Stream.cuh"
+#include "Stream.cuh"
 
-cudaError_t Stream::operator()(
+cudaError_t Stream::run_sequence(
   const char* host_events,
   const uint* host_event_offsets,
   const size_t host_events_size,
@@ -8,8 +8,6 @@ cudaError_t Stream::operator()(
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
-  const bool do_print_memory_manager = true;
-
   // Generate object for populating arguments
   DynamicArgumentGenerator<argument_tuple_t> argen {arguments, dev_base_pointer};
 
@@ -39,7 +37,8 @@ cudaError_t Stream::operator()(
     // Reserve memory for this step datatypes
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
 
-    // Setup arguments for kernel call
+    // Setup  opts and arguments for kernel call
+    sequence.item<seq::estimate_input_size>().set_opts(dim3(number_of_events), dim3(32, 26), stream);
     sequence.item<seq::estimate_input_size>().set_arguments(
       argen.generate<arg::dev_raw_input>(argument_offsets),
       argen.generate<arg::dev_raw_input_offsets>(argument_offsets),
@@ -48,9 +47,6 @@ cudaError_t Stream::operator()(
       argen.generate<arg::dev_module_candidate_num>(argument_offsets),
       argen.generate<arg::dev_cluster_candidates>(argument_offsets)
     );
-
-    // Setup opts for kernel call
-    sequence.item<seq::estimate_input_size>().set_opts(dim3(number_of_events), dim3(32, 26), stream);
 
     if (transmit_host_to_device) {
       cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input>(argument_offsets), host_events, host_events_size, cudaMemcpyHostToDevice, stream));
@@ -349,11 +345,11 @@ cudaError_t Stream::operator()(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    if (print_individual_rates) {
-      t_total.stop();
-      times.emplace_back("total", t_total.get());
-      print_timing(number_of_events, times);
-    }
+    // if (print_individual_rates) {
+    //   t_total.stop();
+    //   times.emplace_back("total", t_total.get());
+    //   print_timing(number_of_events, times);
+    // }
 
     // ///////////////////////
     // // Monte Carlo Check //

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "HandlerMaker.cuh"
+#include "../../handlers/include/HandlerMaker.cuh"
 #include <tuple>
 
 template<typename T>

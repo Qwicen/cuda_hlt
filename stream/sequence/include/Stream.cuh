@@ -11,8 +11,8 @@
 #include "../../../main/include/Logger.h"
 #include "../../../main/include/Timer.h"
 #include "../../../main/include/Tools.h"
-#include "../../memory_manager/include/BaseDynamicScheduler.cuh"
-#include "SequenceSetup.cuh"
+#include "../../scheduler/include/BaseDynamicScheduler.cuh"
+#include "../../sequence_setup/include/SequenceSetup.cuh"
 
 class Timer;
 
@@ -37,7 +37,7 @@ struct Stream {
   bool transmit_device_to_host;
   bool do_check;
   bool do_simplified_kalman_filter;
-  bool print_individual_rates;
+  bool do_print_memory_manager;
 
   // Pinned host datatypes
   int* host_number_of_tracks;
@@ -73,7 +73,7 @@ struct Stream {
     const uint param_stream_number
   );
   
-  cudaError_t operator()(
+  cudaError_t run_sequence(
     const char* host_events,
     const uint* host_event_offsets,
     const size_t host_events_size,

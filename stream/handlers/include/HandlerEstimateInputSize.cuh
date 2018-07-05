@@ -1,7 +1,7 @@
 #pragma once
 
 #include "HandlerDispatcher.cuh"
-#include "../../sequence/include/SequenceArgumentEnum.cuh"
+#include "../../sequence_setup/include/SequenceArgumentEnum.cuh"
 #include <iostream>
 
 template<typename R, typename... T>
