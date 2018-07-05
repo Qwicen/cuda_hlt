@@ -12,22 +12,12 @@ struct Sequence {
   Sequence(T param_algorithms) :
     algorithms(param_algorithms) {}
 
-  template<typename U, unsigned long... Is>
-  void set_helper(
-    U u,
-    std::index_sequence<Is...>
-  ) {
-    // Trick to assign to all elements
-    auto l = {(std::get<Is>(algorithms) = HandlerMaker<Is>::make_handler(std::get<Is>(u)), 0)...};
-  }
-
   /**
-   * @brief Populates all elements in the sequence with the
-   *        kernel functions passed.
+   * @brief Populates the tuple of algorithms.
    */
-  template<typename... U>
-  void set(U... u) {
-    set_helper(std::make_tuple(u...), std::make_index_sequence<sizeof...(U)>());
+  template<typename U>
+  void set(U u) {
+    algorithms = u;
   }
 
   template<unsigned long I>
@@ -37,12 +27,12 @@ struct Sequence {
 };
 
 template<typename U, unsigned long... Is>
-void make_sequence_tuple_helper(
+constexpr auto make_algorithm_tuple_helper(
   U u,
   std::index_sequence<Is...>
 ) {
   // Trick to assign to all elements
-  auto l = {(std::get<Is>(algorithms) = HandlerMaker<Is>::make_handler(std::get<Is>(u)), 0)...};
+  return std::make_tuple(HandlerMaker<Is>::make_handler(std::get<Is>(u))...);
 }
 
 /**
@@ -50,8 +40,8 @@ void make_sequence_tuple_helper(
  *        kernel functions passed.
  */
 template<typename U>
-void make_sequence_tuple(U u) {
-  make_sequence_tuple_helper(
+constexpr auto make_algorithm_tuple(U u) {
+  return make_algorithm_tuple_helper(
     u,
     std::make_index_sequence<std::tuple_size<U>::value>()
   );

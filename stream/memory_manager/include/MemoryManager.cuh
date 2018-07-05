@@ -143,7 +143,7 @@ struct MemoryManager {
    * @brief Prints the current state of the memory segments.
    */
   void print(
-    const std::array<std::string, std::tuple_size<sequence_tuple_t>::value>& sequence_names = {},
+    const std::array<std::string, std::tuple_size<algorithm_tuple_t>::value>& sequence_names = {},
     const std::array<std::string, std::tuple_size<argument_tuple_t>::value>& argument_names = {},
     const int step = -1
   ) {

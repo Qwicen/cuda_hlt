@@ -16,8 +16,6 @@ cudaError_t Stream::run_sequence(
   std::array<uint, std::tuple_size<argument_tuple_t>::value> argument_offsets;
 
   for (uint repetition=0; repetition<number_of_repetitions; ++repetition) {
-    std::vector<std::pair<std::string, float>> times;
-    Timer t_total;
     uint sequence_step = 0;
 
     // Reset scheduler
@@ -27,14 +25,13 @@ cudaError_t Stream::run_sequence(
     // Clustering //
     ////////////////
 
+    // Set arguments and reserve memory
     argument_sizes[arg::dev_raw_input] = argen.size<arg::dev_raw_input>(host_events_size);
     argument_sizes[arg::dev_raw_input_offsets] = argen.size<arg::dev_raw_input_offsets>(host_event_offsets_size);
     argument_sizes[arg::dev_estimated_input_size] = argen.size<arg::dev_estimated_input_size>(number_of_events * VeloTracking::n_modules + 1);
     argument_sizes[arg::dev_module_cluster_num] = argen.size<arg::dev_module_cluster_num>(number_of_events * VeloTracking::n_modules);
     argument_sizes[arg::dev_module_candidate_num] = argen.size<arg::dev_raw_input_offsets>(number_of_events);
     argument_sizes[arg::dev_cluster_candidates] = argen.size<arg::dev_cluster_candidates>(number_of_events * VeloClustering::max_candidates_event);
-
-    // Reserve memory for this step datatypes
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
 
     // Setup  opts and arguments for kernel call
@@ -58,9 +55,8 @@ cudaError_t Stream::run_sequence(
     // Estimate the input size of each module
     sequence.item<seq::estimate_input_size>().invoke();
 
+    // Set arguments and reserve memory
     argument_sizes[arg::dev_cluster_offset] = argen.size<arg::dev_cluster_offset>(number_of_events);
-
-    // Reserve memory
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++, do_print_memory_manager);
 
     // Setup sequence step
@@ -345,15 +341,9 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    // if (print_individual_rates) {
-    //   t_total.stop();
-    //   times.emplace_back("total", t_total.get());
-    //   print_timing(number_of_events, times);
-    // }
-
-    // ///////////////////////
-    // // Monte Carlo Check //
-    // ///////////////////////
+    ///////////////////////
+    // Monte Carlo Check //
+    ///////////////////////
 
     if (mc_check_enabled) {
       if (repetition == 0 && do_check) { // only check efficiencies once
@@ -377,26 +367,4 @@ cudaError_t Stream::run_sequence(
     }
   }
   return cudaSuccess;
-}
-
-void Stream::print_timing(
-  const unsigned int number_of_events,
-  const std::vector<std::pair<std::string, float>>& times
-) {
-  const auto total_time = times[times.size() - 1];
-  std::string partial_times = "{\n";
-  for (size_t i=0; i<times.size(); ++i) {
-    if (i != times.size()-1) {
-      partial_times += " " + times[i].first + "\t" + std::to_string(times[i].second) + "\t("
-        + std::to_string(100 * (times[i].second / total_time.second)) + " %)\n";
-    } else {
-      partial_times += " " + times[i].first + "\t" + std::to_string(times[i].second) + "\t("
-        + std::to_string(100 * (times[i].second / total_time.second)) + " %)\n}";
-    }
-  }
-
-  info_cout << "stream #" << stream_number << ": "
-    << number_of_events / total_time.second << " events/s"
-    << ", partial timers (s): " << partial_times
-    << std::endl;
 }

@@ -13,7 +13,12 @@
 #include "../../gear/include/TupleIndicesChecker.cuh"
 #include "SequenceArgumentEnum.cuh"
 
-constexpr auto sequence_arguments() {
+/**
+ * @brief Algorithm tuple definition. All algorithms in the sequence
+ *        should be added here in the same order as seq_enum_t
+ *        (this condition is checked at compile time).
+ */
+constexpr auto sequence_algorithms() {
   return std::make_tuple(
     estimate_input_size,
     prefix_sum_reduce,
@@ -32,35 +37,17 @@ constexpr auto sequence_arguments() {
 }
 
 /**
- * @brief Sequence tuple definition. All algorithms in the sequence
- *        should be added here in the same order as seq_enum_t (checked
- *        at compile time).
- *        
- *        make_handler receives as argument the kernel function itself and
+ * @brief Definition of the algorithm tuple type.
+ *        make_algorithm_tuple receives as argument a tuple
+ *        with the kernel functions and
  *        deduces its return type (void) and datatypes.
  */
-using sequence_tuple_t = decltype(make_sequence_tuple(sequence_arguments());
-
-// std::tuple<
-//   decltype(HandlerMaker<seq::estimate_input_size>::make_handler(estimate_input_size)),
-//   decltype(HandlerMaker<seq::prefix_sum_reduce>::make_handler(prefix_sum_reduce)),
-//   decltype(HandlerMaker<seq::prefix_sum_single_block>::make_handler(prefix_sum_single_block)),
-//   decltype(HandlerMaker<seq::prefix_sum_scan>::make_handler(prefix_sum_scan)),
-//   decltype(HandlerMaker<seq::masked_velo_clustering>::make_handler(masked_velo_clustering)),
-//   decltype(HandlerMaker<seq::calculate_phi_and_sort>::make_handler(calculatePhiAndSort)),
-//   decltype(HandlerMaker<seq::search_by_triplet>::make_handler(searchByTriplet)),
-//   decltype(HandlerMaker<seq::copy_and_prefix_sum_single_block>::make_handler(copy_and_prefix_sum_single_block)),
-//   decltype(HandlerMaker<seq::copy_velo_track_hit_number>::make_handler(copy_velo_track_hit_number)),
-//   decltype(HandlerMaker<seq::prefix_sum_reduce_velo_track_hit_number>::make_handler(prefix_sum_reduce)),
-//   decltype(HandlerMaker<seq::prefix_sum_single_block_velo_track_hit_number>::make_handler(prefix_sum_single_block)),
-//   decltype(HandlerMaker<seq::prefix_sum_scan_velo_track_hit_number>::make_handler(prefix_sum_scan)),
-//   decltype(HandlerMaker<seq::consolidate_tracks>::make_handler(consolidate_tracks))
-// >;
+using algorithm_tuple_t = decltype(make_algorithm_tuple(sequence_algorithms()));
 
 /**
  * Sequence type.
  */
-using sequence_t = Sequence<sequence_tuple_t>;
+using sequence_t = Sequence<algorithm_tuple_t>;
 
 /**
  * @brief Argument tuple definition. All arguments and their types should
@@ -95,7 +82,7 @@ using argument_tuple_t = std::tuple<
 /**
  * @brief Returns an array with names for every element in the sequence.
  */
-std::array<std::string, std::tuple_size<sequence_tuple_t>::value> get_sequence_names();
+std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_names();
 
 /**
  * @brief Returns an array with names for every argument.
@@ -119,7 +106,7 @@ std::vector<std::vector<uint>> get_sequence_dependencies();
  * @brief Checks the sequence tuple is defined sequentially and
  *        starting at 0.
  */
-static_assert(check_tuple_indices<sequence_tuple_t>(),
+static_assert(check_tuple_indices<algorithm_tuple_t>(),
   "Sequence tuple indices are not sequential starting at zero");
 
 /**

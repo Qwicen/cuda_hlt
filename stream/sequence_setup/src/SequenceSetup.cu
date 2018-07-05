@@ -1,7 +1,7 @@
 #include "SequenceSetup.cuh" 
 
-std::array<std::string, std::tuple_size<sequence_tuple_t>::value> get_sequence_names() {
-  std::array<std::string, std::tuple_size<sequence_tuple_t>::value> a;
+std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_names() {
+  std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> a;
   a[seq::estimate_input_size] = "Estimate input size";
   a[seq::prefix_sum_reduce] = "Prefix sum reduce";
   a[seq::prefix_sum_single_block] = "Prefix sum single block";

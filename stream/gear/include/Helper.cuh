@@ -2,6 +2,9 @@
 
 #include "cuda_runtime.h"
 
+/**
+ * @brief Deprecated helper function to invoke and run timer.
+ */
 struct Helper {
   /**
    * @brief Invokes an object with operator()

@@ -22,7 +22,7 @@ struct Stream {
   argument_tuple_t arguments;
 
   // Sequence and argument names
-  std::array<std::string, std::tuple_size<sequence_tuple_t>::value> sequence_names;
+  std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> sequence_names;
   std::array<std::string, std::tuple_size<argument_tuple_t>::value> argument_names;
 
   // Stream datatypes

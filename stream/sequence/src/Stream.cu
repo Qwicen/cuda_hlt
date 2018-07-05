@@ -1,10 +1,7 @@
 #include "Stream.cuh"
 
 /**
- * @brief Sets up statically the chain that will be
- *        executed later.
- *        
- * @details 
+ * @brief Sets up the chain that will be executed later.
  */
 cudaError_t Stream::initialize(
   const std::vector<char>& raw_events,
@@ -50,21 +47,7 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_hits_in_velo_tracks, sizeof(uint)));
 
   // Define sequence of algorithms to execute
-  sequence.set(
-    estimate_input_size,
-    prefix_sum_reduce,
-    prefix_sum_single_block,
-    prefix_sum_scan,
-    masked_velo_clustering,
-    calculatePhiAndSort,
-    searchByTriplet,
-    copy_and_prefix_sum_single_block,
-    copy_velo_track_hit_number,
-    prefix_sum_reduce,
-    prefix_sum_single_block,
-    prefix_sum_scan,
-    consolidate_tracks
-  );
+  sequence.set(sequence_algorithms());
 
   // Get sequence and argument names
   sequence_names = get_sequence_names();
@@ -89,4 +72,26 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_base_pointer, reserve_mb * 1024 * 1024));
 
   return cudaSuccess;
+}
+
+void Stream::print_timing(
+  const unsigned int number_of_events,
+  const std::vector<std::pair<std::string, float>>& times
+) {
+  const auto total_time = times[times.size() - 1];
+  std::string partial_times = "{\n";
+  for (size_t i=0; i<times.size(); ++i) {
+    if (i != times.size()-1) {
+      partial_times += " " + times[i].first + "\t" + std::to_string(times[i].second) + "\t("
+        + std::to_string(100 * (times[i].second / total_time.second)) + " %)\n";
+    } else {
+      partial_times += " " + times[i].first + "\t" + std::to_string(times[i].second) + "\t("
+        + std::to_string(100 * (times[i].second / total_time.second)) + " %)\n}";
+    }
+  }
+
+  info_cout << "stream #" << stream_number << ": "
+    << number_of_events / total_time.second << " events/s"
+    << ", partial timers (s): " << partial_times
+    << std::endl;
 }

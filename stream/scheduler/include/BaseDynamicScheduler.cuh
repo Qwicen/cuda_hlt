@@ -4,7 +4,7 @@
 
 struct BaseDynamicScheduler {
   MemoryManager memory_manager;
-  std::array<std::string, std::tuple_size<sequence_tuple_t>::value> sequence_names;
+  std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> sequence_names;
   std::array<std::string, std::tuple_size<argument_tuple_t>::value> argument_names;
   std::vector<std::vector<uint>> sequence_dependencies;
   int current_sequence_step = 0;
@@ -15,7 +15,7 @@ struct BaseDynamicScheduler {
   BaseDynamicScheduler() = default;
 
   BaseDynamicScheduler(
-    const std::array<std::string, std::tuple_size<sequence_tuple_t>::value>& param_sequence_names,
+    const std::array<std::string, std::tuple_size<algorithm_tuple_t>::value>& param_sequence_names,
     const std::array<std::string, std::tuple_size<argument_tuple_t>::value>& param_argument_names,
     const std::vector<std::vector<uint>>& param_sequence_dependencies,
     const size_t reserved_mb)
