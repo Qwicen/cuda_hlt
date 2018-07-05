@@ -1,16 +1,21 @@
 #define Test_Selector_cxx
 
-#include "Test_Selector.hpp"
+
 #include <TH2.h>
 #include <TStyle.h>
 #include <iostream>
-#include "MCParticle.h"
-#include "VPHit.h"
-#include "FTHit.h"
+
+
 #include <assert.h>
-#include "kalman.h"
+
 #include <TTree.h>
 #include <TFile.h>
+
+#include "../include/Test_Selector.hpp"
+#include "../include/MCParticle.h"
+#include "../include/kalman.h"
+#include "../include/VPHit.h"
+#include "../include/FTHit.h"
 
 
 
@@ -128,6 +133,7 @@ void Test_Selector::GetUTVeloTree(int evtId) {
       seed_state.z  = state.z;
       seed_state.errX2 = state.covXX;
       seed_state.errY2 = state.covYY;
+      cout<<"cov: " << seed_state.errX2 << " " << seed_state.errY2 << endl;
       seed_states.push_back(seed_state);
       Track * seed_track = new Track();
       std::vector<State> just_state;
@@ -140,14 +146,14 @@ void Test_Selector::GetUTVeloTree(int evtId) {
 
   PVSeedTool seedtool;
   XYZPoint beamspot{0.,0.,0.};
-  auto seeds = seedtool.getSeeds(seed_tracks, beamspot);
-  for(auto seed : seeds) cout << seed.x << " " << seed.y << " " << seed.z<< endl;
+  //auto seeds = seedtool.getSeeds(seed_tracks, beamspot);
+  //for(auto seed : seeds) cout << seed.x << " " << seed.y << " " << seed.z<< endl;
 
   AdaptivePV3DFitter fitter;
   std::vector<Track*> tracks_to_remove;
   Vertex vtx;
-  for(auto seed : seeds) {cout << seed_tracks.size() << endl;
-  cout <<fitter.fitVertex(seed, seed_tracks, vtx, tracks_to_remove) << endl;}
+  //for(auto seed : seeds) {cout << seed_tracks.size() << endl;
+  //cout <<fitter.fitVertex(seed, seed_tracks, vtx, tracks_to_remove) << endl;}
   
 
   //return states;

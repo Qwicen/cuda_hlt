@@ -59,6 +59,7 @@ target_link_libraries(cu_hlt tbb Velo VeloUT Stream x86Clustering TrackChecking 
 
 
 
+file(GLOB PV_sources "PatPV/src/*cpp")
 find_package(ROOT)
-add_executable(looper PatPV/src/RunTracking.cxx PatPV/src/Test_Selector.cpp PatPV/src/PVSeedTool.cpp PatPV/src/AdaptivePV3DFitter.cpp)
+add_executable(looper ${PV_sources})
 target_link_libraries(looper ${ROOT_LIBRARIES})

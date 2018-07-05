@@ -6,7 +6,7 @@
 #include <algorithm>
 
 // local
-#include "PVSeedTool.h"
+#include "../include/PVSeedTool.h"
 
 
 bool  vtxcomp( vtxCluster *first, vtxCluster *second ) {

@@ -1,6 +1,7 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
+#include <vector>
 
 
 // auxiliary class for searching of clusters of tracks
@@ -37,7 +38,7 @@ struct State {
   const double dz = new_z - z ;
   const double dz2 = dz*dz ;
   x += dz * tx ;
-  y += dz * y ;
+  y += dz * ty ;
   z = new_z;
 
 
@@ -60,6 +61,57 @@ public:
     return XYZPoint(states.at(0).x, states.at(0).y, states.at(0).z);
   }
 
+};
+
+
+struct Vector2 {
+  double x;
+  double y;
+
+  Vector2(double m_x, double m_y) : x(m_x), y(m_y){}
+};
+
+
+
+ 
+
+
+
+class Vertex {
+  public:
+    Vertex() {};
+    XYZPoint pos{0.,0.,0.};
+    double chi2;
+    int ndof;
+    double cov[6];
+    std::vector<Track*> tracks;
+    std::vector<double> weights;
+    void setChi2AndDoF(double m_chi2, int m_ndof) {
+      chi2 = m_chi2;
+      ndof = m_ndof;
+    }
+    void setPosition(XYZPoint& point) {
+      pos.x = point.x;
+      pos.y = point.y;
+      pos.z = point.z;
+    }
+    void setCovMatrix(double * m_cov) {
+      cov[0] = m_cov[0];
+      cov[1] = m_cov[1];
+      cov[2] = m_cov[2];
+      cov[3] = m_cov[3];
+      cov[4] = m_cov[4];
+      cov[5] = m_cov[5];
+    }
+
+    void clearTracks() {
+      tracks.clear();
+      weights.clear();
+    };
+    void addToTracks(Track* track, double weight) {
+      tracks.push_back(track);
+      weights.push_back(weight);
+    };
 };
 
 
