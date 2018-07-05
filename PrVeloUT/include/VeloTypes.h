@@ -10,7 +10,6 @@ namespace VeloUTTracking {
   struct Hit {
     
     float x;
-    float y;
     float z;
     
     float m_cos;     
@@ -24,8 +23,8 @@ namespace VeloUTTracking {
     int m_planeCode;
     
     bool  m_cluster_threshold;
-    int   m_cluster_station;
-    int   m_cluster_layer;
+    //    int   m_cluster_station;
+    //    int   m_cluster_layer;
 
     Hit(){}
     
