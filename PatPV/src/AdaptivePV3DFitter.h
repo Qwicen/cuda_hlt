@@ -1,4 +1,9 @@
 
+#ifndef ADAPTIVE_H
+#define ADAPTIVE_H
+
+#include "definitions.h"
+/*
 struct State {
   double tx = 0.;
   double ty = 0.;
@@ -34,6 +39,8 @@ public:
 
 
 
+
+*/
 
 
 
@@ -75,69 +82,7 @@ struct Vector2 {
   } ;
 
 
-  AdaptivePVTrack::AdaptivePVTrack(Track& track, XYZPoint& vtx)
-    : m_track(&track)
-  {
-    // get the state
-    m_state = track.firstState() ;
-
-    // do here things we could evaluate at z_seed. may add cov matrix here, which'd save a lot of time.
-    m_H[0] = 1 ;
-    m_H[(2 * (2 + 1)) / 2 + 0] = - m_state.tx ;
-    m_H[(2 * (2 + 1)) / 2 + 1] = - m_state.ty ;
-    // update the cache
-    updateCache( vtx ) ;
-  }
-
-
-  void AdaptivePVTrack::updateCache(const XYZPoint& vtx)
-  {
-    // transport to vtx z
-    // still missing!
-    //m_state.linearTransportTo( vtx.z() ) ;
-
-    // invert cov matrix
-
-    //write out inverse covariance matrix
-    m_invcov[0] = 1. / m_state.errX2;
-    m_invcov[1] = 0.;
-    m_invcov[2] = 1. / m_state.errY2;
-
-    // The following can all be written out, omitting the zeros, once
-    // we know that it works.
-
-    Vector2 res{ vtx.x - m_state.x, vtx.y - m_state.y };
-
-    //do we even need HW?
-    double HW[6] ;
-    HW[0] = 1. / m_state.errX2;
-    HW[1] = 0.;
-    HW[2] = 1. / m_state.errY2;
-    HW[3] = - m_state.tx / m_state.errX2;
-    HW[4] = - m_state.ty / m_state.errY2;
-    HW[5] = 0.;
-    
-    m_halfD2Chi2DX2[0] = 1. / m_state.errX2;
-    m_halfD2Chi2DX2[1] = 0.;
-    m_halfD2Chi2DX2[2] = 1. / m_state.errY2;
-    m_halfD2Chi2DX2[3] = - m_state.tx / m_state.errX2;
-    m_halfD2Chi2DX2[4] = - m_state.ty / m_state.errY2;
-    m_halfD2Chi2DX2[5] = m_state.tx * m_state.tx / m_state.errX2 + m_state.ty * m_state.ty / m_state.errY2;
-
-    m_halfDChi2DX.x = res.x / m_state.errX2;
-    m_halfDChi2DX.y = res.y / m_state.errY2;
-    m_halfDChi2DX.z = -m_state.tx*res.x / m_state.errX2 -m_state.ty*res.y / m_state.errY2;
-    m_chi2          = res.x*res.x / m_state.errX2 +res.y*res.y / m_state.errY2;
-  }
-
-
-  inline double AdaptivePVTrack::chi2( const XYZPoint& vtx ) const
-  {
-    double dz = vtx.z - m_state.z ;
-    Vector2 res{ vtx.x - (m_state.x + dz*m_state.tx),
-                        vtx.y - (m_state.y + dz*m_state.ty) };
-    return res.x*res.x / m_state.errX2 +res.y*res.y / m_state.errY2;
-  }
+ 
 
 
 
@@ -185,10 +130,10 @@ public:
   // Standard constructor
   AdaptivePV3DFitter();
   // Fitting
-  bool fitVertex(const XYZPoint& seedPoint,
-                       const std::vector<Track*>& tracks,
+  bool fitVertex( XYZPoint& seedPoint,
+                        std::vector<Track*>& tracks,
                        Vertex& vtx,
-                       std::vector<Track*>& tracks2remove) const;
+                       std::vector<Track*>& tracks2remove) ;
 private:
   size_t m_minTr = 4;
   int    m_Iterations = 20;
@@ -206,3 +151,5 @@ private:
   // Get Tukey's weight
   double getTukeyWeight(double trchi2, int iter) const;
 };
+
+#endif ADAPTIVE_H

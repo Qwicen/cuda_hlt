@@ -21,10 +21,10 @@ AdaptivePV3DFitter::AdaptivePV3DFitter()
 //=============================================================================
 // Least square adaptive fitting method
 //=============================================================================
-bool AdaptivePV3DFitter::fitVertex(const XYZPoint& seedPoint,
-             const std::vector<Track*>& rTracks,
+bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
+              std::vector<Track*>& rTracks,
              Vertex& vtx,
-             std::vector<Track*>& tracks2remove) const
+             std::vector<Track*>& tracks2remove) 
 {
   tracks2remove.clear();
 
@@ -37,11 +37,16 @@ bool AdaptivePV3DFitter::fitVertex(const XYZPoint& seedPoint,
   for( const auto& track : rTracks ) {
     
       pvTracks.emplace_back( *track, refpos );
+      std::cout << "pos state x: " << track->position().x << " " << refpos.x << std::endl;
+      std::cout << "pos state y: " << track->position().y << " " << refpos.y << std::endl;
+      std::cout << "pos state z: " << track->position().z << " " << refpos.z << std::endl;
+      std::cout << "chi2: " << pvTracks.back().chi2() << " " << m_maxChi2 << std::endl;
       if (pvTracks.back().chi2() >= m_maxChi2) pvTracks.pop_back();
   }
     
 
   if( pvTracks.size() < m_minTr ) {
+    std::cout << pvTracks.size() << " " << m_minTr << std::endl;
     std::cout << "Too few tracks to fit PV" << std::endl;
     return false;
     }
@@ -104,7 +109,7 @@ bool AdaptivePV3DFitter::fitVertex(const XYZPoint& seedPoint,
     if( !decomp ) return false;
     decomp.Invert(vtxcov);
 
-    //big piece missing: inversion of vtxcov!!!!
+    
 
     // compute the delta w.r.t. the reference
     XYZPoint delta{0.,0.,0.};
@@ -160,4 +165,72 @@ double AdaptivePV3DFitter::getTukeyWeight(double trchi2, int iter) const
   double cT2 = trchi2 / std::pow(ctrv*m_TrackErrorScaleFactor,2);
   return cT2 < 1. ? std::pow(1.-cT2,2) : 0. ;
 }
+
+
+
+ AdaptivePVTrack::AdaptivePVTrack(Track& track, XYZPoint& vtx)
+    : m_track(&track)
+  {
+    // get the state
+    m_state = track.firstState() ;
+
+    // do here things we could evaluate at z_seed. may add cov matrix here, which'd save a lot of time.
+    m_H[0] = 1 ;
+    m_H[(2 * (2 + 1)) / 2 + 0] = - m_state.tx ;
+    m_H[(2 * (2 + 1)) / 2 + 1] = - m_state.ty ;
+    // update the cache
+    updateCache( vtx ) ;
+  }
+
+
+  void AdaptivePVTrack::updateCache(const XYZPoint& vtx)
+  {
+    // transport to vtx z
+    // still missing!
+    std::cout << "before transport: " << m_track->position().z << std::endl;
+    m_state.linearTransportTo( vtx.z ) ;
+    std::cout << "after transport: " << m_track->position().z << std::endl;
+
+    // invert cov matrix
+
+    //write out inverse covariance matrix
+    m_invcov[0] = 1. / m_state.errX2;
+    m_invcov[1] = 0.;
+    m_invcov[2] = 1. / m_state.errY2;
+
+    // The following can all be written out, omitting the zeros, once
+    // we know that it works.
+
+    Vector2 res{ vtx.x - m_state.x, vtx.y - m_state.y };
+
+    //do we even need HW?
+    double HW[6] ;
+    HW[0] = 1. / m_state.errX2;
+    HW[1] = 0.;
+    HW[2] = 1. / m_state.errY2;
+    HW[3] = - m_state.tx / m_state.errX2;
+    HW[4] = - m_state.ty / m_state.errY2;
+    HW[5] = 0.;
+    
+    m_halfD2Chi2DX2[0] = 1. / m_state.errX2;
+    m_halfD2Chi2DX2[1] = 0.;
+    m_halfD2Chi2DX2[2] = 1. / m_state.errY2;
+    m_halfD2Chi2DX2[3] = - m_state.tx / m_state.errX2;
+    m_halfD2Chi2DX2[4] = - m_state.ty / m_state.errY2;
+    m_halfD2Chi2DX2[5] = m_state.tx * m_state.tx / m_state.errX2 + m_state.ty * m_state.ty / m_state.errY2;
+
+    m_halfDChi2DX.x = res.x / m_state.errX2;
+    m_halfDChi2DX.y = res.y / m_state.errY2;
+    m_halfDChi2DX.z = -m_state.tx*res.x / m_state.errX2 -m_state.ty*res.y / m_state.errY2;
+    m_chi2          = res.x*res.x / m_state.errX2 +res.y*res.y / m_state.errY2;
+  }
+
+
+   double AdaptivePVTrack::chi2( const XYZPoint& vtx ) const
+  {
+    double dz = vtx.z - m_state.z ;
+    Vector2 res{ vtx.x - (m_state.x + dz*m_state.tx),
+                        vtx.y - (m_state.y + dz*m_state.ty) };
+    return res.x*res.x / m_state.errX2 +res.y*res.y / m_state.errY2;
+  }
 
