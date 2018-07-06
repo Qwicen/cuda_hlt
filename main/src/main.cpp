@@ -35,8 +35,8 @@ void printUsage(char* argv[]){
     << std::endl << (mc_check_enabled ? " " : " [") << "-g {folder containing .bin files with MC truth information}"
     << (mc_check_enabled ? "" : " ]")
     << std::endl << " [-n {number of files to process}=0 (all)]"
-    << std::endl << " [-t {number of threads / streams}=3]"
-    << std::endl << " [-r {number of repetitions per thread / stream}=10]"
+    << std::endl << " [-t {number of threads / streams}=1]"
+    << std::endl << " [-r {number of repetitions per thread / stream}=1]"
     << std::endl << " [-a {transmit host to device}=1]"
     << std::endl << " [-b {transmit device to host}=1]"
     << std::endl << " [-c {run checkers}=0]"
@@ -52,8 +52,8 @@ int main(int argc, char *argv[])
   std::string folder_name_raw;
   std::string folder_name_MC = "";
   uint number_of_files = 0;
-  uint tbb_threads = 3;
-  uint number_of_repetitions = 10;
+  uint tbb_threads = 1;
+  uint number_of_repetitions = 1;
   uint verbosity = 3;
   bool print_individual_rates = false;
   bool transmit_host_to_device = true;
