@@ -190,7 +190,7 @@ using argument_tuple_t = std::tuple<
 Finally, we populate the _dependency tree_, ie. where are these arguments needed. For that, go to the body of `get_sequence_dependencies`, in `Stream/sequence_setup/src/SequenceSetup.cu`:
 
 ```clike
-std::vector<std::vector<uint>> get_sequence_dependencies() {
+std::vector<std::vector<int>> get_sequence_dependencies() {
   ...
   sequence_dependencies[seq::saxpy] = {
     arg::dev_x,
