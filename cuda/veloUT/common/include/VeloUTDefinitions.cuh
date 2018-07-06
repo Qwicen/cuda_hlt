@@ -41,7 +41,7 @@ namespace VeloUTTracking {
     float m_dxDy[max_numhits_per_event];
     float m_zAtYEq0[max_numhits_per_event];
     float m_xAtYEq0[max_numhits_per_event];
-    float m_weight[max_numhits_per_event];
+    float m_weight2[max_numhits_per_event];
     int   m_highThreshold[max_numhits_per_event];
     unsigned int m_LHCbID[max_numhits_per_event];
     int m_planeCode[max_numhits_per_event];
@@ -59,7 +59,7 @@ namespace VeloUTTracking {
     inline int planeCode(const int i_hit) const { return m_planeCode[i_hit]; }
     inline float sinT(const int i_hit) const { return tanT(i_hit) * cosT(i_hit); }
     inline float tanT(const int i_hit) const { return -m_dxDy[i_hit]; }
-    inline float weight(const int i_hit) const { return m_weight[i_hit]; }
+    inline float weight2(const int i_hit) const { return m_weight2[i_hit]; }
     inline float xAt( const int i_hit, const float globalY ) const { return m_xAtYEq0[i_hit] + globalY * m_dxDy[i_hit]; }
     inline float xAtYEq0(const int i_hit) const { return m_xAtYEq0[i_hit]; }
     //inline float xAtYMid(const int i_hit) const { return m_x[i_hit]; }  // not used, have to initialize properly if this  will be used

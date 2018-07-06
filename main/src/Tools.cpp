@@ -90,7 +90,7 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
       std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_xAtYEq0[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_weight[ layer_offset ]) );
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_weight2[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
       std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_highThreshold[ layer_offset ]) );
       raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer];
@@ -122,7 +122,7 @@ void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
       number_of_hits += n_hits_layers_events[i_event][i_layer];
       int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
-	printf("\t at hit %u, cos = %f, yBegin = %f, yEnd = %f, dxDy = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight = %f, highThreshold = %u, LHCbID = %u \n",
+	printf("\t at hit %u, cos = %f, yBegin = %f, yEnd = %f, dxDy = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight2 = %f, highThreshold = %u, LHCbID = %u \n",
 	       i_hit,
 	       hits_layers_events[i_event].m_cos[ layer_offset + i_hit ],
 	       hits_layers_events[i_event].m_yBegin[ layer_offset + i_hit ],
@@ -130,7 +130,7 @@ void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
 	       hits_layers_events[i_event].m_dxDy[ layer_offset + i_hit ],
 	       hits_layers_events[i_event].m_zAtYEq0[ layer_offset + i_hit ],
 	       hits_layers_events[i_event].m_xAtYEq0[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].m_weight[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].m_weight2[ layer_offset + i_hit ],
 	       hits_layers_events[i_event].m_highThreshold[ layer_offset + i_hit ],
                hits_layers_events[i_event].m_LHCbID[ layer_offset + i_hit ] );
       }

@@ -14,7 +14,7 @@ namespace VeloUTTracking {
     
     float m_cos;     
     float m_dxDy;    ///< The dx/dy value
-    float m_weight;  ///< The hit weight (1/error)
+    float m_weight2;  ///< The hit weight^2 (1/error^2)
     float m_xAtYEq0; ///< The value of x at the point y=0
     float m_yBegin;  ///< The y value at the start point of the line
     float m_yEnd;    ///< The y value at the end point of the line
@@ -23,9 +23,7 @@ namespace VeloUTTracking {
     int m_planeCode;
     
     bool  m_cluster_threshold;
-    //    int   m_cluster_station;
-    //    int   m_cluster_layer;
-
+    
     Hit(){}
     
     inline float cos() const { return m_cos; }
@@ -46,7 +44,7 @@ namespace VeloUTTracking {
     inline float sinT() const { return tanT() * cosT(); }
     // inline int size() const { return m_cluster.pseudoSize(); }
     inline float tanT() const { return -m_dxDy; }
-    inline float weight() const { return m_weight; }
+    inline float weight2() const { return m_weight2; }
     inline float xAt( const float globalY ) const { return m_xAtYEq0 + globalY * m_dxDy; }
     inline float xAtYEq0() const { return m_xAtYEq0; }
     //inline float xAtYMid() const { return m_x; }  // not used

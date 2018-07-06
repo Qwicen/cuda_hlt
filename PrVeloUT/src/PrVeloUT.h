@@ -82,7 +82,6 @@ public:
     const std::vector<VeloUTTracking::TrackVelo>& inputTracks,
     const VeloUTTracking::HitsSoA &hits_layers_events,
     const uint32_t n_hits_layers_events[VeloUTTracking::n_layers]
-    //const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits
   ) const;
 
 private:
@@ -116,7 +115,6 @@ private:
   bool getHits(
     std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
     const std::array<std::array<int,85>,4>& posLayers,
-    //const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits,
     const VeloUTTracking::HitsSoA &hits_layers,
     const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     const std::vector<float>& fudgeFactors, 
@@ -143,7 +141,6 @@ private:
   // -- The last element is an "end" iterator, to make sure we never go out of bound
   // ==============================================================================
   inline void fillIterators(
-    //const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
     const VeloUTTracking::HitsSoA &hits_layers,
     const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     std::array<std::array<int,85>,4>& posLayers) const
@@ -169,7 +166,6 @@ private:
           }
         }
 
-	// DvB: why overwrite value from before?
         std::fill(
           posLayers[layer].begin() + 42 + int(bound), 
           posLayers[layer].end(),
@@ -185,7 +181,6 @@ private:
   inline void findHits( 
     const size_t posBeg,
     const size_t posEnd,
-    //const std::vector<VeloUTTracking::Hit>& inputHits,
     const VeloUTTracking::HitsSoA &hits_layers,
     const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     const int layer_offset,
@@ -194,13 +189,12 @@ private:
     const float invNormFact,
     std::vector<VeloUTTracking::Hit>& outHits ) const 
   {
-    const auto zInit = hits_layers.zAtYEq0( layer_offset + posBeg ); //inputHits.at(posBeg).zAtYEq0();
+    const auto zInit = hits_layers.zAtYEq0( layer_offset + posBeg );
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
 
     size_t pos = posBeg;
     while ( 
       pos <= posEnd && 
-      //inputHits[pos].isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) )
       hits_layers.isNotYCompatible( layer_offset + pos, yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) )
     ) { ++pos; }
 
@@ -209,31 +203,30 @@ private:
 
     for (int i=pos; i<posEnd; ++i) {
 
-      const auto xx = hits_layers.xAt( layer_offset + i, yApprox ); //inputHits.at(i).xAt(yApprox);
+      const auto xx = hits_layers.xAt( layer_offset + i, yApprox ); 
       const auto dx = xx - xOnTrackProto;
       
       if( dx < -xTolNormFact ) continue;
       if( dx >  xTolNormFact ) break; 
 
       // -- Now refine the tolerance in Y
-      //if( inputHits.at(i).isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
       if ( hits_layers.isNotYCompatible( layer_offset + i, yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
       
       
-      const auto zz = hits_layers.zAtYEq0( layer_offset + i ); //inputHits.at(i).zAtYEq0();
+      const auto zz = hits_layers.zAtYEq0( layer_offset + i ); 
       const auto yy = yyProto +  myState.ty*zz;
-      const auto xx2 = hits_layers.xAt( layer_offset + i, yy ); //inputHits.at(i).xAt(yy);
+      const auto xx2 = hits_layers.xAt( layer_offset + i, yy );
 
       // TODO avoid the copy - remove the const?
       // XXX this could be a source of error?
-      VeloUTTracking::Hit temp_hit; //inputHits.at(i);
+      VeloUTTracking::Hit temp_hit; 
       temp_hit.m_cos = hits_layers.cos(layer_offset + i);
       temp_hit.m_yBegin = hits_layers.yBegin(layer_offset + i);
       temp_hit.m_yEnd = hits_layers.yEnd(layer_offset + i);
       temp_hit.m_dxDy = hits_layers.dxDy(layer_offset + i);
       temp_hit.m_zAtYEq0 = hits_layers.zAtYEq0(layer_offset + i);
       temp_hit.m_xAtYEq0 = hits_layers.xAtYEq0(layer_offset + i);
-      temp_hit.m_weight = hits_layers.weight(layer_offset + i);
+      temp_hit.m_weight2 = hits_layers.weight2(layer_offset + i);
       temp_hit.m_cluster_threshold = hits_layers.highThreshold(layer_offset + i);
       temp_hit.m_LHCbID = hits_layers.lhcbID(layer_offset + i);
       temp_hit.m_planeCode = hits_layers.planeCode(layer_offset + i);
@@ -252,7 +245,7 @@ private:
     const float ui = hit->x;
     const float ci = hit->cosT();
     const float dz = 0.001*(hit->z - m_zMidUT);
-    const float wi = hit->weight();
+    const float wi = hit->weight2();
 
     mat[0] += wi * ci;
     mat[1] += wi * ci * dz;
@@ -265,7 +258,7 @@ private:
     const float zd    = hit->z;
     const float xd    = xTTFit + xSlopeTTFit*(zd-m_zMidUT);
     const float du    = xd - hit->x;
-    chi2 += (du*du)*hit->weight();
+    chi2 += (du*du)*hit->weight2();
   }
 
   template <std::size_t N>
