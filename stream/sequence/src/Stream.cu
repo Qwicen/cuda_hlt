@@ -61,12 +61,16 @@ cudaError_t Stream::initialize(
   sequence.item<seq::copy_and_prefix_sum_single_block>().set_opts(             dim3(1), dim3(1024), stream);
   sequence.item<seq::prefix_sum_single_block_velo_track_hit_number>().set_opts(dim3(1), dim3(1024), stream);
 
-  // Set dependencies for each algorithm
-  std::vector<std::vector<uint>> sequence_dependencies = get_sequence_dependencies();
+  // Get dependencies for each algorithm
+  std::vector<std::vector<int>> sequence_dependencies = get_sequence_dependencies();
+
+  // Get output arguments from the sequence
+  std::vector<int> sequence_output_arguments = get_sequence_output_arguments();
 
   // Prepare dynamic scheduler
   scheduler = BaseDynamicScheduler{sequence_names, argument_names,
-    sequence_dependencies, reserve_mb * 1024 * 1024, do_print_memory_manager};
+    sequence_dependencies, sequence_output_arguments,
+    reserve_mb * 1024 * 1024, do_print_memory_manager};
 
   // Malloc a configurable reserved memory
   cudaCheck(cudaMalloc((void**)&dev_base_pointer, reserve_mb * 1024 * 1024));
