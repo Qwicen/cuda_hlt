@@ -93,7 +93,7 @@ __global__ void saxpy(float *x, float *y, int n, float a) {
 }
 ```
 
-Lastly, edit `stream/CMakeLists.txt` and have `target_link_libraries` looks as follows:
+Lastly, edit `stream/CMakeLists.txt` and modify `target_link_libraries`:
 
 ```cmake
 target_link_libraries(Stream Velo Test)
@@ -168,7 +168,7 @@ enum arg_enum_t {
 };
 ```
 
-Again, order matters. Next, we will populate the arguments and their types in `argument_tuple_t` in `Stream/sequence_setup/include/SequenceSetup.cuh`:
+Again, order matters. Next, we will populate the arguments and their types without the `*` in `argument_tuple_t` in `Stream/sequence_setup/include/SequenceSetup.cuh`:
 
 ```clike
 /**
