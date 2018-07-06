@@ -25,7 +25,8 @@ namespace VeloUTTracking {
   
   /* Cut-offs */
   static constexpr uint max_numhits_per_layer = 500;
-  static constexpr uint max_numhits_per_event = 4000; 
+  static constexpr uint max_numhits_per_event = 4000;
+  static constexpr uint max_hit_candidates_per_layer = 40;
 
   /* SoA for hit variables
      The hits for every layer are written behind each other, the offsets 
@@ -55,7 +56,7 @@ namespace VeloUTTracking {
     inline bool highThreshold(const int i_hit) const { return m_highThreshold[i_hit]; }
     inline bool isYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol <= y && y <= yMax(i_hit) + tol; }
     inline bool isNotYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol > y || y > yMax(i_hit) + tol; }
-    inline int lhcbID(const int i_hit) const { return m_LHCbID[i_hit]; }
+    inline int LHCbID(const int i_hit) const { return m_LHCbID[i_hit]; }
     inline int planeCode(const int i_hit) const { return m_planeCode[i_hit]; }
     inline float sinT(const int i_hit) const { return tanT(i_hit) * cosT(i_hit); }
     inline float tanT(const int i_hit) const { return -m_dxDy[i_hit]; }
@@ -72,8 +73,7 @@ namespace VeloUTTracking {
     inline float yMid(const int i_hit) const { return 0.5 * ( yBegin(i_hit) + yEnd(i_hit) ); }
     inline float yMin(const int i_hit) const { return std::min( yBegin(i_hit), yEnd(i_hit) ); }
     inline float zAtYEq0(const int i_hit) const { return m_zAtYEq0[i_hit]; } 
-    
-    
+
   };
 
 

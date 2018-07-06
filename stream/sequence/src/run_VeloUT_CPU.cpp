@@ -139,7 +139,7 @@ int run_veloUT_on_CPU (
 	hit.m_zAtYEq0 = hits_layers_events[i_event].m_zAtYEq0[layer_offset + i_hit];
 	hit.m_LHCbID = hits_layers_events[i_event].m_LHCbID[layer_offset + i_hit];
 	hit.m_planeCode = hits_layers_events[i_event].m_planeCode[layer_offset + i_hit];
-	hit.m_cluster_threshold = hits_layers_events[i_event].m_highThreshold[layer_offset + i_hit];
+	hit.m_highThreshold = hits_layers_events[i_event].m_highThreshold[layer_offset + i_hit];
 	
 	inputHits[i_layer].push_back( hit );
 	
@@ -152,7 +152,7 @@ int run_veloUT_on_CPU (
 	xAtYEq0 = hit.m_xAtYEq0;
 	weight2 = hit.m_weight2;
 	LHCbID = hit.m_LHCbID;
-	highThreshold = hit.m_cluster_threshold;
+	highThreshold = hit.m_highThreshold;
 	layer = i_layer;
 	
 	t_ut_hits->Fill();
@@ -220,7 +220,7 @@ int run_veloUT_on_CPU (
     }
     //debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0, " << inputHits[1].size() << " hits in layer 1, " << inputHits[2].size() << " hits in layer 2, " << inputHits[3].size() << " in layer 3 to velout" << std::endl;
     
-    std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, hits_layers_events[i_event], n_hits_layers_events[i_event]);
+    std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, &(hits_layers_events[i_event]), n_hits_layers_events[i_event]);
     //debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
     
     // store qop in tree

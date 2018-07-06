@@ -5,6 +5,7 @@
 
 #include "../../main/include/CudaCommon.h"
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
+#include "../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
 
 namespace VeloUTTracking {
   struct Hit {
@@ -22,21 +23,17 @@ namespace VeloUTTracking {
     unsigned int m_LHCbID;
     int m_planeCode;
     
-    bool  m_cluster_threshold;
+    bool  m_highThreshold;
     
     Hit(){}
     
     inline float cos() const { return m_cos; }
     inline float cosT() const { return ( std::fabs( m_xAtYEq0 ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + m_dxDy * m_dxDy ) : cos(); }
     inline float dxDy() const { return m_dxDy; }
-    // TODO get the proper (boolean) for highThreshold
-    // inline bool highThreshold() const { return m_cluster.highThreshold(); }
-    inline bool highThreshold() const { return m_cluster_threshold; }
+    inline bool highThreshold() const { return m_highThreshold; }
     inline bool isYCompatible( const float y, const float tol ) const { return yMin() - tol <= y && y <= yMax() + tol; }
     inline bool isNotYCompatible( const float y, const float tol ) const { return yMin() - tol > y || y > yMax() + tol; }
-    // TODO is this correct?
-    // inline LHCb::LHCbID lhcbID() const { return LHCb::LHCbID( m_cluster.channelID() ); }
-    inline int lhcbID() const { return m_LHCbID; }
+    inline int LHCbID() const { return m_LHCbID; }
     // TODO we have this?
     // inline int planeCode() const { return 2 * ( m_cluster.station() - 1 ) + ( m_cluster.layer() - 1 ) % 2; }
     //inline int planeCode() const { return 2 * ( m_cluster_station - 1 ) + ( m_cluster_layer - 1 ) % 2; }
@@ -58,10 +55,10 @@ namespace VeloUTTracking {
     inline float yMin() const { return std::min( yBegin(), yEnd() ); }
     inline float zAtYEq0() const { return m_zAtYEq0; }
   };
+
+  Hit createHit( HitsSoA *hits_layers, const int i_layer, const int i_hit );
   
   typedef std::vector<Hit> Hits;
-
-  //typedef std::vector<VeloState> TrackVelo;  // DvB: we only have one state: at the last measurement point
 
   struct TrackUT {
     unsigned int hitsNum;
