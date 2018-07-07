@@ -33,23 +33,23 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const bool checkEvent
   // Monte Carlo
   uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
   for (uint32_t i=0; i<number_mcp; ++i) {
-    MCP p;
-    p.key      = *((uint32_t*)  input); input += sizeof(uint32_t);
-    p.id       = *((uint32_t*)  input); input += sizeof(uint32_t);
-    p.p      = *((float*)  input); input += sizeof(float);
-    p.pt       = *((float*)  input); input += sizeof(float);
-    p.eta      = *((float*)  input); input += sizeof(float);
-    p.phi      = *((float*)  input); input += sizeof(float);
-    p.islong     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.isdown     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.isvelo     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.isut     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.strangelong  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.strangedown  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.fromb    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.fromd    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.numHits    = *((uint32_t*)  input); input += sizeof(uint32_t);
-    std::copy_n((uint32_t*) input, p.numHits, std::back_inserter(p.hits)); input += sizeof(uint32_t) * p.numHits;
+    MCParticle p;
+    p.m_key      = *((uint32_t*)  input); input += sizeof(uint32_t);
+    p.m_id       = *((uint32_t*)  input); input += sizeof(uint32_t);
+    p.m_p      = *((float*)  input); input += sizeof(float);
+    p.m_pt       = *((float*)  input); input += sizeof(float);
+    p.m_eta      = *((float*)  input); input += sizeof(float);
+    p.m_phi      = *((float*)  input); input += sizeof(float);
+    p.m_islong     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.m_isdown     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.m_isvelo     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.m_isut     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.m_strangelong  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.m_strangedown  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.m_fromb    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.m_fromd    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.m_numHits    = *((uint32_t*)  input); input += sizeof(uint32_t);
+    std::copy_n((uint32_t*) input, p.nIDs(), std::back_inserter(p.m_hits)); input += sizeof(uint32_t) * p.nIDs();
     mcps.push_back(p);
   }
 
@@ -75,17 +75,17 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const bool checkEvent
       assert(!std::isinf(hit_Zs[i]));
     }
     for (auto& mcp : mcps) {
-      assert(!std::isnan(mcp.p));
-      assert(!std::isnan(mcp.pt));
-      assert(!std::isnan(mcp.eta));
-      assert(!std::isnan(mcp.phi));
-      assert(!std::isinf(mcp.p));
-      assert(!std::isinf(mcp.pt));
-      assert(!std::isinf(mcp.eta));
-      assert(!std::isinf(mcp.phi));
+      assert(!std::isnan(mcp.p()));
+      assert(!std::isnan(mcp.pt()));
+      assert(!std::isnan(mcp.eta()));
+      assert(!std::isnan(mcp.phi()));
+      assert(!std::isinf(mcp.p()));
+      assert(!std::isinf(mcp.pt()));
+      assert(!std::isinf(mcp.eta()));
+      assert(!std::isinf(mcp.phi()));
       // Check all IDs in MC particles exist in hit_IDs
-      for (size_t i=0; i<mcp.numHits; ++i) {
-        auto hit = mcp.hits[i];
+      for (size_t i=0; i<mcp.nIDs(); ++i) {
+        auto hit = mcp.m_hits[i];
         if (std::find(hit_IDs.begin(), hit_IDs.end(), hit) == hit_IDs.end()) {
           throw StrException("The following MC particle hit ID was not found in hit_IDs: " + std::to_string(hit));
         }
@@ -120,57 +120,30 @@ void VelopixEvent::print() const {
     << " hit_Zs " << strVector(hit_Zs, numberOfHits) << std::endl
     << " #MC particles " << mcps.size() << std::endl;
 
-  // Print first MCP
+  // Print first MCParticle
   if (mcps.size() > 0) {
     auto& p = mcps[0];
     std::cout << " First MC particle" << std::endl
-      << "  key " << p.key << std::endl
-      << "  id " << p.id << std::endl
-      << "  p " << p.p << std::endl
-      << "  pt " << p.pt << std::endl
-      << "  eta " << p.eta << std::endl
-      << "  phi " << p.phi << std::endl
-      << "  islong " << p.islong << std::endl
-      << "  isdown " << p.isdown << std::endl
-      << "  isvelo " << p.isvelo << std::endl
-      << "  isut " << p.isut << std::endl
-      << "  strangelong " << p.strangelong << std::endl
-      << "  strangedown " << p.strangedown << std::endl
-      << "  fromb " << p.fromb << std::endl
-      << "  fromd " << p.fromd << std::endl
-      << "  numHits " << p.numHits << std::endl
-      << "  hits " << strVector(p.hits, p.numHits) << std::endl;
+      << "  key " << p.key() << std::endl
+      << "  id " << p.pid() << std::endl
+      << "  p " << p.p() << std::endl
+      << "  pt " << p.pt() << std::endl
+      << "  eta " << p.eta() << std::endl
+      << "  phi " << p.phi() << std::endl
+      << "  islong " << p.isLong() << std::endl
+      << "  isdown " << p.isDown() << std::endl
+      << "  isvelo " << p.isVelo() << std::endl
+      << "  isut " << p.isUT() << std::endl
+      << "  strangelong " << p.isStrangeLong() << std::endl
+      << "  strangedown " << p.isStrangeDown() << std::endl
+      << "  fromb " << p.isFromB() << std::endl
+      << "  fromd " << p.isFromD() << std::endl
+      << "  numHits " << p.nIDs() << std::endl
+      << "  hits " << strVector(p.m_hits, p.nIDs()) << std::endl;
   }
-}
-
-/// get hits into a format we like (should ultimately go away, or just be a view)
-VeloPixels VelopixEvent::soaHits() const
-{
-  VeloPixels retVal;
-  retVal.reserve(numberOfHits);
-  for (std::size_t i = 0; i < numberOfHits; ++i) {
-    retVal.emplace_back(hit_Xs[i], hit_Ys[i], hit_Zs[i], hit_IDs[i]);
-  }
-  return retVal;
 }
 
 MCParticles VelopixEvent::mcparticles() const
 {
-  using Flags = MCParticleDesc::Flags;
-  MCParticles retVal;
-  retVal.reserve(mcps.size());
-  for (const auto& mcp: mcps) {
-	retVal.emplace_back(mcp.p, mcp.pt, mcp.eta, mcp.phi,
-		mcp.id, mcp.key, mcp.numHits,
-		SomeLHCbIDs(mcp.hits.begin(), mcp.hits.end()),
-		(mcp.islong ? Flags::Long : 0) |
-		(mcp.isdown ? Flags::Down : 0) |
-		(mcp.isvelo ? Flags::Velo : 0) |
-		(mcp.isut ? Flags::UT : 0) |
-		(mcp.strangelong ? Flags::StrangeLong : 0) |
-		(mcp.strangedown ? Flags::StrangeDown : 0) |
-		(mcp.fromb ? Flags::FromB : 0) |
-		(mcp.fromd ? Flags::FromD : 0));
-  }
-  return retVal;
+  return mcps;
 }

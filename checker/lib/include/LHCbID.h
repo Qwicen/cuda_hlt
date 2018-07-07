@@ -14,8 +14,6 @@
 #include <cstdint>
 #include <cmath>
 
-#include "boost/range/iterator_range.hpp"
-
 /// encapsulate an LHCbID
 class LHCbID {
     private:
@@ -73,8 +71,3 @@ class LHCbID {
 };
 
 typedef std::vector< LHCbID > SomeLHCbIDs;
-
-/// a range of LHCbIDs from a small collection
-using SomeLHCbIDRange = boost::iterator_range<SomeLHCbIDs::iterator>;
-/// a const range of LHCbIDs from a small collection
-using ConstSomeLHCbIDRange = boost::iterator_range<SomeLHCbIDs::const_iterator>;

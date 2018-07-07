@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  if(folder_name_MC.empty() && mc_check_enabled){
+  if(folder_name_MC.empty() && do_check){
     std::cerr << "No MC folder specified, but MC CHECK turned on" << std::endl;
     printUsage(argv);
     return -1;
