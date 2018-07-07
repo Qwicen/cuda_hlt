@@ -370,8 +370,7 @@ Now you are ready to take over.
 
 Good luck!
 
-Bonus: Extending a Handler
---------------------------
+### Bonus: Extending a Handler
 
 Handlers are used internally to deal with each algorithm in the sequence. A Handler deduces the argument types from the kernel function identifier, and exposes the `set_opts` and `set_arguments` methods.
 
