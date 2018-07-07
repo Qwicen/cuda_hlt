@@ -471,7 +471,7 @@ We can now add a `check` method to `HandlerSaxpy`:
   }
 ```
 
-And refactor `StreamSequence.cuh` to reflect this change:
+And refactor `StreamSequence.cu` to reflect this change:
 
 ```clike
     // Kernel call
