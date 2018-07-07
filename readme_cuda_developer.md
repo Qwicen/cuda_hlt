@@ -369,3 +369,125 @@ Max memory required: 9.61 MiB
 Now you are ready to take over.
 
 Good luck!
+
+Bonus: Extending a Handler
+--------------------------
+
+Handlers are used internally to deal with each algorithm in the sequence. A Handler deduces the argument types from the kernel function identifier, and exposes the `set_opts` and `set_arguments` methods.
+
+Handlers can be specialized and extended for a particular algorithm. This can be useful under certain situations, ie. if one wants to develop a checker method, or a printout method.
+
+Coming back to Saxpy, we may not want to have the checking code laying around in the `run_sequence` body. Particularly, this code could live somewhere else:
+
+```clike
+    // Retrieve result
+    cudaCheck(cudaMemcpyAsync(host_y,
+      argen.generate<arg::dev_y>(argument_offsets),
+      argen.size<arg::dev_y>(saxpy_N),
+      cudaMemcpyDeviceToHost,
+      stream
+    ));
+
+    // Wait to receive the result
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    // Check the output
+    float maxError = 0.0f;
+    for (int i = 0; i < saxpy_N; i++) {
+      maxError = std::max(maxError, abs(host_y[i]-4.0f));
+    }
+    info_cout << "Saxpy max error: " << maxError << std::endl << std::endl;
+```
+
+Let's start by specializing a Handler and registering that specialization. Create a new file in `stream/handlers/include/` and name it `HandlerSaxpy.cuh`. These are the contents:
+
+```clike=
+#pragma once
+
+#include "../../../main/include/CudaCommon.h"
+#include "../../../main/include/Logger.h"
+#include "../../sequence_setup/include/SequenceArgumentEnum.cuh"
+#include "HandlerDispatcher.cuh"
+#include <iostream>
+
+template<typename R, typename... T>
+struct HandlerSaxpy : public Handler<seq::saxpy, R, T...> {
+  HandlerSaxpy() = default;
+  HandlerSaxpy(R(*param_function)(T...))
+  : Handler<seq::saxpy, R, T...>(param_function) {}
+
+  // Add your own methods
+};
+
+// Register partial specialization
+template<>
+struct HandlerDispatcher<seq::saxpy> {
+  template<typename R, typename... T>
+  using H = HandlerSaxpy<R, T...>;
+};
+
+```
+
+Next, register that Handler. Modify `HandlerMaker.cuh` and add the Handler we just created:
+
+```clike
+// Note: Add here additional custom handlers
+#include "HandlerSaxpy.cuh"
+```
+
+Now we are ready to extend HandlerSaxpy. The way this works is by using a partial specialization of `HandlerDispatcher` and defining `H` as our specific Handler. `HandlerMaker` takes care of the rest.
+
+We can now add a `check` method to `HandlerSaxpy`:
+
+```clike
+  // Add your own methods
+  void check(
+    float* host_y,
+    int saxpy_N,
+    float* dev_y,
+    size_t dev_y_size,
+    cudaStream_t& stream,
+    cudaEvent_t& cuda_generic_event
+  ) {
+    // Retrieve result
+    cudaCheck(cudaMemcpyAsync(host_y,
+      dev_y,
+      dev_y_size,
+      cudaMemcpyDeviceToHost,
+      stream
+    ));
+
+    // Wait to receive the result
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    // Check the output
+    float maxError = 0.0f;
+    for (int i = 0; i < saxpy_N; i++) {
+      maxError = std::max(maxError, abs(host_y[i]-4.0f));
+    }
+    info_cout << "Saxpy max error: " << maxError << std::endl << std::endl;
+  }
+```
+
+And refactor `StreamSequence.cuh` to reflect this change:
+
+```clike
+    // Kernel call
+    sequence.item<seq::saxpy>().invoke();
+
+    // Check result
+    sequence.item<seq::saxpy>().check(
+      host_y,
+      saxpy_N,
+      argen.generate<arg::dev_y>(argument_offsets),
+      argen.size<arg::dev_y>(saxpy_N),
+      stream,
+      cuda_generic_event
+    );
+```
+
+Now you are a `cuda_hlt` hacker.
+
+> Note: You can find the full example under the branch `saxpy_test`.
