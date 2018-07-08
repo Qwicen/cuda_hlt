@@ -99,7 +99,17 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
  *          * if a pointer is set to point somewhere different from the beginning
  *          * if an argument is repeated in the argument list.
  */
-std::vector<std::vector<uint>> get_sequence_dependencies();
+std::vector<std::vector<int>> get_sequence_dependencies();
+
+/**
+ * @brief Retrieves the persistent datatypes.
+ * @details The sequence may contain some datatypes that
+ *          once they are reserved should never go out of memory (persistent).
+ *          ie. the tracking sequence may produce some result and
+ *          the primary vertex recostruction a different result.
+ *          All output arguments should be returned here.
+ */
+std::vector<int> get_sequence_output_arguments();
 
 /**
  * @brief Checks the sequence tuple is defined sequentially and

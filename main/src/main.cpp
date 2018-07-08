@@ -43,7 +43,7 @@ void printUsage(char* argv[]){
     << std::endl << " [-k {simplified kalman filter}=0]"
     << std::endl << " [-m {reserve Megabytes}=1024]"
     << std::endl << " [-v {verbosity}=3 (info)]"
-    << std::endl << " [-p (print memory manager)]"
+    << std::endl << " [-p (print memory usage)]"
     << std::endl;
 }
 
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
-    << " print memory manager (-p): " << print_memory_usage std::endl
+    << " print memory usage (-p): " << print_memory_usage std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
     << std::endl;

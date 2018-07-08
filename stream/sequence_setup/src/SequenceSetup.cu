@@ -45,9 +45,9 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   return a;
 }
 
-std::vector<std::vector<uint>> get_sequence_dependencies() {
+std::vector<std::vector<int>> get_sequence_dependencies() {
   // Vector of dependecies for each algorithm
-  std::vector<std::vector<uint>> sequence_dependencies (
+  std::vector<std::vector<int>> sequence_dependencies (
     std::tuple_size<argument_tuple_t>::value
   );
 
@@ -132,4 +132,12 @@ std::vector<std::vector<uint>> get_sequence_dependencies() {
   };
 
   return sequence_dependencies;
+}
+
+std::vector<int> get_sequence_output_arguments() {
+  return {
+    arg::dev_atomics_storage,
+    arg::dev_velo_track_hit_number,
+    arg::dev_velo_track_hits
+  };
 }

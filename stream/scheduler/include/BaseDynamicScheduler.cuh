@@ -6,7 +6,8 @@ struct BaseDynamicScheduler {
   MemoryManager memory_manager;
   std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> sequence_names;
   std::array<std::string, std::tuple_size<argument_tuple_t>::value> argument_names;
-  std::vector<std::vector<uint>> sequence_dependencies;
+  std::vector<std::vector<int>> sequence_dependencies;
+  std::vector<int> sequence_output_arguments;
   int current_sequence_step = 0;
   bool do_print = false;
   // Type that determines the tags to free and initialize on each step
@@ -18,12 +19,14 @@ struct BaseDynamicScheduler {
   BaseDynamicScheduler(
     const std::array<std::string, std::tuple_size<algorithm_tuple_t>::value>& param_sequence_names,
     const std::array<std::string, std::tuple_size<argument_tuple_t>::value>& param_argument_names,
-    const std::vector<std::vector<uint>>& param_sequence_dependencies,
+    const std::vector<std::vector<int>>& param_sequence_dependencies,
+    const std::vector<int> param_sequence_output_arguments,
     const size_t reserved_mb,
     const bool param_do_print)
   : sequence_names(param_sequence_names),
     argument_names(param_argument_names),
     sequence_dependencies(param_sequence_dependencies),
+    sequence_output_arguments(param_sequence_output_arguments),
     do_print(param_do_print) {
     // Generate the helper arguments vector
     generate_tags();
@@ -60,8 +63,12 @@ struct BaseDynamicScheduler {
       for (int argument_number : *it) {
         if (std::find(std::begin(tags_freed), std::end(tags_freed), argument_number)
           == std::end(tags_freed)) {
-          freed.push_back(argument_number);
-          tags_freed.push_back(argument_number);
+          // Never free arguments in sequence_output_arguments
+          if (std::find(std::begin(sequence_output_arguments), std::end(sequence_output_arguments),
+            argument_number) == std::end(sequence_output_arguments)) {
+            freed.push_back(argument_number);
+            tags_freed.push_back(argument_number);
+          }
         }
       }
       tags_to_free.push_back(freed);
