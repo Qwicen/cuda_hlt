@@ -34,7 +34,7 @@ struct StreamWrapper {
     const bool transmit_device_to_host,
     const bool do_check,
     const bool do_simplified_kalman_filter,
-    const bool print_individual_rates,
+    const bool print_memory_usage,
     const std::string& folder_name_MC,
     const size_t reserve_mb
   );

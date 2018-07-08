@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
   uint tbb_threads = 1;
   uint number_of_repetitions = 1;
   uint verbosity = 3;
-  bool print_individual_rates = false;
+  bool print_memory_usage = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
   // By default, do_check will be true when mc_check is enabled
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
       verbosity = atoi(optarg);
       break;
     case 'p':
-      print_individual_rates = true;
+      print_memory_usage = true;
       break;
     case '?':
     case 'h':
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
-    << " print memory manager (-p): " << print_individual_rates << std::endl
+    << " print memory manager (-p): " << print_memory_usage std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
     << std::endl;
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
     transmit_device_to_host,
     do_check,
     do_simplified_kalman_filter,
-    print_individual_rates,
+    print_memory_usage,
     folder_name_MC,
     reserve_mb
   );
