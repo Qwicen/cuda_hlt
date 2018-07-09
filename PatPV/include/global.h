@@ -95,6 +95,7 @@ struct State {
   double z = 0.;
   double errX2 = 0.;
   double errY2 = 0.;
+  /*
   void linearTransportTo (double new_z) {
   const double dz = new_z - z ;
   const double dz2 = dz*dz ;
@@ -105,7 +106,7 @@ struct State {
 
 
 
-  }
+  } */
 
 
 };

@@ -63,7 +63,7 @@ bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
   {
     ++nbIter;
 
-    double halfD2Chi2DX2[6] ;
+    double halfD2Chi2DX2[6] = {0.,0.,0.,0.,0.,0.};
     XYZPoint halfDChi2DX(0.,0.,0.) ;
     
     // update cache if too far from reference position. this is the slow part.
