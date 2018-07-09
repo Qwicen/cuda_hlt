@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
       break;
     case 'e':
       folder_name_ut_hits = std::string(optarg);
+      break;
     case 'm':
       reserve_mb = atoi(optarg);
       break;
