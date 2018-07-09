@@ -11,19 +11,19 @@ The project requires a graphics card with CUDA support, CUDA 9.2 and a compiler 
 If you are working from a node with CVMFS and CentOS 7, we suggest the following setup:
 
 ```shell
-    export CPATH=/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/include:$CPATH
-    export LD_LIBRARY_PATH=/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/lib:$LD_LIBRARY_PATH
-    source /cvmfs/lhcb.cern.ch/lib/lcg/releases/gcc/7.3.0/x86_64-centos7/setup.sh
+export CPATH=/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/include:$CPATH
+export LD_LIBRARY_PATH=/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/lib:$LD_LIBRARY_PATH
+source /cvmfs/lhcb.cern.ch/lib/lcg/releases/gcc/7.3.0/x86_64-centos7/setup.sh
 ```
 
 Regardless of the OS you are running on, you can check your compiler versions as follows:
 
 ```shell
-    $ g++ --version
-    g++ (GCC) 7.3.0
+$ g++ --version
+g++ (GCC) 7.3.0
 
-    $ nvcc --version
-    Cuda compilation tools, release 9.2, V9.2.88
+$ nvcc --version
+Cuda compilation tools, release 9.2, V9.2.88
 ```
 
 You can check your compiler standard compatibility by scrolling to the `C++14 features` chart [here](https://en.cppreference.com/w/cpp/compiler_support).
