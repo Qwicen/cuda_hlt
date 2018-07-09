@@ -38,7 +38,8 @@ int run_veloUT_on_CPU (
   const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
   VeloState * host_velo_states,
   int * host_accumulated_tracks,
-  VeloTracking::Track <mc_check_enabled> *host_tracks_pinned,
+  uint* host_velo_track_hit_number_pinned,
+  VeloTracking::Hit<true>* host_velo_track_hits_pinned,   
   int * host_number_of_tracks_pinned,
   const int &number_of_events
 ) {
@@ -162,19 +163,20 @@ int run_veloUT_on_CPU (
     }
     
     // Prepare Velo tracks
-    VeloState* velo_states_event = host_velo_states + host_accumulated_tracks[i_event];
-    VeloTracking::Track<true>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
+    const int accumulated_tracks = host_accumulated_tracks[i_event];
+    VeloState* velo_states_event = host_velo_states + accumulated_tracks;
     std::vector<VeloUTTracking::TrackVelo> tracks;
     for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
       
       VeloUTTracking::TrackVelo track;
       
       VeloUTTracking::TrackUT ut_track;
-      const VeloTracking::Track<true> velo_track = tracks_event[i_track];
-      backward = (int)velo_track.backward;
-      ut_track.hitsNum = velo_track.hitsNum;
-      for ( int i_hit = 0; i_hit < velo_track.hitsNum; ++i_hit ) {
-	ut_track.LHCbIDs.push_back( velo_track.hits[i_hit].LHCbID );
+      const uint starting_hit = host_velo_track_hit_number_pinned[accumulated_tracks + i_track];
+      const uint number_of_hits = host_velo_track_hit_number_pinned[accumulated_tracks + i_track + 1] - starting_hit;
+      backward = (int)(velo_states_event[i_track].backward);
+      ut_track.hitsNum = number_of_hits;
+      for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
+	ut_track.LHCbIDs.push_back( host_velo_track_hits_pinned[starting_hit + i_hit].LHCbID );
       }
       track.track = ut_track;
       
@@ -215,7 +217,7 @@ int run_veloUT_on_CPU (
       }
       
       
-      if ( velo_track.backward ) continue;
+      if ( backward ) continue;
       tracks.push_back( track );
     }
     //debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0, " << inputHits[1].size() << " hits in layer 1, " << inputHits[2].size() << " hits in layer 2, " << inputHits[3].size() << " in layer 3 to velout" << std::endl;

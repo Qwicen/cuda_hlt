@@ -29,6 +29,7 @@ __global__ void searchByTriplet(
   const uint* module_hitStarts = dev_module_cluster_start + event_number * VeloTracking::n_modules;
   const uint* module_hitNums = dev_module_cluster_num + event_number * VeloTracking::n_modules;
   const uint hit_offset = module_hitStarts[0];
+  assert((module_hitStarts[52] - module_hitStarts[0]) < VeloTracking::max_number_of_hits_per_event);
   
   // Order has changed since SortByPhi
   const float* hit_Ys = (float*) (dev_velo_cluster_container + hit_offset);
@@ -47,13 +48,13 @@ __global__ void searchByTriplet(
   short* h2_candidates = dev_h2_candidates + 2*hit_offset;
 
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * VeloTracking::ttf_modulo;
-  uint* weak_tracks = dev_weak_tracks + hit_offset;
-  VeloTracking::TrackHits* tracklets = dev_tracklets + hit_offset;
+  uint* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
+  VeloTracking::TrackHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
   unsigned short* h1_rel_indices = dev_rel_indices + event_number * VeloTracking::max_numhits_in_module;
 
   // Initialize variables according to event number and module side
   // Insert pointers (atomics)
-  const int ip_shift = number_of_events + event_number * VeloTracking::num_atomics;
+  const int ip_shift = number_of_events + event_number * (VeloTracking::num_atomics - 1);
   uint* weaktracks_insert_pointer = (uint*) dev_atomics_storage + ip_shift;
   uint* tracklets_insert_pointer = (uint*) dev_atomics_storage + ip_shift + 1;
   uint* ttf_insert_pointer = (uint*) dev_atomics_storage + ip_shift + 2;
@@ -73,7 +74,7 @@ __global__ void searchByTriplet(
   }
   // Initialize atomics
   tracks_insert_pointer[0] = 0;
-  if (threadIdx.x < VeloTracking::num_atomics) {
+  if (threadIdx.x < (VeloTracking::num_atomics - 1)) {
     dev_atomics_storage[ip_shift + threadIdx.x] = 0;
   }
 
@@ -114,18 +115,5 @@ __global__ void searchByTriplet(
     h1_rel_indices,
     local_number_of_hits,
     hit_offset
-  );
-
-  __syncthreads();
-
-  // Process left weak tracks
-  weakTracksAdder(
-    (int*) &shared_best_fits[0],
-    weaktracks_insert_pointer,
-    tracks_insert_pointer,
-    weak_tracks,
-    tracklets,
-    tracks,
-    hit_used
   );
 }

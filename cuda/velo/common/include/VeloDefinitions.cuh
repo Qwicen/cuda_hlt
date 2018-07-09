@@ -52,18 +52,18 @@ namespace VeloTracking {
 
   // Total number of atomics required
   // This is just a constant
-  static constexpr uint num_atomics = 4;
+  static constexpr uint num_atomics = 5;
 
   // Constants for requested storage on device
-  static constexpr uint max_tracks = 2200;
+  static constexpr uint max_tracks = 1200;
   static constexpr uint max_track_size = 27;
-  static constexpr uint max_numhits_in_module = 300; 
+  static constexpr uint max_numhits_in_module = 300;
 
   // Maximum number of tracks to follow at a time
-  static constexpr uint ttf_modulo = 2200;
+  static constexpr uint ttf_modulo = 500;
 
   // High number of hits per event
-  static constexpr uint max_number_of_hits_per_event = 4000;
+  static constexpr uint max_number_of_hits_per_event = 9500;
 
   // Constants for filters
   static constexpr uint states_per_track = 3; 
@@ -197,11 +197,13 @@ namespace VeloTracking {
 // DvB: we should check whether the covariance matrix elements are needed
 // for the propagation, otherwise we don't have to store them longer than
 // the Velo scope and we could make a reduced VeloState
+// DvB: they are needed for the PV finding 
 struct VeloState { // 48 B
   float x, y, tx, ty;
   float c00, c20, c22, c11, c31, c33;
   float chi2;
   float z;
+  bool backward;
 };
 
 /**

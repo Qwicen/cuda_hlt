@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 // MC Check
-#ifdef MC_CHECK
+#if defined(MC_CHECK)
 constexpr bool mc_check_enabled = true;
 #else
 constexpr bool mc_check_enabled = false;

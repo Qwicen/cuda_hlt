@@ -1,8 +1,9 @@
 #pragma once
 
-#include "../include/Stream.cuh"
 #include "../../../main/include/Common.h"
 
+//#include "../include/Stream.cuh"
+#include "../../../checker/lib/include/TrackChecker.h"
 #include "../../../PrVeloUT/src/PrVeloUT.h"
 
 int run_veloUT_on_CPU (
@@ -11,7 +12,8 @@ int run_veloUT_on_CPU (
   const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
   VeloState * host_velo_states,
   int * host_accumulated_tracks,
-  VeloTracking::Track <mc_check_enabled> *host_tracks_pinned,
+  uint* host_velo_track_hit_number_pinned,
+  VeloTracking::Hit<true>* host_velo_track_hits_pinned,
   int * host_number_of_tracks_pinned,
   const int &number_of_events
 );

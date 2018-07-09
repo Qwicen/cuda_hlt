@@ -7,7 +7,6 @@
 #include "TrackForwarding.cuh"
 #include "TrackSeeding.cuh"
 #include "TrackSeedingFirst.cuh"
-#include "WeakTracksAdder.cuh"
 
 __global__ void searchByTriplet(
   uint32_t* dev_velo_cluster_container,
