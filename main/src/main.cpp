@@ -21,13 +21,12 @@
 #include <unistd.h>
 #include "tbb/tbb.h"
 #include "cuda_runtime.h"
-#include "../include/CudaCommon.h"
-#include "../include/Logger.h"
-#include "../include/Tools.h"
-#include "../include/Timer.h"
-#include "../../stream/sequence/include/Stream.cuh"
+#include "CudaCommon.h"
+#include "Logger.h"
+#include "Tools.h"
+#include "Timer.h"
+#include "../../stream/sequence/include/StreamWrapper.cuh"
 #include "../../stream/sequence/include/InitializeConstants.cuh"
-#include "../../x86/velo/clustering/include/Clustering.h"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
@@ -36,14 +35,15 @@ void printUsage(char* argv[]){
     << std::endl << (mc_check_enabled ? " " : " [") << "-g {folder containing .bin files with MC truth information}"
     << (mc_check_enabled ? "" : " ]")
     << std::endl << " [-n {number of files to process}=0 (all)]"
-    << std::endl << " [-t {number of threads / streams}=3]"
-    << std::endl << " [-r {number of repetitions per thread / stream}=10]"
+    << std::endl << " [-t {number of threads / streams}=1]"
+    << std::endl << " [-r {number of repetitions per thread / stream}=1]"
     << std::endl << " [-a {transmit host to device}=1]"
     << std::endl << " [-b {transmit device to host}=1]"
     << std::endl << " [-c {run checkers}=0]"
     << std::endl << " [-k {simplified kalman filter}=0]"
+    << std::endl << " [-m {reserve Megabytes}=1024]"
     << std::endl << " [-v {verbosity}=3 (info)]"
-    << std::endl << " [-p (print rates)]"
+    << std::endl << " [-p (print memory usage)]"
     << std::endl;
 }
 
@@ -52,24 +52,28 @@ int main(int argc, char *argv[])
   std::string folder_name_raw;
   std::string folder_name_MC = "";
   uint number_of_files = 0;
-  uint tbb_threads = 3;
-  uint number_of_repetitions = 10;
+  uint tbb_threads = 1;
+  uint number_of_repetitions = 1;
   uint verbosity = 3;
-  bool print_individual_rates = false;
+  bool print_memory_usage = false;
   bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
   // By default, do_check will be true when mc_check is enabled
   bool do_check = mc_check_enabled;
   bool do_simplified_kalman_filter = false;
+  size_t reserve_mb = 1024;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:g:n:t:r:pha:b:d:v:c:k:")) != -1) {
+  while ((c = getopt(argc, argv, "f:g:n:t:r:pha:b:d:v:c:k:m:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_raw = std::string(optarg);
       break;
     case 'g':
       folder_name_MC = std::string(optarg);
+      break;
+    case 'm':
+      reserve_mb = atoi(optarg);
       break;
     case 'n':
       number_of_files = atoi(optarg);
@@ -96,7 +100,7 @@ int main(int argc, char *argv[])
       verbosity = atoi(optarg);
       break;
     case 'p':
-      print_individual_rates = true;
+      print_memory_usage = true;
       break;
     case '?':
     case 'h':
@@ -121,7 +125,7 @@ int main(int argc, char *argv[])
   }
 
   // Set verbosity level
-  std::cout << std::fixed << std::setprecision(6);
+  std::cout << std::fixed << std::setprecision(2);
   logger::ll.verbosityLevel = verbosity;
 
   // Get device properties
@@ -137,7 +141,8 @@ int main(int argc, char *argv[])
     << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
-    << " print rates (-p): " << print_individual_rates << std::endl
+    << " reserve MB (-m): " << reserve_mb << std::endl
+    << " print memory usage (-p): " << print_memory_usage std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
     << std::endl;
@@ -174,32 +179,22 @@ int main(int argc, char *argv[])
   initializeConstants();
 
   // Create streams
+  StreamWrapper stream_wrapper;
   const auto number_of_events = velopix_event_offsets.size() - 1;
-  std::vector<Stream> streams (tbb_threads);
-  for (int i=0; i<streams.size(); ++i) {
-    streams[i].initialize(
-      velopix_events,
-      velopix_event_offsets,
-      geometry,
-      number_of_events,
-      transmit_host_to_device,
-      transmit_device_to_host,
-      do_check,
-      do_simplified_kalman_filter,
-      print_individual_rates,
-      folder_name_MC,
-      i
-    );
-
-    // Memory consumption
-    size_t free_byte ;
-    size_t total_byte ;
-    cudaCheck( cudaMemGetInfo( &free_byte, &total_byte ) );
-    float free_percent = (float)free_byte / total_byte * 100;
-    float used_percent = (float)(total_byte - free_byte) / total_byte * 100;
-    verbose_cout << "GPU memory: " << free_percent << " percent free, "
-      << used_percent << " percent used " << std::endl;
-  }
+  stream_wrapper.initialize_streams(
+    tbb_threads,
+    velopix_events,
+    velopix_event_offsets,
+    geometry,
+    number_of_events,
+    transmit_host_to_device,
+    transmit_device_to_host,
+    do_check,
+    do_simplified_kalman_filter,
+    print_memory_usage,
+    folder_name_MC,
+    reserve_mb
+  );
   
   // Attempt to execute all in one go
   Timer t;
@@ -207,8 +202,8 @@ int main(int argc, char *argv[])
     static_cast<uint>(0),
     static_cast<uint>(tbb_threads),
     [&] (uint i) {
-      auto& s = streams[i];
-      s(
+      stream_wrapper.run_stream(
+        i,
         host_velopix_events_pinned,
         host_velopix_event_offsets_pinned,
         velopix_events.size(),

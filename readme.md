@@ -4,48 +4,10 @@ CUDA HLT
 Welcome to the CUDA High Level Trigger project, an attempt to provide
 a full HLT1 realization on GPU.
 
-How to create the input
------------------------
-
-In the current development stage, the input is created by running Brunel. 
-On one hand, the raw bank / hit information is written to binary files; 
-on the other hand, the MC truth information is written to binary files to be 
-able to run the checker. Use the branch 
-dovombru_output_for_CUDA_HLT1 (branched from Brunel v53r1)
-of the Rec repository to create the input by following these steps on lxplus:
-
-Compilation:
-
-    source /cvmfs/lhcb.cern.ch/group_login.sh
-    lb-dev Brunel/v53r1
-    cd BrunelDev_v53r1
-    git lb-use Rec
-    git lb-checkout Rec/dovombru_output_for_CUDA_HLT1 Pr/PrPixel
-    git lb-checkout Rec/dovombru_output_for_CUDA_HLT1 Pr/PrEventDumper
-    make
-    
-Copy the files `options.py`, `upgrade-minbias-magdown.py` and `upgrade-minbias-magdown.xml`
-from the Brunel_config directory of this repository into the BrunelDev_v53r1 
-directory on lxplus, then you can run.
-    
-Running:
-    
-    mkdir velopix_raw
-    mkdir velopix_MC
-    ./run gaudirun.py options.py upgrade-minbias-magdown.py
-    
-One file per event is created and stored in the velopix_raw and velopix_MC 
-directories, which need to be copied to folders in the CUDA_HLT1 project
-to be used as input there. 
-    
-Caution with the bsphipi data also provided in the Brunel_config directory. The
-occupancies are about twice as high. Currently, the velo clustering algorithm can 
-not handle these high occupancies.
-
 How to run it
 -------------
 
-The project requires a graphics card with CUDA support.
+The project requires a graphics card with CUDA support, a compiler supporting C++14 and CUDA 9.2.
 The build process doesn't differ from standard cmake projects:
 
     mkdir build
@@ -55,7 +17,7 @@ The build process doesn't differ from standard cmake projects:
 
 There are some cmake options to configure the build process:
 
-   * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DBUILD_TYPE=Debug ..`
+   * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
    * The option to run the validation, on by default, can be turned off with `-DMC_CHECK=Off`. 
    
 Some binary input files are included with the project for testing.
@@ -63,7 +25,7 @@ A run of the program with no arguments will let you know the basic options:
 
     Usage: ./cu_hlt
      -f {folder containing .bin files with raw bank information}
-     [-g {folder containing .bin files with MC truth information}]
+     -g {folder containing .bin files with MC truth information}
      [-n {number of files to process}=0 (all)]
      [-t {number of threads / streams}=3]
      [-r {number of repetitions per thread / stream}=10]
@@ -76,18 +38,18 @@ A run of the program with no arguments will let you know the basic options:
 
 Here are some example run options:
 
-    # Run all input files once
-    ./cu_hlt -f ../minbias_raw
+    # Run all input files once with the tracking validation
+    ./cu_hlt -f ../velopix_minbias_raw -g ../velopix_minbias_MC
 
+    # Note: For the examples below, cu_hlt must have been compiled with -DMC_CHECK=Off
     # Run a total of 1000 events, round robin over the existing ones
-    ./cu_hlt -f ../minbias_raw -n 1000
+    ./cu_hlt -f ../velopix_minbias_raw -n 1000
 
     # Run four streams, each with 4000 events, 20 repetitions
-    ./cu_hlt -f ../minbias_raw -t 4 -n 4000 -r 20
+    ./cu_hlt -f ../velopix_minbias_raw -t 4 -n 4000 -r 20
 
     # Run twelve streams, each with 3500 events, 40 repetitions
-    ./cu_hlt -f ../minbias_raw -n 3500 -t 12 -r 40
+    ./cu_hlt -f ../velopix_minbias_raw -n 3500 -t 12 -r 40
 
-    # Run clustering and Velopix efficiency validations, no repetitions or multiple threads needed
-    # Note: cu_hlt must have been compiled with -DMC_CHECK
-    ./cu_hlt -f ../minbias_raw -g ../minbias_MC -n 10 -t 1 -r 1 -c 1
+    # Run one stream and print all memory allocations
+    ./cu_hlt -f ../velopix_minbias_raw -n 5000 -t 1 -r 1 -p

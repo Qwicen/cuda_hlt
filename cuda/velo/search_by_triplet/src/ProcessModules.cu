@@ -63,6 +63,7 @@ __device__ void processModules(
 
   // Prepare forwarding - seeding loop
   uint last_ttf = 0;
+  uint last_weak_tracks = 0;
   first_module -= stride;
 
   while (first_module >= 4) {
@@ -85,6 +86,27 @@ __device__ void processModules(
 
     // Reset atomics
     local_number_of_hits[0] = 0;
+
+    const auto prev_weak_tracks = last_weak_tracks;
+    last_weak_tracks = weaktracks_insert_pointer[0];
+    const auto diff_weak_tracks = last_weak_tracks - prev_weak_tracks;
+
+    // Store weak tracks
+    for (int i=0; i<(diff_weak_tracks + blockDim.x - 1) / blockDim.x; ++i) {
+      const auto rel_weaktrack_no = blockDim.x * i + threadIdx.x;
+      if (rel_weaktrack_no < diff_weak_tracks) {
+        const auto weaktrack_no = (prev_weak_tracks + rel_weaktrack_no) % VeloTracking::ttf_modulo;;
+        const TrackHits t = tracklets[weak_tracks[weaktrack_no]];
+        const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
+
+        // Store them in the tracks bag
+        if (!any_used) {
+          const uint trackno = atomicAdd(tracks_insert_pointer, 1);
+          assert(trackno < VeloTracking::max_tracks);
+          tracks[trackno] = t;
+        }
+      }
+    }
 
     // Due to module data loading
     __syncthreads();
@@ -150,9 +172,16 @@ __device__ void processModules(
       // Here we are only interested in three-hit tracks,
       // to mark them as "doubtful"
       if (track_flag) {
-        const auto weakP = atomicAdd(weaktracks_insert_pointer, 1);
-        assert(weakP < number_of_hits);
-        weak_tracks[weakP] = trackno;
+        // Store weak tracks if no hits are used
+        const TrackHits t = tracklets[trackno];
+        const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
+
+        // Store them in the tracks bag
+        if (!any_used) {
+          const uint trackno = atomicAdd(tracks_insert_pointer, 1);
+          assert(trackno < VeloTracking::max_tracks);
+          tracks[trackno] = t;
+        }
       }
     }
   }

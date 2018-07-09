@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-project(cu_hlt CXX)
+project(cu_hlt C CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}) # for find_package
 
@@ -10,7 +10,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 MESSAGE(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=native")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
@@ -37,15 +37,18 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
   set(CUDA_BUILD_TYPE "-O0\;-G\;-g\;-DDEBUG\;")
 endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 
-set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=64;")
+set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=63;")
 
 add_subdirectory(cuda)
 add_subdirectory(stream)
 add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
 
+# Include directory
+include_directories(main/include)
+
 # Files from source directories
-file(GLOB main_sources "main/src/*cpp")
+file(GLOB main_sources "main/src/*")
 
 cuda_add_executable(cu_hlt ${main_sources})
 

@@ -1,4 +1,4 @@
-#include "../include/Tools.h"
+#include "Tools.h"
 #include "../../checker/lib/include/velopix-input-reader.h"
 #include "../../checker/lib/include/TrackChecker.h"
 #include "../../checker/lib/include/MCParticle.h"
@@ -428,32 +428,30 @@ void call_PrChecker(
 }
 
 void checkTracks(
-  Track<true>* host_tracks_pinned,
-  int* host_accumulated_tracks,
   int* host_number_of_tracks_pinned,
+  int* host_accumulated_tracks,
+  uint* host_velo_track_hit_number_pinned,
+  Hit<true>* host_velo_track_hits_pinned,
   const int number_of_events,
   const std::string& folder_name_MC
 ) {  
   /* Tracks to be checked, save in format for checker */
-  std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
-  for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
-    Track<true>* tracks_event = host_tracks_pinned + host_accumulated_tracks[i_event];
-    trackChecker::Tracks tracks; // all tracks within one event
-    
-    for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+  std::vector<trackChecker::Tracks> all_tracks; // all tracks from all events
+  for (uint i_event=0; i_event<number_of_events; i_event++) {
+    trackChecker::Tracks tracks; // all tracks in one event
+    const int accumulated_tracks = host_accumulated_tracks[i_event];
+    for (uint i_track=0; i_track<host_number_of_tracks_pinned[i_event]; ++i_track) {
       trackChecker::Track t;
-      const Track<true> track = tracks_event[i_track];
-      
-      for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
-        Hit<true> hit = track.hits[ i_hit ];
-        LHCbID lhcb_id( hit.LHCbID );
-        t.addId( lhcb_id );
-      } // hits
-      tracks.push_back( t );
-    } // tracks
-    
+      const uint starting_hit = host_velo_track_hit_number_pinned[accumulated_tracks + i_track];
+      const uint number_of_hits = host_velo_track_hit_number_pinned[accumulated_tracks + i_track + 1] - starting_hit;
+
+      for (uint i_hit=0; i_hit<number_of_hits; ++i_hit) {
+        t.addId(host_velo_track_hits_pinned[starting_hit + i_hit].LHCbID);
+      }
+      tracks.push_back(t);
+    }
     all_tracks.emplace_back( tracks );
-  } // events
+  }
 
   call_PrChecker( all_tracks, folder_name_MC );
 }
