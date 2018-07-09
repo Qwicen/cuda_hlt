@@ -67,7 +67,7 @@ Inside the `test` folder we will create the following structure:
 │           └── Saxpy.cu
 ```
 
-The newly created `test/CMakeLists.txt` file should reflect the project we are creating. We can do so by populating it like so:
+The newly created `test/CMakeLists.txt` file should reflect the project we are creating. We can do that by populating it like so:
 
 ```cmake=
 file(GLOB test_saxpy "saxpy/src/*cu")
@@ -215,6 +215,18 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_x] = "dev_x";
   a[arg::dev_y] = "dev_y";
   return a;
+}
+```
+
+Optionally (2), some types are required to live throughout the whole sequence since its creation. An argument can be specified to live the whole sequence and never leave memory space by adding it to `SequenceSetup.cu`, function `get_sequence_output_arguments`:
+
+```clike
+std::vector<int> get_sequence_output_arguments() {
+  return {
+    arg::dev_atomics_storage,
+    arg::dev_velo_track_hit_number,
+    arg::dev_velo_track_hits
+  };
 }
 ```
 
