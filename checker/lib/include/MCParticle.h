@@ -13,7 +13,7 @@
 // Monte Carlo information
 struct MCParticle {
   uint32_t m_key;
-  uint32_t m_id;
+  int m_id;
   float m_p;
   float m_pt;
   float m_eta;
@@ -32,7 +32,7 @@ struct MCParticle {
   uint32_t key() const noexcept
   { return m_key; }
 
-  uint32_t pid() const noexcept
+  int pid() const noexcept
   { return m_id; }
 
   float p() const noexcept
