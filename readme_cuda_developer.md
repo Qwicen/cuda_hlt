@@ -218,7 +218,7 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
 }
 ```
 
-Optionally (2), some types are required to live throughout the whole sequence since its creation. An argument can be specified to live the whole sequence and never leave memory space by adding it to `SequenceSetup.cu`, function `get_sequence_output_arguments`:
+Optionally (2), some types are required to live throughout the whole sequence since its creation. An argument can be specified to be persistent in memory by adding it to `SequenceSetup.cu`, function `get_sequence_output_arguments`:
 
 ```clike
 std::vector<int> get_sequence_output_arguments() {
