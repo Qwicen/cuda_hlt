@@ -20,6 +20,85 @@
 
 
 using namespace std;
+
+
+template <typename C>
+void removeTracks(std::vector< Track*>& tracks,
+                                  C& tracks2remove) 
+{
+
+
+  for( Track* trk : tracks2remove) {
+    auto i = std::find(tracks.begin(),tracks.end(), trk);
+    if ( i != tracks.end()) tracks.erase(i);
+  }
+
+
+}
+
+/*
+XYZPoint& seedPoint,
+              std::vector<Track*>& rTracks,
+             Vertex& vtx,
+             std::vector<Track*>& tracks2remove
+
+*/
+bool reconstructMultiPVFromTracks( std::vector< Track*>& tracks2use,
+                                                       std::vector<Vertex>& outvtxvec) 
+{
+  
+
+  auto rtracks = tracks2use;
+
+  outvtxvec.clear();
+
+
+  PVSeedTool seedtool;
+  double m_beamSpotX = 0.;
+  double m_beamSpotY = 0.;
+  XYZPoint beamspot{m_beamSpotX, m_beamSpotY, 0.};
+  
+
+    
+
+
+  int nvtx_before = -1;
+  int nvtx_after  =  0;
+  //for (int i = 0; i < 5 ; i++) {
+  while ( nvtx_after > nvtx_before ) {
+    nvtx_before = outvtxvec.size();
+    // reconstruct vertices
+
+
+  AdaptivePV3DFitter fitter;
+  std::vector<XYZPoint> seeds = seedtool.getSeeds(rtracks, beamspot);
+    for ( auto seed : seeds) {
+      Vertex recvtx;
+
+
+      std::vector< Track*> tracks2remove;
+      
+      // fitting
+      bool scvfit = fitter.fitVertex( seed, rtracks, recvtx, tracks2remove );
+      if (!scvfit) continue;
+      
+      
+
+      
+      outvtxvec.push_back(recvtx);
+      removeTracks(rtracks, tracks2remove);
+    }//iterate on seeds
+    nvtx_after = outvtxvec.size();
+  }//iterate on vtx
+
+  return true;
+
+}
+
+
+
+
+
 void Test_Selector::Begin(TTree * /*tree*/)
 {
    // The Begin() function is called at the start of the query.
@@ -112,8 +191,20 @@ void Test_Selector::GetVeloTracks(int evtId) {
   AdaptivePV3DFitter fitter;
   std::vector<Track*> tracks_to_remove;
   Vertex vtx;
-  for(auto seed : seeds) {cout << seed_tracks.size() << endl;
-  cout <<"success: " << fitter.fitVertex(seed, seed_tracks, vtx, tracks_to_remove) << endl;}
+  for(auto seed : seeds) {
+    cout <<" seed size:" << seed_tracks.size() << endl;
+    cout <<" seed size:" << seeds.size() << endl;
+  cout <<"success: " << fitter.fitVertex(seed, seed_tracks, vtx, tracks_to_remove) << endl;
+  cout << "found vertex: " << vtx.pos.x << " " << vtx.pos.y << " " << vtx.pos.z << endl;
+  //for (auto vertex_track : vtx.tracks) {
+    //     }
+  }
+
+   std::vector<Vertex> outvtxvec;
+  cout << "begin secpnd: " << endl;
+   cout <<" seed size:" << seed_tracks.size() << endl;
+  reconstructMultiPVFromTracks( seed_tracks, outvtxvec) ;
+  for (auto outvtx : outvtxvec) cout << "found vertex: " << outvtx.pos.x << " " << outvtx.pos.y << " " << outvtx.pos.z << endl;
   
 
   //return states;
