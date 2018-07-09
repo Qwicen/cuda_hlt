@@ -359,7 +359,7 @@ void printTracks(
 void check_roughly(
   const trackChecker::Tracks& tracks,
   const std::vector<uint32_t> hit_IDs,
-  const std::vector<VelopixEvent::MCP> mcps
+  const MCParticles mcps
 ) {
   int matched = 0;
   for ( auto track : tracks ) {
@@ -369,9 +369,9 @@ void check_roughly(
       uint32_t id_int = uint32_t( id );
       // find associated IDs from mcps
       for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
-        VelopixEvent::MCP part = mcps[i_mcp];
-        auto it = find( part.hits.begin(), part.hits.end(), id_int );
-        if ( it != part.hits.end() ) {
+        MCParticle part = mcps[i_mcp];
+        auto it = std::find( part.m_hits.begin(), part.m_hits.end(), id_int );
+        if ( it != part.m_hits.end() ) {
           mcp_ids.push_back( i_mcp );
         }
       }
@@ -392,8 +392,8 @@ void check_roughly(
   }
 
   int long_tracks = 0;
-  for ( VelopixEvent::MCP part : mcps ) {
-    if ( part.islong )
+  for (auto& part : mcps) {
+    if (part.isLong())
       long_tracks++;
   }
   
@@ -414,7 +414,7 @@ void call_PrChecker(
     debug_cout << "Event " << (evnum+1) << std::endl;
     const auto& mcps = ev.mcparticles();
     const std::vector<uint32_t>& hit_IDs = ev.hit_IDs;
-    const std::vector<VelopixEvent::MCP>& mcps_vector = ev.mcps;
+    const MCParticles& mcps_vector = ev.mcps;
     MCAssociator mcassoc(mcps);
 
     debug_cout << "Found " << all_tracks[evnum].size() << " reconstructed tracks" <<
