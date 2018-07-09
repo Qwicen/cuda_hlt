@@ -260,7 +260,7 @@ void printTracks(
 void check_roughly(
   const trackChecker::Tracks& tracks,
   const std::vector<uint32_t> hit_IDs,
-  const std::vector<VelopixEvent::MCP> mcps
+  const MCParticles mcps
 ) {
   int matched = 0;
   for ( auto track : tracks ) {
@@ -270,9 +270,9 @@ void check_roughly(
       uint32_t id_int = uint32_t( id );
       // find associated IDs from mcps
       for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
-        VelopixEvent::MCP part = mcps[i_mcp];
-        auto it = find( part.hits.begin(), part.hits.end(), id_int );
-        if ( it != part.hits.end() ) {
+        MCParticle part = mcps[i_mcp];
+        auto it = std::find( part.m_hits.begin(), part.m_hits.end(), id_int );
+        if ( it != part.m_hits.end() ) {
           mcp_ids.push_back( i_mcp );
         }
       }
@@ -293,15 +293,13 @@ void check_roughly(
   }
 
   int long_tracks = 0;
-  for ( VelopixEvent::MCP part : mcps ) {
-    if ( part.islong )
+  for (auto& part : mcps) {
+    if (part.isLong())
       long_tracks++;
   }
   
   printf("efficiency = %f \n", float(matched) / long_tracks );
 }
-
-
 
 std::vector< trackChecker::Tracks > prepareTracks(
   uint* host_velo_track_hit_number_pinned,

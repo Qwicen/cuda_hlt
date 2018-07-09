@@ -1,16 +1,27 @@
+/** @file velopix-input-reader.h
+ *
+ * @brief a reader of velopix inputs
+ *
+ * @author Rainer Schwemmer
+ * @author Daniel Campora
+ * @author Manuel Schiller
+ * @date 2018-02-18
+ */
+
 #pragma once
 
 #include <string>
 #include <cstdint>
 #include <vector>
+#include <algorithm>
 
-#include "VeloPixels.h"
 #include "MCParticle.h"
 
 #include "../../../main/include/Common.h"
 #include "../../../main/include/Logger.h"
 #include "../../../main/include/InputTools.h"
 #include "TrackChecker.h"
+#include "MCParticle.h"
 
 class VelopixEvent {
 private:
@@ -40,28 +51,7 @@ public:
     std::vector<float> hit_Xs;
     std::vector<float> hit_Ys;
     std::vector<float> hit_Zs;
-
-    // Monte Carlo information
-    struct MCP {
-        uint32_t key;
-        uint32_t id;
-        float p;
-        float pt;
-        float eta;
-        float phi;
-        bool islong;
-        bool isdown;
-        bool isvelo;
-        bool isut;
-        bool strangelong;
-        bool strangedown;
-        bool fromb;
-        bool fromd;
-        uint32_t numHits;
-        std::vector<uint32_t> hits;
-    };
-
-    std::vector<MCP> mcps;
+    MCParticles mcps;
 
     // Constructor
     VelopixEvent() {};
@@ -69,8 +59,6 @@ public:
 
     void print() const;
 
-    /// get hits into a format we like (should ultimately go away, or just be a view)
-    VeloPixels soaHits() const;
     MCParticles mcparticles() const;
 };
 
@@ -101,7 +89,7 @@ void callPrChecker(
 
   for (const auto& ev: events) {
     const auto& mcps = ev.mcparticles();
-    const std::vector<VelopixEvent::MCP>& mcps_vector = ev.mcps;
+    const std::vector<MCParticle>& mcps_vector = ev.mcps;
     MCAssociator mcassoc(mcps);
 
     trackChecker(all_tracks[evnum], mcassoc, mcps);

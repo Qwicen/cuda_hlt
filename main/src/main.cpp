@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
   // Get device properties
   cudaDeviceProp device_properties;
   cudaCheck(cudaGetDeviceProperties(&device_properties, 0));
-
+  
   // Show call options
   std::cout << "Requested options:" << std::endl
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl

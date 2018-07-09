@@ -25,8 +25,7 @@
 class MCAssociator
 {
     private:
-        using LHCbIDWithIndex = std::pair<
-            LHCbID, MCParticles::size_type>;
+        using LHCbIDWithIndex = std::pair<LHCbID, uint>;
         using AssocMap = std::vector<LHCbIDWithIndex>;
 
         /// internal structure with index into particles and weight

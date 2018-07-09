@@ -13,8 +13,6 @@
 #include <array>
 #include <cstdint>
 
-#include "boost/range/iterator_range.hpp"
-
 #include "LHCbID.h"
 
 namespace trackChecker {

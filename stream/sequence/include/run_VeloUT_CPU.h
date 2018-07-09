@@ -2,9 +2,9 @@
 
 #include "../../../main/include/Common.h"
 
-//#include "../include/Stream.cuh"
 #include "../../../checker/lib/include/TrackChecker.h"
 #include "../../../PrVeloUT/src/PrVeloUT.h"
+#include "../../../main/include/Tools.h"
 
 int run_veloUT_on_CPU (
   std::vector< trackChecker::Tracks > * ut_tracks_events,

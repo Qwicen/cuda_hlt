@@ -193,25 +193,26 @@ int run_veloUT_on_CPU (
       z = track.state.z;
       // study (sign of) (dr/dz) -> track moving away from beamline?
       // drop 1/sqrt(x^2+y^2) to avoid sqrt calculation, no effect on sign
-      float dx = velo_track.hits[velo_track.hitsNum - 1].x - velo_track.hits[0].x;
-      float dy = velo_track.hits[velo_track.hitsNum - 1].y - velo_track.hits[0].y;
-      float dz = velo_track.hits[velo_track.hitsNum - 1].z - velo_track.hits[0].z;
-      drdz = velo_track.hits[0].x * dx/dz + velo_track.hits[0].y * dy/dz;
+      const uint last_hit = starting_hit + number_of_hits - 1;
+      float dx = host_velo_track_hits_pinned[last_hit].x - host_velo_track_hits_pinned[starting_hit].x;
+      float dy = host_velo_track_hits_pinned[last_hit].y - host_velo_track_hits_pinned[starting_hit].y;
+      float dz = host_velo_track_hits_pinned[last_hit].z - host_velo_track_hits_pinned[starting_hit].z;
+      drdz = host_velo_track_hits_pinned[starting_hit].x * dx/dz + host_velo_track_hits_pinned[starting_hit].y * dy/dz;
       
-      first_x = velo_track.hits[0].x;
-      first_y = velo_track.hits[0].y;
-      first_z = velo_track.hits[0].z;
-      last_x = velo_track.hits[velo_track.hitsNum-1].x;
-      last_y = velo_track.hits[velo_track.hitsNum-1].y;
-      last_z = velo_track.hits[velo_track.hitsNum-1].z;
+      first_x = host_velo_track_hits_pinned[starting_hit].x;
+      first_y = host_velo_track_hits_pinned[starting_hit].y;
+      first_z = host_velo_track_hits_pinned[starting_hit].z;
+      last_x = host_velo_track_hits_pinned[last_hit].x;
+      last_y = host_velo_track_hits_pinned[last_hit].y;
+      last_z = host_velo_track_hits_pinned[last_hit].z;
       
       t_velo_states->Fill();
       
       /* Get hits on track */
-      for ( int i_hit = 0; i_hit < velo_track.hitsNum; ++i_hit ) {
-	x_hit = velo_track.hits[i_hit].x;
-	y_hit = velo_track.hits[i_hit].y;
-	z_hit = velo_track.hits[i_hit].z;
+      for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
+	x_hit = host_velo_track_hits_pinned[starting_hit + i_hit].x;
+	y_hit = host_velo_track_hits_pinned[starting_hit + i_hit].y;
+	z_hit = host_velo_track_hits_pinned[starting_hit + i_hit].z;
 	
 	t_track_hits->Fill();
       }
