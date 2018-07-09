@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
-    << " print memory usage (-p): " << print_memory_usage << std::endl
+    << " print memory usage (-p): " << print_memory_usage std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
     << std::endl;

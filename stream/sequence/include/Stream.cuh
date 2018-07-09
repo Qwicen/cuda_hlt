@@ -67,7 +67,7 @@ struct Stream {
     const bool param_transmit_device_to_host,
     const bool param_do_check,
     const bool param_do_simplified_kalman_filter,
-    const bool param_print_individual_rates,
+    const bool param_print_memory_usage,
     const std::string& param_folder_name_MC,
     const size_t param_reserve_mb,
     const uint param_stream_number
