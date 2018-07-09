@@ -184,8 +184,7 @@ public :
    virtual TList  *GetOutputList() const { return fOutput; }
    virtual void    SlaveTerminate();
    virtual void    Terminate();
-   void GetUTVeloTree(int evtId);
-   std::vector<state_t> GetVeloTracks();
+   void GetVeloTracks(int evtId);
 
    // ClassDef(Test_Selector,0);  // <-------- THe MakeSelector make this line, comment it out when creating the class
 };

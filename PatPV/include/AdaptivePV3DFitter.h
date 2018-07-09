@@ -2,8 +2,9 @@
 #ifndef ADAPTIVE_H
 #define ADAPTIVE_H
 
-#include "definitions.h"
+//#include "definitions.h"
 #include "AdaptivePVTrack.h"
+
 
 /*
 struct State {

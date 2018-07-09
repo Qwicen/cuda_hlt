@@ -69,7 +69,7 @@ int main(int ac, const char** av){
     std::cout<< "Begin" << std::endl;
     looper->Begin( tree);
     std::cout<< "Process" << std::endl;
-    looper->GetUTVeloTree(evtId);
+    looper->GetVeloTracks(evtId);
 
 
     //the idea is to have a kind of

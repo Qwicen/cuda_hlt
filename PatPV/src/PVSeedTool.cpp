@@ -257,8 +257,8 @@ double PVSeedTool::zCloseBeam( Track* track, const XYZPoint& beamspot) const {
   XYZPoint tpoint = track->position();
   XYZPoint tdir = track->slopes();
 
-  double wx = ( 1. + tdir.x * tdir.x ) / track->firstState().errX2;
-  double wy = ( 1. + tdir.y * tdir.y ) / track->firstState().errY2;
+  double wx = ( 1. + tdir.x * tdir.x ) / track->firstState().covXX;
+  double wy = ( 1. + tdir.y * tdir.y ) / track->firstState().covYY;
 
   double x0 = tpoint.x - tpoint.z * tdir.x - beamspot.x;
   double y0 = tpoint.y - tpoint.z * tdir.y - beamspot.y;

@@ -2,7 +2,7 @@
 #define DEFINITIONS_H
 
 #include <vector>
-
+#include "global.h"
 
 // auxiliary class for searching of clusters of tracks
 struct vtxCluster final {
@@ -42,6 +42,8 @@ struct State {
   z = new_z;
 
 
+
+
   }
 
 
@@ -50,8 +52,8 @@ struct State {
 //typedef std::vector<State> Track;
 class Track {
 public:
-  std::vector<State> states;
-  State firstState() {
+  std::vector<state_t> states;
+  state_t firstState() {
     return states.at(0);
   }
   XYZPoint slopes() {

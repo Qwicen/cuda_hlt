@@ -41,56 +41,8 @@ void Test_Selector::SlaveBegin(TTree * /*tree*/)
 }
 
 
-std::vector<state_t> Test_Selector::GetVeloTracks() { 
- //---> loop over the entries[mcparticles] { 
-  // ---> loop over the VeloHits associated to the mcparticle of interest (filter it eventually : only reconstructible velo+ut tracks or use only long ...free to chose) 
-  //----> fit the set of velo hits and make a track state
 
-  Long64_t maxEntries = fChain->GetTree()->GetEntries();
-  vector<track_t> velo_tracks;
-  vector<state_t> states;
-  //cout << "start event loop" << endl;
-  for(Long64_t entry = 0; entry< maxEntries ; ++entry){
-    fChain->GetTree()->GetEntry(entry);
-    if( p>0){
-      //for p>0 all MCParticles with at least 1 hit in one of the sub-detectors
-      track_t track;
-      //cout << "getting hit" << endl;
-      //cout << "size " << (*Velo_x).size() << " " << Velo_x->size() << " " << (*Velo_x).at(0) <<  endl;
-      vector<const hit_t * > hit_vector;
-      //get all Velo hits for one MC particle
-      for(int index = 0; index < Velo_x->size(); index++) {
-        hit_t * hit = new hit_t;
-        hit->x = Velo_x->at(index);
-        hit->y = Velo_y->at(index);
-        hit->z = Velo_z->at(index);
-        //cout << Velo_z->at(index) << endl;
-        hit_vector.push_back(hit);
-      }
-      //apply Kalman fit
-      //cout << "got hit" << endl;
-      track.hits = hit_vector;
-      track.key = key;
-      state_t state;
-      fitKalman(track, state, 1);
-      finalizeKalman(state);
-      state.key = track.key;
-      cout << state.x << " " << state.y << " " << state.z << " " << state.key<<endl;  
-      states.push_back(state);
-
-    }
-  }
-  return states;
-}
-
-
-void Test_Selector::GetUTVeloTree(int evtId) { 
-
- 
-
-
-  
-  
+void Test_Selector::GetVeloTracks(int evtId) { 
   
   
 
@@ -114,6 +66,7 @@ void Test_Selector::GetUTVeloTree(int evtId) {
         hit->x = Velo_x->at(index);
         hit->y = Velo_y->at(index);
         hit->z = Velo_z->at(index);
+        //cout << hit->x << " " << hit->y << " " << hit->z<< endl;
         //cout << Velo_z->at(index) << endl;
         hit_vector.push_back(hit);
       }
@@ -121,7 +74,9 @@ void Test_Selector::GetUTVeloTree(int evtId) {
       //cout << "got hit" << endl;
       track.hits = hit_vector;
       state_t state;
-      fitKalman(track, state, 1);
+
+      //go from last hit to hit closest to velo
+      fitKalman(track, state, -1);
       finalizeKalman(state);
       //cout << state.x << " " << state.y << " " << state.z <<endl;  
       states.push_back(state);
@@ -133,27 +88,32 @@ void Test_Selector::GetUTVeloTree(int evtId) {
       seed_state.z  = state.z;
       seed_state.errX2 = state.covXX;
       seed_state.errY2 = state.covYY;
-      cout<<"cov: " << seed_state.errX2 << " " << seed_state.errY2 << endl;
+      //cout<<"cov: " << seed_state.errX2 << " " << seed_state.errY2 << endl;
       seed_states.push_back(seed_state);
       Track * seed_track = new Track();
-      std::vector<State> just_state;
-      just_state.push_back(seed_state);
+      std::vector<state_t> just_state;
+      just_state.push_back(state);
       seed_track->states = just_state;
       seed_tracks.push_back(seed_track);
+
+      //std::cout<<"before transport: " << state.x << " " << state.y << " " << state.z << " " << state.covXX << " " << state.covYY << std::endl;
+      //state.linearTransportTo(0.);
+      //std::cout<<"after transport: " << state.x << " " << state.y << " " << state.z << " " << state.covXX << " " << state.covYY << std::endl;
+
     }
 
   }
 
   PVSeedTool seedtool;
   XYZPoint beamspot{0.,0.,0.};
-  //auto seeds = seedtool.getSeeds(seed_tracks, beamspot);
-  //for(auto seed : seeds) cout << seed.x << " " << seed.y << " " << seed.z<< endl;
+  auto seeds = seedtool.getSeeds(seed_tracks, beamspot);
+  for(auto seed : seeds) cout << seed.x << " " << seed.y << " " << seed.z<< endl;
 
   AdaptivePV3DFitter fitter;
   std::vector<Track*> tracks_to_remove;
   Vertex vtx;
-  //for(auto seed : seeds) {cout << seed_tracks.size() << endl;
-  //cout <<fitter.fitVertex(seed, seed_tracks, vtx, tracks_to_remove) << endl;}
+  for(auto seed : seeds) {cout << seed_tracks.size() << endl;
+  cout <<"success: " << fitter.fitVertex(seed, seed_tracks, vtx, tracks_to_remove) << endl;}
   
 
   //return states;

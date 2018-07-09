@@ -1,4 +1,5 @@
-#include "definitions.h"
+//#include "definitions.h"
+#include "global.h"
 
 
 
@@ -18,7 +19,7 @@
   private:
     double m_weight ;
      Track* m_track ;
-    State m_state ;
+    state_t m_state ;
     //express symmetrical amtrices as arrays in in packed representation element m(i,j) (j <= i) is supposed to be in array element  (i * (i + 1)) / 2 + j
 
 

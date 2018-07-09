@@ -38,16 +38,16 @@ bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
   for( const auto& track : rTracks ) {
     
       pvTracks.emplace_back( *track, refpos );
-      std::cout << "pos state x: " << track->position().x << " " << refpos.x << std::endl;
-      std::cout << "pos state y: " << track->position().y << " " << refpos.y << std::endl;
-      std::cout << "pos state z: " << track->position().z << " " << refpos.z << std::endl;
-      std::cout << "chi2: " << pvTracks.back().chi2() << " " << m_maxChi2 << std::endl;
+      //std::cout << "pos state x: " << track->position().x << " " << refpos.x << std::endl;
+      //std::cout << "pos state y: " << track->position().y << " " << refpos.y << std::endl;
+      //std::cout << "pos state z: " << track->position().z << " " << refpos.z << std::endl;
+      //std::cout << "chi2: " << pvTracks.back().chi2() << " " << m_maxChi2 << std::endl;
       if (pvTracks.back().chi2() >= m_maxChi2) pvTracks.pop_back();
   }
     
 
   if( pvTracks.size() < m_minTr ) {
-    std::cout << pvTracks.size() << " " << m_minTr << std::endl;
+    //std::cout << pvTracks.size() << " " << m_minTr << std::endl;
     std::cout << "Too few tracks to fit PV" << std::endl;
     return false;
     }
