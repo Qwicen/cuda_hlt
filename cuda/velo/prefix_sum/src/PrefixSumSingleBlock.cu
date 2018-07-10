@@ -150,3 +150,28 @@ __global__ void copy_and_prefix_sum_single_block(
   prefix_sum_single_block_implementation(dev_total_sum,
     dev_output_array, array_size);
 }
+
+/**
+ * @brief Copies Velo track hit numbers on a consecutive container
+ */
+__global__ void copy_velo_track_hit_number(
+  const VeloTracking::TrackHits* dev_tracks,
+  int* dev_atomics_storage,
+  uint* dev_velo_track_hit_number
+) {
+  const uint number_of_events = gridDim.x;
+  const uint event_number = blockIdx.x;
+  const VeloTracking::TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
+  const int accumulated_tracks = dev_atomics_storage[number_of_events + event_number];
+  const int number_of_tracks = dev_atomics_storage[event_number];
+
+  // Pointer to velo_track_hit_number of current event
+  uint* velo_track_hit_number = dev_velo_track_hit_number + accumulated_tracks;
+
+  for (int i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
+    const auto element = i*blockDim.x + threadIdx.x;
+    if (element < number_of_tracks) {
+      velo_track_hit_number[element] = event_tracks[element].hitsNum;
+    }
+  }
+}

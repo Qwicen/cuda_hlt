@@ -1,4 +1,4 @@
-#include "../include/InitializeConstants.cuh"
+#include "InitializeConstants.cuh"
 
 void initializeConstants() {
   // Velo module constants

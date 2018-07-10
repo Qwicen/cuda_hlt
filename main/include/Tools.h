@@ -69,9 +69,10 @@ void writeBinaryTrack(
 );
 
 std::vector< trackChecker::Tracks > prepareTracks(
-  VeloTracking::Track <true> * host_tracks_pinned,
-  int * host_accumulated_tracks,
-  int * host_number_of_tracks_pinned,
+  uint* host_velo_track_hit_number_pinned,
+  VeloTracking::Hit<true>* host_velo_track_hits_pinned,                                       
+  int* host_accumulated_tracks,
+  int* host_number_of_tracks_pinned,
   const int &number_of_events
 );
 

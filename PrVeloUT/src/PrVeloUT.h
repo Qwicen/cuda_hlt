@@ -17,8 +17,7 @@
 #include "../include/VeloTypes.h"
 #include "../include/SystemOfUnits.h"
 
-//#include "TTree.h"
-//#include "TFile.h"
+#include "../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
 
 /** @class PrVeloUT PrVeloUT.h
    *
@@ -54,7 +53,9 @@ struct PrUTMagnetTool {
 
 struct TrackHelper{
   VeloState state;
-  std::array<const VeloUTTracking::Hit*, 4> bestHits = { nullptr, nullptr, nullptr, nullptr};
+  //std::array<const VeloUTTracking::Hit*, 4> bestHits = { nullptr, nullptr, nullptr, nullptr};
+  VeloUTTracking::Hit bestHits[VeloUTTracking::n_layers];
+  int n_hits = 0;
   std::array<float, 4> bestParams;
   float wb, invKinkVeloDist, xMidField;
 
@@ -80,8 +81,10 @@ public:
   // std::vector<std::string> GetFieldMaps();
   virtual int initialize();
   std::vector<VeloUTTracking::TrackUT> operator()(
-    const std::vector<VeloUTTracking::TrackVelo>& inputTracks, 
-    const std::array<std::vector<VeloUTTracking::Hit>,4> &inputHits ) const;
+    const std::vector<VeloUTTracking::TrackVelo>& inputTracks,
+    VeloUTTracking::HitsSoA *hits_layers_events,
+    const uint32_t n_hits_layers_events[VeloUTTracking::n_layers]
+  ) const;
 
 private:
 
@@ -112,18 +115,30 @@ private:
     VeloState& trState ) const;
 
   bool getHits(
-    std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, 
+	       //std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+    int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+    int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
     const std::array<std::array<int,85>,4>& posLayers,
-    const std::array<std::vector<VeloUTTracking::Hit>,4> inputHits,
+    VeloUTTracking::HitsSoA *hits_layers,
+    const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     const std::vector<float>& fudgeFactors, 
     VeloState& trState ) const; 
 
-  bool formClusters(const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers, TrackHelper& helper) const;
+  bool formClusters(
+    //const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+    const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+    const int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
+    VeloUTTracking::HitsSoA *hits_layers,
+    TrackHelper& helper,
+    const bool forward ) const;
 
   void prepareOutputTrack(
     const VeloUTTracking::TrackVelo& veloTrack,
     const TrackHelper& helper,
-    const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+    //const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
+    int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+    int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
+    VeloUTTracking::HitsSoA *hits_layers,
     std::vector<VeloUTTracking::TrackUT>& outputTracks,
     const std::vector<float>& bdlTable) const;
 
@@ -139,15 +154,16 @@ private:
   // -- The last element is an "end" iterator, to make sure we never go out of bound
   // ==============================================================================
   inline void fillIterators(
-    const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits,
+    VeloUTTracking::HitsSoA *hits_layers,
+    const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     std::array<std::array<int,85>,4>& posLayers) const
   {
     
     for(int iStation = 0; iStation < 2; ++iStation){
       for(int iLayer = 0; iLayer < 2; ++iLayer){
         int layer = 2*iStation + iLayer;
-        const std::vector<VeloUTTracking::Hit>& hits = inputHits[layer];
-
+       	int layer_offset = hits_layers->layer_offset[layer];
+	
         size_t pos = 0;
         posLayers[layer].fill(pos);
 
@@ -155,8 +171,8 @@ private:
         float val = std::copysign(bound*bound/2.0, bound);
 
         // TODO add bounds checking
-        for ( ; pos != hits.size(); ++pos) {
-          while( hits.at(pos).xAtYEq0() > val){
+        for ( ; pos != n_hits_layers[layer]; ++pos) {
+          while( hits_layers->xAtYEq0( layer_offset + pos ) > val){
             posLayers[layer][bound+42] = pos;
             ++bound;
             val = std::copysign(bound*bound/2.0, bound);
@@ -165,7 +181,8 @@ private:
 
         std::fill(
           posLayers[layer].begin() + 42 + int(bound), 
-          posLayers[layer].end(), hits.size()
+          posLayers[layer].end(),
+	  n_hits_layers[layer]
         );
       }
     }
@@ -177,19 +194,24 @@ private:
   inline void findHits( 
     const size_t posBeg,
     const size_t posEnd,
-    const std::vector<VeloUTTracking::Hit>& inputHits,
+    VeloUTTracking::HitsSoA *hits_layers,
+    const uint32_t n_hits_layers[VeloUTTracking::n_layers],
+    const int layer_offset,
     const VeloState& myState, 
     const float xTolNormFact,
     const float invNormFact,
-    std::vector<VeloUTTracking::Hit>& outHits ) const 
+    int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
+    int &n_hitCandidatesInLayer
+    //std::vector<VeloUTTracking::Hit>& outHits
+    ) const 
   {
-    const auto zInit = inputHits.at(posBeg).zAtYEq0();
+    const auto zInit = hits_layers->zAtYEq0( layer_offset + posBeg );
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
 
     size_t pos = posBeg;
     while ( 
       pos <= posEnd && 
-      inputHits[pos].isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) ) 
+      hits_layers->isNotYCompatible( layer_offset + pos, yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) )
     ) { ++pos; }
 
     const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
@@ -197,26 +219,36 @@ private:
 
     for (int i=pos; i<posEnd; ++i) {
 
-      const auto xx = inputHits.at(i).xAt(yApprox);
+      const auto xx = hits_layers->xAt( layer_offset + i, yApprox ); 
       const auto dx = xx - xOnTrackProto;
       
       if( dx < -xTolNormFact ) continue;
       if( dx >  xTolNormFact ) break; 
 
       // -- Now refine the tolerance in Y
-      if( inputHits.at(i).isNotYCompatible( yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
-
-      const auto zz = inputHits.at(i).zAtYEq0();
+      if ( hits_layers->isNotYCompatible( layer_offset + i, yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
+      
+      
+      const auto zz = hits_layers->zAtYEq0( layer_offset + i ); 
       const auto yy = yyProto +  myState.ty*zz;
-      const auto xx2 = inputHits.at(i).xAt(yy);
+      const auto xx2 = hits_layers->xAt( layer_offset + i, yy );
 
-      // TODO avoid the copy - remove the const?
-      // XXX this could be a source of error?
-      VeloUTTracking::Hit temp_hit = inputHits.at(i);
-      temp_hit.x = xx2;
-      temp_hit.z = zz;
+      hits_layers->x[ layer_offset + i ] = xx2;
+      hits_layers->z[ layer_offset + i ] = zz;
 
-      outHits.emplace_back(temp_hit);
+      //outHits.emplace_back(temp_hit);
+
+      hitCandidatesInLayer[n_hitCandidatesInLayer] = i;
+      n_hitCandidatesInLayer++;
+      
+      if ( n_hitCandidatesInLayer >= VeloUTTracking::max_hit_candidates_per_layer )
+        debug_cout << "n hits candidates = " << n_hitCandidatesInLayer << std::endl;
+      assert( n_hitCandidatesInLayer < VeloUTTracking::max_hit_candidates_per_layer );
+    }
+    for ( int i_hit = 0; i_hit < n_hitCandidatesInLayer; ++i_hit ) {
+      if ( hitCandidatesInLayer[i_hit] >= VeloUTTracking::max_numhits_per_event )
+        debug_cout << "hit index = " << hitCandidatesInLayer[i_hit] << std::endl;
+      assert( hitCandidatesInLayer[i_hit] < VeloUTTracking::max_numhits_per_event );
     }
   }
 
@@ -228,7 +260,7 @@ private:
     const float ui = hit->x;
     const float ci = hit->cosT();
     const float dz = 0.001*(hit->z - m_zMidUT);
-    const float wi = hit->weight();
+    const float wi = hit->weight2();
 
     mat[0] += wi * ci;
     mat[1] += wi * ci * dz;
@@ -241,7 +273,7 @@ private:
     const float zd    = hit->z;
     const float xd    = xTTFit + xSlopeTTFit*(zd-m_zMidUT);
     const float du    = xd - hit->x;
-    chi2 += (du*du)*hit->weight();
+    chi2 += (du*du)*hit->weight2();
   }
 
   template <std::size_t N>
@@ -294,8 +326,12 @@ private:
 
       helper.bestParams = { qp, chi2TT, xTTFit,xSlopeTTFit };
 
-      std::copy( hits.begin(), hits.end(), helper.bestHits.begin() );
-      if( N == 3 ) { helper.bestHits[3] = nullptr ; }
+      //std::copy( hits.begin(), hits.end(), helper.bestHits.begin() );
+      for ( int i_hit = 0; i_hit < N; ++i_hit ) {
+        helper.bestHits[i_hit] = *(hits[i_hit]);
+      }
+      helper.n_hits = N;
+      //if( N == 3 ) { helper.bestHits[3] = nullptr ; }
     }
 
   }
@@ -311,3 +347,4 @@ private:
 
 
 };
+

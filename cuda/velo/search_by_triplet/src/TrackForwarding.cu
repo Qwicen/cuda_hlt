@@ -64,8 +64,7 @@ __device__ void trackForwarding(
 
       const VeloTracking::TrackHits* track_pointer = track_flag ? tracklets : tracks;
       
-      assert(track_pointer==tracklets ? trackno < VeloTracking::ttf_modulo : true);
-      assert(track_pointer==tracks ? trackno < VeloTracking::max_tracks : true);
+      assert(track_flag ? trackno < VeloTracking::ttf_modulo : trackno < VeloTracking::max_tracks);
       auto t = track_pointer[trackno];
 
       // Load last two hits in h0, h1
@@ -163,7 +162,7 @@ __device__ void trackForwarding(
       // If there are only three hits in this track,
       // mark it as "doubtful"
       else if (t.hitsNum == 3) {
-        const auto weakP = atomicAdd(weaktracks_insertPointer, 1);
+        const auto weakP = atomicAdd(weaktracks_insertPointer, 1) % VeloTracking::ttf_modulo;
         assert(weakP < number_of_hits);
         weak_tracks[weakP] = trackno;
       }

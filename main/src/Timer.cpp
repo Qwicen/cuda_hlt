@@ -1,4 +1,4 @@
-#include "../include/Timer.h"
+#include "Timer.h"
 
 Timer::Timer() : accumulated_elapsed_time(std::chrono::duration<double>::zero()) {
   start_time = std::chrono::high_resolution_clock::now();
