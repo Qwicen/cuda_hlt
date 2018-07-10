@@ -18,6 +18,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 # include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/ROOT/6.12.06-51921/x86_64-centos7-gcc62-opt/include/")
 include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/ROOT/6.08.06-d7e12/x86_64-centos7-gcc62-opt/include/")
 include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/include")
+include_directories("/usr/local/root/include")
 
 # MC truth matching
 if("${MC_CHECK}" STREQUAL Off OR "${MC_CHECK}" STREQUAL OFF)
