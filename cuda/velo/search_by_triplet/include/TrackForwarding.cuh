@@ -13,7 +13,7 @@ __device__ void trackForwarding(
   const Module* module_data,
   const uint diff_ttf,
   uint* tracks_to_follow,
-  uint* weak_tracks,
+  TrackHits* weak_tracks,
   const uint prev_ttf,
   TrackHits* tracklets,
   TrackHits* tracks,

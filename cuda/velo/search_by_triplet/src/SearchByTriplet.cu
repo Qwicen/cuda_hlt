@@ -11,7 +11,7 @@ __global__ void searchByTriplet(
   TrackHits* dev_tracks,
   TrackHits* dev_tracklets,
   uint* dev_tracks_to_follow,
-  uint* dev_weak_tracks,
+  TrackHits* dev_weak_tracks,
   bool* dev_hit_used,
   int* dev_atomics_storage,
   short* dev_h0_candidates,
@@ -48,7 +48,7 @@ __global__ void searchByTriplet(
   short* h2_candidates = dev_h2_candidates + 2*hit_offset;
 
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * VeloTracking::ttf_modulo;
-  uint* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
+  TrackHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
   TrackHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
   unsigned short* h1_rel_indices = dev_rel_indices + event_number * VeloTracking::max_numhits_in_module;
 
@@ -115,5 +115,19 @@ __global__ void searchByTriplet(
     h1_rel_indices,
     local_number_of_hits,
     hit_offset
+  );
+
+  __syncthreads();
+
+  // Process left weak tracks
+  weakTracksAdder(
+    weaktracks_insert_pointer,
+    tracks_insert_pointer,
+    weak_tracks,
+    tracks,
+    hit_used,
+    hit_Xs,
+    hit_Ys,
+    hit_Zs
   );
 }

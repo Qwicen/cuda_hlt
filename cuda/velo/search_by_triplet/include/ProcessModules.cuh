@@ -21,7 +21,7 @@ __device__ void processModules(
   uint* ttf_insert_pointer,
   uint* tracks_insert_pointer,
   uint* tracks_to_follow,
-  uint* weak_tracks,
+  TrackHits* weak_tracks,
   TrackHits* tracklets,
   TrackHits* tracks,
   const uint number_of_hits,

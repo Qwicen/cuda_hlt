@@ -47,7 +47,7 @@ __device__ void trackForwarding(
   const Module* module_data,
   const uint diff_ttf,
   uint* tracks_to_follow,
-  uint* weak_tracks,
+  TrackHits* weak_tracks,
   const uint prev_ttf,
   TrackHits* tracklets,
   TrackHits* tracks,
@@ -164,7 +164,7 @@ __device__ void trackForwarding(
       else if (t.hitsNum == 3) {
         const auto weakP = atomicAdd(weaktracks_insertPointer, 1) % VeloTracking::ttf_modulo;
         assert(weakP < number_of_hits);
-        weak_tracks[weakP] = trackno;
+        weak_tracks[weakP] = t;
       }
       // In the "else" case, we couldn't follow up the track,
       // so we won't be track following it anymore.

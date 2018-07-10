@@ -25,7 +25,7 @@ __device__ void processModules(
   uint* ttf_insert_pointer,
   uint* tracks_insert_pointer,
   uint* tracks_to_follow,
-  uint* weak_tracks,
+  TrackHits* weak_tracks,
   TrackHits* tracklets,
   TrackHits* tracks,
   const uint number_of_hits,
@@ -63,7 +63,6 @@ __device__ void processModules(
 
   // Prepare forwarding - seeding loop
   uint last_ttf = 0;
-  uint last_weak_tracks = 0;
   first_module -= stride;
 
   while (first_module >= 4) {
@@ -86,27 +85,6 @@ __device__ void processModules(
 
     // Reset atomics
     local_number_of_hits[0] = 0;
-
-    const auto prev_weak_tracks = last_weak_tracks;
-    last_weak_tracks = weaktracks_insert_pointer[0];
-    const auto diff_weak_tracks = last_weak_tracks - prev_weak_tracks;
-
-    // Store weak tracks
-    for (int i=0; i<(diff_weak_tracks + blockDim.x - 1) / blockDim.x; ++i) {
-      const auto rel_weaktrack_no = blockDim.x * i + threadIdx.x;
-      if (rel_weaktrack_no < diff_weak_tracks) {
-        const auto weaktrack_no = (prev_weak_tracks + rel_weaktrack_no) % VeloTracking::ttf_modulo;;
-        const TrackHits t = tracklets[weak_tracks[weaktrack_no]];
-        const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
-
-        // Store them in the tracks bag
-        if (!any_used) {
-          const uint trackno = atomicAdd(tracks_insert_pointer, 1);
-          assert(trackno < VeloTracking::max_tracks);
-          tracks[trackno] = t;
-        }
-      }
-    }
 
     // Due to module data loading
     __syncthreads();
@@ -159,30 +137,4 @@ __device__ void processModules(
   const auto prev_ttf = last_ttf;
   last_ttf = ttf_insert_pointer[0];
   const auto diff_ttf = last_ttf - prev_ttf;
-
-  // Process the last bunch of track_to_follows
-  for (int i=0; i<(diff_ttf + blockDim.x - 1) / blockDim.x; ++i) {
-    const auto ttf_element = blockDim.x * i + threadIdx.x;
-
-    if (ttf_element < diff_ttf) {
-      const int fulltrackno = tracks_to_follow[(prev_ttf + ttf_element) % VeloTracking::ttf_modulo];
-      const bool track_flag = (fulltrackno & 0x80000000) == 0x80000000;
-      const int trackno = fulltrackno & 0x0FFFFFFF;
-
-      // Here we are only interested in three-hit tracks,
-      // to mark them as "doubtful"
-      if (track_flag) {
-        // Store weak tracks if no hits are used
-        const TrackHits t = tracklets[trackno];
-        const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
-
-        // Store them in the tracks bag
-        if (!any_used) {
-          const uint trackno = atomicAdd(tracks_insert_pointer, 1);
-          assert(trackno < VeloTracking::max_tracks);
-          tracks[trackno] = t;
-        }
-      }
-    }
-  }
 }
