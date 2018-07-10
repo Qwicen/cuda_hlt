@@ -54,8 +54,8 @@ bool reconstructMultiPVFromTracks( std::vector< Track*>& tracks2use,
 
 
   PVSeedTool seedtool;
-  double m_beamSpotX = 0.;
-  double m_beamSpotY = 0.;
+  double m_beamSpotX = 0.02;
+  double m_beamSpotY = -0.16;
   XYZPoint beamspot{m_beamSpotX, m_beamSpotY, 0.};
   
 
