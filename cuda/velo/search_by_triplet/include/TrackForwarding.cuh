@@ -2,7 +2,7 @@
 
 #include "../../common/include/VeloDefinitions.cuh"
 
-__device__ void trackForwarding(
+__device__ void track_forwarding(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,

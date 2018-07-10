@@ -88,7 +88,7 @@
   return state.chi2;
 }
 
-__device__ void weakTracksAdder(
+__device__ void weak_tracks_adder(
   uint* weaktracks_insert_pointer,
   uint* tracks_insert_pointer,
   TrackHits* weak_tracks,

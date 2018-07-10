@@ -7,7 +7,7 @@
  *         abscence of flagged hits at this stage, there is
  *         a specialized algorithm for it
  */
-__device__ void trackSeedingFirst(
+__device__ void track_seeding_first(
   float* shared_best_fits,
   const float* hit_Xs,
   const float* hit_Ys,

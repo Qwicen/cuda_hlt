@@ -3,7 +3,7 @@
 #include "../../common/include/VeloDefinitions.cuh"
 #include "../../common/include/ClusteringDefinitions.cuh"
 
-__device__ void trackSeedingFirst(
+__device__ void track_seeding_first(
   float* shared_best_fits,
   const float* hit_Xs,
   const float* hit_Ys,

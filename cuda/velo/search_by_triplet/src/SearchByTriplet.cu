@@ -4,7 +4,7 @@
 /**
  * @brief Track forwarding algorithm based on triplet finding
  */
-__global__ void searchByTriplet(
+__global__ void search_by_triplet(
   uint32_t* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
@@ -79,7 +79,7 @@ __global__ void searchByTriplet(
   }
 
   // Fill candidates for both sides
-  fillCandidates(
+  fill_candidates(
     h0_candidates,
     h2_candidates,
     module_hitStarts,
@@ -89,7 +89,7 @@ __global__ void searchByTriplet(
   );
 
   // Process modules
-  processModules(
+  process_modules(
     (Module*) &module_data[0],
     (float*) &shared_best_fits[0],
     VP::NModules-1,
@@ -120,7 +120,7 @@ __global__ void searchByTriplet(
   __syncthreads();
 
   // Process left weak tracks
-  weakTracksAdder(
+  weak_tracks_adder(
     weaktracks_insert_pointer,
     tracks_insert_pointer,
     weak_tracks,

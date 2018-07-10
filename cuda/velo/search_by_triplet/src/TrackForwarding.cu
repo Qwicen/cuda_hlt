@@ -7,7 +7,7 @@
  *          returns the chi2 weight of the track. Otherwise,
  *          returns FLT_MAX.
  */
-__device__ float fitHitToTrack(
+__device__ float fit_hit_to_track(
   const HitXY& h0,
   const HitXY& h2,
   const float predx,
@@ -36,7 +36,7 @@ __device__ float fitHitToTrack(
 /**
  * @brief Performs the track forwarding of forming tracks
  */
-__device__ void trackForwarding(
+__device__ void track_forwarding(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
@@ -102,7 +102,7 @@ __device__ void trackForwarding(
       for (auto j=0; j<module_data[2].hitNums; ++j) {
         const auto h2_index = module_data[2].hitStart + j;
         const HitXY h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
-        const auto fit = fitHitToTrack(
+        const auto fit = fit_hit_to_track(
           h0,
           h2,
           predx,

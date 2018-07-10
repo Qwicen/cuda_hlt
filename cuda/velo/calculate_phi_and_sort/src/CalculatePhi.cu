@@ -27,7 +27,7 @@ __device__ float hit_phi_even(
  * @brief Calculates a phi side
  */
 template<class T>
-__device__ void calculatePhiSide(
+__device__ void calculate_phi_side(
   float* shared_hit_phis,
   const unsigned int* module_hitStarts,
   const unsigned int* module_hitNums,
@@ -88,7 +88,7 @@ __device__ void calculatePhiSide(
 /**
  * @brief Calculates phi for each hit
  */
-__device__ void calculatePhi(
+__device__ void calculate_phi(
   const unsigned int* module_hitStarts,
   const unsigned int* module_hitNums,
   const float* hit_Xs,
@@ -99,7 +99,7 @@ __device__ void calculatePhi(
   __shared__ float shared_hit_phis [VeloTracking::max_numhits_in_module];
 
   // Odd modules
-  calculatePhiSide(
+  calculate_phi_side(
     (float*) &shared_hit_phis[0],
     module_hitStarts,
     module_hitNums,
@@ -112,7 +112,7 @@ __device__ void calculatePhi(
   );
 
   // Even modules
-  calculatePhiSide(
+  calculate_phi_side(
     (float*) &shared_hit_phis[0],
     module_hitStarts,
     module_hitNums,

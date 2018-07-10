@@ -9,7 +9,7 @@
 #include "TrackSeedingFirst.cuh"
 #include "WeakTracksAdder.cuh"
 
-__global__ void searchByTriplet(
+__global__ void search_by_triplet(
   uint32_t* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,

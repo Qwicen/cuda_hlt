@@ -2,7 +2,7 @@
 
 #include "../../common/include/VeloDefinitions.cuh"
 
-__device__ void processModules(
+__device__ void process_modules(
   Module* module_data,
   float* shared_best_fits,
   const uint starting_module,

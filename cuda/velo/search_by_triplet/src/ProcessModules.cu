@@ -6,7 +6,7 @@
 /**
  * @brief Processes modules in decreasing order with some stride
  */
-__device__ void processModules(
+__device__ void process_modules(
   Module* module_data,
   float* shared_best_fits,
   const uint starting_module,
@@ -48,7 +48,7 @@ __device__ void processModules(
   __syncthreads();
 
   // Do first track seeding
-  trackSeedingFirst(
+  track_seeding_first(
     shared_best_fits,
     hit_Xs,
     hit_Ys,
@@ -90,7 +90,7 @@ __device__ void processModules(
     __syncthreads();
 
     // Track Forwarding
-    trackForwarding(
+    track_forwarding(
       hit_Xs,
       hit_Ys,
       hit_Zs,
@@ -112,7 +112,7 @@ __device__ void processModules(
     __syncthreads();
 
     // Seeding
-    trackSeeding(
+    track_seeding(
       shared_best_fits,
       hit_Xs,
       hit_Ys,
@@ -137,4 +137,23 @@ __device__ void processModules(
   const auto prev_ttf = last_ttf;
   last_ttf = ttf_insert_pointer[0];
   const auto diff_ttf = last_ttf - prev_ttf;
+
+  // Process the last bunch of track_to_follows
+  for (int i=0; i<(diff_ttf + blockDim.x - 1) / blockDim.x; ++i) {
+    const auto ttf_element = blockDim.x * i + threadIdx.x;
+
+    if (ttf_element < diff_ttf) {
+      const int fulltrackno = tracks_to_follow[(prev_ttf + ttf_element) % VeloTracking::ttf_modulo];
+      const bool track_flag = (fulltrackno & 0x80000000) == 0x80000000;
+      const int trackno = fulltrackno & 0x0FFFFFFF;
+
+      // Here we are only interested in three-hit tracks,
+      // to mark them as "doubtful"
+      if (track_flag) {
+        const auto weakP = atomicAdd(weaktracks_insert_pointer, 1);
+        assert(weakP < number_of_hits);
+        weak_tracks[weakP] = tracklets[trackno];
+      }
+    }
+  }
 }
