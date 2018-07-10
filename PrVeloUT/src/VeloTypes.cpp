@@ -6,7 +6,6 @@ VeloUTTracking::Hit VeloUTTracking::createHit( HitsSoA *hits_layers, const int i
     hit.m_cos = hits_layers->cos(layer_offset + i_hit);
     hit.m_yBegin = hits_layers->yBegin(layer_offset + i_hit);
     hit.m_yEnd = hits_layers->yEnd(layer_offset + i_hit);
-    hit.m_dxDy = hits_layers->dxDy(layer_offset + i_hit);
     hit.m_zAtYEq0 = hits_layers->zAtYEq0(layer_offset + i_hit);
     hit.m_xAtYEq0 = hits_layers->xAtYEq0(layer_offset + i_hit);
     hit.m_weight2 = hits_layers->weight2(layer_offset + i_hit);

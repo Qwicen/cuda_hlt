@@ -119,7 +119,7 @@ int run_veloUT_on_CPU (
       );
 
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_cos );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_dxDy );
+      //      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_dxDy );
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_weight2 );
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_xAtYEq0 );
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_yBegin );
@@ -132,7 +132,7 @@ int run_veloUT_on_CPU (
       for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
 	VeloUTTracking::Hit hit;
 	hit.m_cos = hits_layers_events[i_event].m_cos[layer_offset + i_hit];
-	hit.m_dxDy = hits_layers_events[i_event].m_dxDy[layer_offset + i_hit];
+	//hit.m_dxDy = hits_layers_events[i_event].m_dxDy[layer_offset + i_hit];
 	hit.m_weight2 = hits_layers_events[i_event].m_weight2[layer_offset + i_hit];
 	hit.m_xAtYEq0 = hits_layers_events[i_event].m_xAtYEq0[layer_offset + i_hit];
 	hit.m_yBegin = hits_layers_events[i_event].m_yBegin[layer_offset + i_hit];
@@ -148,14 +148,14 @@ int run_veloUT_on_CPU (
 	cos = hit.m_cos;
 	yBegin = hit.m_yBegin;
 	yEnd = hit.m_yEnd;
-	dxDy = hit.m_dxDy;
 	zAtYEq0 = hit.m_zAtYEq0;
 	xAtYEq0 = hit.m_xAtYEq0;
 	weight2 = hit.m_weight2;
 	LHCbID = hit.m_LHCbID;
 	highThreshold = hit.m_highThreshold;
 	layer = i_layer;
-	
+        dxDy = hit.dxDy();
+        
 	t_ut_hits->Fill();
       }
       // sort hits according to xAtYEq0
