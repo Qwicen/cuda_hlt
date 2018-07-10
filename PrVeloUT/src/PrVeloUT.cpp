@@ -85,8 +85,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   const std::vector<VeloUTTracking::TrackVelo>& inputTracks,
   VeloUTTracking::HitsSoA *hits_layers,
   const uint32_t n_hits_layers[VeloUTTracking::n_layers]
-  //const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits
-) const
+  ) const
 {
   
   std::vector<VeloUTTracking::TrackUT> outputTracks;
@@ -98,18 +97,15 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
-  // std::array<std::vector<VeloUTTracking::Hit>,4> hitsInLayers;
   // array to store indices of selected hits in layers
   // -> can then access the hit information in the HitsSoA
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers];
   
-  //for( auto& it : hitsInLayers ) it.reserve(8); 
   for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
-
+    
     VeloState trState;
     if( !getState(veloTr, trState)) continue;
-    //for( auto& it : hitsInLayers ) it.clear();
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
     }
@@ -139,9 +135,6 @@ bool PrVeloUT::getState(
   const VeloUTTracking::TrackVelo& iTr, 
   VeloState& trState ) const 
 {
-  // const VeloState* s = iTr.stateAt(LHCb::State::EndVelo);
-  // const VeloState& state = s ? *s : (iTr.closestState(LHCb::State::EndVelo));
-  // TODO get the closest state not the last
   const VeloState state = iTr.state;
   
   // -- reject tracks outside of acceptance or pointing to the beam pipe
@@ -170,7 +163,6 @@ bool PrVeloUT::getState(
 // Find the hits
 //=============================================================================
 bool PrVeloUT::getHits(
-  //std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],		       
   const std::array<std::array<int,85>,4>& posLayers,
@@ -207,13 +199,11 @@ bool PrVeloUT::getHits(
 
       int layer = 2*iStation+iLayer;
       int layer_offset = hits_layers->layer_offset[layer];
-      //const std::vector<VeloUTTracking::Hit>& hits = inputHits[layer];
-
-      // UNLIKELY is a MACRO for `__builtin_expect` compiler hint of GCC
+      
       if( n_hits_layers[layer] == 0 ) continue;
 
-      const float dxDy   = hits_layers->dxDy(layer_offset + 0); //hits.front().dxDy();
-      const float zLayer = hits_layers->zAtYEq0(layer_offset + 0); //hits.front().zAtYEq0();
+      const float dxDy   = hits_layers->dxDy(layer_offset + 0);
+      const float zLayer = hits_layers->zAtYEq0(layer_offset + 0); 
 
       const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
       const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
@@ -242,7 +232,6 @@ bool PrVeloUT::getHits(
 
       findHits(posBeg, posEnd, hits_layers, n_hits_layers, layer_offset, trState, xTol*invNormFact, invNormFact, hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer]);
 
-      //nLayers += int(!hitsInLayers[layer].empty());
       nLayers += int( !( n_hitCandidatesInLayers[layer] == 0 ) );
     }
   }
@@ -373,7 +362,6 @@ bool PrVeloUT::formClusters(
 void PrVeloUT::prepareOutputTrack(
   const VeloUTTracking::TrackVelo& veloTrack,
   const TrackHelper& helper,
-  //const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
@@ -432,32 +420,23 @@ void PrVeloUT::prepareOutputTrack(
   outputTracks.emplace_back( veloTrack.track );
   outputTracks.back().set_qop( qop );
   
-  //outputTracks.back().UTIDs.reserve(8);
-
   // Adding overlap hits
-  //for( const auto* hit : helper.bestHits){
   for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
     const VeloUTTracking::Hit hit = helper.bestHits[i_hit];
     
-    // -- only the last one can be a nullptr.
-    //if( !hit ) break;
-
     outputTracks.back().addLHCbID( hit.LHCbID() );
 
     const float xhit = hit.x;
     const float zhit = hit.z;
 
     const int planeCode = hit.planeCode();
-    //for( auto& ohit : hitsInLayers[hit->planeCode()]){
     for ( int i_ohit = 0; i_ohit < n_hitCandidatesInLayers[planeCode]; ++i_ohit ) {
       const int ohit_index = hitCandidatesInLayers[planeCode][i_ohit];
       const int layer_offset = hits_layers->layer_offset[planeCode];
       
-      //const float zohit = ohit.z;
       const float zohit = hits_layers->z[layer_offset + ohit_index];
       if(zohit==zhit) continue;
 
-      //const float xohit = ohit.x;
       const float xohit = hits_layers->x[layer_offset + ohit_index];
       const float xextrap = xhit + txUT*(zhit-zohit);
       if( xohit-xextrap < -m_overlapTol) continue;
