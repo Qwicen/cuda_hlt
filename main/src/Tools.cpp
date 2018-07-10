@@ -4,6 +4,14 @@
 #include "../../checker/lib/include/MCParticle.h"
 
 /**
+ * @brief Test to check existence of filename.
+ */
+bool exists_test(const std::string& name) {
+  std::ifstream f(name.c_str());
+  return f.good();
+}
+
+/**
  * @brief Natural ordering for strings.
  */
 bool naturalOrder(const std::string& s1, const std::string& s2 ) {
@@ -58,11 +66,18 @@ void appendFileToVector(
   infile.close();
 }
 
+/**
+ * @brief Reads the geometry from foldername.
+ */
 void readGeometry(
   const std::string& foldername,
   std::vector<char>& geometry
 ) {
-  readFileIntoVector(foldername + "/geometry.bin", geometry);
+  const auto filename = foldername + "/geometry.bin";
+  if (!exists_test(filename)) {
+    throw StrException("File geometry.bin could not be found in folder " + foldername);
+  }
+  readFileIntoVector(filename, geometry);
 }
 
 void check_events(

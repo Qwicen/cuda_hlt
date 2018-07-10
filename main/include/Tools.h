@@ -17,6 +17,8 @@
 #include "../../cuda/velo/common/include/ClusteringDefinitions.cuh"
 #include "../../checker/lib/include/Tracks.h"
 
+bool exists_test(const std::string& name);
+
 bool naturalOrder(
   const std::string& s1,
   const std::string& s2
