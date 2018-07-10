@@ -16,11 +16,11 @@ namespace {
     return (index3*11 + index2)*31 + index1;
   }
 
-  constexpr std::array<float,3> minValsBdl = { -0.3, -250.0, 0.0 };
-  constexpr std::array<float,3> maxValsBdl = { 0.3, 250.0, 800.0 };
-  constexpr std::array<float,3> deltaBdl   = { 0.02, 50.0, 80.0 };
+  constexpr float minValsBdl[3] = { -0.3, -250.0, 0.0 };
+  constexpr float maxValsBdl[3] = { 0.3, 250.0, 800.0 };
+  constexpr float deltaBdl[3]   = { 0.02, 50.0, 80.0 };
 
-  constexpr std::array<float,4> dxDyHelper = { 0.0, 1.0, -1.0, 0.0 };
+  constexpr float dxDyHelper[4] = { 0.0, 1.0, -1.0, 0.0 };
 }
 
 //=============================================================================
@@ -40,30 +40,33 @@ namespace {
 int PrVeloUT::initialize() {
 
   //load the deflection and Bdl values from a text file
-  std::vector<float> deflection_vals;
-  float deflection;
+  float dxLayTable[PrUTMagnetTool::N_dxLay_vals];
   std::ifstream deflectionfile;
   deflectionfile.open("../PrUTMagnetTool/deflection.txt");
   if (deflectionfile.is_open()) {
+    int i = 0;
+    float deflection;
     while (!deflectionfile.eof()) {
       deflectionfile >> deflection;
-      deflection_vals.push_back(deflection);
-      
+      assert( i < PrUTMagnetTool::N_dxLay_vals );
+      dxLayTable[i++] = deflection;
     }
   }
   
-  std::vector<float> bdl_vals;
-  float bdl;
+  float bdlTable[PrUTMagnetTool::N_bdl_vals];
   std::ifstream bdlfile;
   bdlfile.open("../PrUTMagnetTool/bdl.txt");
   if (bdlfile.is_open()) {
+    int i = 0;
+    float bdl;
     while (!bdlfile.eof()) {
       bdlfile >> bdl;
-      bdl_vals.push_back(bdl);
-      
+      assert( i < PrUTMagnetTool::N_bdl_vals );
+      bdlTable[i++] = bdl;
     }
   }
-  m_PrUTMagnetTool = PrUTMagnetTool( deflection_vals, bdl_vals );
+  
+  m_PrUTMagnetTool = PrUTMagnetTool( dxLayTable, bdlTable );
   
   // m_zMidUT is a position of normalization plane which should to be close to z middle of UT ( +- 5 cm ).
   // Cashed once in PrVeloUTTool at initialization. No need to update with small UT movement.
@@ -94,8 +97,8 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   std::array<std::array<int,85>,4> posLayers;
   fillIterators(hits_layers, n_hits_layers, posLayers);
 
-  const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
-  const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
+  const float* fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
+  const float* bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
   // array to store indices of selected hits in layers
   // -> can then access the hit information in the HitsSoA
@@ -168,13 +171,14 @@ bool PrVeloUT::getHits(
   const std::array<std::array<int,85>,4>& posLayers,
   VeloUTTracking::HitsSoA *hits_layers,
   const uint32_t n_hits_layers[VeloUTTracking::n_layers],
-  const std::vector<float>& fudgeFactors, 
+  const float* fudgeFactors, 
   VeloState& trState ) const 
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
   const float absSlopeY = std::abs( trState.ty );
   const int index = (int)(absSlopeY*100 + 0.5);
+  assert( 3 + 4*index < PrUTMagnetTool::N_dxLay_vals );
   const std::array<float,4> normFact = { 
     fudgeFactors[4*index], 
     fudgeFactors[1 + 4*index], 
@@ -366,14 +370,12 @@ void PrVeloUT::prepareOutputTrack(
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
   std::vector<VeloUTTracking::TrackUT>& outputTracks,
-  const std::vector<float>& bdlTable) const {
+  const float* bdlTable) const {
 
   //== Handle states. copy Velo one, add TT.
   const float zOrigin = (std::fabs(helper.state.ty) > 0.001)
     ? helper.state.z - helper.state.y / helper.state.ty
     : helper.state.z - helper.state.x / helper.state.tx;
-
-  //const float bdl1    = m_PrUTMagnetTool->bdlIntegral(helper.state.ty,zOrigin,helper.state.z);
 
   // -- These are calculations, copied and simplified from PrTableForFunction
   const std::array<float,3> var = { helper.state.ty, zOrigin, helper.state.z };
@@ -382,6 +384,7 @@ void PrVeloUT::prepareOutputTrack(
   const int index2 = std::max(0, std::min( 10, int((var[1] + 250)/500*10) ));
   const int index3 = std::max(0, std::min( 10, int( var[2]/800*10)        ));
 
+  assert( masterIndex(index1, index2, index3) < PrUTMagnetTool::N_bdl_vals );
   float bdl = bdlTable[masterIndex(index1, index2, index3)];
 
   const std::array<float,3> bdls = { bdlTable[masterIndex(index1+1, index2,index3)],
