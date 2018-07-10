@@ -261,13 +261,6 @@ bool PrVeloUT::formClusters(
   const bool forward ) const 
 {
 
-  if ( helper.n_hits > 0 && helper.n_hits != 3 ) {
-    debug_cout << "Track already has " << helper.n_hits << " hits" << std::endl;
-        for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
-          warning_cout << "\t" << std::hex << helper.bestHits[i_hit].LHCbID() << " on plane " << helper.bestHits[i_hit].planeCode() << std::endl;
-        }
-  }
-   
   // handle forward / backward cluster search
   int layers[VeloUTTracking::n_layers];
   for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
@@ -275,39 +268,35 @@ bool PrVeloUT::formClusters(
         layers[i_layer] = i_layer;
       else
         layers[i_layer] = VeloUTTracking::n_layers - 1 - i_layer;
-    }
- 
+  }
+
+  // Go through the layers
   bool fourLayerSolution = false;
-
   for ( int i_hit0 = 0; i_hit0 < n_hitCandidatesInLayers[ layers[0] ]; ++i_hit0 ) {
-    const int hit_index0 = hitCandidatesInLayers[ layers[0] ][i_hit0];
-    
-    const int layer_offset0 = hits_layers->layer_offset[ layers[0] ];
-    const float xhitLayer0 = hits_layers->x[ layer_offset0 + hit_index0 ];
-    const float zhitLayer0 = hits_layers->z[ layer_offset0 + hit_index0 ];
-    
-    // Loop over Second Layer
-    for ( int i_hit2 = 0; i_hit2 < n_hitCandidatesInLayers[ layers[2] ]; ++i_hit2 ) {
-       const int hit_index2 = hitCandidatesInLayers[ layers[2] ][i_hit2];
-       
-       const int layer_offset2 = hits_layers->layer_offset[ layers[2] ];
 
-       assert( layer_offset2 + hit_index2 < VeloUTTracking::max_numhits_per_event );
-       const float xhitLayer2 = hits_layers->x[ layer_offset2 + hit_index2 ];
-       const float zhitLayer2 = hits_layers->z[ layer_offset2 + hit_index2 ];
+    const int hit_index0    = hitCandidatesInLayers[ layers[0] ][i_hit0];
+    const int layer_offset0 = hits_layers->layer_offset[ layers[0] ];
+    const float xhitLayer0  = hits_layers->x[ layer_offset0 + hit_index0 ];
+    const float zhitLayer0  = hits_layers->z[ layer_offset0 + hit_index0 ];
+    
+    for ( int i_hit2 = 0; i_hit2 < n_hitCandidatesInLayers[ layers[2] ]; ++i_hit2 ) {
+      
+      const int hit_index2    = hitCandidatesInLayers[ layers[2] ][i_hit2];
+      const int layer_offset2 = hits_layers->layer_offset[ layers[2] ];
+      const float xhitLayer2  = hits_layers->x[ layer_offset2 + hit_index2 ];
+      const float zhitLayer2  = hits_layers->z[ layer_offset2 + hit_index2 ];
        
       const float tx = (xhitLayer2 - xhitLayer0)/(zhitLayer2 - zhitLayer0);
-
       if( std::abs(tx-helper.state.tx) > m_deltaTx2 ) continue;
       
       int IndexBestHit1 = -10;
       float hitTol = m_hitTol2;
       for ( int i_hit1 = 0; i_hit1 < n_hitCandidatesInLayers[ layers[1] ]; ++i_hit1 ) {
-        const int hit_index1 = hitCandidatesInLayers[ layers[1] ][i_hit1];
 
+        const int hit_index1    = hitCandidatesInLayers[ layers[1] ][i_hit1];
         const int layer_offset1 = hits_layers->layer_offset[ layers[1] ];
-        const float xhitLayer1 = hits_layers->x[ layer_offset1 + hit_index1 ];
-        const float zhitLayer1 = hits_layers->z[ layer_offset1 + hit_index1 ];
+        const float xhitLayer1  = hits_layers->x[ layer_offset1 + hit_index1 ];
+        const float zhitLayer1  = hits_layers->z[ layer_offset1 + hit_index1 ];
        
 
         const float xextrapLayer1 = xhitLayer0 + tx*(zhitLayer1-zhitLayer0);
@@ -315,30 +304,29 @@ bool PrVeloUT::formClusters(
           hitTol = std::abs(xhitLayer1 - xextrapLayer1);
           IndexBestHit1 = hit_index1;
         }
-      }
+      } // loop over layer 1
       VeloUTTracking::Hit bestHit1;
       if ( IndexBestHit1 > 0 ) { // found hit candidate
         bestHit1 = VeloUTTracking::createHit(hits_layers, layers[1], IndexBestHit1);
       }
-        
+      
       if( fourLayerSolution && IndexBestHit1 < 0 ) continue;
 
       int IndexBestHit3 = -10;
       hitTol = m_hitTol2;
       for ( int i_hit3 = 0; i_hit3 < n_hitCandidatesInLayers[ layers[3] ]; ++i_hit3 ) {
-        const int hit_index3 = hitCandidatesInLayers[ layers[3] ][i_hit3];
 
+        const int hit_index3    = hitCandidatesInLayers[ layers[3] ][i_hit3];
         const int layer_offset3 = hits_layers->layer_offset[ layers[3] ];
-        const float xhitLayer3 = hits_layers->x[ layer_offset3 + hit_index3 ];
-        const float zhitLayer3 = hits_layers->z[ layer_offset3 + hit_index3 ];
+        const float xhitLayer3  = hits_layers->x[ layer_offset3 + hit_index3 ];
+        const float zhitLayer3  = hits_layers->z[ layer_offset3 + hit_index3 ];
 
         const float xextrapLayer3 = xhitLayer2 + tx*(zhitLayer3-zhitLayer2);
-
         if(std::abs(xhitLayer3 - xextrapLayer3) < hitTol){
           hitTol = std::abs(xhitLayer3 - xextrapLayer3);
           IndexBestHit3 = hit_index3;
         }
-      }
+      } // loop over layer 3
       VeloUTTracking::Hit bestHit3;
       if ( IndexBestHit3 > 0 ) { // found hit candidate
         bestHit3 = VeloUTTracking::createHit(hits_layers, layers[3], IndexBestHit3);
@@ -346,31 +334,11 @@ bool PrVeloUT::formClusters(
 
       // -- All hits found
       if ( IndexBestHit1 > 0 && IndexBestHit3 > 0 ) {
-        VeloUTTracking::Hit hit0 = VeloUTTracking::createHit(hits_layers, 0, hit_index0);
-        VeloUTTracking::Hit hit2 = VeloUTTracking::createHit(hits_layers, 2, hit_index2);
+        VeloUTTracking::Hit hit0 = VeloUTTracking::createHit(hits_layers, layers[0], hit_index0);
+        VeloUTTracking::Hit hit2 = VeloUTTracking::createHit(hits_layers, layers[2], hit_index2);
         std::array<const VeloUTTracking::Hit*,4> hits4fit = {&hit0, &bestHit1, &hit2, &bestHit3};
         simpleFit(hits4fit, helper);
-
-        for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
-          uint32_t id_a = helper.bestHits[i_hit].LHCbID();
-          int counted_IDs = 0;
-          for ( int i_o_hit = i_hit; i_o_hit < helper.n_hits; ++i_o_hit ) {
-            uint32_t id_b = helper.bestHits[i_o_hit].LHCbID();
-            if ( id_a == id_b )
-              counted_IDs++;
-          }
-          if ( counted_IDs > 1 ) {
-            warning_cout << "FOUND same hit > 1 time in a " << std::endl;
-            if ( forward )
-              warning_cout << "forward track" << std::endl;
-            else
-              warning_cout << "backward track" << std::endl;
-            for ( int i = 0; i < helper.n_hits; ++i ) {
-              warning_cout << "\t" << std::hex << helper.bestHits[i].LHCbID() << " on plane " << helper.bestHits[i].planeCode() << std::endl;
-            }
-          }
-        }
-
+        
         if(!fourLayerSolution && helper.n_hits > 0){
           fourLayerSolution = true;
         }
@@ -397,9 +365,6 @@ bool PrVeloUT::formClusters(
     }
   }
 
- 
-  
-  
   return fourLayerSolution;
 }
 //=========================================================================
