@@ -29,6 +29,7 @@ namespace VeloUTTracking {
   static constexpr uint max_numhits_per_event = 4000;
   static constexpr uint max_hit_candidates_per_layer = 40;
   static constexpr uint max_num_tracks = 400;
+  static constexpr uint max_track_size = 8; // to do: double check what the max # of hits really is
 
   /* SoA for hit variables
      The hits for every layer are written behind each other, the offsets 
@@ -139,7 +140,22 @@ namespace VeloUTTracking {
     }
   };
    
+  /* Structure containing indices to hits within hit array */
+  struct TrackHits { 
+    unsigned short hitsNum = 0;
+    unsigned short hits[VeloUTTracking::max_track_size];
+    unsigned short veloTrackIndex;
+    float qop;
+
+    void addHit( const unsigned short _h ) {
+      hits[hitsNum] = _h;
+      ++hitsNum;
+    }
+    void set_qop( float _qop ) {
+      qop = _qop;
+    }
+  };
 
 
-
+  
 }

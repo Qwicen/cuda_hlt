@@ -133,7 +133,7 @@ private:
   bool getHits(
     int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
     int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
-    const std::array<std::array<int,85>,4>& posLayers,
+    const int posLayers[4][85],
     VeloUTTracking::HitsSoA *hits_layers,
     const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     const float* fudgeFactors, 
@@ -158,6 +158,23 @@ private:
     std::vector<VeloUTTracking::TrackUT>& outputTracks,
     const float* bdlTable) const;
 
+  void fillArray(
+    int * array,
+    const int size,
+    const size_t value ) const {
+    for ( int i = 0; i < size; ++i ) {
+      array[i] = value;
+    }
+  }
+  
+  void fillArrayAt(
+    int * array,
+    const int offset,
+    const int n_vals,
+    const size_t value ) const {  
+    fillArray( array + offset, n_vals, value ); 
+  }
+  
   // ==============================================================================
   // -- Method to cache some starting points for the search
   // -- This is actually faster than binary searching the full array
@@ -172,7 +189,7 @@ private:
   inline void fillIterators(
     VeloUTTracking::HitsSoA *hits_layers,
     const uint32_t n_hits_layers[VeloUTTracking::n_layers],
-    std::array<std::array<int,85>,4>& posLayers) const
+    int posLayers[4][85] ) const
   {
     
     for(int iStation = 0; iStation < 2; ++iStation){
@@ -181,25 +198,26 @@ private:
        	int layer_offset = hits_layers->layer_offset[layer];
 	
         size_t pos = 0;
-        posLayers[layer].fill(pos);
+        fillArray( posLayers[layer], 85, pos );
 
-        float bound = -42.0;
-        float val = std::copysign(bound*bound/2.0, bound);
+        int bound = -42.0;
+        float val = std::copysign(float(bound*bound)/2.0, bound);
 
         // TODO add bounds checking
         for ( ; pos != n_hits_layers[layer]; ++pos) {
           while( hits_layers->xAtYEq0( layer_offset + pos ) > val){
             posLayers[layer][bound+42] = pos;
             ++bound;
-            val = std::copysign(bound*bound/2.0, bound);
+            val = std::copysign(float(bound*bound)/2.0, bound);
           }
         }
 
-        std::fill(
-          posLayers[layer].begin() + 42 + int(bound), 
-          posLayers[layer].end(),
-	  n_hits_layers[layer]
-        );
+        fillArrayAt(
+          posLayers[layer],
+          42 + bound,
+          85 - 42 - bound,
+          n_hits_layers[layer] );
+        
       }
     }
   }

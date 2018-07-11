@@ -97,7 +97,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   
   std::vector<VeloUTTracking::TrackUT> outputTracks;
 
-  std::array<std::array<int,85>,4> posLayers;
+  int posLayers[4][85];
   fillIterators(hits_layers, n_hits_layers, posLayers);
 
   const float* fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
@@ -171,7 +171,7 @@ bool PrVeloUT::filterTrack(
 bool PrVeloUT::getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],		       
-  const std::array<std::array<int,85>,4>& posLayers,
+  const int posLayers[4][85],
   VeloUTTracking::HitsSoA *hits_layers,
   const uint32_t n_hits_layers[VeloUTTracking::n_layers],
   const float* fudgeFactors, 
@@ -434,7 +434,7 @@ void PrVeloUT::prepareOutputTrack(
   }
   outputTracks.emplace_back( track );
   outputTracks.back().set_qop( qop );
-  
+
   // Adding overlap hits
   for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
     const VeloUTTracking::Hit hit = helper.bestHits[i_hit];

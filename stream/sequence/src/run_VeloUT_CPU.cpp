@@ -223,7 +223,7 @@ int run_veloUT_on_CPU (
       host_velo_states_event,
       &(hits_layers_events[i_event]),
       n_hits_layers_events[i_event],
-      n_velo_tracks_in_UT_event
+      n_velo_tracks_in_UT_event  
    );
 
     n_UT_tracks += ut_tracks.size();
@@ -241,6 +241,7 @@ int run_veloUT_on_CPU (
     }
     
     // save in format for track checker
+    
     trackChecker::Tracks checker_tracks = prepareVeloUTTracks( ut_tracks );
         
     ut_tracks_events->emplace_back( checker_tracks );
