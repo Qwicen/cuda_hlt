@@ -332,6 +332,19 @@ cudaError_t Stream::run_sequence(
 	trackType); 
       
       delete ut_tracks_events;
+
+
+      run_PatPV_on_CPU(
+           ut_tracks_events,
+     hits_layers_events_ut,
+     n_hits_layers_events_ut,
+     host_velo_states,
+     host_accumulated_tracks,
+                 host_velo_track_hit_number,
+                 reinterpret_cast<VeloTracking::Hit<true>*>(host_velo_track_hits),
+     host_number_of_tracks,
+     number_of_events
+         );
       
       
     } // mc_check_enabled       
