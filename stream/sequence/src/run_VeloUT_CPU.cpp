@@ -33,14 +33,14 @@ void findPermutation(
 
 
 int run_veloUT_on_CPU (
-  std::vector< trackChecker::Tracks > * ut_tracks_events,
-  VeloUTTracking::HitsSoA * hits_layers_events,
+  std::vector< trackChecker::Tracks >* ut_tracks_events,
+  VeloUTTracking::HitsSoA* hits_layers_events,
   const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
-  VeloState * host_velo_states,
-  int * host_accumulated_tracks,
-  uint* host_velo_track_hit_number_pinned,
-  VeloTracking::Hit<true>* host_velo_track_hits_pinned,   
-  int * host_number_of_tracks_pinned,
+  const VeloState* host_velo_states,
+  const int* host_accumulated_tracks,
+  const uint* host_velo_track_hit_number_pinned,
+  const VeloTracking::Hit<true>* host_velo_track_hits_pinned,   
+  const int* host_number_of_tracks_pinned,
   const int &number_of_events
 ) {
 
@@ -119,7 +119,6 @@ int run_veloUT_on_CPU (
       );
 
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_cos );
-      //      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_dxDy );
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_weight2 );
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_xAtYEq0 );
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_yBegin );
@@ -132,7 +131,6 @@ int run_veloUT_on_CPU (
       for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
 	VeloUTTracking::Hit hit;
 	hit.m_cos = hits_layers_events[i_event].m_cos[layer_offset + i_hit];
-	//hit.m_dxDy = hits_layers_events[i_event].m_dxDy[layer_offset + i_hit];
 	hit.m_weight2 = hits_layers_events[i_event].m_weight2[layer_offset + i_hit];
 	hit.m_xAtYEq0 = hits_layers_events[i_event].m_xAtYEq0[layer_offset + i_hit];
 	hit.m_yBegin = hits_layers_events[i_event].m_yBegin[layer_offset + i_hit];
@@ -158,13 +156,11 @@ int run_veloUT_on_CPU (
         
 	t_ut_hits->Fill();
       }
-      // sort hits according to xAtYEq0
-      //std::sort( inputHits[i_layer].begin(), inputHits[i_layer].end(), [](VeloUTTracking::Hit a, VeloUTTracking::Hit b) { return a.xAtYEq0() < b.xAtYEq0(); } );
-    }
+    } // layers
     
     // Prepare Velo tracks
     const int accumulated_tracks = host_accumulated_tracks[i_event];
-    VeloState* velo_states_event = host_velo_states + accumulated_tracks;
+    const VeloState* host_velo_states_event = host_velo_states + accumulated_tracks;
     std::vector<VeloUTTracking::TrackVelo> tracks;
     for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
       
@@ -173,14 +169,13 @@ int run_veloUT_on_CPU (
       VeloUTTracking::TrackUT ut_track;
       const uint starting_hit = host_velo_track_hit_number_pinned[accumulated_tracks + i_track];
       const uint number_of_hits = host_velo_track_hit_number_pinned[accumulated_tracks + i_track + 1] - starting_hit;
-      backward = (int)(velo_states_event[i_track].backward);
-      ut_track.hitsNum = number_of_hits;
+      backward = (int)(host_velo_states_event[i_track].backward);
       for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
-	ut_track.LHCbIDs.push_back( host_velo_track_hits_pinned[starting_hit + i_hit].LHCbID );
+	ut_track.addLHCbID( host_velo_track_hits_pinned[starting_hit + i_hit].LHCbID );
       }
       track.track = ut_track;
       
-      track.state = ( velo_states_event[i_track] );
+      track.state = ( host_velo_states_event[i_track] );
       
       //////////////////////
       // For tree filling
@@ -223,7 +218,16 @@ int run_veloUT_on_CPU (
     }
     //debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0, " << inputHits[1].size() << " hits in layer 1, " << inputHits[2].size() << " hits in layer 2, " << inputHits[3].size() << " in layer 3 to velout" << std::endl;
     
-    std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, &(hits_layers_events[i_event]), n_hits_layers_events[i_event]);
+    std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(
+      host_velo_track_hit_number_pinned,
+      host_velo_track_hits_pinned,                                                        
+      host_number_of_tracks_pinned[i_event],
+      host_accumulated_tracks[i_event],
+      host_velo_states_event,
+      &(hits_layers_events[i_event]),
+      n_hits_layers_events[i_event]
+   );
+
     //debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
     
     // store qop in tree
@@ -238,7 +242,7 @@ int run_veloUT_on_CPU (
     
     ut_tracks_events->emplace_back( checker_tracks );
     
-  }
+  } // events
   
   
   f->Write();

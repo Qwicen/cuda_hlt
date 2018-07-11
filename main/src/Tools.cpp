@@ -338,7 +338,7 @@ trackChecker::Tracks prepareVeloUTTracks(
   trackChecker::Tracks checker_tracks;
   for ( VeloUTTracking::TrackUT ut_track : ut_tracks ) {
     trackChecker::Track checker_track;
-    for ( int i_hit = 0; i_hit < ut_track.hitsNum; ++i_hit ) {
+    for ( int i_hit = 0; i_hit < ut_track.LHCbIDs.size(); ++i_hit ) {
       LHCbID lhcb_id( ut_track.LHCbIDs[i_hit] );
       checker_track.addId( lhcb_id );
     }

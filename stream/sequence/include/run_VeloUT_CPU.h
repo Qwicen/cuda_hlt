@@ -10,11 +10,11 @@ int run_veloUT_on_CPU (
   std::vector< trackChecker::Tracks > * ut_tracks_events,
   VeloUTTracking::HitsSoA * hits_layers_events,
   const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
-  VeloState * host_velo_states,
-  int * host_accumulated_tracks,
-  uint* host_velo_track_hit_number_pinned,
-  VeloTracking::Hit<true>* host_velo_track_hits_pinned,
-  int * host_number_of_tracks_pinned,
+  const VeloState * host_velo_states,
+  const int * host_accumulated_tracks,
+  const uint* host_velo_track_hit_number_pinned,
+  const VeloTracking::Hit<true>* host_velo_track_hits_pinned,
+  const int * host_number_of_tracks_pinned,
   const int &number_of_events
 );
 

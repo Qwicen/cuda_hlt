@@ -61,13 +61,11 @@ namespace VeloUTTracking {
   typedef std::vector<Hit> Hits;
 
   struct TrackUT {
-    unsigned int hitsNum;
     std::vector<unsigned int> LHCbIDs;
     float qop;
 
     void addLHCbID( unsigned int id ) {
       LHCbIDs.push_back(id);
-      hitsNum++;
     }
 
     void set_qop( float _qop ) {

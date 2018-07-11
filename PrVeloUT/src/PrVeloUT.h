@@ -69,7 +69,7 @@ struct TrackHelper{
   VeloState state;
   VeloUTTracking::Hit bestHits[VeloUTTracking::n_layers];
   int n_hits = 0;
-  std::array<float, 4> bestParams;
+  float bestParams[4];
   float wb, invKinkVeloDist, xMidField;
 
   TrackHelper(
@@ -77,24 +77,28 @@ struct TrackHelper{
     const float zKink, 
     const float sigmaVeloSlope, 
     const float maxPseudoChi2
-  ):
-    state(miniState),
-    bestParams{{ 0.0, maxPseudoChi2, 0.0, 0.0 }}{
+    ) : state(miniState) {
+    bestParams[0] = bestParams[2] = bestParams[3] = 0.;
+    bestParams[1] = maxPseudoChi2;
     xMidField = state.x + state.tx*(zKink-state.z);
     const float a = sigmaVeloSlope*(zKink - state.z);
     wb=1./(a*a);
     invKinkVeloDist = 1/(zKink-state.z);
-  }
-};
+    }
+  };
 
 class PrVeloUT {
 
 public:
 
-  // std::vector<std::string> GetFieldMaps();
   virtual int initialize();
+  
   std::vector<VeloUTTracking::TrackUT> operator()(
-    const std::vector<VeloUTTracking::TrackVelo>& inputTracks,
+    const uint* velo_track_hit_number,
+    const VeloTracking::Hit<true>* velo_track_hits,
+    const int number_of_tracks_event,
+    const int accumulated_tracks_event,
+    const VeloState* velo_states_event,
     VeloUTTracking::HitsSoA *hits_layers_events,
     const uint32_t n_hits_layers_events[VeloUTTracking::n_layers]
   ) const;
@@ -123,9 +127,8 @@ private:
 
   // typedef MultiIndexedHitContainer<Hit, UT::Info::kNStations, UT::Info::kNLayers>::HitRange HitRange;
 
-  bool getState(
-    const VeloUTTracking::TrackVelo& iTr, 
-    VeloState& trState ) const;
+  bool filterTrack(
+    const VeloState& state ) const;
 
   bool getHits(
     int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
@@ -134,7 +137,7 @@ private:
     VeloUTTracking::HitsSoA *hits_layers,
     const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     const float* fudgeFactors, 
-    VeloState& trState ) const; 
+    const VeloState& trState ) const; 
 
   bool formClusters(
     const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
@@ -144,7 +147,10 @@ private:
     const bool forward ) const;
 
   void prepareOutputTrack(
-    const VeloUTTracking::TrackVelo& veloTrack,
+    const uint* velo_track_hit_number,
+    const VeloTracking::Hit<true>* velo_track_hits,
+    const int accumulated_tracks_event,
+    const int i_track,
     const TrackHelper& helper,
     int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
     int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
@@ -331,7 +337,10 @@ private:
       const float sinOutX = xSlopeTTFit * std::sqrt(1.+xSlopeTTFit*xSlopeTTFit);
       const float qp = (sinInX-sinOutX);
 
-      helper.bestParams = { qp, chi2TT, xTTFit,xSlopeTTFit };
+      helper.bestParams[0] = qp;
+      helper.bestParams[1] = chi2TT;
+      helper.bestParams[2] = xTTFit;
+      helper.bestParams[3] = xSlopeTTFit;
 
       for ( int i_hit = 0; i_hit < N; ++i_hit ) {
         helper.bestHits[i_hit] = *(hits[i_hit]);

@@ -85,14 +85,16 @@ int PrVeloUT::initialize() {
 // Main execution
 //=============================================================================
 std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
-  const std::vector<VeloUTTracking::TrackVelo>& inputTracks,
+  const uint* velo_track_hit_number,
+  const VeloTracking::Hit<true>* velo_track_hits,
+  const int number_of_tracks_event,
+  const int accumulated_tracks_event,
+  const VeloState* velo_states_event,
   VeloUTTracking::HitsSoA *hits_layers,
-  const uint32_t n_hits_layers[VeloUTTracking::n_layers]
-  ) const
+  const uint32_t n_hits_layers[VeloUTTracking::n_layers] ) const
 {
   
   std::vector<VeloUTTracking::TrackUT> outputTracks;
-  outputTracks.reserve(inputTracks.size());
 
   std::array<std::array<int,85>,4> posLayers;
   fillIterators(hits_layers, n_hits_layers, posLayers);
@@ -105,26 +107,36 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers];
   
-  for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
+  for ( int i_track = 0; i_track < number_of_tracks_event; ++i_track ) {
+    if ( velo_states_event[i_track].backward ) continue;
     
-    VeloState trState;
-    if( !getState(veloTr, trState)) continue;
+    if( !filterTrack( velo_states_event[i_track] ) ) continue;
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
     }
-    if( !getHits(hitCandidatesInLayers, n_hitCandidatesInLayers, posLayers, hits_layers, n_hits_layers, fudgeFactors, trState ) ) continue;
-
-    TrackHelper helper(trState, m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
-
+    if( !getHits(hitCandidatesInLayers, n_hitCandidatesInLayers, posLayers, hits_layers, n_hits_layers, fudgeFactors, velo_states_event[i_track] ) ) continue;
+    
+    TrackHelper helper(velo_states_event[i_track], m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
+    
     // go through UT layers in forward direction
     if( !formClusters(hitCandidatesInLayers, n_hitCandidatesInLayers, hits_layers, helper, true) ){
-
+      
       // go through UT layers in backward direction
       formClusters(hitCandidatesInLayers, n_hitCandidatesInLayers, hits_layers, helper, false);
     }
-
+    
     if ( helper.n_hits > 0 ) {
-      prepareOutputTrack(veloTr, helper, hitCandidatesInLayers, n_hitCandidatesInLayers, hits_layers, outputTracks, bdlTable);
+      prepareOutputTrack(
+        velo_track_hit_number,
+        velo_track_hits,
+        accumulated_tracks_event,
+        i_track,
+        helper,
+        hitCandidatesInLayers,
+        n_hitCandidatesInLayers,
+        hits_layers,
+        outputTracks,
+        bdlTable);
     }
   }
 
@@ -132,34 +144,24 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
 }
 
 //=============================================================================
-// Get the state, do some cuts
+// Reject tracks outside of acceptance or pointing to the beam pipe
 //=============================================================================
-bool PrVeloUT::getState(
-  const VeloUTTracking::TrackVelo& iTr, 
-  VeloState& trState ) const 
+bool PrVeloUT::filterTrack(
+  const VeloState& state ) const 
 {
-  const VeloState state = iTr.state;
-  
-  // -- reject tracks outside of acceptance or pointing to the beam pipe
-  trState.tx = state.tx;
-  trState.ty = state.ty;
-  trState.x = state.x;
-  trState.y = state.y;
-  trState.z = state.z;
 
   // m_zMidUT comes from MagnetTool
-  const float xMidUT =  trState.x + trState.tx*( m_zMidUT - trState.z);
-  const float yMidUT =  trState.y + trState.ty*( m_zMidUT - trState.z);
+  const float xMidUT =  state.x + state.tx*( m_zMidUT - state.z);
+  const float yMidUT =  state.y + state.ty*( m_zMidUT - state.z);
 
   if( xMidUT*xMidUT+yMidUT*yMidUT  < m_centralHoleSize*m_centralHoleSize ) return false;
-  if( (std::abs(trState.tx) > m_maxXSlope) || (std::abs(trState.ty) > m_maxYSlope) ) return false;
+  if( (std::abs(state.tx) > m_maxXSlope) || (std::abs(state.ty) > m_maxYSlope) ) return false;
 
   if(m_passTracks && std::abs(xMidUT) < m_passHoleSize && std::abs(yMidUT) < m_passHoleSize) {
     return false;
   }
 
   return true;
-
 }
 
 //=============================================================================
@@ -172,7 +174,7 @@ bool PrVeloUT::getHits(
   VeloUTTracking::HitsSoA *hits_layers,
   const uint32_t n_hits_layers[VeloUTTracking::n_layers],
   const float* fudgeFactors, 
-  VeloState& trState ) const 
+  const VeloState& trState ) const 
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
@@ -364,7 +366,10 @@ bool PrVeloUT::formClusters(
 // Create the Velo-TU tracks
 //=========================================================================
 void PrVeloUT::prepareOutputTrack(
-  const VeloUTTracking::TrackVelo& veloTrack,
+  const uint* velo_track_hit_number,   
+  const VeloTracking::Hit<true>* velo_track_hits,
+  const int accumulated_tracks_event,
+  const int i_track,
   const TrackHelper& helper,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
@@ -420,7 +425,13 @@ void PrVeloUT::prepareOutputTrack(
 
   const float txUT = helper.bestParams[3];
 
-  outputTracks.emplace_back( veloTrack.track );
+  VeloUTTracking::TrackUT track;
+  const uint starting_hit = velo_track_hit_number[accumulated_tracks_event + i_track];
+  const uint number_of_hits = velo_track_hit_number[accumulated_tracks_event + i_track + 1] - starting_hit;
+  for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
+    track.addLHCbID( velo_track_hits[starting_hit + i_hit].LHCbID );
+  }
+  outputTracks.emplace_back( track );
   outputTracks.back().set_qop( qop );
   
   // Adding overlap hits
