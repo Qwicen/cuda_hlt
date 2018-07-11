@@ -99,6 +99,11 @@ int run_veloUT_on_CPU (
     error_cout << "Could not initialize VeloUT" << std::endl;
     return -1;
   }
+
+  float amount_velo_tracks_in_UT = 0.;
+  int n_UT_tracks = 0;
+  int n_velo_tracks_in_UT = 0;
+  int n_velo_tracks = 0;
   
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
 
@@ -163,9 +168,10 @@ int run_veloUT_on_CPU (
     const VeloState* host_velo_states_event = host_velo_states + accumulated_tracks;
     std::vector<VeloUTTracking::TrackVelo> tracks;
     for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+
+      n_velo_tracks++;
       
       VeloUTTracking::TrackVelo track;
-      
       VeloUTTracking::TrackUT ut_track;
       const uint starting_hit = host_velo_track_hit_number_pinned[accumulated_tracks + i_track];
       const uint number_of_hits = host_velo_track_hit_number_pinned[accumulated_tracks + i_track + 1] - starting_hit;
@@ -217,7 +223,8 @@ int run_veloUT_on_CPU (
       tracks.push_back( track );
     }
     //debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0, " << inputHits[1].size() << " hits in layer 1, " << inputHits[2].size() << " hits in layer 2, " << inputHits[3].size() << " in layer 3 to velout" << std::endl;
-    
+
+    int n_velo_tracks_in_UT_event = 0;
     std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(
       host_velo_track_hit_number_pinned,
       host_velo_track_hits_pinned,                                                        
@@ -225,10 +232,17 @@ int run_veloUT_on_CPU (
       host_accumulated_tracks[i_event],
       host_velo_states_event,
       &(hits_layers_events[i_event]),
-      n_hits_layers_events[i_event]
+      n_hits_layers_events[i_event],
+      n_velo_tracks_in_UT_event
    );
 
-    //debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
+    n_UT_tracks += ut_tracks.size();
+    n_velo_tracks_in_UT += n_velo_tracks_in_UT_event;
+    
+    // How many tracks are in UT acceptance?
+    if ( tracks.size() > 0 ) {
+      amount_velo_tracks_in_UT += float(n_velo_tracks_in_UT_event) / float(tracks.size());
+    }
     
     // store qop in tree
     for ( auto veloUT_track : ut_tracks ) {
@@ -243,7 +257,10 @@ int run_veloUT_on_CPU (
     ut_tracks_events->emplace_back( checker_tracks );
     
   } // events
-  
+
+  info_cout << "Number of velo tracks per event = " << float(n_velo_tracks) / float(number_of_events) << std::endl;
+  info_cout << "Amount of velo tracks in UT acceptance = " << amount_velo_tracks_in_UT / float(number_of_events)  << std::endl;
+  info_cout << "Amount of UT tracks found ( out of velo tracks in UT acceptance ) " << float(n_UT_tracks) / float(n_velo_tracks_in_UT) << std::endl;
   
   f->Write();
   f->Close();

@@ -100,7 +100,8 @@ public:
     const int accumulated_tracks_event,
     const VeloState* velo_states_event,
     VeloUTTracking::HitsSoA *hits_layers_events,
-    const uint32_t n_hits_layers_events[VeloUTTracking::n_layers]
+    const uint32_t n_hits_layers_events[VeloUTTracking::n_layers],
+    int &n_tracks_past_filter
   ) const;
 
 private:

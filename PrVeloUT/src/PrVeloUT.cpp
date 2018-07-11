@@ -91,7 +91,8 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   const int accumulated_tracks_event,
   const VeloState* velo_states_event,
   VeloUTTracking::HitsSoA *hits_layers,
-  const uint32_t n_hits_layers[VeloUTTracking::n_layers] ) const
+  const uint32_t n_hits_layers[VeloUTTracking::n_layers],
+  int &n_tracks_past_filter ) const
 {
   
   std::vector<VeloUTTracking::TrackUT> outputTracks;
@@ -106,11 +107,11 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   // -> can then access the hit information in the HitsSoA
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers];
-  
   for ( int i_track = 0; i_track < number_of_tracks_event; ++i_track ) {
     if ( velo_states_event[i_track].backward ) continue;
     
     if( !filterTrack( velo_states_event[i_track] ) ) continue;
+    n_tracks_past_filter++;
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
     }
