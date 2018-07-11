@@ -1,8 +1,8 @@
 #include "../include/PrefixSum.cuh"
 
 __global__ void prefix_sum_scan(
-  uint* dev_estimated_input_size,
-  uint* dev_cluster_offset,
+  uint* dev_main_array,
+  uint* dev_auxiliary_array,
   const uint array_size
 ) {
   // Note: The first block is already correctly populated.
@@ -10,7 +10,7 @@ __global__ void prefix_sum_scan(
   const uint element = (blockIdx.x + 1) * blockDim.x + threadIdx.x;
 
   if (element < array_size) {
-    const uint cluster_offset = dev_cluster_offset[blockIdx.x + 1];
-    dev_estimated_input_size[element] += cluster_offset;
+    const uint cluster_offset = dev_auxiliary_array[blockIdx.x + 1];
+    dev_main_array[element] += cluster_offset;
   }
 }

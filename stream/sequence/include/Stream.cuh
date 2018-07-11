@@ -4,118 +4,87 @@
 #include <vector>
 #include <numeric>
 #include <algorithm>
+#include <tuple>
 
 #include "../../../main/include/Common.h"
 #include "../../../main/include/CudaCommon.h"
 #include "../../../main/include/Logger.h"
 #include "../../../main/include/Timer.h"
 #include "../../../main/include/Tools.h"
-#include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
-#include "../../../cuda/velo/common/include/ClusteringDefinitions.cuh"
-#include "../../handlers/include/HandleEstimateInputSize.cuh"
-#include "../../handlers/include/HandlePrefixSumReduce.cuh"
-#include "../../handlers/include/HandlePrefixSumSingleBlock.cuh"
-#include "../../handlers/include/HandleCopyAndPrefixSumSingleBlock.cuh"
-#include "../../handlers/include/HandlePrefixSumScan.cuh"
-#include "../../handlers/include/HandleMaskedVeloClustering.cuh"
-#include "../../handlers/include/HandleCalculatePhiAndSort.cuh"
-#include "../../handlers/include/HandleSearchByTriplet.cuh"
-#include "../../handlers/include/HandleConsolidateTracks.cuh"
-#include "../../handlers/include/HandleSimplifiedKalmanFilter.cuh"
-#include "../../handlers/include/Helper.cuh"
+#include "../../scheduler/include/BaseDynamicScheduler.cuh"
+#include "../../sequence_setup/include/SequenceSetup.cuh"
+#include "run_VeloUT_CPU.h"
 
 class Timer;
 
 struct Stream {
-  // Limiting constants for preallocation
-  constexpr static uint max_tracks_in_event = VeloTracking::max_tracks;
-  constexpr static uint max_numhits_in_module = VeloTracking::max_numhits_in_module;
-  // DvB: why + 1? sizes should be understandable
-  // because this array first contains the track counters for all events
-  // then an array of size number_of_events of structures of the num_atomics counters
-  // this is not easily understandable
-  constexpr static uint atomic_space = VeloTracking::num_atomics + 1;
+  // Sequence and arguments
+  sequence_t sequence;
+  argument_tuple_t arguments;
+
+  // Sequence and argument names
+  std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> sequence_names;
+  std::array<std::string, std::tuple_size<argument_tuple_t>::value> argument_names;
+
   // Stream datatypes
   cudaStream_t stream;
   cudaEvent_t cuda_generic_event;
   cudaEvent_t cuda_event_start;
   cudaEvent_t cuda_event_stop;
   uint stream_number;
-  // Algorithms
-  EstimateInputSize estimateInputSize;
-  PrefixSumReduce prefixSumReduce;
-  PrefixSumScan prefixSumScan;
-  PrefixSumSingleBlock prefixSumSingleBlock;
-  MaskedVeloClustering maskedVeloClustering;
-  CalculatePhiAndSort calculatePhiAndSort;
-  SearchByTriplet searchByTriplet;
-  CopyAndPrefixSumSingleBlock copyAndPrefixSumSingleBlock;
-  ConsolidateTracks consolidateTracks;
-  SimplifiedKalmanFilter simplifiedKalmanFilter;
+
   // Launch options
   bool transmit_host_to_device;
   bool transmit_device_to_host;
   bool do_check;
   bool do_simplified_kalman_filter;
-  bool print_individual_rates;
-  // Varying cluster container size
-  uint velo_cluster_container_size;
-  // Geometry of Velo detector
-  std::vector<char> geometry;
-  // Data back transmission
-  int* host_number_of_tracks_pinned;
+  bool do_print_memory_manager;
+
+  // Pinned host datatypes
+  int* host_number_of_tracks;
   int* host_accumulated_tracks;
-  VeloTracking::Track <mc_check_enabled> *host_tracks_pinned;
+  uint* host_velo_track_hit_number;
+  VeloTracking::Hit<mc_check_enabled>* host_velo_track_hits;
+  uint* host_total_number_of_velo_clusters;
+  uint* host_number_of_reconstructed_velo_tracks;
+  uint* host_accumulated_number_of_hits_in_velo_tracks;
   VeloState* host_velo_states;
 
-  Stream() = default;
+  // Dynamic scheduler
+  BaseDynamicScheduler scheduler;
 
+  // GPU pointers
+  char* dev_velo_geometry;
+  char* dev_base_pointer;
+
+  // Monte Carlo folder name
   std::string folder_name_MC;
 
   cudaError_t initialize(
     const std::vector<char>& raw_events,
     const std::vector<uint>& event_offsets,
     const std::vector<char>& geometry,
-    const uint number_of_events,
+    const uint max_number_of_events,
     const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
     const bool param_do_simplified_kalman_filter,
-    const bool param_print_individual_rates,
-    const std::string param_folder_name_MC,
+    const bool param_print_memory_usage,
+    const std::string& param_folder_name_MC,
+    const size_t param_reserve_mb,
     const uint param_stream_number
   );
-
-  ~Stream() {
-    // // Free buffers
-    // cudaCheck(cudaFree(dev_hit_permutation));
-    // cudaCheck(cudaFree(dev_tracks_to_follow));
-    // cudaCheck(cudaFree(dev_hit_used));
-    // cudaCheck(cudaFree(dev_tracklets));
-    // cudaCheck(cudaFree(dev_weak_tracks));
-    // cudaCheck(cudaFree(dev_h0_candidates));
-    // cudaCheck(cudaFree(dev_h2_candidates));
-    // cudaCheck(cudaFree(dev_rel_indices));
-    // cudaCheck(cudaFree(dev_event_offsets));
-    // cudaCheck(cudaFree(dev_events));
-    // cudaCheck(cudaFree(dev_hit_temp));
-    // cudaCheck(cudaFree(dev_atomics_storage));
-    // cudaCheck(cudaFree(dev_tracks));
-
-    // cudaCheck(cudaStreamDestroy(stream));
-    // cudaCheck(cudaStreamDestroy(stream_receive));
-  }
   
-  cudaError_t operator()(
-    const char* host_events_pinned,
-    const uint* host_event_offsets_pinned,
-    size_t host_events_pinned_size,
-    size_t host_event_offsets_pinned_size,
-    const VeloUTTracking::HitsSoA *hits_layers_events,
-    const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
-    uint number_of_events,
-    uint number_of_repetitions,
-    uint i_stream
+  cudaError_t run_sequence(
+    const uint i_stream,
+    const char* host_events,
+    const uint* host_event_offsets,
+    const size_t host_events_size,
+    const size_t host_event_offsets_size,
+    VeloUTTracking::HitsSoA *hits_layers_events_ut,
+    const uint32_t n_hits_layers_events_ut[][VeloUTTracking::n_layers],
+    const uint number_of_events,
+    const uint number_of_repetitions
   );
 
   void print_timing(

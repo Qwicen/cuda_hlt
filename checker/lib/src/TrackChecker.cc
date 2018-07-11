@@ -70,9 +70,9 @@ void TrackCheckerVelo::SetCategories() {
     //     [] (const MCParticles::const_reference& mcp)
     //     { return mcp.isStrangeDown() && 11 != std::abs(mcp.pid()) && mcp.p() > 5e3; },
     // 	})
-    }}; 
+    }};
 };
-
+ 
 
 void TrackCheckerVeloUT::SetCategories() {
   m_categories = {{ // define which categories to monitor
@@ -80,23 +80,23 @@ void TrackCheckerVeloUT::SetCategories() {
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && 11 != std::abs(mcp.pid()); },
         }),
-    TrackEffReport({ "Velo + UT",
+    TrackEffReport({ "Velo+UT",
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && mcp.isUT() && 11 != std::abs(mcp.pid()); },
         }),
-    TrackEffReport({ "Velo + UT, p > 5 GeV",
+    TrackEffReport({ "Velo+UT, p > 5 GeV",
 	[] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && mcp.isUT() && mcp.p() > 5e3 && 11 != std::abs(mcp.pid()) ; },
 	}),
-    TrackEffReport({ "Velo + not long",
+    TrackEffReport({ "Velo, not long",
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && !mcp.isLong() && 11 != std::abs(mcp.pid()); },
         }),
-    TrackEffReport({ "Velo + UT + not long",
+    TrackEffReport({ "Velo+UT, not long",
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && mcp.isUT() && !mcp.isLong() && 11 != std::abs(mcp.pid()); },
 	  }),
-    TrackEffReport({ "Velo + UT + not long, p > 5 GeV",
+    TrackEffReport({ "Velo+UT, not long, p > 5 GeV",
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.isVelo() && mcp.isUT() && !mcp.isLong() && mcp.p() > 5e3 && 11 != std::abs(mcp.pid()); },
 	  }),
@@ -150,20 +150,19 @@ void TrackChecker::TrackEffReport::operator()(
   if (!m_keysseen.count(mcp.key())) {
     ++m_nfound, ++m_nfoundperevt;
     m_keysseen.insert(mcp.key());
-    // update purity
-    m_hitpur *= float(m_nfound - 1) / float(m_nfound);
-    m_hitpur += weight / float(m_nfound);
-    // update hit efficiency
-    auto hiteff = track.nIDs() * weight / float(mcp.nIDs());
-    m_hiteff *= float(m_nfound - 1) / float(m_nfound);
-    m_hiteff += hiteff / float(m_nfound);
   } else {
-    // clone, update total hit efficiency by adding what's missing to
-    // m_hiteff
-    auto hiteff = track.nIDs() * weight / float(mcp.nIDs());
-    m_hiteff += hiteff / float(m_nfound);
     ++m_nclones;
   }
+  
+  // update purity
+  m_hitpur *= float(m_nfound + m_nclones - 1) / float(m_nfound + m_nclones);
+  m_hitpur += weight / float(m_nfound + m_nclones);
+  // update hit efficiency
+  //auto hiteff = track.nIDs() * weight / float(mcp.nIDs());
+  auto hiteff = track.n_matched_total * weight / float(mcp.nIDs());
+  m_hiteff *= float(m_nfound + m_nclones - 1) / float(m_nfound + m_nclones);
+  m_hiteff += hiteff / float(m_nfound + m_nclones);
+
 }
 
 void TrackChecker::TrackEffReport::evtEnds()
@@ -205,7 +204,7 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
   for (auto track: tracks) {
     // check LHCbIDs for MC association
     const auto& ids = track.ids();
-    const auto assoc = mcassoc(ids.begin(), ids.end());
+    const auto assoc = mcassoc(ids.begin(), ids.end(), track.n_matched_total);
     if (!assoc) {
       ++nghostsperevt;
 	  continue;
@@ -219,7 +218,10 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
     // okay, sufficient to proceed...
     const auto mcp = assoc.front().first;
     // add to various categories
-    for (auto& report: m_categories) report(track, mcp, weight);
+    for (auto& report: m_categories) {
+      report(track, mcp, weight);
+      
+    }
   }
   // almost done, notify of end of event...
   ++m_nevents;

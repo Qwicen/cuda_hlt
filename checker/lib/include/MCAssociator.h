@@ -18,13 +18,14 @@
 #include "LHCbID.h"
 #include "MCParticle.h"
 
+#include "../../../main/include/Logger.h"
+
 
 /// simple MC associator
 class MCAssociator
 {
     private:
-        using LHCbIDWithIndex = std::pair<
-            LHCbID, MCParticles::size_type>;
+        using LHCbIDWithIndex = std::pair<LHCbID, uint>;
         using AssocMap = std::vector<LHCbIDWithIndex>;
 
         /// internal structure with index into particles and weight
@@ -193,20 +194,21 @@ class MCAssociator
         }
         /// associate a range of LHCbIDs
         template <typename IT>
-        MCAssocResult operator()(IT first, IT last) const noexcept
+        MCAssocResult operator()(IT first, IT last, std::size_t &n_matched_total) const noexcept
         {
             AssocPreResult assoc;
             std::size_t total = 0;
             // count how often each particle appears
+	    // and how many hits of the reconstructed track are matched
+	    // to the MCP
             for (; last != first; ++first) {
-	      //printf("working on lhcb id %u \n", uint32_t( *first ) );
-                auto it = find(*first);
+	      auto it = find(*first);
                 if (m_map.end() == it) continue;
+		++n_matched_total;
                 ++assoc[it->second];
-                ++total;
-		//printf("total = %u \n", total);
-            }
-            // bring the map into a more compact format
-            return buildResult(assoc, total);
+	    }
+
+	    // bring the map into a more compact format
+            return buildResult(assoc, n_matched_total);
         }
 };

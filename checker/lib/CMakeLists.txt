@@ -1,5 +1,4 @@
 include_directories(include)
-include_directories(SOAContainer/include)
 
 find_package( ROOT REQUIRED COMPONENTS  Matrix Physics MathCore Thread GenVector ) 
 

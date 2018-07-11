@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-project(cu_hlt CXX)
+project(cu_hlt C CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}) # for find_package
 
@@ -18,6 +18,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 # include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/ROOT/6.12.06-51921/x86_64-centos7-gcc62-opt/include/")
 include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/ROOT/6.08.06-d7e12/x86_64-centos7-gcc62-opt/include/")
 include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/include")
+include_directories("/usr/local/root/include")
 
 # MC truth matching
 if("${MC_CHECK}" STREQUAL Off OR "${MC_CHECK}" STREQUAL OFF)
@@ -41,7 +42,7 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
   set(CUDA_BUILD_TYPE "-O0\;-G\;-g\;-DDEBUG\;")
 endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 
-set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=64;")
+set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=63;")
 
 add_subdirectory(cuda)
 add_subdirectory(stream)
@@ -49,8 +50,11 @@ add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
 add_subdirectory(PrVeloUT)
 
+# Include directory
+include_directories(main/include)
+
 # Files from source directories
-file(GLOB main_sources "main/src/*cpp")
+file(GLOB main_sources "main/src/*")
 
 cuda_add_executable(cu_hlt ${main_sources})
 
