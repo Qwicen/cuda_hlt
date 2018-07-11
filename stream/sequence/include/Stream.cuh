@@ -14,6 +14,7 @@
 #include "../../scheduler/include/BaseDynamicScheduler.cuh"
 #include "../../sequence_setup/include/SequenceSetup.cuh"
 #include "run_VeloUT_CPU.h"
+#include "run_PatPV_CPU.h"
 
 class Timer;
 
