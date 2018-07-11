@@ -14,10 +14,10 @@
 // Math from ROOT
 #include "../include/CholeskyDecomp.h"
 
-#include "../include/VeloTypes.h"
 #include "../include/SystemOfUnits.h"
 
 #include "../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
+#include "../../cuda/velo/common/include/VeloDefinitions.cuh"
 
 /** @class PrVeloUT PrVeloUT.h
    *

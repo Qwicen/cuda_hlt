@@ -18,7 +18,6 @@
 #include "../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
 #include "../../checker/lib/include/Tracks.h"
 #include "../include/InputTools.h"
-#include "../../PrVeloUT/include/VeloTypes.h"
 
 void readGeometry(
   const std::string& foldername,
