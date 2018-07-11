@@ -73,8 +73,4 @@ namespace VeloUTTracking {
     }
   };
   
-  struct TrackVelo {
-    VeloState state;
-    TrackUT track;
-  };
 }

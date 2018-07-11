@@ -33,7 +33,6 @@
    *  2018-05-05: Plácido Fernández (make standalone)
    */
 
-// TODO Fake MagnetTool just to make it compile
 struct PrUTMagnetTool {
   static const int N_dxLay_vals = 124;
   static const int N_bdl_vals   = 3752;

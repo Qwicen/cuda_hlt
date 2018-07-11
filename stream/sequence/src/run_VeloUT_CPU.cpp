@@ -104,6 +104,7 @@ int run_veloUT_on_CPU (
   int n_UT_tracks = 0;
   int n_velo_tracks_in_UT = 0;
   int n_velo_tracks = 0;
+  int n_forward_velo_tracks = 0;
   
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
 
@@ -166,32 +167,26 @@ int run_veloUT_on_CPU (
     // Prepare Velo tracks
     const int accumulated_tracks = host_accumulated_tracks[i_event];
     const VeloState* host_velo_states_event = host_velo_states + accumulated_tracks;
-    std::vector<VeloUTTracking::TrackVelo> tracks;
     for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
 
       n_velo_tracks++;
       
-      VeloUTTracking::TrackVelo track;
-      VeloUTTracking::TrackUT ut_track;
       const uint starting_hit = host_velo_track_hit_number_pinned[accumulated_tracks + i_track];
       const uint number_of_hits = host_velo_track_hit_number_pinned[accumulated_tracks + i_track + 1] - starting_hit;
+
       backward = (int)(host_velo_states_event[i_track].backward);
-      for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
-	ut_track.addLHCbID( host_velo_track_hits_pinned[starting_hit + i_hit].LHCbID );
-      }
-      track.track = ut_track;
-      
-      track.state = ( host_velo_states_event[i_track] );
+      if ( !backward ) n_forward_velo_tracks++;
+
       
       //////////////////////
       // For tree filling
       //////////////////////
-      x = track.state.x;
-      y = track.state.y;
-      tx = track.state.tx;
-      ty = track.state.ty;
-      chi2 = track.state.chi2;
-      z = track.state.z;
+      x = host_velo_states_event[i_track].x;
+      y = host_velo_states_event[i_track].y;
+      tx = host_velo_states_event[i_track].tx;
+      ty = host_velo_states_event[i_track].ty;
+      chi2 = host_velo_states_event[i_track].chi2;
+      z = host_velo_states_event[i_track].z;
       // study (sign of) (dr/dz) -> track moving away from beamline?
       // drop 1/sqrt(x^2+y^2) to avoid sqrt calculation, no effect on sign
       const uint last_hit = starting_hit + number_of_hits - 1;
@@ -217,13 +212,8 @@ int run_veloUT_on_CPU (
 	
 	t_track_hits->Fill();
       }
-      
-      
-      if ( backward ) continue;
-      tracks.push_back( track );
-    }
-    //debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0, " << inputHits[1].size() << " hits in layer 1, " << inputHits[2].size() << " hits in layer 2, " << inputHits[3].size() << " in layer 3 to velout" << std::endl;
-
+    } // tracks
+   
     int n_velo_tracks_in_UT_event = 0;
     std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(
       host_velo_track_hit_number_pinned,
@@ -240,8 +230,8 @@ int run_veloUT_on_CPU (
     n_velo_tracks_in_UT += n_velo_tracks_in_UT_event;
     
     // How many tracks are in UT acceptance?
-    if ( tracks.size() > 0 ) {
-      amount_velo_tracks_in_UT += float(n_velo_tracks_in_UT_event) / float(tracks.size());
+    if ( n_forward_velo_tracks > 0 ) {
+      amount_velo_tracks_in_UT += float(n_velo_tracks_in_UT_event) / float(n_forward_velo_tracks);
     }
     
     // store qop in tree
@@ -252,8 +242,7 @@ int run_veloUT_on_CPU (
     
     // save in format for track checker
     trackChecker::Tracks checker_tracks = prepareVeloUTTracks( ut_tracks );
-    //debug_cout << "Passing " << checker_tracks.size() << " tracks to PrChecker" << std::endl;
-    
+        
     ut_tracks_events->emplace_back( checker_tracks );
     
   } // events
