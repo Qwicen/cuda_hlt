@@ -4,6 +4,7 @@
 #include "device_launch_parameters.h"
 #include "../../../../main/include/Common.h"
 #include "../../../../main/include/Logger.h"
+#include "../../../velo/common/include/VeloDefinitions.cuh"
 
 #include "assert.h"
 
@@ -21,15 +22,15 @@ namespace VeloUTTracking {
      needs to be saved for the forward tracking
   */
   // layer configuration: XUVX, U and V layers tilted by +/- 5 degrees = 0.087 radians
-  static constexpr float dxDyTable[n_layers] = {0., 0.08748866617679595947, -0.08748866617679595947, 0.};
+  static constexpr float dxDyTable[n_layers] = {0., 0.08748867, -0.08748867, 0.};
   static constexpr int planeCode[n_layers] = {0, 1, 2, 3};
   
   /* Cut-offs */
   static constexpr uint max_numhits_per_layer = 500;
   static constexpr uint max_numhits_per_event = 4000;
   static constexpr uint max_hit_candidates_per_layer = 40;
-  static constexpr uint max_num_tracks = 400;
-  static constexpr uint max_track_size = 8; // to do: double check what the max # of hits really is
+  static constexpr uint max_num_tracks = 300; // to do: what is the best / safest value here?
+  static constexpr uint max_track_size = VeloTracking::max_track_size + 8; // to do: double check what the max # of hits added in UT really is
 
   /* SoA for hit variables
      The hits for every layer are written behind each other, the offsets 
@@ -128,11 +129,14 @@ namespace VeloUTTracking {
   typedef std::vector<Hit> Hits;
 
   struct TrackUT {
-    std::vector<unsigned int> LHCbIDs;
+    
+    unsigned int LHCbIDs[VeloUTTracking::max_track_size];
     float qop;
-
+    unsigned short hitsNum = 0;
+    
+    
     void addLHCbID( unsigned int id ) {
-      LHCbIDs.push_back(id);
+      LHCbIDs[hitsNum++] = id;
     }
 
     void set_qop( float _qop ) {

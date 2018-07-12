@@ -333,13 +333,15 @@ std::vector< trackChecker::Tracks > prepareTracks(
 
 
 trackChecker::Tracks prepareVeloUTTracks(
-  std::vector< VeloUTTracking::TrackUT > ut_tracks
+  const VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks],
+  const int n_veloUT_tracks
 ) {
   trackChecker::Tracks checker_tracks;
-  for ( VeloUTTracking::TrackUT ut_track : ut_tracks ) {
+  for ( int i_track = 0; i_track < n_veloUT_tracks; ++i_track ) {
+    VeloUTTracking::TrackUT veloUT_track = veloUT_tracks[i_track];
     trackChecker::Track checker_track;
-    for ( int i_hit = 0; i_hit < ut_track.LHCbIDs.size(); ++i_hit ) {
-      LHCbID lhcb_id( ut_track.LHCbIDs[i_hit] );
+    for ( int i_hit = 0; i_hit < veloUT_track.hitsNum; ++i_hit ) {
+      LHCbID lhcb_id( veloUT_track.LHCbIDs[i_hit] );
       checker_track.addId( lhcb_id );
     }
     checker_tracks.push_back( checker_track );

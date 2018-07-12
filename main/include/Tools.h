@@ -76,7 +76,8 @@ std::vector< trackChecker::Tracks > prepareTracks(
 );
 
 trackChecker::Tracks prepareVeloUTTracks(
-  std::vector< VeloUTTracking::TrackUT > ut_tracks
+  const VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks],
+  const int n_veloUT_tracks
 );
 
 void call_pr_checker(

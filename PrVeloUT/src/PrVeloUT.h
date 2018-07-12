@@ -8,7 +8,6 @@
 
 #include <cassert>
 
-// #include "../../PrUTMagnetTool/PrUTMagnetTool.h"
 #include "../../main/include/Logger.h"
 
 #include "../include/SystemOfUnits.h"
@@ -87,7 +86,7 @@ public:
 
   virtual int initialize();
   
-  std::vector<VeloUTTracking::TrackUT> operator()(
+  void operator()(
     const uint* velo_track_hit_number,
     const VeloTracking::Hit<true>* velo_track_hits,
     const int number_of_tracks_event,
@@ -95,7 +94,9 @@ public:
     const VeloState* velo_states_event,
     VeloUTTracking::HitsSoA *hits_layers_events,
     const uint32_t n_hits_layers_events[VeloUTTracking::n_layers],
-    int &n_tracks_past_filter
+    VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
+    int &n_velo_tracks_in_UT,
+    int &n_veloUT_tracks
   ) const;
 
 private:
@@ -150,7 +151,8 @@ private:
     int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
     int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
     VeloUTTracking::HitsSoA *hits_layers,
-    std::vector<VeloUTTracking::TrackUT>& outputTracks,
+    VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
+    int &n_veloUT_tracks,
     const float* bdlTable) const;
 
   void fillArray(
@@ -380,7 +382,6 @@ private:
   float                m_zKink;
   float                m_sigmaVeloSlope;
   float                m_invSigmaVeloSlope;
-
 
 };
 

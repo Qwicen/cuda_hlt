@@ -100,7 +100,7 @@ int run_veloUT_on_CPU (
     return -1;
   }
 
-  int n_UT_tracks = 0;
+  int n_veloUT_tracks = 0;
   int n_velo_tracks_in_UT = 0;
   int n_velo_tracks = 0;
   int n_forward_velo_tracks = 0;
@@ -212,31 +212,32 @@ int run_veloUT_on_CPU (
 	t_track_hits->Fill();
       }
     } // tracks
-   
-    //std::vector< VeloUTTracking::TrackUT > ut_tracks =
-    //VeloUTTracking::TrackUT ut_tracks[max_num_tracks];
-    std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(
+
+    int n_veloUT_tracks_event = 0;
+    VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks];
+    velout(
       host_velo_track_hit_number_pinned,
-      host_velo_track_hits_pinned,                                                        
+      host_velo_track_hits_pinned,                                                       
       host_number_of_tracks_pinned[i_event],
       host_accumulated_tracks[i_event],
       host_velo_states_event,
       &(hits_layers_events[i_event]),
       n_hits_layers_events[i_event],
-      n_velo_tracks_in_UT
+      veloUT_tracks,
+      n_velo_tracks_in_UT,
+      n_veloUT_tracks_event
    );
-
-    n_UT_tracks += ut_tracks.size();
-       
+    n_veloUT_tracks += n_veloUT_tracks_event;
+    
     // store qop in tree
-    for ( auto veloUT_track : ut_tracks ) {
-      qop = veloUT_track.qop;
+    for ( int i_track = 0; i_track < n_veloUT_tracks_event; i_track++ ) {
+      qop = veloUT_tracks[i_track].qop;
       t_veloUT_tracks->Fill();
     }
     
     // save in format for track checker
     
-    trackChecker::Tracks checker_tracks = prepareVeloUTTracks( ut_tracks );
+    trackChecker::Tracks checker_tracks = prepareVeloUTTracks( veloUT_tracks, n_veloUT_tracks_event );
         
     ut_tracks_events->emplace_back( checker_tracks );
     
@@ -245,7 +246,7 @@ int run_veloUT_on_CPU (
   info_cout << "Number of velo tracks per event = " << float(n_velo_tracks) / float(number_of_events) << std::endl;
   info_cout << "Amount of forward velo tracks = " << float(n_forward_velo_tracks) / float(n_velo_tracks) << std::endl;
   info_cout << "Amount of forward velo tracks in UT acceptance = " << float(n_velo_tracks_in_UT) / float(n_forward_velo_tracks)  << std::endl;
-  info_cout << "Amount of UT tracks found ( out of velo tracks in UT acceptance ) " << float(n_UT_tracks) / float(n_velo_tracks_in_UT) << std::endl;
+  info_cout << "Amount of UT tracks found ( out of velo tracks in UT acceptance ) " << float(n_veloUT_tracks) / float(n_velo_tracks_in_UT) << std::endl;
   
   f->Write();
   f->Close();

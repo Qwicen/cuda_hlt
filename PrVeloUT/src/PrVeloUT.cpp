@@ -74,7 +74,7 @@ int PrVeloUT::initialize() {
 //=============================================================================
 // Main execution
 //=============================================================================
-std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
+void PrVeloUT::operator() (
   const uint* velo_track_hit_number,
   const VeloTracking::Hit<true>* velo_track_hits,
   const int number_of_tracks_event,
@@ -82,11 +82,11 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   const VeloState* velo_states_event,
   VeloUTTracking::HitsSoA *hits_layers,
   const uint32_t n_hits_layers[VeloUTTracking::n_layers],
-  int &n_tracks_past_filter ) const
+  VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
+  int &n_velo_tracks_in_UT,
+  int &n_veloUT_tracks ) const
 {
   
-  std::vector<VeloUTTracking::TrackUT> outputTracks;
-
   int posLayers[4][85];
   fillIterators(hits_layers, n_hits_layers, posLayers);
 
@@ -101,7 +101,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
     if ( velo_states_event[i_track].backward ) continue;
     
     if( !filterTrack( velo_states_event[i_track] ) ) continue;
-    n_tracks_past_filter++;
+    n_velo_tracks_in_UT++;
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
     }
@@ -126,12 +126,12 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
         hitCandidatesInLayers,
         n_hitCandidatesInLayers,
         hits_layers,
-        outputTracks,
+        VeloUT_tracks,
+        n_veloUT_tracks,
         bdlTable);
     }
   }
 
-  return outputTracks;
 }
 
 //=============================================================================
@@ -360,12 +360,13 @@ void PrVeloUT::prepareOutputTrack(
   const uint* velo_track_hit_number,   
   const VeloTracking::Hit<true>* velo_track_hits,
   const int accumulated_tracks_event,
-  const int i_track,
+  const int i_Velo_track,
   const TrackHelper& helper,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
-  std::vector<VeloUTTracking::TrackUT>& outputTracks,
+  VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
+  int &n_veloUT_tracks,
   const float* bdlTable) const {
 
   //== Handle states. copy Velo one, add TT.
@@ -417,19 +418,18 @@ void PrVeloUT::prepareOutputTrack(
   const float txUT = helper.bestParams[3];
 
   VeloUTTracking::TrackUT track;
-  const uint starting_hit = velo_track_hit_number[accumulated_tracks_event + i_track];
-  const uint number_of_hits = velo_track_hit_number[accumulated_tracks_event + i_track + 1] - starting_hit;
+  const uint starting_hit = velo_track_hit_number[accumulated_tracks_event + i_Velo_track];
+  const uint number_of_hits = velo_track_hit_number[accumulated_tracks_event + i_Velo_track + 1] - starting_hit;
   for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
     track.addLHCbID( velo_track_hits[starting_hit + i_hit].LHCbID );
   }
-  outputTracks.emplace_back( track );
-  outputTracks.back().set_qop( qop );
-
+  track.set_qop( qop );
+  
   // Adding overlap hits
   for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
     const VeloUTTracking::Hit hit = helper.bestHits[i_hit];
     
-    outputTracks.back().addLHCbID( hit.LHCbID() );
+    track.addLHCbID( hit.LHCbID() );
 
     const float xhit = hit.x;
     const float zhit = hit.z;
@@ -447,13 +447,17 @@ void PrVeloUT::prepareOutputTrack(
       if( xohit-xextrap < -m_overlapTol) continue;
       if( xohit-xextrap > m_overlapTol) break;
     
-      outputTracks.back().addLHCbID( hits_layers->LHCbID(layer_offset + ohit_index) );
+      track.addLHCbID( hits_layers->LHCbID(layer_offset + ohit_index) );
 
       // -- only one overlap hit
       break;
     }
   }
- 
+
+  assert( n_veloUT_tracks < VeloUTTracking::max_num_tracks );
+  VeloUT_tracks[n_veloUT_tracks] = track;
+  n_veloUT_tracks++;
+  
    /*
   outTr.x = helper.state.x;
   outTr.y = helper.state.y;
