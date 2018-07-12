@@ -3,7 +3,7 @@
 
 
 
-
+#include "../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "global.h"
 
 
@@ -19,15 +19,15 @@ public:
   /// Standard constructor
   PVSeedTool( ) {};
 
-  std::vector<XYZPoint> getSeeds(const std::vector<Track*>& inputTracks,
-       const XYZPoint& beamspot) const ;
+  std::vector<XYZPoint> getSeeds(const VeloState* inputTracks,
+       const XYZPoint& beamspot, int number_of_tracks) const ;
 
 private:
 
   std::vector<double> findClusters(std::vector<vtxCluster>& vclus) const;
   void errorForPVSeedFinding(double tx, double ty, double &sigzaq) const;
 
-  double zCloseBeam( Track* track, const XYZPoint& beamspot) const;
+  double zCloseBeam(  VeloState track, const XYZPoint& beamspot) const;
 
   // steering parameters for merging procedure
   double m_maxChi2Merge = 25.;

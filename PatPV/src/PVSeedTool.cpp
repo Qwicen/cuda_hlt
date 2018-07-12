@@ -60,22 +60,22 @@ constexpr static const int s_p2mstatic = 5000;
 // getSeeds
 //=============================================================================
 std::vector<XYZPoint>
-PVSeedTool::getSeeds(const std::vector< Track*>& inputTracks,
-                     const XYZPoint& beamspot) const {
+PVSeedTool::getSeeds(const VeloState * inputTracks,
+                     const XYZPoint& beamspot, int number_of_tracks) const {
 
   std::vector<XYZPoint> seeds;
-  if(inputTracks.size() < 3 ) return seeds;
+  //if(inputTracks.size() < 3 ) return seeds;
 
   std::vector<vtxCluster> vclusters;
 
-  for (const auto& trk : inputTracks) {
+  for (int i = 0; i < number_of_tracks; i++) {
 
     double sigsq;
     double zclu;
-
+    auto trk = inputTracks[i];
    
     zclu = zCloseBeam(trk,beamspot);
-    errorForPVSeedFinding(trk->firstState().tx, trk->firstState().ty,sigsq);
+    errorForPVSeedFinding(trk.tx, trk.ty,sigsq);
 
     if ( fabs(zclu)>2000.) continue;
     vtxCluster clu;
@@ -252,13 +252,14 @@ void PVSeedTool::errorForPVSeedFinding(double tx, double ty, double &sigz2) cons
 
 
 
-double PVSeedTool::zCloseBeam( Track* track, const XYZPoint& beamspot) const {
+double PVSeedTool::zCloseBeam( VeloState track, const XYZPoint& beamspot) const {
 
-  XYZPoint tpoint = track->position();
-  XYZPoint tdir = track->slopes();
+  XYZPoint tpoint(track.x, track.y, track.z);
 
-  double wx = ( 1. + tdir.x * tdir.x ) / track->firstState().covXX;
-  double wy = ( 1. + tdir.y * tdir.y ) / track->firstState().covYY;
+  XYZPoint tdir(track.tx, track.ty, 1.);
+
+  double wx = ( 1. + tdir.x * tdir.x ) / track.c00;
+  double wy = ( 1. + tdir.y * tdir.y ) / track.c11;
 
   double x0 = tpoint.x - tpoint.z * tdir.x - beamspot.x;
   double y0 = tpoint.y - tpoint.z * tdir.y - beamspot.y;
