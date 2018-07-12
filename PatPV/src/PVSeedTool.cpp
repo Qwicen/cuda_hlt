@@ -60,7 +60,7 @@ constexpr static const int s_p2mstatic = 5000;
 // getSeeds
 //=============================================================================
 std::vector<XYZPoint>
-PVSeedTool::getSeeds(const VeloState * inputTracks,
+PVSeedTool::getSeeds( VeloState * inputTracks,
                      const XYZPoint& beamspot, int number_of_tracks) const {
 
   std::vector<XYZPoint> seeds;

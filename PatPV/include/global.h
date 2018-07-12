@@ -2,6 +2,7 @@
 #define DEFINITIONS_H
 
 #include <vector>
+#include "../../cuda/velo/common/include/VeloDefinitions.cuh"
 
 
 typedef float data_t;
@@ -148,7 +149,7 @@ class Vertex {
     double chi2;
     int ndof;
     double cov[6];
-    std::vector<Track*> tracks;
+    std::vector<VeloState> tracks;
     std::vector<double> weights;
     void setChi2AndDoF(double m_chi2, int m_ndof) {
       chi2 = m_chi2;
@@ -172,7 +173,7 @@ class Vertex {
       tracks.clear();
       weights.clear();
     };
-    void addToTracks(Track* track, double weight) {
+    void addToTracks(VeloState track, double weight) {
       tracks.push_back(track);
       weights.push_back(weight);
     };

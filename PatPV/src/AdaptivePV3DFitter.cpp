@@ -23,9 +23,9 @@ AdaptivePV3DFitter::AdaptivePV3DFitter()
 // Least square adaptive fitting method
 //=============================================================================
 bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
-              std::vector<Track*>& rTracks,
+              VeloState * host_velo_states,
              Vertex& vtx,
-             std::vector<Track*>& tracks2remove) 
+             std::vector<VeloState>& tracks2remove, int number_of_tracks) 
 {
   tracks2remove.clear();
 
@@ -34,10 +34,10 @@ bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
 
   // prepare tracks
   std::vector<AdaptivePVTrack> pvTracks ;
-  pvTracks.reserve( rTracks.size() ) ;
-  for( const auto& track : rTracks ) {
-    
-      pvTracks.emplace_back( *track, refpos );
+  pvTracks.reserve( number_of_tracks ) ;
+  //for( const auto& track : rTracks ) {
+  for(int i = 0; i < number_of_tracks; i++) {  
+      pvTracks.emplace_back( host_velo_states[i], refpos );
       //std::cout << "pos state x: " << track->position().x << " " << refpos.x << std::endl;
       //std::cout << "pos state y: " << track->position().y << " " << refpos.y << std::endl;
       //std::cout << "pos state z: " << track->position().z << " " << refpos.z << std::endl;

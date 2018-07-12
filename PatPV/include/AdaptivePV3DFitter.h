@@ -4,6 +4,8 @@
 
 //#include "definitions.h"
 #include "AdaptivePVTrack.h"
+#include "../../cuda/velo/common/include/VeloDefinitions.cuh"
+#include "global.h"
 
 
 /*
@@ -61,9 +63,9 @@ public:
   AdaptivePV3DFitter();
   // Fitting
   bool fitVertex( XYZPoint& seedPoint,
-                        std::vector<Track*>& tracks,
-                       Vertex& vtx,
-                       std::vector<Track*>& tracks2remove) ;
+              VeloState * host_velo_states,
+             Vertex& vtx,
+             std::vector<VeloState>& tracks2remove, int number_of_tracks) ;
 private:
   size_t m_minTr = 4;
   int    m_Iterations = 20;

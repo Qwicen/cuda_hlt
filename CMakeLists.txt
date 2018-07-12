@@ -58,11 +58,7 @@ file(GLOB main_sources "main/src/*")
 
 cuda_add_executable(cu_hlt ${main_sources})
 
-target_link_libraries(cu_hlt tbb Velo VeloUT Stream x86Clustering TrackChecking CheckClustering)
+target_link_libraries(cu_hlt tbb Velo VeloUT PatPV Stream x86Clustering TrackChecking CheckClustering)
 
 
 
-file(GLOB PV_sources "PatPV/src/*cpp")
-find_package(ROOT)
-add_executable(looper ${PV_sources})
-target_link_libraries(looper ${ROOT_LIBRARIES})

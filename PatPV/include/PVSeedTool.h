@@ -19,7 +19,7 @@ public:
   /// Standard constructor
   PVSeedTool( ) {};
 
-  std::vector<XYZPoint> getSeeds(const VeloState* inputTracks,
+  std::vector<XYZPoint> getSeeds( VeloState* inputTracks,
        const XYZPoint& beamspot, int number_of_tracks) const ;
 
 private:

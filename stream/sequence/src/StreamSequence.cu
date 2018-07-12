@@ -335,9 +335,6 @@ cudaError_t Stream::run_sequence(
 
 
       run_PatPV_on_CPU(
-           ut_tracks_events,
-     hits_layers_events_ut,
-     n_hits_layers_events_ut,
      host_velo_states,
      host_accumulated_tracks,
                  host_velo_track_hit_number,
