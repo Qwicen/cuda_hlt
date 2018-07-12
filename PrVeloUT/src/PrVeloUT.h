@@ -121,9 +121,8 @@ private:
   const bool  m_passTracks =        false;
   const bool  m_doTiming =          false;
 
-  // typedef MultiIndexedHitContainer<Hit, UT::Info::kNStations, UT::Info::kNLayers>::HitRange HitRange;
-
-  bool filterTrack(
+  
+  bool veloTrackInUTAcceptance(
     const VeloState& state ) const;
 
   bool getHits(
@@ -291,7 +290,7 @@ private:
     const float ui = hit->x;
     const float ci = hit->cosT();
     const float dz = 0.001*(hit->z - m_zMidUT);
-    const float wi = hit->weight2();
+    const float wi = hit->weight();
 
     mat[0] += wi * ci;
     mat[1] += wi * ci * dz;
@@ -304,7 +303,7 @@ private:
     const float zd    = hit->z;
     const float xd    = xTTFit + xSlopeTTFit*(zd-m_zMidUT);
     const float du    = xd - hit->x;
-    chi2 += (du*du)*hit->weight2();
+    chi2 += (du*du)*hit->weight();
   }
 
   template <int N>

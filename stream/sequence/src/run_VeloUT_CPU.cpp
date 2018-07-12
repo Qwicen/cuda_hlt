@@ -54,7 +54,7 @@ int run_veloUT_on_CPU (
   TTree *t_velo_states = new TTree("velo_states", "velo_states");
   TTree *t_track_hits = new TTree("track_hits", "track_hits");
   TTree *t_veloUT_tracks = new TTree("veloUT_tracks", "veloUT_tracks");
-  float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight2;
+  float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
   float x, y, tx, ty, chi2, z, drdz;
   unsigned int LHCbID;
   int highThreshold, layer;
@@ -71,7 +71,7 @@ int run_veloUT_on_CPU (
   t_ut_hits->Branch("dxDy", &dxDy);
   t_ut_hits->Branch("zAtYEq0", &zAtYEq0);
   t_ut_hits->Branch("xAtYEq0", &xAtYEq0);
-  t_ut_hits->Branch("weight2", &weight2);
+  t_ut_hits->Branch("weight", &weight);
   t_ut_hits->Branch("LHCbID", &LHCbID);
   t_ut_hits->Branch("highThreshold", &highThreshold);
   t_ut_hits->Branch("layer", &layer);
@@ -124,7 +124,7 @@ int run_veloUT_on_CPU (
       );
 
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_cos );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_weight2 );
+      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_weight );
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_xAtYEq0 );
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_yBegin );
       applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_yEnd );
@@ -136,7 +136,7 @@ int run_veloUT_on_CPU (
       for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
 	VeloUTTracking::Hit hit;
 	hit.m_cos = hits_layers_events[i_event].m_cos[layer_offset + i_hit];
-	hit.m_weight2 = hits_layers_events[i_event].m_weight2[layer_offset + i_hit];
+	hit.m_weight = hits_layers_events[i_event].m_weight[layer_offset + i_hit];
 	hit.m_xAtYEq0 = hits_layers_events[i_event].m_xAtYEq0[layer_offset + i_hit];
 	hit.m_yBegin = hits_layers_events[i_event].m_yBegin[layer_offset + i_hit];
 	hit.m_yEnd = hits_layers_events[i_event].m_yEnd[layer_offset + i_hit];
@@ -153,7 +153,7 @@ int run_veloUT_on_CPU (
 	yEnd = hit.m_yEnd;
 	zAtYEq0 = hit.m_zAtYEq0;
 	xAtYEq0 = hit.m_xAtYEq0;
-	weight2 = hit.m_weight2;
+	weight = hit.m_weight;
 	LHCbID = hit.m_LHCbID;
 	highThreshold = hit.m_highThreshold;
 	layer = i_layer;

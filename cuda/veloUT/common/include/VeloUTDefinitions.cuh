@@ -45,7 +45,7 @@ namespace VeloUTTracking {
     float m_yEnd[max_numhits_per_event];
     float m_zAtYEq0[max_numhits_per_event];
     float m_xAtYEq0[max_numhits_per_event];
-    float m_weight2[max_numhits_per_event];
+    float m_weight[max_numhits_per_event];
     int   m_highThreshold[max_numhits_per_event];
     unsigned int m_LHCbID[max_numhits_per_event];
     int m_planeCode[max_numhits_per_event];
@@ -66,7 +66,7 @@ namespace VeloUTTracking {
     inline int LHCbID(const int i_hit) const { return m_LHCbID[i_hit]; }
     inline float sinT(const int i_hit) const { return tanT(i_hit) * cosT(i_hit); }
     inline float tanT(const int i_hit) const { return -1 * dxDy(i_hit); }
-    inline float weight2(const int i_hit) const { return m_weight2[i_hit]; }
+    inline float weight(const int i_hit) const { return m_weight[i_hit]; }
     inline float xAt( const int i_hit, const float globalY ) const { return m_xAtYEq0[i_hit] + globalY * dxDy(i_hit); }
     inline float xAtYEq0(const int i_hit) const { return m_xAtYEq0[i_hit]; }
     //inline float xAtYMid(const int i_hit) const { return m_x[i_hit]; }  // not used, have to initialize properly if this  will be used
@@ -88,7 +88,7 @@ namespace VeloUTTracking {
     float z; // calculated during VeloUT tracking
     
     float m_cos;     
-    float m_weight2;  ///< The hit weight^2 (1/error^2)
+    float m_weight;  ///< The hit weight^2 (1/error^2)
     float m_xAtYEq0; ///< The value of x at the point y=0
     float m_yBegin;  ///< The y value at the start point of the line
     float m_yEnd;    ///< The y value at the end point of the line
@@ -110,7 +110,7 @@ namespace VeloUTTracking {
     inline int planeCode() const { return m_planeCode; }
     inline float sinT() const { return tanT() * cosT(); }
     inline float tanT() const { return -1 * dxDy(); }
-    inline float weight2() const { return m_weight2; }
+    inline float weight() const { return m_weight; }
     inline float xAt( const float globalY ) const { return m_xAtYEq0 + globalY * dxDy(); }
     inline float xAtYEq0() const { return m_xAtYEq0; }
     inline float xMax() const { return std::max( xAt( yBegin() ), xAt( yEnd() ) ); }

@@ -100,7 +100,7 @@ void PrVeloUT::operator() (
   for ( int i_track = 0; i_track < number_of_tracks_event; ++i_track ) {
     if ( velo_states_event[i_track].backward ) continue;
     
-    if( !filterTrack( velo_states_event[i_track] ) ) continue;
+    if( !veloTrackInUTAcceptance( velo_states_event[i_track] ) ) continue;
     n_velo_tracks_in_UT++;
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
@@ -137,7 +137,7 @@ void PrVeloUT::operator() (
 //=============================================================================
 // Reject tracks outside of acceptance or pointing to the beam pipe
 //=============================================================================
-bool PrVeloUT::filterTrack(
+bool PrVeloUT::veloTrackInUTAcceptance(
   const VeloState& state ) const 
 {
 
