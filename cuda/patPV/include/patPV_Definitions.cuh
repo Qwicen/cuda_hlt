@@ -5,65 +5,7 @@
 #include "../../velo/common/include/VeloDefinitions.cuh"
 
 
-typedef float data_t;
-const data_t WEIGHT = 3966.94;
-const float FACTOR = 1.;
 
-struct hit_t {
-  float x;
-  float y;
-  float z;
-  int   tid;
-  int module;
-  bool used = false;
-  
-   //compare two hits by track ID
-  
-  bool operator==(int tid_) {
-    return tid == tid_;
-  } 
-};
-
-
-
-struct track_t {
-  std::vector< const hit_t * > hits;
-  std::vector< int > hit_ids;
-  //track od
-  int key;
-
-};
-
-struct state_t {
-  data_t x = 0;
-  data_t y = 0;
-  data_t z = 0;
-  data_t tx = 0;
-  data_t ty = 0;
-  
-  data_t covXX;
-  data_t covYY;
-  data_t covXTx;
-  data_t covYTy;
-  data_t covTxTx;
-  data_t covTyTy;
-  
-  data_t chi2 = 0.;
-  data_t chi2_x = 0.;
-  data_t chi2_y = 0.;
-  int key;
-  void linearTransportTo (double new_z) {
-    const double dz = new_z - z ;
-    const double dz2 = dz*dz ;
-    x += dz * tx ;
-    y += dz * ty ;
-    z = new_z;
-    covXX += dz2*covTxTx + 2*dz*covXTx ;
-    covXTx += dz*covTxTx ;
-    covYY += dz2*covTyTy + 2*dz*covYTy ;
-    covYTy += dz*covTyTy ;
-  }
-};
 
 
 // auxiliary class for searching of clusters of tracks
@@ -88,45 +30,8 @@ struct XYZPoint {
 };
 
 
-struct State {
-  double tx = 0.;
-  double ty = 0.;
-  double x = 0.;
-  double y = 0.;
-  double z = 0.;
-  double errX2 = 0.;
-  double errY2 = 0.;
-  /*
-  void linearTransportTo (double new_z) {
-  const double dz = new_z - z ;
-  const double dz2 = dz*dz ;
-  x += dz * tx ;
-  y += dz * ty ;
-  z = new_z;
 
 
-
-
-  } */
-
-
-};
-
-//typedef std::vector<State> Track;
-class Track {
-public:
-  std::vector<state_t> states;
-  state_t firstState() {
-    return states.at(0);
-  }
-  XYZPoint slopes() {
-    return XYZPoint(states.at(0).tx, states.at(0).ty, 1.);
-  }
-  XYZPoint position() {
-    return XYZPoint(states.at(0).x, states.at(0).y, states.at(0).z);
-  }
-
-};
 
 
 struct Vector2 {
@@ -135,8 +40,6 @@ struct Vector2 {
 
   Vector2(double m_x, double m_y) : x(m_x), y(m_y){}
 };
-
-
 
  
 
