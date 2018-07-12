@@ -61,8 +61,8 @@ constexpr static const int s_p2mstatic = 5000;
 //=============================================================================
 std::vector<XYZPoint>
 PVSeedTool::getSeeds( VeloState * inputTracks,
-                     const XYZPoint& beamspot, int number_of_tracks) const {
-
+                     const XYZPoint& beamspot, int number_of_tracks)  {
+  
   std::vector<XYZPoint> seeds;
   //if(inputTracks.size() < 3 ) return seeds;
 
@@ -86,26 +86,31 @@ PVSeedTool::getSeeds( VeloState * inputTracks,
     vclusters.push_back(clu);
   }
 
-  auto zseeds = findClusters(vclusters);
 
-  seeds.reserve(zseeds.size());
-  std::transform( zseeds.begin(), zseeds.end(),
-                  std::back_inserter(seeds),
-                  [&](double z) {
-    return XYZPoint{ beamspot.x, beamspot.y, z};
-  });
+
+ double  zseeds[m_max_clusters];
+ findClusters(vclusters, zseeds);
+ std::cout << *(zseeds+1) << std::endl;
+ std::cout << "not broken yet" << std::endl;
+  seeds.reserve(m_max_clusters);
+  for(int i = 0; i < getClusterCounter(); i++) {
+    std::cout << i << " not broken yet "<< zseeds[i] << std::endl;
+    seeds.push_back(XYZPoint{ beamspot.x, beamspot.y, zseeds[i]});
+  }
+
 
   return seeds;
 }
 
 
-std::vector<double>
-PVSeedTool::findClusters(std::vector<vtxCluster>& vclus) const {
+void PVSeedTool::findClusters(std::vector<vtxCluster>& vclus, double * zclusters)  {
 
 
-  std::vector<double> zclusters;
-  if(vclus.empty()) return zclusters;
+  
+  
 
+
+  resetClusterCounter();
   std::vector<vtxCluster*> pvclus;
   pvclus.reserve(vclus.size());
 
@@ -221,12 +226,15 @@ PVSeedTool::findClusters(std::vector<vtxCluster>& vclus) const {
     }
     // veto
     if( n_tracks_close < m_minCloseTracksInCluster ) igood = false;
-    if(igood)  zclusters.push_back((*ivc)->z);
+    std::cout << "counter: " << getClusterCounter() << std::endl;
+    if(igood)  {zclusters[getClusterCounter()] = ((*ivc)->z); std::cout<< zclusters[getClusterCounter()] <<std::endl; increaseClusterCounter();}
 
   }
 
   //  print_clusters(pvclus);
-  return zclusters;
+  std::cout << "clustering finishes" << std::endl;
+  std::cout << "cpointer: " << std::endl;
+  
 
 }
 
@@ -274,3 +282,4 @@ double PVSeedTool::zCloseBeam( VeloState track, const XYZPoint& beamspot) const 
 }
 
 //=============================================================================
+ 

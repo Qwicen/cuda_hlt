@@ -20,11 +20,15 @@ public:
   PVSeedTool( ) {};
 
   std::vector<XYZPoint> getSeeds( VeloState* inputTracks,
-       const XYZPoint& beamspot, int number_of_tracks) const ;
+       const XYZPoint& beamspot, int number_of_tracks)  ;
+
+   void resetClusterCounter()  {m_cluster_counter = 0 ;}
+   void increaseClusterCounter()  {m_cluster_counter++ ;}
+   int getClusterCounter()  {return m_cluster_counter;}
 
 private:
 
-  std::vector<double> findClusters(std::vector<vtxCluster>& vclus) const;
+  void findClusters(std::vector<vtxCluster>& vclus, double * zclusters) ;
   void errorForPVSeedFinding(double tx, double ty, double &sigzaq) const;
 
   double zCloseBeam(  VeloState track, const XYZPoint& beamspot) const;
@@ -41,6 +45,8 @@ private:
   double m_ratioSig2HighMult = 1.0;
   double m_ratioSig2LowMult = 0.9;
 
+  int m_max_clusters = 200; // maximmum nubmer of clusters 
+  int m_cluster_counter; //counts how many cluster we have
   double m_x0MS = 0.01;// X0 (tunable) of MS to add for extrapolation of
                                                        // track parameters to PV
   double  m_scatCons = 0;     // calculated from m_x0MS
