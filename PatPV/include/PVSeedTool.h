@@ -28,7 +28,7 @@ public:
 
 private:
 
-  void findClusters(std::vector<vtxCluster>& vclus, double * zclusters) ;
+  void findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters) ;
   void errorForPVSeedFinding(double tx, double ty, double &sigzaq) const;
 
   double zCloseBeam(  VeloState track, const XYZPoint& beamspot) const;

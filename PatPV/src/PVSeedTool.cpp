@@ -66,8 +66,9 @@ PVSeedTool::getSeeds( VeloState * inputTracks,
   std::vector<XYZPoint> seeds;
   //if(inputTracks.size() < 3 ) return seeds;
 
-  std::vector<vtxCluster> vclusters;
+  vtxCluster  vclusters[number_of_tracks];
 
+  int number_of_clusters = 0;
   for (int i = 0; i < number_of_tracks; i++) {
 
     double sigsq;
@@ -83,18 +84,20 @@ PVSeedTool::getSeeds( VeloState * inputTracks,
     clu.sigsq = sigsq;
     clu.sigsqmin = clu.sigsq;
     clu.ntracks = 1;
-    vclusters.push_back(clu);
+    vclusters[i] = clu;
+    number_of_clusters++;
   }
 
 
 
  double  zseeds[m_max_clusters];
- findClusters(vclusters, zseeds);
+  //std::cout << "not broken yet1" << std::endl;
+ findClusters(vclusters, zseeds, number_of_clusters);
  std::cout << *(zseeds+1) << std::endl;
- std::cout << "not broken yet" << std::endl;
-  seeds.reserve(m_max_clusters);
+ std::cout << "not broken yet2" << std::endl;
+  //seeds.reserve(m_max_clusters);
   for(int i = 0; i < getClusterCounter(); i++) {
-    std::cout << i << " not broken yet "<< zseeds[i] << std::endl;
+    //std::cout << i << " not broken yet3 "<< zseeds[i] << std::endl;
     seeds.push_back(XYZPoint{ beamspot.x, beamspot.y, zseeds[i]});
   }
 
@@ -103,7 +106,7 @@ PVSeedTool::getSeeds( VeloState * inputTracks,
 }
 
 
-void PVSeedTool::findClusters(std::vector<vtxCluster>& vclus, double * zclusters)  {
+void PVSeedTool::findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)  {
 
 
   
@@ -112,15 +115,16 @@ void PVSeedTool::findClusters(std::vector<vtxCluster>& vclus, double * zclusters
 
   resetClusterCounter();
   std::vector<vtxCluster*> pvclus;
-  pvclus.reserve(vclus.size());
+  pvclus.reserve(number_of_clusters);
 
-  for (auto& itvtx : vclus) {
-    itvtx.sigsq *= m_factorToIncreaseErrors*m_factorToIncreaseErrors; // blow up errors
-    itvtx.sigsqmin = itvtx.sigsq;
-    pvclus.push_back(&itvtx);
+
+  for(int i = 0; i < number_of_clusters; i++) {
+    vclus[i].sigsq *= m_factorToIncreaseErrors*m_factorToIncreaseErrors; // blow up errors
+    vclus[i].sigsqmin = vclus[i].sigsq;
+    pvclus.push_back(vclus + i);
   }
 
-
+  
   std::sort(pvclus.begin(),pvclus.end(),vtxcomp);
   //  print_clusters(pvclus);
 
@@ -137,7 +141,6 @@ void PVSeedTool::findClusters(std::vector<vtxCluster>& vclus, double * zclusters
     // "a few" might become a property?
     auto n_consequtive = std::min(5,static_cast<int>(pvclus.size()));
     auto ivc2up = std::next( pvclus.begin(), n_consequtive);
-
     std::vector<pair_to_merge> vecp2m; vecp2m.reserve( std::min(static_cast<int>(pvclus.size())*n_consequtive,s_p2mstatic) );
     for(auto ivc1 = pvclus.begin(); ivc1 != pvclus.end()-1; ivc1++) {
       if(ivc2up != pvclus.end()) ++ivc2up;
@@ -149,7 +152,6 @@ void PVSeedTool::findClusters(std::vector<vtxCluster>& vclus, double * zclusters
         }
       }
     }
-
     // done if no more pairs to merge
     if(vecp2m.empty()) {
       more_merging = false;
@@ -201,9 +203,10 @@ void PVSeedTool::findClusters(std::vector<vtxCluster>& vclus, double * zclusters
   // Select good clusters.
 
   for(auto ivc=pvclus.begin(); ivc != pvclus.end(); ivc++) {
+
     int n_tracks_close = 0;
-    for(auto itvtx = vclus.begin(); itvtx != vclus.end(); itvtx++) {
-      if(fabs(itvtx->z - (*ivc)->z ) < m_dzCloseTracksInCluster ) n_tracks_close++;
+    for(int i = 0; i < number_of_clusters; i++) {
+      if(fabs(vclus[i].z - (*ivc)->z ) < m_dzCloseTracksInCluster ) n_tracks_close++; 
     }
 
     double dist_to_closest = 1000000.;
@@ -226,7 +229,7 @@ void PVSeedTool::findClusters(std::vector<vtxCluster>& vclus, double * zclusters
     }
     // veto
     if( n_tracks_close < m_minCloseTracksInCluster ) igood = false;
-    std::cout << "counter: " << getClusterCounter() << std::endl;
+    //std::cout <<igood<< "counter: " << getClusterCounter() << std::endl;
     if(igood)  {zclusters[getClusterCounter()] = ((*ivc)->z); std::cout<< zclusters[getClusterCounter()] <<std::endl; increaseClusterCounter();}
 
   }
