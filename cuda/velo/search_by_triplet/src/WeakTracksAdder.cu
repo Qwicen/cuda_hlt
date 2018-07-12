@@ -88,7 +88,7 @@
   return state.chi2;
 }
 
-__device__ void weak_tracks_adder(
+__device__ void weak_tracks_adder_impl(
   uint* weaktracks_insert_pointer,
   uint* tracks_insert_pointer,
   TrackHits* weak_tracks,
@@ -120,4 +120,54 @@ __device__ void weak_tracks_adder(
       }
     }
   }
+}
+
+__global__ void weak_tracks_adder(
+  uint32_t* dev_velo_cluster_container,
+  uint* dev_module_cluster_start,
+  TrackHits* dev_tracks,
+  TrackHits* dev_weak_tracks,
+  bool* dev_hit_used,
+  int* dev_atomics_storage
+) {
+  /* Data initialization */
+  // Each event is treated with two blocks, one for each side.
+  const uint event_number = blockIdx.x;
+  const uint number_of_events = gridDim.x;
+  const uint tracks_offset = event_number * VeloTracking::max_tracks;
+
+  // Pointers to data within the event
+  const uint number_of_hits = dev_module_cluster_start[VeloTracking::n_modules * number_of_events];
+  const uint* module_hitStarts = dev_module_cluster_start + event_number * VeloTracking::n_modules;
+  const uint hit_offset = module_hitStarts[0];
+  assert((module_hitStarts[52] - module_hitStarts[0]) < VeloTracking::max_number_of_hits_per_event);
+  
+  // Order has changed since SortByPhi
+  const float* hit_Ys = (float*) (dev_velo_cluster_container + hit_offset);
+  const float* hit_Zs = (float*) (dev_velo_cluster_container + number_of_hits + hit_offset);
+  const float* hit_Xs = (float*) (dev_velo_cluster_container + 5 * number_of_hits + hit_offset);
+
+  // Per event datatypes
+  TrackHits* tracks = dev_tracks + tracks_offset;
+  uint* tracks_insert_pointer = (uint*) dev_atomics_storage + event_number;
+
+  // Per side datatypes
+  bool* hit_used = dev_hit_used + hit_offset;
+  TrackHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
+
+  // Initialize variables according to event number and module side
+  // Insert pointers (atomics)
+  const int ip_shift = number_of_events + event_number * (VeloTracking::num_atomics - 1);
+  uint* weaktracks_insert_pointer = (uint*) dev_atomics_storage + ip_shift;
+
+  weak_tracks_adder_impl(
+    weaktracks_insert_pointer,
+    tracks_insert_pointer,
+    weak_tracks,
+    tracks,
+    hit_used,
+    hit_Xs,
+    hit_Ys,
+    hit_Zs
+  );
 }

@@ -6,7 +6,6 @@
 #include "ProcessModules.cuh"
 #include "TrackForwarding.cuh"
 #include "TrackSeeding.cuh"
-// #include "TrackSeedingFirst.cuh"
 #include "WeakTracksAdder.cuh"
 
 __global__ void search_by_triplet(

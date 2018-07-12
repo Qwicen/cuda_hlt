@@ -117,6 +117,21 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::calculate_phi_and_sort>().invoke();
 
+    // Fill candidates
+    argument_sizes[arg::dev_h0_candidates] = argen.size<arg::dev_h0_candidates>(2 * host_total_number_of_velo_clusters[0]);
+    argument_sizes[arg::dev_h2_candidates] = argen.size<arg::dev_h2_candidates>(2 * host_total_number_of_velo_clusters[0]);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    // Setup opts and arguments
+    sequence.item<seq::fill_candidates>().set_opts(dim3(number_of_events, 48), dim3(128), stream);
+    sequence.item<seq::fill_candidates>().set_arguments(
+      argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
+      argen.generate<arg::dev_estimated_input_size>(argument_offsets),
+      argen.generate<arg::dev_module_cluster_num>(argument_offsets),
+      argen.generate<arg::dev_h0_candidates>(argument_offsets),
+      argen.generate<arg::dev_h2_candidates>(argument_offsets)
+    );
+    sequence.item<seq::fill_candidates>().invoke();
+
     // Search by triplet
     argument_sizes[arg::dev_tracks] = argen.size<arg::dev_tracks>(number_of_events * VeloTracking::max_tracks);
     argument_sizes[arg::dev_tracklets] = argen.size<arg::dev_tracklets>(number_of_events * VeloTracking::ttf_modulo);
@@ -124,8 +139,6 @@ cudaError_t Stream::run_sequence(
     argument_sizes[arg::dev_weak_tracks] = argen.size<arg::dev_weak_tracks>(number_of_events * VeloTracking::ttf_modulo);
     argument_sizes[arg::dev_hit_used] = argen.size<arg::dev_hit_used>(host_total_number_of_velo_clusters[0]);
     argument_sizes[arg::dev_atomics_storage] = argen.size<arg::dev_atomics_storage>(number_of_events * VeloTracking::num_atomics);
-    argument_sizes[arg::dev_h0_candidates] = argen.size<arg::dev_h0_candidates>(2 * host_total_number_of_velo_clusters[0]);
-    argument_sizes[arg::dev_h2_candidates] = argen.size<arg::dev_h2_candidates>(2 * host_total_number_of_velo_clusters[0]);
     argument_sizes[arg::dev_rel_indices] = argen.size<arg::dev_rel_indices>(number_of_events * VeloTracking::max_numhits_in_module);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     // Setup opts and arguments
@@ -145,6 +158,20 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_rel_indices>(argument_offsets)
     );
     sequence.item<seq::search_by_triplet>().invoke();
+
+    // Weak tracks adder
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    // Setup opts and arguments
+    sequence.item<seq::weak_tracks_adder>().set_opts(dim3(number_of_events), dim3(32), stream);
+    sequence.item<seq::weak_tracks_adder>().set_arguments(
+      argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
+      argen.generate<arg::dev_estimated_input_size>(argument_offsets),
+      argen.generate<arg::dev_tracks>(argument_offsets),
+      argen.generate<arg::dev_weak_tracks>(argument_offsets),
+      argen.generate<arg::dev_hit_used>(argument_offsets),
+      argen.generate<arg::dev_atomics_storage>(argument_offsets)
+    );
+    sequence.item<seq::weak_tracks_adder>().invoke();
     
     // Calculate prefix sum of found tracks
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
