@@ -11,9 +11,6 @@
 // #include "../../PrUTMagnetTool/PrUTMagnetTool.h"
 #include "../../main/include/Logger.h"
 
-// Math from ROOT
-#include "../include/CholeskyDecomp.h"
-
 #include "../include/SystemOfUnits.h"
 
 #include "../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
@@ -39,9 +36,7 @@ struct PrUTMagnetTool {
   
   //const float m_zMidUT = 0.0;
   //const float m_averageDist2mom = 0.0;
-  //std::vector<float> dxLayTable;
   float* dxLayTable;
-  //std::vector<float> bdlTable;
   float* bdlTable;
 
   PrUTMagnetTool(){}
@@ -198,9 +193,11 @@ private:
        	int layer_offset = hits_layers->layer_offset[layer];
 	
         size_t pos = 0;
+        // to do: check whether there is an efficient thrust implementation for this
         fillArray( posLayers[layer], 85, pos );
 
         int bound = -42.0;
+        // to do : make copysignf
         float val = std::copysign(float(bound*bound)/2.0, bound);
 
         // TODO add bounds checking
@@ -241,6 +238,7 @@ private:
     const auto zInit = hits_layers->zAtYEq0( layer_offset + posBeg );
     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
 
+    // to do: use fabsf instead of std::abs
     size_t pos = posBeg;
     while ( 
       pos <= posEnd && 
@@ -307,58 +305,64 @@ private:
     chi2 += (du*du)*hit->weight2();
   }
 
-  template <std::size_t N>
+  template <int N>
   void simpleFit(
-    std::array<const VeloUTTracking::Hit*,N>& hits, 
+    const VeloUTTracking::Hit* hits[N], 
     TrackHelper& helper ) const 
   {
     assert( N==3||N==4 );
 
-    // -- Scale the z-component, to not run into numerical problems
-    // -- with floats
-    const float zDiff = 0.001*(m_zKink-m_zMidUT);
-    float mat[3] = { helper.wb, helper.wb*zDiff, helper.wb*zDiff*zDiff };
-    float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
-
+    // to do in cuda: implement count_if / use thrust
     const int nHighThres = std::count_if( 
-      hits.begin(),  hits.end(), []( const VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
+                                         hits,  hits + N, []( const VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
     
     // -- Veto hit combinations with no high threshold hit
     // -- = likely spillover
     if( nHighThres < m_minHighThres ) return;
 
-    std::for_each( hits.begin(), hits.end(), [&](const VeloUTTracking::Hit* h) { this->addHit(mat,rhs,h); } );
+    /* Straight line fit of UT hits,
+       including the hit at x_mid_field, z_mid_field,
+       use least squares method for fitting x(z) = a + bz,
+       the chi2 is minimized and expressed in terms of sums as described
+       in chapter 4 of http://cds.cern.ch/record/1635665/files/LHCb-PUB-2013-023.pdf
+    */
+    // -- Scale the z-component, to not run into numerical problems with floats
+    // -- first add to sum values from hit at xMidField, zMidField hit
+    const float zDiff = 0.001*(m_zKink-m_zMidUT);
+    float mat[3] = { helper.wb, helper.wb*zDiff, helper.wb*zDiff*zDiff };
+    float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
 
-    ROOT::Math::CholeskyDecomp<float, 2> decomp(mat);
-    if( !decomp ) return;
+    // to do in cuda: implement for_each / use thrust
+    // then add to sum values from hits on track
+    std::for_each( hits, hits + N, [&](const VeloUTTracking::Hit* h) { this->addHit(mat,rhs,h); } );
 
-    decomp.Solve(rhs);
-
-    const float xSlopeTTFit = 0.001*rhs[1];
-    const float xTTFit = rhs[0];
+    const float denom       = 1. / (mat[0]*mat[2] - mat[1]*mat[1]);
+    const float xSlopeUTFit = 0.001*(mat[0]*rhs[1] - mat[1]*rhs[0]) * denom;
+    const float xUTFit      = (mat[2]*rhs[0] - mat[1]*rhs[1]) * denom;
 
     // new VELO slope x
-    const float xb = xTTFit+xSlopeTTFit*(m_zKink-m_zMidUT);
+    const float xb = xUTFit+xSlopeUTFit*(m_zKink-m_zMidUT);
     const float xSlopeVeloFit = (xb-helper.state.x)*helper.invKinkVeloDist;
     const float chi2VeloSlope = (helper.state.tx - xSlopeVeloFit)*m_invSigmaVeloSlope;
 
-    float chi2TT = chi2VeloSlope*chi2VeloSlope;
+    /* chi2 takes chi2 from velo fit + chi2 from UT fit */
+    float chi2UT = chi2VeloSlope*chi2VeloSlope;
+    // to do: use thrust call
+    std::for_each( hits, hits + N, [&](const VeloUTTracking::Hit* h) { this->addChi2(xUTFit,xSlopeUTFit, chi2UT, h); } );
 
-    std::for_each( hits.begin(), hits.end(), [&](const VeloUTTracking::Hit* h) { this->addChi2(xTTFit,xSlopeTTFit, chi2TT, h); } );
+    chi2UT /= (N + 1 - 2);
 
-    chi2TT /= (N + 1 - 2);
-
-    if( chi2TT < helper.bestParams[1] ){
+    if( chi2UT < helper.bestParams[1] ){
 
       // calculate q/p
       const float sinInX  = xSlopeVeloFit * std::sqrt(1.+xSlopeVeloFit*xSlopeVeloFit);
-      const float sinOutX = xSlopeTTFit * std::sqrt(1.+xSlopeTTFit*xSlopeTTFit);
+      const float sinOutX = xSlopeUTFit * std::sqrt(1.+xSlopeUTFit*xSlopeUTFit);
       const float qp = (sinInX-sinOutX);
 
       helper.bestParams[0] = qp;
-      helper.bestParams[1] = chi2TT;
-      helper.bestParams[2] = xTTFit;
-      helper.bestParams[3] = xSlopeTTFit;
+      helper.bestParams[1] = chi2UT;
+      helper.bestParams[2] = xUTFit;
+      helper.bestParams[3] = xSlopeUTFit;
 
       for ( int i_hit = 0; i_hit < N; ++i_hit ) {
         helper.bestHits[i_hit] = *(hits[i_hit]);

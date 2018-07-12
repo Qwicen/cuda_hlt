@@ -26,16 +26,6 @@ namespace {
 //=============================================================================
 // Initialization
 //=============================================================================
-// std::vector<std::string> PrVeloUT::GetFieldMaps() {
-  
-//   std::vector<std::string> filenames;
-//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c1.down.cdf");
-//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c2.down.cdf");
-//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c3.down.cdf");
-//   filenames.push_back("../PrUTMagnetTool/fieldmaps/field.v5r0.c4.down.cdf");
-
-//   return filenames;
-// }
 
 int PrVeloUT::initialize() {
 
@@ -332,8 +322,8 @@ bool PrVeloUT::formClusters(
       if ( IndexBestHit1 > 0 && IndexBestHit3 > 0 ) {
         VeloUTTracking::Hit hit0 = VeloUTTracking::createHit(hits_layers, layers[0], hit_index0);
         VeloUTTracking::Hit hit2 = VeloUTTracking::createHit(hits_layers, layers[2], hit_index2);
-        std::array<const VeloUTTracking::Hit*,4> hits4fit = {&hit0, &bestHit1, &hit2, &bestHit3};
-        simpleFit(hits4fit, helper);
+        const VeloUTTracking::Hit* hits4fit[4] = {&hit0, &bestHit1, &hit2, &bestHit3};
+        simpleFit<4>(hits4fit, helper);
         
         if(!fourLayerSolution && helper.n_hits > 0){
           fourLayerSolution = true;
@@ -345,16 +335,16 @@ bool PrVeloUT::formClusters(
       if( !fourLayerSolution && IndexBestHit1 > 0 ){
         VeloUTTracking::Hit hit0 = VeloUTTracking::createHit(hits_layers, layers[0], hit_index0);
         VeloUTTracking::Hit hit2 = VeloUTTracking::createHit(hits_layers, layers[2], hit_index2);
-        std::array<const VeloUTTracking::Hit*,3> hits4fit = {&hit0, &bestHit1, &hit2};
-        simpleFit(hits4fit,  helper);
+        const VeloUTTracking::Hit* hits4fit[3] = {&hit0, &bestHit1, &hit2};
+        simpleFit<3>(hits4fit,  helper);
         continue;
       }
       // -- Nothing found in layer 1
       if( !fourLayerSolution && IndexBestHit3 > 0 ){
         VeloUTTracking::Hit hit0 = VeloUTTracking::createHit(hits_layers, layers[0], hit_index0);
         VeloUTTracking::Hit hit2 = VeloUTTracking::createHit(hits_layers, layers[2], hit_index2);
-        std::array<const VeloUTTracking::Hit*,3> hits4fit = {&hit0, &bestHit3, &hit2};
-        simpleFit(hits4fit, helper);
+        const VeloUTTracking::Hit* hits4fit[3] = {&hit0, &bestHit3, &hit2};
+        simpleFit<3>(hits4fit, helper);
         continue;
       }
       
@@ -393,13 +383,13 @@ void PrVeloUT::prepareOutputTrack(
   assert( masterIndex(index1, index2, index3) < PrUTMagnetTool::N_bdl_vals );
   float bdl = bdlTable[masterIndex(index1, index2, index3)];
 
-  const std::array<float,3> bdls = { bdlTable[masterIndex(index1+1, index2,index3)],
-                                     bdlTable[masterIndex(index1,index2+1,index3)],
-                                     bdlTable[masterIndex(index1,index2,index3+1)] };
+  const float bdls[3] = { bdlTable[masterIndex(index1+1, index2,index3)],
+                          bdlTable[masterIndex(index1,index2+1,index3)],
+                          bdlTable[masterIndex(index1,index2,index3+1)] };
 
-  const std::array<float,3> boundaries = { -0.3f + float(index1)*deltaBdl[0],
-                                           -250.0f + float(index2)*deltaBdl[1],
-                                           0.0f + float(index3)*deltaBdl[2] };
+  const float boundaries[3] = { -0.3f + float(index1)*deltaBdl[0],
+                                -250.0f + float(index2)*deltaBdl[1],
+                                0.0f + float(index3)*deltaBdl[2] };
 
   // -- This is an interpolation, to get a bit more precision
   float addBdlVal = 0.0;

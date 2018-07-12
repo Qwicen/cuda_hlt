@@ -213,7 +213,9 @@ int run_veloUT_on_CPU (
       }
     } // tracks
    
-       std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(
+    //std::vector< VeloUTTracking::TrackUT > ut_tracks =
+    //VeloUTTracking::TrackUT ut_tracks[max_num_tracks];
+    std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(
       host_velo_track_hit_number_pinned,
       host_velo_track_hits_pinned,                                                        
       host_number_of_tracks_pinned[i_event],
@@ -221,7 +223,7 @@ int run_veloUT_on_CPU (
       host_velo_states_event,
       &(hits_layers_events[i_event]),
       n_hits_layers_events[i_event],
-      n_velo_tracks_in_UT  
+      n_velo_tracks_in_UT
    );
 
     n_UT_tracks += ut_tracks.size();
