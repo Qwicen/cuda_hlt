@@ -5,7 +5,7 @@
 //#include "definitions.h"
 #include "AdaptivePVTrack.h"
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
-#include "global.h"
+#include "../../cuda/patPV/include/patPV_Definitions.cuh"
 
 
 /*

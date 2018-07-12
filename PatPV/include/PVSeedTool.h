@@ -4,7 +4,7 @@
 
 
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
-#include "global.h"
+#include "../../cuda/patPV/include/patPV_Definitions.cuh"
 
 
 /** @class PVSeedTool PVSeedTool.h tmp/PVSeedTool.h

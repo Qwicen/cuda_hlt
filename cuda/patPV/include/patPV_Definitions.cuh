@@ -2,7 +2,7 @@
 #define DEFINITIONS_H
 
 #include <vector>
-#include "../../cuda/velo/common/include/VeloDefinitions.cuh"
+#include "../../velo/common/include/VeloDefinitions.cuh"
 
 
 typedef float data_t;

@@ -1,6 +1,7 @@
 //#include "definitions.h"
-#include "global.h"
+#include "../../cuda/patPV/include/patPV_Definitions.cuh"
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
+
 
 
 
