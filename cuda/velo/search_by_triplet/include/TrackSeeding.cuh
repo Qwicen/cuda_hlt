@@ -6,6 +6,7 @@ __device__ void track_seeding(
   float* shared_best_fits,
   const float* hit_Xs,
   const float* hit_Ys,
+  const float* hit_Zs,
   const Module* module_data,
   const short* h0_candidates,
   const short* h2_candidates,

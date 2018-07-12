@@ -62,7 +62,7 @@ __global__ void search_by_triplet(
 
   // Shared memory
   extern __shared__ float shared_best_fits [];
-  __shared__ int module_data [9];
+  __shared__ int module_data [12];
 
   // Initialize hit_used
   const auto current_event_number_of_hits = module_hitStarts[VeloTracking::n_modules] - hit_offset;
@@ -93,7 +93,7 @@ __global__ void search_by_triplet(
     (Module*) &module_data[0],
     (float*) &shared_best_fits[0],
     VP::NModules-1,
-    1,
+    2,
     hit_used,
     h0_candidates,
     h2_candidates,

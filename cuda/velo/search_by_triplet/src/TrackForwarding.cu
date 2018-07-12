@@ -8,8 +8,8 @@
  *          returns FLT_MAX.
  */
 __device__ float fit_hit_to_track(
-  const HitXY& h0,
-  const HitXY& h2,
+  const HitBase& h0,
+  const HitBase& h2,
   const float predx,
   const float predy,
   const float scatterDenom2
@@ -73,16 +73,14 @@ __device__ void track_forwarding(
       const auto h1_num = t.hits[t.hitsNum - 1];
 
       assert(h0_num < number_of_hits);
-      const HitXY h0 {hit_Xs[h0_num], hit_Ys[h0_num]};
-      const auto h0_z = hit_Zs[h0_num];
+      const HitBase h0 {hit_Xs[h0_num], hit_Ys[h0_num], hit_Zs[h0_num]};
 
       assert(h1_num < number_of_hits);
-      const HitXY h1 {hit_Xs[h1_num], hit_Ys[h1_num]};
-      const auto h1_z = hit_Zs[h1_num];
+      const HitBase h1 {hit_Xs[h1_num], hit_Ys[h1_num], hit_Zs[h1_num]};
 
       // Track forwarding over t, for all hits in the next module
       // Line calculations
-      const auto td = 1.0f / (h1_z - h0_z);
+      const auto td = 1.0f / (h1.z - h0.z);
       const auto txn = (h1.x - h0.x);
       const auto tyn = (h1.y - h0.y);
       const auto tx = txn * td;
@@ -92,16 +90,36 @@ __device__ void track_forwarding(
       float best_fit = FLT_MAX;
       unsigned short best_h2;
 
-      // Some constants of fitting
-      const auto h2_z = module_data[2].z;
-      const auto dz = h2_z - h0_z;
-      const auto predx = tx * dz;
-      const auto predy = ty * dz;
-      const auto scatterDenom2 = 1.f / ((h2_z - h1_z) * (h2_z - h1_z));
+      for (auto j=0; j<module_data[4].hitNums; ++j) {
+        const auto h2_index = module_data[4].hitStart + j;
+        const HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
 
-      for (auto j=0; j<module_data[2].hitNums; ++j) {
-        const auto h2_index = module_data[2].hitStart + j;
-        const HitXY h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
+        const auto dz = h2.z - h0.z;
+        const auto predx = tx * dz;
+        const auto predy = ty * dz;
+        const auto scatterDenom2 = 1.f / ((h2.z - h1.z) * (h2.z - h1.z));
+
+        const auto fit = fit_hit_to_track(
+          h0,
+          h2,
+          predx,
+          predy,
+          scatterDenom2
+        );
+        const auto fit_is_better = fit < best_fit;
+        best_fit = fit_is_better*fit + !fit_is_better*best_fit;
+        best_h2 = fit_is_better*h2_index + !fit_is_better*best_h2;
+      }
+
+      for (auto j=0; j<module_data[5].hitNums; ++j) {
+        const auto h2_index = module_data[5].hitStart + j;
+        const HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
+
+        const auto dz = h2.z - h0.z;
+        const auto predx = tx * dz;
+        const auto predy = ty * dz;
+        const auto scatterDenom2 = 1.f / ((h2.z - h1.z) * (h2.z - h1.z));
+
         const auto fit = fit_hit_to_track(
           h0,
           h2,

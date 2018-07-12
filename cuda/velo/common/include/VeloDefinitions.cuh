@@ -49,7 +49,7 @@ namespace VeloTracking {
 
   // Maximum number of skipped modules allowed for a track
   // before storing it
-  static constexpr uint max_skipped_modules = 3;
+  static constexpr uint max_skipped_modules = 1;
 
   // Total number of atomics required
   // This is just a constant
@@ -78,14 +78,12 @@ namespace VeloTracking {
 struct Module {
     uint hitStart;
     uint hitNums;
-    float z;
 
     __device__ Module(){}
     __device__ Module(
       const uint _hitStart,
-      const uint _hitNums,
-      const float _z
-    ) : hitStart(_hitStart), hitNums(_hitNums), z(_z) {}
+      const uint _hitNums
+    ) : hitStart(_hitStart), hitNums(_hitNums) {}
 };
 
 struct HitXY {

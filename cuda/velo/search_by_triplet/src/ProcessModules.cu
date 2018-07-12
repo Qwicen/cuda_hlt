@@ -37,28 +37,31 @@ __device__ void process_modules(
 
   // Prepare the first seeding iteration
   // Load shared module information
-  if (threadIdx.x < 3) {
-    const auto module_number = first_module - threadIdx.x * 2;
+  if (threadIdx.x < 6) {
+    const auto module_number = first_module - threadIdx.x;
     module_data[threadIdx.x].hitStart = module_hitStarts[module_number] - hit_offset;
     module_data[threadIdx.x].hitNums = module_hitNums[module_number];
-    module_data[threadIdx.x].z = VeloTracking::velo_module_zs[module_number];
   }
 
   // Due to shared module data loading
   __syncthreads();
 
   // Do first track seeding
-  track_seeding_first(
+  track_seeding(
     shared_best_fits,
     hit_Xs,
     hit_Ys,
+    hit_Zs,
     module_data,
     h0_candidates,
     h2_candidates,
+    hit_used,
     tracklets_insert_pointer,
     ttf_insert_pointer,
     tracklets,
-    tracks_to_follow
+    tracks_to_follow,
+    h1_rel_indices,
+    local_number_of_hits
   );
 
   // Prepare forwarding - seeding loop
@@ -72,11 +75,10 @@ __device__ void process_modules(
     
     // Iterate in modules
     // Load in shared
-    if (threadIdx.x < 3) {
-      const int module_number = first_module - threadIdx.x * 2;
+    if (threadIdx.x < 6) {
+      const auto module_number = first_module - threadIdx.x;
       module_data[threadIdx.x].hitStart = module_hitStarts[module_number] - hit_offset;
       module_data[threadIdx.x].hitNums = module_hitNums[module_number];
-      module_data[threadIdx.x].z = VeloTracking::velo_module_zs[module_number];
     }
 
     const auto prev_ttf = last_ttf;
@@ -116,6 +118,7 @@ __device__ void process_modules(
       shared_best_fits,
       hit_Xs,
       hit_Ys,
+      hit_Zs,
       module_data,
       h0_candidates,
       h2_candidates,
