@@ -78,16 +78,6 @@ __global__ void search_by_triplet(
     dev_atomics_storage[ip_shift + threadIdx.x] = 0;
   }
 
-  // Fill candidates for both sides
-  // fill_candidates(
-  //   h0_candidates,
-  //   h2_candidates,
-  //   module_hitStarts,
-  //   module_hitNums,
-  //   hit_Phis,
-  //   hit_offset
-  // );
-
   // Process modules
   process_modules(
     (Module*) &module_data[0],
@@ -116,16 +106,4 @@ __global__ void search_by_triplet(
     local_number_of_hits,
     hit_offset
   );
-
-  // Process left weak tracks
-  // weak_tracks_adder(
-  //   weaktracks_insert_pointer,
-  //   tracks_insert_pointer,
-  //   weak_tracks,
-  //   tracks,
-  //   hit_used,
-  //   hit_Xs,
-  //   hit_Ys,
-  //   hit_Zs
-  // );
 }

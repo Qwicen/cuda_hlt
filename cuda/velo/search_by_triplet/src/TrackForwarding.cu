@@ -169,7 +169,7 @@ __device__ void track_forwarding(
       }
       // A track just skipped a module
       // We keep it for another round
-      else if (skipped_modules <= VeloTracking::max_skipped_modules) {
+      else if (skipped_modules < VeloTracking::max_skipped_modules) {
         // Form the new mask
         trackno = ((skipped_modules + 1) << 28) | (fulltrackno & 0x8FFFFFFF);
 

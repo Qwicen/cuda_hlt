@@ -57,11 +57,12 @@ namespace VeloTracking {
 
   // Constants for requested storage on device
   static constexpr uint max_tracks = 1200;
-  static constexpr uint max_track_size = 27;
+  static constexpr uint max_track_size = 26;
   static constexpr uint max_numhits_in_module = 300;
 
   // Maximum number of tracks to follow at a time
-  static constexpr uint ttf_modulo = 500;
+  static constexpr uint ttf_modulo = 1000;
+  static constexpr uint max_weak_tracks = 500;
 
   // High number of hits per event
   static constexpr uint max_number_of_hits_per_event = 9500;
