@@ -10,7 +10,7 @@
    *
    *  2017-03-01: Christoph Hasse (adapt to future framework)
    *  2018-05-05: Plácido Fernández (make standalone)
-   *  2018-07:    Dorothea vom Bruch (convert to C code for GPU compatability)
+   *  2018-07:    Dorothea vom Bruch (convert to C, and then to CUDA code)
 
  */
 
@@ -26,6 +26,17 @@ namespace PrVeloUTConst {
   static constexpr float invSigmaVeloSlope = 1./sigmaVeloSlope;
   static constexpr float zKink = 1780.0;
 
+  constexpr float minValsBdl[3] = { -0.3, -250.0, 0.0 };
+  constexpr float maxValsBdl[3] = { 0.3, 250.0, 800.0 };
+  constexpr float deltaBdl[3]   = { 0.02, 50.0, 80.0 };
+  constexpr float dxDyHelper[4] = { 0.0, 1.0, -1.0, 0.0 };
+#ifdef __CUDACC__
+  __constant__ float dev_minValsBdl[3];
+  __constant__ float dev_maxValsBdl[3];
+  __constant__ float dev_deltaBdl[3];
+  __constant__ float dev_dxDyHelper[4];
+#endif
+  
   static constexpr float minMomentum =       1.5*Gaudi::Units::GeV;
   static constexpr float minPT =             0.3*Gaudi::Units::GeV;
   static constexpr float maxPseudoChi2 =     1280.;

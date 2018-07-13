@@ -4,7 +4,7 @@
 
 #include "../../../checker/lib/include/TrackChecker.h"
 
-#include "../../../x86/veloUT/PrVeloUT/include/PrVeloUT.h"
+#include "../../../x86/veloUT/PrVeloUT/include/PrVeloUTWrapper.h"
 #include "../../../main/include/Tools.h"
 
 int run_veloUT_on_CPU (

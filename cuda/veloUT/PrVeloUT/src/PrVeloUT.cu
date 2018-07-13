@@ -1,6 +1,7 @@
-#include "PrVeloUT.h"
+#include "PrVeloUT.cuh"
+
 //-----------------------------------------------------------------------------
-// Implementation file for class : PrVeloUT
+// Implementation file for PrVeloUT
 //
 // 2007-05-08: Mariusz Witek
 // 2017-03-01: Christoph Hasse (adapt to future framework)
@@ -8,91 +9,21 @@
 // 2018-07:    Dorothea vom Bruch (convert to C code for GPU compatability)
 //-----------------------------------------------------------------------------
 
-namespace {
-  // -- These things are all hardcopied from the PrTableForFunction
-  // -- and PrUTMagnetTool
-  // -- If the granularity or whatever changes, this will give wrong results
+// -- These things are all hardcopied from the PrTableForFunction
+// -- and PrUTMagnetTool
+// -- If the granularity or whatever changes, this will give wrong results
 
-  int masterIndex(const int index1, const int index2, const int index3){
+  __host__ __device__ int masterIndex(const int index1, const int index2, const int index3){
     return (index3*11 + index2)*31 + index1;
   }
 
-  constexpr float minValsBdl[3] = { -0.3, -250.0, 0.0 };
-  constexpr float maxValsBdl[3] = { 0.3, 250.0, 800.0 };
-  constexpr float deltaBdl[3]   = { 0.02, 50.0, 80.0 };
+ 
 
-  constexpr float dxDyHelper[4] = { 0.0, 1.0, -1.0, 0.0 };
-}
-
-
-//=============================================================================
-// Main execution
-//=============================================================================
-void PrVeloUT::operator() (
-  const uint* velo_track_hit_number,
-  const VeloTracking::Hit<true>* velo_track_hits,
-  const int number_of_tracks_event,
-  const int accumulated_tracks_event,
-  const VeloState* velo_states_event,
-  VeloUTTracking::HitsSoA *hits_layers,
-  const PrUTMagnetTool *magnet_tool,
-  VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
-  int &n_velo_tracks_in_UT,
-  int &n_veloUT_tracks ) const
-{
-  
-  int posLayers[4][85];
-  fillIterators(hits_layers, posLayers);
-
-  const float* fudgeFactors = &(magnet_tool->dxLayTable[0]);
-  const float* bdlTable     = &(magnet_tool->bdlTable[0]);
-
-  // array to store indices of selected hits in layers
-  // -> can then access the hit information in the HitsSoA
-  int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
-  int n_hitCandidatesInLayers[VeloUTTracking::n_layers];
-  for ( int i_track = 0; i_track < number_of_tracks_event; ++i_track ) {
-    if ( velo_states_event[i_track].backward ) continue;
-    
-    if( !veloTrackInUTAcceptance( velo_states_event[i_track] ) ) continue;
-    n_velo_tracks_in_UT++;
-    for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      n_hitCandidatesInLayers[i_layer] = 0;
-    }
-    if( !getHits(hitCandidatesInLayers, n_hitCandidatesInLayers, posLayers, hits_layers, fudgeFactors, velo_states_event[i_track] ) ) continue;
-    
-    TrackHelper helper(velo_states_event[i_track]);
-    
-    // go through UT layers in forward direction
-    if( !formClusters(hitCandidatesInLayers, n_hitCandidatesInLayers, hits_layers, helper, true) ){
-      
-      // go through UT layers in backward direction
-      formClusters(hitCandidatesInLayers, n_hitCandidatesInLayers, hits_layers, helper, false);
-    }
-    
-    if ( helper.n_hits > 0 ) {
-      prepareOutputTrack(
-        velo_track_hit_number,
-        velo_track_hits,
-        accumulated_tracks_event,
-        i_track,
-        helper,
-        hitCandidatesInLayers,
-        n_hitCandidatesInLayers,
-        hits_layers,
-        VeloUT_tracks,
-        n_veloUT_tracks,
-        bdlTable);
-    }
-  }
-
-}
 
 //=============================================================================
 // Reject tracks outside of acceptance or pointing to the beam pipe
 //=============================================================================
-bool PrVeloUT::veloTrackInUTAcceptance(
-  const VeloState& state ) const 
+__host__ __device__ bool veloTrackInUTAcceptance( const VeloState& state )
 {
 
   const float xMidUT =  state.x + state.tx*( PrVeloUTConst::zMidUT - state.z);
@@ -111,13 +42,13 @@ bool PrVeloUT::veloTrackInUTAcceptance(
 //=============================================================================
 // Find the hits
 //=============================================================================
-bool PrVeloUT::getHits(
+__host__ __device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],		       
   const int posLayers[4][85],
   VeloUTTracking::HitsSoA *hits_layers,
   const float* fudgeFactors, 
-  const VeloState& trState ) const 
+  const VeloState& trState )
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
@@ -156,7 +87,11 @@ bool PrVeloUT::getHits(
 
       const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
       const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
-      const float yLayer = yAtZ + yTol*dxDyHelper[2*iStation+iLayer];
+#ifndef __CUDACC__
+      const float yLayer = yAtZ + yTol*PrVeloUTConst::dxDyHelper[2*iStation+iLayer];
+#else
+      const float yLayer = yAtZ + yTol*PrVeloUTConst::dev_dxDyHelper[2*iStation+iLayer];
+#endif
 
       const float normFactNum = normFact[2*iStation + iLayer];
       const float invNormFact = 1.0/normFactNum;
@@ -191,12 +126,12 @@ bool PrVeloUT::getHits(
 //=========================================================================
 // Form clusters
 //=========================================================================
-bool PrVeloUT::formClusters(
+__host__ __device__ bool formClusters(
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
   TrackHelper& helper,
-  const bool forward ) const 
+  const bool forward )
 {
 
   // handle forward / backward cluster search
@@ -308,7 +243,7 @@ bool PrVeloUT::formClusters(
 //=========================================================================
 // Create the Velo-TU tracks
 //=========================================================================
-void PrVeloUT::prepareOutputTrack(
+__host__ __device__ void prepareOutputTrack(
   const uint* velo_track_hit_number,   
   const VeloTracking::Hit<true>* velo_track_hits,
   const int accumulated_tracks_event,
@@ -319,7 +254,7 @@ void PrVeloUT::prepareOutputTrack(
   VeloUTTracking::HitsSoA *hits_layers,
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
   int &n_veloUT_tracks,
-  const float* bdlTable) const {
+  const float* bdlTable) {
 
   //== Handle states. copy Velo one, add TT.
   const float zOrigin = (std::fabs(helper.state.ty) > 0.001)
@@ -340,17 +275,20 @@ void PrVeloUT::prepareOutputTrack(
                           bdlTable[masterIndex(index1,index2+1,index3)],
                           bdlTable[masterIndex(index1,index2,index3+1)] };
 
-  const float boundaries[3] = { -0.3f + float(index1)*deltaBdl[0],
-                                -250.0f + float(index2)*deltaBdl[1],
-                                0.0f + float(index3)*deltaBdl[2] };
+  const float boundaries[3] = { -0.3f + float(index1)*PrVeloUTConst::deltaBdl[0],
+                                -250.0f + float(index2)*PrVeloUTConst::deltaBdl[1],
+                                0.0f + float(index3)*PrVeloUTConst::deltaBdl[2] };
 
   // -- This is an interpolation, to get a bit more precision
   float addBdlVal = 0.0;
   for(int i=0; i<3; ++i) {
-
-    if( var[i] < minValsBdl[i] || var[i] > maxValsBdl[i] ) continue;
-
-    const float dTab_dVar =  (bdls[i] - bdl) / deltaBdl[i];
+#ifndef __CUDACC__
+    if( var[i] < PrVeloUTConst::minValsBdl[i] || var[i] > PrVeloUTConst::maxValsBdl[i] ) continue;
+    const float dTab_dVar =  (bdls[i] - bdl) / PrVeloUTConst::deltaBdl[i];
+#else
+    if( var[i] < PrVeloUTConst::dev_minValsBdl[i] || var[i] > PrVeloUTConst::dev_maxValsBdl[i] ) continue;
+    const float dTab_dVar =  (bdls[i] - bdl) / PrVeloUTConst::dev_deltaBdl[i];
+#endif
     const float dVar = (var[i]-boundaries[i]);
     addBdlVal += dTab_dVar*dVar;
   }
@@ -417,8 +355,151 @@ void PrVeloUT::prepareOutputTrack(
   outTr.tx = helper.state.tx;
   outTr.ty = helper.state.ty;
   */
+}
 
+__host__ __device__ void fillArray(
+  int * array,
+  const int size,
+  const size_t value ) {
+  for ( int i = 0; i < size; ++i ) {
+    array[i] = value;
+  }
+}
+
+__host__ __device__ void fillArrayAt(
+  int * array,
+  const int offset,
+  const int n_vals,
+  const size_t value ) {  
+    fillArray( array + offset, n_vals, value ); 
+}
+
+// ==============================================================================
+// -- Method to cache some starting points for the search
+// -- This is actually faster than binary searching the full array
+// -- Granularity hardcoded for the moment.
+// -- Idea is: UTb has dimensions in x (at y = 0) of about -860mm -> 860mm
+// -- The indices go from 0 -> 84, and shift by -42, leading to -42 -> 42
+// -- Taking the higher density of hits in the center into account, the positions of the iterators are
+// -- calculated as index*index/2, where index = [ -42, 42 ], leading to
+// -- -882mm -> 882mm
+// -- The last element is an "end" iterator, to make sure we never go out of bound
+// ==============================================================================
+__host__ __device__ void fillIterators(
+  VeloUTTracking::HitsSoA *hits_layers,
+  int posLayers[4][85] )
+{
+    
+  for(int iStation = 0; iStation < 2; ++iStation){
+    for(int iLayer = 0; iLayer < 2; ++iLayer){
+      int layer = 2*iStation + iLayer;
+      int layer_offset = hits_layers->layer_offset[layer];
+      
+      size_t pos = 0;
+      // to do: check whether there is an efficient thrust implementation for this
+      fillArray( posLayers[layer], 85, pos );
+      
+      int bound = -42.0;
+      // to do : make copysignf
+      float val = std::copysign(float(bound*bound)/2.0, bound);
+      
+      // TODO add bounds checking
+      for ( ; pos != hits_layers->n_hits_layers[layer]; ++pos) {
+        while( hits_layers->xAtYEq0( layer_offset + pos ) > val){
+          posLayers[layer][bound+42] = pos;
+          ++bound;
+          val = std::copysign(float(bound*bound)/2.0, bound);
+        }
+      }
+      
+      fillArrayAt(
+        posLayers[layer],
+        42 + bound,
+        85 - 42 - bound,
+        hits_layers->n_hits_layers[layer] );
+      
+    }
+  }
+}
+
+
+// ==============================================================================
+// -- Finds the hits in a given layer within a certain range
+// ==============================================================================
+__host__ __device__ void findHits( 
+  const size_t posBeg,
+  const size_t posEnd,
+  VeloUTTracking::HitsSoA *hits_layers,
+  const int layer_offset,
+  const VeloState& myState, 
+  const float xTolNormFact,
+  const float invNormFact,
+  int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
+  int &n_hitCandidatesInLayer)
+{
+  const auto zInit = hits_layers->zAtYEq0( layer_offset + posBeg );
+  const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
   
+  // to do: use fabsf instead of std::abs
+  size_t pos = posBeg;
+  while ( 
+   pos <= posEnd && 
+   hits_layers->isNotYCompatible( layer_offset + pos, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(xTolNormFact) )
+   ) { ++pos; }
+
+  const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
+  const auto yyProto =       myState.y - myState.ty*myState.z;
+  
+  for (int i=pos; i<posEnd; ++i) {
+    
+    const auto xx = hits_layers->xAt( layer_offset + i, yApprox ); 
+    const auto dx = xx - xOnTrackProto;
+    
+    if( dx < -xTolNormFact ) continue;
+    if( dx >  xTolNormFact ) break; 
+    
+    // -- Now refine the tolerance in Y
+    if ( hits_layers->isNotYCompatible( layer_offset + i, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx*invNormFact)) ) continue;
+    
+    const auto zz = hits_layers->zAtYEq0( layer_offset + i ); 
+    const auto yy = yyProto +  myState.ty*zz;
+    const auto xx2 = hits_layers->xAt( layer_offset + i, yy );
+    
+    hits_layers->x[ layer_offset + i ] = xx2;
+    hits_layers->z[ layer_offset + i ] = zz;
+    
+    hitCandidatesInLayer[n_hitCandidatesInLayer] = i;
+    n_hitCandidatesInLayer++;
+
+    assert( n_hitCandidatesInLayer < VeloUTTracking::max_hit_candidates_per_layer );
+  }
+  for ( int i_hit = 0; i_hit < n_hitCandidatesInLayer; ++i_hit ) {
+    assert( hitCandidatesInLayer[i_hit] < VeloUTTracking::max_numhits_per_event );
+  }
+}
+ 
+// =================================================
+// -- 2 helper functions for fit
+// -- Pseudo chi2 fit, templated for 3 or 4 hits
+// =================================================
+__host__ __device__ void addHit( float* mat, float* rhs, const VeloUTTracking::Hit* hit) {
+  const float ui = hit->x;
+  const float ci = hit->cosT();
+  const float dz = 0.001*(hit->z - PrVeloUTConst::zMidUT);
+  const float wi = hit->weight();
+  
+  mat[0] += wi * ci;
+  mat[1] += wi * ci * dz;
+  mat[2] += wi * ci * dz * dz;
+  rhs[0] += wi * ui;
+  rhs[1] += wi * ui * dz;
+}
+
+__host__ __device__ void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const VeloUTTracking::Hit* hit) {
+  const float zd    = hit->z;
+  const float xd    = xTTFit + xSlopeTTFit*(zd-PrVeloUTConst::zMidUT);
+  const float du    = xd - hit->x;
+  chi2 += (du*du)*hit->weight();
 }
 
 

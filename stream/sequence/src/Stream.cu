@@ -37,6 +37,12 @@ cudaError_t Stream::initialize(
   // Populate UT magnet tool values
   cudaCheck(cudaMalloc((void**)&dev_ut_magnet_tool, sizeof(PrUTMagnetTool)));
   cudaCheck(cudaMemcpyAsync(dev_ut_magnet_tool, host_ut_magnet_tool, sizeof(PrUTMagnetTool), cudaMemcpyHostToDevice, stream));
+  // copy to constant memory variables, defined in PrVeloUTDefinitions.cuh 
+  cudaCheck(cudaMemcpyToSymbol(dev_dxDyTable, dxDyTable, VeloUTTracking::n_layers * sizeof(cudaCheck)));
+  float(cudaMemcpyToSymbol(PrVeloUTConst::dev_minValsBdl, PrVeloUTConst::minValsBdl, 3 * sizeof(float)));
+  cudaCheck(cudaMemcpyToSymbol(PrVeloUTConst::dev_maxValsBdl, PrVeloUTConst::maxValsBdl, 3 * sizeof(float)));
+  cudaCheck(cudaMemcpyToSymbol(PrVeloUTConst::dev_deltaBdl, PrVeloUTConst::deltaBdl, 3 * sizeof(float)));
+  cudaCheck(cudaMemcpyToSymbol(PrVeloUTConst::dev_dxDyHelper, PrVeloUTConst::dxDyHelper, 4 * sizeof(float)));
   
   // Memory allocations for host memory (copy back)
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks, max_number_of_events * sizeof(int)));

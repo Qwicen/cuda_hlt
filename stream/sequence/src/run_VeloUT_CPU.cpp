@@ -207,10 +207,9 @@ int run_veloUT_on_CPU (
       }
     } // tracks
 
-    PrVeloUT velout;
     int n_veloUT_tracks_event = 0;
     VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks];
-    velout(
+    call_PrVeloUT(
       host_velo_track_hit_number_pinned,
       host_velo_track_hits_pinned,                                                       
       host_number_of_tracks_pinned[i_event],

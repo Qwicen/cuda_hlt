@@ -14,6 +14,7 @@
 #include "../../scheduler/include/BaseDynamicScheduler.cuh"
 #include "../../sequence_setup/include/SequenceSetup.cuh"
 #include "../../../cuda/veloUT/PrVeloUT/include/PrVeloUTMagnetToolDefinitions.cuh"
+#include "../../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
 
 #include "run_VeloUT_CPU.h"
 

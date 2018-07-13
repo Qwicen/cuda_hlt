@@ -22,6 +22,9 @@ namespace VeloUTTracking {
   */
   // layer configuration: XUVX, U and V layers tilted by +/- 5 degrees = 0.087 radians
   static constexpr float dxDyTable[n_layers] = {0., 0.08748867, -0.08748867, 0.};
+#ifdef __CUDACC__
+  __constant__ float dev_dxDyTable[n_layers];
+#endif
   static constexpr int planeCode[n_layers] = {0, 1, 2, 3};
     
   /* Cut-offs */
@@ -57,7 +60,11 @@ namespace VeloUTTracking {
     __host__ __device__ inline int planeCode(const int i_hit) const { return m_planeCode[i_hit]; }
     __host__ __device__ inline float dxDy(const int i_hit) const {
       const int i_plane = m_planeCode[i_hit];
+#ifndef __CUDACC__
       return dxDyTable[i_plane];
+#else
+      return dev_dxDyTable[i_plane];
+#endif
     }
     __host__ __device__ inline float cosT(const int i_hit) const { return ( std::fabs( m_xAtYEq0[i_hit] ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy(i_hit) * dxDy(i_hit) ) : cos(i_hit); }
     __host__ __device__ inline bool highThreshold(const int i_hit) const { return m_highThreshold[i_hit]; }
@@ -101,7 +108,13 @@ namespace VeloUTTracking {
     __host__ __device__ Hit(){}
     
     __host__ __device__ inline float cos() const { return m_cos; }
-    __host__ __device__ inline float dxDy() const { return dxDyTable[m_planeCode]; }
+    __host__ __device__ inline float dxDy() const {
+#ifndef __CUDACC__
+      return dxDyTable[m_planeCode];
+#else
+      return dev_dxDyTable[m_planeCode];
+#endif
+    }
     __host__ __device__ inline float cosT() const { return ( std::fabs( m_xAtYEq0 ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy() * dxDy() ) : cos(); }
     __host__ __device__ inline bool highThreshold() const { return m_highThreshold; }
     __host__ __device__ inline bool isYCompatible( const float y, const float tol ) const { return yMin() - tol <= y && y <= yMax() + tol; }
