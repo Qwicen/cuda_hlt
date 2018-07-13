@@ -239,6 +239,18 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::consolidate_tracks>().invoke();
 
+
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::velo_fit>().set_opts(dim3(number_of_events), dim3(32), stream);
+    sequence.item<seq::velo_fit>().set_arguments(
+      argen.generate<arg::dev_atomics_storage>(argument_offsets),
+      argen.generate<arg::dev_tracks>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hits>(argument_offsets),
+      argen.generate<arg::dev_velo_states>(argument_offsets)
+    );
+    sequence.item<seq::velo_fit>().invoke();
+
     ////////////////////////////////////////
     // Optional: Simplified Kalman filter //
     ////////////////////////////////////////
