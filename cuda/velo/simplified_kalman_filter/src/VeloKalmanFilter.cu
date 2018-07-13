@@ -79,8 +79,9 @@ __global__ void velo_fit(
       const VeloTracking::Hit<mc_check_enabled>* velo_track_hits = dev_velo_track_hits +
       dev_velo_track_hit_number[accumulated_tracks + element];
       VeloState * state_pointer = dev_velo_states + element +
-      dev_velo_track_hit_number[accumulated_tracks + element];
-      const VeloState first = state_pointer[0];
+      dev_velo_track_hit_number[accumulated_tracks + element] + number_of_tracks;
+      const VeloState first = (dev_velo_states + element +
+      dev_velo_track_hit_number[accumulated_tracks + element])[0];
 
       simplified_fit<false>(        velo_track_hits,        first,        state_pointer,        number_of_tracks     );
     }

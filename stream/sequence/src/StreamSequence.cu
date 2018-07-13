@@ -346,7 +346,7 @@ cudaError_t Stream::run_sequence(
       
 
       for(int i = 0; i < *host_number_of_reconstructed_velo_tracks; i++) {
-      std::cout << "host velo state: " << host_velo_states[i].tx << std::endl;
+      std::cout << "host velo state: " << host_velo_states[i].tx << " " << host_velo_states[*host_number_of_reconstructed_velo_tracks+i].tx << std::endl;
     }
     } // mc_check_enabled       
     
