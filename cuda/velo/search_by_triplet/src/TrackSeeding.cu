@@ -4,7 +4,7 @@
  * @brief Search for compatible triplets in
  *        three neighbouring modules on one side
  */
-__device__ void trackSeeding(
+__device__ void track_seeding(
   float* shared_best_fits,
   const float* hit_Xs,
   const float* hit_Ys,

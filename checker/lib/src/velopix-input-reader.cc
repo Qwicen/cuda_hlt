@@ -139,7 +139,7 @@ void readNtupleIntoVelopixEvent(
  ) {
 
   // Check if file exists
-  if (!fileExists(filename)){
+  if (!exists_test(filename)){
     throw StrException("Error: File " + filename + " does not exist.");
   }
    

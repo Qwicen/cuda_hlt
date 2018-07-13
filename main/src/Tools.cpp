@@ -3,11 +3,18 @@
 #include "../../checker/lib/include/TrackChecker.h"
 #include "../../checker/lib/include/MCParticle.h"
 
+/**
+ * @brief Reads the geometry from foldername.
+ */
 void readGeometry(
   const std::string& foldername,
   std::vector<char>& geometry
 ) {
-  readFileIntoVector(foldername + "/geometry.bin", geometry);
+  const auto filename = foldername + "/geometry.bin";
+  if (!exists_test(filename)) {
+    throw StrException("File geometry.bin could not be found in folder " + foldername);
+  }
+  readFileIntoVector(filename, geometry);
 }
 
 void check_velopix_events(

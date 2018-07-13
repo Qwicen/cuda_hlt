@@ -7,7 +7,7 @@
  *          returns the chi2 weight of the track. Otherwise,
  *          returns FLT_MAX.
  */
-__device__ float fitHitToTrack(
+__device__ float fit_hit_to_track(
   const VeloTracking::HitXY& h0,
   const VeloTracking::HitXY& h2,
   const float predx,
@@ -36,7 +36,7 @@ __device__ float fitHitToTrack(
 /**
  * @brief Performs the track forwarding of forming tracks
  */
-__device__ void trackForwarding(
+__device__ void track_forwarding(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
@@ -47,7 +47,7 @@ __device__ void trackForwarding(
   const VeloTracking::Module* module_data,
   const uint diff_ttf,
   uint* tracks_to_follow,
-  uint* weak_tracks,
+  VeloTracking::TrackHits* weak_tracks,
   const uint prev_ttf,
   VeloTracking::TrackHits* tracklets,
   VeloTracking::TrackHits* tracks,
@@ -102,7 +102,7 @@ __device__ void trackForwarding(
       for (auto j=0; j<module_data[2].hitNums; ++j) {
         const auto h2_index = module_data[2].hitStart + j;
         const VeloTracking::HitXY h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
-        const auto fit = fitHitToTrack(
+        const auto fit = fit_hit_to_track(
           h0,
           h2,
           predx,
@@ -164,7 +164,7 @@ __device__ void trackForwarding(
       else if (t.hitsNum == 3) {
         const auto weakP = atomicAdd(weaktracks_insertPointer, 1) % VeloTracking::ttf_modulo;
         assert(weakP < number_of_hits);
-        weak_tracks[weakP] = trackno;
+        weak_tracks[weakP] = t;
       }
       // In the "else" case, we couldn't follow up the track,
       // so we won't be track following it anymore.

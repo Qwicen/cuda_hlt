@@ -3,7 +3,7 @@
 /**
  * @brief Track forwarding algorithm based on triplet finding
  */
-__global__ void calculatePhiAndSort(
+__global__ void calculate_phi_and_sort(
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
   uint32_t* dev_velo_cluster_container,
@@ -42,7 +42,7 @@ __global__ void calculatePhiAndSort(
   __syncthreads();
 
   // Calculate phi and populate hit_permutations
-  calculatePhi(
+  calculate_phi(
     module_hitStarts,
     module_hitNums,
     hit_Xs,
@@ -55,7 +55,7 @@ __global__ void calculatePhiAndSort(
   __syncthreads();
 
   // Sort by phi
-  sortByPhi(
+  sort_by_phi(
     event_hit_start,
     event_number_of_hits,
     hit_Xs,

@@ -1,6 +1,6 @@
 #include "FillCandidates.cuh"
 
-__device__ void fillCandidates(
+__device__ void fill_candidates(
   short* h0_candidates,
   short* h2_candidates,
   const uint* module_hitStarts,

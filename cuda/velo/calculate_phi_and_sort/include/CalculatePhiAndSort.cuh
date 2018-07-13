@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "../../common/include/VeloDefinitions.cuh"
 
-__device__ void calculatePhi(
+__device__ void calculate_phi(
   const uint* module_hitStarts,
   const uint* module_hitNums,
   const float* hit_Xs,
@@ -12,7 +12,7 @@ __device__ void calculatePhi(
   uint* hit_permutations
 );
 
-__device__ void sortByPhi(
+__device__ void sort_by_phi(
   const uint event_hit_start,
   const uint event_number_of_hits,
   float* hit_Xs,
@@ -23,7 +23,7 @@ __device__ void sortByPhi(
   uint* hit_permutations
 );
 
-__global__ void calculatePhiAndSort(
+__global__ void calculate_phi_and_sort(
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
   uint32_t* dev_velo_cluster_container,

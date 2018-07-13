@@ -2,7 +2,7 @@
 
 #include "../../common/include/VeloDefinitions.cuh"
 
-__device__ void processModules(
+__device__ void process_modules(
   VeloTracking:: Module* module_data,
   float* shared_best_fits,
   const uint starting_module,
@@ -21,7 +21,7 @@ __device__ void processModules(
   uint* ttf_insert_pointer,
   uint* tracks_insert_pointer,
   uint* tracks_to_follow,
-  uint* weak_tracks,
+  VeloTracking::TrackHits* weak_tracks,
   VeloTracking::TrackHits* tracklets,
   VeloTracking::TrackHits* tracks,
   const uint number_of_hits,

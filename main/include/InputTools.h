@@ -14,6 +14,10 @@
 #include <stdint.h>
 #include "Logger.h"
 
+bool exists_test(
+  const std::string& name
+);
+
 bool naturalOrder(
   const std::string& s1,
   const std::string& s2
@@ -40,8 +44,4 @@ void read_folder(
   unsigned int fileNumber,
   std::vector<char>& events,
   std::vector<unsigned int>& event_offsets
-);
- 
-bool fileExists(
-  const std::string& name
 );

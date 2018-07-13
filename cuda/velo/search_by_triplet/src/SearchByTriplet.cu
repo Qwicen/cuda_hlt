@@ -4,14 +4,14 @@
 /**
  * @brief Track forwarding algorithm based on triplet finding
  */
-__global__ void searchByTriplet(
+__global__ void search_by_triplet(
   uint32_t* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
   VeloTracking::TrackHits* dev_tracks,
   VeloTracking::TrackHits* dev_tracklets,
   uint* dev_tracks_to_follow,
-  uint* dev_weak_tracks,
+  VeloTracking::TrackHits* dev_weak_tracks,
   bool* dev_hit_used,
   int* dev_atomics_storage,
   short* dev_h0_candidates,
@@ -48,7 +48,7 @@ __global__ void searchByTriplet(
   short* h2_candidates = dev_h2_candidates + 2*hit_offset;
 
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * VeloTracking::ttf_modulo;
-  uint* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
+  VeloTracking::TrackHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
   VeloTracking::TrackHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
   unsigned short* h1_rel_indices = dev_rel_indices + event_number * VeloTracking::max_numhits_in_module;
 
@@ -79,7 +79,7 @@ __global__ void searchByTriplet(
   }
 
   // Fill candidates for both sides
-  fillCandidates(
+  fill_candidates(
     h0_candidates,
     h2_candidates,
     module_hitStarts,
@@ -89,7 +89,7 @@ __global__ void searchByTriplet(
   );
 
   // Process modules
-  processModules(
+  process_modules(
     (VeloTracking::Module*) &module_data[0],
     (float*) &shared_best_fits[0],
     VP::NModules-1,
@@ -115,5 +115,19 @@ __global__ void searchByTriplet(
     h1_rel_indices,
     local_number_of_hits,
     hit_offset
+  );
+
+  __syncthreads();
+
+  // Process left weak tracks
+  weak_tracks_adder(
+    weaktracks_insert_pointer,
+    tracks_insert_pointer,
+    weak_tracks,
+    tracks,
+    hit_used,
+    hit_Xs,
+    hit_Ys,
+    hit_Zs
   );
 }

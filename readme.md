@@ -8,7 +8,6 @@ a full HLT1 realization on GPU.
 How to run it
 -------------
 
-The project requires a graphics card with CUDA support, a compiler supporting C++14 and CUDA 9.2.
 The build process doesn't differ from standard cmake projects:
 
     mkdir build

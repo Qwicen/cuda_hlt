@@ -1,6 +1,14 @@
 #include "../include/InputTools.h"
 
 /**
+ * @brief Test to check existence of filename.
+ */
+bool exists_test(const std::string& name) {
+  std::ifstream f(name.c_str());
+  return f.good();
+}
+
+/**
  * @brief Natural ordering for strings.
  */
 bool naturalOrder(const std::string& s1, const std::string& s2 ) {
@@ -98,16 +106,6 @@ std::vector<std::string> list_folder(
   std::sort(folderContents.begin(), folderContents.end(), naturalOrder);
   return folderContents;
 }
-
-bool fileExists (const std::string& name) {
-  if (FILE *file = fopen(name.c_str(), "r")) {
-    fclose(file);
-    return true;
-  } else {
-    return false;
-  }
-}
-
 
 /**
  * @brief Reads a number of events from a folder name.
