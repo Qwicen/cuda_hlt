@@ -254,13 +254,7 @@ cudaError_t Stream::run_sequence(
     //   );
     // }
 
-    argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(number_of_events);
-    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
-    sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(1), stream);
-    sequence.item<seq::veloUT>().set_arguments( argen.generate<arg::dev_ut_hits>(argument_offsets) );
-    sequence.item<seq::veloUT>().invoke();
-    
+   
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
@@ -269,6 +263,15 @@ cudaError_t Stream::run_sequence(
       cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
     }
+
+    // VeloUT tracking
+    argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(number_of_events);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
+    sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(1), stream);
+    sequence.item<seq::veloUT>().set_arguments( argen.generate<arg::dev_ut_hits>(argument_offsets) );
+    sequence.item<seq::veloUT>().invoke();
+    
 
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
