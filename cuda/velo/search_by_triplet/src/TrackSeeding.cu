@@ -29,7 +29,7 @@ __device__ void track_seeding(
       const auto h2_first_candidate = h2_candidates[2*h1_index];
       if (!hit_used[h1_index] && h0_first_candidate!=-1 && h2_first_candidate!=-1) {
         const auto current_hit = atomicAdd(local_number_of_hits, 1);
-        h1_rel_indices[current_hit] = (module_data[2].hitStart - module_data[3].hitStart) + h1_rel_index;
+        h1_rel_indices[current_hit] = h1_index;
       }
     }
   }
@@ -43,7 +43,7 @@ __device__ void track_seeding(
       const auto h2_first_candidate = h2_candidates[2*h1_index];
       if (!hit_used[h1_index] && h0_first_candidate!=-1 && h2_first_candidate!=-1) {
         const auto current_hit = atomicAdd(local_number_of_hits, 1);
-        h1_rel_indices[current_hit] = h1_rel_index;
+        h1_rel_indices[current_hit] = h1_index;
       }
     }
   }
@@ -102,8 +102,8 @@ __device__ void track_seeding(
     const auto h1_rel_rel_index = i*VeloTracking::max_concurrent_h1 + thread_id_x;
     if (h1_rel_rel_index < number_of_hits_h1) {
       // Fetch h1
-      const auto h1_rel_index = h1_rel_indices[h1_rel_rel_index];
-      h1_index = module_data[3].hitStart + h1_rel_index;
+      // const auto h1_rel_index = h1_rel_indices[h1_rel_rel_index];
+      h1_index = h1_rel_indices[h1_rel_rel_index];
       const HitBase h1 {hit_Xs[h1_index], hit_Ys[h1_index], hit_Zs[h1_index]};
 
       // Iterate over all h0, h2 combinations
