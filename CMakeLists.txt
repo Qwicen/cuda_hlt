@@ -48,7 +48,7 @@ add_subdirectory(cuda)
 add_subdirectory(stream)
 add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
-add_subdirectory(PrVeloUT)
+add_subdirectory(x86/veloUT/PrVeloUT)
 
 # Include directory
 include_directories(main/include)

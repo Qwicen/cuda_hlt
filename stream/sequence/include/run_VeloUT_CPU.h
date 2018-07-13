@@ -3,7 +3,8 @@
 #include "../../../main/include/Common.h"
 
 #include "../../../checker/lib/include/TrackChecker.h"
-#include "../../../PrVeloUT/src/PrVeloUT.h"
+
+#include "../../../x86/veloUT/PrVeloUT/include/PrVeloUT.h"
 #include "../../../main/include/Tools.h"
 
 int run_veloUT_on_CPU (
