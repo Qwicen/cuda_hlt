@@ -265,10 +265,18 @@ cudaError_t Stream::run_sequence(
 
     // VeloUT tracking
     argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(number_of_events);
+    argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
     sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(1), stream);
-    sequence.item<seq::veloUT>().set_arguments( argen.generate<arg::dev_ut_hits>(argument_offsets) );
+    sequence.item<seq::veloUT>().set_arguments(
+      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_atomics_storage>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hits>(argument_offsets),
+      argen.generate<arg::dev_velo_states>(argument_offsets),
+      argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
+      dev_ut_magnet_tool );
     sequence.item<seq::veloUT>().invoke();
     
 
@@ -281,13 +289,16 @@ cudaError_t Stream::run_sequence(
     
     if (do_check && i_stream == 0) {
       if (repetition == 0) { // only check efficiencies once
-        // Fetch data
-        cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-        cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-        cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
-        cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]), cudaMemcpyDeviceToHost, stream));
-        cudaEventRecord(cuda_generic_event, stream);
-        cudaEventSynchronize(cuda_generic_event);
+        
+        if ( !transmit_device_to_host ) { // Fetch data
+          cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+          cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+          cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
+          cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]), cudaMemcpyDeviceToHost, stream));
+          cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
+          cudaEventRecord(cuda_generic_event, stream);
+          cudaEventSynchronize(cuda_generic_event);
+        }
 
 	std::cout << "CHECKING VELO TRACKS " << std::endl; 
 	
@@ -311,8 +322,8 @@ cudaError_t Stream::run_sequence(
     /* Plugin VeloUT CPU code here 
        Adjust input types to match PrVeloUT code
     */
-    if (mc_check_enabled && i_stream == 0) {
-
+    if (do_check && i_stream == 0) {
+   
       std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
       
       int rv = run_veloUT_on_CPU(

@@ -44,6 +44,7 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_velo_track_hits] = "dev_velo_track_hits";
   a[arg::dev_velo_states] = "dev_velo_states";
   a[arg::dev_ut_hits] = "dev_ut_hits";
+  a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
   return a;
 }
 
@@ -133,7 +134,12 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_states
   };
   sequence_dependencies[seq::veloUT] = {
-    arg::dev_ut_hits
+    arg::dev_ut_hits,
+    arg::dev_atomics_storage,
+    arg::dev_velo_track_hit_number,
+    arg::dev_velo_track_hits,
+    arg::dev_velo_states,
+    arg::dev_veloUT_tracks
   };
 
   return sequence_dependencies;
