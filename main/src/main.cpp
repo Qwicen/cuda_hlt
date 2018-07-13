@@ -182,17 +182,17 @@ int main(int argc, char *argv[])
     error_cout << "no geometry file found in " << folder_name_velopix_raw << std::endl;
     return -1;
   }
-  std::vector<char> geometry;
-  readGeometry(folder_name_velopix_raw, geometry);
+  std::vector<char> velopix_geometry;
+  readGeometry(folder_name_velopix_raw, velopix_geometry);
 
   // Copy data to pinned host memory
   const int number_of_events = velopix_event_offsets.size() - 1;
-  char* host_velopix_events_pinned;
-  uint* host_velopix_event_offsets_pinned;
-  cudaCheck(cudaMallocHost((void**)&host_velopix_events_pinned, velopix_events.size()));
-  cudaCheck(cudaMallocHost((void**)&host_velopix_event_offsets_pinned, velopix_event_offsets.size() * sizeof(uint)));
-  std::copy_n(std::begin(velopix_events), velopix_events.size(), host_velopix_events_pinned);
-  std::copy_n(std::begin(velopix_event_offsets), velopix_event_offsets.size(), host_velopix_event_offsets_pinned);
+  char* host_velopix_events;
+  uint* host_velopix_event_offsets;
+  cudaCheck(cudaMallocHost((void**)&host_velopix_events, velopix_events.size()));
+  cudaCheck(cudaMallocHost((void**)&host_velopix_event_offsets, velopix_event_offsets.size() * sizeof(uint)));
+  std::copy_n(std::begin(velopix_events), velopix_events.size(), host_velopix_events);
+  std::copy_n(std::begin(velopix_event_offsets), velopix_event_offsets.size(), host_velopix_event_offsets);
 
   std::vector<char> ut_events;
   std::vector<unsigned int> ut_event_offsets;
@@ -215,9 +215,7 @@ int main(int argc, char *argv[])
   StreamWrapper stream_wrapper;
   stream_wrapper.initialize_streams(
     tbb_threads,
-    velopix_events,
-    velopix_event_offsets,
-    geometry,
+    velopix_geometry,
     number_of_events,
     transmit_host_to_device,
     transmit_device_to_host,
@@ -236,8 +234,8 @@ int main(int argc, char *argv[])
     [&] (uint i) {
       stream_wrapper.run_stream(
         i,
-        host_velopix_events_pinned,
-        host_velopix_event_offsets_pinned,
+        host_velopix_events,
+        host_velopix_event_offsets,
         velopix_events.size(),
         velopix_event_offsets.size(),
 	ut_hits_events,
@@ -255,8 +253,8 @@ int main(int argc, char *argv[])
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
   // Free and reset device
-  // cudaCheck(cudaFreeHost(host_velopix_events_pinned));
-  // cudaCheck(cudaFreeHost(host_velopix_event_offsets_pinned));
+  // cudaCheck(cudaFreeHost(host_velopix_events));
+  // cudaCheck(cudaFreeHost(host_velopix_event_offsets));
   cudaCheck(cudaDeviceReset());
 
   return 0;

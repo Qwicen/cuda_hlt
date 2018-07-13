@@ -2,10 +2,10 @@
 
 cudaError_t Stream::run_sequence(
   const uint i_stream,
-  const char* host_events,
-  const uint* host_event_offsets,
-  const size_t host_events_size,
-  const size_t host_event_offsets_size,
+  const char* host_velopix_events,
+  const uint* host_velopix_event_offsets,
+  const size_t host_velopix_events_size,
+  const size_t host_velopix_event_offsets_size,
   VeloUTTracking::HitsSoA *hits_layers_events_ut,
   const uint32_t n_hits_layers_events_ut[][VeloUTTracking::n_layers],
   const uint number_of_events,
@@ -26,8 +26,8 @@ cudaError_t Stream::run_sequence(
 
     // Estimate input size
     // Set arguments and reserve memory
-    argument_sizes[arg::dev_raw_input] = argen.size<arg::dev_raw_input>(host_events_size);
-    argument_sizes[arg::dev_raw_input_offsets] = argen.size<arg::dev_raw_input_offsets>(host_event_offsets_size);
+    argument_sizes[arg::dev_raw_input] = argen.size<arg::dev_raw_input>(host_velopix_events_size);
+    argument_sizes[arg::dev_raw_input_offsets] = argen.size<arg::dev_raw_input_offsets>(host_velopix_event_offsets_size);
     argument_sizes[arg::dev_estimated_input_size] = argen.size<arg::dev_estimated_input_size>(number_of_events * VeloTracking::n_modules + 1);
     argument_sizes[arg::dev_module_cluster_num] = argen.size<arg::dev_module_cluster_num>(number_of_events * VeloTracking::n_modules);
     argument_sizes[arg::dev_module_candidate_num] = argen.size<arg::dev_raw_input_offsets>(number_of_events);
@@ -44,8 +44,8 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_cluster_candidates>(argument_offsets)
     );
     if (transmit_host_to_device) {
-      cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input>(argument_offsets), host_events, host_events_size, cudaMemcpyHostToDevice, stream));
-      cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input_offsets>(argument_offsets), host_event_offsets, host_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
+      cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input>(argument_offsets), host_velopix_events, host_velopix_events_size, cudaMemcpyHostToDevice, stream));
+      cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input_offsets>(argument_offsets), host_velopix_event_offsets, host_velopix_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
       cudaEventRecord(cuda_generic_event, stream);
       cudaEventSynchronize(cuda_generic_event);
     }

@@ -4,9 +4,7 @@
  * @brief Sets up the chain that will be executed later.
  */
 cudaError_t Stream::initialize(
-  const std::vector<char>& raw_events,
-  const std::vector<uint>& event_offsets,
-  const std::vector<char>& geometry,
+  const std::vector<char>& velopix_geometry,
   const uint max_number_of_events,
   const bool param_transmit_host_to_device,
   const bool param_transmit_device_to_host,
@@ -34,8 +32,8 @@ cudaError_t Stream::initialize(
 
   // Special case
   // Populate velo geometry
-  cudaCheck(cudaMalloc((void**)&dev_velo_geometry, geometry.size()));
-  cudaCheck(cudaMemcpyAsync(dev_velo_geometry, geometry.data(), geometry.size(), cudaMemcpyHostToDevice, stream));
+  cudaCheck(cudaMalloc((void**)&dev_velo_geometry, velopix_geometry.size()));
+  cudaCheck(cudaMemcpyAsync(dev_velo_geometry, velopix_geometry.data(), velopix_geometry.size(), cudaMemcpyHostToDevice, stream));
 
   // Memory allocations for host memory (copy back)
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks, max_number_of_events * sizeof(int)));
