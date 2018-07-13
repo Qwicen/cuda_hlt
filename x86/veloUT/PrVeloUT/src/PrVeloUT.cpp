@@ -81,14 +81,13 @@ void PrVeloUT::operator() (
   const int accumulated_tracks_event,
   const VeloState* velo_states_event,
   VeloUTTracking::HitsSoA *hits_layers,
-  const uint32_t n_hits_layers[VeloUTTracking::n_layers],
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
   int &n_velo_tracks_in_UT,
   int &n_veloUT_tracks ) const
 {
   
   int posLayers[4][85];
-  fillIterators(hits_layers, n_hits_layers, posLayers);
+  fillIterators(hits_layers, posLayers);
 
   const float* fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
   const float* bdlTable     = m_PrUTMagnetTool.returnBdlTable();
@@ -105,7 +104,7 @@ void PrVeloUT::operator() (
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
     }
-    if( !getHits(hitCandidatesInLayers, n_hitCandidatesInLayers, posLayers, hits_layers, n_hits_layers, fudgeFactors, velo_states_event[i_track] ) ) continue;
+    if( !getHits(hitCandidatesInLayers, n_hitCandidatesInLayers, posLayers, hits_layers, fudgeFactors, velo_states_event[i_track] ) ) continue;
     
     TrackHelper helper(velo_states_event[i_track], m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
     
@@ -163,7 +162,6 @@ bool PrVeloUT::getHits(
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],		       
   const int posLayers[4][85],
   VeloUTTracking::HitsSoA *hits_layers,
-  const uint32_t n_hits_layers[VeloUTTracking::n_layers],
   const float* fudgeFactors, 
   const VeloState& trState ) const 
 {
@@ -197,7 +195,7 @@ bool PrVeloUT::getHits(
       int layer = 2*iStation+iLayer;
       int layer_offset = hits_layers->layer_offset[layer];
       
-      if( n_hits_layers[layer] == 0 ) continue;
+      if( hits_layers->n_hits_layers[layer] == 0 ) continue;
 
       const float dxDy   = hits_layers->dxDy(layer_offset + 0);
       const float zLayer = hits_layers->zAtYEq0(layer_offset + 0); 
@@ -223,11 +221,11 @@ bool PrVeloUT::getHits(
       size_t posBeg = posLayers[layer][ indexLow ];
       size_t posEnd = posLayers[layer][ indexHi  ];
 
-      while ( (hits_layers->xAtYEq0(layer_offset + posBeg) < lowerBoundX) && (posBeg != n_hits_layers[layer] ) )
+      while ( (hits_layers->xAtYEq0(layer_offset + posBeg) < lowerBoundX) && (posBeg != hits_layers->n_hits_layers[layer] ) )
 	++posBeg;
-      if (posBeg == n_hits_layers[layer]) continue;
+      if (posBeg == hits_layers->n_hits_layers[layer]) continue;
 
-      findHits(posBeg, posEnd, hits_layers, n_hits_layers, layer_offset, trState, xTol*invNormFact, invNormFact, hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer]);
+      findHits(posBeg, posEnd, hits_layers, layer_offset, trState, xTol*invNormFact, invNormFact, hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer]);
 
       nLayers += int( !( n_hitCandidatesInLayers[layer] == 0 ) );
     }

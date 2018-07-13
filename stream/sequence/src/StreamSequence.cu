@@ -7,7 +7,6 @@ cudaError_t Stream::run_sequence(
   const size_t host_velopix_events_size,
   const size_t host_velopix_event_offsets_size,
   VeloUTTracking::HitsSoA *hits_layers_events_ut,
-  const uint32_t n_hits_layers_events_ut[][VeloUTTracking::n_layers],
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -319,7 +318,6 @@ cudaError_t Stream::run_sequence(
       int rv = run_veloUT_on_CPU(
 	         ut_tracks_events,
 		 hits_layers_events_ut,
-		 n_hits_layers_events_ut,
 		 host_velo_states,
 		 host_accumulated_tracks,
                  host_velo_track_hit_number,

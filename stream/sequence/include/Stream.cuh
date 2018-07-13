@@ -81,7 +81,6 @@ struct Stream {
     const size_t host_events_size,
     const size_t host_event_offsets_size,
     VeloUTTracking::HitsSoA *hits_layers_events_ut,
-    const uint32_t n_hits_layers_events_ut[][VeloUTTracking::n_layers],
     const uint number_of_events,
     const uint number_of_repetitions
   );

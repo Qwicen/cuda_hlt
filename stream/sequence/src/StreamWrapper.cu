@@ -51,7 +51,6 @@ void StreamWrapper::run_stream(
   const size_t velopix_events_size,
   const size_t velopix_event_offsets_size,
   VeloUTTracking::HitsSoA *hits_layers_events_ut,
-  const uint32_t n_hits_layers_events_ut[][VeloUTTracking::n_layers],
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -63,7 +62,6 @@ void StreamWrapper::run_stream(
     velopix_events_size,
     velopix_event_offsets_size,
     hits_layers_events_ut,
-    n_hits_layers_events_ut,
     number_of_events,
     number_of_repetitions
   );

@@ -93,7 +93,6 @@ public:
     const int accumulated_tracks_event,
     const VeloState* velo_states_event,
     VeloUTTracking::HitsSoA *hits_layers_events,
-    const uint32_t n_hits_layers_events[VeloUTTracking::n_layers],
     VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
     int &n_velo_tracks_in_UT,
     int &n_veloUT_tracks
@@ -130,7 +129,6 @@ private:
     int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
     const int posLayers[4][85],
     VeloUTTracking::HitsSoA *hits_layers,
-    const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     const float* fudgeFactors, 
     const VeloState& trState ) const; 
 
@@ -184,7 +182,6 @@ private:
   // ==============================================================================
   inline void fillIterators(
     VeloUTTracking::HitsSoA *hits_layers,
-    const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     int posLayers[4][85] ) const
   {
     
@@ -202,7 +199,7 @@ private:
         float val = std::copysign(float(bound*bound)/2.0, bound);
 
         // TODO add bounds checking
-        for ( ; pos != n_hits_layers[layer]; ++pos) {
+        for ( ; pos != hits_layers->n_hits_layers[layer]; ++pos) {
           while( hits_layers->xAtYEq0( layer_offset + pos ) > val){
             posLayers[layer][bound+42] = pos;
             ++bound;
@@ -214,7 +211,7 @@ private:
           posLayers[layer],
           42 + bound,
           85 - 42 - bound,
-          n_hits_layers[layer] );
+          hits_layers->n_hits_layers[layer] );
         
       }
     }
@@ -227,7 +224,6 @@ private:
     const size_t posBeg,
     const size_t posEnd,
     VeloUTTracking::HitsSoA *hits_layers,
-    const uint32_t n_hits_layers[VeloUTTracking::n_layers],
     const int layer_offset,
     const VeloState& myState, 
     const float xTolNormFact,

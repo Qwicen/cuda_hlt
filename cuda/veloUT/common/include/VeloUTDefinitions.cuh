@@ -39,6 +39,7 @@ namespace VeloUTTracking {
    */
   struct HitsSoA {
     int layer_offset[n_layers];
+    int n_hits_layers[n_layers];
     
     float m_cos[max_numhits_per_event];
     float m_yBegin[max_numhits_per_event];

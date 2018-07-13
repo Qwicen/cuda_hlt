@@ -202,11 +202,9 @@ int main(int argc, char *argv[])
 
   
   VeloUTTracking::HitsSoA *ut_hits_events = new VeloUTTracking::HitsSoA[number_of_events];
-  uint32_t ut_n_hits_layers_events[number_of_events][VeloUTTracking::n_layers];
-  read_ut_events_into_arrays( ut_hits_events, ut_n_hits_layers_events,
-  			      ut_events, ut_event_offsets, number_of_events );
+  read_ut_events_into_arrays( ut_hits_events, ut_events, ut_event_offsets, number_of_events );
 
-  //check_ut_events( ut_hits_events, ut_n_hits_layers_events, number_of_events );
+  //check_ut_events( ut_hits_events, number_of_events );
 
   // Initialize detector constants on GPU
   initializeConstants();
@@ -239,7 +237,6 @@ int main(int argc, char *argv[])
         velopix_events.size(),
         velopix_event_offsets.size(),
 	ut_hits_events,
-	ut_n_hits_layers_events,
         number_of_events,
         number_of_repetitions
       );
