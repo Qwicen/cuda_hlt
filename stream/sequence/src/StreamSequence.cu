@@ -253,6 +253,13 @@ cudaError_t Stream::run_sequence(
     //     print_individual_rates
     //   );
     // }
+
+    argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(number_of_events);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
+    sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(1), stream);
+    sequence.item<seq::veloUT>().set_arguments( argen.generate<arg::dev_ut_hits>(argument_offsets) );
+    sequence.item<seq::veloUT>().invoke();
     
     // Transmission device to host
     if (transmit_device_to_host) {

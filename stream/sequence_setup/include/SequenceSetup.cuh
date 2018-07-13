@@ -7,6 +7,8 @@
 #include "../../../cuda/velo/prefix_sum/include/PrefixSum.cuh"
 #include "../../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
 #include "../../../cuda/velo/simplified_kalman_filter/include/VeloKalmanFilter.cuh"
+#include "../../../cuda/veloUT/tracking/include/VeloUT.cuh"
+
 #include "../../gear/include/Argument.cuh"
 #include "../../gear/include/Sequence.cuh"
 #include "../../gear/include/TupleIndicesChecker.cuh"
@@ -31,7 +33,8 @@ constexpr auto sequence_algorithms() {
     prefix_sum_reduce,
     prefix_sum_single_block,
     prefix_sum_scan,
-    consolidate_tracks
+    consolidate_tracks,
+    veloUT
   );
 }
 
@@ -75,7 +78,8 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_velo_track_hit_number, uint>,
   Argument<arg::dev_prefix_sum_auxiliary_array_2, uint>,
   Argument<arg::dev_velo_track_hits, VeloTracking::Hit<mc_check_enabled>>,
-  Argument<arg::dev_velo_states, VeloState>
+  Argument<arg::dev_velo_states, VeloState>,
+  Argument<arg::dev_ut_hits, VeloUTTracking::HitsSoA>
 >;
 
 /**
