@@ -64,7 +64,6 @@ struct Stream {
   cudaError_t initialize(
     const std::vector<char>& velopix_geometry,
     const uint max_number_of_events,
-    const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
     const bool param_do_simplified_kalman_filter,

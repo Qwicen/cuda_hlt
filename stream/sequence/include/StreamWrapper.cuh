@@ -30,7 +30,6 @@ struct StreamWrapper {
     const uint n,
     const std::vector<char>& velopix_geometry,
     const uint number_of_events,
-    const bool transmit_host_to_device,
     const bool transmit_device_to_host,
     const bool do_check,
     const bool do_simplified_kalman_filter,

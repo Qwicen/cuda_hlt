@@ -39,7 +39,6 @@ void printUsage(char* argv[]){
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=1]"
     << std::endl << " [-r {number of repetitions per thread / stream}=1]"
-    << std::endl << " [-a {transmit host to device}=1]"
     << std::endl << " [-b {transmit device to host}=1]"
     << std::endl << " [-c {run checkers}=0]"
     << std::endl << " [-k {simplified kalman filter}=0]"
@@ -59,7 +58,6 @@ int main(int argc, char *argv[])
   uint number_of_repetitions = 1;
   uint verbosity = 3;
   bool print_memory_usage = false;
-  bool transmit_host_to_device = true;
   bool transmit_device_to_host = true;
   // By default, do_check will be true when mc_check is enabled 
   bool do_check = mc_check_enabled;
@@ -89,9 +87,6 @@ int main(int argc, char *argv[])
       break;
     case 'r':
       number_of_repetitions = atoi(optarg);
-      break;
-    case 'a':
-      transmit_host_to_device = atoi(optarg);
       break;
     case 'b':
       transmit_device_to_host = atoi(optarg);
@@ -151,7 +146,6 @@ int main(int argc, char *argv[])
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
-    << " transmit host to device (-a): " << transmit_host_to_device << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
     << " run checkers (-c): " << do_check << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
@@ -215,7 +209,6 @@ int main(int argc, char *argv[])
     tbb_threads,
     velopix_geometry,
     number_of_events,
-    transmit_host_to_device,
     transmit_device_to_host,
     do_check,
     do_simplified_kalman_filter,

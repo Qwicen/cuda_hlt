@@ -6,7 +6,6 @@
 cudaError_t Stream::initialize(
   const std::vector<char>& velopix_geometry,
   const uint max_number_of_events,
-  const bool param_transmit_host_to_device,
   const bool param_transmit_device_to_host,
   const bool param_do_check,
   const bool param_do_simplified_kalman_filter,
@@ -23,7 +22,6 @@ cudaError_t Stream::initialize(
 
   // Set stream options
   stream_number = param_stream_number;
-  transmit_host_to_device = param_transmit_host_to_device;
   transmit_device_to_host = param_transmit_device_to_host;
   do_check = param_do_check;
   do_simplified_kalman_filter = param_do_simplified_kalman_filter;
