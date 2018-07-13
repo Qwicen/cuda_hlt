@@ -46,6 +46,7 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_number_of_reconstructed_velo_tracks, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_hits_in_velo_tracks, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_velo_states, max_number_of_events * VeloTracking::max_tracks * sizeof(VeloState)));
+  cudaCheck(cudaMallocHost((void**)&host_kal_velo_states, max_number_of_events * VeloTracking::max_tracks * sizeof(VeloState)));
 
   // Define sequence of algorithms to execute
   sequence.set(sequence_algorithms());

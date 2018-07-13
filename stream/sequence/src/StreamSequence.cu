@@ -239,14 +239,15 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::consolidate_tracks>().invoke();
 
-
+    argument_sizes[arg::dev_kal_velo_states] = argen.size<arg::dev_kal_velo_states>(host_number_of_reconstructed_velo_tracks[0]);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::velo_fit>().set_opts(dim3(number_of_events), dim3(32), stream);
     sequence.item<seq::velo_fit>().set_arguments(
       argen.generate<arg::dev_atomics_storage>(argument_offsets),
       argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
       argen.generate<arg::dev_velo_track_hits>(argument_offsets),
-      argen.generate<arg::dev_velo_states>(argument_offsets)
+      argen.generate<arg::dev_velo_states>(argument_offsets),
+      argen.generate<arg::dev_kal_velo_states>(argument_offsets)
     );
     sequence.item<seq::velo_fit>().invoke();
 
@@ -272,6 +273,7 @@ cudaError_t Stream::run_sequence(
       cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
+      cudaCheck(cudaMemcpyAsync(host_kal_velo_states, argen.generate<arg::dev_kal_velo_states>(argument_offsets), argen.size<arg::dev_kal_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
     }
 
     cudaEventRecord(cuda_generic_event, stream);
@@ -346,7 +348,8 @@ cudaError_t Stream::run_sequence(
       
 
       for(int i = 0; i < *host_number_of_reconstructed_velo_tracks; i++) {
-      std::cout << "host velo state: " << host_velo_states[i].tx << " " << host_velo_states[*host_number_of_reconstructed_velo_tracks+i].tx << std::endl;
+      std::cout << "host velo state tx: " << host_velo_states[i].tx << " " << host_kal_velo_states[i].tx << std::endl;
+      std::cout << "host velo state ty: " << host_velo_states[i].ty << " " << host_kal_velo_states[i].ty << std::endl;
     }
     } // mc_check_enabled       
     

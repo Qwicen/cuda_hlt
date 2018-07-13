@@ -49,6 +49,7 @@ enum arg_enum_t {
   dev_velo_track_hit_number,
   dev_prefix_sum_auxiliary_array_2,
   dev_velo_track_hits,
-  dev_velo_states
+  dev_velo_states,
+  dev_kal_velo_states
 };
 }

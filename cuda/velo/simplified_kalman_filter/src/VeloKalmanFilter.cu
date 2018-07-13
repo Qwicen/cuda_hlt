@@ -44,7 +44,8 @@ __global__ void velo_fit(
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
-  VeloState* dev_velo_states
+  VeloState* dev_velo_states,
+  VeloState* dev_kal_velo_states
 ) {
 
 
@@ -58,7 +59,6 @@ __global__ void velo_fit(
 
 
   //get pointer to trackhits of current event
-  VeloState * event_velostates = dev_velo_states + event_number * VeloTracking::max_tracks;
   int* tracks_insert_pointer = dev_atomics_storage + event_number;
 
   //get total nubmer of tracks
@@ -78,12 +78,17 @@ __global__ void velo_fit(
 
       const VeloTracking::Hit<mc_check_enabled>* velo_track_hits = dev_velo_track_hits +
       dev_velo_track_hit_number[accumulated_tracks + element];
-      VeloState * state_pointer = dev_velo_states + element +
-      dev_velo_track_hit_number[accumulated_tracks + element] + number_of_tracks;
-      const VeloState first = (dev_velo_states + element +
-      dev_velo_track_hit_number[accumulated_tracks + element])[0];
 
-      simplified_fit<false>(        velo_track_hits,        first,        state_pointer,        number_of_tracks     );
+
+      //acumulated tracks gives the number of tracks in all previous events-> element gives position in current event
+      VeloState * state_pointer = dev_kal_velo_states + accumulated_tracks +element ;
+
+
+//velo_states = dev_velo_states + accumulated_tracks;
+      const VeloState first = (dev_velo_states + accumulated_tracks)[element];
+
+      simplified_fit<true>(        velo_track_hits,        first,        state_pointer,        number_of_tracks     );
+
     }
   }
 

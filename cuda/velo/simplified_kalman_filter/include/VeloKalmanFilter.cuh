@@ -64,7 +64,6 @@ __device__ void simplified_fit(
   // add remaining hits
   state.chi2 = 0.0f;
   for (uint i=firsthit + dhit; i!=lasthit + dhit; i+=dhit) {
-    // illegal memory acces here?
     const auto hit_x = velo_track_hits[0].x;
     const auto hit_y = velo_track_hits[0].y;
     const auto hit_z = velo_track_hits[0].z;
@@ -94,5 +93,6 @@ __global__ void velo_fit(
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
-  VeloState* dev_velo_states
+  VeloState* dev_velo_states,
+  VeloState* dev_kal_velo_states
 );
