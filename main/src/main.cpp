@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
     << " run checkers (-c): " << do_check << std::endl
     << std::endl;
 
-  // Read folder contents
+  // Read velopix raw data 
   std::vector<char> velopix_events;
   std::vector<unsigned int> velopix_event_offsets;
   verbose_cout << "Reading velopix raw events" << std::endl;
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
   std::vector<char> velopix_geometry;
   readGeometry(folder_name_velopix_raw, velopix_geometry);
 
-  // Copy data to pinned host memory
+  // Copy velopix raw data to pinned host memory
   const int number_of_events = velopix_event_offsets.size() - 1;
   char* host_velopix_events;
   uint* host_velopix_event_offsets;
@@ -188,18 +188,27 @@ int main(int argc, char *argv[])
   std::copy_n(std::begin(velopix_events), velopix_events.size(), host_velopix_events);
   std::copy_n(std::begin(velopix_event_offsets), velopix_event_offsets.size(), host_velopix_event_offsets);
 
+  // Read ut hits
   std::vector<char> ut_events;
   std::vector<unsigned int> ut_event_offsets;
   verbose_cout << "Reading UT hits for " << number_of_events << " events " << std::endl;
   read_folder( folder_name_ut_hits, number_of_files,
   	      ut_events, ut_event_offsets );
 
+  // Copy ut hits to pinned host memory
+  VeloUTTracking::HitsSoA* host_ut_hits_events;
+  cudaCheck(cudaMallocHost((void**)&host_ut_hits_events, number_of_events * sizeof(VeloUTTracking::HitsSoA)));
+
+  read_ut_events_into_arrays( host_ut_hits_events, ut_events, ut_event_offsets, number_of_events );
+
+  //check_ut_events( host_ut_hits_events, number_of_events );
+
+  // Read LUTs from PrUTMagnetTool into pinned host memory
+  PrUTMagnetTool* host_ut_magnet_tool;
+  cudaCheck(cudaMallocHost((void**)&host_ut_magnet_tool, sizeof(PrUTMagnetTool)));
+  read_UT_magnet_tool( host_ut_magnet_tool );
   
-  VeloUTTracking::HitsSoA *ut_hits_events = new VeloUTTracking::HitsSoA[number_of_events];
-  read_ut_events_into_arrays( ut_hits_events, ut_events, ut_event_offsets, number_of_events );
-
-  //check_ut_events( ut_hits_events, number_of_events );
-
+  
   // Initialize detector constants on GPU
   initializeConstants();
 
@@ -208,6 +217,7 @@ int main(int argc, char *argv[])
   stream_wrapper.initialize_streams(
     tbb_threads,
     velopix_geometry,
+    host_ut_magnet_tool,
     number_of_events,
     transmit_device_to_host,
     do_check,
@@ -229,7 +239,8 @@ int main(int argc, char *argv[])
         host_velopix_event_offsets,
         velopix_events.size(),
         velopix_event_offsets.size(),
-	ut_hits_events,
+	host_ut_hits_events,
+        host_ut_magnet_tool,
         number_of_events,
         number_of_repetitions
       );
@@ -237,8 +248,6 @@ int main(int argc, char *argv[])
   );
   t.stop();
 
-  delete [] ut_hits_events;
-  
   std::cout << (number_of_events * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 

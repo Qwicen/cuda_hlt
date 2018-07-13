@@ -6,7 +6,8 @@ cudaError_t Stream::run_sequence(
   const uint* host_velopix_event_offsets,
   const size_t host_velopix_events_size,
   const size_t host_velopix_event_offsets_size,
-  VeloUTTracking::HitsSoA *hits_layers_events_ut,
+  VeloUTTracking::HitsSoA *host_ut_hits_events,
+  const PrUTMagnetTool* host_ut_magnet_tool,
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -265,7 +266,7 @@ cudaError_t Stream::run_sequence(
     // VeloUT tracking
     argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
     sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(1), stream);
     sequence.item<seq::veloUT>().set_arguments( argen.generate<arg::dev_ut_hits>(argument_offsets) );
     sequence.item<seq::veloUT>().invoke();
@@ -316,7 +317,8 @@ cudaError_t Stream::run_sequence(
       
       int rv = run_veloUT_on_CPU(
 	         ut_tracks_events,
-		 hits_layers_events_ut,
+		 host_ut_hits_events,
+                 host_ut_magnet_tool,
 		 host_velo_states,
 		 host_accumulated_tracks,
                  host_velo_track_hit_number,

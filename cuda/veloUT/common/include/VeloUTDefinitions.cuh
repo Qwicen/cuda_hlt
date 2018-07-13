@@ -16,15 +16,14 @@ namespace VeloUTTracking {
   */
   static constexpr uint n_layers           = 4;
   static constexpr uint n_ut_hit_variables = 8;
-  /* For now, the dxdy and planeCode are attributes of every hit,
-     we should see if we cannot use these constants if we always know which plane a hit belongs to
-     -> check how this is known in the final fitting step and which information
+  /* For now, the planeCode is an attribute of every hit,
+     -> check which information
      needs to be saved for the forward tracking
   */
   // layer configuration: XUVX, U and V layers tilted by +/- 5 degrees = 0.087 radians
   static constexpr float dxDyTable[n_layers] = {0., 0.08748867, -0.08748867, 0.};
   static constexpr int planeCode[n_layers] = {0, 1, 2, 3};
-  
+    
   /* Cut-offs */
   static constexpr uint max_numhits_per_layer = 500;
   static constexpr uint max_numhits_per_event = 4000;
@@ -54,32 +53,32 @@ namespace VeloUTTracking {
     float z[max_numhits_per_event]; // calculated during VeloUT tracking
 
     
-    inline float cos(const int i_hit) const { return m_cos[i_hit]; }
-    inline int planeCode(const int i_hit) const { return m_planeCode[i_hit]; }
-    inline float dxDy(const int i_hit) const {
+    __host__ __device__ inline float cos(const int i_hit) const { return m_cos[i_hit]; }
+    __host__ __device__ inline int planeCode(const int i_hit) const { return m_planeCode[i_hit]; }
+    __host__ __device__ inline float dxDy(const int i_hit) const {
       const int i_plane = m_planeCode[i_hit];
       return dxDyTable[i_plane];
     }
-    inline float cosT(const int i_hit) const { return ( std::fabs( m_xAtYEq0[i_hit] ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy(i_hit) * dxDy(i_hit) ) : cos(i_hit); }
-    inline bool highThreshold(const int i_hit) const { return m_highThreshold[i_hit]; }
-    inline bool isYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol <= y && y <= yMax(i_hit) + tol; }
-    inline bool isNotYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol > y || y > yMax(i_hit) + tol; }
-    inline int LHCbID(const int i_hit) const { return m_LHCbID[i_hit]; }
-    inline float sinT(const int i_hit) const { return tanT(i_hit) * cosT(i_hit); }
-    inline float tanT(const int i_hit) const { return -1 * dxDy(i_hit); }
-    inline float weight(const int i_hit) const { return m_weight[i_hit]; }
-    inline float xAt( const int i_hit, const float globalY ) const { return m_xAtYEq0[i_hit] + globalY * dxDy(i_hit); }
-    inline float xAtYEq0(const int i_hit) const { return m_xAtYEq0[i_hit]; }
-    //inline float xAtYMid(const int i_hit) const { return m_x[i_hit]; }  // not used, have to initialize properly if this  will be used
-    inline float xMax(const int i_hit) const { return std::max( xAt( i_hit, yBegin(i_hit) ), xAt( i_hit, yEnd(i_hit) ) ); }
-    inline float xMin(const int i_hit) const { return std::min( xAt( i_hit, yBegin(i_hit) ), xAt( i_hit, yEnd(i_hit) ) ); }
-    inline float xT(const int i_hit) const { return cos(i_hit); }
-    inline float yBegin(const int i_hit) const { return m_yBegin[i_hit]; }
-    inline float yEnd(const int i_hit) const { return m_yEnd[i_hit]; }
-    inline float yMax(const int i_hit) const { return std::max( yBegin(i_hit), yEnd(i_hit) ); }
-    inline float yMid(const int i_hit) const { return 0.5 * ( yBegin(i_hit) + yEnd(i_hit) ); }
-    inline float yMin(const int i_hit) const { return std::min( yBegin(i_hit), yEnd(i_hit) ); }
-    inline float zAtYEq0(const int i_hit) const { return m_zAtYEq0[i_hit]; } 
+    __host__ __device__ inline float cosT(const int i_hit) const { return ( std::fabs( m_xAtYEq0[i_hit] ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy(i_hit) * dxDy(i_hit) ) : cos(i_hit); }
+    __host__ __device__ inline bool highThreshold(const int i_hit) const { return m_highThreshold[i_hit]; }
+    __host__ __device__ inline bool isYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol <= y && y <= yMax(i_hit) + tol; }
+    __host__ __device__ inline bool isNotYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol > y || y > yMax(i_hit) + tol; }
+    __host__ __device__ inline int LHCbID(const int i_hit) const { return m_LHCbID[i_hit]; }
+    __host__ __device__ inline float sinT(const int i_hit) const { return tanT(i_hit) * cosT(i_hit); }
+    __host__ __device__ inline float tanT(const int i_hit) const { return -1 * dxDy(i_hit); }
+    __host__ __device__ inline float weight(const int i_hit) const { return m_weight[i_hit]; }
+    __host__ __device__  inline float xAt( const int i_hit, const float globalY ) const { return m_xAtYEq0[i_hit] + globalY * dxDy(i_hit); }
+    __host__ __device__ inline float xAtYEq0(const int i_hit) const { return m_xAtYEq0[i_hit]; }
+    //__host__ __device__ inline float xAtYMid(const int i_hit) const { return m_x[i_hit]; }  // not used, have to initialize properly if this  will be used
+    __host__ __device__ inline float xMax(const int i_hit) const { return std::max( xAt( i_hit, yBegin(i_hit) ), xAt( i_hit, yEnd(i_hit) ) ); }
+    __host__ __device__ inline float xMin(const int i_hit) const { return std::min( xAt( i_hit, yBegin(i_hit) ), xAt( i_hit, yEnd(i_hit) ) ); }
+    __host__ __device__ inline float xT(const int i_hit) const { return cos(i_hit); }
+    __host__ __device__ inline float yBegin(const int i_hit) const { return m_yBegin[i_hit]; }
+    __host__ __device__ inline float yEnd(const int i_hit) const { return m_yEnd[i_hit]; }
+    __host__ __device__ inline float yMax(const int i_hit) const { return std::max( yBegin(i_hit), yEnd(i_hit) ); }
+    __host__ __device__ inline float yMid(const int i_hit) const { return 0.5 * ( yBegin(i_hit) + yEnd(i_hit) ); }
+    __host__ __device__ inline float yMin(const int i_hit) const { return std::min( yBegin(i_hit), yEnd(i_hit) ); }
+    __host__ __device__ inline float zAtYEq0(const int i_hit) const { return m_zAtYEq0[i_hit]; } 
 
   };
 
@@ -99,33 +98,33 @@ namespace VeloUTTracking {
     
     bool  m_highThreshold;
     
-    Hit(){}
+    __host__ __device__ Hit(){}
     
-    inline float cos() const { return m_cos; }
-    inline float dxDy() const { return dxDyTable[m_planeCode]; }
-    inline float cosT() const { return ( std::fabs( m_xAtYEq0 ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy() * dxDy() ) : cos(); }
-    inline bool highThreshold() const { return m_highThreshold; }
-    inline bool isYCompatible( const float y, const float tol ) const { return yMin() - tol <= y && y <= yMax() + tol; }
-    inline bool isNotYCompatible( const float y, const float tol ) const { return yMin() - tol > y || y > yMax() + tol; }
-    inline int LHCbID() const { return m_LHCbID; }
-    inline int planeCode() const { return m_planeCode; }
-    inline float sinT() const { return tanT() * cosT(); }
-    inline float tanT() const { return -1 * dxDy(); }
-    inline float weight() const { return m_weight; }
-    inline float xAt( const float globalY ) const { return m_xAtYEq0 + globalY * dxDy(); }
-    inline float xAtYEq0() const { return m_xAtYEq0; }
-    inline float xMax() const { return std::max( xAt( yBegin() ), xAt( yEnd() ) ); }
-    inline float xMin() const { return std::min( xAt( yBegin() ), xAt( yEnd() ) ); }
-    inline float xT() const { return cos(); }
-    inline float yBegin() const { return m_yBegin; }
-    inline float yEnd() const { return m_yEnd; }
-    inline float yMax() const { return std::max( yBegin(), yEnd() ); }
-    inline float yMid() const { return 0.5 * ( yBegin() + yEnd() ); }
-    inline float yMin() const { return std::min( yBegin(), yEnd() ); }
-    inline float zAtYEq0() const { return m_zAtYEq0; }
+    __host__ __device__ inline float cos() const { return m_cos; }
+    __host__ __device__ inline float dxDy() const { return dxDyTable[m_planeCode]; }
+    __host__ __device__ inline float cosT() const { return ( std::fabs( m_xAtYEq0 ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy() * dxDy() ) : cos(); }
+    __host__ __device__ inline bool highThreshold() const { return m_highThreshold; }
+    __host__ __device__ inline bool isYCompatible( const float y, const float tol ) const { return yMin() - tol <= y && y <= yMax() + tol; }
+    __host__ __device__ inline bool isNotYCompatible( const float y, const float tol ) const { return yMin() - tol > y || y > yMax() + tol; }
+    __host__ __device__ inline int LHCbID() const { return m_LHCbID; }
+    __host__ __device__ inline int planeCode() const { return m_planeCode; }
+    __host__ __device__ inline float sinT() const { return tanT() * cosT(); }
+    __host__ __device__ inline float tanT() const { return -1 * dxDy(); }
+    __host__ __device__ inline float weight() const { return m_weight; }
+    __host__ __device__ inline float xAt( const float globalY ) const { return m_xAtYEq0 + globalY * dxDy(); }
+    __host__ __device__ inline float xAtYEq0() const { return m_xAtYEq0; }
+    __host__ __device__ inline float xMax() const { return std::max( xAt( yBegin() ), xAt( yEnd() ) ); }
+    __host__ __device__ inline float xMin() const { return std::min( xAt( yBegin() ), xAt( yEnd() ) ); }
+    __host__ __device__ inline float xT() const { return cos(); }
+    __host__ __device__ inline float yBegin() const { return m_yBegin; }
+    __host__ __device__ inline float yEnd() const { return m_yEnd; }
+    __host__ __device__ inline float yMax() const { return std::max( yBegin(), yEnd() ); }
+    __host__ __device__ inline float yMid() const { return 0.5 * ( yBegin() + yEnd() ); }
+    __host__ __device__ inline float yMin() const { return std::min( yBegin(), yEnd() ); }
+    __host__ __device__ inline float zAtYEq0() const { return m_zAtYEq0; }
   };
 
-  Hit createHit( HitsSoA *hits_layers, const int i_layer, const int i_hit );
+  __host__ __device__ Hit createHit( HitsSoA *hits_layers, const int i_layer, const int i_hit );
   
   typedef std::vector<Hit> Hits;
 
@@ -136,11 +135,11 @@ namespace VeloUTTracking {
     unsigned short hitsNum = 0;
     
     
-    void addLHCbID( unsigned int id ) {
+    __host__ __device__ void addLHCbID( unsigned int id ) {
       LHCbIDs[hitsNum++] = id;
     }
 
-    void set_qop( float _qop ) {
+    __host__ __device__ void set_qop( float _qop ) {
       qop = _qop;
     }
   };
@@ -152,15 +151,14 @@ namespace VeloUTTracking {
     unsigned short veloTrackIndex;
     float qop;
 
-    void addHit( const unsigned short _h ) {
+    __host__ __device__ void addHit( const unsigned short _h ) {
       hits[hitsNum] = _h;
       ++hitsNum;
     }
-    void set_qop( float _qop ) {
+    __host__ __device__ void set_qop( float _qop ) {
       qop = _qop;
     }
   };
-
-
   
 }
+

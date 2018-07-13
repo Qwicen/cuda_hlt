@@ -13,6 +13,8 @@
 #include "../../../main/include/Tools.h"
 #include "../../scheduler/include/BaseDynamicScheduler.cuh"
 #include "../../sequence_setup/include/SequenceSetup.cuh"
+#include "../../../cuda/veloUT/PrVeloUT/include/PrVeloUTMagnetToolDefinitions.cuh"
+
 #include "run_VeloUT_CPU.h"
 
 class Timer;
@@ -49,7 +51,6 @@ struct Stream {
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   VeloState* host_velo_states;
-  VeloUTTracking::HitsSoA* host_ut_hits;
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;
@@ -57,12 +58,14 @@ struct Stream {
   // GPU pointers
   char* dev_velo_geometry;
   char* dev_base_pointer;
-
+  PrUTMagnetTool* dev_ut_magnet_tool;
+  
   // Monte Carlo folder name
   std::string folder_name_MC;
 
   cudaError_t initialize(
     const std::vector<char>& velopix_geometry,
+    const PrUTMagnetTool* host_ut_magnet_tool,
     const uint max_number_of_events,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
@@ -79,7 +82,8 @@ struct Stream {
     const uint* host_event_offsets,
     const size_t host_events_size,
     const size_t host_event_offsets_size,
-    VeloUTTracking::HitsSoA *hits_layers_events_ut,
+    VeloUTTracking::HitsSoA *host_ut_hits_events,
+    const PrUTMagnetTool* host_ut_magnet_tool,
     const uint number_of_events,
     const uint number_of_repetitions
   );

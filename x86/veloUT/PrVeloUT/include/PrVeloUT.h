@@ -9,10 +9,11 @@
 #include <cassert>
 
 #include "../../../../main/include/Logger.h"
-
-#include "SystemOfUnits.h"
+#include "../../../../main/include/SystemOfUnits.h"
 
 #include "../../../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
+#include "../../../../cuda/veloUT/PrVeloUT/include/PrVeloUTDefinitions.cuh"
+#include "../../../../cuda/veloUT/PrVeloUT/include/PrVeloUTMagnetToolDefinitions.cuh"
 #include "../../../../cuda/velo/common/include/VeloDefinitions.cuh"
 
 /** @class PrVeloUT PrVeloUT.h
@@ -27,36 +28,8 @@
    *
    *  2017-03-01: Christoph Hasse (adapt to future framework)
    *  2018-05-05: Plácido Fernández (make standalone)
+   *  2018-07:    Dorothea vom Bruch (convert to C code for GPU compatability)
    */
-
-struct PrUTMagnetTool {
-  static const int N_dxLay_vals = 124;
-  static const int N_bdl_vals   = 3752;
-  
-  //const float m_zMidUT = 0.0;
-  //const float m_averageDist2mom = 0.0;
-  float* dxLayTable;
-  float* bdlTable;
-
-  PrUTMagnetTool(){}
-  PrUTMagnetTool( 
-    const float *_dxLayTable, 
-    const float *_bdlTable ) {
-    dxLayTable = new float[N_dxLay_vals];
-    for ( int i = 0; i < N_dxLay_vals; ++i ) {
-      dxLayTable[i] = _dxLayTable[i];
-    }
-    bdlTable = new float[N_bdl_vals];
-    for ( int i = 0; i < N_bdl_vals; ++i ) {
-      bdlTable[i] = _bdlTable[i];
-    }
-  }
-  
-  //float zMidUT() { return m_zMidUT; }
-  //float averageDist2mom() { return m_averageDist2mom; }
-  float* returnDxLayTable() const { return dxLayTable; }
-  float* returnBdlTable() const { return bdlTable; }
-};
 
 struct TrackHelper{
   VeloState state;
@@ -66,25 +39,20 @@ struct TrackHelper{
   float wb, invKinkVeloDist, xMidField;
 
   TrackHelper(
-    const VeloState& miniState, 
-    const float zKink, 
-    const float sigmaVeloSlope, 
-    const float maxPseudoChi2
+    const VeloState& miniState
     ) : state(miniState) {
     bestParams[0] = bestParams[2] = bestParams[3] = 0.;
-    bestParams[1] = maxPseudoChi2;
-    xMidField = state.x + state.tx*(zKink-state.z);
-    const float a = sigmaVeloSlope*(zKink - state.z);
+    bestParams[1] = PrVeloUTConst::maxPseudoChi2;
+    xMidField = state.x + state.tx*(PrVeloUTConst::zKink-state.z);
+    const float a = PrVeloUTConst::sigmaVeloSlope*(PrVeloUTConst::zKink - state.z);
     wb=1./(a*a);
-    invKinkVeloDist = 1/(zKink-state.z);
+    invKinkVeloDist = 1/(PrVeloUTConst::zKink-state.z);
     }
   };
 
 class PrVeloUT {
 
 public:
-
-  virtual int initialize();
   
   void operator()(
     const uint* velo_track_hit_number,
@@ -93,6 +61,7 @@ public:
     const int accumulated_tracks_event,
     const VeloState* velo_states_event,
     VeloUTTracking::HitsSoA *hits_layers_events,
+    const PrUTMagnetTool *magnet_tool,
     VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
     int &n_velo_tracks_in_UT,
     int &n_veloUT_tracks
@@ -100,28 +69,7 @@ public:
 
 private:
 
-  const float m_minMomentum =       1.5*Gaudi::Units::GeV;
-  const float m_minPT =             0.3*Gaudi::Units::GeV;
-  const float m_maxPseudoChi2 =     1280.;
-  const float m_yTol =              0.5 * Gaudi::Units::mm;
-  const float m_yTolSlope =         0.08;
-  const float m_hitTol1 =           6.0 * Gaudi::Units::mm;
-  const float m_hitTol2 =           0.8 * Gaudi::Units::mm;
-  const float m_deltaTx1 =          0.035;
-  const float m_deltaTx2 =          0.018;
-  const float m_maxXSlope =         0.350;
-  const float m_maxYSlope =         0.300;
-  const float m_centralHoleSize =   33. * Gaudi::Units::mm;
-  const float m_intraLayerDist =    15.0 * Gaudi::Units::mm;
-  const float m_overlapTol =        0.7 * Gaudi::Units::mm;
-  const float m_passHoleSize =      40. * Gaudi::Units::mm;
-  const int   m_minHighThres =      1;
-  const bool  m_printVariables =    false;
-  const bool  m_passTracks =        false;
-  const bool  m_doTiming =          false;
-
-  
-  bool veloTrackInUTAcceptance(
+   bool veloTrackInUTAcceptance(
     const VeloState& state ) const;
 
   bool getHits(
@@ -239,7 +187,7 @@ private:
     size_t pos = posBeg;
     while ( 
       pos <= posEnd && 
-      hits_layers->isNotYCompatible( layer_offset + pos, yApprox, m_yTol + m_yTolSlope * std::abs(xTolNormFact) )
+      hits_layers->isNotYCompatible( layer_offset + pos, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(xTolNormFact) )
     ) { ++pos; }
 
     const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
@@ -254,7 +202,7 @@ private:
       if( dx >  xTolNormFact ) break; 
 
       // -- Now refine the tolerance in Y
-      if ( hits_layers->isNotYCompatible( layer_offset + i, yApprox, m_yTol + m_yTolSlope * std::abs(dx*invNormFact)) ) continue;
+      if ( hits_layers->isNotYCompatible( layer_offset + i, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx*invNormFact)) ) continue;
       
       
       const auto zz = hits_layers->zAtYEq0( layer_offset + i ); 
@@ -285,7 +233,7 @@ private:
   void addHit( float* mat, float* rhs, const VeloUTTracking::Hit* hit) const {
     const float ui = hit->x;
     const float ci = hit->cosT();
-    const float dz = 0.001*(hit->z - m_zMidUT);
+    const float dz = 0.001*(hit->z - PrVeloUTConst::zMidUT);
     const float wi = hit->weight();
 
     mat[0] += wi * ci;
@@ -297,7 +245,7 @@ private:
 
   void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const VeloUTTracking::Hit* hit) const {
     const float zd    = hit->z;
-    const float xd    = xTTFit + xSlopeTTFit*(zd-m_zMidUT);
+    const float xd    = xTTFit + xSlopeTTFit*(zd-PrVeloUTConst::zMidUT);
     const float du    = xd - hit->x;
     chi2 += (du*du)*hit->weight();
   }
@@ -315,7 +263,7 @@ private:
     
     // -- Veto hit combinations with no high threshold hit
     // -- = likely spillover
-    if( nHighThres < m_minHighThres ) return;
+    if( nHighThres < PrVeloUTConst::minHighThres ) return;
 
     /* Straight line fit of UT hits,
        including the hit at x_mid_field, z_mid_field,
@@ -325,7 +273,7 @@ private:
     */
     // -- Scale the z-component, to not run into numerical problems with floats
     // -- first add to sum values from hit at xMidField, zMidField hit
-    const float zDiff = 0.001*(m_zKink-m_zMidUT);
+    const float zDiff = 0.001*(PrVeloUTConst::zKink-PrVeloUTConst::zMidUT);
     float mat[3] = { helper.wb, helper.wb*zDiff, helper.wb*zDiff*zDiff };
     float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
 
@@ -338,9 +286,9 @@ private:
     const float xUTFit      = (mat[2]*rhs[0] - mat[1]*rhs[1]) * denom;
 
     // new VELO slope x
-    const float xb = xUTFit+xSlopeUTFit*(m_zKink-m_zMidUT);
+    const float xb = xUTFit+xSlopeUTFit*(PrVeloUTConst::zKink-PrVeloUTConst::zMidUT);
     const float xSlopeVeloFit = (xb-helper.state.x)*helper.invKinkVeloDist;
-    const float chi2VeloSlope = (helper.state.tx - xSlopeVeloFit)*m_invSigmaVeloSlope;
+    const float chi2VeloSlope = (helper.state.tx - xSlopeVeloFit)*PrVeloUTConst::invSigmaVeloSlope;
 
     /* chi2 takes chi2 from velo fit + chi2 from UT fit */
     float chi2UT = chi2VeloSlope*chi2VeloSlope;
@@ -369,14 +317,6 @@ private:
 
   }
 
-  // ---
-
-  PrUTMagnetTool       m_PrUTMagnetTool;                            ///< Multipupose tool for Bdl and deflection
-  float                m_zMidUT;
-  float                m_distToMomentum;
-  float                m_zKink;
-  float                m_sigmaVeloSlope;
-  float                m_invSigmaVeloSlope;
-
+  
 };
 

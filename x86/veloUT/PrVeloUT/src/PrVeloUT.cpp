@@ -5,6 +5,7 @@
 // 2007-05-08: Mariusz Witek
 // 2017-03-01: Christoph Hasse (adapt to future framework)
 // 2018-05-05: Plácido Fernández (make standalone)
+// 2018-07:    Dorothea vom Bruch (convert to C code for GPU compatability)
 //-----------------------------------------------------------------------------
 
 namespace {
@@ -23,53 +24,6 @@ namespace {
   constexpr float dxDyHelper[4] = { 0.0, 1.0, -1.0, 0.0 };
 }
 
-//=============================================================================
-// Initialization
-//=============================================================================
-
-int PrVeloUT::initialize() {
-
-  //load the deflection and Bdl values from a text file
-  float dxLayTable[PrUTMagnetTool::N_dxLay_vals];
-  std::ifstream deflectionfile;
-  deflectionfile.open("../PrUTMagnetTool/deflection.txt");
-  if (deflectionfile.is_open()) {
-    int i = 0;
-    float deflection;
-    while (!deflectionfile.eof()) {
-      deflectionfile >> deflection;
-      assert( i < PrUTMagnetTool::N_dxLay_vals );
-      dxLayTable[i++] = deflection;
-    }
-  }
-  
-  float bdlTable[PrUTMagnetTool::N_bdl_vals];
-  std::ifstream bdlfile;
-  bdlfile.open("../PrUTMagnetTool/bdl.txt");
-  if (bdlfile.is_open()) {
-    int i = 0;
-    float bdl;
-    while (!bdlfile.eof()) {
-      bdlfile >> bdl;
-      assert( i < PrUTMagnetTool::N_bdl_vals );
-      bdlTable[i++] = bdl;
-    }
-  }
-  
-  m_PrUTMagnetTool = PrUTMagnetTool( dxLayTable, bdlTable );
-  
-  // m_zMidUT is a position of normalization plane which should to be close to z middle of UT ( +- 5 cm ).
-  // Cashed once in PrVeloUTTool at initialization. No need to update with small UT movement.
-  m_zMidUT    = 2484.6;
-  //  zMidField and distToMomentum isproperly recalculated in PrUTMagnetTool when B field changes
-  m_distToMomentum = 4.0212e-05;
-
-  m_sigmaVeloSlope = 0.10*Gaudi::Units::mrad;
-  m_invSigmaVeloSlope = 1.0/m_sigmaVeloSlope;
-  m_zKink = 1780.0;
-
-  return 1;
-}
 
 //=============================================================================
 // Main execution
@@ -81,6 +35,7 @@ void PrVeloUT::operator() (
   const int accumulated_tracks_event,
   const VeloState* velo_states_event,
   VeloUTTracking::HitsSoA *hits_layers,
+  const PrUTMagnetTool *magnet_tool,
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
   int &n_velo_tracks_in_UT,
   int &n_veloUT_tracks ) const
@@ -89,8 +44,8 @@ void PrVeloUT::operator() (
   int posLayers[4][85];
   fillIterators(hits_layers, posLayers);
 
-  const float* fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
-  const float* bdlTable     = m_PrUTMagnetTool.returnBdlTable();
+  const float* fudgeFactors = &(magnet_tool->dxLayTable[0]);
+  const float* bdlTable     = &(magnet_tool->bdlTable[0]);
 
   // array to store indices of selected hits in layers
   // -> can then access the hit information in the HitsSoA
@@ -106,7 +61,7 @@ void PrVeloUT::operator() (
     }
     if( !getHits(hitCandidatesInLayers, n_hitCandidatesInLayers, posLayers, hits_layers, fudgeFactors, velo_states_event[i_track] ) ) continue;
     
-    TrackHelper helper(velo_states_event[i_track], m_zKink, m_sigmaVeloSlope, m_maxPseudoChi2);
+    TrackHelper helper(velo_states_event[i_track]);
     
     // go through UT layers in forward direction
     if( !formClusters(hitCandidatesInLayers, n_hitCandidatesInLayers, hits_layers, helper, true) ){
@@ -140,14 +95,13 @@ bool PrVeloUT::veloTrackInUTAcceptance(
   const VeloState& state ) const 
 {
 
-  // m_zMidUT comes from MagnetTool
-  const float xMidUT =  state.x + state.tx*( m_zMidUT - state.z);
-  const float yMidUT =  state.y + state.ty*( m_zMidUT - state.z);
+  const float xMidUT =  state.x + state.tx*( PrVeloUTConst::zMidUT - state.z);
+  const float yMidUT =  state.y + state.ty*( PrVeloUTConst::zMidUT - state.z);
 
-  if( xMidUT*xMidUT+yMidUT*yMidUT  < m_centralHoleSize*m_centralHoleSize ) return false;
-  if( (std::abs(state.tx) > m_maxXSlope) || (std::abs(state.ty) > m_maxYSlope) ) return false;
+  if( xMidUT*xMidUT+yMidUT*yMidUT  < PrVeloUTConst::centralHoleSize*PrVeloUTConst::centralHoleSize ) return false;
+  if( (std::abs(state.tx) > PrVeloUTConst::maxXSlope) || (std::abs(state.ty) > PrVeloUTConst::maxYSlope) ) return false;
 
-  if(m_passTracks && std::abs(xMidUT) < m_passHoleSize && std::abs(yMidUT) < m_passHoleSize) {
+  if(PrVeloUTConst::passTracks && std::abs(xMidUT) < PrVeloUTConst::passHoleSize && std::abs(yMidUT) < PrVeloUTConst::passHoleSize) {
     return false;
   }
 
@@ -179,9 +133,9 @@ bool PrVeloUT::getHits(
 
   // -- this 500 seems a little odd...
   const float invTheta = std::min(500.,1.0/std::sqrt(trState.tx*trState.tx+trState.ty*trState.ty));
-  const float minMom   = std::max(m_minPT*invTheta, m_minMomentum);
-  const float xTol     = std::abs(1. / ( m_distToMomentum * minMom ));
-  const float yTol     = m_yTol + m_yTolSlope * xTol;
+  const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, PrVeloUTConst::minMomentum);
+  const float xTol     = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
+  const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
 
   int nLayers = 0;
 
@@ -208,9 +162,9 @@ bool PrVeloUT::getHits(
       const float invNormFact = 1.0/normFactNum;
 
       const float lowerBoundX =
-        (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(trState.tx)*m_intraLayerDist;
+        (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(trState.tx)*PrVeloUTConst::intraLayerDist;
       const float upperBoundX =
-        (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(trState.tx)*m_intraLayerDist;
+        (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(trState.tx)*PrVeloUTConst::intraLayerDist;
 
       const int indexLowProto = lowerBoundX > 0 ? std::sqrt( std::abs(lowerBoundX)*2.0 ) + 42 : 42 - std::sqrt( std::abs(lowerBoundX)*2.0 );
       const int indexHiProto  = upperBoundX > 0 ? std::sqrt( std::abs(upperBoundX)*2.0 ) + 43 : 43 - std::sqrt( std::abs(upperBoundX)*2.0 );
@@ -271,10 +225,10 @@ bool PrVeloUT::formClusters(
       const float zhitLayer2  = hits_layers->z[ layer_offset2 + hit_index2 ];
        
       const float tx = (xhitLayer2 - xhitLayer0)/(zhitLayer2 - zhitLayer0);
-      if( std::abs(tx-helper.state.tx) > m_deltaTx2 ) continue;
+      if( std::abs(tx-helper.state.tx) > PrVeloUTConst::deltaTx2 ) continue;
       
       int IndexBestHit1 = -10;
-      float hitTol = m_hitTol2;
+      float hitTol = PrVeloUTConst::hitTol2;
       for ( int i_hit1 = 0; i_hit1 < n_hitCandidatesInLayers[ layers[1] ]; ++i_hit1 ) {
 
         const int hit_index1    = hitCandidatesInLayers[ layers[1] ][i_hit1];
@@ -297,7 +251,7 @@ bool PrVeloUT::formClusters(
       if( fourLayerSolution && IndexBestHit1 < 0 ) continue;
 
       int IndexBestHit3 = -10;
-      hitTol = m_hitTol2;
+      hitTol = PrVeloUTConst::hitTol2;
       for ( int i_hit3 = 0; i_hit3 < n_hitCandidatesInLayers[ layers[3] ]; ++i_hit3 ) {
 
         const int hit_index3    = hitCandidatesInLayers[ layers[3] ][i_hit3];
@@ -411,7 +365,7 @@ void PrVeloUT::prepareOutputTrack(
   const float p  = 1.3*std::abs(1/qop);
   const float pt = p*std::sqrt(helper.state.tx*helper.state.tx + helper.state.ty*helper.state.ty);
 
-  if( p < m_minMomentum || pt < m_minPT ) return;
+  if( p < PrVeloUTConst::minMomentum || pt < PrVeloUTConst::minPT ) return;
 
   const float txUT = helper.bestParams[3];
 
@@ -442,8 +396,8 @@ void PrVeloUT::prepareOutputTrack(
 
       const float xohit = hits_layers->x[layer_offset + ohit_index];
       const float xextrap = xhit + txUT*(zhit-zohit);
-      if( xohit-xextrap < -m_overlapTol) continue;
-      if( xohit-xextrap > m_overlapTol) break;
+      if( xohit-xextrap < -PrVeloUTConst::overlapTol) continue;
+      if( xohit-xextrap > PrVeloUTConst::overlapTol) break;
     
       track.addLHCbID( hits_layers->LHCbID(layer_offset + ohit_index) );
 

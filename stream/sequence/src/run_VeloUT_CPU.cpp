@@ -35,6 +35,7 @@ void findPermutation(
 int run_veloUT_on_CPU (
   std::vector< trackChecker::Tracks >* ut_tracks_events,
   VeloUTTracking::HitsSoA* hits_layers_events,
+  const PrUTMagnetTool* host_ut_magnet_tool,
   const VeloState* host_velo_states,
   const int* host_accumulated_tracks,
   const uint* host_velo_track_hit_number_pinned,
@@ -43,9 +44,6 @@ int run_veloUT_on_CPU (
   const int &number_of_events
 ) {
 
-  PrVeloUT velout;
-
-  
       
   // Histograms only for checking and debugging
   TFile *f = new TFile("../output/veloUT.root", "RECREATE");
@@ -94,11 +92,6 @@ int run_veloUT_on_CPU (
   t_veloUT_tracks->Branch("qop", &qop);
 
    
-  if ( !velout.initialize() ) {
-    error_cout << "Could not initialize VeloUT" << std::endl;
-    return -1;
-  }
-
   int n_veloUT_tracks = 0;
   int n_velo_tracks_in_UT = 0;
   int n_velo_tracks = 0;
@@ -214,6 +207,7 @@ int run_veloUT_on_CPU (
       }
     } // tracks
 
+    PrVeloUT velout;
     int n_veloUT_tracks_event = 0;
     VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks];
     velout(
@@ -223,6 +217,7 @@ int run_veloUT_on_CPU (
       host_accumulated_tracks[i_event],
       host_velo_states_event,
       &(hits_layers),
+      host_ut_magnet_tool,
       veloUT_tracks,
       n_velo_tracks_in_UT,
       n_veloUT_tracks_event

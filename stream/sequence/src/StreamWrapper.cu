@@ -6,6 +6,7 @@
 void StreamWrapper::initialize_streams(
   const uint n,
   const std::vector<char>& velopix_geometry,
+  const PrUTMagnetTool* host_ut_magnet_tool,
   const uint number_of_events,
   const bool transmit_device_to_host,
   const bool do_check,
@@ -21,6 +22,7 @@ void StreamWrapper::initialize_streams(
   for (int i=0; i<streams.size(); ++i) {
     streams[i]->initialize(
       velopix_geometry,
+      host_ut_magnet_tool,
       number_of_events,
       transmit_device_to_host,
       do_check,
@@ -48,7 +50,8 @@ void StreamWrapper::run_stream(
   uint* host_velopix_event_offsets,
   const size_t velopix_events_size,
   const size_t velopix_event_offsets_size,
-  VeloUTTracking::HitsSoA *hits_layers_events_ut,
+  VeloUTTracking::HitsSoA *host_ut_hits_events,
+  const PrUTMagnetTool* host_ut_magnet_tool,
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -59,7 +62,8 @@ void StreamWrapper::run_stream(
     host_velopix_event_offsets,
     velopix_events_size,
     velopix_event_offsets_size,
-    hits_layers_events_ut,
+    host_ut_hits_events,
+    host_ut_magnet_tool,
     number_of_events,
     number_of_repetitions
   );

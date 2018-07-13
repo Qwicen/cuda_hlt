@@ -16,6 +16,8 @@
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../cuda/velo/common/include/ClusteringDefinitions.cuh"
 #include "../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
+#include "../../cuda/veloUT/PrVeloUT/include/PrVeloUTMagnetToolDefinitions.cuh"
+#include "../../cuda/veloUT/PrVeloUT/include/PrVeloUTDefinitions.cuh"
 #include "../../checker/lib/include/Tracks.h"
 #include "../include/InputTools.h"
 
@@ -38,6 +40,8 @@ void read_ut_events_into_arrays(  VeloUTTracking::HitsSoA *ut_hits_events,
 void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
                       const int n_events
 		      );
+
+void read_UT_magnet_tool( PrUTMagnetTool* host_magnet_tool );
 
 std::map<std::string, float> calcResults(
   std::vector<float>& times
