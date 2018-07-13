@@ -244,7 +244,6 @@ cudaError_t Stream::run_sequence(
     sequence.item<seq::velo_fit>().set_opts(dim3(number_of_events), dim3(32), stream);
     sequence.item<seq::velo_fit>().set_arguments(
       argen.generate<arg::dev_atomics_storage>(argument_offsets),
-      argen.generate<arg::dev_tracks>(argument_offsets),
       argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
       argen.generate<arg::dev_velo_track_hits>(argument_offsets),
       argen.generate<arg::dev_velo_states>(argument_offsets)
@@ -345,9 +344,17 @@ cudaError_t Stream::run_sequence(
       
       delete ut_tracks_events;
       
-      
+
+      for(int i = 0; i < *host_number_of_reconstructed_velo_tracks; i++) {
+      std::cout << "host velo state: " << host_velo_states[i].tx << std::endl;
+    }
     } // mc_check_enabled       
     
+
   } // repititions
+
+
+  
+
   return cudaSuccess;
 }

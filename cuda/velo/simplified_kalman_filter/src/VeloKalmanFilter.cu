@@ -42,32 +42,47 @@ __device__ float velo_kalman_filter_step(
 
 __global__ void velo_fit(
   int* dev_atomics_storage,
-  const VeloTracking::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,
   VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
   VeloState* dev_velo_states
 ) {
 
+
+  // one event per block -> block we look at one event -> threads look at different tracks inside event
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
 
+  //get number of accumulated tracks for one event
   const int* accumulated_tracks_base_pointer = dev_atomics_storage + number_of_events;
   const auto accumulated_tracks = accumulated_tracks_base_pointer[event_number];
 
-  const VeloTracking::TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
+
+  //get pointer to trackhits of current event
+  VeloState * event_velostates = dev_velo_states + event_number * VeloTracking::max_tracks;
   int* tracks_insert_pointer = dev_atomics_storage + event_number;
+
+  //get total nubmer of tracks
   const int number_of_tracks = *tracks_insert_pointer;
 
+  //each thread looks at multiple tracks -> for loop distributes tracks on threads
   for (uint i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
+
+    // element is offset so that thread looks at right track
     const uint element = i * blockDim.x + threadIdx.x;
+
+    //check that we still have tracks
     if (element < number_of_tracks) {
       
-      const VeloTracking::TrackHits track = event_tracks[element];
+
+
 
       const VeloTracking::Hit<mc_check_enabled>* velo_track_hits = dev_velo_track_hits +
       dev_velo_track_hit_number[accumulated_tracks + element];
+      VeloState * state_pointer = dev_velo_states + element +
+      dev_velo_track_hit_number[accumulated_tracks + element];
+      const VeloState first = state_pointer[0];
 
-      simplified_fit<false>(        velo_track_hits,        dev_velo_states[0],        dev_velo_states,        track      );
+      simplified_fit<false>(        velo_track_hits,        first,        state_pointer,        number_of_tracks     );
     }
   }
 

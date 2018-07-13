@@ -134,7 +134,6 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
 
   sequence_dependencies[seq::velo_fit] = {
     arg::dev_atomics_storage,
-    arg::dev_tracks,
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,
     arg::dev_velo_states

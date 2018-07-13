@@ -25,7 +25,7 @@ __device__ void simplified_fit(
   const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
   const VeloState& stateAtBeamLine,
   VeloState* velo_state,
-  const VeloTracking::TrackHits& track
+  const int& hitsNum
 ) {
   // backward = state.z > track.hits[0].z;
   const bool backward = stateAtBeamLine.z > velo_track_hits[0].z;
@@ -35,7 +35,7 @@ __device__ void simplified_fit(
   // assume the hits are sorted,
   // but don't assume anything on the direction of sorting
   int firsthit = 0;
-  int lasthit = track.hitsNum - 1;
+  int lasthit = hitsNum - 1;
   int dhit = 1;
   if ((velo_track_hits[lasthit].z - velo_track_hits[firsthit].z) * direction < 0) {
     const int temp = firsthit;
@@ -87,12 +87,11 @@ __device__ void simplified_fit(
   state.c33 += noise2PerLayer;
 
   // finally, store the state
-  //*velo_state = state;
+  *velo_state = state;
 }
 
 __global__ void velo_fit(
   int* dev_atomics_storage,
-  const VeloTracking::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,
   VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
   VeloState* dev_velo_states
