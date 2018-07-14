@@ -48,7 +48,7 @@ __global__ void search_by_triplet(
   short* h2_candidates = dev_h2_candidates + 2*hit_offset;
 
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * VeloTracking::ttf_modulo;
-  TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
+  TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::max_weak_tracks;
   TrackletHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
   unsigned short* h1_rel_indices = dev_rel_indices + event_number * VeloTracking::max_numhits_in_module;
 

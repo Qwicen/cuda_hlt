@@ -61,7 +61,7 @@ namespace VeloTracking {
   static constexpr uint max_numhits_in_module = 350;
 
   // Maximum number of tracks to follow at a time
-  static constexpr uint ttf_modulo = 1000;
+  static constexpr uint ttf_modulo = 2000;
   static constexpr uint max_weak_tracks = 500;
 
   // High number of hits per event

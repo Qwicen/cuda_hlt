@@ -179,7 +179,7 @@ __device__ void track_forwarding(
       // mark it as "doubtful"
       else if (t.hitsNum == 3) {
         const auto weakP = atomicAdd(weaktracks_insertPointer, 1) % VeloTracking::ttf_modulo;
-        assert(weakP < number_of_hits);
+        assert(weakP < VeloTracking::max_weak_tracks);
         weak_tracks[weakP] = TrackletHits{t.hits[0], t.hits[1], t.hits[2]};
       }
       // In the "else" case, we couldn't follow up the track,

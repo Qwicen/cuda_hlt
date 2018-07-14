@@ -9,7 +9,7 @@
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
-  const TrackHits& track
+  const TrackletHits& track
 ) {
   VeloState state;
 
@@ -20,7 +20,7 @@
   u0 = uy = uz = uyz = uz2 = 0.0f;
   
   // Iterate over hits
-  for (unsigned short h=0; h<track.hitsNum; ++h) {
+  for (unsigned short h=0; h<3; ++h) {
     const auto hitno = track.hits[h];
     const auto x = hit_Xs[hitno];
     const auto y = hit_Ys[hitno];
@@ -62,7 +62,7 @@
     //=========================================================================
     float ch = 0.0f;
     int nDoF = -4;
-    for (uint h=0; h<track.hitsNum; ++h) {
+    for (uint h=0; h<3; ++h) {
       const auto hitno = track.hits[h];
 
       const auto z = hit_Zs[hitno];
@@ -153,7 +153,7 @@ __global__ void weak_tracks_adder(
 
   // Per side datatypes
   bool* hit_used = dev_hit_used + hit_offset;
-  TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
+  TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::max_weak_tracks;
 
   // Initialize variables according to event number and module side
   // Insert pointers (atomics)
