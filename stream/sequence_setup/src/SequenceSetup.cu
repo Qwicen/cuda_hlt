@@ -10,6 +10,7 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::calculate_phi_and_sort] = "Calculate phi and sort";
   a[seq::fill_candidates] = "Fill candidates";
   a[seq::search_by_triplet] = "Search by triplet";
+  a[seq::weak_tracks_adder] = "Weak tracks adder";
   a[seq::copy_and_prefix_sum_single_block] = "Copy and prefix sum single block";
   a[seq::copy_velo_track_hit_number] = "Copy Velo track hit number";
   a[seq::prefix_sum_reduce_velo_track_hit_number] = "Prefix sum reduce (2)";

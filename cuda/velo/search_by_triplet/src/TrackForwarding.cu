@@ -47,9 +47,9 @@ __device__ void track_forwarding(
   const Module* module_data,
   const uint diff_ttf,
   uint* tracks_to_follow,
-  TrackHits* weak_tracks,
+  TrackletHits* weak_tracks,
   const uint prev_ttf,
-  TrackHits* tracklets,
+  TrackletHits* tracklets,
   TrackHits* tracks,
   const uint number_of_hits
 ) {
@@ -61,11 +61,9 @@ __device__ void track_forwarding(
       const bool track_flag = (fulltrackno & 0x80000000) == 0x80000000;
       const auto skipped_modules = (fulltrackno & 0x70000000) >> 28;
       auto trackno = fulltrackno & 0x0FFFFFFF;
-
-      const TrackHits* track_pointer = track_flag ? tracklets : tracks;
-      
       assert(track_flag ? trackno < VeloTracking::ttf_modulo : trackno < VeloTracking::max_tracks);
-      auto t = track_pointer[trackno];
+
+      TrackHits t = track_flag ? TrackHits{tracklets[trackno]} : tracks[trackno];
 
       // Load last two hits in h0, h1
       assert(t.hitsNum < VeloTracking::max_track_size);
@@ -182,7 +180,7 @@ __device__ void track_forwarding(
       else if (t.hitsNum == 3) {
         const auto weakP = atomicAdd(weaktracks_insertPointer, 1) % VeloTracking::ttf_modulo;
         assert(weakP < number_of_hits);
-        weak_tracks[weakP] = t;
+        weak_tracks[weakP] = TrackletHits{t.hits[0], t.hits[1], t.hits[2]};
       }
       // In the "else" case, we couldn't follow up the track,
       // so we won't be track following it anymore.

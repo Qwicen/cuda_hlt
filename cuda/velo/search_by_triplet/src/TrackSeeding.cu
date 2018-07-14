@@ -15,9 +15,9 @@ __device__ void track_seeding(
   bool* hit_used,
   uint* tracklets_insertPointer,
   uint* ttf_insertPointer,
-  TrackHits* tracklets,
+  TrackletHits* tracklets,
   uint* tracks_to_follow,
-  unsigned short* h1_rel_indices,
+  unsigned short* h1_indices,
   uint* local_number_of_hits
 ) {
   // Add to an array all non-used h1 hits with candidates
@@ -29,7 +29,7 @@ __device__ void track_seeding(
       const auto h2_first_candidate = h2_candidates[2*h1_index];
       if (!hit_used[h1_index] && h0_first_candidate!=-1 && h2_first_candidate!=-1) {
         const auto current_hit = atomicAdd(local_number_of_hits, 1);
-        h1_rel_indices[current_hit] = h1_index;
+        h1_indices[current_hit] = h1_index;
       }
     }
   }
@@ -43,12 +43,12 @@ __device__ void track_seeding(
       const auto h2_first_candidate = h2_candidates[2*h1_index];
       if (!hit_used[h1_index] && h0_first_candidate!=-1 && h2_first_candidate!=-1) {
         const auto current_hit = atomicAdd(local_number_of_hits, 1);
-        h1_rel_indices[current_hit] = h1_index;
+        h1_indices[current_hit] = h1_index;
       }
     }
   }
 
-  // Due to h1_rel_indices
+  // Due to h1_indices
   __syncthreads();
 
   // Adaptive number of xthreads and ythreads,
@@ -99,11 +99,11 @@ __device__ void track_seeding(
     // Ie. if processing 30 h1 hits, with max_concurrent_h1 = 8, #h1 in each iteration to process are:
     // {8, 8, 8, 6}
     // On the fourth iteration, we should start from 3*max_concurrent_h1 (24 + thread_id_x)
-    const auto h1_rel_rel_index = i*VeloTracking::max_concurrent_h1 + thread_id_x;
-    if (h1_rel_rel_index < number_of_hits_h1) {
+    const auto h1_rel_index = i*VeloTracking::max_concurrent_h1 + thread_id_x;
+    if (h1_rel_index < number_of_hits_h1) {
       // Fetch h1
-      // const auto h1_rel_index = h1_rel_indices[h1_rel_rel_index];
-      h1_index = h1_rel_indices[h1_rel_rel_index];
+      // const auto h1_rel_index = h1_indices[h1_rel_index];
+      h1_index = h1_indices[h1_rel_index];
       const HitBase h1 {hit_Xs[h1_index], hit_Ys[h1_index], hit_Zs[h1_index]};
 
       // Iterate over all h0, h2 combinations
@@ -185,7 +185,7 @@ __device__ void track_seeding(
     if (threadIdx.x == winner_thread) {
       // Add the track to the bag of tracks
       const auto trackP = atomicAdd(tracklets_insertPointer, 1) % VeloTracking::ttf_modulo;
-      tracklets[trackP] = TrackHits {3, best_h0, h1_index, best_h2};
+      tracklets[trackP] = TrackletHits {best_h0, h1_index, best_h2};
 
       // Add the tracks to the bag of tracks to_follow
       // Note: The first bit flag marks this is a tracklet (hitsNum == 3),

@@ -91,7 +91,7 @@
 __device__ void weak_tracks_adder_impl(
   uint* weaktracks_insert_pointer,
   uint* tracks_insert_pointer,
-  TrackHits* weak_tracks,
+  TrackletHits* weak_tracks,
   TrackHits* tracks,
   bool* hit_used,
   const float* hit_Xs,
@@ -103,7 +103,7 @@ __device__ void weak_tracks_adder_impl(
   for (int i=0; i<(weaktracks_total + blockDim.x - 1) / blockDim.x; ++i) {
     const auto weaktrack_no = blockDim.x * i + threadIdx.x;
     if (weaktrack_no < weaktracks_total) {
-      const TrackHits& t = weak_tracks[weaktrack_no];
+      const TrackletHits& t = weak_tracks[weaktrack_no];
       const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
       const float chi2 = means_square_fit_chi2(
         hit_Xs,
@@ -116,7 +116,7 @@ __device__ void weak_tracks_adder_impl(
       if (!any_used && chi2 < VeloTracking::max_chi2) {
         const uint trackno = atomicAdd(tracks_insert_pointer, 1);
         assert(trackno < VeloTracking::max_tracks);
-        tracks[trackno] = t;
+        tracks[trackno] = TrackHits{t};
       }
     }
   }
@@ -126,7 +126,7 @@ __global__ void weak_tracks_adder(
   uint32_t* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   TrackHits* dev_tracks,
-  TrackHits* dev_weak_tracks,
+  TrackletHits* dev_weak_tracks,
   bool* dev_hit_used,
   int* dev_atomics_storage
 ) {
@@ -153,7 +153,7 @@ __global__ void weak_tracks_adder(
 
   // Per side datatypes
   bool* hit_used = dev_hit_used + hit_offset;
-  TrackHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
+  TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
 
   // Initialize variables according to event number and module side
   // Insert pointers (atomics)
