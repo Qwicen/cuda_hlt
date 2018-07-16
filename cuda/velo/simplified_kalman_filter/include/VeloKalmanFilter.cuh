@@ -64,9 +64,10 @@ __device__ void simplified_fit(
   // add remaining hits
   state.chi2 = 0.0f;
   for (uint i=firsthit + dhit; i!=lasthit + dhit; i+=dhit) {
-    const auto hit_x = velo_track_hits[0].x;
-    const auto hit_y = velo_track_hits[0].y;
-    const auto hit_z = velo_track_hits[0].z;
+    const auto hit_x = velo_track_hits[i].x;
+    const auto hit_y = velo_track_hits[i].y;
+    const auto hit_z = velo_track_hits[i].z;
+
     
     // add the noise
     state.c22 += noise2PerLayer;
