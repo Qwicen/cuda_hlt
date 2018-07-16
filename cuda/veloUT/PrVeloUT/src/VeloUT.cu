@@ -17,7 +17,10 @@ __global__ void veloUT(
   const int number_of_tracks = *(dev_atomics_storage + event_number);
   const int* accumulated_tracks_base_pointer = dev_atomics_storage + number_of_events;
   const int accumulated_tracks = accumulated_tracks_base_pointer[event_number];
+
+  VeloUTTracking::HitsSoA* hits_layers_event = dev_ut_hits + event_number;
   
-  
+  int posLayers[4][85];
+  fillIterators(hits_layers_event, posLayers);
   
 }

@@ -287,7 +287,7 @@ cudaError_t Stream::run_sequence(
     // Monte Carlo Check //
     ///////////////////////
     
-    if (do_check && i_stream == 0) {
+    if (mc_check_enabled && i_stream == 0) {
       if (repetition == 0) { // only check efficiencies once
         
         if ( !transmit_device_to_host ) { // Fetch data
@@ -322,7 +322,7 @@ cudaError_t Stream::run_sequence(
     /* Plugin VeloUT CPU code here 
        Adjust input types to match PrVeloUT code
     */
-    // if (do_check && i_stream == 0) {
+    // if (mc_check_enabled && i_stream == 0) {
    
     //   std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
       
