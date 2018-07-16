@@ -175,7 +175,8 @@ void read_folder(
   const std::string& foldername,
   uint number_of_files,
   std::vector<char>& events,
-  std::vector<uint>& event_offsets
+  std::vector<uint>& event_offsets,
+  bool check
 ) {
   std::vector<std::string> folderContents = list_folder(foldername, true);
 
@@ -210,7 +211,8 @@ void read_folder(
 
   info_cout << std::endl << (event_offsets.size() - 1) << " files read" << std::endl << std::endl;
 
-  check_events( events, event_offsets, number_of_files );
+  if(check)
+    check_events( events, event_offsets, number_of_files );
 }
 
 std::vector<VelopixEvent> read_mc_folder (

@@ -48,6 +48,9 @@ struct Stream {
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
 
+  char* host_ft_events;
+  uint* host_ft_event_offsets_pinned;
+
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;
 

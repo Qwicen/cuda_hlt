@@ -34,6 +34,7 @@ void printUsage(char* argv[]){
     << std::endl << " -f {folder containing .bin files with raw bank information}"
     << std::endl << (mc_check_enabled ? " " : " [") << "-g {folder containing .bin files with MC truth information}"
     << (mc_check_enabled ? "" : " ]")
+    << std::endl << " -i {folder containing .bin files with FT clusters}"
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=1]"
     << std::endl << " [-r {number of repetitions per thread / stream}=1]"
@@ -51,6 +52,7 @@ int main(int argc, char *argv[])
 {
   std::string folder_name_raw;
   std::string folder_name_MC = "";
+  std::string folder_name_ft;
   uint number_of_files = 0;
   uint tbb_threads = 1;
   uint number_of_repetitions = 1;
@@ -64,13 +66,16 @@ int main(int argc, char *argv[])
   size_t reserve_mb = 1024;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:g:n:t:r:pha:b:d:v:c:k:m:")) != -1) {
+  while ((c = getopt(argc, argv, "f:g:i:n:t:r:pha:b:d:v:c:k:m:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_raw = std::string(optarg);
       break;
     case 'g':
       folder_name_MC = std::string(optarg);
+      break;
+    case 'i':
+      folder_name_ft = std::string(optarg);
       break;
     case 'm':
       reserve_mb = atoi(optarg);
@@ -135,6 +140,7 @@ int main(int argc, char *argv[])
   // Show call options
   std::cout << "Requested options:" << std::endl
     << " folder with raw bank input (-f): " << folder_name_raw << std::endl
+    << " folder with FT input (-i): " << folder_name_ft << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
@@ -161,7 +167,8 @@ int main(int argc, char *argv[])
     folder_name_raw,
     number_of_files,
 	  velopix_events,
-    velopix_event_offsets
+    velopix_event_offsets,
+    true
   );
 
   std::vector<char> geometry;
@@ -174,6 +181,18 @@ int main(int argc, char *argv[])
   cudaCheck(cudaMallocHost((void**)&host_velopix_event_offsets_pinned, velopix_event_offsets.size() * sizeof(uint)));
   std::copy_n(std::begin(velopix_events), velopix_events.size(), host_velopix_events_pinned);
   std::copy_n(std::begin(velopix_event_offsets), velopix_event_offsets.size(), host_velopix_event_offsets_pinned);
+
+  //Read and copy FT cluster data
+  std::vector<char> ft_events;
+  std::vector<uint> ft_event_offsets;
+  read_folder(folder_name_ft, number_of_files, ft_events, ft_event_offsets, false);
+
+  char* host_ft_events_pinned;
+  uint* host_ft_event_offsets_pinned;
+  cudaCheck(cudaMallocHost((void**)&host_ft_events_pinned, ft_events.size()));
+  cudaCheck(cudaMallocHost((void**)&host_ft_event_offsets_pinned, ft_event_offsets.size() * sizeof(uint)));
+  std::copy_n(std::begin(ft_events), ft_events.size(), host_ft_events_pinned);
+  std::copy_n(std::begin(ft_event_offsets), ft_event_offsets.size(), host_ft_event_offsets_pinned);
 
   // Initialize detector constants on GPU
   initializeConstants();
