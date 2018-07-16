@@ -247,7 +247,8 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
       argen.generate<arg::dev_velo_track_hits>(argument_offsets),
       argen.generate<arg::dev_velo_states>(argument_offsets),
-      argen.generate<arg::dev_kal_velo_states>(argument_offsets)
+      argen.generate<arg::dev_kal_velo_states>(argument_offsets),
+      argen.generate<arg::dev_tracks>(argument_offsets)
     );
     sequence.item<seq::velo_fit>().invoke();
 
@@ -347,12 +348,42 @@ cudaError_t Stream::run_sequence(
       delete ut_tracks_events;
       
 
-      for(int i = 0; i < *host_number_of_reconstructed_velo_tracks; i++) {
-      std::cout << "host velo state tx: " << host_velo_states[i].tx << " " << host_kal_velo_states[i].tx << std::endl;
-      std::cout << "host velo state ty: " << host_velo_states[i].ty << " " << host_kal_velo_states[i].ty << std::endl;
+
+      //loop ove events
+      for(int i = 0; i < number_of_events; i++) {
+        std::cout<<"------------------"<<std::endl;
+        std::cout <<  host_accumulated_tracks[i] << " "  << host_number_of_tracks[i] << " " << host_number_of_reconstructed_velo_tracks[0] << std::endl;
+        //std::cout << "host velo state x: " << host_velo_states[i].x << " " << host_kal_velo_states[i].x << std::endl;
+        //std::cout << "host velo state y: " << host_velo_states[i].y << " " << host_kal_velo_states[i].y << std::endl;
+        //std::cout << "host velo state z: " << host_velo_states[i].z << " " << host_kal_velo_states[i].z << std::endl;
+        //std::cout << "host velo state tx: " << host_velo_states[i].tx << " " << host_kal_velo_states[i].tx << std::endl;
+        //std::cout << "host velo state ty: " << host_velo_states[i].ty << " " << host_kal_velo_states[i].ty << std::endl;
+        //std::cout <<  "accumulated nubmer hits:  " << host_accumulated_number_of_hits_in_velo_tracks[i] << std::endl;
+        
+        //loop over tracks in event
+        const int accumulated_tracks = host_accumulated_tracks[i];
+        for(int j = 0; j < host_number_of_tracks[i]; j++)
+          {
+            //loop over hits in track
+            
+            const uint starting_hit = host_velo_track_hit_number[accumulated_tracks + j ];
+            const uint number_of_hits = host_velo_track_hit_number[accumulated_tracks + j  + 1] - starting_hit;
+            std::cout << "track number " << j << std::endl;
+            std::cout << "host velo state x: " << host_velo_states[accumulated_tracks + j].x << " " << host_kal_velo_states[accumulated_tracks + j].x << std::endl;
+            std::cout << "host velo state y: " << host_velo_states[accumulated_tracks + j].y << " " << host_kal_velo_states[accumulated_tracks + j].y << std::endl;
+            std::cout << "host velo state z: " << host_velo_states[accumulated_tracks + j].z << " " << host_kal_velo_states[accumulated_tracks + j].z << std::endl;
+            std::cout << std::setprecision(4) << "host velo state tx: " << host_velo_states[accumulated_tracks + j].tx << " " << host_kal_velo_states[accumulated_tracks + j].tx << std::endl;
+            std::cout << std::setprecision(4)<< "host velo state ty: " << host_velo_states[accumulated_tracks + j].ty << " " << host_kal_velo_states[accumulated_tracks + j].ty << std::endl;
+            for (int k = 0 ; k < number_of_hits; k++) {
+              std::cout << host_velo_track_hits[starting_hit + k].x << " "  << host_velo_track_hits[starting_hit + k].y << " " << host_velo_track_hits[starting_hit + k].z << std::endl;
+            }
+            
+           // std::cout <<  host_velo_track_hit_number[j] << " " << host_accumulated_number_of_hits_in_velo_tracks[j] << std::endl;
+            //std::cout << host_velo_track_hits[host_accumulated_tracks[i] + j ].x << " " << host_velo_track_hits[host_accumulated_tracks[i] + j ].y << " " << host_velo_track_hits[host_accumulated_tracks[i] + j ].z << std::endl; 
+          }
     }
     } // mc_check_enabled       
-    
+
 
   } // repititions
 

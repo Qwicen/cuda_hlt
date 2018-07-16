@@ -45,13 +45,16 @@ __global__ void velo_fit(
   uint* dev_velo_track_hit_number,
   VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
   VeloState* dev_velo_states,
-  VeloState* dev_kal_velo_states
+  VeloState* dev_kal_velo_states,
+  const VeloTracking::TrackHits* dev_tracks
 ) {
-
 
   // one event per block -> block we look at one event -> threads look at different tracks inside event
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
+  
+  const VeloTracking::TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
+  
 
   //get number of accumulated tracks for one event
   const int* accumulated_tracks_base_pointer = dev_atomics_storage + number_of_events;
@@ -72,6 +75,7 @@ __global__ void velo_fit(
 
     //check that we still have tracks
     if (element < number_of_tracks) {
+      const VeloTracking::TrackHits track = event_tracks[element];
       
 
 
@@ -87,7 +91,9 @@ __global__ void velo_fit(
 //velo_states = dev_velo_states + accumulated_tracks;
       const VeloState first = (dev_velo_states + accumulated_tracks)[element];
 
-      simplified_fit<true>(        velo_track_hits,        first,        state_pointer,        number_of_tracks     );
+      
+      simplified_fit<true>(        velo_track_hits,        first,        state_pointer,        track.hitsNum    );
+      
 
     }
   }
