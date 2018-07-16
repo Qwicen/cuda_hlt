@@ -77,7 +77,7 @@ __host__ __device__ void prepareOutputTrack(
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
-  int &n_veloUT_tracks,
+  int* n_veloUT_tracks,
   const float* bdlTable);
 
 __host__ __device__ void fillArray(

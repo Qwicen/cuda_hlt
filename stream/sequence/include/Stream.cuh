@@ -54,6 +54,7 @@ struct Stream {
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   VeloState* host_velo_states;
   VeloUTTracking::TrackUT* host_veloUT_tracks;
+  int* host_n_veloUT_tracks;
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;

@@ -81,7 +81,8 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_velo_track_hits, VeloTracking::Hit<mc_check_enabled>>,
   Argument<arg::dev_velo_states, VeloState>,
   Argument<arg::dev_ut_hits, VeloUTTracking::HitsSoA>,
-  Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>
+  Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
+  Argument<arg::dev_n_veloUT_tracks, int>
 >;
 
 /**

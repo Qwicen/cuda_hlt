@@ -231,7 +231,7 @@ int run_veloUT_on_CPU (
     
     // save in format for track checker
     
-    trackChecker::Tracks checker_tracks = prepareVeloUTTracks( veloUT_tracks, n_veloUT_tracks_event );
+    trackChecker::Tracks checker_tracks = prepareVeloUTTracksEvent( veloUT_tracks, n_veloUT_tracks_event );
         
     ut_tracks_events->emplace_back( checker_tracks );
     

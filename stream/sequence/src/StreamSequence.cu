@@ -266,6 +266,7 @@ cudaError_t Stream::run_sequence(
     // VeloUT tracking
     argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(number_of_events);
     argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks);
+    argument_sizes[arg::dev_n_veloUT_tracks] = argen.size<arg::dev_n_veloUT_tracks>(number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
     sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(1), stream);
@@ -276,9 +277,15 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_velo_track_hits>(argument_offsets),
       argen.generate<arg::dev_velo_states>(argument_offsets),
       argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
+      argen.generate<arg::dev_n_veloUT_tracks>(argument_offsets),
       dev_ut_magnet_tool );
     sequence.item<seq::veloUT>().invoke();
-    
+
+    // Transmission device to host
+    if ( transmit_device_to_host) {
+      cudaCheck(cudaMemcpyAsync(host_n_veloUT_tracks, argen.generate<arg::dev_n_veloUT_tracks>(argument_offsets), argen.size<arg::dev_n_veloUT_tracks>(number_of_events), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
+    }
 
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
@@ -289,7 +296,8 @@ cudaError_t Stream::run_sequence(
     
     if (mc_check_enabled && i_stream == 0) {
       if (repetition == 0) { // only check efficiencies once
-        
+
+        /* CHECKING Velo TRACKS */
         if ( !transmit_device_to_host ) { // Fetch data
           cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
           cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
@@ -317,6 +325,38 @@ cudaError_t Stream::run_sequence(
     	  fromNtuple,
     	  trackType);
       }
+
+      /* CHECKING VeloUT TRACKS */
+      if ( !transmit_device_to_host ) { // Fetch data
+        cudaCheck(cudaMemcpyAsync(host_n_veloUT_tracks, argen.generate<arg::dev_n_veloUT_tracks>(argument_offsets), argen.size<arg::dev_n_veloUT_tracks>(number_of_events), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
+      }
+
+      // for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
+      //   debug_cout << "Found " << host_n_veloUT_tracks[i_event] << " veloUT tracks in event" << i_event << std::endl;
+      //   VeloUTTracking::TrackUT* veloUT_tracks_event = host_veloUT_tracks + i_event * VeloUTTracking::max_num_tracks;
+      //   for ( int i_track = 0; i_track < host_n_veloUT_tracks[i_event]; i_track ++ ) {
+      //     debug_cout << "\t track " << i_track << " has " << veloUT_tracks_event[i_track].hitsNum << " hits" << std::endl;
+      //   }
+      // }
+
+      const std::vector< trackChecker::Tracks > veloUT_tracks = prepareVeloUTTracks(
+        host_veloUT_tracks,
+        host_n_veloUT_tracks,
+        number_of_events
+      );
+      
+      std::cout << "CHECKING VeloUT TRACKS" << std::endl;
+      const bool fromNtuple = true;
+      const std::string trackType = "VeloUT";
+      call_pr_checker (
+        veloUT_tracks,
+        folder_name_MC,
+        fromNtuple,
+        trackType);                                                                            
+      
+      
+      
     }
 
     /* Plugin VeloUT CPU code here 

@@ -254,7 +254,7 @@ __host__ __device__ void prepareOutputTrack(
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
-  int &n_veloUT_tracks,
+  int* n_veloUT_tracks,
   const float* bdlTable) {
 
   //== Handle states. copy Velo one, add TT.
@@ -309,10 +309,12 @@ __host__ __device__ void prepareOutputTrack(
   const float txUT = helper.bestParams[3];
 
   VeloUTTracking::TrackUT track;
+  track.hitsNum = 0;
   const uint starting_hit = velo_track_hit_number[accumulated_tracks_event + i_Velo_track];
   const uint number_of_hits = velo_track_hit_number[accumulated_tracks_event + i_Velo_track + 1] - starting_hit;
   for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
     track.addLHCbID( velo_track_hits[starting_hit + i_hit].LHCbID );
+    assert( track.hitsNum < VeloUTTracking::max_track_size);
   }
   track.set_qop( qop );
   
@@ -321,6 +323,7 @@ __host__ __device__ void prepareOutputTrack(
     const VeloUTTracking::Hit hit = helper.bestHits[i_hit];
     
     track.addLHCbID( hit.LHCbID() );
+    assert( track.hitsNum < VeloUTTracking::max_track_size);
 
     const float xhit = hit.x;
     const float zhit = hit.z;
@@ -339,16 +342,23 @@ __host__ __device__ void prepareOutputTrack(
       if( xohit-xextrap > PrVeloUTConst::overlapTol) break;
     
       track.addLHCbID( hits_layers->LHCbID(layer_offset + ohit_index) );
-
+      assert( track.hitsNum < VeloUTTracking::max_track_size);
+      
       // -- only one overlap hit
       break;
     }
   }
 
-  assert( n_veloUT_tracks < VeloUTTracking::max_num_tracks );
-  VeloUT_tracks[n_veloUT_tracks] = track;
-  n_veloUT_tracks++;
-  
+#ifdef __CUDA_ARCH__
+  uint n_tracks = atomicAdd(n_veloUT_tracks, 1);
+  assert( n_tracks < VeloUTTracking::max_num_tracks );
+  VeloUT_tracks[n_tracks] = track;
+// #else
+//   assert( *n_veloUT_tracks < VeloUTTracking::max_num_tracks );
+//   VeloUT_tracks[*n_veloUT_tracks] = track;
+//   (*n_veloUT_tracks)++;
+#endif
+    
    /*
   outTr.x = helper.state.x;
   outTr.y = helper.state.y;
