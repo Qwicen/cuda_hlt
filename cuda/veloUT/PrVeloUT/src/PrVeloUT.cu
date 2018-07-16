@@ -6,7 +6,7 @@
 // 2007-05-08: Mariusz Witek
 // 2017-03-01: Christoph Hasse (adapt to future framework)
 // 2018-05-05: Plácido Fernández (make standalone)
-// 2018-07:    Dorothea vom Bruch (convert to C code for GPU compatability)
+// 2018-07:    Dorothea vom Bruch (convert to C and then CUDA code)
 //-----------------------------------------------------------------------------
 
 // -- These things are all hardcopied from the PrTableForFunction
@@ -64,7 +64,8 @@ __host__ __device__ bool getHits(
 
   // -- this 500 seems a little odd...
   const float invTheta = std::min(500.,1.0/std::sqrt(trState.tx*trState.tx+trState.ty*trState.ty));
-  const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, PrVeloUTConst::minMomentum);
+  //const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, PrVeloUTConst::minMomentum);
+  const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, float(1.5e3));
   const float xTol     = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
   const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
 
@@ -87,10 +88,10 @@ __host__ __device__ bool getHits(
 
       const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
       const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
-#ifndef __CUDACC__
-      const float yLayer = yAtZ + yTol*PrVeloUTConst::dxDyHelper[2*iStation+iLayer];
-#else
+#ifdef __CUDA_ARCH__
       const float yLayer = yAtZ + yTol*PrVeloUTConst::dev_dxDyHelper[2*iStation+iLayer];
+#else
+      const float yLayer = yAtZ + yTol*PrVeloUTConst::dxDyHelper[2*iStation+iLayer];
 #endif
 
       const float normFactNum = normFact[2*iStation + iLayer];
@@ -282,12 +283,12 @@ __host__ __device__ void prepareOutputTrack(
   // -- This is an interpolation, to get a bit more precision
   float addBdlVal = 0.0;
   for(int i=0; i<3; ++i) {
-#ifndef __CUDACC__
-    if( var[i] < PrVeloUTConst::minValsBdl[i] || var[i] > PrVeloUTConst::maxValsBdl[i] ) continue;
-    const float dTab_dVar =  (bdls[i] - bdl) / PrVeloUTConst::deltaBdl[i];
-#else
+#ifdef __CUDA_ARCH__
     if( var[i] < PrVeloUTConst::dev_minValsBdl[i] || var[i] > PrVeloUTConst::dev_maxValsBdl[i] ) continue;
     const float dTab_dVar =  (bdls[i] - bdl) / PrVeloUTConst::dev_deltaBdl[i];
+#else
+    if( var[i] < PrVeloUTConst::minValsBdl[i] || var[i] > PrVeloUTConst::maxValsBdl[i] ) continue;
+    const float dTab_dVar =  (bdls[i] - bdl) / PrVeloUTConst::deltaBdl[i];
 #endif
     const float dVar = (var[i]-boundaries[i]);
     addBdlVal += dTab_dVar*dVar;
@@ -482,24 +483,39 @@ __host__ __device__ void findHits(
 // -- 2 helper functions for fit
 // -- Pseudo chi2 fit, templated for 3 or 4 hits
 // =================================================
-__host__ __device__ void addHit( float* mat, float* rhs, const VeloUTTracking::Hit* hit) {
-  const float ui = hit->x;
-  const float ci = hit->cosT();
-  const float dz = 0.001*(hit->z - PrVeloUTConst::zMidUT);
-  const float wi = hit->weight();
-  
-  mat[0] += wi * ci;
-  mat[1] += wi * ci * dz;
-  mat[2] += wi * ci * dz * dz;
-  rhs[0] += wi * ui;
-  rhs[1] += wi * ui * dz;
+__host__ __device__ void addHits(
+  float* mat,
+  float* rhs,
+  const VeloUTTracking::Hit** hits,
+  const int n_hits ) {
+  for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
+    const VeloUTTracking::Hit* hit = hits[i_hit];
+    const float ui = hit->x;
+    const float ci = hit->cosT();
+    const float dz = 0.001*(hit->z - PrVeloUTConst::zMidUT);
+    const float wi = hit->weight();
+    
+    mat[0] += wi * ci;
+    mat[1] += wi * ci * dz;
+    mat[2] += wi * ci * dz * dz;
+    rhs[0] += wi * ui;
+    rhs[1] += wi * ui * dz;
+  }
 }
 
-__host__ __device__ void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const VeloUTTracking::Hit* hit) {
-  const float zd    = hit->z;
-  const float xd    = xTTFit + xSlopeTTFit*(zd-PrVeloUTConst::zMidUT);
-  const float du    = xd - hit->x;
-  chi2 += (du*du)*hit->weight();
+__host__ __device__ void addChi2s(
+  const float xTTFit,
+  const float xSlopeTTFit,
+  float& chi2 ,
+  const VeloUTTracking::Hit** hits,
+  const int n_hits ) {
+  for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
+    const VeloUTTracking::Hit* hit = hits[i_hit];
+    const float zd    = hit->z;
+    const float xd    = xTTFit + xSlopeTTFit*(zd-PrVeloUTConst::zMidUT);
+    const float du    = xd - hit->x;
+    chi2 += (du*du)*hit->weight();
+  }
 }
 
 

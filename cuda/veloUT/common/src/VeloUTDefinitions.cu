@@ -1,5 +1,7 @@
 #include "../include/VeloUTDefinitions.cuh"
 
+__constant__ float VeloUTTracking::dev_dxDyTable[VeloUTTracking::n_layers];
+
 __host__ __device__ VeloUTTracking::Hit VeloUTTracking::createHit( HitsSoA *hits_layers, const int i_layer, const int i_hit ) {
     Hit hit;
     const int layer_offset = hits_layers->layer_offset[i_layer];

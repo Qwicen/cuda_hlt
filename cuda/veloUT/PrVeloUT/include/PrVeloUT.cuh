@@ -8,6 +8,9 @@
 
 #include <cassert>
 
+#include <thrust/count.h>
+#include <thrust/execution_policy.h>
+
 #include "../../../../main/include/Logger.h"
 #include "../../../../main/include/SystemOfUnits.h"
 
@@ -24,7 +27,7 @@
    *
    *  2017-03-01: Christoph Hasse (adapt to future framework)
    *  2018-05-05: Plácido Fernández (make standalone)
-   *  2018-07:    Dorothea vom Bruch (convert to C code for GPU compatability)
+   *  2018-07:    Dorothea vom Bruch (convert to C and then CUDA code)
    */
 
 struct TrackHelper{
@@ -103,9 +106,18 @@ __host__ __device__ void findHits(
   int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
   int &n_hitCandidatesInLayer);
 
-__host__ __device__ void addHit( float* mat, float* rhs, const VeloUTTracking::Hit* hit);
+__host__ __device__ void addHits(
+  float* mat,
+  float* rhs,
+  const VeloUTTracking::Hit** hits,
+  const int n_hits);
 
-__host__ __device__ void addChi2( const float xTTFit, const float xSlopeTTFit, float& chi2 , const VeloUTTracking::Hit* hit);
+__host__ __device__ void addChi2s(
+  const float xTTFit,
+  const float xSlopeTTFit,
+  float& chi2,
+  const VeloUTTracking::Hit** hits,
+  const int n_hits );
 
 template <int N>
 __host__ __device__ void simpleFit(
@@ -113,13 +125,21 @@ __host__ __device__ void simpleFit(
   TrackHelper& helper ) {
   assert( N==3||N==4 );
   
-  // to do in cuda: implement count_if / use thrust
-  int nHighThres;
-#ifndef __CUDACC__
-  nHighThres = std::count_if( 
-                             hits,  hits + N, []( const VeloUTTracking::Hit* hit ) { return hit && hit->highThreshold(); });
+#ifdef __CUDA_ARCH__
+  // thrust::seq -> executed sequentially with one thread
+  // thrust::device -> launch a child grid using
+  // Dynamic Parallelism to parallelize the execution
+  // the capture list of the lambda has to be captured by value ([=])
+  // since a child kernel cannot access local memory of the parent kernel
+  const int nHighThres = thrust::count_if(
+                           thrust::seq, hits, hits + N,
+                           [=]( const VeloUTTracking::Hit* hit ) {
+                             return hit && hit->highThreshold(); });
 #else
-// to do
+  const int nHighThres = std::count_if( 
+                           hits,  hits + N,
+                           []( const VeloUTTracking::Hit* hit ) {
+                             return hit && hit->highThreshold(); });
 #endif
   
   // -- Veto hit combinations with no high threshold hit
@@ -138,13 +158,15 @@ __host__ __device__ void simpleFit(
   float mat[3] = { helper.wb, helper.wb*zDiff, helper.wb*zDiff*zDiff };
   float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
   
-  // to do in cuda: implement for_each / use thrust
   // then add to sum values from hits on track
-#ifndef __CUDACC__
-  std::for_each( hits, hits + N, [&](const VeloUTTracking::Hit* h) { addHit(mat,rhs,h); } );
-#else
-// to do
-#endif
+  addHits( mat, rhs, hits, N );
+// #ifndef __CUDACC__
+//   std::for_each( hits, hits + N, [&](const VeloUTTracking::Hit* h) { addHit(mat,rhs,h); } );
+// #else
+//   thrust::for_each(
+//     thrust::seq, hits, hits + N,
+//     [=, &mat, &rhs](const VeloUTTracking::Hit* h) { addHit(mat,rhs,h); } );   
+// #endif
   
   const float denom       = 1. / (mat[0]*mat[2] - mat[1]*mat[1]);
   const float xSlopeUTFit = 0.001*(mat[0]*rhs[1] - mat[1]*rhs[0]) * denom;
@@ -157,12 +179,14 @@ __host__ __device__ void simpleFit(
   
   /* chi2 takes chi2 from velo fit + chi2 from UT fit */
   float chi2UT = chi2VeloSlope*chi2VeloSlope;
-  // to do: use thrust call
-#ifndef __CUDACC__
-  std::for_each( hits, hits + N, [&](const VeloUTTracking::Hit* h) { addChi2(xUTFit,xSlopeUTFit, chi2UT, h); } );
-#else
-// to do 
-#endif
+  addChi2s( xUTFit, xSlopeUTFit, chi2UT, hits, N );
+// #ifndef __CUDACC__
+//   std::for_each( hits, hits + N, [&](const VeloUTTracking::Hit* h) { addChi2(xUTFit,xSlopeUTFit, chi2UT, h); } );
+// #else
+//   thrust::for_each(
+//     thrust::seq, hits, hits + N,
+//     [=](const VeloUTTracking::Hit* h) { addChi2(xUTFit,xSlopeUTFit, chi2UT, h); } );
+// #endif
 
   chi2UT /= (N + 1 - 2);
   

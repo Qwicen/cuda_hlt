@@ -48,7 +48,7 @@ add_subdirectory(cuda)
 add_subdirectory(stream)
 add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
-add_subdirectory(x86/veloUT/PrVeloUT)
+#add_subdirectory(x86/veloUT/PrVeloUT)
 
 # Include directory
 include_directories(main/include)
@@ -62,7 +62,7 @@ target_link_libraries(cu_hlt
   tbb
   Velo
   VeloUT
-  x86VeloUT
+  #x86VeloUT
   Stream
   x86Clustering
   TrackChecking

@@ -7,6 +7,7 @@
 #include "../../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
 #include "../../../cuda/veloUT/PrVeloUT/include/PrVeloUTMagnetToolDefinitions.cuh"
 
+
 // Forward definition of Stream, to avoid
 // inability to compile kernel calls (due to <<< >>>
 // operators) from main.cpp

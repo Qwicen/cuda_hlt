@@ -29,5 +29,5 @@ cuda_add_library(Stream STATIC
 target_link_libraries(Stream
   Velo
   VeloUT
-  x86VeloUT
+  #x86VeloUT
   ${ROOT_LIBRAIRES})

@@ -10,9 +10,14 @@ __global__ void veloUT(
   PrUTMagnetTool* dev_ut_magnet_tool
 ) {
 
-  int i_event = blockIdx.x;
-  float first_x = dev_ut_hits[i_event].xAtYEq0(0);
-
-  if ( i_event == 0 )
-    printf("first x = %f \n", first_x);
+  const int number_of_events = gridDim.x;
+  const int event_number = blockIdx.x;
+  
+  VeloUTTracking::HitsSoA* dev_ut_hits_event = dev_ut_hits + event_number;
+  const int number_of_tracks = *(dev_atomics_storage + event_number);
+  const int* accumulated_tracks_base_pointer = dev_atomics_storage + number_of_events;
+  const int accumulated_tracks = accumulated_tracks_base_pointer[event_number];
+  
+  
+  
 }

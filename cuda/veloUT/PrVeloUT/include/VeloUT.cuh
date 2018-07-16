@@ -10,6 +10,6 @@ __global__ void veloUT(
   uint* dev_velo_track_hit_number,
   VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
   VeloState* dev_velo_states,
-  VeloUTTracking::TrackUT *dev_veloUT_tracks,
+  VeloUTTracking::TrackUT* dev_veloUT_tracks,
   PrUTMagnetTool* dev_ut_magnet_tool
 );

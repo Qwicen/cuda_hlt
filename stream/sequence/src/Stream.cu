@@ -38,7 +38,7 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_ut_magnet_tool, sizeof(PrUTMagnetTool)));
   cudaCheck(cudaMemcpyAsync(dev_ut_magnet_tool, host_ut_magnet_tool, sizeof(PrUTMagnetTool), cudaMemcpyHostToDevice, stream));
   // copy to constant memory variables, defined in PrVeloUTDefinitions.cuh 
-  cudaCheck(cudaMemcpyToSymbol(dev_dxDyTable, dxDyTable, VeloUTTracking::n_layers * sizeof(cudaCheck)));
+  cudaCheck(cudaMemcpyToSymbol(VeloUTTracking::dev_dxDyTable, VeloUTTracking::dxDyTable, VeloUTTracking::n_layers * sizeof(float)));
   float(cudaMemcpyToSymbol(PrVeloUTConst::dev_minValsBdl, PrVeloUTConst::minValsBdl, 3 * sizeof(float)));
   cudaCheck(cudaMemcpyToSymbol(PrVeloUTConst::dev_maxValsBdl, PrVeloUTConst::maxValsBdl, 3 * sizeof(float)));
   cudaCheck(cudaMemcpyToSymbol(PrVeloUTConst::dev_deltaBdl, PrVeloUTConst::deltaBdl, 3 * sizeof(float)));
