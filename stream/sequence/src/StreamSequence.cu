@@ -333,15 +333,22 @@ cudaError_t Stream::run_sequence(
       
       delete ut_tracks_events;
 
-
+     Vertex bla[50];
+     uint  number_of_vertex[1];
       run_PatPV_on_CPU(
      host_velo_states,
      host_accumulated_tracks,
                  host_velo_track_hit_number,
                  reinterpret_cast<VeloTracking::Hit<true>*>(host_velo_track_hits),
      host_number_of_tracks,
-     number_of_events
+     number_of_events,
+     bla,
+     number_of_vertex
          );
+
+      for(uint i = 0; i < *number_of_vertex; i++) {
+        std::cout << "vertex " << i << " " << bla[i].pos.x << " " << bla[i].pos.y << " " << bla[i].pos.z << std::endl;
+      }
       
       
     } // mc_check_enabled       

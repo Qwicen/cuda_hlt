@@ -4,6 +4,15 @@
 
 #include "../../../main/include/Tools.h"
 
+
+#include "../../../PatPV/include/PVSeedTool.h"
+#include "../../../PatPV/include/AdaptivePV3DFitter.h"
+
+#include "TH1D.h"
+#include "TFile.h"
+#include "TTree.h"
+#include <algorithm>
+
 /*
 template <typename C>
 void removeTracks(std::vector< Track*>& tracks,
@@ -26,6 +35,8 @@ int run_PatPV_on_CPU (
   uint* host_velo_track_hit_number_pinned,
   VeloTracking::Hit<true>* host_velo_track_hits_pinned,
   int * host_number_of_tracks_pinned,
-  const int &number_of_events
+  const int &number_of_events,
+  Vertex * outvtxvec,
+  uint * number_of_vertex
 );
 
