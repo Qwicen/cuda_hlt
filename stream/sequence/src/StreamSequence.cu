@@ -224,7 +224,7 @@ cudaError_t Stream::run_sequence(
 
     // Consolidate tracks
     argument_sizes[arg::dev_velo_track_hits] = argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]);
-    argument_sizes[arg::dev_velo_states] = argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]);
+    argument_sizes[arg::dev_velo_states] = argen.size<arg::dev_velo_states>(2*host_number_of_reconstructed_velo_tracks[0]);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::consolidate_tracks>().set_opts(dim3(number_of_events), dim3(32), stream);
     sequence.item<seq::consolidate_tracks>().set_arguments(
@@ -273,7 +273,7 @@ cudaError_t Stream::run_sequence(
       cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
+      cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(2*host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
       cudaCheck(cudaMemcpyAsync(host_kal_velo_states, argen.generate<arg::dev_kal_velo_states>(argument_offsets), argen.size<arg::dev_kal_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
     }
 
@@ -317,7 +317,7 @@ cudaError_t Stream::run_sequence(
        Adjust input types to match PrVeloUT code
     */
     if (mc_check_enabled && i_stream == 0) {
-
+      /*
       std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
       
       int rv = run_veloUT_on_CPU(
@@ -346,7 +346,7 @@ cudaError_t Stream::run_sequence(
 	trackType); 
       
       delete ut_tracks_events;
-      
+      */
 
 
       //loop ove events
@@ -364,16 +364,25 @@ cudaError_t Stream::run_sequence(
         const int accumulated_tracks = host_accumulated_tracks[i];
         for(int j = 0; j < host_number_of_tracks[i]; j++)
           {
-            //loop over hits in track
             
-            const uint starting_hit = host_velo_track_hit_number[accumulated_tracks + j ];
-            const uint number_of_hits = host_velo_track_hit_number[accumulated_tracks + j  + 1] - starting_hit;
             std::cout << "track number " << j << std::endl;
-            std::cout << "host velo state x: " << host_velo_states[accumulated_tracks + j].x << " " << host_kal_velo_states[accumulated_tracks + j].x << std::endl;
-            std::cout << "host velo state y: " << host_velo_states[accumulated_tracks + j].y << " " << host_kal_velo_states[accumulated_tracks + j].y << std::endl;
-            std::cout << "host velo state z: " << host_velo_states[accumulated_tracks + j].z << " " << host_kal_velo_states[accumulated_tracks + j].z << std::endl;
-            std::cout << std::setprecision(4) << "host velo state tx: " << host_velo_states[accumulated_tracks + j].tx << " " << host_kal_velo_states[accumulated_tracks + j].tx << std::endl;
-            std::cout << std::setprecision(4)<< "host velo state ty: " << host_velo_states[accumulated_tracks + j].ty << " " << host_kal_velo_states[accumulated_tracks + j].ty << std::endl;
+            //index gives current position in state aray
+            uint index = accumulated_tracks + j;
+
+            VeloState * state_least       = host_velo_states + 2 * index;
+            VeloState * state_kalman      = host_velo_states + 2 * index + 1;
+            VeloState * state_kalman_old  = host_kal_velo_states + index;
+            
+
+            std::cout << "host velo state x: " << state_least->x << " " << state_kalman->x << " " << state_kalman_old->x << std::endl;
+            std::cout << "host velo state y: " << state_least->y << " " << state_kalman->y << " " << state_kalman_old->y << std::endl;
+            std::cout << "host velo state z: " << state_least->z << " " << state_kalman->z << " " << state_kalman_old->z << std::endl;
+            std::cout << std::setprecision(4) << "host velo state tx: " << state_least->tx << " " << state_kalman->tx << " " << state_kalman_old->tx << std::endl;
+            std::cout << std::setprecision(4)<< "host velo state ty: " << state_least->ty << " " << state_kalman->ty << " " << state_kalman_old->ty << std::endl;
+
+            //loop over hits in track
+            const uint starting_hit = host_velo_track_hit_number[index];
+            const uint number_of_hits = host_velo_track_hit_number[index  + 1] - starting_hit;
             for (int k = 0 ; k < number_of_hits; k++) {
               std::cout << host_velo_track_hits[starting_hit + k].x << " "  << host_velo_track_hits[starting_hit + k].y << " " << host_velo_track_hits[starting_hit + k].z << std::endl;
             }

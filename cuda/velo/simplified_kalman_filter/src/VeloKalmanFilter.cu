@@ -64,7 +64,7 @@ __global__ void velo_fit(
   //get pointer to trackhits of current event
   int* tracks_insert_pointer = dev_atomics_storage + event_number;
 
-  //get total nubmer of tracks
+  //get total number of tracks
   const int number_of_tracks = *tracks_insert_pointer;
 
   //each thread looks at multiple tracks -> for loop distributes tracks on threads
@@ -85,7 +85,7 @@ __global__ void velo_fit(
 
 
       //acumulated tracks gives the number of tracks in all previous events-> element gives position in current event
-      VeloState * state_pointer = dev_kal_velo_states + accumulated_tracks +element ;
+      VeloState * state_pointer = dev_velo_states + 2*accumulated_tracks + 2*element +1 ;
 
 
 //velo_states = dev_velo_states + accumulated_tracks;
@@ -93,6 +93,7 @@ __global__ void velo_fit(
 
       
       simplified_fit<true>(        velo_track_hits,        first,        state_pointer,        track.hitsNum    );
+      simplified_fit<true>(        velo_track_hits,        first,        dev_kal_velo_states + accumulated_tracks + element ,        track.hitsNum    );
       
 
     }
