@@ -137,7 +137,6 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,
     arg::dev_velo_states,
-    arg::dev_kal_velo_states,
     arg::dev_tracks
   };
 

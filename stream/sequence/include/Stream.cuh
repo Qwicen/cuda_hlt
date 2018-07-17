@@ -48,8 +48,7 @@ struct Stream {
   uint* host_total_number_of_velo_clusters;
   uint* host_number_of_reconstructed_velo_tracks;  // total number of tracks in all events -> has only value at [0]
   uint* host_accumulated_number_of_hits_in_velo_tracks;  // total number of all hits in all events -> has only value at [0]
-  VeloState* host_velo_states;  //velo state for each track
-  VeloState* host_kal_velo_states;
+  VeloState* host_velo_states;  //velo state for each track -> one from simple least squares fit and one from simplified Kalman
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;

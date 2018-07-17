@@ -95,6 +95,5 @@ __global__ void velo_fit(
   uint* dev_velo_track_hit_number,
   VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
   VeloState* dev_velo_states,
-  VeloState* dev_kal_velo_states,
   const VeloTracking::TrackHits* dev_tracks
 );
