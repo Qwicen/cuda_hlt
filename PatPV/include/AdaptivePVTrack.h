@@ -9,6 +9,7 @@
   class AdaptivePVTrack 
   {
   public:
+    AdaptivePVTrack() { };
     AdaptivePVTrack( VeloState& track, XYZPoint& vtx) ;
     void updateCache( const XYZPoint& vtx ) ;
     double weight() const { return m_weight ; }

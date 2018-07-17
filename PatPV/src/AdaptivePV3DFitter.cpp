@@ -33,20 +33,25 @@ bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
   XYZPoint refpos = seedPoint ;
 
   // prepare tracks
-  std::vector<AdaptivePVTrack> pvTracks ;
-  pvTracks.reserve( number_of_tracks ) ;
+  AdaptivePVTrack pvTracks[number_of_tracks] ;
+
+  int pvTrack_counter = 0;
   //for( const auto& track : rTracks ) {
   for(int i = 0; i < number_of_tracks; i++) {  
-      pvTracks.emplace_back( host_velo_states[i], refpos );
+      AdaptivePVTrack pvTrack(host_velo_states[i], refpos);
+      if(pvTrack.chi2() < m_maxChi2) {
+        pvTracks[pvTrack_counter] = pvTrack;
+        pvTrack_counter++;
+      }
       //std::cout << "pos state x: " << track->position().x << " " << refpos.x << std::endl;
       //std::cout << "pos state y: " << track->position().y << " " << refpos.y << std::endl;
       //std::cout << "pos state z: " << track->position().z << " " << refpos.z << std::endl;
       //std::cout << "chi2: " << pvTracks.back().chi2() << " " << m_maxChi2 << std::endl;
-      if (pvTracks.back().chi2() >= m_maxChi2) pvTracks.pop_back();
+      
   }
     
 
-  if( pvTracks.size() < m_minTr ) {
+  if( pvTrack_counter < m_minTr ) {
     //std::cout << pvTracks.size() << " " << m_minTr << std::endl;
     std::cout << "Too few tracks to fit PV" << std::endl;
     return false;
@@ -69,14 +74,15 @@ bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
     // update cache if too far from reference position. this is the slow part.
     if( std::abs(refpos.z - vtxpos.z > m_maxDeltaZCache) ) {
       refpos = vtxpos ;
-      for( auto& trk : pvTracks ) trk.updateCache( refpos ) ;
+      for( int index = 0; index < pvTrack_counter; index++)  pvTracks[index].updateCache( refpos ) ;
     };
 
     // add contribution from all tracks
     double chi2(0) ;
     size_t ntrin(0) ;
-    for( auto& trk : pvTracks ) {
+    for( int index = 0; index < pvTrack_counter; index++) {
       // compute weight
+      AdaptivePVTrack trk = pvTracks[index];
       double trkchi2 = trk.chi2(vtxpos) ;
       double weight = getTukeyWeight(trkchi2, nbIter) ;
       trk.setWeight(weight) ;
@@ -144,7 +150,8 @@ bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
   // Set tracks. Compute final chi2.
   vtx.clearTracks();
   int tracks2remove_counter = 0;
-  for( const auto& trk : pvTracks ) {
+  for( int index = 0; index < pvTrack_counter; index++) {
+    AdaptivePVTrack trk = pvTracks[index];
     if( trk.weight() > m_minTrackWeight)
       vtx.addToTracks( trk.track(), trk.weight() ) ;
     // remove track for next PV search
