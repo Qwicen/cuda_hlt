@@ -6,17 +6,17 @@
 using namespace std;
 
 //pass pointer to state?
-VeloState linearTransportTo(VeloState  velo_state, double new_z) {
-    const double dz = new_z - velo_state.z ;
+void AdaptivePVTrack::linearTransportTo( double new_z) {
+    const double dz = new_z - m_state.z ;
     const double dz2 = dz*dz ;
-    velo_state.x += dz * velo_state.tx ;
-    velo_state.y += dz * velo_state.ty ;
-    velo_state.z = new_z;
-    velo_state.c00 += dz2 * velo_state.c22 + 2*dz* velo_state.c20 ;
-    velo_state.c20 += dz* velo_state.c22 ;
-    velo_state.c11 += dz2* velo_state.c33 + 2* dz*velo_state.c31 ;
-    velo_state.c31 += dz* velo_state.c33 ;
-    return velo_state;
+    m_state.x += dz * m_state.tx ;
+    m_state.y += dz * m_state.ty ;
+    m_state.z = new_z;
+    m_state.c00 += dz2 * m_state.c22 + 2*dz* m_state.c20 ;
+    m_state.c20 += dz* m_state.c22 ;
+    m_state.c11 += dz2* m_state.c33 + 2* dz*m_state.c31 ;
+    m_state.c31 += dz* m_state.c33 ;
+    
   }
 
 
@@ -42,7 +42,7 @@ VeloState linearTransportTo(VeloState  velo_state, double new_z) {
     // still missing!
     std::cout << "before transport: "<< vtx.z << " " << m_state.z << std::endl;
     //std::cout << m_state.y << endl;
-    m_state = linearTransportTo(m_state, vtx.z ) ;
+    linearTransportTo( vtx.z ) ;
     std::cout << "after transport: " << m_state.z << std::endl;
     //std::cout << m_state.y << endl;
 

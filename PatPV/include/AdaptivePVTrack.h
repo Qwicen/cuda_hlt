@@ -19,6 +19,7 @@
     double chi2() const { return m_chi2 ; }
     double chi2( const XYZPoint& vtx ) const ;
     VeloState track() const { return m_state ; }
+    void linearTransportTo( double new_z);
   private:
     double m_weight ;
     
