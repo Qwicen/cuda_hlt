@@ -41,58 +41,62 @@ __device__ float velo_kalman_filter_step(
 }
 
 __global__ void velo_fit(
-  const uint32_t* dev_velo_cluster_container,
-  const uint* dev_module_cluster_start,
-  const int* dev_atomics_storage,
-  const VeloTracking::Track<mc_check_enabled>* dev_tracks,
-  VeloState* dev_velo_states
+  int* dev_atomics_storage,
+  uint* dev_velo_track_hit_number,
+  VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
+  VeloState* dev_velo_states,
+  const VeloTracking::TrackHits* dev_tracks
 ) {
-  /* Data initialization */
-  // Each event is treated with two blocks, one for each side.
-  const uint event_number = blockIdx.x;
+
+  // one event per block -> block we look at one event -> threads look at different tracks inside event
   const uint number_of_events = gridDim.x;
+  const uint event_number = blockIdx.x;
+  
+  const VeloTracking::TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
+  
 
-  // Reconstructed tracks
-  const uint number_of_tracks = dev_atomics_storage[event_number];
-  const uint track_start = dev_atomics_storage[number_of_events + event_number];
-  const uint total_number_of_tracks = dev_atomics_storage[2*number_of_events];
-  const VeloTracking::Track<mc_check_enabled>* tracks = dev_tracks + track_start;
-  VeloState* velo_states = dev_velo_states + track_start;
+  //get number of accumulated tracks for one event
+  const int* accumulated_tracks_base_pointer = dev_atomics_storage + number_of_events;
+  const auto accumulated_tracks = accumulated_tracks_base_pointer[event_number];
 
-  // Iterate over the tracks and calculate fits
+
+  //get pointer to trackhits of current event
+  int* tracks_insert_pointer = dev_atomics_storage + event_number;
+
+  //get total number of tracks
+  const int number_of_tracks = *tracks_insert_pointer;
+
+  //each thread looks at multiple tracks -> for loop distributes tracks on threads
   for (uint i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
-    const auto element = i * blockDim.x + threadIdx.x;
+
+    // element is offset so that thread looks at right track
+    const uint element = i * blockDim.x + threadIdx.x;
+
+    //check that we still have tracks
     if (element < number_of_tracks) {
-      // Pointer to current element in velo states
-      VeloState* velo_state_base = velo_states + element;
-      const auto track = tracks[element];
-
-      // Fetch means square fit 
-      const auto stateAtBeamLine = *velo_state_base;
-
-      // Always calculate two simplified Kalman fits and store their results to VeloState:
-      // Downstream and upstream
-      //
-      // Note:
-      // Downstream is equivalent to
-      // ((!backward && m_stateEndVeloKalmanFit) || m_addStateFirstLastMeasurementKalmanFit)
-      // 
-      // Upstream is equivalent to
-      // (m_stateClosestToBeamKalmanFit || m_addStateFirstLastMeasurementKalmanFit)
+      const VeloTracking::TrackHits track = event_tracks[element];
       
-      // Downstream fit
-      simplified_fit<false>(
-        track,
-        stateAtBeamLine,
-        velo_state_base + total_number_of_tracks
-      );
 
-      // Upstream fit
-      simplified_fit<true>(
-        track,
-        stateAtBeamLine,
-        velo_state_base + 2*total_number_of_tracks
-      );
+
+
+      const VeloTracking::Hit<mc_check_enabled>* velo_track_hits = dev_velo_track_hits +
+      dev_velo_track_hit_number[accumulated_tracks + element];
+
+
+      //acumulated tracks gives the number of tracks in all previous events-> element gives position in current event
+      VeloState * state_pointer = dev_velo_states + VeloTracking::number_of_saved_velo_states * (accumulated_tracks + element) + 1 ;
+
+
+//velo_states = dev_velo_states + accumulated_tracks;
+      const VeloState first = (dev_velo_states + accumulated_tracks)[element];
+
+      
+      simplified_fit<true>(        velo_track_hits,        first,        state_pointer,        track.hitsNum    );
+      
+
     }
   }
+
+
+
 }

@@ -18,7 +18,8 @@ enum seq_enum_t {
   prefix_sum_reduce_velo_track_hit_number,
   prefix_sum_single_block_velo_track_hit_number,
   prefix_sum_scan_velo_track_hit_number,
-  consolidate_tracks
+  consolidate_tracks,
+  velo_fit
 };
 }
 

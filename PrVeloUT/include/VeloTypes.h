@@ -8,13 +8,13 @@
 #include "../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
 
 namespace VeloUTTracking {
+
   struct Hit {
     
     float x;
     float z;
     
     float m_cos;     
-    float m_dxDy;    ///< The dx/dy value
     float m_weight2;  ///< The hit weight^2 (1/error^2)
     float m_xAtYEq0; ///< The value of x at the point y=0
     float m_yBegin;  ///< The y value at the start point of the line
@@ -28,8 +28,8 @@ namespace VeloUTTracking {
     Hit(){}
     
     inline float cos() const { return m_cos; }
-    inline float cosT() const { return ( std::fabs( m_xAtYEq0 ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + m_dxDy * m_dxDy ) : cos(); }
-    inline float dxDy() const { return m_dxDy; }
+    inline float dxDy() const { return dxDyTable[m_planeCode]; }
+    inline float cosT() const { return ( std::fabs( m_xAtYEq0 ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy() * dxDy() ) : cos(); }
     inline bool highThreshold() const { return m_highThreshold; }
     inline bool isYCompatible( const float y, const float tol ) const { return yMin() - tol <= y && y <= yMax() + tol; }
     inline bool isNotYCompatible( const float y, const float tol ) const { return yMin() - tol > y || y > yMax() + tol; }
@@ -40,9 +40,9 @@ namespace VeloUTTracking {
     inline int planeCode() const { return m_planeCode; }
     inline float sinT() const { return tanT() * cosT(); }
     // inline int size() const { return m_cluster.pseudoSize(); }
-    inline float tanT() const { return -m_dxDy; }
+    inline float tanT() const { return -1 * dxDy(); }
     inline float weight2() const { return m_weight2; }
-    inline float xAt( const float globalY ) const { return m_xAtYEq0 + globalY * m_dxDy; }
+    inline float xAt( const float globalY ) const { return m_xAtYEq0 + globalY * dxDy(); }
     inline float xAtYEq0() const { return m_xAtYEq0; }
     //inline float xAtYMid() const { return m_x; }  // not used
     inline float xMax() const { return std::max( xAt( yBegin() ), xAt( yEnd() ) ); }

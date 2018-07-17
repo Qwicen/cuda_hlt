@@ -31,7 +31,8 @@ constexpr auto sequence_algorithms() {
     prefix_sum_reduce,
     prefix_sum_single_block,
     prefix_sum_scan,
-    consolidate_tracks
+    consolidate_tracks,
+    velo_fit
   );
 }
 

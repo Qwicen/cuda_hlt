@@ -16,11 +16,11 @@ namespace {
     return (index3*11 + index2)*31 + index1;
   }
 
-  constexpr std::array<float,3> minValsBdl = { -0.3, -250.0, 0.0 };
-  constexpr std::array<float,3> maxValsBdl = { 0.3, 250.0, 800.0 };
-  constexpr std::array<float,3> deltaBdl   = { 0.02, 50.0, 80.0 };
+  constexpr float minValsBdl[3] = { -0.3, -250.0, 0.0 };
+  constexpr float maxValsBdl[3] = { 0.3, 250.0, 800.0 };
+  constexpr float deltaBdl[3]   = { 0.02, 50.0, 80.0 };
 
-  constexpr std::array<float,4> dxDyHelper = { 0.0, 1.0, -1.0, 0.0 };
+  constexpr float dxDyHelper[4] = { 0.0, 1.0, -1.0, 0.0 };
 }
 
 //=============================================================================
@@ -40,30 +40,33 @@ namespace {
 int PrVeloUT::initialize() {
 
   //load the deflection and Bdl values from a text file
-  std::vector<float> deflection_vals;
-  float deflection;
+  float dxLayTable[PrUTMagnetTool::N_dxLay_vals];
   std::ifstream deflectionfile;
   deflectionfile.open("../PrUTMagnetTool/deflection.txt");
   if (deflectionfile.is_open()) {
+    int i = 0;
+    float deflection;
     while (!deflectionfile.eof()) {
       deflectionfile >> deflection;
-      deflection_vals.push_back(deflection);
-      
+      assert( i < PrUTMagnetTool::N_dxLay_vals );
+      dxLayTable[i++] = deflection;
     }
   }
   
-  std::vector<float> bdl_vals;
-  float bdl;
+  float bdlTable[PrUTMagnetTool::N_bdl_vals];
   std::ifstream bdlfile;
   bdlfile.open("../PrUTMagnetTool/bdl.txt");
   if (bdlfile.is_open()) {
+    int i = 0;
+    float bdl;
     while (!bdlfile.eof()) {
       bdlfile >> bdl;
-      bdl_vals.push_back(bdl);
-      
+      assert( i < PrUTMagnetTool::N_bdl_vals );
+      bdlTable[i++] = bdl;
     }
   }
-  m_PrUTMagnetTool = PrUTMagnetTool( deflection_vals, bdl_vals );
+  
+  m_PrUTMagnetTool = PrUTMagnetTool( dxLayTable, bdlTable );
   
   // m_zMidUT is a position of normalization plane which should to be close to z middle of UT ( +- 5 cm ).
   // Cashed once in PrVeloUTTool at initialization. No need to update with small UT movement.
@@ -85,8 +88,7 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   const std::vector<VeloUTTracking::TrackVelo>& inputTracks,
   VeloUTTracking::HitsSoA *hits_layers,
   const uint32_t n_hits_layers[VeloUTTracking::n_layers]
-  //const std::array<std::vector<VeloUTTracking::Hit>,4>& inputHits
-) const
+  ) const
 {
   
   std::vector<VeloUTTracking::TrackUT> outputTracks;
@@ -95,21 +97,18 @@ std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
   std::array<std::array<int,85>,4> posLayers;
   fillIterators(hits_layers, n_hits_layers, posLayers);
 
-  const std::vector<float> fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
-  const std::vector<float> bdlTable     = m_PrUTMagnetTool.returnBdlTable();
+  const float* fudgeFactors = m_PrUTMagnetTool.returnDxLayTable();
+  const float* bdlTable     = m_PrUTMagnetTool.returnBdlTable();
 
-  // std::array<std::vector<VeloUTTracking::Hit>,4> hitsInLayers;
   // array to store indices of selected hits in layers
   // -> can then access the hit information in the HitsSoA
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers];
   
-  //for( auto& it : hitsInLayers ) it.reserve(8); 
   for(const VeloUTTracking::TrackVelo& veloTr : inputTracks) {
-
+    
     VeloState trState;
     if( !getState(veloTr, trState)) continue;
-    //for( auto& it : hitsInLayers ) it.clear();
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
     }
@@ -139,9 +138,6 @@ bool PrVeloUT::getState(
   const VeloUTTracking::TrackVelo& iTr, 
   VeloState& trState ) const 
 {
-  // const VeloState* s = iTr.stateAt(LHCb::State::EndVelo);
-  // const VeloState& state = s ? *s : (iTr.closestState(LHCb::State::EndVelo));
-  // TODO get the closest state not the last
   const VeloState state = iTr.state;
   
   // -- reject tracks outside of acceptance or pointing to the beam pipe
@@ -170,19 +166,19 @@ bool PrVeloUT::getState(
 // Find the hits
 //=============================================================================
 bool PrVeloUT::getHits(
-  //std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],		       
   const std::array<std::array<int,85>,4>& posLayers,
   VeloUTTracking::HitsSoA *hits_layers,
   const uint32_t n_hits_layers[VeloUTTracking::n_layers],
-  const std::vector<float>& fudgeFactors, 
+  const float* fudgeFactors, 
   VeloState& trState ) const 
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
   const float absSlopeY = std::abs( trState.ty );
   const int index = (int)(absSlopeY*100 + 0.5);
+  assert( 3 + 4*index < PrUTMagnetTool::N_dxLay_vals );
   const std::array<float,4> normFact = { 
     fudgeFactors[4*index], 
     fudgeFactors[1 + 4*index], 
@@ -207,13 +203,11 @@ bool PrVeloUT::getHits(
 
       int layer = 2*iStation+iLayer;
       int layer_offset = hits_layers->layer_offset[layer];
-      //const std::vector<VeloUTTracking::Hit>& hits = inputHits[layer];
-
-      // UNLIKELY is a MACRO for `__builtin_expect` compiler hint of GCC
+      
       if( n_hits_layers[layer] == 0 ) continue;
 
-      const float dxDy   = hits_layers->dxDy(layer_offset + 0); //hits.front().dxDy();
-      const float zLayer = hits_layers->zAtYEq0(layer_offset + 0); //hits.front().zAtYEq0();
+      const float dxDy   = hits_layers->dxDy(layer_offset + 0);
+      const float zLayer = hits_layers->zAtYEq0(layer_offset + 0); 
 
       const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
       const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
@@ -242,7 +236,6 @@ bool PrVeloUT::getHits(
 
       findHits(posBeg, posEnd, hits_layers, n_hits_layers, layer_offset, trState, xTol*invNormFact, invNormFact, hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer]);
 
-      //nLayers += int(!hitsInLayers[layer].empty());
       nLayers += int( !( n_hitCandidatesInLayers[layer] == 0 ) );
     }
   }
@@ -261,13 +254,6 @@ bool PrVeloUT::formClusters(
   const bool forward ) const 
 {
 
-  if ( helper.n_hits > 0 && helper.n_hits != 3 ) {
-    debug_cout << "Track already has " << helper.n_hits << " hits" << std::endl;
-        for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
-          warning_cout << "\t" << std::hex << helper.bestHits[i_hit].LHCbID() << " on plane " << helper.bestHits[i_hit].planeCode() << std::endl;
-        }
-  }
-   
   // handle forward / backward cluster search
   int layers[VeloUTTracking::n_layers];
   for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
@@ -275,39 +261,35 @@ bool PrVeloUT::formClusters(
         layers[i_layer] = i_layer;
       else
         layers[i_layer] = VeloUTTracking::n_layers - 1 - i_layer;
-    }
- 
+  }
+
+  // Go through the layers
   bool fourLayerSolution = false;
-
   for ( int i_hit0 = 0; i_hit0 < n_hitCandidatesInLayers[ layers[0] ]; ++i_hit0 ) {
-    const int hit_index0 = hitCandidatesInLayers[ layers[0] ][i_hit0];
-    
-    const int layer_offset0 = hits_layers->layer_offset[ layers[0] ];
-    const float xhitLayer0 = hits_layers->x[ layer_offset0 + hit_index0 ];
-    const float zhitLayer0 = hits_layers->z[ layer_offset0 + hit_index0 ];
-    
-    // Loop over Second Layer
-    for ( int i_hit2 = 0; i_hit2 < n_hitCandidatesInLayers[ layers[2] ]; ++i_hit2 ) {
-       const int hit_index2 = hitCandidatesInLayers[ layers[2] ][i_hit2];
-       
-       const int layer_offset2 = hits_layers->layer_offset[ layers[2] ];
 
-       assert( layer_offset2 + hit_index2 < VeloUTTracking::max_numhits_per_event );
-       const float xhitLayer2 = hits_layers->x[ layer_offset2 + hit_index2 ];
-       const float zhitLayer2 = hits_layers->z[ layer_offset2 + hit_index2 ];
+    const int hit_index0    = hitCandidatesInLayers[ layers[0] ][i_hit0];
+    const int layer_offset0 = hits_layers->layer_offset[ layers[0] ];
+    const float xhitLayer0  = hits_layers->x[ layer_offset0 + hit_index0 ];
+    const float zhitLayer0  = hits_layers->z[ layer_offset0 + hit_index0 ];
+    
+    for ( int i_hit2 = 0; i_hit2 < n_hitCandidatesInLayers[ layers[2] ]; ++i_hit2 ) {
+      
+      const int hit_index2    = hitCandidatesInLayers[ layers[2] ][i_hit2];
+      const int layer_offset2 = hits_layers->layer_offset[ layers[2] ];
+      const float xhitLayer2  = hits_layers->x[ layer_offset2 + hit_index2 ];
+      const float zhitLayer2  = hits_layers->z[ layer_offset2 + hit_index2 ];
        
       const float tx = (xhitLayer2 - xhitLayer0)/(zhitLayer2 - zhitLayer0);
-
       if( std::abs(tx-helper.state.tx) > m_deltaTx2 ) continue;
       
       int IndexBestHit1 = -10;
       float hitTol = m_hitTol2;
       for ( int i_hit1 = 0; i_hit1 < n_hitCandidatesInLayers[ layers[1] ]; ++i_hit1 ) {
-        const int hit_index1 = hitCandidatesInLayers[ layers[1] ][i_hit1];
 
+        const int hit_index1    = hitCandidatesInLayers[ layers[1] ][i_hit1];
         const int layer_offset1 = hits_layers->layer_offset[ layers[1] ];
-        const float xhitLayer1 = hits_layers->x[ layer_offset1 + hit_index1 ];
-        const float zhitLayer1 = hits_layers->z[ layer_offset1 + hit_index1 ];
+        const float xhitLayer1  = hits_layers->x[ layer_offset1 + hit_index1 ];
+        const float zhitLayer1  = hits_layers->z[ layer_offset1 + hit_index1 ];
        
 
         const float xextrapLayer1 = xhitLayer0 + tx*(zhitLayer1-zhitLayer0);
@@ -315,30 +297,29 @@ bool PrVeloUT::formClusters(
           hitTol = std::abs(xhitLayer1 - xextrapLayer1);
           IndexBestHit1 = hit_index1;
         }
-      }
+      } // loop over layer 1
       VeloUTTracking::Hit bestHit1;
       if ( IndexBestHit1 > 0 ) { // found hit candidate
         bestHit1 = VeloUTTracking::createHit(hits_layers, layers[1], IndexBestHit1);
       }
-        
+      
       if( fourLayerSolution && IndexBestHit1 < 0 ) continue;
 
       int IndexBestHit3 = -10;
       hitTol = m_hitTol2;
       for ( int i_hit3 = 0; i_hit3 < n_hitCandidatesInLayers[ layers[3] ]; ++i_hit3 ) {
-        const int hit_index3 = hitCandidatesInLayers[ layers[3] ][i_hit3];
 
+        const int hit_index3    = hitCandidatesInLayers[ layers[3] ][i_hit3];
         const int layer_offset3 = hits_layers->layer_offset[ layers[3] ];
-        const float xhitLayer3 = hits_layers->x[ layer_offset3 + hit_index3 ];
-        const float zhitLayer3 = hits_layers->z[ layer_offset3 + hit_index3 ];
+        const float xhitLayer3  = hits_layers->x[ layer_offset3 + hit_index3 ];
+        const float zhitLayer3  = hits_layers->z[ layer_offset3 + hit_index3 ];
 
         const float xextrapLayer3 = xhitLayer2 + tx*(zhitLayer3-zhitLayer2);
-
         if(std::abs(xhitLayer3 - xextrapLayer3) < hitTol){
           hitTol = std::abs(xhitLayer3 - xextrapLayer3);
           IndexBestHit3 = hit_index3;
         }
-      }
+      } // loop over layer 3
       VeloUTTracking::Hit bestHit3;
       if ( IndexBestHit3 > 0 ) { // found hit candidate
         bestHit3 = VeloUTTracking::createHit(hits_layers, layers[3], IndexBestHit3);
@@ -346,31 +327,11 @@ bool PrVeloUT::formClusters(
 
       // -- All hits found
       if ( IndexBestHit1 > 0 && IndexBestHit3 > 0 ) {
-        VeloUTTracking::Hit hit0 = VeloUTTracking::createHit(hits_layers, 0, hit_index0);
-        VeloUTTracking::Hit hit2 = VeloUTTracking::createHit(hits_layers, 2, hit_index2);
+        VeloUTTracking::Hit hit0 = VeloUTTracking::createHit(hits_layers, layers[0], hit_index0);
+        VeloUTTracking::Hit hit2 = VeloUTTracking::createHit(hits_layers, layers[2], hit_index2);
         std::array<const VeloUTTracking::Hit*,4> hits4fit = {&hit0, &bestHit1, &hit2, &bestHit3};
         simpleFit(hits4fit, helper);
-
-        for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
-          uint32_t id_a = helper.bestHits[i_hit].LHCbID();
-          int counted_IDs = 0;
-          for ( int i_o_hit = i_hit; i_o_hit < helper.n_hits; ++i_o_hit ) {
-            uint32_t id_b = helper.bestHits[i_o_hit].LHCbID();
-            if ( id_a == id_b )
-              counted_IDs++;
-          }
-          if ( counted_IDs > 1 ) {
-            warning_cout << "FOUND same hit > 1 time in a " << std::endl;
-            if ( forward )
-              warning_cout << "forward track" << std::endl;
-            else
-              warning_cout << "backward track" << std::endl;
-            for ( int i = 0; i < helper.n_hits; ++i ) {
-              warning_cout << "\t" << std::hex << helper.bestHits[i].LHCbID() << " on plane " << helper.bestHits[i].planeCode() << std::endl;
-            }
-          }
-        }
-
+        
         if(!fourLayerSolution && helper.n_hits > 0){
           fourLayerSolution = true;
         }
@@ -397,9 +358,6 @@ bool PrVeloUT::formClusters(
     }
   }
 
- 
-  
-  
   return fourLayerSolution;
 }
 //=========================================================================
@@ -408,19 +366,16 @@ bool PrVeloUT::formClusters(
 void PrVeloUT::prepareOutputTrack(
   const VeloUTTracking::TrackVelo& veloTrack,
   const TrackHelper& helper,
-  //const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
   std::vector<VeloUTTracking::TrackUT>& outputTracks,
-  const std::vector<float>& bdlTable) const {
+  const float* bdlTable) const {
 
   //== Handle states. copy Velo one, add TT.
   const float zOrigin = (std::fabs(helper.state.ty) > 0.001)
     ? helper.state.z - helper.state.y / helper.state.ty
     : helper.state.z - helper.state.x / helper.state.tx;
-
-  //const float bdl1    = m_PrUTMagnetTool->bdlIntegral(helper.state.ty,zOrigin,helper.state.z);
 
   // -- These are calculations, copied and simplified from PrTableForFunction
   const std::array<float,3> var = { helper.state.ty, zOrigin, helper.state.z };
@@ -429,6 +384,7 @@ void PrVeloUT::prepareOutputTrack(
   const int index2 = std::max(0, std::min( 10, int((var[1] + 250)/500*10) ));
   const int index3 = std::max(0, std::min( 10, int( var[2]/800*10)        ));
 
+  assert( masterIndex(index1, index2, index3) < PrUTMagnetTool::N_bdl_vals );
   float bdl = bdlTable[masterIndex(index1, index2, index3)];
 
   const std::array<float,3> bdls = { bdlTable[masterIndex(index1+1, index2,index3)],
@@ -467,32 +423,23 @@ void PrVeloUT::prepareOutputTrack(
   outputTracks.emplace_back( veloTrack.track );
   outputTracks.back().set_qop( qop );
   
-  //outputTracks.back().UTIDs.reserve(8);
-
   // Adding overlap hits
-  //for( const auto* hit : helper.bestHits){
   for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
     const VeloUTTracking::Hit hit = helper.bestHits[i_hit];
     
-    // -- only the last one can be a nullptr.
-    //if( !hit ) break;
-
     outputTracks.back().addLHCbID( hit.LHCbID() );
 
     const float xhit = hit.x;
     const float zhit = hit.z;
 
     const int planeCode = hit.planeCode();
-    //for( auto& ohit : hitsInLayers[hit->planeCode()]){
     for ( int i_ohit = 0; i_ohit < n_hitCandidatesInLayers[planeCode]; ++i_ohit ) {
       const int ohit_index = hitCandidatesInLayers[planeCode][i_ohit];
       const int layer_offset = hits_layers->layer_offset[planeCode];
       
-      //const float zohit = ohit.z;
       const float zohit = hits_layers->z[layer_offset + ohit_index];
       if(zohit==zhit) continue;
 
-      //const float xohit = ohit.x;
       const float xohit = hits_layers->x[layer_offset + ohit_index];
       const float xextrap = xhit + txUT*(zhit-zohit);
       if( xohit-xextrap < -m_overlapTol) continue;

@@ -145,7 +145,7 @@ __global__ void consolidate_tracks(
   const uint32_t* hit_IDs = (uint32_t*) (dev_velo_cluster_container + 2 * number_of_hits + hit_offset);
 
   // Consolidate tracks in dev_output_tracks
-  VeloState* velo_states = dev_velo_states + accumulated_tracks;
+  VeloState* velo_states = dev_velo_states + VeloTracking::number_of_saved_velo_states * accumulated_tracks;
 
   for (uint i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
     const uint element = i * blockDim.x + threadIdx.x;
@@ -170,7 +170,7 @@ __global__ void consolidate_tracks(
       }
 
       // Calculate and store fit in consolidated container
-      velo_states[element] = means_square_fit(
+      velo_states[VeloTracking::number_of_saved_velo_states * element] = means_square_fit(
         velo_track_hits,
         track
       );

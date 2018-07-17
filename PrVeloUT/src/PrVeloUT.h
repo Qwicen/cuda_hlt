@@ -35,25 +35,38 @@
 
 // TODO Fake MagnetTool just to make it compile
 struct PrUTMagnetTool {
+  static const int N_dxLay_vals = 124;
+  static const int N_bdl_vals   = 3752;
+  
   //const float m_zMidUT = 0.0;
   //const float m_averageDist2mom = 0.0;
-  std::vector<float> dxLayTable;
-  std::vector<float> bdlTable;
+  //std::vector<float> dxLayTable;
+  float* dxLayTable;
+  //std::vector<float> bdlTable;
+  float* bdlTable;
 
   PrUTMagnetTool(){}
   PrUTMagnetTool( 
-    const std::vector<float> _dxLayTable, 
-    const std::vector<float> _bdlTable ) : dxLayTable(_dxLayTable), bdlTable(_bdlTable) {}
+    const float *_dxLayTable, 
+    const float *_bdlTable ) {
+    dxLayTable = new float[N_dxLay_vals];
+    for ( int i = 0; i < N_dxLay_vals; ++i ) {
+      dxLayTable[i] = _dxLayTable[i];
+    }
+    bdlTable = new float[N_bdl_vals];
+    for ( int i = 0; i < N_bdl_vals; ++i ) {
+      bdlTable[i] = _bdlTable[i];
+    }
+  }
   
   //float zMidUT() { return m_zMidUT; }
   //float averageDist2mom() { return m_averageDist2mom; }
-  std::vector<float> returnDxLayTable() const { return dxLayTable; }
-  std::vector<float> returnBdlTable() const { return bdlTable; }
+  float* returnDxLayTable() const { return dxLayTable; }
+  float* returnBdlTable() const { return bdlTable; }
 };
 
 struct TrackHelper{
   VeloState state;
-  //std::array<const VeloUTTracking::Hit*, 4> bestHits = { nullptr, nullptr, nullptr, nullptr};
   VeloUTTracking::Hit bestHits[VeloUTTracking::n_layers];
   int n_hits = 0;
   std::array<float, 4> bestParams;
@@ -115,17 +128,15 @@ private:
     VeloState& trState ) const;
 
   bool getHits(
-	       //std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
     int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
     int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
     const std::array<std::array<int,85>,4>& posLayers,
     VeloUTTracking::HitsSoA *hits_layers,
     const uint32_t n_hits_layers[VeloUTTracking::n_layers],
-    const std::vector<float>& fudgeFactors, 
+    const float* fudgeFactors, 
     VeloState& trState ) const; 
 
   bool formClusters(
-    //const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
     const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
     const int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
     VeloUTTracking::HitsSoA *hits_layers,
@@ -135,12 +146,11 @@ private:
   void prepareOutputTrack(
     const VeloUTTracking::TrackVelo& veloTrack,
     const TrackHelper& helper,
-    //const std::array<std::vector<VeloUTTracking::Hit>,4>& hitsInLayers,
     int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
     int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
     VeloUTTracking::HitsSoA *hits_layers,
     std::vector<VeloUTTracking::TrackUT>& outputTracks,
-    const std::vector<float>& bdlTable) const;
+    const float* bdlTable) const;
 
   // ==============================================================================
   // -- Method to cache some starting points for the search
@@ -202,7 +212,6 @@ private:
     const float invNormFact,
     int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
     int &n_hitCandidatesInLayer
-    //std::vector<VeloUTTracking::Hit>& outHits
     ) const 
   {
     const auto zInit = hits_layers->zAtYEq0( layer_offset + posBeg );
@@ -235,8 +244,6 @@ private:
 
       hits_layers->x[ layer_offset + i ] = xx2;
       hits_layers->z[ layer_offset + i ] = zz;
-
-      //outHits.emplace_back(temp_hit);
 
       hitCandidatesInLayer[n_hitCandidatesInLayer] = i;
       n_hitCandidatesInLayer++;
@@ -326,12 +333,10 @@ private:
 
       helper.bestParams = { qp, chi2TT, xTTFit,xSlopeTTFit };
 
-      //std::copy( hits.begin(), hits.end(), helper.bestHits.begin() );
       for ( int i_hit = 0; i_hit < N; ++i_hit ) {
         helper.bestHits[i_hit] = *(hits[i_hit]);
       }
       helper.n_hits = N;
-      //if( N == 3 ) { helper.bestHits[3] = nullptr ; }
     }
 
   }
