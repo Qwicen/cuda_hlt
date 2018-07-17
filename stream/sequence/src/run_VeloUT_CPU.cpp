@@ -164,7 +164,7 @@ int run_veloUT_on_CPU (
     
     // Prepare Velo tracks
     const int accumulated_tracks = host_accumulated_tracks[i_event];
-    VeloState* velo_states_event = host_velo_states + accumulated_tracks;
+    VeloState* velo_states_event = host_velo_states + 2*accumulated_tracks;
     std::vector<VeloUTTracking::TrackVelo> tracks;
     for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
       
@@ -173,14 +173,14 @@ int run_veloUT_on_CPU (
       VeloUTTracking::TrackUT ut_track;
       const uint starting_hit = host_velo_track_hit_number_pinned[accumulated_tracks + i_track];
       const uint number_of_hits = host_velo_track_hit_number_pinned[accumulated_tracks + i_track + 1] - starting_hit;
-      backward = (int)(velo_states_event[i_track].backward);
+      backward = (int)(velo_states_event[2*i_track].backward);
       ut_track.hitsNum = number_of_hits;
       for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
 	ut_track.LHCbIDs.push_back( host_velo_track_hits_pinned[starting_hit + i_hit].LHCbID );
       }
       track.track = ut_track;
       
-      track.state = ( velo_states_event[i_track] );
+      track.state = ( velo_states_event[2*i_track] );
       
       //////////////////////
       // For tree filling

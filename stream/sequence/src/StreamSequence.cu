@@ -317,7 +317,7 @@ cudaError_t Stream::run_sequence(
        Adjust input types to match PrVeloUT code
     */
     if (mc_check_enabled && i_stream == 0) {
-      /*
+      
       std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
       
       int rv = run_veloUT_on_CPU(
@@ -346,10 +346,11 @@ cudaError_t Stream::run_sequence(
 	trackType); 
       
       delete ut_tracks_events;
-      */
+      
 
 
-      //loop ove events
+      //loop over events
+      
       for(int i = 0; i < number_of_events; i++) {
         std::cout<<"------------------"<<std::endl;
         std::cout <<  host_accumulated_tracks[i] << " "  << host_number_of_tracks[i] << " " << host_number_of_reconstructed_velo_tracks[0] << std::endl;
@@ -390,7 +391,10 @@ cudaError_t Stream::run_sequence(
            // std::cout <<  host_velo_track_hit_number[j] << " " << host_accumulated_number_of_hits_in_velo_tracks[j] << std::endl;
             //std::cout << host_velo_track_hits[host_accumulated_tracks[i] + j ].x << " " << host_velo_track_hits[host_accumulated_tracks[i] + j ].y << " " << host_velo_track_hits[host_accumulated_tracks[i] + j ].z << std::endl; 
           }
-    }
+      }
+      
+
+
     } // mc_check_enabled       
 
 
