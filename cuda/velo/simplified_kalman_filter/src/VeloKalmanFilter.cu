@@ -85,7 +85,7 @@ __global__ void velo_fit(
 
 
       //acumulated tracks gives the number of tracks in all previous events-> element gives position in current event
-      VeloState * state_pointer = dev_velo_states + 2*accumulated_tracks + 2*element +1 ;
+      VeloState * state_pointer = dev_velo_states + VeloTracking::number_of_saved_velo_states * (accumulated_tracks + element) + 1 ;
 
 
 //velo_states = dev_velo_states + accumulated_tracks;
