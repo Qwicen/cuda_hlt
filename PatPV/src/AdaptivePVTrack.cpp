@@ -5,8 +5,8 @@
 
 using namespace std;
 
-
-void linearTransportTo(VeloState  velo_state, double new_z) {
+//pass pointer to state?
+VeloState linearTransportTo(VeloState  velo_state, double new_z) {
     const double dz = new_z - velo_state.z ;
     const double dz2 = dz*dz ;
     velo_state.x += dz * velo_state.tx ;
@@ -16,6 +16,7 @@ void linearTransportTo(VeloState  velo_state, double new_z) {
     velo_state.c20 += dz* velo_state.c22 ;
     velo_state.c11 += dz2* velo_state.c33 + 2* dz*velo_state.c31 ;
     velo_state.c31 += dz* velo_state.c33 ;
+    return velo_state;
   }
 
 
@@ -24,7 +25,7 @@ void linearTransportTo(VeloState  velo_state, double new_z) {
   {
     // get the state
     m_state = track ;
-    m_track = track;
+    
 
     // do here things we could evaluate at z_seed. may add cov matrix here, which'd save a lot of time.
     m_H[0] = 1 ;
@@ -39,10 +40,10 @@ void linearTransportTo(VeloState  velo_state, double new_z) {
   {
     // transport to vtx z
     // still missing!
-    //std::cout << "before transport: " << m_track->position().z << std::endl;
+    std::cout << "before transport: "<< vtx.z << " " << m_state.z << std::endl;
     //std::cout << m_state.y << endl;
-    linearTransportTo(m_state, vtx.z ) ;
-    //std::cout << "after transport: " << m_track->position().z << std::endl;
+    m_state = linearTransportTo(m_state, vtx.z ) ;
+    std::cout << "after transport: " << m_state.z << std::endl;
     //std::cout << m_state.y << endl;
 
     // invert cov matrix

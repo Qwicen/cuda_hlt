@@ -18,10 +18,10 @@
     const XYZPoint&  halfDChi2DX() const { return m_halfDChi2DX ; }
     double chi2() const { return m_chi2 ; }
     double chi2( const XYZPoint& vtx ) const ;
-    VeloState track() const { return m_track ; }
+    VeloState track() const { return m_state ; }
   private:
     double m_weight ;
-     VeloState m_track ;
+    
     VeloState m_state ;
     //express symmetrical amtrices as arrays in in packed representation element m(i,j) (j <= i) is supposed to be in array element  (i * (i + 1)) / 2 + j
 
