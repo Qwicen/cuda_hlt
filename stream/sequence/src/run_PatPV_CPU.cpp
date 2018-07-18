@@ -15,7 +15,7 @@ XYZPoint& seedPoint,
 
 bool reconstructMultiPVFromTracks( VeloState * tracks2use,
                                                        Vertex * outvtxvec, int host_number_of_tracks_pinned,
-  uint * number_of_vertex) 
+  uint * number_of_vertex, int event_number) 
 {
   
 
@@ -57,11 +57,11 @@ bool reconstructMultiPVFromTracks( VeloState * tracks2use,
       
 
       
-      outvtxvec[nvtx_after] = recvtx;
+      outvtxvec[event_number *max_number_vertices + nvtx_after] = recvtx;
       nvtx_after++;
       //removeTracks(rtracks, tracks2remove);
     }//iterate on seeds
-    *number_of_vertex = nvtx_after;
+    number_of_vertex[event_number] = nvtx_after;
   //}//iterate on vtx
 
   return true;
@@ -133,7 +133,7 @@ std::cout << "kalman: " << kalman_states[1].c11 <<std::endl;
 std::cout << "kalman: " << kalman_states[1].c31 <<std::endl;
 std::cout << "least: " << kalman_states[1].c33 <<std::endl;
 
-reconstructMultiPVFromTracks(kalman_states, outvtxvec, host_number_of_tracks_pinned[i_event], number_of_vertex);
+reconstructMultiPVFromTracks(kalman_states, outvtxvec, host_number_of_tracks_pinned[i_event], number_of_vertex, i_event);
 }
 
   return 0;

@@ -344,8 +344,8 @@ cudaError_t Stream::run_sequence(
       
       delete ut_tracks_events;
 
-     Vertex bla[50];
-     uint  number_of_vertex[1];
+     Vertex bla[number_of_events * max_number_vertices];
+     uint  number_of_vertex[number_of_events];
       run_PatPV_on_CPU(
      host_velo_states,
      host_accumulated_tracks,
@@ -357,9 +357,13 @@ cudaError_t Stream::run_sequence(
      number_of_vertex
          );
 
-      for(uint i = 0; i < *number_of_vertex; i++) {
-        std::cout << "vertex " << i << " " << bla[i].pos.x << " " << bla[i].pos.y << " " << bla[i].pos.z << std::endl;
+    for(int i_event = 0; i_event < number_of_events; i_event++) {
+      std::cout << "event number " << i_event << std::endl;
+      for(uint i = 0; i < number_of_vertex[i_event]; i++) {
+        int index = i_event  *max_number_vertices + i;
+        std::cout << std::setprecision(4) << "vertex " << i << " " << bla[index].pos.x << " " << bla[index].pos.y << " " << bla[index].pos.z << std::endl;
       }
+    }
       
 
 
@@ -373,7 +377,8 @@ cudaError_t Stream::run_sequence(
         
         //loop over tracks in event
         const int accumulated_tracks = host_accumulated_tracks[i];
-        for(int j = 0; j < host_number_of_tracks[i]; j++)
+        //for(int j = 0; j < host_number_of_tracks[i]; j++)
+        for(int j = 0; j < 3; j++)
           {
             
             std::cout << "track number " << j << std::endl;

@@ -5,7 +5,8 @@
 #include "../../velo/common/include/VeloDefinitions.cuh"
 
 
-
+//maximum number of vertices in a event
+static constexpr uint max_number_vertices = 30;
 
 
 // auxiliary class for searching of clusters of tracks
