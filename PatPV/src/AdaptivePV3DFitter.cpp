@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "../include/AdaptivePV3DFitter.h"
-#include "../../PrVeloUT/include/CholeskyDecomp.h"
+//#include "../../PrVeloUT/include/CholeskyDecomp.h"
 
 
 
@@ -111,10 +111,43 @@ bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
     }
 
     // compute the new vertex covariance
+    /*
     for(int i = 0; i < 6; i++) vtxcov[i] = halfD2Chi2DX2[i] ;
     ROOT::Math::CholeskyDecomp<float, 3> decomp(vtxcov);
     if( !decomp ) return false;
     decomp.Invert(vtxcov);
+    */
+/*
+    const double li21 = -halfD2Chi2DX2[1] * halfD2Chi2DX2[0] * halfD2Chi2DX2[2];
+    const double li32 = -halfD2Chi2DX2[4] * halfD2Chi2DX2[2] * halfD2Chi2DX2[5];
+    const double li31 = (halfD2Chi2DX2[1] * halfD2Chi2DX2[4] * halfD2Chi2DX2[2] - halfD2Chi2DX2[3]) * halfD2Chi2DX2[0] * halfD2Chi2DX2[5];
+
+    vtxcov[0] = li31*li31 + li21*li21 + halfD2Chi2DX2[0]*halfD2Chi2DX2[0];
+    vtxcov[1] = li31*li32 + li21*halfD2Chi2DX2[2];
+    vtxcov[2] = li32*li32 + halfD2Chi2DX2[2]*halfD2Chi2DX2[2];
+    vtxcov[3] = li31*halfD2Chi2DX2[5];
+    vtxcov[4] = li32*halfD2Chi2DX2[5];
+    vtxcov[5] = halfD2Chi2DX2[5]*halfD2Chi2DX2[5];
+*/
+
+    //repalce Cholesky inverter by analytical solution
+    double a00 = halfD2Chi2DX2[0];
+    double a10 = halfD2Chi2DX2[1];
+    double a11 = halfD2Chi2DX2[2];
+    double a20 = halfD2Chi2DX2[3];
+    double a21 = halfD2Chi2DX2[4];
+    double a22 = halfD2Chi2DX2[5];
+
+    double det = a00 * (a22 * a11 - a21 * a21) - a10 * (a22 * a10 - a21 * a20) + a20 * (a21*a10 - a11*a20);
+    if (det == 0) return false;
+
+
+   vtxcov[0] = (a22*a11 - a21*a21) / det;
+   vtxcov[1] = -(a22*a10-a20*a21) / det;
+   vtxcov[2] = (a22*a00-a20*a20) / det;
+   vtxcov[3] = (a21*a10-a20*a11) / det;
+   vtxcov[4] = -(a21*a00-a20*a10) / det;
+   vtxcov[5] = (a11*a00-a10*a10) / det;
 
     
 
