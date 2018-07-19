@@ -11,6 +11,7 @@
 
 namespace VeloUTTracking {
 
+  static constexpr int num_atomics = 2;
   
   /* Detector description
      There are two stations with two layers each 
