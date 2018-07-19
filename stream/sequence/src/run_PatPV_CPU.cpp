@@ -264,8 +264,9 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   //again, loop over events/files
   //loop first over rec vertices, hten over files/events
   int i_event = 0;
+  std::cout << "start comparison" << std::endl;
   for(auto vtx_vec : events_vertices) {
-    std::cout << "-----------" << std::endl; 
+    //std::cout << "-----------" << std::endl; 
     for(uint i = 0; i < number_of_vertex[i_event]; i++) {
       int index = i_event  *max_number_vertices + i;
       //std::cout << std::setprecision(4) << "vertex " << i << " " << rec_vertex[index].pos.x << " " << rec_vertex[index].pos.y << " " << rec_vertex[index].pos.z << std::endl;
@@ -276,9 +277,12 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
         for (auto vtx : vtx_vec) {
           if(vtx.numberTracks < 4) continue;
           //number_reconstructible_vertices++;
-          std::cout <<"compare vertex positions: " << rec_vertex[index].pos.z << " " << vtx.z << " " << 5. * rec_vertex[index].cov[5] << std::endl;
-          if(abs(rec_vertex[index].pos.z - vtx.z) <  5. * rec_vertex[index].cov[5]) {
+          
+          //don't forget that covariance is sigma squared!
+          if(abs(rec_vertex[index].pos.z - vtx.z) <  5. * sqrt(rec_vertex[index].cov[5])) {
           //if(abs(rec_vertex[index].pos.z - vtx.z) <  1.) {
+            //std::cout<< std::setprecision(4) <<"compare vertex positions: " << rec_vertex[index].pos.z << " " << vtx.z << " " <<  rec_vertex[index].cov[5] << std::endl;
+            std::cout<< std::setprecision(4)  << rec_vertex[index].pos.z << " " << vtx.z << " " <<  rec_vertex[index].cov[5] << std::endl;
             number_reconstructed_vertices++;
             matched = true;
             break;
@@ -288,8 +292,9 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
       }
     i_event++;
   }
+  std::cout << "end comparison" << std::endl;
 
-  std::cout << "found " << number_reconstructed_vertices << " / " << number_reconstructible_vertices << " vertices! -> efficiency: " << number_reconstructed_vertices / number_reconstructible_vertices << std::endl; 
+  std::cout << "found " << number_reconstructed_vertices << " / " << number_reconstructible_vertices << " vertices! -> efficiency: " << (double)number_reconstructed_vertices / (double)number_reconstructible_vertices << std::endl; 
   std::cout << "fakes: " << number_fake_vertices << std::endl;
     
     

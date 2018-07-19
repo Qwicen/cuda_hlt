@@ -40,3 +40,4 @@ int run_PatPV_on_CPU (
   uint * number_of_vertex
 );
 
+void checkPVs(  const std::string& folder_name_MC,  const bool& fromNtuple, uint number_of_files, Vertex * rec_vertex, uint* number_of_vertex);

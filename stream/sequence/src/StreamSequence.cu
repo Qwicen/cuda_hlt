@@ -357,6 +357,9 @@ cudaError_t Stream::run_sequence(
      number_of_vertex
          );
 
+     checkPVs(folder_name_MC, true, number_of_events, bla, number_of_vertex);
+
+
     for(int i_event = 0; i_event < number_of_events; i_event++) {
       std::cout << "event number " << i_event << std::endl;
       for(uint i = 0; i < number_of_vertex[i_event]; i++) {
@@ -378,6 +381,7 @@ cudaError_t Stream::run_sequence(
         //loop over tracks in event
         const int accumulated_tracks = host_accumulated_tracks[i];
         //for(int j = 0; j < host_number_of_tracks[i]; j++)
+        /*
         for(int j = 0; j < 3; j++)
           {
             
@@ -406,6 +410,7 @@ cudaError_t Stream::run_sequence(
            // std::cout <<  host_velo_track_hit_number[j] << " " << host_accumulated_number_of_hits_in_velo_tracks[j] << std::endl;
             //std::cout << host_velo_track_hits[host_accumulated_tracks[i] + j ].x << " " << host_velo_track_hits[host_accumulated_tracks[i] + j ].y << " " << host_velo_track_hits[host_accumulated_tracks[i] + j ].z << std::endl; 
           }
+          */
       }
       
       
