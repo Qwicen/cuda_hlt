@@ -14,8 +14,8 @@ __host__ __device__ VeloUTTracking::Hit VeloUTTracking::createHit( HitsSoA *hits
     hit.m_highThreshold = hits_layers->highThreshold(layer_offset + i_hit);
     hit.m_LHCbID = hits_layers->LHCbID(layer_offset + i_hit);
     hit.m_planeCode = hits_layers->planeCode(layer_offset + i_hit);
-    hit.x = hits_layers->x[layer_offset + i_hit];
-    hit.z = hits_layers->z[layer_offset + i_hit];
+    //hit.x = hits_layers->x[layer_offset + i_hit];
+    //hit.z = hits_layers->z[layer_offset + i_hit];
     
     return hit;
   }

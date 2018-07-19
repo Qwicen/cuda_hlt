@@ -130,6 +130,11 @@ int main(int argc, char *argv[])
     return -1;
   }
 
+  if ( do_check && !mc_check_enabled){
+    std::cerr << "Not compiled with -DMC_CHECK=ON, but requesting check" << std::endl;
+    return -1;
+  }
+
   // Set verbosity level
   std::cout << std::fixed << std::setprecision(2);
   logger::ll.verbosityLevel = verbosity;

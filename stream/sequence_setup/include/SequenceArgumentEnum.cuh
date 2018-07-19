@@ -52,6 +52,6 @@ enum arg_enum_t {
   dev_velo_states,
   dev_ut_hits,
   dev_veloUT_tracks,
-  dev_n_veloUT_tracks
+  dev_atomics_veloUT
 };
 }
