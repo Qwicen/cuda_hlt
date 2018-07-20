@@ -50,6 +50,10 @@ void StreamWrapper::run_stream(
   uint* host_velopix_event_offsets_pinned,
   const size_t velopix_events_size,
   const size_t velopix_event_offsets_size,
+  char* host_ft_events_pinned,
+  uint* host_ft_event_offsets_pinned,
+  const size_t ft_events_size,
+  const size_t ft_event_offsets_size,
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -59,6 +63,10 @@ void StreamWrapper::run_stream(
     host_velopix_event_offsets_pinned,
     velopix_events_size,
     velopix_event_offsets_size,
+    host_ft_events_pinned,
+    host_ft_event_offsets_pinned,
+    ft_events_size,
+    ft_event_offsets_size,
     number_of_events,
     number_of_repetitions
   );

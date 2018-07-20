@@ -75,10 +75,14 @@ struct Stream {
   );
   
   cudaError_t run_sequence(
-    const char* host_events,
-    const uint* host_event_offsets,
-    const size_t host_events_size,
-    const size_t host_event_offsets_size,
+    const char* host_velopix_events,
+    const uint* host_velopix_event_offsets,
+    const size_t host_velopix_events_size,
+    const size_t host_velopix_event_offsets_size,
+    char* host_ft_events_pinned,
+    uint* host_ft_event_offsets_pinned,
+    const size_t ft_events_size,
+    const size_t ft_event_offsets_size,
     const uint number_of_events,
     const uint number_of_repetitions
   );

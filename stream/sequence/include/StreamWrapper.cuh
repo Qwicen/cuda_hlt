@@ -46,6 +46,10 @@ struct StreamWrapper {
     uint* host_velopix_event_offsets_pinned,
     const size_t velopix_events_size,
     const size_t velopix_event_offsets_size,
+    char* host_ft_events_pinned,
+    uint* host_ft_event_offsets_pinned,
+    const size_t ft_events_size,
+    const size_t ft_event_offsets_size,
     const uint number_of_events,
     const uint number_of_repetitions
   );

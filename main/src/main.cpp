@@ -225,6 +225,10 @@ int main(int argc, char *argv[])
         host_velopix_event_offsets_pinned,
         velopix_events.size(),
         velopix_event_offsets.size(),
+        host_ft_events_pinned,
+        host_ft_event_offsets_pinned,
+        ft_events.size(),
+        ft_event_offsets.size(),
         number_of_events,
         number_of_repetitions
       );
