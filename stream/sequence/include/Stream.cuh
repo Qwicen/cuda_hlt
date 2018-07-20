@@ -62,8 +62,6 @@ struct Stream {
   std::string folder_name_MC;
 
   cudaError_t initialize(
-    const std::vector<char>& raw_events,
-    const std::vector<uint>& event_offsets,
     const std::vector<char>& geometry,
     const uint max_number_of_events,
     const bool param_transmit_host_to_device,

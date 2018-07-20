@@ -5,8 +5,6 @@
 
 void StreamWrapper::initialize_streams(
   const uint n,
-  const std::vector<char>& velopix_events,
-  const std::vector<uint>& velopix_event_offsets,
   const std::vector<char>& geometry,
   const uint number_of_events,
   const bool transmit_host_to_device,
@@ -23,8 +21,6 @@ void StreamWrapper::initialize_streams(
 
   for (int i=0; i<streams.size(); ++i) {
     streams[i]->initialize(
-      velopix_events,
-      velopix_event_offsets,
       geometry,
       number_of_events,
       transmit_host_to_device,

@@ -26,8 +26,6 @@ struct StreamWrapper {
    */
   void initialize_streams(
     const uint n,
-    const std::vector<char>& velopix_events,
-    const std::vector<uint>& velopix_event_offsets,
     const std::vector<char>& geometry,
     const uint number_of_events,
     const bool transmit_host_to_device,

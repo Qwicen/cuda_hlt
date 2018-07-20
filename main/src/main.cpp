@@ -202,8 +202,6 @@ int main(int argc, char *argv[])
   const auto number_of_events = velopix_event_offsets.size() - 1;
   stream_wrapper.initialize_streams(
     tbb_threads,
-    velopix_events,
-    velopix_event_offsets,
     geometry,
     number_of_events,
     transmit_host_to_device,
