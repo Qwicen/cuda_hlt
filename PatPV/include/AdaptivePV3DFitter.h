@@ -6,7 +6,7 @@
 #include "AdaptivePVTrack.h"
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../cuda/patPV/include/patPV_Definitions.cuh"
-
+using namespace PatPV ;
 
 /*
 struct State {

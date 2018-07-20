@@ -4,6 +4,8 @@
 #include <vector>
 #include "../../velo/common/include/VeloDefinitions.cuh"
 
+namespace PatPV {
+
 
 //maximum number of vertices in a event
 static constexpr uint max_number_vertices = 30;
@@ -82,5 +84,8 @@ class Vertex {
       weights.push_back(weight);
     };
 };
+
+
+}
 
 #endif DEFINITIONS_H
