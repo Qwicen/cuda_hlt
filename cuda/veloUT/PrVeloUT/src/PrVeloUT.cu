@@ -259,7 +259,7 @@ __host__ __device__ bool formClusters(
 //=========================================================================
 __host__ __device__ void prepareOutputTrack(
   const uint* velo_track_hit_number,   
-  const VeloTracking::Hit<true>* velo_track_hits,
+  const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
   const int accumulated_tracks_event,
   const int i_Velo_track,
   const TrackHelper& helper,
@@ -321,61 +321,67 @@ __host__ __device__ void prepareOutputTrack(
 
   if( p < PrVeloUTConst::minMomentum || pt < PrVeloUTConst::minPT ) return;
 
-  const float txUT = helper.bestParams[3];
-
-  VeloUTTracking::TrackUT track;
-  track.hitsNum = 0;
-  const uint starting_hit = velo_track_hit_number[accumulated_tracks_event + i_Velo_track];
-  const uint number_of_hits = velo_track_hit_number[accumulated_tracks_event + i_Velo_track + 1] - starting_hit;
-  for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
-    track.addLHCbID( velo_track_hits[starting_hit + i_hit].LHCbID );
-    assert( track.hitsNum < VeloUTTracking::max_track_size);
-  }
-  track.set_qop( qop );
-  
-  // Adding overlap hits
-  for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
-    const VeloUTTracking::Hit hit = helper.bestHits[i_hit];
-    
-    track.addLHCbID( hit.LHCbID() );
-    assert( track.hitsNum < VeloUTTracking::max_track_size);
-
-    const int planeCode = hit.planeCode();
-    const float xhit = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
-    const int layer_offset = hits_layers->layer_offset[ planeCode ];
-    const int hit_index = hitCandidatesInLayers[planeCode][ hitCandidateIndices[i_hit] ];
-    const float zhit = hits_layers->zAtYEq0( layer_offset + hit_index );
-
-    for ( int i_ohit = 0; i_ohit < n_hitCandidatesInLayers[planeCode]; ++i_ohit ) {
-      const int ohit_index = hitCandidatesInLayers[planeCode][i_ohit];
-      const float zohit  = hits_layers->zAtYEq0( layer_offset + ohit_index );
- 
-      if(zohit==zhit) continue;
-
-      const float xohit = x_pos_layers[ planeCode ][ i_ohit];
-      const float xextrap = xhit + txUT*(zhit-zohit);
-      if( xohit-xextrap < -PrVeloUTConst::overlapTol) continue;
-      if( xohit-xextrap > PrVeloUTConst::overlapTol) break;
-    
-      track.addLHCbID( hits_layers->LHCbID(layer_offset + ohit_index) );
-      assert( track.hitsNum < VeloUTTracking::max_track_size);
-      
-      // -- only one overlap hit
-      break;
-    }
-  }
-
 #ifdef __CUDA_ARCH__
   uint n_tracks = atomicAdd(n_veloUT_tracks, 1);
-  assert( n_tracks < VeloUTTracking::max_num_tracks );
-  VeloUT_tracks[n_tracks] = track;
-// #else
+  //assert( n_tracks < VeloUTTracking::max_num_tracks );
+ // #else
 //   assert( *n_veloUT_tracks < VeloUTTracking::max_num_tracks );
 //   VeloUT_tracks[*n_veloUT_tracks] = track;
 //   (*n_veloUT_tracks)++;
 #endif
+
+  
+  const float txUT = helper.bestParams[3];
+
+  if (mc_check_enabled) {
+    VeloUTTracking::TrackUT track;
+    track.hitsNum = 0;
+    const uint starting_hit = velo_track_hit_number[accumulated_tracks_event + i_Velo_track];
+    const uint number_of_hits = velo_track_hit_number[accumulated_tracks_event + i_Velo_track + 1]  - starting_hit;
+    for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
+      track.addLHCbID( velo_track_hits[starting_hit + i_hit].LHCbID );
+      assert( track.hitsNum < VeloUTTracking::max_track_size);
+    }
+    track.set_qop( qop );
     
-   /*
+    // Adding overlap hits
+    for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
+      const VeloUTTracking::Hit hit = helper.bestHits[i_hit];
+      
+      track.addLHCbID( hit.LHCbID() );
+      assert( track.hitsNum < VeloUTTracking::max_track_size);
+      
+      const int planeCode = hit.planeCode();
+      const float xhit = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
+      const int layer_offset = hits_layers->layer_offset[ planeCode ];
+      const int hit_index = hitCandidatesInLayers[planeCode][ hitCandidateIndices[i_hit] ];
+      const float zhit = hits_layers->zAtYEq0( layer_offset + hit_index );
+      
+      for ( int i_ohit = 0; i_ohit < n_hitCandidatesInLayers[planeCode]; ++i_ohit ) {
+        const int ohit_index = hitCandidatesInLayers[planeCode][i_ohit];
+        const float zohit  = hits_layers->zAtYEq0( layer_offset + ohit_index );
+        
+        if(zohit==zhit) continue;
+        
+        const float xohit = x_pos_layers[ planeCode ][ i_ohit];
+        const float xextrap = xhit + txUT*(zhit-zohit);
+        if( xohit-xextrap < -PrVeloUTConst::overlapTol) continue;
+        if( xohit-xextrap > PrVeloUTConst::overlapTol) break;
+        
+        track.addLHCbID( hits_layers->LHCbID(layer_offset + ohit_index) );
+        assert( track.hitsNum < VeloUTTracking::max_track_size);
+        
+        // -- only one overlap hit
+        break;
+      }
+    }
+#ifdef __CUDA_ARCH__
+    assert( n_tracks < VeloUTTracking::max_num_tracks );
+    VeloUT_tracks[n_tracks] = track;
+#endif
+  }
+
+  /*
   outTr.x = helper.state.x;
   outTr.y = helper.state.y;
   outTr.z = helper.state.z;
