@@ -56,7 +56,6 @@ __global__ void veloUT(
 
      // for storing calculated x and z positions of hits for this track
     float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
-    float z_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
 
     
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
@@ -66,7 +65,6 @@ __global__ void veloUT(
           hitCandidatesInLayers,
           n_hitCandidatesInLayers,
           x_pos_layers,
-          z_pos_layers,
           posLayers,
           hits_layers_event,
           fudgeFactors,
@@ -83,7 +81,6 @@ __global__ void veloUT(
           hitCandidatesInLayers,
           n_hitCandidatesInLayers,
           x_pos_layers,
-          z_pos_layers,
           hitCandidateIndices,
           hits_layers_event,
           helper,
@@ -94,7 +91,6 @@ __global__ void veloUT(
         hitCandidatesInLayers,
         n_hitCandidatesInLayers,
         x_pos_layers,
-        z_pos_layers,
         hitCandidateIndices,
         hits_layers_event,
         helper,
@@ -112,7 +108,6 @@ __global__ void veloUT(
         n_hitCandidatesInLayers,
         hits_layers_event,
         x_pos_layers,
-        z_pos_layers,
         hitCandidateIndices,
         veloUT_tracks_event,
         n_veloUT_tracks_event,

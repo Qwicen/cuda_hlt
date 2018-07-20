@@ -46,7 +46,6 @@ __host__ __device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  float z_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int posLayers[4][85],
   VeloUTTracking::HitsSoA *hits_layers,
   const float* fudgeFactors, 
@@ -122,7 +121,7 @@ __host__ __device__ bool getHits(
         hits_layers, layer_offset, layer,
         trState, xTol*invNormFact, invNormFact,
         hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer],
-        x_pos_layers, z_pos_layers);
+        x_pos_layers);
 
       nLayers += int( !( n_hitCandidatesInLayers[layer] == 0 ) );
     }
@@ -138,7 +137,6 @@ __host__ __device__ bool formClusters(
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const float z_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int bestHitCandidateIndices[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
   TrackHelper& helper,
@@ -161,14 +159,16 @@ __host__ __device__ bool formClusters(
 
     const int hit_index0    = hitCandidatesInLayers[ layers[0] ][i_hit0];
     const float xhitLayer0  = x_pos_layers[layers[0]][i_hit0];
-    const float zhitLayer0  = z_pos_layers[layers[0]][i_hit0];
+    const int layer_offset0 = hits_layers->layer_offset[ layers[0] ];
+    const float zhitLayer0  = hits_layers->zAtYEq0( layer_offset0 + hit_index0 );
     hitCandidateIndices[0] = i_hit0;
     
     for ( int i_hit2 = 0; i_hit2 < n_hitCandidatesInLayers[ layers[2] ]; ++i_hit2 ) {
       
       const int hit_index2    = hitCandidatesInLayers[ layers[2] ][i_hit2];
       const float xhitLayer2  = x_pos_layers[layers[2]][i_hit2];
-      const float zhitLayer2  = z_pos_layers[layers[2]][i_hit2];
+      const int layer_offset2 = hits_layers->layer_offset[ layers[2] ];
+      const float zhitLayer2  = hits_layers->zAtYEq0( layer_offset2 + hit_index2 );
       hitCandidateIndices[2] = i_hit2;
       
       const float tx = (xhitLayer2 - xhitLayer0)/(zhitLayer2 - zhitLayer0);
@@ -180,8 +180,9 @@ __host__ __device__ bool formClusters(
 
         const int hit_index1    = hitCandidatesInLayers[ layers[1] ][i_hit1];
         const float xhitLayer1  = x_pos_layers[layers[1]][i_hit1];
-        const float zhitLayer1  = z_pos_layers[layers[1]][i_hit1];
-    
+        const int layer_offset1 = hits_layers->layer_offset[ layers[1] ];
+        const float zhitLayer1  = hits_layers->zAtYEq0( layer_offset1 + hit_index1 );
+       
         const float xextrapLayer1 = xhitLayer0 + tx*(zhitLayer1-zhitLayer0);
         if(std::abs(xhitLayer1 - xextrapLayer1) < hitTol){
           hitTol = std::abs(xhitLayer1 - xextrapLayer1);
@@ -202,8 +203,9 @@ __host__ __device__ bool formClusters(
 
         const int hit_index3    = hitCandidatesInLayers[ layers[3] ][i_hit3];
         const float xhitLayer3  = x_pos_layers[layers[3]][i_hit3];
-        const float zhitLayer3  = z_pos_layers[layers[3]][i_hit3];
-    
+        const int layer_offset3 = hits_layers->layer_offset[ layers[3] ];
+        const float zhitLayer3  = hits_layers->zAtYEq0( layer_offset3 + hit_index3 );
+        
         const float xextrapLayer3 = xhitLayer2 + tx*(zhitLayer3-zhitLayer2);
         if(std::abs(xhitLayer3 - xextrapLayer3) < hitTol){
           hitTol = std::abs(xhitLayer3 - xextrapLayer3);
@@ -221,7 +223,7 @@ __host__ __device__ bool formClusters(
         VeloUTTracking::Hit hit0 = VeloUTTracking::createHit(hits_layers, layers[0], hit_index0);
         VeloUTTracking::Hit hit2 = VeloUTTracking::createHit(hits_layers, layers[2], hit_index2);
         const VeloUTTracking::Hit* hits4fit[4] = {&hit0, &bestHit1, &hit2, &bestHit3};
-        simpleFit<4>(hits4fit, x_pos_layers, z_pos_layers, hitCandidateIndices, bestHitCandidateIndices, helper);
+        simpleFit<4>(hits4fit, x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, hits_layers, helper);
         
         if(!fourLayerSolution && helper.n_hits > 0){
           fourLayerSolution = true;
@@ -234,7 +236,7 @@ __host__ __device__ bool formClusters(
         VeloUTTracking::Hit hit0 = VeloUTTracking::createHit(hits_layers, layers[0], hit_index0);
         VeloUTTracking::Hit hit2 = VeloUTTracking::createHit(hits_layers, layers[2], hit_index2);
         const VeloUTTracking::Hit* hits4fit[3] = {&hit0, &bestHit1, &hit2};
-        simpleFit<3>(hits4fit, x_pos_layers, z_pos_layers, hitCandidateIndices, bestHitCandidateIndices, helper);
+        simpleFit<3>(hits4fit, x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, hits_layers, helper);
         continue;
       }
       // -- Nothing found in layer 1
@@ -243,7 +245,7 @@ __host__ __device__ bool formClusters(
         VeloUTTracking::Hit hit0 = VeloUTTracking::createHit(hits_layers, layers[0], hit_index0);
         VeloUTTracking::Hit hit2 = VeloUTTracking::createHit(hits_layers, layers[2], hit_index2);
         const VeloUTTracking::Hit* hits4fit[3] = {&hit0, &bestHit3, &hit2};
-        simpleFit<3>(hits4fit, x_pos_layers, z_pos_layers, hitCandidateIndices, bestHitCandidateIndices, helper);
+        simpleFit<3>(hits4fit, x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, hits_layers, helper);
         continue;
       }
       
@@ -265,7 +267,6 @@ __host__ __device__ void prepareOutputTrack(
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const float z_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int hitCandidateIndices[VeloUTTracking::n_layers],
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
   int* n_veloUT_tracks,
@@ -341,13 +342,14 @@ __host__ __device__ void prepareOutputTrack(
 
     const int planeCode = hit.planeCode();
     const float xhit = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
-    const float zhit = z_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
-    
+    const int layer_offset = hits_layers->layer_offset[ planeCode ];
+    const int hit_index = hitCandidatesInLayers[planeCode][ hitCandidateIndices[i_hit] ];
+    const float zhit = hits_layers->zAtYEq0( layer_offset + hit_index );
+
     for ( int i_ohit = 0; i_ohit < n_hitCandidatesInLayers[planeCode]; ++i_ohit ) {
       const int ohit_index = hitCandidatesInLayers[planeCode][i_ohit];
-      const int layer_offset = hits_layers->layer_offset[planeCode];
-      const float zohit = z_pos_layers[ planeCode ][ i_ohit ];
-      
+      const float zohit  = hits_layers->zAtYEq0( layer_offset + ohit_index );
+ 
       if(zohit==zhit) continue;
 
       const float xohit = x_pos_layers[ planeCode ][ i_ohit];
@@ -463,8 +465,7 @@ __host__ __device__ void findHits(
   const float invNormFact,
   int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
   int &n_hitCandidatesInLayer,
-  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  float z_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer] )
+  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer])
 {
   const auto zInit = hits_layers->zAtYEq0( layer_offset + posBeg );
   const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
@@ -496,7 +497,6 @@ __host__ __device__ void findHits(
         
     hitCandidatesInLayer[n_hitCandidatesInLayer] = i;
     x_pos_layers[i_layer][n_hitCandidatesInLayer] = xx2;
-    z_pos_layers[i_layer][n_hitCandidatesInLayer] = zz;
     
     n_hitCandidatesInLayer++;
 
@@ -516,15 +516,18 @@ __host__ __device__ void addHits(
   float* rhs,
   const VeloUTTracking::Hit** hits,
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const float z_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int hitCandidateIndices[VeloUTTracking::n_layers],
+  const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  VeloUTTracking::HitsSoA *hits_layers,
   const int n_hits ) {
   for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
     const VeloUTTracking::Hit* hit = hits[i_hit];
     const int planeCode = hit->planeCode();
     const float ui = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
     const float ci = hit->cosT();
-    const float z  = z_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
+    const int layer_offset = hits_layers->layer_offset[ planeCode ];
+    const int hit_index = hitCandidatesInLayers[planeCode][ hitCandidateIndices[i_hit] ];
+    const float z  = hits_layers->zAtYEq0( layer_offset + hit_index );
     const float dz = 0.001*(z - PrVeloUTConst::zMidUT);
     const float wi = hit->weight();
 
@@ -542,13 +545,16 @@ __host__ __device__ void addChi2s(
   float& chi2 ,
   const VeloUTTracking::Hit** hits,
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const float z_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int hitCandidateIndices[VeloUTTracking::n_layers],
+  const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  VeloUTTracking::HitsSoA *hits_layers,
   const int n_hits ) {
   for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
     const VeloUTTracking::Hit* hit = hits[i_hit];
     const int planeCode = hit->planeCode();
-    const float zd = z_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
+    const int layer_offset = hits_layers->layer_offset[ planeCode ];
+    const int hit_index = hitCandidatesInLayers[planeCode][ hitCandidateIndices[i_hit] ];
+    const float zd = hits_layers->zAtYEq0( layer_offset + hit_index );
     const float xd = xUTFit + xSlopeUTFit*(zd-PrVeloUTConst::zMidUT);
     const float x  = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
     const float du = xd - x;
