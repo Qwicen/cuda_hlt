@@ -11,7 +11,7 @@
 
 namespace VeloUTTracking {
 
-  static constexpr int num_atomics = 3;
+  static constexpr int num_atomics = 2;
   
   /* Detector description
      There are two stations with two layers each 
@@ -54,8 +54,6 @@ namespace VeloUTTracking {
     int   m_highThreshold[max_numhits_per_event];
     unsigned int m_LHCbID[max_numhits_per_event];
     int m_planeCode[max_numhits_per_event];
-    // float x[max_numhits_per_event]; // calculated during VeloUT tracking
-    // float z[max_numhits_per_event]; // calculated during VeloUT tracking
 
     
     __host__ __device__ inline float cos(const int i_hit) const { return m_cos[i_hit]; }
@@ -92,9 +90,6 @@ namespace VeloUTTracking {
   };
 
   struct Hit {
-    
-    // float x; // calculated during VeloUT tracking
-    // float z; // calculated during VeloUT tracking
     
     float m_cos;     
     float m_weight;  ///< The hit weight^2 (1/error^2)

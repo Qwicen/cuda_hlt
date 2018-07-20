@@ -295,17 +295,6 @@ cudaError_t Stream::run_sequence(
 
     debug_cout << "n tracks first event = " << *(host_atomics_veloUT+1) << std::endl;
 
-    /* debugging */
-    std::ofstream myfile;
-    myfile.open ("n_veloUT_tracks.txt");
-    for ( int i_event = 0; i_event < number_of_events; ++i_event) {
-      int* n_velo_tracks_in_UT = host_atomics_veloUT + number_of_events + i_event;
-      int* n_veloUT_tracks = host_atomics_veloUT + i_event;
-      myfile << "At event \t" << i_event << ", # in UT = \t" << *n_velo_tracks_in_UT << ", # veloUT  = \t" << *n_veloUT_tracks << std::endl;
-    }
-    myfile.close();
-    
-    
     ///////////////////////
     // Monte Carlo Check //
     ///////////////////////

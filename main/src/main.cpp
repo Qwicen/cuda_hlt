@@ -165,6 +165,12 @@ int main(int argc, char *argv[])
     << " run checkers (-c): " << do_check << std::endl
     << std::endl;
 
+  if ( do_check && !mc_check_enabled){
+    std::cerr << "Not compiled with -DMC_CHECK=ON, but requesting check" << std::endl;
+    return -1;
+  }
+
+  
   // Read velopix raw data 
   std::vector<char> velopix_events;
   std::vector<unsigned int> velopix_event_offsets;
