@@ -72,7 +72,7 @@ __host__ __device__ bool formClusters(
 
 __host__ __device__ void prepareOutputTrack(
   const uint* velo_track_hit_number,
-  const VeloTracking::Hit<true>* velo_track_hits,
+  const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
   const int accumulated_tracks_event,
   const int i_track,
   const TrackHelper& helper,
