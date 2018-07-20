@@ -45,7 +45,6 @@ __global__ void veloUT(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers];
   
-  //for ( int i_track = 0; i_track < number_of_tracks_event; ++i_track ) {
   for ( int i = 0; i < (number_of_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
     const int i_track = i * blockDim.x + threadIdx.x;
     if ( i_track >= number_of_tracks_event ) continue;
@@ -54,6 +53,11 @@ __global__ void veloUT(
     
     if( !veloTrackInUTAcceptance( velo_states_event[i_track] ) ) continue;
     atomicAdd(n_velo_tracks_in_UT_event, 1);
+
+     // for storing calculated x and z positions of hits for this track
+    float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
+    float z_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
+
     
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
@@ -61,6 +65,8 @@ __global__ void veloUT(
     if( !getHits(
           hitCandidatesInLayers,
           n_hitCandidatesInLayers,
+          x_pos_layers,
+          z_pos_layers,
           posLayers,
           hits_layers_event,
           fudgeFactors,
@@ -68,11 +74,17 @@ __global__ void veloUT(
         ) continue;
     
     TrackHelper helper(velo_states_event[i_track]);
+
+    // indices within hitCandidatesInLayers for selected hits belonging to best track 
+    int hitCandidateIndices[VeloUTTracking::n_layers];
     
     // go through UT layers in forward direction
     if( !formClusters(
           hitCandidatesInLayers,
           n_hitCandidatesInLayers,
+          x_pos_layers,
+          z_pos_layers,
+          hitCandidateIndices,
           hits_layers_event,
           helper,
           true) ){
@@ -81,6 +93,9 @@ __global__ void veloUT(
       formClusters(
         hitCandidatesInLayers,
         n_hitCandidatesInLayers,
+        x_pos_layers,
+        z_pos_layers,
+        hitCandidateIndices,
         hits_layers_event,
         helper,
         false);
@@ -96,16 +111,14 @@ __global__ void veloUT(
         hitCandidatesInLayers,
         n_hitCandidatesInLayers,
         hits_layers_event,
+        x_pos_layers,
+        z_pos_layers,
+        hitCandidateIndices,
         veloUT_tracks_event,
         n_veloUT_tracks_event,
         bdlTable);
     }
     
-  } // tracks
-  
-  //printf("event %u has %u tracks \n", event_number, *n_veloUT_tracks_event);
-  // for ( int i_track = 0; i_track < *n_veloUT_tracks_event; ++i_track ) {
-  //   printf("in event %u, at track %u, # of hits = %u \n", event_number, i_track, veloUT_tracks_event[i_track].hitsNum);
-  // }
-  
+  } // velo tracks
+ 
 }

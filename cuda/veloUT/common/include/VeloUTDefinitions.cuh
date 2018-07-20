@@ -54,8 +54,6 @@ namespace VeloUTTracking {
     int   m_highThreshold[max_numhits_per_event];
     unsigned int m_LHCbID[max_numhits_per_event];
     int m_planeCode[max_numhits_per_event];
-    float x[max_numhits_per_event]; // calculated during VeloUT tracking
-    float z[max_numhits_per_event]; // calculated during VeloUT tracking
 
     
     __host__ __device__ inline float cos(const int i_hit) const { return m_cos[i_hit]; }
