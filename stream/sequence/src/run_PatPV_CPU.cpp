@@ -33,7 +33,7 @@ bool reconstructMultiPVFromTracks( VeloState * tracks2use,
   
 
     
-
+  //PatPv::max_number_vertices
 
   int nvtx_before = -1;
   int nvtx_after  =  0;
@@ -45,8 +45,12 @@ bool reconstructMultiPVFromTracks( VeloState * tracks2use,
 
 
   AdaptivePV3DFitter fitter;
-  std::vector<XYZPoint> seeds = seedtool.getSeeds(rtracks, beamspot, host_number_of_tracks_pinned);
-    for ( auto seed : seeds) {
+  XYZPoint  seeds[PatPV::max_number_vertices];
+  int number_seeds = seedtool.getSeeds(rtracks, beamspot, host_number_of_tracks_pinned, seeds);
+  //nubmer of seeds should be in same order as nubmer of priamry vertices
+  //std::cout << "number of seeds: " << seeds.size() << std::endl;
+    for(int i=0; i < number_seeds; i++) {
+      XYZPoint seed = seeds[i]; 
       Vertex recvtx;
 
 

@@ -59,11 +59,11 @@ constexpr static const int s_p2mstatic = 5000;
 //=============================================================================
 // getSeeds
 //=============================================================================
-std::vector<XYZPoint>
+int 
 PVSeedTool::getSeeds( VeloState * inputTracks,
-                     const XYZPoint& beamspot, int number_of_tracks)  {
+                     const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds)  {
   
-  std::vector<XYZPoint> seeds;
+  
   //if(inputTracks.size() < 3 ) return seeds;
 
   vtxCluster  vclusters[number_of_tracks];
@@ -94,15 +94,14 @@ PVSeedTool::getSeeds( VeloState * inputTracks,
   //std::cout << "not broken yet1" << std::endl;
  findClusters(vclusters, zseeds, number_of_clusters);
  std::cout << *(zseeds+1) << std::endl;
- std::cout << "not broken yet2" << std::endl;
+ std::cout << "not broken yet2 getClusterCounter()" << getClusterCounter() << std::endl;
   //seeds.reserve(m_max_clusters);
   for(int i = 0; i < getClusterCounter(); i++) {
     //std::cout << i << " not broken yet3 "<< zseeds[i] << std::endl;
-    seeds.push_back(XYZPoint{ beamspot.x, beamspot.y, zseeds[i]});
+    seeds[i] = XYZPoint{ beamspot.x, beamspot.y, zseeds[i]};
   }
+  return getClusterCounter();
 
-
-  return seeds;
 }
 
 

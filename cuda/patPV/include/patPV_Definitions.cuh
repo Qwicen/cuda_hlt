@@ -12,6 +12,12 @@ static constexpr uint max_number_vertices = 30;
 
 
 // auxiliary class for searching of clusters of tracks
+
+
+
+}
+
+
 struct vtxCluster final {
 
   double  z = 0;            // z of the cluster
@@ -28,7 +34,8 @@ struct XYZPoint {
   double x = 0.;
   double y = 0.;
   double z = 0.;
-  XYZPoint(double m_x, double m_y, double m_z) : x(m_x), y(m_y), z(m_z) {}
+  XYZPoint(double m_x, double m_y, double m_z) : x(m_x), y(m_y), z(m_z) {};
+  XYZPoint() {};
 
 };
 
@@ -84,8 +91,5 @@ class Vertex {
       weights.push_back(weight);
     };
 };
-
-
-}
 
 #endif DEFINITIONS_H

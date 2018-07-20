@@ -5,7 +5,7 @@
 
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../cuda/patPV/include/patPV_Definitions.cuh"
-using namespace PatPV ;
+
 
 /** @class PVSeedTool PVSeedTool.h tmp/PVSeedTool.h
  *
@@ -19,8 +19,8 @@ public:
   /// Standard constructor
   PVSeedTool( ) {};
 
-  std::vector<XYZPoint> getSeeds( VeloState* inputTracks,
-       const XYZPoint& beamspot, int number_of_tracks)  ;
+  int getSeeds( VeloState* inputTracks,
+       const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds)  ;
 
    void resetClusterCounter()  {m_cluster_counter = 0 ;}
    void increaseClusterCounter()  {m_cluster_counter++ ;}
