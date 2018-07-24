@@ -31,8 +31,8 @@ namespace VeloUTTracking {
     
   /* Cut-offs */
   static constexpr uint max_numhits_per_layer = 500;
-  static constexpr uint max_numhits_per_event = 4000;
-  static constexpr uint max_hit_candidates_per_layer = 40;
+  static constexpr uint max_numhits_per_event = 4500;
+  static constexpr uint max_hit_candidates_per_layer = 100;
   static constexpr uint max_num_tracks = 300; // to do: what is the best / safest value here?
   static constexpr uint max_track_size = VeloTracking::max_track_size + 8; // to do: double check what the max # of hits added in UT really is
 

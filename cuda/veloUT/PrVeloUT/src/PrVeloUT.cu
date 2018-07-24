@@ -506,6 +506,8 @@ __host__ __device__ void findHits(
     
     n_hitCandidatesInLayer++;
 
+    if ( n_hitCandidatesInLayer >= VeloUTTracking::max_hit_candidates_per_layer )
+      printf("%u > %u !! \n", n_hitCandidatesInLayer, VeloUTTracking::max_hit_candidates_per_layer);
     assert( n_hitCandidatesInLayer < VeloUTTracking::max_hit_candidates_per_layer );
   }
   for ( int i_hit = 0; i_hit < n_hitCandidatesInLayer; ++i_hit ) {

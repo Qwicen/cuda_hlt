@@ -78,6 +78,8 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
       hits_layers->n_hits_layers[i_layer] = *((uint32_t*)raw_input);
       n_hits_total += hits_layers->n_hits_layers[i_layer];
       raw_input += sizeof(uint32_t);
+      if ( n_hits_total >= VeloUTTracking::max_numhits_per_event )
+        printf(" n_hits_total UT: %u >= %u \n", n_hits_total, VeloUTTracking::max_numhits_per_event);
       assert( n_hits_total < VeloUTTracking::max_numhits_per_event );
       hits_layers->layer_offset[i_layer] = accumulated_hits;
       accumulated_hits += hits_layers->n_hits_layers[i_layer];
