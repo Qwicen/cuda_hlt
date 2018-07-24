@@ -4,6 +4,9 @@ CUDA HLT
 Welcome to the CUDA High Level Trigger project, an attempt to provide
 a full HLT1 realization on GPU.
 
+Where to find input
+-------------
+Input from 10k events can be found here: /afs/cern.ch/work/d/dovombru/public/gpu_input/10kevents
 
 How to run it
 -------------
