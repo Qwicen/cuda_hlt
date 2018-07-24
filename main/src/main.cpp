@@ -33,7 +33,7 @@ void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
     << std::endl << " -f {folder containing .bin files with raw bank information}"
-    << std::endl << (mc_check_enabled ? " " : " [") << "-g {folder containing .root files with MC truth information}"
+    << std::endl << (mc_check_enabled ? " " : " [") << "-d {folder containing .root files with MC truth information}"
     << (mc_check_enabled ? "" : " ]")
     << std::endl << " -e {folder containing, bin files with UT hit information}"
     << std::endl << " [-n {number of files to process}=0 (all)]"
@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
   std::string folder_name_velopix_raw;
   std::string folder_name_MC = "";
   std::string folder_name_ut_hits = "";
+  std::string folder_name_geometry = "";
   uint number_of_files = 0;
   uint tbb_threads = 1;
   uint number_of_repetitions = 1;
@@ -65,16 +66,19 @@ int main(int argc, char *argv[])
   size_t reserve_mb = 1024;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:g:e:n:t:r:pha:b:d:v:c:k:m:")) != -1) {
+  while ((c = getopt(argc, argv, "f:d:e:n:t:r:pha:b:d:v:c:k:m:g:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_velopix_raw = std::string(optarg);
       break;
-    case 'g':
+    case 'd':
       folder_name_MC = std::string(optarg);
       break;
     case 'e':
       folder_name_ut_hits = std::string(optarg);
+      break;
+    case 'g':
+      folder_name_geometry = std::string(optarg);
       break;
     case 'm':
       reserve_mb = atoi(optarg);
@@ -123,6 +127,12 @@ int main(int argc, char *argv[])
     printUsage(argv);
     return -1;
   }
+
+  if(folder_name_geometry.empty()){
+    std::cerr << "No folder for geometry specified" << std::endl;
+    printUsage(argv);
+    return -1;
+  }
   
   if(folder_name_MC.empty() && mc_check_enabled){
     std::cerr << "No MC folder specified, but MC CHECK turned on" << std::endl;
@@ -146,8 +156,9 @@ int main(int argc, char *argv[])
   // Show call options
   std::cout << "Requested options:" << std::endl
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
-    << " folder with MC truth input (-g): " << folder_name_MC << std::endl
+    << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " folder with ut hits input (-e): " << folder_name_ut_hits << std::endl
+    << " folder with geometry input (-g): " << folder_name_geometry << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
@@ -161,7 +172,7 @@ int main(int argc, char *argv[])
     << std::endl;
 
   std::cout << "MC check (compile opt): " << (mc_check_enabled ? "On" : "Off") << std::endl
-    << " folder with MC truth input (-g): " << folder_name_MC << std::endl
+    << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " run checkers (-c): " << do_check << std::endl
     << std::endl;
 
@@ -183,12 +194,9 @@ int main(int argc, char *argv[])
   
   check_velopix_events( velopix_events, velopix_event_offsets, number_of_files );
 
-  if ( !exists_test(folder_name_velopix_raw + "/geometry.bin") ) {
-    error_cout << "no geometry file found in " << folder_name_velopix_raw << std::endl;
-    return -1;
-  }
+  std::string filename_geom = folder_name_geometry + "velo_geometry.bin";
   std::vector<char> velopix_geometry;
-  readGeometry(folder_name_velopix_raw, velopix_geometry);
+  readGeometry(filename_geom, velopix_geometry);
 
   // Copy velopix raw data to pinned host memory
   const int number_of_events = velopix_event_offsets.size() - 1;

@@ -7,12 +7,11 @@
  * @brief Reads the geometry from foldername.
  */
 void readGeometry(
-  const std::string& foldername,
+  const std::string& filename,
   std::vector<char>& geometry
 ) {
-  const auto filename = foldername + "/geometry.bin";
   if (!exists_test(filename)) {
-    throw StrException("File geometry.bin could not be found in folder " + foldername);
+    throw StrException("Geometry file could not be found: " + filename);
   }
   readFileIntoVector(filename, geometry);
 }
