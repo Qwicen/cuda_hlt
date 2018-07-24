@@ -35,7 +35,8 @@ void printUsage(char* argv[]){
     << std::endl << " -f {folder containing .bin files with raw bank information}"
     << std::endl << (mc_check_enabled ? " " : " [") << "-d {folder containing .root files with MC truth information}"
     << (mc_check_enabled ? "" : " ]")
-    << std::endl << " -e {folder containing, bin files with UT hit information}"
+    << std::endl << " -e {folder containing bin files with UT hit information}"
+    << std::endl << " -g {folder containing geometry descriptions}"
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=1]"
     << std::endl << " [-r {number of repetitions per thread / stream}=1]"
