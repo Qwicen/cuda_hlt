@@ -29,6 +29,25 @@ namespace VeloUTTracking {
   static constexpr uint max_numhits_per_event = 4000;
   static constexpr uint max_hit_candidates_per_layer = 40;
 
+   /**
+   * @brief Complete state, unlike the reduced VELO one
+   *
+   *        {x, y, tx, ty, qOverP}
+   *
+   *        c00 c10 c20 c30 c40
+   *            c11 c21 c31 c41
+   *                c22 c32 c42
+   *                    c33 c43
+   *                        c44
+   */
+
+  struct FullState { 
+    float x, y, tx, ty, qOverP = 0.;
+    float c00, c11, c22, c33, c44, c10, c20, c30, c40, c21, c31, c41, c32, c42, c43 = 0.;
+    float chi2 = 0.;
+    float z = 0.;
+  };
+
   /* SoA for hit variables
      The hits for every layer are written behind each other, the offsets 
      are stored for access;
@@ -78,13 +97,5 @@ namespace VeloUTTracking {
     inline float zAtYEq0(const int i_hit) const { return m_zAtYEq0[i_hit]; } 
 
   };
-
-
-
-  
-
-
-
-
 
 }

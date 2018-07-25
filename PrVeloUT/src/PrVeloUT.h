@@ -93,7 +93,7 @@ public:
 
   // std::vector<std::string> GetFieldMaps();
   virtual int initialize();
-  std::vector<VeloUTTracking::TrackUT> operator()(
+  std::vector<VeloUTTracking::TrackVeloUT> operator()(
     const std::vector<VeloUTTracking::TrackVelo>& inputTracks,
     VeloUTTracking::HitsSoA *hits_layers_events,
     const uint32_t n_hits_layers_events[VeloUTTracking::n_layers]
@@ -149,7 +149,7 @@ private:
     int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
     int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
     VeloUTTracking::HitsSoA *hits_layers,
-    std::vector<VeloUTTracking::TrackUT>& outputTracks,
+    std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
     const float* bdlTable) const;
 
   // ==============================================================================

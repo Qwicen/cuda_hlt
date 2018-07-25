@@ -36,6 +36,7 @@ void printUsage(char* argv[]){
     << std::endl << (mc_check_enabled ? " " : " [") << "-g {folder containing .root files with MC truth information}"
     << (mc_check_enabled ? "" : " ]")
     << std::endl << " -e {folder containing, bin files with UT hit information}"
+    << std::endl << " -s {folder containing, bin files with FT hit information}"
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=1]"
     << std::endl << " [-r {number of repetitions per thread / stream}=1]"
@@ -54,6 +55,7 @@ int main(int argc, char *argv[])
   std::string folder_name_velopix_raw;
   std::string folder_name_MC = "";
   std::string folder_name_ut_hits = "";
+  std::string folder_name_ft_hits = "";
   uint number_of_files = 0;
   uint tbb_threads = 1;
   uint number_of_repetitions = 1;
@@ -77,6 +79,9 @@ int main(int argc, char *argv[])
       break;
     case 'e':
       folder_name_ut_hits = std::string(optarg);
+      break;
+    case 's':
+      folder_name_ft_hits = std::string(optarg);
       break;
     case 'm':
       reserve_mb = atoi(optarg);
@@ -128,7 +133,13 @@ int main(int argc, char *argv[])
     printUsage(argv);
     return -1;
   }
-  
+
+  if(folder_name_ft_hits.empty()){
+    std::cerr << "No folder for ft hits specified" << std::endl;
+    printUsage(argv);
+    return -1;
+  } 
+ 
   if(folder_name_MC.empty() && do_check){
     std::cerr << "No MC folder specified, but MC CHECK turned on" << std::endl;
     printUsage(argv);
@@ -148,6 +159,7 @@ int main(int argc, char *argv[])
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
     << " folder with MC truth input (-g): " << folder_name_MC << std::endl
     << " folder with ut hits input (-e): " << folder_name_ut_hits << std::endl
+    << " folder with ft hits input (-e): " << folder_name_ft_hits << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
@@ -206,6 +218,17 @@ int main(int argc, char *argv[])
   read_ut_events_into_arrays( ut_hits_events, ut_n_hits_layers_events,
   			      ut_events, ut_event_offsets, number_of_events );
 
+  std::vector<char> ft_events;
+  std::vector<unsigned int> ft_event_offsets;
+  verbose_cout << "Reading FT hits for " << number_of_events << " events " << std::endl;
+  read_folder( folder_name_ft_hits, number_of_files,
+              ft_events, ft_event_offsets );
+
+  ForwardTracking::HitsSoAFwd *ft_hits_events = new ForwardTracking::HitsSoAFwd[number_of_events];
+  uint32_t ft_n_hits_layers_events[number_of_events][ForwardTracking::n_layers];
+  read_ft_events_into_arrays( ft_hits_events, ft_n_hits_layers_events,
+                              ft_events, ft_event_offsets, number_of_events );
+
   //check_ut_events( ut_hits_events, ut_n_hits_layers_events, number_of_events );
 
   // Initialize detector constants on GPU
@@ -242,6 +265,8 @@ int main(int argc, char *argv[])
         velopix_event_offsets.size(),
 	ut_hits_events,
 	ut_n_hits_layers_events,
+        ft_hits_events,
+        ft_n_hits_layers_events,
         number_of_events,
         number_of_repetitions
       );
@@ -250,7 +275,8 @@ int main(int argc, char *argv[])
   t.stop();
 
   delete [] ut_hits_events;
-  
+  delete [] ft_hits_events; 
+ 
   std::cout << (number_of_events * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 

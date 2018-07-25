@@ -64,6 +64,9 @@ namespace VeloUTTracking {
     unsigned int hitsNum;
     std::vector<unsigned int> LHCbIDs;
     float qop;
+    float quality;
+    float chi2;
+    std::vector<float> trackParams;
 
     void addLHCbID( unsigned int id ) {
       LHCbIDs.push_back(id);
@@ -78,5 +81,13 @@ namespace VeloUTTracking {
   struct TrackVelo {
     VeloState state;
     TrackUT track;
+  };
+
+  struct TrackVeloUT {
+    FullState state_beamline;
+    FullState state_endvelo;
+    FullState state_forward;
+    TrackUT track;
+    TrackUT trackForward;
   };
 }

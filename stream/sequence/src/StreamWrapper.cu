@@ -56,6 +56,8 @@ void StreamWrapper::run_stream(
   const size_t velopix_event_offsets_size,
   VeloUTTracking::HitsSoA *hits_layers_events_ut,
   const uint32_t n_hits_layers_events_ut[][VeloUTTracking::n_layers],
+  ForwardTracking::HitsSoAFwd *hits_layers_events_ft,
+  const uint32_t n_hits_layers_events_ft[][ForwardTracking::n_layers],
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -68,6 +70,8 @@ void StreamWrapper::run_stream(
     velopix_event_offsets_size,
     hits_layers_events_ut,
     n_hits_layers_events_ut,
+    hits_layers_events_ft,
+    n_hits_layers_events_ft,
     number_of_events,
     number_of_repetitions
   );

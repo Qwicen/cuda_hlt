@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "../../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
+#include "../../../cuda/forward/common/include/ForwardDefinitions.cuh"
 
 // Forward definition of Stream, to avoid
 // inability to compile kernel calls (due to <<< >>>
@@ -52,6 +53,8 @@ struct StreamWrapper {
     const size_t velopix_event_offsets_size,
     VeloUTTracking::HitsSoA *hits_layers_events_ut,
     const uint32_t n_hits_layers_events_ut[][VeloUTTracking::n_layers],
+    ForwardTracking::HitsSoAFwd *hits_layers_events_ft,
+    const uint32_t n_hits_layers_events_ft[][ForwardTracking::n_layers],
     const uint number_of_events,
     const uint number_of_repetitions
   );

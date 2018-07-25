@@ -8,6 +8,8 @@ cudaError_t Stream::run_sequence(
   const size_t host_event_offsets_size,
   VeloUTTracking::HitsSoA *hits_layers_events_ut,
   const uint32_t n_hits_layers_events_ut[][VeloUTTracking::n_layers],
+  ForwardTracking::HitsSoAFwd *hits_layers_events_ft,
+  const uint32_t n_hits_layers_events_ft[][ForwardTracking::n_layers],
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -302,11 +304,12 @@ cudaError_t Stream::run_sequence(
     /* Plugin VeloUT CPU code here 
        Adjust input types to match PrVeloUT code
     */
+    std::vector< std::vector< VeloUTTracking::TrackVeloUT > > ut_tracks;
     if (mc_check_enabled && i_stream == 0) {
 
       std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
       
-      int rv = run_veloUT_on_CPU(
+      ut_tracks = run_veloUT_on_CPU(
 	         ut_tracks_events,
 		 hits_layers_events_ut,
 		 n_hits_layers_events_ut,
@@ -318,10 +321,6 @@ cudaError_t Stream::run_sequence(
 		 number_of_events
 	       );
 
-      if ( rv != 0 )
-	continue;
-      
-      
       std::cout << "CHECKING VeloUT TRACKS" << std::endl;
       const bool fromNtuple = true;
       const std::string trackType = "VeloUT";
@@ -334,7 +333,36 @@ cudaError_t Stream::run_sequence(
       delete ut_tracks_events;
       
       
-    } // mc_check_enabled       
+    } // mc_check_enabled      
+
+    /* Plugin Forward CPU code here 
+    */
+    std::vector< std::vector< VeloUTTracking::TrackVeloUT > > forward_tracks;
+    if (mc_check_enabled && i_stream == 0) {
+
+      std::vector< trackChecker::Tracks > *forward_tracks_events = new std::vector< trackChecker::Tracks >;
+
+      forward_tracks = run_forward_on_CPU(
+                 forward_tracks_events,
+                 hits_layers_events_ft,
+                 n_hits_layers_events_ft,
+	         ut_tracks,
+                 number_of_events
+               );
+
+      std::cout << "CHECKING Forward TRACKS" << std::endl;
+      const bool fromNtuple = true;
+      const std::string trackType = "Forward";
+      call_pr_checker (
+        *forward_tracks_events,
+        folder_name_MC,
+        fromNtuple,
+        trackType);
+
+      delete forward_tracks_events;
+
+
+    } // mc_check_enabled    
     
   } // repititions
   return cudaSuccess;

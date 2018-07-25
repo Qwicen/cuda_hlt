@@ -84,14 +84,14 @@ int PrVeloUT::initialize() {
 //=============================================================================
 // Main execution
 //=============================================================================
-std::vector<VeloUTTracking::TrackUT> PrVeloUT::operator() (
+std::vector<VeloUTTracking::TrackVeloUT> PrVeloUT::operator() (
   const std::vector<VeloUTTracking::TrackVelo>& inputTracks,
   VeloUTTracking::HitsSoA *hits_layers,
   const uint32_t n_hits_layers[VeloUTTracking::n_layers]
   ) const
 {
   
-  std::vector<VeloUTTracking::TrackUT> outputTracks;
+  std::vector<VeloUTTracking::TrackVeloUT> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
   std::array<std::array<int,85>,4> posLayers;
@@ -369,7 +369,7 @@ void PrVeloUT::prepareOutputTrack(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
-  std::vector<VeloUTTracking::TrackUT>& outputTracks,
+  std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
   const float* bdlTable) const {
 
   //== Handle states. copy Velo one, add TT.
@@ -420,14 +420,15 @@ void PrVeloUT::prepareOutputTrack(
 
   const float txUT = helper.bestParams[3];
 
-  outputTracks.emplace_back( veloTrack.track );
-  outputTracks.back().set_qop( qop );
+  VeloUTTracking::TrackVeloUT outputtrack; 
+  outputtrack.track = veloTrack.track;
+  outputTracks.emplace_back( outputtrack );
   
   // Adding overlap hits
   for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
     const VeloUTTracking::Hit hit = helper.bestHits[i_hit];
     
-    outputTracks.back().addLHCbID( hit.LHCbID() );
+    outputTracks.back().track.addLHCbID( hit.LHCbID() );
 
     const float xhit = hit.x;
     const float zhit = hit.z;
@@ -445,7 +446,7 @@ void PrVeloUT::prepareOutputTrack(
       if( xohit-xextrap < -m_overlapTol) continue;
       if( xohit-xextrap > m_overlapTol) break;
     
-      outputTracks.back().addLHCbID( hits_layers->LHCbID(layer_offset + ohit_index) );
+      outputTracks.back().track.addLHCbID( hits_layers->LHCbID(layer_offset + ohit_index) );
 
       // -- only one overlap hit
       break;

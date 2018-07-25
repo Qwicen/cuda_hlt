@@ -49,6 +49,7 @@ add_subdirectory(stream)
 add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
 add_subdirectory(PrVeloUT)
+add_subdirectory(PrForward)
 
 # Include directory
 include_directories(main/include)
@@ -58,4 +59,4 @@ file(GLOB main_sources "main/src/*")
 
 cuda_add_executable(cu_hlt ${main_sources})
 
-target_link_libraries(cu_hlt tbb Velo VeloUT Stream x86Clustering TrackChecking CheckClustering)
+target_link_libraries(cu_hlt tbb Velo VeloUT Forward Stream x86Clustering TrackChecking CheckClustering)

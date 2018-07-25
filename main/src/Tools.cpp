@@ -107,6 +107,58 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
   }
 }
 
+void read_ft_events_into_arrays( ForwardTracking::HitsSoAFwd *hits_layers_events,
+                                 uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
+                                 const std::vector<char> events,
+                                 const std::vector<unsigned int> event_offsets,
+                                 const int n_events ) {
+
+
+  for ( int i_event = 0; i_event < n_events; ++i_event ) {
+    const char* raw_input = events.data() + event_offsets[i_event];
+    int n_hits_total = 0;
+    int accumulated_hits = 0;
+    int accumulated_hits_layers[12];
+    for ( int i_layer = 0; i_layer < ForwardTracking::n_layers; ++i_layer ) {
+      n_hits_layers_events[i_event][i_layer] = *((uint32_t*)raw_input);
+      n_hits_total += n_hits_layers_events[i_event][i_layer];
+      raw_input += sizeof(uint32_t);
+      assert( n_hits_total < ForwardTracking::max_numhits_per_event );
+      hits_layers_events[i_event].layer_offset[i_layer] = accumulated_hits;
+      accumulated_hits += n_hits_layers_events[i_event][i_layer];
+    }
+
+    for ( int i_layer = 0; i_layer < ForwardTracking::n_layers; ++i_layer ) {
+      int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &( hits_layers_events[i_event].m_x[ layer_offset ]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_z[ layer_offset ]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_w[ layer_offset ]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_dxdy[ layer_offset ]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_dzdy[ layer_offset ]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_yMin[ layer_offset ]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_yMax[ layer_offset ]) );
+      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((unsigned int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_LHCbID[ layer_offset ]) );
+      raw_input += sizeof(unsigned int) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_planeCode[ layer_offset ]) );
+      raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer];
+      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_hitZone[ layer_offset ]) );
+      raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer];
+
+      for ( int i_hit = 0; i_hit < n_hits_layers_events[i_event][i_layer]; ++i_hit ) {
+        hits_layers_events[i_event].m_planeCode[ layer_offset + i_hit ] = i_layer;
+      }
+    }
+
+
+  }
+}
 
 void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
 		      const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
@@ -148,6 +200,49 @@ void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
     
   
 }
+
+void check_ft_events( const ForwardTracking::HitsSoAFwd *hits_layers_events,
+		      const uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
+		      const int n_events ) {
+
+  float average_number_of_hits_per_event = 0;
+  
+  for ( int i_event = 0; i_event < n_events; ++i_event ) {
+    // sanity checks
+    float number_of_hits = 0;
+
+    for ( int i_layer = 0; i_layer < ForwardTracking::n_layers; ++i_layer ) {
+      debug_cout << "checks on layer " << i_layer << ", with " << n_hits_layers_events[i_event][i_layer] << " hits" << std::endl;
+      number_of_hits += n_hits_layers_events[i_event][i_layer];
+      int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
+      for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
+	printf("\t at hit %u, x = %f, z = %f, w = %f, dxdy = %f, dzdy = %f, yMin = %f, yMax = %f, LHCbID = %u, planeCode = %i, hitZone = %i \n",
+	       i_hit,
+	       hits_layers_events[i_event].m_x[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].m_z[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].m_w[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].m_dxdy[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].m_dzdy[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].m_yMin[ layer_offset + i_hit ],
+	       hits_layers_events[i_event].m_yMax[ layer_offset + i_hit ],
+               hits_layers_events[i_event].m_LHCbID[ layer_offset + i_hit ],
+               hits_layers_events[i_event].m_planeCode[layer_offset + i_hit ],
+               hits_layers_events[i_event].m_hitZone[layer_offset + i_hit ] );
+      }
+    }
+
+    
+    average_number_of_hits_per_event += number_of_hits;
+    debug_cout << "# of FT hits = " << number_of_hits << std::endl;
+    
+  }
+
+  average_number_of_hits_per_event = average_number_of_hits_per_event / n_events;
+  debug_cout << "average # of FT hits / event = " << average_number_of_hits_per_event << std::endl;
+    
+  
+}
+
 
 /**
  * @brief Obtains results statistics.
@@ -348,6 +443,21 @@ trackChecker::Tracks prepareVeloUTTracks(
   return checker_tracks;
 }
 
+trackChecker::Tracks prepareForwardTracks(
+  std::vector< VeloUTTracking::TrackUT > forward_tracks
+) {
+  trackChecker::Tracks checker_tracks;
+  for ( VeloUTTracking::TrackUT forward_track : forward_tracks ) {
+    trackChecker::Track checker_track;
+    for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
+      LHCbID lhcb_id( forward_track.LHCbIDs[i_hit] );
+      checker_track.addId( lhcb_id );
+    }
+    checker_tracks.push_back( checker_track );
+  }
+
+  return checker_tracks;
+}
 
 void call_pr_checker(
   const std::vector< trackChecker::Tracks >& all_tracks,

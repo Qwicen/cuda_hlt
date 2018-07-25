@@ -6,7 +6,7 @@
 #include "../../../PrVeloUT/src/PrVeloUT.h"
 #include "../../../main/include/Tools.h"
 
-int run_veloUT_on_CPU (
+std::vector< std::vector< VeloUTTracking::TrackVeloUT > > run_veloUT_on_CPU (
   std::vector< trackChecker::Tracks > * ut_tracks_events,
   VeloUTTracking::HitsSoA * hits_layers_events,
   const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],

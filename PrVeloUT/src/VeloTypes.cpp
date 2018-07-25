@@ -1,7 +1,7 @@
 #include "../include/VeloTypes.h"
 
 VeloUTTracking::Hit VeloUTTracking::createHit( HitsSoA *hits_layers, const int i_layer, const int i_hit ) {
-    Hit hit;
+    VeloUTTracking::Hit hit;
     const int layer_offset = hits_layers->layer_offset[i_layer];
     hit.m_cos = hits_layers->cos(layer_offset + i_hit);
     hit.m_yBegin = hits_layers->yBegin(layer_offset + i_hit);

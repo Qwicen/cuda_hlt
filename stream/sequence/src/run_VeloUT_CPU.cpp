@@ -32,7 +32,7 @@ void findPermutation(
 }
 
 
-int run_veloUT_on_CPU (
+std::vector< std::vector< VeloUTTracking::TrackVeloUT > > run_veloUT_on_CPU (
   std::vector< trackChecker::Tracks > * ut_tracks_events,
   VeloUTTracking::HitsSoA * hits_layers_events,
   const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
@@ -94,12 +94,13 @@ int run_veloUT_on_CPU (
   t_velo_states->Branch("last_z", &last_z); 
   t_veloUT_tracks->Branch("qop", &qop);
 
-   
+  std::vector<std::vector< VeloUTTracking::TrackVeloUT > > ut_tracks_all;  
+ 
   if ( !velout.initialize() ) {
     error_cout << "Could not initialize VeloUT" << std::endl;
-    return -1;
+    return ut_tracks_all;
   }
-  
+ 
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
 
     // Prepare hits
@@ -223,20 +224,25 @@ int run_veloUT_on_CPU (
     }
     //debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0, " << inputHits[1].size() << " hits in layer 1, " << inputHits[2].size() << " hits in layer 2, " << inputHits[3].size() << " in layer 3 to velout" << std::endl;
     
-    std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, &(hits_layers_events[i_event]), n_hits_layers_events[i_event]);
+    std::vector< VeloUTTracking::TrackVeloUT > ut_tracks = velout(tracks, &(hits_layers_events[i_event]), n_hits_layers_events[i_event]);
     //debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
     
     // store qop in tree
     for ( auto veloUT_track : ut_tracks ) {
-      qop = veloUT_track.qop;
+      qop = veloUT_track.track.qop;
       t_veloUT_tracks->Fill();
     }
     
     // save in format for track checker
-    trackChecker::Tracks checker_tracks = prepareVeloUTTracks( ut_tracks );
+    std::vector< VeloUTTracking::TrackUT > ut_tracks_reduced;
+    for ( auto veloUT_track : ut_tracks ) {
+      ut_tracks_reduced.push_back(veloUT_track.track);
+    }
+    trackChecker::Tracks checker_tracks = prepareVeloUTTracks( ut_tracks_reduced );
     //debug_cout << "Passing " << checker_tracks.size() << " tracks to PrChecker" << std::endl;
     
     ut_tracks_events->emplace_back( checker_tracks );
+    ut_tracks_all.push_back(ut_tracks);
     
   }
   
@@ -244,5 +250,5 @@ int run_veloUT_on_CPU (
   f->Write();
   f->Close();
   
-  return 0;
+  return ut_tracks_all;
 }

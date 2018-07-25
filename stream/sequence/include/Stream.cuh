@@ -14,6 +14,7 @@
 #include "../../scheduler/include/BaseDynamicScheduler.cuh"
 #include "../../sequence_setup/include/SequenceSetup.cuh"
 #include "run_VeloUT_CPU.h"
+#include "run_Forward_CPU.h"
 
 class Timer;
 
@@ -83,6 +84,8 @@ struct Stream {
     const size_t host_event_offsets_size,
     VeloUTTracking::HitsSoA *hits_layers_events_ut,
     const uint32_t n_hits_layers_events_ut[][VeloUTTracking::n_layers],
+    ForwardTracking::HitsSoAFwd *hits_layers_events_ft,
+    const uint32_t n_hits_layers_events_ft[][ForwardTracking::n_layers],
     const uint number_of_events,
     const uint number_of_repetitions
   );

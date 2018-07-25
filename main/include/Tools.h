@@ -16,6 +16,7 @@
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../cuda/velo/common/include/ClusteringDefinitions.cuh"
 #include "../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
+#include "../../cuda/forward/common/include/ForwardDefinitions.cuh"
 #include "../../checker/lib/include/Tracks.h"
 #include "../include/InputTools.h"
 #include "../../PrVeloUT/include/VeloTypes.h"
@@ -30,6 +31,17 @@ void check_velopix_events(
   const std::vector<unsigned int> event_offsets,
   int n_events
 );
+
+void read_ft_events_into_arrays(  ForwardTracking::HitsSoAFwd *ft_hits_events,
+                                  uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
+                                  const std::vector<char> events,
+                                  const std::vector<unsigned int> event_offsets,
+                                  int n_events );
+
+void check_ft_events( const ForwardTracking::HitsSoAFwd *hits_layers_events,
+                      const uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
+                      const int n_events
+                      );
 
 void read_ut_events_into_arrays(  VeloUTTracking::HitsSoA *ut_hits_events,
 				  uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
@@ -78,6 +90,10 @@ std::vector< trackChecker::Tracks > prepareTracks(
 
 trackChecker::Tracks prepareVeloUTTracks(
   std::vector< VeloUTTracking::TrackUT > ut_tracks
+);
+
+trackChecker::Tracks prepareForwardTracks(
+  std::vector< VeloUTTracking::TrackUT > forward_tracks
 );
 
 void call_pr_checker(
