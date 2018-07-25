@@ -280,6 +280,11 @@ int main(int argc, char *argv[])
   std::cout << (number_of_events * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
+  std::ofstream outfile;
+  outfile.open("test.txt", std::fstream::in | std::fstream::out | std::ios_base::app);
+  outfile << start_event_offset << "\t" << t.get() << std::endl;
+  outfile.close();
+  
   // Free and reset device
   // cudaCheck(cudaFreeHost(host_velopix_events));
   // cudaCheck(cudaFreeHost(host_velopix_event_offsets));
