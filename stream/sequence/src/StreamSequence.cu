@@ -327,6 +327,7 @@ cudaError_t Stream::run_sequence(
       	call_pr_checker (
 	  tracks_events,
       	  folder_name_MC,
+          start_event_offset,
     	  fromNtuple,
     	  trackType);
       }
@@ -349,6 +350,7 @@ cudaError_t Stream::run_sequence(
       call_pr_checker (
         veloUT_tracks,
         folder_name_MC,
+        start_event_offset,
         fromNtuple,
         trackType);                                                                            
       

@@ -114,7 +114,8 @@ void read_folder(
   const std::string& foldername,
   uint number_of_files,
   std::vector<char>& events,
-  std::vector<uint>& event_offsets
+  std::vector<uint>& event_offsets,
+  const uint start_event_offset
 ) {
   std::vector<std::string> folderContents = list_folder(foldername);
 
@@ -128,7 +129,7 @@ void read_folder(
   // Read all requested events
   unsigned int accumulated_size=0;
   std::vector<unsigned int> event_sizes;
-  for (int i=0; i<number_of_files; ++i) {
+  for (int i = start_event_offset; i < number_of_files + start_event_offset; ++i) {
     // Read event #i in the list and add it to the inputs
     std::string readingFile = folderContents[i % folderContents.size()];
     appendFileToVector(foldername + "/" + readingFile, events, event_sizes);

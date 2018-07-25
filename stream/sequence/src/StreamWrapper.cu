@@ -13,6 +13,7 @@ void StreamWrapper::initialize_streams(
   const bool do_simplified_kalman_filter,
   const bool print_individual_rates,
   const std::string& folder_name_MC,
+  const uint start_event_offset,
   const size_t reserve_mb
 ) {
   for (uint i=0; i<n; ++i) {
@@ -29,6 +30,7 @@ void StreamWrapper::initialize_streams(
       do_simplified_kalman_filter,
       print_individual_rates,
       folder_name_MC,
+      start_event_offset,
       reserve_mb,
       i
     );

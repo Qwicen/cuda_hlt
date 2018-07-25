@@ -408,6 +408,7 @@ std::vector< trackChecker::Tracks > prepareVeloUTTracks(
 void call_pr_checker(
   const std::vector< trackChecker::Tracks >& all_tracks,
   const std::string& folder_name_MC,
+  const uint start_event_offset,
   const bool& fromNtuple,
   const std::string& trackType
 ) {
@@ -415,6 +416,7 @@ void call_pr_checker(
     callPrChecker< TrackCheckerVelo> (
       all_tracks,
       folder_name_MC,
+      start_event_offset,
       fromNtuple,
       trackType);
   }
@@ -422,6 +424,7 @@ void call_pr_checker(
     callPrChecker< TrackCheckerVeloUT> (
       all_tracks,
       folder_name_MC,
+      start_event_offset,
       fromNtuple,
       trackType);
   }

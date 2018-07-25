@@ -43,5 +43,6 @@ void read_folder(
   const std::string& foldername,
   unsigned int fileNumber,
   std::vector<char>& events,
-  std::vector<unsigned int>& event_offsets
+  std::vector<unsigned int>& event_offsets,
+  const uint start_event_offset
 );

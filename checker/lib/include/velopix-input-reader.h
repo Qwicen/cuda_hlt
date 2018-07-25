@@ -69,6 +69,7 @@ std::vector<VelopixEvent> read_mc_folder(
   const bool& fromNtuple,
   const std::string& trackType,
   uint number_of_files,
+  const uint start_event_offset,
   const bool checkEvents = false
 );
  
@@ -76,12 +77,13 @@ template< typename t_checker >
 void callPrChecker(
   const std::vector< trackChecker::Tracks >& all_tracks,
   const std::string& folder_name_MC,
+  const uint start_event_offset,
   const bool& fromNtuple,
   const std::string& trackType
 ) {
    /* MC information */
   int n_events = all_tracks.size();
-    std::vector<VelopixEvent> events = read_mc_folder(folder_name_MC, fromNtuple, trackType, n_events, true );
+  std::vector<VelopixEvent> events = read_mc_folder(folder_name_MC, fromNtuple, trackType, n_events, start_event_offset, true );
 
     
   t_checker trackChecker {};

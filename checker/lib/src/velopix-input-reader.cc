@@ -293,6 +293,7 @@ std::vector<VelopixEvent> read_mc_folder (
   const bool& fromNtuple,
   const std::string& trackType,
   uint number_of_files,
+  const uint start_event_offset,
   const bool checkEvents
 ) {
   std::vector<std::string> folderContents = list_folder(foldername, fromNtuple);
@@ -307,7 +308,7 @@ std::vector<VelopixEvent> read_mc_folder (
   
   std::vector<VelopixEvent> input;
   int readFiles = 0;
-  for (uint i=0; i<requestedFiles; ++i) {
+  for (uint i = start_event_offset; i < requestedFiles + start_event_offset; ++i) {
     // Read event #i in the list and add it to the inputs
     // if more files are requested than present in folder, read them again
     std::string readingFile = folderContents[i % folderContents.size()];
