@@ -4,6 +4,11 @@
 //
 //-----------------------------------------------------------------------------
 
+PrForward::PrForward() : 
+  m_MLPReader_1st{mlpInputVars},
+  m_MLPReader_2nd{mlpInputVars}
+{}
+
 //=============================================================================
 // Main execution
 //=============================================================================
@@ -34,7 +39,7 @@ std::vector<VeloUTTracking::TrackVeloUT> PrForward::operator() (
 //=============================================================================
 void PrForward::prepareOutputTrack(
   const VeloUTTracking::TrackVeloUT& veloUTTrack,
-  std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
+  std::vector<VeloUTTracking::TrackVeloUT>& outputTracks
 ) const {
 
   // Cache state information from state at the end of the VELO for
@@ -57,7 +62,7 @@ void PrForward::prepareOutputTrack(
   // Some values related to the forward track which were stored in a dedicated
   // forward track class, let's see if I can get rid of that here
   const float m_zRef_track    = m_zReference; 
-  const float m_xParams_seed[4] = {m_x0 + (m_zRef_track - m_z0)*m_tx,m_tx,0.f,0.f},
+  const float m_xParams_seed[4] = {m_x0 + (m_zRef_track - m_z0)*m_tx,m_tx,0.f,0.f};
   const float m_yParams_seed[4] = {m_y0 + (m_zRef_track - m_z0)*m_ty,m_ty,0.f,0.f};
 
   float yAtRef = yFromVelo( m_zReference );
@@ -69,36 +74,47 @@ void PrForward::prepareOutputTrack(
   m_maxXGap_cur         = m_maxXGap;
   m_minStereoHits_cur   = 0;
 
-  std::vector<int>[2] allXHits;
+  std::vector<int> allXHits[2];
 
   if(yAtRef>-5.f)collectAllXHits(allXHits[1], m_xParams_seed, m_yParams_seed, 1); 
   if(yAtRef< 5.f)collectAllXHits(allXHits[0], m_xParams_seed, m_yParams_seed, -1);
+
+  std::vector<VeloUTTracking::TrackVeloUT> outputTracks1;
   
-  if(yAtRef>-5.f)selectXCandidates(allXHits[1], veloUTTrack, outputTracks, m_zRef_track, m_xParams_seed, m_yParams_seed, 1);
-  if(yAtRef< 5.f)selectXCandidates(allXHits[0], veloUTTrack, outputTracks, m_zRef_track, m_xParams_seed, m_yParams_seed, -1); 
+  if(yAtRef>-5.f)selectXCandidates(allXHits[1], veloUTTrack, outputTracks1, m_zRef_track, m_xParams_seed, m_yParams_seed, 1);
+  if(yAtRef< 5.f)selectXCandidates(allXHits[0], veloUTTrack, outputTracks1, m_zRef_track, m_xParams_seed, m_yParams_seed, -1); 
 
-  selectFullCandidates(outputTracks,m_xParams_seed,m_yParams_seed);
+  selectFullCandidates(outputTracks1,m_xParams_seed,m_yParams_seed);
 
-  if (outputTracks.empty()) { // If you found nothing begin the 2nd loop
+  bool ok = std::any_of(outputTracks1.begin(), outputTracks1.end(),
+                        [](const auto& track) {
+                           return track.trackForward.hitsNum > 10;
+                        });
+
+  std::vector<VeloUTTracking::TrackVeloUT> outputTracks2; 
+  if (!ok && m_secondLoop) { // If you found nothing begin the 2nd loop
     m_minXHits_cur        = m_minXHits_2nd;
     m_maxXWindow_cur      = m_maxXWindow_2nd;
     m_maxXWindowSlope_cur = m_maxXWindowSlope_2nd ;
     m_maxXGap_cur         = m_maxXGap_2nd;   
-    if(yAtRef>-5.f)selectXCandidates(allXHits[1], veloUTTrack, outputTracks, m_zRef_track, m_xParams_seed, m_yParams_seed, 1);
-    if(yAtRef< 5.f)selectXCandidates(allXHits[0], veloUTTrack, outputTracks, m_zRef_track, m_xParams_seed, m_yParams_seed, -1);  
-    selectFullCandidates(outputTracks,m_xParams_seed,m_yParams_seed);
-  }
-
-  //== Handle states. copy Velo one, add TT.
-  if (!outputTracks.empty()) { // Clone kill and write the best track out
-    if (outputTracks.size() == 1) {
-      return;
-    }
-    // Implement some kind of quality based selection, come back to this
-    // later on in the business
-    return;
+    if(yAtRef>-5.f)selectXCandidates(allXHits[1], veloUTTrack, outputTracks2, m_zRef_track, m_xParams_seed, m_yParams_seed, 1);
+    if(yAtRef< 5.f)selectXCandidates(allXHits[0], veloUTTrack, outputTracks2, m_zRef_track, m_xParams_seed, m_yParams_seed, -1);  
+    selectFullCandidates(outputTracks2,m_xParams_seed,m_yParams_seed);
+    // Merge
+    outputTracks1.insert(std::end(outputTracks1),
+		 	 std::begin(outputTracks2),
+	 		 std::end(outputTracks2));
+    ok = not outputTracks1.empty();
   }
   
+  if(ok || !m_secondLoop){
+    std::sort(outputTracks1.begin(), outputTracks1.end(), lowerByQuality );
+    float minQuality = m_maxQuality;
+    for ( auto& track : outputTracks ){
+      if(track.trackForward.quality + m_deltaQuality < minQuality) minQuality = track.trackForward.quality + m_deltaQuality;
+      if(track.trackForward.quality < minQuality) outputTracks.emplace_back(track);
+    }
+  }
 }
 
 //=========================================================================
@@ -109,26 +125,34 @@ void PrForward::prepareOutputTrack(
 //=========================================================================
 void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
                                      const float m_xParams_seed[4],
-                                     const float m_yParams_seed[4]) {
+                                     const float m_yParams_seed[4]) const {
 
   std::vector<unsigned int> pc;
-  vector<float> mlpInput(7, 0.); 
+  std::vector<float> mlpInput(7, 0.); 
 
-  for (std::vector<VeloUTTracking::TrackVeloUT>::const_iterator cand = std::begin(outputTracks);
+  std::vector<VeloUTTracking::TrackVeloUT> selectedTracks;
+
+  for (std::vector<VeloUTTracking::TrackVeloUT>::iterator cand = std::begin(outputTracks);
        cand != std::end(outputTracks); ++cand) {
     bool isValid = false; // In c++ this is in track class, try to understand why later
-    m_minStereoHits_cur = 4
+    m_minStereoHits_cur = 4;
 
     if(cand->trackForward.hitsNum + m_minStereoHits_cur < m_minTotalHits) {
       m_minStereoHits_cur = m_minTotalHits - cand->trackForward.hitsNum;
     }
     // search for hits in U/V layers
-    std::vector<int> stereoHits = collectStereoHits(cand);
+    std::vector<int> stereoHits = collectStereoHits(*cand);
     if(stereoHits.size() < m_minStereoHits_cur) continue;
-    std::sort( stereoHits.begin(), stereoHits.end(), compareByCoord);
+    // DIRTY HACK
+    std::vector<std::pair<float,int> > tempforsort;
+    tempforsort.clear();
+    for (auto hit : stereoHits) { tempforsort.emplace_back(std::pair<float,int>(m_hits_layers.m_coord[hit],hit));}
+    std::sort( tempforsort.begin(), tempforsort.end());
+    stereoHits.clear();
+    for (auto pair : tempforsort) {stereoHits.emplace_back(pair.second);}
 
     // select best U/V hits
-    if ( !selectStereoHits(cand, stereoHits) ) continue;
+    if ( !selectStereoHits(*cand, stereoHits) ) continue;
 
     pc.clear();
     int planelist[12] = {0};
@@ -142,7 +166,7 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
     if(!fitXProjection(cand->trackForward.trackParams, pc, planelist))continue;
     
     //check in empty x layers for hits 
-    auto checked_empty = (cand.y(zReference) < 0.f) ?
+    auto checked_empty = (cand->trackForward.trackParams[4]  < 0.f) ?
         addHitsOnEmptyXLayers(cand->trackForward.trackParams, m_xParams_seed, m_yParams_seed,
                               true, pc, planelist, -1)
         : 
@@ -160,8 +184,8 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
       float dSlope  = ( m_x0 + (m_zReference - m_z0) * m_tx - xAtRef ) / ( m_zReference - m_zMagnetParams[0]);
       const float zMagSlope = m_zMagnetParams[2] * m_tx2 +  m_zMagnetParams[3] * m_ty2;
       const float zMag    = m_zMagnetParams[0] + m_zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
-      const float xMag    = m_x0 + (m_zMag- m_z0) * m_tx;
-      const float slopeT  = ( xAtRef - xMag ) / ( zReference - zMag );
+      const float xMag    = m_x0 + (zMag- m_z0) * m_tx;
+      const float slopeT  = ( xAtRef - xMag ) / ( m_zReference - zMag );
       dSlope        = slopeT - m_tx;
       const float dyCoef  = dSlope * dSlope * m_ty;
 
@@ -195,9 +219,12 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
 	cand->trackForward.hitsNum = pc.size();
         cand->trackForward.LHCbIDs = pc;
         cand->trackForward.set_qop( qOverP );
+	// Must be a neater way to do this...
+	selectedTracks.emplace_back(*cand);
       }
     }
   }
+  outputTracks = selectedTracks;
 }
 
 //=========================================================================
@@ -214,9 +241,9 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
   float bestMeanDy       = 1e9f;
 
   auto beginRange = std::begin(stereoHits)-1;
-  if(m_minStereoHits_cur > allStereoHits.size()) return false; //otherwise crash if minHits is too large
+  if(m_minStereoHits_cur > stereoHits.size()) return false; //otherwise crash if minHits is too large
   auto endLoop = std::end(stereoHits) - m_minStereoHits_cur;
-  std::vector<int> pc;
+  std::vector<unsigned int> pc;
   int planelist[12] = {0};
   while ( beginRange < endLoop ) {
     ++beginRange;
@@ -242,7 +269,7 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
            ((averageCoord - m_hits_layers.m_coord[*beginRange]) > 1.0f * 
 	    (m_hits_layers.m_coord[*(endRange-1)] - averageCoord)) ) { //tune this value has only little effect?!
         planelist[m_hits_layers.m_planeCode[*beginRange]] -= 1;
-	std::vector<int> pc_temp;
+	std::vector<unsigned int> pc_temp;
         pc_temp.clear();
         for (auto hit : pc) {
           if (hit != *beginRange){
@@ -254,7 +281,7 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
         continue;
       }
 
-      if(endRange == allStereoHits.end()) break; //already at end, cluster cannot be expanded anymore
+      if(endRange == stereoHits.end()) break; //already at end, cluster cannot be expanded anymore
 
       //add next, if it decreases the range size and is empty
       if ( (planelist[*endRange] == 0) &&
@@ -274,7 +301,7 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
     track.trackForward.trackParams[5] = originalYParams[1];
     track.trackForward.trackParams[6] = originalYParams[2];
     std::vector<int> trackStereoHits;
-    trackStereoHits.clear()
+    trackStereoHits.clear();
     // Skip a reserve from framework code 
     std::transform(beginRange, endRange, std::back_inserter(trackStereoHits),
                    [](const int& hit) { return hit; });
@@ -289,7 +316,7 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
     //== Calculate  dy chi2 /ndf
     float meanDy = 0.;
     for ( const auto& hit : trackStereoHits ){
-      const float d = trackToHitDistance(track.trackForward.trackParams,*hit); / m_hits_layers.m_dxdy[*hit];
+      const float d = trackToHitDistance(track.trackForward.trackParams,hit) / m_hits_layers.m_dxdy[hit];
       meanDy += d*d;
     }
     meanDy /=  float(trackStereoHits.size()-1);
@@ -321,30 +348,30 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
 //=========================================================================
 bool PrForward::addHitsOnEmptyStereoLayers(VeloUTTracking::TrackVeloUT& track,
                                		   std::vector<int>& stereoHits,
-                               		   std::vector<int> &pc,
+                               		   std::vector<unsigned int> &pc,
                                		   int planelist[]) const {
   //at this point pc is counting only stereo HITS!
   if(nbDifferent(planelist)  > 5) return true;
 
   bool added = false;
-  for ( unsigned int zone = 0; zone != m_uvZones.size(); zone += 1 ) {
+  for ( unsigned int zone = 0; zone < 12; zone += 1 ) {
     if ( planelist[ m_uvZones[zone]/2 ] != 0 ) continue; //there is already one hit
 
     float zZone = m_uvZone_zPos[zone];
-    float yZone = straightLineExtend({track.trackForward.trackParams[4],
-				      track.trackForward.trackParams[5],
-				      track.trackForward.trackParams[6],
-				      0.}, zZone );
 
+    const float parsX[4] = {track.trackForward.trackParams[0],
+                            track.trackForward.trackParams[1],
+                            track.trackForward.trackParams[2],
+                            track.trackForward.trackParams[3]};
+    const float parsY[4] = {track.trackForward.trackParams[4],
+                            track.trackForward.trackParams[5],
+                            track.trackForward.trackParams[6],
+                            0.};
+
+    float yZone = straightLineExtend(parsY,zZone);
     zZone = m_Zone_dzdy[m_uvZones[zone]]*yZone;  // Correct for dzDy
-    yZone = straightLineExtend({track.trackForward.trackParams[4],
-                                      track.trackForward.trackParams[5],
-                                      track.trackForward.trackParams[6],
-                                      0.}, zZone );
-    const float xPred  = straightLineExtend({track.trackForward.trackParams[0],
-                                             track.trackForward.trackParams[1],
-                                             track.trackForward.trackParams[2],
-                                             track.trackForward.trackParams[3]}, zZone );
+    yZone = straightLineExtend(parsY,zZone);
+    const float xPred  = straightLineExtend(parsX,zZone);
 
     const bool triangleSearch = std::fabs(yZone) < m_tolYTriangleSearch;
     // Not 100% sure about logic of next line, check it!
@@ -402,7 +429,7 @@ bool PrForward::addHitsOnEmptyStereoLayers(VeloUTTracking::TrackVeloUT& track,
 //=========================================================================
 bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
                                std::vector<int>& stereoHits,
-			       std::vector<int> &pc,
+			       std::vector<unsigned int> &pc,
                                int planelist[]) const {
   if ( nbDifferent(planelist) < m_minStereoHits_cur ) return false;
   float maxChi2 = 1.e9f;
@@ -421,7 +448,7 @@ bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
     const float tys = track.trackForward.trackParams[4]+(zMag-m_zReference)*track.trackForward.trackParams[5];
     const float tsyz = m_y0 + (zMag-m_z0)*m_ty;
     const float dyMag = tys-tsyz;
-    zMag -= zReference;
+    zMag -= m_zReference;
     float s0   = wMag;
     float sz   = wMag * zMag;
     float sz2  = wMag * zMag * zMag;
@@ -506,7 +533,7 @@ bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
 
     if ( maxChi2 > m_maxChi2Stereo ) {
       planelist[m_hits_layers.m_planeCode[*worst]] -= 1;
-      std::vector<int> pc_temp;
+      std::vector<unsigned int> pc_temp;
       pc_temp.clear();
       for (auto hit : pc) {
         if (hit != *worst){
@@ -531,17 +558,19 @@ std::vector<int> PrForward::collectStereoHits(VeloUTTracking::TrackVeloUT& track
   
   std::vector<int> stereoHits;
   // Skip a reserve call for now, save that for CUDA
-  for ( int zone = 0; zone != m_uvZones.size(); ++zone ) {
+  for ( int zone = 0; zone < 12; ++zone ) {
     float zZone = m_uvZone_zPos[zone];
-    const float yZone = straightLineExtend({track.trackForward.trackParams[4],
-                                            track.trackForward.trackParams[5],
-                                            track.trackForward.trackParams[6],
-                                            0.}, zZone );
+    const float parsX[4] = {track.trackForward.trackParams[0],
+                            track.trackForward.trackParams[1],
+                            track.trackForward.trackParams[2],
+                            track.trackForward.trackParams[3]};
+    const float parsY[4] = {track.trackForward.trackParams[4],
+                            track.trackForward.trackParams[5],
+                            track.trackForward.trackParams[6],
+                            0.};
+    const float yZone = straightLineExtend(parsY,zZone);
     zZone += m_Zone_dzdy[m_uvZones[zone]]*yZone;  // Correct for dzDy
-    const float xPred  = straightLineExtend({track.trackForward.trackParams[0],
-                                             track.trackForward.trackParams[1],
-                                             track.trackForward.trackParams[2],
-                                             track.trackForward.trackParams[3]}, zZone );
+    const float xPred  = straightLineExtend(parsX,zZone);
 
     const bool triangleSearch = std::fabs(yZone) < m_tolYTriangleSearch;
     // Not 100% sure about logic of next line, check it!
@@ -600,7 +629,7 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
   float zMag = zMagnet();
  
   const float q = m_qOverP>0.f ? 1.f :-1.f;
-  const float dir = q*m_magScaleFactor*(-1.f);
+  const float dir = q*m_magscalefactor*(-1.f);
 
   // Is PT at end VELO same as PT at beamline? Check output of VeloUT 
   const float pt = std::sqrt(std::fabs(1./(m_qOverP*m_qOverP))*(m_slope2)/(1.+m_slope2));
@@ -656,7 +685,7 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
     int itEnd = getLowerBound(m_hits_layers.m_x,xMax,x_zone_offset_begin,x_zone_offset_end);
 
     // Skip making range but continue if the end is before or equal to the start
-    if !(itEnd > itH) continue; 
+    if (!(itEnd > itH)) continue; 
  
     // Now match the stereo hits
     const float this_uv_z   = m_uvZone_zPos[iZone-iZoneStartingPoint];
@@ -726,7 +755,13 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
   // Drop the more sophisticated sort in the C++ code for now, not sure if this
   // is actually more efficient in CUDA. See line 577 then 1539-1552 of
   // /cvmfs/lhcb.cern.ch/lib/lhcb/REC/REC_v30r0/Pr/PrAlgorithms/src/PrForwardTool.cpp
-  std::sort( allXHits.begin(), allXHits.end(), compareByCoord);
+  // DIRTY HACK FOR NOW
+  std::vector<std::pair<float,int> > tempforsort; 
+  tempforsort.clear();
+  for (auto hit : allXHits) { tempforsort.emplace_back(std::pair<float,int>(m_hits_layers.m_coord[hit],hit));}
+  std::sort( tempforsort.begin(), tempforsort.end());
+  allXHits.clear();
+  for (auto pair : tempforsort) {allXHits.emplace_back(pair.second);}
 }
 
 //=========================================================================
@@ -770,13 +805,14 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
     // Cluster candidate found, now count planes
     // Skip this for now, it1 and it2 already encompass what we need at this point
     // try to get rid of this helper class (as pretty much all helper classes)
-    std::vector<int> pc;
+    std::vector<unsigned int> pc;
     pc.clear();
     int planelist[12] = {0};
     for (int itH = it1; itH != it2; ++itH) {
       if (isValid(allXHits[itH])) {
         pc.push_back(allXHits[itH]);
         planelist[m_hits_layers.m_planeCode[allXHits[itH]]] += 1;
+      }
     }   
     // Improve cluster (at the moment only add hits to the right)
     int itLast = it2 - 1;
@@ -831,7 +867,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
     lineFitParameters.m_z0 = m_zReference;
     float xAtRef = 0.;
 
-    if ( nbSingle >= m_minSingleHits && nbSingle(planelist) != nbDifferent(planelist) ) {
+    if ( nbSingle(planelist) >= m_minSingleHits && nbSingle(planelist) != nbDifferent(planelist) ) {
       //1) we have enough single planes (thus two) to make a straight line fit
       for(int i=0; i < 12; i++) otherHits[i].clear();
       //seperate single and double hits
@@ -868,7 +904,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
     } else {
       // 2) Try to find a small distance containing at least 5(4) different planes
       //    Most of the time do nothing
-      const unsigned int nPlanes =  std::min(nbDifferent(planelist),uint{5});
+      const unsigned int nPlanes =  std::min(nbDifferent(planelist),int{5});
       int itWindowStart = it1; 
       int itWindowEnd   = it1 + nPlanes; //pointing at last+1
       //Hit is used, go to next unused one
@@ -879,7 +915,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
       int best     = itWindowStart;
       int bestEnd  = itWindowEnd;
 
-      std::vector<int> lpc;
+      std::vector<unsigned int> lpc;
       lpc.clear();
       int lplanelist[12] = {0};
       for (int itH = itWindowStart; itH != itWindowEnd; ++itH) {
@@ -910,10 +946,10 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
         // OK this is super annoying but the way I've set it up, sans pointers, I have to now go through this crap
         // and remove this hit. Very very irritating but hey no pointers or helper class shit!
         lplanelist[m_hits_layers.m_planeCode[allXHits[itWindowStart]]] -= 1;
-        std::vector<int> lpc_temp;
+        std::vector<unsigned int> lpc_temp;
         lpc_temp.clear();
         for (auto hit : lpc) { 
-          if (hit != allXHits[itWindowStart].second) {
+          if (hit != allXHits[itWindowStart]) {
             lpc_temp.emplace_back(hit);
           }
         }
@@ -950,10 +986,11 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
     // Only unused(!) hits in coordToFit now
     // The objective of what follows is to add the candidate to m_candidateOutputTracks if it passes some checks
     bool ok = nbDifferent(pcplanelist) > 3;
+    std::vector<float> trackParameters;
     if(ok){
       // In LHCb code this is a move operation replacing hits on the track candidate
       // Here I will work directly with the hits in coordToFit for now
-      std::vector<float> trackParameters = getTrackParameters(xAtRef); 
+      trackParameters = getTrackParameters(xAtRef); 
       fastLinearFit(trackParameters, pc, pcplanelist);
       addHitsOnEmptyXLayers(trackParameters, m_xParams_seed, m_yParams_seed,
                             false, pc, planelist, side);
@@ -990,11 +1027,11 @@ bool PrForward::addHitsOnEmptyXLayers(std::vector<float> &trackParameters,
                                       const float m_xParams_seed[4],
                                       const float m_yParams_seed[4],
 				      bool fullFit,
-                                      std::vector<int> &pc,
+                                      std::vector<unsigned int> &pc,
                                       int planelist[],
 				      int side) const {
   //is there an empty plane? otherwise skip here!
-  if (nbDifferent(planelist) > 11) continue; 
+  if (nbDifferent(planelist) > 11) return true;
   bool  added = false;
   const float x1 = trackParameters[0];
   const float xStraight = straightLineExtend(m_xParams_seed,m_zReference);
@@ -1005,11 +1042,13 @@ bool PrForward::addHitsOnEmptyXLayers(std::vector<float> &trackParameters,
   for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + m_zoneoffsetpar; iZone++) {
     if (planelist[m_xZones[iZone]/2] != 0) continue;
 
+    const float parsX[4] = {trackParameters[0],
+                            trackParameters[1],
+                            trackParameters[2],
+                            trackParameters[3]};
+
     const float zZone  = m_xZone_zPos[iZone-iZoneStartingPoint];
-    const float xPred  = straightLineExtend({trackParameters[0],
-                                             trackParameters[1],
-                                             trackParameters[2],
-                                             trackParameters[3]}, zZone);
+    const float xPred  = straightLineExtend(parsX,zZone);
     const float minX = xPred - xWindow;
     const float maxX = xPred + xWindow;
     float bestChi2 = 1.e9f;
@@ -1045,7 +1084,7 @@ bool PrForward::addHitsOnEmptyXLayers(std::vector<float> &trackParameters,
 }
 
 bool PrForward::fitXProjection(std::vector<float> &trackParameters,
-                               std::vector<int> &pc,
+                               std::vector<unsigned int> &pc,
                                int planelist[]) const {
 
   if (nbDifferent(planelist) < m_minXHits_cur) return false;
@@ -1119,14 +1158,13 @@ bool PrForward::fitXProjection(std::vector<float> &trackParameters,
          maxChi2 > m_maxChi2XProjection ) {
       // Should really make this bit of code into a function... 
       planelist[m_hits_layers.m_planeCode[worst]] -= 1;
-      std::vector<int> pc_temp;
+      std::vector<unsigned int> pc_temp;
       pc_temp.clear();
       for (auto hit : pc) {
         if (hit != worst) pc_temp.emplace_back(hit);
       }
       pc = pc_temp;
       if (nbDifferent(planelist) < m_minXHits_cur + m_minStereoHits_cur) return false;
-      }    
       doFit = true;
     }    
   }
@@ -1134,7 +1172,7 @@ bool PrForward::fitXProjection(std::vector<float> &trackParameters,
 }
 
 void PrForward::fastLinearFit(std::vector<float> &trackParameters, 
-			      std::vector<int> &pc,
+			      std::vector<unsigned int> &pc,
 			      int planelist[]) const {
   bool fit = true;
   while (fit) {
@@ -1146,11 +1184,12 @@ void PrForward::fastLinearFit(std::vector<float> &trackParameters,
     float sdz  = 0.;
 
     for (auto hit : pc ){
+      const float parsX[4] = {trackParameters[0],
+                              trackParameters[1],
+                              trackParameters[2],
+                              trackParameters[3]};
       const float zHit = m_hits_layers.m_z[hit];
-      float track_x_at_zHit = straightLineExtend({trackParameters[0],
-						  trackParameters[1],
-						  trackParameters[2],
-						  trackParameters[3]}, zHit);
+      float track_x_at_zHit = straightLineExtend(parsX,zHit);
       const float d = m_hits_layers.m_x[hit] - track_x_at_zHit;
       const float w = m_hits_layers.m_w[hit];
       const float z = zHit - m_zReference;
@@ -1179,11 +1218,11 @@ void PrForward::fastLinearFit(std::vector<float> &trackParameters,
     for ( auto hit : pc) { 
       // This could certainly be wrapped in some helper function with a lot
       // of passing around or copying etc... 
-      float track_x_at_zHit = straightLineExtend({trackParameters[0],
-                                                  trackParameters[1],
-                                                  trackParameters[2],
-                                                  trackParameters[3]},
-						  m_hits_layers.m_z[hit]);
+      const float parsX[4] = {trackParameters[0],
+                              trackParameters[1],
+                              trackParameters[2],
+                              trackParameters[3]};
+      float track_x_at_zHit = straightLineExtend(parsX,m_hits_layers.m_z[hit]);
       float hitdist = m_hits_layers.m_x[hit] - track_x_at_zHit; 
       float chi2 = hitdist*hitdist*m_hits_layers.m_w[hit];
 
@@ -1195,7 +1234,7 @@ void PrForward::fastLinearFit(std::vector<float> &trackParameters,
     //== Remove grossly out hit, or worst in multiple layers
     if ( maxChi2 > m_maxChi2LinearFit || ( !notMultiple && maxChi2 > 4.f ) ) {
       planelist[m_hits_layers.m_planeCode[worst]] -= 1;
-      std::vector<int> pc_temp;
+      std::vector<unsigned int> pc_temp;
       pc_temp.clear();
       for (auto hit : pc) {
         if (hit != worst) pc_temp.emplace_back(hit);
@@ -1213,16 +1252,16 @@ inline void PrForward::xAtRef_SamePlaneHits(std::vector<int>& allXHits,
   //this is quite computationally expensive mind, should take care when porting
   float zHit    = m_hits_layers.m_z[allXHits[itH]]; //all hits in same layer
   float xFromVelo_Hit = straightLineExtend(m_xParams_seed,zHit);
-  float zMagSlope = zMagnetParams[2] * m_tx2 +  zMagnetParams[3] * m_ty2;
-  float dSlopeDivPart = 1.f / ( zHit - zMagnetParams[0]);
+  float zMagSlope = m_zMagnetParams[2] * m_tx2 +  m_zMagnetParams[3] * m_ty2;
+  float dSlopeDivPart = 1.f / ( zHit - m_zMagnetParams[0]);
   float dz      = 1.e-3f * ( zHit - m_zReference );
   
   while( itEnd>itH ){
-    xHit = m_hits_layers.m_x[allXHits[itH]];
+    float xHit = m_hits_layers.m_x[allXHits[itH]];
     float dSlope  = ( xFromVelo_Hit - xHit ) * dSlopeDivPart;
-    float zMag    = zMagnetParams[0] + zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
+    float zMag    = m_zMagnetParams[0] + m_zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
     float xMag    = xFromVelo_Hit + m_tx * (zMag - zHit);
-    float dxCoef  = dz * dz * ( xParams[0] + dz * xParams[1] ) * dSlope;
+    float dxCoef  = dz * dz * ( m_xParams[0] + dz * m_xParams[1] ) * dSlope;
     float ratio   = (  m_zReference - zMag ) / ( zHit - zMag );
     m_hits_layers.m_coord[allXHits[itH]] = xMag + ratio * (xHit + dxCoef  - xMag);
     itH++;

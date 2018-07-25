@@ -32,6 +32,10 @@ class PrForward {
 
 public:
 
+  PrForward();
+
+  bool initialize(){return true;}
+
   // std::vector<std::string> GetFieldMaps(;
   std::vector<VeloUTTracking::TrackVeloUT> operator()(
     const std::vector<VeloUTTracking::TrackVeloUT>& inputTracks,
@@ -42,6 +46,8 @@ public:
   void setMagScaleFactor(int magscalefactor){m_magscalefactor = magscalefactor;}
 
 private:
+
+  const std::vector<std::string> mlpInputVars {{"nPlanes"}, {"dSlope"}, {"dp"}, {"slope2"}, {"dby"}, {"dbx"}, {"day"}};
 
   // dump a bunch of options here
   const float        m_deltaQuality = 0.1; // Difference in quality btw two tracks which share hits when clone killing
@@ -149,7 +155,10 @@ private:
 
   // Vectors of selected hits
   mutable ForwardTracking::HitsSoAFwd  m_hits_layers;
-  
+ 
+  ReadMLP_Forward1stLoop m_MLPReader_1st;
+  ReadMLP_Forward2ndLoop m_MLPReader_2nd;
+ 
   void prepareOutputTrack(  
     const VeloUTTracking::TrackVeloUT& veloUTTrack,
     std::vector<VeloUTTracking::TrackVeloUT>& outputTracks
@@ -198,14 +207,14 @@ private:
 
   }
 
-  float zMagnet() {
+  float zMagnet() const {
     
     return ( m_zMagnetParams[0] +
              m_zMagnetParams[2] * m_tx2 +
              m_zMagnetParams[3] * m_ty2 );
   }
 
-  void covariance ( VeloUTTracking::FullState& state, const float qOverP ) {
+  void covariance ( VeloUTTracking::FullState& state, const float qOverP ) const {
      
     state.c00 = m_covarianceValues[0];
     state.c11 = m_covarianceValues[1];
@@ -218,16 +227,16 @@ private:
     return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  m_ty2 - 1000. * m_tx2; // tune this window
   }
 
-  float straightLineExtend(const float params[4], const float z) const {
+  float straightLineExtend(const float params[4], float z) const {
     float dz = z - m_zReference;
-    return params[0] + dz*(params[1]+dz*(params[2] + dz*params[3]));
+    return params[0] + (params[1]+(params[2] + params[3]*dz)*dz)*dz;
   }
 
-  bool isInside(float val, const float min, const float max) {
+  bool isInside(float val, const float min, const float max) const {
     return (val > min) && (val < max) ;
   }
 
-  int getLowerBound(float range[],float value,int start, int end){
+  int getLowerBound(float range[],float value,int start, int end) const {
     int i = start;
     for (i; i<end; i++) {
       if (range[i] > value) break;
@@ -235,40 +244,39 @@ private:
     return i;
   }
 
-  bool isValid(int value) {
+  bool isValid(int value) const {
     return !m_hits_layers.m_used[value];
   }
 
-  int nbDifferent(int planelist[]) {
+  int nbDifferent(int planelist[]) const {
     int different = 0;
-    for (auto i : planelist){different += i > 0 ? 1 : 0;}
+    for (int i=0;i<12;++i){different += planelist[i] > 0 ? 1 : 0;}
     return different;
   }
 
-  int nbSingle(int planelist[]){
+  int nbSingle(int planelist[]) const {
     int single = 0;
     for (int i=0;i<12;++i){single += planelist[i] == 1 ? 1 : 0;}
     return single;
   }
 
   inline float trackToHitDistance( std::vector<float> trackParameters, int hit ) const {
+    const float parsX[4] = {trackParameters[0],
+                           trackParameters[1],
+                           trackParameters[2],
+                           trackParameters[3]};
+    const float parsY[4] = {trackParameters[4],
+                           trackParameters[5],
+                           trackParameters[6],
+                           0.}; 
     float z_Hit = m_hits_layers.m_z[hit] + 
-		  m_hits_layers.m_dzdy[hit]*straightLineExtend({trackParameters[4],
-                                           		        trackParameters[5],
-                                        			trackParameters[6],
-                                        		 	0.}, m_hits_layers.m_z[hit]);
-    float x_track = straightLineExtend({trackParameters[0],
-					trackParameters[1],
-					trackParameters[2],
-					trackParameters[3]}, z_Hit);
-    float y_track = straightLineExtend({trackParameters[4],
-					trackParameters[5],
-					trackParameters[6],
-					0.}, z_Hit);
+		  m_hits_layers.m_dzdy[hit]*straightLineExtend(parsY, m_hits_layers.m_z[hit]);
+    float x_track = straightLineExtend(parsX,z_Hit);
+    float y_track = straightLineExtend(parsY,z_Hit);
     return m_hits_layers.m_x[hit] + y_track*m_hits_layers.m_dxdy[hit] - x_track; 
   }
 
-  void incrementLineFitParameters(ForwardTracking::LineFitterPars &parameters, int it) {
+  void incrementLineFitParameters(ForwardTracking::LineFitterPars &parameters, int it) const {
     float c = m_hits_layers.m_coord[it];
     float w = m_hits_layers.m_w[it];
     float z = m_hits_layers.m_z[it] - parameters.m_z0;
@@ -279,29 +287,72 @@ private:
     parameters.m_scz  += w * c * z;
   } 
 
-  float getLineFitDistance(ForwardTracking::LineFitterPars &parameters, int it ) { 
+  float getLineFitDistance(ForwardTracking::LineFitterPars &parameters, int it ) const { 
     return m_hits_layers.m_coord[it] - (parameters.m_c0 + (m_hits_layers.m_z[it] - parameters.m_z0) * parameters.m_tc);
   }
 
-  float getLineFitChi2(ForwardTracking::LineFitterPars &parameters, int it) {
-    float d = getLineFitDistance( hit ); 
+  float getLineFitChi2(ForwardTracking::LineFitterPars &parameters, int it) const {
+    float d = getLineFitDistance( parameters, it ); 
     return d * d * m_hits_layers.m_coord[it]; 
   }
 
-  void solveLineFit(ForwardTracking::LineFitterPars &parameters) {
+  void solveLineFit(ForwardTracking::LineFitterPars &parameters) const {
     float den = (parameters.m_sz*parameters.m_sz-parameters.m_s0*parameters.m_sz2);
     parameters.m_c0  = (parameters.m_scz * parameters.m_sz - parameters.m_sc * parameters.m_sz2) / den;
     parameters.m_tc  = (parameters.m_sc *  parameters.m_sz - parameters.m_s0 * parameters.m_scz) / den;
   }
 
-  bool compareByCoord(int i1, int i2) {
-    return m_hits_layers.m_coord[i1] < m_hits_layers.m_coord[i2]; 
+  static bool lowerByQuality(VeloUTTracking::TrackVeloUT t1, VeloUTTracking::TrackVeloUT t2) {
+    return t1.trackForward.quality < t2.trackForward.quality;
   }
 
   void collectAllXHits(std::vector<int>& allXHits, 
 		       const float m_xParams_seed[4],
                        const float m_yParams_seed[4],
                        int side) const;
+
+  void selectXCandidates(std::vector<int>& allXHits,
+                         const VeloUTTracking::TrackVeloUT& veloUTTrack,
+                         std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
+                         const float m_zRef_track,
+                         const float m_xParams_seed[4],
+                         const float m_yParams_seed[4],
+                         int side) const;
+
+  bool addHitsOnEmptyXLayers(std::vector<float> &trackParameters,
+                             const float m_xParams_seed[4],
+                             const float m_yParams_seed[4],
+                             bool fullFit,
+                             std::vector<unsigned int> &pc,
+                             int planelist[],
+                             int side) const;
+
+  bool fitXProjection(std::vector<float> &trackParameters,
+                      std::vector<unsigned int> &pc,
+                      int planelist[]) const;
+
+  void fastLinearFit(std::vector<float> &trackParameters,
+                     std::vector<unsigned int> &pc,
+                     int planelist[]) const;
+
+  void selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
+                            const float m_xParams_seed[4],
+                            const float m_yParams_seed[4]) const;
+
+  bool selectStereoHits(VeloUTTracking::TrackVeloUT& track,
+                        std::vector<int> stereoHits) const;
+
+  bool addHitsOnEmptyStereoLayers(VeloUTTracking::TrackVeloUT& track,
+                                  std::vector<int>& stereoHits,
+                                  std::vector<unsigned int> &pc,
+                                  int planelist[]) const;
+
+  bool fitYProjection(VeloUTTracking::TrackVeloUT& track,
+                      std::vector<int>& stereoHits,
+                      std::vector<unsigned int> &pc,
+                      int planelist[]) const;
+
+  std::vector<int> collectStereoHits(VeloUTTracking::TrackVeloUT& track) const;
 
   void xAtRef_SamePlaneHits(std::vector<int>& allXHits,
 			    const float m_xParams_seed[4],
