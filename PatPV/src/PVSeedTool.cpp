@@ -93,15 +93,15 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
   while(!no_merges) {
    //asume clusters sorted in z
   no_merges = true;
-  for(int index_cluster = 0; index_cluster < number_of_clusters; index_cluster++) {
+  for(int index_cluster = 0; index_cluster < number_of_clusters - 1; index_cluster++) {
       //only look at next five clusters
     //skip cluster which have already been merged
     std::cout << "index cluster " << index_cluster << std::endl;
     int second_cluster_counter = 0;
-    while(second_cluster_counter < 500) {
+    for(int index_second_cluster = index_cluster + 1; index_second_cluster < number_of_clusters; index_second_cluster++){
       std::cout << second_cluster_counter << std::endl;
-      int index_second_cluster = index_cluster +1 + second_cluster_counter;
-      if(index_second_cluster >= number_of_clusters) break;
+
+
       //skip cluster which have already been merged
       if(vclus[index_cluster].ntracks == 0) break;
       if(vclus[index_second_cluster].ntracks == 0) { second_cluster_counter++;continue;}
@@ -132,11 +132,12 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
         vclus[index_second_cluster].ntracks  = 0;  // mark second cluster as used
         counter_merges++;
         std::cout << "after merge " << vclus[index_cluster].z << std::endl;
+        break;
       }
       std::cout << "current pair after merging: " << vclus[index_cluster].z << " " << vclus[index_cluster].ntracks << " " << vclus[index_second_cluster].ntracks << std::endl;
       //stop while loop after first merge
-      if (chi2dist<m_maxChi2Merge ) break;
-      second_cluster_counter++;
+
+      
     }
     
 
