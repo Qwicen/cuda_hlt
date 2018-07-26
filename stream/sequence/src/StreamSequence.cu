@@ -282,7 +282,7 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
       argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
       dev_ut_magnet_tool );
-     sequence.item<seq::veloUT>().invoke();
+    sequence.item<seq::veloUT>().invoke();
 
     // Transmission device to host
     if ( transmit_device_to_host) {
