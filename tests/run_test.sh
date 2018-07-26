@@ -10,7 +10,7 @@ cd ../build
 #done
 
 # measure statistical fluctuation of measurements with the same settings
-for i in {0..1..1}
+for i in {0..9..1}
 do
     ./cu_hlt -f ../input/minbias/10kevents/velopix_raw/ -d ../input/minbias/10kevents/TrackerDumper/ -e ../input/minbias/10kevents/ut_hits/ -g ../input/geometry/ -n 500 -o 0 -t 1 -r 100 -c 0 -v2 -m 300
 done
