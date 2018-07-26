@@ -40,22 +40,22 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const bool checkEvent
   uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
   for (uint32_t i=0; i<number_mcp; ++i) {
     MCParticle p;
-    p.m_key      = *((uint32_t*)  input); input += sizeof(uint32_t);
-    p.m_id       = *((uint32_t*)  input); input += sizeof(uint32_t);
-    p.m_p      = *((float*)  input); input += sizeof(float);
-    p.m_pt       = *((float*)  input); input += sizeof(float);
-    p.m_eta      = *((float*)  input); input += sizeof(float);
-    p.m_phi      = *((float*)  input); input += sizeof(float);
-    p.m_islong     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.m_isdown     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.m_isvelo     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.m_isut     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.m_strangelong  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.m_strangedown  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.m_fromb    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.m_fromd    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.m_numHits    = *((uint32_t*)  input); input += sizeof(uint32_t);
-    std::copy_n((uint32_t*) input, p.nIDs(), std::back_inserter(p.m_hits)); input += sizeof(uint32_t) * p.nIDs();
+    p.key      = *((uint32_t*)  input); input += sizeof(uint32_t);
+    p.pid       = *((uint32_t*)  input); input += sizeof(uint32_t);
+    p.p      = *((float*)  input); input += sizeof(float);
+    p.pt       = *((float*)  input); input += sizeof(float);
+    p.eta      = *((float*)  input); input += sizeof(float);
+    p.phi      = *((float*)  input); input += sizeof(float);
+    p.isLong     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.isDown     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.hasVelo     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.hasUT     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.hasSciFi     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.fromBeautyDecay    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.fromCharmDecay    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.fromStrangeDecay    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.numHits    = *((uint32_t*)  input); input += sizeof(uint32_t);
+    std::copy_n((uint32_t*) input, p.numHits, std::back_inserter(p.hits)); input += sizeof(uint32_t) * p.numHits;
     mcps.push_back(p);
   }
 
@@ -67,29 +67,17 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const bool checkEvent
   }
 
     if (checkEvent) {
-        // Check all floats are valid
-        for (size_t i=0; i<numberOfModules; ++i) {
-            assert(!std::isnan(module_Zs[i]));
-            assert(!std::isinf(module_Zs[i]));
-        }
-        for (size_t i=0; i<numberOfHits; ++i) {
-            assert(!std::isnan(hit_Xs[i]));
-            assert(!std::isnan(hit_Ys[i]));
-            assert(!std::isnan(hit_Zs[i]));
-            assert(!std::isinf(hit_Xs[i]));
-            assert(!std::isinf(hit_Ys[i]));
-            assert(!std::isinf(hit_Zs[i]));
-        }
-        for (auto& mcp : mcps) {
-            assert(!std::isnan(mcp.p() ));
-            assert(!std::isnan(mcp.pt()));
-            assert(!std::isnan(mcp.eta()));
-            assert(!std::isnan(mcp.phi()));
-            assert(!std::isinf(mcp.p()));
-            assert(!std::isinf(mcp.pt()));
-            assert(!std::isinf(mcp.eta()));
-            assert(!std::isinf(mcp.phi()));
-	}
+      // Check all floats are valid
+      for (auto& mcp : mcps) {
+        assert(!std::isnan(mcp.p ));
+        assert(!std::isnan(mcp.pt));
+        assert(!std::isnan(mcp.eta));
+        assert(!std::isnan(mcp.phi));
+        assert(!std::isinf(mcp.p));
+        assert(!std::isinf(mcp.pt));
+        assert(!std::isinf(mcp.eta));
+        assert(!std::isinf(mcp.phi));
+      }
     }
     
  
@@ -102,22 +90,22 @@ void VelopixEvent::print() const {
   if (mcps.size() > 0) {
     auto& p = mcps[0];
     std::cout << " First MC particle" << std::endl
-      << "  key " << p.key() << std::endl
-      << "  id " << p.pid() << std::endl
-      << "  p " << p.p() << std::endl
-      << "  pt " << p.pt() << std::endl
-      << "  eta " << p.eta() << std::endl
-      << "  phi " << p.phi() << std::endl
-      << "  islong " << p.isLong() << std::endl
-      << "  isdown " << p.isDown() << std::endl
-      << "  isvelo " << p.isVelo() << std::endl
-      << "  isut " << p.isUT() << std::endl
-      << "  strangelong " << p.isStrangeLong() << std::endl
-      << "  strangedown " << p.isStrangeDown() << std::endl
-      << "  fromb " << p.isFromB() << std::endl
-      << "  fromd " << p.isFromD() << std::endl
-      << "  numHits " << p.nIDs() << std::endl
-      << "  hits " << strVector(p.m_hits, p.nIDs()) << std::endl;
+      << "  key " << p.key << std::endl
+      << "  id " << p.pid << std::endl
+      << "  p " << p.p << std::endl
+      << "  pt " << p.pt << std::endl
+      << "  eta " << p.eta << std::endl
+      << "  phi " << p.phi << std::endl
+      << "  isLong " << p.isLong << std::endl
+      << "  isDown " << p.isDown << std::endl
+      << "  hasVelo " << p.hasVelo << std::endl
+      << "  hasUT " << p.hasUT << std::endl
+      << "  hasSciFi " << p.hasSciFi << std::endl
+      << "  fromBeautyDecay " << p.fromBeautyDecay << std::endl
+      << "  fromCharmDecay " << p.fromCharmDecay << std::endl
+      << "  fromStrangeDecay " << p.fromStrangeDecay << std::endl
+      << "  numHits " << p.numHits << std::endl
+      << "  hits " << strVector(p.hits, p.numHits) << std::endl;
   }
 }
 
@@ -245,20 +233,19 @@ void readNtupleIntoVelopixEvent(
     if ( trackType == "VeloUT" && !(hasVelo && hasUT) ) continue;
         
     MCParticle mcp;
-    mcp.m_key = key;
-    mcp.m_id = pid;
-    mcp.m_p = p;
-    mcp.m_pt = pt;
-    mcp.m_eta = eta;
+    mcp.key = key;
+    mcp.pid = pid;
+    mcp.p = p;
+    mcp.pt = pt;
+    mcp.eta = eta;
     //mcp.phi = phi; // not yet available in Ntuple
-    mcp.m_islong = isLong;
-    mcp.m_isdown = isDown;
-    mcp.m_isvelo = hasVelo;
-    mcp.m_isut = hasUT;
-    mcp.m_strangelong = fromStrangeDecay && isLong;
-    mcp.m_strangedown = fromStrangeDecay && isDown;
-    mcp.m_fromb = fromBeautyDecay;
-    mcp.m_fromd = fromCharmDecay;
+    mcp.isLong = isLong;
+    mcp.isDown = isDown;
+    mcp.hasVelo = hasVelo;
+    mcp.hasUT = hasUT;
+    mcp.fromBeautyDecay = fromBeautyDecay;
+    mcp.fromCharmDecay = fromCharmDecay;
+    mcp.fromStrangeDecay = fromStrangeDecay;
     
     std::vector<uint32_t> hits;
     if ( trackType == "Velo" || trackType == "VeloUT" || trackType == "SciFi" )
@@ -276,8 +263,8 @@ void readNtupleIntoVelopixEvent(
 	hits.push_back( FT_lhcbID->at(index) );
       }
         
-    mcp.m_numHits = (uint32_t)hits.size();
-    mcp.m_hits = hits;
+    mcp.numHits = (uint32_t)hits.size();
+    mcp.hits = hits;
     
     event.mcps.push_back( mcp );
 
