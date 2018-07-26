@@ -16,21 +16,7 @@ bool  multcomp( vtxCluster *first, vtxCluster *second ) {
     return first->ntracks > second->ntracks;
 }
 
-// auxiliary class for merging procedure of tracks/clusters
-struct pair_to_merge final {
 
-  vtxCluster* first = nullptr;  // pointer to first cluster to be merged
-  vtxCluster* second = nullptr; // pointer to second cluster to be merged
-  double chi2dist = 10.e+10;    // a chi2dist = zdistance**2/(sigma1**2+sigma2**2)
-
-  pair_to_merge(vtxCluster* f, vtxCluster* s, double chi2) : first(f), second(s), chi2dist(chi2) {}
-
-};
-
-bool paircomp( const pair_to_merge &first, const pair_to_merge &second ) {
-  return first.chi2dist < second.chi2dist;
-
-}
 
 
 constexpr static const int s_p2mstatic = 5000;
@@ -164,7 +150,13 @@ int PVSeedTool::findClusters(vtxCluster * vclus, double * zclusters, int number_
   resetClusterCounter();
   std::vector<vtxCluster*> pvclus;
   pvclus.reserve(number_of_clusters);
+  int return_number_of_clusters = 0;
+  for(int i = 0; i < number_of_clusters; i++) {
+    if(vclus[i].ntracks != 0)    return_number_of_clusters++;
+  } 
 
+  //still missing: cleaning up the clusters like below
+/*
    for(int i = 0; i < number_of_clusters; i++) {
     if(vclus[i].ntracks != 0)    pvclus.push_back(&(vclus[i]));
   } 
@@ -216,9 +208,9 @@ int PVSeedTool::findClusters(vtxCluster * vclus, double * zclusters, int number_
     if(vclus[index_cluster].ntracks == 0) continue; 
     std::cout << index_cluster << " " << vclus[index_cluster].z << " "<< vclus[index_cluster].sigsq << " " <<  vclus[index_cluster].ntracks<< std::endl;
   
-  }
+  }*/
   
-  return pvclus.size();
+  return return_number_of_clusters;
 
 }
 
