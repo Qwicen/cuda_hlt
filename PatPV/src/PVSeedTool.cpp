@@ -84,8 +84,10 @@ PVSeedTool::getSeeds( VeloState * inputTracks,
     clu.sigsq = sigsq;
     clu.sigsqmin = clu.sigsq;
     clu.ntracks = 1;
-    vclusters[i] = clu;
+    vclusters[number_of_clusters] = clu;
+    std::cout << "seed " << number_of_clusters << " " <<  vclusters[number_of_clusters].z << " " << vclusters[number_of_clusters].sigsq << std::endl;
     number_of_clusters++;
+
   }
 
 
@@ -121,25 +123,28 @@ void PVSeedTool::findClusters(vtxCluster * vclus, double * zclusters, int number
    int counter_merges = -1;
    std::cout<<"inital nubmer of clusters: " << number_of_clusters << std::endl;
 
-
+  bool no_merges = false;
+  while(!no_merges) {
    //asume clusters sorted in z
+  no_merges = true;
   for(int index_cluster = 0; index_cluster < number_of_clusters; index_cluster++) {
       //only look at next five clusters
     //skip cluster which have already been merged
-    
+    std::cout << "index cluster " << index_cluster << std::endl;
     int second_cluster_counter = 0;
-    while(second_cluster_counter < 100) {
+    while(second_cluster_counter < 500) {
+      std::cout << second_cluster_counter << std::endl;
       int index_second_cluster = index_cluster +1 + second_cluster_counter;
       if(index_second_cluster >= number_of_clusters) break;
       //skip cluster which have already been merged
       if(vclus[index_cluster].ntracks == 0) break;
-      if(vclus[index_second_cluster].ntracks == 0) continue;
+      if(vclus[index_second_cluster].ntracks == 0) { second_cluster_counter++;continue;}
       double z1 = vclus[index_cluster].z;
-      double z2 = vclus[second_cluster_counter].z;
+      double z2 = vclus[index_second_cluster].z;
       double s1 = vclus[index_cluster].sigsq;
-      double s2 = vclus[second_cluster_counter].sigsq;
+      double s2 = vclus[index_second_cluster].sigsq;
       double s1min = vclus[index_cluster].sigsqmin;
-      double s2min = vclus[second_cluster_counter].sigsqmin;
+      double s2min = vclus[index_second_cluster].sigsqmin;
       double sigsqmin = s1min;
       if(s2min<s1min) sigsqmin = s2min;
 
@@ -147,28 +152,30 @@ void PVSeedTool::findClusters(vtxCluster * vclus, double * zclusters, int number
       double zdist = z1 - z2;
       double chi2dist = zdist*zdist/(s1+s2);
       //merge if chi2dist is smaller than max
+      std::cout << "current pair before merging: " << vclus[index_cluster].z << " " << vclus[index_cluster].ntracks << " " << vclus[index_second_cluster].ntracks << std::endl;
       if (chi2dist<m_maxChi2Merge ) {
+        no_merges = no_merges && false;
         double w_inv = (s1*s2/(s1+s2));
         double zmerge = w_inv*(z1/s1+z2/s2);
-        std::cout << "before merge: " << vclus[index_cluster].z << " " << vclus[second_cluster_counter].z << " " << chi2dist << " " << zmerge << " " << w_inv<< " " << s1 << " " << s2 << std::endl;
+        std::cout << "before merge: " << vclus[index_cluster].z << " " << vclus[index_second_cluster].z << " " << chi2dist << " " << zmerge << " " << w_inv<< " " << s1 << " " << s2 << std::endl;
 
         vclus[index_cluster].z        = zmerge;
         vclus[index_cluster].sigsq    = w_inv;
         vclus[index_cluster].sigsqmin = sigsqmin;
-        vclus[index_cluster].ntracks += vclus[second_cluster_counter].ntracks;
-        vclus[second_cluster_counter].ntracks  = 0;  // mark second cluster as used
+        vclus[index_cluster].ntracks += vclus[index_second_cluster].ntracks;
+        vclus[index_second_cluster].ntracks  = 0;  // mark second cluster as used
         counter_merges++;
         std::cout << "after merge " << vclus[index_cluster].z << std::endl;
       }
+      std::cout << "current pair after merging: " << vclus[index_cluster].z << " " << vclus[index_cluster].ntracks << " " << vclus[index_second_cluster].ntracks << std::endl;
       //stop while loop after first merge
       if (chi2dist<m_maxChi2Merge ) break;
-
       second_cluster_counter++;
     }
     
 
    }
-
+}
    /*
   while(counter_merges != 0) {
     counter_clusters = 0;
