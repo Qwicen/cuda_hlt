@@ -25,7 +25,7 @@
 bool fitVertex( XYZPoint& seedPoint,
               VeloState * host_velo_states,
              Vertex& vtx,
-             std::vector<VeloState>& tracks2remove, int number_of_tracks) 
+             std::vector<VeloState>& tracks2remove, int number_of_tracks, bool * tracks2disable) 
 {
   //tracks2remove.clear();
 
@@ -39,6 +39,9 @@ bool fitVertex( XYZPoint& seedPoint,
   //for( const auto& track : rTracks ) {
   for(int i = 0; i < number_of_tracks; i++) {  
       AdaptivePVTrack pvTrack(host_velo_states[i], refpos);
+
+      //don't use disabled tracks
+      if(tracks2disable[i]) continue;
       if(pvTrack.chi2() < m_maxChi2) {
         pvTracks[pvTrack_counter] = pvTrack;
         pvTrack_counter++;
@@ -173,6 +176,17 @@ bool fitVertex( XYZPoint& seedPoint,
       tracks2remove.push_back( trk.track() );
       tracks2remove_counter++;
     }
+  }
+
+
+  //disable tracks added to this vertex
+    for(int i = 0; i < number_of_tracks; i++) {  
+      AdaptivePVTrack pvTrack(host_velo_states[i], refpos);
+
+      //don't use disabled tracks
+      if(tracks2disable[i]) continue;
+      if( pvTrack.chi2(vtxpos) < m_trackMaxChi2Remove) tracks2disable[i] = true;
+   
   }
   
 
