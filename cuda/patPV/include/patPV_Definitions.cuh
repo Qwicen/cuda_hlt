@@ -23,7 +23,7 @@ struct vtxCluster final {
   double  z = 0;            // z of the cluster
   double  sigsq = 0;        // sigma**2 of the cluster
   double  sigsqmin = 0;     // minimum sigma**2 of the tracks forming cluster
-  int     ntracks = 0;      // number of tracks in the cluster
+  int     ntracks = 1;      // number of tracks in the cluster
   int     not_merged = 0;   // flag for iterative merging
 
   vtxCluster() = default;
