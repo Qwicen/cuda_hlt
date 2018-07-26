@@ -5,24 +5,24 @@
 #include "../include/AdaptivePV3DFitter.h"
 //#include "../../PrVeloUT/include/CholeskyDecomp.h"
 
-
-
-
-//=============================================================================
-// Standard constructor, initializes variables
-//=============================================================================
-AdaptivePV3DFitter::AdaptivePV3DFitter()
-  
-{
-  m_trackChi = std::sqrt(m_trackMaxChi2);
-}
+  size_t m_minTr = 4;
+  int    m_Iterations = 20;
+  int    m_minIter = 5;
+  double m_maxDeltaZ = 0.0005; // unit:: mm
+  double m_minTrackWeight = 0.00000001;
+  double m_TrackErrorScaleFactor = 1.0;
+  double m_maxChi2 = 400.0;
+  double m_trackMaxChi2 = 12.;
+  double m_trackChi = std::sqrt(m_trackMaxChi2);     // sqrt of trackMaxChi2
+  double m_trackMaxChi2Remove = 25.;
+  double m_maxDeltaZCache = 1.; //unit: mm
 
 
 
 //=============================================================================
 // Least square adaptive fitting method
 //=============================================================================
-bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
+bool fitVertex( XYZPoint& seedPoint,
               VeloState * host_velo_states,
              Vertex& vtx,
              std::vector<VeloState>& tracks2remove, int number_of_tracks) 
@@ -43,10 +43,7 @@ bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
         pvTracks[pvTrack_counter] = pvTrack;
         pvTrack_counter++;
       }
-      //std::cout << "pos state x: " << track->position().x << " " << refpos.x << std::endl;
-      //std::cout << "pos state y: " << track->position().y << " " << refpos.y << std::endl;
-      //std::cout << "pos state z: " << track->position().z << " " << refpos.z << std::endl;
-      //std::cout << "chi2: " << pvTracks.back().chi2() << " " << m_maxChi2 << std::endl;
+
       
   }
     
@@ -111,24 +108,7 @@ bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
     }
 
     // compute the new vertex covariance
-    /*
-    for(int i = 0; i < 6; i++) vtxcov[i] = halfD2Chi2DX2[i] ;
-    ROOT::Math::CholeskyDecomp<float, 3> decomp(vtxcov);
-    if( !decomp ) return false;
-    decomp.Invert(vtxcov);
-    */
-/*
-    const double li21 = -halfD2Chi2DX2[1] * halfD2Chi2DX2[0] * halfD2Chi2DX2[2];
-    const double li32 = -halfD2Chi2DX2[4] * halfD2Chi2DX2[2] * halfD2Chi2DX2[5];
-    const double li31 = (halfD2Chi2DX2[1] * halfD2Chi2DX2[4] * halfD2Chi2DX2[2] - halfD2Chi2DX2[3]) * halfD2Chi2DX2[0] * halfD2Chi2DX2[5];
 
-    vtxcov[0] = li31*li31 + li21*li21 + halfD2Chi2DX2[0]*halfD2Chi2DX2[0];
-    vtxcov[1] = li31*li32 + li21*halfD2Chi2DX2[2];
-    vtxcov[2] = li32*li32 + halfD2Chi2DX2[2]*halfD2Chi2DX2[2];
-    vtxcov[3] = li31*halfD2Chi2DX2[5];
-    vtxcov[4] = li32*halfD2Chi2DX2[5];
-    vtxcov[5] = halfD2Chi2DX2[5]*halfD2Chi2DX2[5];
-*/
 
     //repalce Cholesky inverter by analytical solution
     double a00 = halfD2Chi2DX2[0];
@@ -203,7 +183,7 @@ bool AdaptivePV3DFitter::fitVertex( XYZPoint& seedPoint,
 //=============================================================================
 // Get Tukey's weight
 //=============================================================================
-double AdaptivePV3DFitter::getTukeyWeight(double trchi2, int iter) const
+double getTukeyWeight(double trchi2, int iter) 
 {
   if (iter<1 ) return 1.;
   double ctrv = m_trackChi * std::max(m_minIter -  iter,1);

@@ -45,7 +45,7 @@ bool reconstructMultiPVFromTracks( VeloState * tracks2use,
     // reconstruct vertices
 
 
-  AdaptivePV3DFitter fitter;
+
   XYZPoint  seeds[PatPV::max_number_vertices];
   int number_seeds = getSeeds(rtracks, beamspot, host_number_of_tracks_pinned, seeds);
   //nubmer of seeds should be in same order as nubmer of priamry vertices
@@ -63,7 +63,7 @@ bool reconstructMultiPVFromTracks( VeloState * tracks2use,
       //VeloState * tracks2remove;
       std::vector<VeloState> tracks2remove;
       // fitting
-      bool scvfit = fitter.fitVertex( seed, rtracks, recvtx, tracks2remove, host_number_of_tracks_pinned);
+      bool scvfit = fitVertex( seed, rtracks, recvtx, tracks2remove, host_number_of_tracks_pinned);
       if (!scvfit) continue;
       
       
