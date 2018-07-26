@@ -26,8 +26,7 @@ constexpr static const int s_p2mstatic = 5000;
 //=============================================================================
 // getSeeds
 //=============================================================================
-int 
-PVSeedTool::getSeeds( VeloState * inputTracks,
+int getSeeds( VeloState * inputTracks,
                      const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds)  {
   
   
@@ -74,7 +73,7 @@ PVSeedTool::getSeeds( VeloState * inputTracks,
 }
 
 
-int PVSeedTool::findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)  {
+int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)  {
 
 
   //maybe sort in z before merging?
@@ -147,7 +146,6 @@ int PVSeedTool::findClusters(vtxCluster * vclus, double * zclusters, int number_
   
 
 
-  resetClusterCounter();
   std::vector<vtxCluster*> pvclus;
   pvclus.reserve(number_of_clusters);
   int return_number_of_clusters = 0;
@@ -214,7 +212,7 @@ int PVSeedTool::findClusters(vtxCluster * vclus, double * zclusters, int number_
 
 }
 
-void PVSeedTool::errorForPVSeedFinding(double tx, double ty, double &sigz2) const {
+void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
   // the seeding results depend weakly on this eror parametrization
 
@@ -237,7 +235,7 @@ void PVSeedTool::errorForPVSeedFinding(double tx, double ty, double &sigz2) cons
 
 
 
-double PVSeedTool::zCloseBeam( VeloState track, const XYZPoint& beamspot) const {
+double zCloseBeam( VeloState track, const XYZPoint& beamspot) {
 
   XYZPoint tpoint(track.x, track.y, track.z);
 

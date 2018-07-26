@@ -1,5 +1,5 @@
 #include "../include/run_PatPV_CPU.h"
-
+//#include "../../../PatPV/include/PVSeedTool.h"
 
 /*
 XYZPoint& seedPoint,
@@ -8,9 +8,10 @@ XYZPoint& seedPoint,
              std::vector<Track*>& tracks2remove
 
 */
+#include "../../../PatPV/include/PVSeedTool.h"
 
-
-
+//int getSeeds( VeloState* inputTracks,
+  //     const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds)  ;
 
 
 bool reconstructMultiPVFromTracks( VeloState * tracks2use,
@@ -24,7 +25,7 @@ bool reconstructMultiPVFromTracks( VeloState * tracks2use,
   //outvtxvec.clear();
 
 
-  PVSeedTool seedtool;
+
   //double m_beamSpotX = 0.02;
   //double m_beamSpotY = -0.16;
   double m_beamSpotX = 0.;
@@ -46,12 +47,17 @@ bool reconstructMultiPVFromTracks( VeloState * tracks2use,
 
   AdaptivePV3DFitter fitter;
   XYZPoint  seeds[PatPV::max_number_vertices];
-  int number_seeds = seedtool.getSeeds(rtracks, beamspot, host_number_of_tracks_pinned, seeds);
+  int number_seeds = getSeeds(rtracks, beamspot, host_number_of_tracks_pinned, seeds);
   //nubmer of seeds should be in same order as nubmer of priamry vertices
   //std::cout << "number of seeds: " << seeds.size() << std::endl;
     for(int i=0; i < number_seeds; i++) {
       XYZPoint seed = seeds[i]; 
       Vertex recvtx;
+
+      std::cout << "trying to fit with seed " << i << std::endl;
+      std::cout << seed.x << std::endl;
+      std::cout << seed.y << std::endl;
+      std::cout << seed.z << std::endl;
 
 
       //VeloState * tracks2remove;
@@ -89,7 +95,7 @@ int run_PatPV_on_CPU (
 ) {
 
 XYZPoint beamspot(0.,0.,0.);
-PVSeedTool seedtool;
+
 //std:std::vector<XYZPoint> seeds = seedtool.getSeeds(host_velo_states, beamspot, *host_number_of_tracks_pinned);
 
 /*
@@ -141,6 +147,9 @@ std::cout << "least: " << kalman_states[1].c33 <<std::endl;
 
 reconstructMultiPVFromTracks(kalman_states, outvtxvec, host_number_of_tracks_pinned[i_event], number_of_vertex, i_event);
 }
+
+
+
 
   return 0;
 }
@@ -234,7 +243,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
       if( p<0 || MCVertexType != 1) continue;  // Hits not associated to an MCP are stored with p < 0 and only look for trakcs from PVs
 
       if(std::find(found_z.begin(), found_z.end(), ovtx_z) == found_z.end()) {
-        std::cout << "found a new vertex with: " << std::endl;
+        std::cout << "found a new MC vertex with: " << std::endl;
         std::cout << "x: " << ovtx_x << std::endl;
         std::cout << "y: " << ovtx_y << std::endl;
         std::cout << "z: " << ovtx_z << std::endl;
@@ -253,7 +262,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
 
     events_vertices.push_back(vertices);
   }
-  std::cout << "here are the vertices!" << std::endl;
+  std::cout << "here are the MC vertices!" << std::endl;
   for(auto vtx_vec : events_vertices) {
     for (auto vtx : vtx_vec) {
       std::cout << "x: " << vtx.x << std::endl;
@@ -263,11 +272,35 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
     }
   }
 
+  std::cout << "rec vertices with errors:" << std::endl;
+  for(int i = 0; i < number_of_vertex[0]; i++) {
+    int index = 0  * max_number_vertices + i;
+    std::cout << "x: " << rec_vertex[index].pos.x << " " << rec_vertex[index].cov[0] << std::endl;
+    std::cout << "y: " << rec_vertex[index].pos.y << " " << rec_vertex[index].cov[5] << std::endl;
+    std::cout << "z: " << rec_vertex[index].pos.z << " " << rec_vertex[index].cov[5] << std::endl;
+  }
+
 
   //now, for each event, loop over MCVertices and check if it has been found (distance criterion) -> calculate efficiency
   //again, loop over events/files
   //loop first over rec vertices, hten over files/events
+  
+  for(int i_event = 0; i_event < number_of_files; i_event++) {
+    std::cout << "number_of_vertex: " << number_of_vertex[i_event] << std::endl;
+    for(uint i = 0; i < number_of_vertex[i_event]; i++) {
+      int index = i_event  *max_number_vertices + i;
+      std::cout << "reconstructed vertex " << i << std::endl;
+        std::cout << rec_vertex[index].pos.x << std::endl;
+        std::cout << rec_vertex[index].pos.y << std::endl;
+        std::cout << rec_vertex[index].pos.z << std::endl;
+    }
+  }
+
+
   int i_event = 0;
+
+
+
   std::cout << "start comparison" << std::endl;
   for(auto vtx_vec : events_vertices) {
     //std::cout << "-----------" << std::endl; 
@@ -275,7 +308,10 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
       int index = i_event  *max_number_vertices + i;
       //std::cout << std::setprecision(4) << "vertex " << i << " " << rec_vertex[index].pos.x << " " << rec_vertex[index].pos.y << " " << rec_vertex[index].pos.z << std::endl;
       //look if reconstructed vertex matches with reconstrutible by distance criterion
-      
+        std::cout << "reconstructed vertex " << i << std::endl;
+        std::cout << rec_vertex[index].pos.x << std::endl;
+        std::cout << rec_vertex[index].pos.y << std::endl;
+        std::cout << rec_vertex[index].pos.z << std::endl;
       
         bool matched = false;
         for (auto vtx : vtx_vec) {
