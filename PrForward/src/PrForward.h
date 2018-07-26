@@ -26,6 +26,11 @@
    *
    *  - InputTracksName: Input location for VeloUT tracks
    *  - OutputTracksName: Output location for Forward tracks
+   *  Based on code written by
+   *  2012-03-20 : Olivier Callot
+   *  2013-03-15 : Thomas Nikodem
+   *  2015-02-13 : Sevda Esen [additional search in the triangles by Marian Stahl]
+   *  2016-03-09 : Thomas Nikodem [complete restructuring]
    */
 
 class PrForward {
