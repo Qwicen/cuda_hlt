@@ -6,6 +6,8 @@
  * @author Daniel Campora
  * @author Manuel Schiller
  * @date 2018-02-18
+ *
+ * 07-2018: updated categories and names, Dorothea vom Bruch
  */
 
 #pragma once

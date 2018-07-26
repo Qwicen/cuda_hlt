@@ -55,7 +55,7 @@ public:
 
     // Constructor
     VelopixEvent() {};
-    VelopixEvent(const std::vector<char>& _event, const bool checkFile = true);
+    VelopixEvent(const std::vector<char>& _event, const std::string& trackType, const bool checkFile = true);
 
     void print() const;
 

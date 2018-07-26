@@ -22,40 +22,63 @@
 
 #include "velopix-input-reader.h"
 
-VelopixEvent::VelopixEvent(const std::vector<char>& event, const bool checkEvent) {
+VelopixEvent::VelopixEvent(const std::vector<char>& event, const std::string& trackType, const bool checkEvent) {
   uint8_t* input = (uint8_t*) event.data();
 
-  // Event
-  // numberOfModules  = *((uint32_t*)input); input += sizeof(uint32_t);
-  // numberOfHits   = *((uint32_t*)input); input += sizeof(uint32_t);
-  // std::copy_n((float*) input, numberOfModules, std::back_inserter(module_Zs)); input += sizeof(float) * numberOfModules;
-  // std::copy_n((uint32_t*) input, numberOfModules, std::back_inserter(module_hitStarts)); input += sizeof(uint32_t) * numberOfModules;
-  // std::copy_n((uint32_t*) input, numberOfModules, std::back_inserter(module_hitNums)); input += sizeof(uint32_t) * numberOfModules;
-  // std::copy_n((uint32_t*) input, numberOfHits, std::back_inserter(hit_IDs)); input += sizeof(uint32_t) * numberOfHits;
-  // std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Xs)); input += sizeof(float) * numberOfHits;
-  // std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Ys)); input += sizeof(float) * numberOfHits;
-  // std::copy_n((float*) input, numberOfHits, std::back_inserter(hit_Zs)); input += sizeof(float) * numberOfHits;
-
-  // Monte Carlo
   uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
+  //std::cout << "num MCPs = " << number_mcp << std::endl;
   for (uint32_t i=0; i<number_mcp; ++i) {
     MCParticle p;
-    p.key      = *((uint32_t*)  input); input += sizeof(uint32_t);
-    p.pid       = *((uint32_t*)  input); input += sizeof(uint32_t);
-    p.p      = *((float*)  input); input += sizeof(float);
-    p.pt       = *((float*)  input); input += sizeof(float);
-    p.eta      = *((float*)  input); input += sizeof(float);
-    p.phi      = *((float*)  input); input += sizeof(float);
-    p.isLong     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.isDown     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.hasVelo     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.hasUT     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.hasSciFi     = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.fromBeautyDecay    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.key               = *((uint32_t*)  input); input += sizeof(uint32_t);
+    p.pid               = *((uint32_t*)  input); input += sizeof(uint32_t);
+    p.p                 = *((float*)  input); input += sizeof(float);
+    p.pt                = *((float*)  input); input += sizeof(float);
+    p.eta               = *((float*)  input); input += sizeof(float);
+    //p.phi             = *((float*)  input); input += sizeof(float); // phi not available now
+    p.isLong            = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.isDown            = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.hasVelo           = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.hasUT             = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.hasSciFi          = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+    p.fromBeautyDecay   = (bool) *((int8_t*)  input); input += sizeof(int8_t);
     p.fromCharmDecay    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.fromStrangeDecay    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.numHits    = *((uint32_t*)  input); input += sizeof(uint32_t);
-    std::copy_n((uint32_t*) input, p.numHits, std::back_inserter(p.hits)); input += sizeof(uint32_t) * p.numHits;
+    p.fromStrangeDecay  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
+
+   
+    int num_Velo_hits = *((uint32_t*)  input); input += sizeof(uint32_t);
+    std::vector<uint32_t> velo_hits;
+    std::copy_n((uint32_t*) input, num_Velo_hits, std::back_inserter(velo_hits));
+    input += sizeof(uint32_t) * num_Velo_hits;
+    int num_UT_hits = *((uint32_t*)  input); input += sizeof(uint32_t);
+    std::vector<uint32_t> UT_hits;
+    std::copy_n((uint32_t*) input, num_UT_hits, std::back_inserter(UT_hits));
+    input += sizeof(uint32_t) * num_UT_hits;
+    int num_SciFi_hits = *((uint32_t*)  input); input += sizeof(uint32_t);
+    std::vector<uint32_t> SciFi_hits;
+    std::copy_n((uint32_t*) input, num_SciFi_hits, std::back_inserter(SciFi_hits));
+    input += sizeof(uint32_t) * num_SciFi_hits;
+
+    /* Only save the hits relevant for the track type we are checking
+       -> get denominator of efficiency right
+     */
+    std::vector<uint32_t> hits;
+    if ( trackType == "Velo" || trackType == "VeloUT" || trackType == "SciFi" )
+      for(int index = 0; index < velo_hits.size(); index++) {
+	hits.push_back( velo_hits.at(index) );
+      }
+    
+    if ( trackType == "VeloUT" || trackType == "SciFi" )
+      for(int index = 0; index < UT_hits.size(); index++) {
+	hits.push_back( UT_hits.at(index) );
+      }
+    
+    if ( trackType == "SciFi" )
+      for(int index = 0; index < SciFi_hits.size(); index++) {
+	hits.push_back( SciFi_hits.at(index) );
+      }
+    
+    p.numHits    = int( hits.size() );
+    p.hits = hits;
     mcps.push_back(p);
   }
 
@@ -79,8 +102,7 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const bool checkEvent
         assert(!std::isinf(mcp.phi));
       }
     }
-    
- 
+     
 }
 
 void VelopixEvent::print() const {
@@ -228,7 +250,8 @@ void readNtupleIntoVelopixEvent(
   for(Long64_t entry = 0; entry< maxEntries ; ++entry){
     fChain->GetTree()->GetEntry(entry);
     if( p<0) continue;  // Hits not associated to an MCP are stored with p < 0
-   
+
+    // to do: do we really need this check?
     if ( trackType == "Velo" && !hasVelo ) continue;
     if ( trackType == "VeloUT" && !(hasVelo && hasUT) ) continue;
         
@@ -304,13 +327,13 @@ std::vector<VelopixEvent> read_mc_folder (
     if ( !fromNtuple ) {
       std::vector<char> inputContents;
       readFileIntoVector(foldername + "/" + readingFile, inputContents);
-      event = VelopixEvent(inputContents, checkEvents);
+      event = VelopixEvent(inputContents, trackType, checkEvents);
     }
     else if ( fromNtuple )
       readNtupleIntoVelopixEvent(foldername + "/" + readingFile, trackType, event);
       
-    // if ( i == 0 )
-    //   event.print();
+    if ( i == 0 )
+      event.print();
        
     input.emplace_back(event);
 
