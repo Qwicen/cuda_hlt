@@ -32,29 +32,10 @@ bool paircomp( const pair_to_merge &first, const pair_to_merge &second ) {
 
 }
 
-//void print_clusters(const std::vector<vtxCluster*>& pvclus) {
-//  std::cout << pvclus.size() << " clusters at this iteration" << std::endl;
-//  for(const auto& vc : pvclus) {
-//     std::cout << vc->ntracks << " " << vc->z << " "
-//            <<  vc->sigsq << " " <<  vc->sigsqmin << std::endl;
-//  }
-//}
 
 constexpr static const int s_p2mstatic = 5000;
 
 
-//-----------------------------------------------------------------------------
-// Implementation file for class : PVSeedTool
-//
-// 2005-11-19 : Mariusz Witek
-//-----------------------------------------------------------------------------
-
-//DECLARE_COMPONENT( PVSeedTool )
-
-//=============================================================================
-// Standard constructor, initializes variables
-//=============================================================================
-//PVSeedTool::PVSeedTool() {}
 
 //=============================================================================
 // getSeeds
@@ -176,69 +157,7 @@ int PVSeedTool::findClusters(vtxCluster * vclus, double * zclusters, int number_
 
    }
 }
-   /*
-  while(counter_merges != 0) {
-    counter_clusters = 0;
-     //loop over all clusters and check if something to merge
-    //std::cout << "counter merges: "<<counter_merges<<std::endl;
-    counter_merges = 0;
-    for(int i = 0; i < number_of_clusters ; i++) {
-      //don't re-use cluster which have already been merged
-      if(vclus[i].ntracks == 0) continue;
-      //else counter_clusters++;
-      
-      for(int j = 0; j < number_of_clusters ; j++) {
-        //don't merge with yourself
-        if(i==j) continue;
-        //don't re-use cluster which have already been merged
-        if(vclus[j].ntracks == 0) continue;
-        //std::cout << "ij"<<i<<" "<<j<<std::endl;
-
-        double z1 = vclus[i].z;
-        double z2 = vclus[j].z;
-        double s1 = vclus[i].sigsq;
-        double s2 = vclus[j].sigsq;
-        double s1min = vclus[i].sigsqmin;
-        double s2min = vclus[j].sigsqmin;
-        double sigsqmin = s1min;
-        if(s2min<s1min) sigsqmin = s2min;
-
-
-        double zdist = z1 - z2;
-        double chi2dist = zdist*zdist/(s1+s2);
-        //merge if chi2dist is smaller than max
-        if (chi2dist<m_maxChi2Merge ) {
-          double w_inv = (s1*s2/(s1+s2));
-          double zmerge = w_inv*(z1/s1+z2/s2);
-          std::cout << "before merge: " << vclus[i].z << " " << vclus[j].z << " " << chi2dist << " " << zmerge << " " << w_inv<< " " << s1 << " " << s2 << std::endl;
-
-          vclus[i].z        = zmerge;
-          vclus[i].sigsq    = w_inv;
-          vclus[i].sigsqmin = sigsqmin;
-          vclus[i].ntracks += vclus[j].ntracks;
-          vclus[j].ntracks  = 0;  // mark second cluster as used
-          vclus[i].not_merged = 0;
-          vclus[j].not_merged = 0;
-          counter_merges++;
-          std::cout << "after merge " << vclus[i].z << std::endl;
-          //break;
-
-
-
-        }
-      }
-    }
-    std::cout << "counter merges: "<<counter_merges << std::endl;
-    //count clusters
-    for(int i = 0; i < number_of_clusters ; i++) {
-      if(vclus[i].ntracks > 1) counter_clusters++;
-      if(vclus[i].ntracks > 1)std::cout << vclus[i].z << " " << vclus[i].ntracks << std::endl;
-    }
-    std::cout << "remaining clusters: " << counter_clusters << std::endl;
-  }
-
-    */
-
+ 
   
 
 
@@ -250,85 +169,7 @@ int PVSeedTool::findClusters(vtxCluster * vclus, double * zclusters, int number_
     if(vclus[i].ntracks != 0)    pvclus.push_back(&(vclus[i]));
   } 
 
-/*
-  for(int i = 0; i < number_of_clusters; i++) {
-    vclus[i].sigsq *= m_factorToIncreaseErrors*m_factorToIncreaseErrors; // blow up errors
-    vclus[i].sigsqmin = vclus[i].sigsq;
-    pvclus.push_back(vclus + i);
-  }
 
-  
-  std::sort(pvclus.begin(),pvclus.end(),vtxcomp);
-  //  print_clusters(pvclus);
-
-  bool more_merging = true;
-  while (more_merging) {
-  // find pair of clusters for merging
-
-    // refresh flag for this iteration
-    for(auto ivc = pvclus.begin(); ivc != pvclus.end(); ivc++) {
-      (*ivc)->not_merged = 1;
-    }
-
-    // for a given cluster look only up to a few consequtive ones to merge
-    // "a few" might become a property?
-    auto n_consequtive = std::min(5,static_cast<int>(pvclus.size()));
-    auto ivc2up = std::next( pvclus.begin(), n_consequtive);
-    std::vector<pair_to_merge> vecp2m; vecp2m.reserve( std::min(static_cast<int>(pvclus.size())*n_consequtive,s_p2mstatic) );
-    for(auto ivc1 = pvclus.begin(); ivc1 != pvclus.end()-1; ivc1++) {
-      if(ivc2up != pvclus.end()) ++ivc2up;
-      for(auto ivc2 = std::next(ivc1); ivc2 != ivc2up; ivc2++) {
-        double zdist = (*ivc1)->z-(*ivc2)->z;
-        double chi2dist = zdist*zdist/((*ivc1)->sigsq+(*ivc2)->sigsq);
-        if(chi2dist<m_maxChi2Merge && vecp2m.size()<s_p2mstatic) {
-          vecp2m.emplace_back(*ivc1,*ivc2,chi2dist);
-        }
-      }
-    }
-    // done if no more pairs to merge
-    if(vecp2m.empty()) {
-      more_merging = false;
-    } else {
-      // sort if number of pairs reasonable. Sorting increases efficency.
-      if(vecp2m.size()<100) std::sort(vecp2m.begin(), vecp2m.end(), paircomp);
-
-      // merge pairs
-      for(auto itp2m = vecp2m.begin(); itp2m != vecp2m.end(); itp2m++) {
-        vtxCluster* pvtx1 = itp2m->first;
-        vtxCluster* pvtx2 = itp2m->second;
-        if(pvtx1->not_merged == 1 && pvtx2->not_merged == 1) {
-
-          double z1 = pvtx1->z;
-          double z2 = pvtx2->z;
-          double s1 = pvtx1->sigsq;
-          double s2 = pvtx2->sigsq;
-          double s1min = pvtx1->sigsqmin;
-          double s2min = pvtx2->sigsqmin;
-          double sigsqmin = s1min;
-          if(s2min<s1min) sigsqmin = s2min;
-
-          double w_inv = (s1*s2/(s1+s2));
-          double zmerge = w_inv*(z1/s1+z2/s2);
-
-          pvtx1->z        = zmerge;
-          pvtx1->sigsq    = w_inv;
-          pvtx1->sigsqmin = sigsqmin;
-          pvtx1->ntracks += pvtx2->ntracks;
-          pvtx2->ntracks  = 0;  // mark second cluster as used
-          pvtx1->not_merged = 0;
-          pvtx2->not_merged = 0;
-  }
-      }
-
-      // remove clusters which where used
-      pvclus.erase( std::remove_if( pvclus.begin(), pvclus.end(),
-                                    [](const vtxCluster* cl) { return cl->ntracks<1; }),
-                    pvclus.end());
-    }
-  }
-
-  // End of clustering.
-*/
   // Sort according to multiplicity
 
   std::sort(pvclus.begin(),pvclus.end(),multcomp);
