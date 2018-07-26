@@ -22,4 +22,4 @@ cuda_add_library(Stream STATIC
   ${stream_sequence_setup}
   )
 
-target_link_libraries(Stream Velo)
+target_link_libraries(Stream Velo Ft)
