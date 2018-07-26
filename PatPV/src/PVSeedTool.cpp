@@ -150,7 +150,7 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
   pvclus.reserve(number_of_clusters);
   int return_number_of_clusters = 0;
   for(int i = 0; i < number_of_clusters; i++) {
-    if(vclus[i].ntracks != 0)    return_number_of_clusters++;
+    if(vclus[i].ntracks != 0)    {zclusters[return_number_of_clusters] = vclus[return_number_of_clusters].z; return_number_of_clusters++;}
   } 
 
   //still missing: cleaning up the clusters like below
