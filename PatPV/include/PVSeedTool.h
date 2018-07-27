@@ -17,7 +17,7 @@
 
 
   int getSeeds( VeloState* inputTracks,
-       const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds)  ;
+       const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds,  int event_number)  ;
 
 
 

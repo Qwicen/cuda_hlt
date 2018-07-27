@@ -27,7 +27,7 @@ constexpr static const int s_p2mstatic = 5000;
 // getSeeds
 //=============================================================================
 int getSeeds( VeloState * inputTracks,
-                     const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds)  {
+                     const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds,  int event_number)  {
   
   
   //if(inputTracks.size() < 3 ) return seeds;
@@ -66,7 +66,7 @@ int getSeeds( VeloState * inputTracks,
   //seeds.reserve(m_max_clusters);
   for(int i = 0; i < number_final_clusters; i++) {
     //std::cout << i << " not broken yet3 "<< zseeds[i] << std::endl;
-    seeds[i] = XYZPoint{ beamspot.x, beamspot.y, zseeds[i]};
+    seeds[event_number * PatPV::max_number_vertices + i] = XYZPoint{ beamspot.x, beamspot.y, zseeds[i]};
   }
   return number_final_clusters;
 

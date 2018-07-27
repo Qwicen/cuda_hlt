@@ -345,6 +345,7 @@ cudaError_t Stream::run_sequence(
       delete ut_tracks_events;
 
      Vertex bla[number_of_events * max_number_vertices];
+     XYZPoint  seeds[number_of_events * PatPV::max_number_vertices];
      uint  number_of_vertex[number_of_events];
       run_PatPV_on_CPU(
      host_velo_states,
@@ -354,7 +355,8 @@ cudaError_t Stream::run_sequence(
      host_number_of_tracks,
      number_of_events,
      bla,
-     number_of_vertex
+     number_of_vertex,
+     seeds
          );
 
      checkPVs(folder_name_MC, true, number_of_events, bla, number_of_vertex);

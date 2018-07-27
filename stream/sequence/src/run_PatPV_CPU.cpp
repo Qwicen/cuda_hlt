@@ -14,23 +14,13 @@ XYZPoint& seedPoint,
   //     const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds)  ;
 
 
-bool reconstructMultiPVFromTracks( VeloState * tracks2use,
-                                                       Vertex * outvtxvec, int host_number_of_tracks_pinned,
-  uint * number_of_vertex, int event_number, bool * tracks2disable) 
+bool reconstructMultiPVFromTracks(VeloState * tracks2use, Vertex * outvtxvec, int host_number_of_tracks_pinned,
+  uint * number_of_vertex, int event_number, bool * tracks2disable, XYZPoint * seeds, int number_seeds) 
 {
   
 
   VeloState * rtracks = tracks2use;
-
-  //outvtxvec.clear();
-
-
-
-  //double m_beamSpotX = 0.02;
-  //double m_beamSpotY = -0.16;
-  double m_beamSpotX = 0.;
-  double m_beamSpotY = 0.;
-  XYZPoint beamspot{m_beamSpotX, m_beamSpotY, 0.};
+ 
   
 
     
@@ -46,16 +36,17 @@ bool reconstructMultiPVFromTracks( VeloState * tracks2use,
 
 
 
-  XYZPoint  seeds[PatPV::max_number_vertices];
-  int number_seeds = getSeeds(rtracks, beamspot, host_number_of_tracks_pinned, seeds);
+  //XYZPoint  seeds[PatPV::max_number_vertices];
+  //int number_seeds = getSeeds(rtracks, beamspot, host_number_of_tracks_pinned, seeds, event_number);
   //nubmer of seeds should be in same order as nubmer of priamry vertices
   //std::cout << "number of seeds: " << seeds.size() << std::endl;
+  
   int number_rec_vtx = 0;
   bool continue_fitting = true;
   while(continue_fitting) {
     int before_fit = nvtx_after;
     for(int i=0; i < number_seeds; i++) {
-      XYZPoint seed = seeds[i]; 
+      XYZPoint seed = seeds[event_number * PatPV::max_number_vertices + i ]; 
       Vertex recvtx;
 
       std::cout << "trying to fit with seed " << i << std::endl;
@@ -94,6 +85,7 @@ bool reconstructMultiPVFromTracks( VeloState * tracks2use,
   //}//iterate on vtx
 
   return true;
+  
 
 }
 
@@ -108,7 +100,8 @@ int run_PatPV_on_CPU (
   int * host_number_of_tracks_pinned,
   const int &number_of_events,
   Vertex * outvtxvec,
-  uint * number_of_vertex
+  uint * number_of_vertex,
+  XYZPoint * seeds
 ) {
 
 XYZPoint beamspot(0.,0.,0.);
@@ -165,9 +158,9 @@ std::cout << "kalman: " << kalman_states[1].c22 <<std::endl;
 std::cout << "kalman: " << kalman_states[1].c11 <<std::endl;
 std::cout << "kalman: " << kalman_states[1].c31 <<std::endl;
 std::cout << "least: " << kalman_states[1].c33 <<std::endl;
-
-
-reconstructMultiPVFromTracks(kalman_states, outvtxvec, host_number_of_tracks_pinned[i_event], number_of_vertex, i_event, tracks2disable);
+XYZPoint beamspot = {0.,0.,0.};
+int number_seeds = getSeeds( kalman_states, beamspot, number_of_tracks,  seeds,  i_event);
+reconstructMultiPVFromTracks(kalman_states, outvtxvec, host_number_of_tracks_pinned[i_event], number_of_vertex, i_event, tracks2disable, seeds, number_seeds);
 }
 
 

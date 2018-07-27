@@ -37,7 +37,9 @@ int run_PatPV_on_CPU (
   int * host_number_of_tracks_pinned,
   const int &number_of_events,
   Vertex * outvtxvec,
-  uint * number_of_vertex
+  uint * number_of_vertex,
+  XYZPoint * seeds
+  
 );
 
 void checkPVs(  const std::string& folder_name_MC,  const bool& fromNtuple, uint number_of_files, Vertex * rec_vertex, uint* number_of_vertex);
