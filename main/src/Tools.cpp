@@ -409,7 +409,6 @@ void call_pr_checker(
   const std::vector< trackChecker::Tracks >& all_tracks,
   const std::string& folder_name_MC,
   const uint start_event_offset,
-  const bool& fromNtuple,
   const std::string& trackType
 ) {
   if ( trackType == "Velo" ) {
@@ -417,7 +416,6 @@ void call_pr_checker(
       all_tracks,
       folder_name_MC,
       start_event_offset,
-      fromNtuple,
       trackType);
   }
   else if ( trackType == "VeloUT" ) {
@@ -425,7 +423,6 @@ void call_pr_checker(
       all_tracks,
       folder_name_MC,
       start_event_offset,
-      fromNtuple,
       trackType);
   }
   else {

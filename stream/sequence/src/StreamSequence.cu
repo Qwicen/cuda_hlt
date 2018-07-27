@@ -322,13 +322,11 @@ cudaError_t Stream::run_sequence(
       	  host_number_of_tracks,
       	  number_of_events);
       
-        const bool fromNtuple = false;
         const std::string trackType = "Velo";
       	call_pr_checker (
 	  tracks_events,
       	  folder_name_MC,
           start_event_offset,
-    	  fromNtuple,
     	  trackType);
       }
 
@@ -345,13 +343,11 @@ cudaError_t Stream::run_sequence(
       );
       
       std::cout << "CHECKING VeloUT TRACKS" << std::endl;
-      const bool fromNtuple = false;
       const std::string trackType = "VeloUT";
       call_pr_checker (
         veloUT_tracks,
         folder_name_MC,
         start_event_offset,
-        fromNtuple,
         trackType);                                                                            
       
     }
@@ -380,12 +376,10 @@ cudaError_t Stream::run_sequence(
       
       
     //   std::cout << "CHECKING VeloUT TRACKS" << std::endl;
-    //   const bool fromNtuple = true;
     //   const std::string trackType = "VeloUT";
     //   call_pr_checker (
     //     *ut_tracks_events,
     //     folder_name_MC,
-    //     fromNtuple,
     //     trackType); 
       
     //   delete ut_tracks_events;

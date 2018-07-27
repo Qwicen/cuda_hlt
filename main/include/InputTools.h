@@ -35,8 +35,7 @@ void appendFileToVector(
 );
 
 std::vector<std::string> list_folder(
-  const std::string& foldername,
-  const bool fromNtuple = false
+  const std::string& foldername
 );
  
 void read_folder(

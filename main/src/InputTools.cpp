@@ -65,8 +65,7 @@ void appendFileToVector(
  
 
 std::vector<std::string> list_folder(
-  const std::string& foldername,
-  const bool fromNtuple				     
+  const std::string& foldername
 ) {
   std::vector<std::string> folderContents;
   DIR *dir;
@@ -77,22 +76,13 @@ std::vector<std::string> list_folder(
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
       std::string filename = std::string(ent->d_name);
-      if ( !fromNtuple ) {
-	if (filename.find(".bin") != std::string::npos &&
-	    filename.find("geometry") == std::string::npos) 
-	  folderContents.push_back(filename);
-      }
-      else {
-	if (filename.find(".root") != std::string::npos) 
-	  folderContents.push_back(filename);
-      }
+      if (filename.find(".bin") != std::string::npos &&
+          filename.find("geometry") == std::string::npos) 
+        folderContents.push_back(filename);
     }
     closedir(dir);
     if (folderContents.size() == 0) {
-      if ( fromNtuple )
-	error_cout << "No root files found in folder " << foldername << std::endl;
-      else
-	error_cout << "No binary files found in folder " << foldername << std::endl;
+      error_cout << "No binary files found in folder " << foldername << std::endl;
       exit(-1);
     } else {
       verbose_cout << "Found " << folderContents.size() << " binary files" << std::endl;

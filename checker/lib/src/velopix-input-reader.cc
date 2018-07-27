@@ -130,13 +130,12 @@ MCParticles VelopixEvent::mcparticles() const
 
 std::vector<VelopixEvent> read_mc_folder (
   const std::string& foldername,
-  const bool& fromNtuple,
   const std::string& trackType,
   uint number_of_files,
   const uint start_event_offset,
   const bool checkEvents
 ) {
-  std::vector<std::string> folderContents = list_folder(foldername, fromNtuple);
+  std::vector<std::string> folderContents = list_folder(foldername);
   
   uint requestedFiles = number_of_files==0 ? folderContents.size() : number_of_files;
   verbose_cout << "Requested " << requestedFiles << " files" << std::endl;
