@@ -158,8 +158,8 @@ std::vector<VelopixEvent> read_mc_folder (
     readFileIntoVector(foldername + "/" + readingFile, inputContents);
     event = VelopixEvent(inputContents, trackType, checkEvents);
     
-    if ( i == 0 && checkEvents )
-      event.print();
+    // if ( i == 0 && checkEvents )
+    //   event.print();
        
     input.emplace_back(event);
 

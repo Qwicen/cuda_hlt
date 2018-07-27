@@ -1,5 +1,7 @@
 #pragma once
 
+#include "cuda_runtime.h"
+
 #include "../../../../main/include/SystemOfUnits.h"
 
 /**
