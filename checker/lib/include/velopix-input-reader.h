@@ -6,6 +6,9 @@
  * @author Daniel Campora
  * @author Manuel Schiller
  * @date 2018-02-18
+ *
+ * 2018-07 Dorothea vom Bruch: updated to run over different track types, 
+ * take input from Renato Quagliani's TrackerDumper
  */
 
 #pragma once
@@ -40,18 +43,7 @@ private:
 
 public:
     uint32_t size;
-
-    // Event data
-    uint32_t numberOfModules;
-    uint32_t numberOfHits;
-    std::vector<float> module_Zs;
-    std::vector<uint32_t> module_hitStarts;
-    std::vector<uint32_t> module_hitNums;
-    std::vector<uint32_t> hit_IDs;
-    std::vector<float> hit_Xs;
-    std::vector<float> hit_Ys;
-    std::vector<float> hit_Zs;
-    MCParticles mcps;
+  MCParticles mcps;
 
     // Constructor
     VelopixEvent() {};
@@ -62,8 +54,6 @@ public:
     MCParticles mcparticles() const;
 };
 
-void readNtupleIntoVelopixEvent(const std::string& filename, const std::string& trackType, VelopixEvent& event);
- 
 std::vector<VelopixEvent> read_mc_folder(
   const std::string& foldername,
   const bool& fromNtuple,
