@@ -144,46 +144,54 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
   
 
 
-  std::vector<vtxCluster*> pvclus;
-  pvclus.reserve(number_of_clusters);
+  
   int return_number_of_clusters = 0;
+  //count final number of clusters
+  for(int i = 0; i < number_of_clusters; i++) {
+    if(vclus[i].ntracks != 0)     return_number_of_clusters++;
+  } 
+  /*
   for(int i = 0; i < number_of_clusters; i++) {
     if(vclus[i].ntracks != 0)    {zclusters[return_number_of_clusters] = vclus[i].z; return_number_of_clusters++;}
   } 
+*/
 
-  //still missing: cleaning up the clusters like below
-/*
-   for(int i = 0; i < number_of_clusters; i++) {
-    if(vclus[i].ntracks != 0)    pvclus.push_back(&(vclus[i]));
+//clean up clusters, do we gain much from this?
+  vtxCluster pvclus[return_number_of_clusters];
+  int counter = 0;
+  for(int i = 0; i < number_of_clusters; i++) {
+    if(vclus[i].ntracks != 0)    {pvclus[counter] = vclus[i]; counter++;}
   } 
 
 
-  // Sort according to multiplicity
 
-  std::sort(pvclus.begin(),pvclus.end(),multcomp);
+
+
 
   // Select good clusters.
 
-  for(auto ivc=pvclus.begin(); ivc != pvclus.end(); ivc++) {
+  int number_good_clusters = 0;
+
+  for(int index = 0; index < return_number_of_clusters; index++) {
 
     int n_tracks_close = 0;
     for(int i = 0; i < number_of_clusters; i++) {
-      if(fabs(vclus[i].z - (*ivc)->z ) < m_dzCloseTracksInCluster ) n_tracks_close++; 
+      if(fabs(vclus[i].z - pvclus[index].z ) < m_dzCloseTracksInCluster ) n_tracks_close++; 
     }
-
+//ivc = index, ivc1 = index2
     double dist_to_closest = 1000000.;
-    if(pvclus.size() > 1) {
-      for(auto ivc1=pvclus.begin(); ivc1 != pvclus.end(); ivc1++) {
-  if( ivc!=ivc1 && ( fabs((*ivc1)->z-(*ivc)->z) < dist_to_closest) ) {
-    dist_to_closest = fabs((*ivc1)->z-(*ivc)->z);
+    if(return_number_of_clusters > 1) {
+      for(int index2 = 0; index2 < return_number_of_clusters; index2++) {
+  if( index!=index2 && ( fabs( pvclus[index2].z - pvclus[index].z) < dist_to_closest) ) {
+    dist_to_closest = fabs( pvclus[index2].z - pvclus[index].z);
   }
       }
     }
 
     // ratio to remove clusters made of one low error track and many large error ones
-    double rat = (*ivc)->sigsq/(*ivc)->sigsqmin;
+    double rat = pvclus[index].sigsq/pvclus[index].sigsqmin;
     bool igood = false;
-    int ntracks = (*ivc)->ntracks;
+    int ntracks = pvclus[index].ntracks;
     if( ntracks >= m_minClusterMult ) {
       if( dist_to_closest>10. && rat<0.95) igood=true;
       if( ntracks >= m_highMult && rat < m_ratioSig2HighMult)  igood=true;
@@ -191,22 +199,16 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
     }
     // veto
     if( n_tracks_close < m_minCloseTracksInCluster ) igood = false;
-    //std::cout <<igood<< "counter: " << getClusterCounter() << std::endl;
-    if(igood)  {zclusters[getClusterCounter()] = ((*ivc)->z); std::cout<< zclusters[getClusterCounter()] <<std::endl; increaseClusterCounter();}
+    if(igood) {zclusters[number_good_clusters] = pvclus[index].z; number_good_clusters++;}
+
 
   }
 
-  //  print_clusters(pvclus);
-  std::cout << "clustering finishes" << std::endl;
-  std::cout << "cpointer: " << std::endl;
-  std::cout << "clusters found: " << std::endl;
-  for(int index_cluster = 0; index_cluster < number_of_clusters; index_cluster++) {
-    if(vclus[index_cluster].ntracks == 0) continue; 
-    std::cout << index_cluster << " " << vclus[index_cluster].z << " "<< vclus[index_cluster].sigsq << " " <<  vclus[index_cluster].ntracks<< std::endl;
-  
-  }*/
-  
-  return return_number_of_clusters;
+
+  std::cout << "compare return clsuter to good clusters:" << std::endl;
+  std::cout << return_number_of_clusters << " " << number_good_clusters << std::endl;
+  //return return_number_of_clusters;
+  return number_good_clusters;
 
 }
 
