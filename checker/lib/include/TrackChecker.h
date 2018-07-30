@@ -6,6 +6,10 @@
  * @author Daniel Campora
  * @author Manuel Schiller
  * @date 2018-02-19
+ *
+ * 2018-07 Dorothea vom Bruch: updated to run over different track types, 
+ * euse exact same categories as PrChecker2, 
+ * take input from Renato Quagliani's TrackerDumper
  */
 
 #pragma once

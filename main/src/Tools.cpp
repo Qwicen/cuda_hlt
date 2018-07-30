@@ -309,8 +309,8 @@ void check_roughly(
       // find associated IDs from mcps
       for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
         MCParticle part = mcps[i_mcp];
-        auto it = std::find( part.m_hits.begin(), part.m_hits.end(), id_int );
-        if ( it != part.m_hits.end() ) {
+        auto it = std::find( part.hits.begin(), part.hits.end(), id_int );
+        if ( it != part.hits.end() ) {
           mcp_ids.push_back( i_mcp );
         }
       }
@@ -332,7 +332,7 @@ void check_roughly(
 
   int long_tracks = 0;
   for (auto& part : mcps) {
-    if (part.isLong())
+    if (part.isLong)
       long_tracks++;
   }
   
@@ -409,7 +409,6 @@ void call_pr_checker(
   const std::vector< trackChecker::Tracks >& all_tracks,
   const std::string& folder_name_MC,
   const uint start_event_offset,
-  const bool& fromNtuple,
   const std::string& trackType
 ) {
   if ( trackType == "Velo" ) {
@@ -417,7 +416,6 @@ void call_pr_checker(
       all_tracks,
       folder_name_MC,
       start_event_offset,
-      fromNtuple,
       trackType);
   }
   else if ( trackType == "VeloUT" ) {
@@ -425,7 +423,6 @@ void call_pr_checker(
       all_tracks,
       folder_name_MC,
       start_event_offset,
-      fromNtuple,
       trackType);
   }
   else {

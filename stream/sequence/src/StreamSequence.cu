@@ -322,13 +322,11 @@ cudaError_t Stream::run_sequence(
       	  host_number_of_tracks,
       	  number_of_events);
       
-        const bool fromNtuple = true;
         const std::string trackType = "Velo";
       	call_pr_checker (
 	  tracks_events,
       	  folder_name_MC,
           start_event_offset,
-    	  fromNtuple,
     	  trackType);
       }
 
@@ -345,13 +343,11 @@ cudaError_t Stream::run_sequence(
       );
       
       std::cout << "CHECKING VeloUT TRACKS" << std::endl;
-      const bool fromNtuple = true;
       const std::string trackType = "VeloUT";
       call_pr_checker (
         veloUT_tracks,
         folder_name_MC,
         start_event_offset,
-        fromNtuple,
         trackType);                                                                            
       
     }
@@ -359,39 +355,38 @@ cudaError_t Stream::run_sequence(
     /* Plugin VeloUT CPU code here 
        Adjust input types to match PrVeloUT code
     */
-    // if (do_check && i_stream == 0) {
+    if (do_check && i_stream == 0) {
    
-    //   std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
+      std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
       
-    //   int rv = run_veloUT_on_CPU(
-    //              ut_tracks_events,
-    //     	 host_ut_hits_events,
-    //              host_ut_magnet_tool,
-    //     	 host_velo_states,
-    //     	 host_accumulated_tracks,
-    //              host_velo_track_hit_number,
-    //              reinterpret_cast<VeloTracking::Hit<true>*>(host_velo_track_hits),
-    //     	 host_number_of_tracks,
-    //     	 number_of_events
-    //            );
+      int rv = run_veloUT_on_CPU(
+                 ut_tracks_events,
+        	 host_ut_hits_events,
+                 host_ut_magnet_tool,
+        	 host_velo_states,
+        	 host_accumulated_tracks,
+                 host_velo_track_hit_number,
+                 reinterpret_cast<VeloTracking::Hit<true>*>(host_velo_track_hits),
+        	 host_number_of_tracks,
+        	 number_of_events
+               );
 
-    //   if ( rv != 0 )
-    //     continue;
+      if ( rv != 0 )
+        continue;
       
       
-    //   std::cout << "CHECKING VeloUT TRACKS" << std::endl;
-    //   const bool fromNtuple = true;
-    //   const std::string trackType = "VeloUT";
-    //   call_pr_checker (
-    //     *ut_tracks_events,
-    //     folder_name_MC,
-    //     fromNtuple,
-    //     trackType); 
+      std::cout << "CHECKING VeloUT TRACKS from x86" << std::endl;
+      const std::string trackType = "VeloUT";
+      call_pr_checker (
+        *ut_tracks_events,
+        folder_name_MC,
+        start_event_offset,
+        trackType); 
       
-    //   delete ut_tracks_events;
+      delete ut_tracks_events;
       
       
-    // } // mc_check_enabled     
+    } // mc_check_enabled     
     
     
   } // repititions

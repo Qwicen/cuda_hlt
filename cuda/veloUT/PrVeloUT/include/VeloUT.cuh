@@ -5,6 +5,12 @@
 #include "PrVeloUTMagnetToolDefinitions.cuh"
 #include "PrVeloUT.cuh"
 
+// #include "cuda_runtime.h"
+// #include "device_launch_parameters.h"
+// #include <cuda.h>
+// #include <device_functions.h>
+// #include <cuda_runtime_api.h>
+
 __global__ void veloUT(
   VeloUTTracking::HitsSoA* dev_ut_hits,
   int* dev_atomics_storage,

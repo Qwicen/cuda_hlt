@@ -18,12 +18,12 @@ MCAssociator::MCAssociator(const MCParticles& mcps) :
   // work out how much space we need
   const std::size_t total = std::accumulate(mcps.begin(), mcps.end(), 0,
       [] (std::size_t acc, MCParticles::const_reference mcp) noexcept
-      { return acc + mcp.nIDs(); });
+      { return acc + mcp.numHits; });
   m_map.reserve(total);
   // build association LHCbID -> MCParticle index
   std::size_t idx = 0;
   for (auto mcp: mcps) {
-    for (auto id: mcp.m_hits) {
+    for (auto id: mcp.hits) {
       m_map.emplace_back(id, idx);
     }
     ++idx;
