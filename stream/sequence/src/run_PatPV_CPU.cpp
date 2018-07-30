@@ -215,7 +215,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
      }
    
     TFile *file = new TFile(filename.data(),"READ");
-    TTree *tree = (TTree*)file->Get("Hits_detectors");
+    TTree *tree = (TTree*)file->Get("pv");
     assert( tree);
 
     TBranch        *b_ovtx_x;   //!
@@ -230,50 +230,48 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
     Double_t        ovtx_x;
     Double_t        ovtx_y;
     Double_t        ovtx_z;
-    Double_t        p;
-    Int_t           MCVertexType;
     Int_t           VertexNumberOfTracks;
     Int_t           MCVertexNumberOfTracks;
     
 
     TTree* fChain = tree;
 
-    fChain->SetBranchAddress("ovtx_x", &ovtx_x, &b_ovtx_x);
-    fChain->SetBranchAddress("ovtx_y", &ovtx_y, &b_ovtx_y);
-    fChain->SetBranchAddress("ovtx_z", &ovtx_z, &b_ovtx_z);
-    fChain->SetBranchAddress("p", &p, &b_p);
-    fChain->SetBranchAddress("MCVertexType", &MCVertexType, &b_MCVertexType);
-    fChain->SetBranchAddress("VertexNumberOfTracks", &VertexNumberOfTracks, &b_VertexNumberOfTracks);
-    fChain->SetBranchAddress("MCVertexNumberOfTracks", &MCVertexNumberOfTracks, &b_MCVertexNumberOfTracks);
+    fChain->SetBranchAddress("pv_x", &ovtx_x, &b_ovtx_x);
+    fChain->SetBranchAddress("pv_y", &ovtx_y, &b_ovtx_y);
+    fChain->SetBranchAddress("pv_z", &ovtx_z, &b_ovtx_z);
+
+    fChain->SetBranchAddress("number_rec_tracks", &VertexNumberOfTracks, &b_VertexNumberOfTracks);
+   //fChain->SetBranchAddress("MCVertexNumberOfTracks", &MCVertexNumberOfTracks, &b_MCVertexNumberOfTracks);
 
     // vector containing MC vertices
     std::vector<MCVertex> vertices;
 
 
 
-    std::vector<double> found_z;
+    
     Long64_t maxEntries = fChain->GetTree()->GetEntries();
+    std::cout << "-------" << std::endl;
     for(Long64_t entry = 0; entry< maxEntries ; ++entry){
       fChain->GetTree()->GetEntry(entry);
-      if( p<0 || MCVertexType != 1) continue;  // Hits not associated to an MCP are stored with p < 0 and only look for trakcs from PVs
 
-      if(std::find(found_z.begin(), found_z.end(), ovtx_z) == found_z.end()) {
-        std::cout << "found a new MC vertex with: " << std::endl;
+
+        std::cout <<  "MC vertex " << entry << std::endl;
         std::cout << "x: " << ovtx_x << std::endl;
         std::cout << "y: " << ovtx_y << std::endl;
         std::cout << "z: " << ovtx_z << std::endl;
-        std::cout << "number of tracks: " << MCVertexNumberOfTracks << std::endl;
-        if(MCVertexNumberOfTracks >= 4) number_reconstructible_vertices++;
-        found_z.push_back(ovtx_z);
+        std::cout << "number of reconstructible tracks: " << VertexNumberOfTracks << std::endl;
+        if(VertexNumberOfTracks >= 4) number_reconstructible_vertices++;
+        
         MCVertex vertex;
         vertex.x = ovtx_x;
         vertex.y = ovtx_y;
         vertex.z = ovtx_z;
-        vertex.numberTracks = MCVertexNumberOfTracks;
+        vertex.numberTracks = VertexNumberOfTracks;
         vertices.push_back(vertex);
-      }
+      
 
     }
+    std::cout << " ----" << std::endl;
 
     events_vertices.push_back(vertices);
   }
@@ -287,6 +285,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
     }
   }
 
+  std::cout << "------------" << std::endl;
   std::cout << "rec vertices with errors:" << std::endl;
   for(int i = 0; i < number_of_vertex[0]; i++) {
     int index = 0  * max_number_vertices + i;
@@ -299,7 +298,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   //now, for each event, loop over MCVertices and check if it has been found (distance criterion) -> calculate efficiency
   //again, loop over events/files
   //loop first over rec vertices, hten over files/events
-  
+  /*
   for(int i_event = 0; i_event < number_of_files; i_event++) {
     std::cout << "number_of_vertex: " << number_of_vertex[i_event] << std::endl;
     for(uint i = 0; i < number_of_vertex[i_event]; i++) {
@@ -310,7 +309,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
         std::cout << rec_vertex[index].pos.z << std::endl;
     }
   }
-
+*/
 
   int i_event = 0;
 
