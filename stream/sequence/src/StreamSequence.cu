@@ -344,29 +344,36 @@ cudaError_t Stream::run_sequence(
       
       delete ut_tracks_events;
 
-     Vertex bla[number_of_events * max_number_vertices];
-     XYZPoint  seeds[number_of_events * PatPV::max_number_vertices];
-     uint  number_of_vertex[number_of_events];
-      run_PatPV_on_CPU(
+
+    //declare all memory needed for PV finding here
+
+    //seeds
+    XYZPoint  seeds[number_of_events * PatPV::max_number_vertices];
+    uint number_of_seeds[number_of_events];
+    //output vertices
+    Vertex out_vertices[number_of_events * PatPV::max_number_vertices];
+    uint  number_of_vertex[number_of_events];
+
+    run_PatPV_on_CPU(
      host_velo_states,
      host_accumulated_tracks,
-                 host_velo_track_hit_number,
-                 reinterpret_cast<VeloTracking::Hit<true>*>(host_velo_track_hits),
      host_number_of_tracks,
      number_of_events,
-     bla,
+     out_vertices,
      number_of_vertex,
-     seeds
+     seeds,
+     number_of_seeds
+
          );
 
-     checkPVs("../../lxplus_work/public/recept/Brunel_trackerdumper2/PVDumper/", true, number_of_events, bla, number_of_vertex);
+     checkPVs("../../lxplus_work/public/recept/Brunel_trackerdumper2/PVDumper/", true, number_of_events, out_vertices, number_of_vertex);
 
 
     for(int i_event = 0; i_event < number_of_events; i_event++) {
       std::cout << "event number " << i_event << std::endl;
       for(uint i = 0; i < number_of_vertex[i_event]; i++) {
         int index = i_event  *max_number_vertices + i;
-        std::cout << std::setprecision(4) << "vertex " << i << " " << bla[index].pos.x << " " << bla[index].pos.y << " " << bla[index].pos.z << std::endl;
+        std::cout << std::setprecision(4) << "vertex " << i << " " << out_vertices[index].pos.x << " " << out_vertices[index].pos.y << " " << out_vertices[index].pos.z << std::endl;
       }
     }
       

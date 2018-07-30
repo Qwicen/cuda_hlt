@@ -32,13 +32,12 @@ void removeTracks(std::vector< Track*>& tracks,
 int run_PatPV_on_CPU (
   VeloState * host_velo_states,
   int * host_accumulated_tracks,
-  uint* host_velo_track_hit_number_pinned,
-  VeloTracking::Hit<true>* host_velo_track_hits_pinned,
   int * host_number_of_tracks_pinned,
   const int &number_of_events,
   Vertex * outvtxvec,
   uint * number_of_vertex,
-  XYZPoint * seeds
+  XYZPoint * seeds,
+  uint * number_of_seeds
   
 );
 
