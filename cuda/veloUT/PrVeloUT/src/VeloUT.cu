@@ -54,7 +54,7 @@ __global__ void veloUT(
     if( !veloTrackInUTAcceptance( velo_states_event[i_track] ) ) continue;
     atomicAdd(n_velo_tracks_in_UT_event, 1);
 
-     // for storing calculated x and z positions of hits for this track
+     // for storing calculated x position of hits for this track
     float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
 
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {

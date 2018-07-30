@@ -2,7 +2,7 @@
 
 #include "cuda_runtime.h"
 
-#include "../../../../main/include/SystemOfUnits.h"
+#include "SystemOfUnits.h"
 
 /**
    *Constants mainly taken from PrVeloUT.h from Rec

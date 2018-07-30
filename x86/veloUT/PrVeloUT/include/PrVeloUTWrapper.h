@@ -1,5 +1,5 @@
-#include "../../../../cuda/veloUT/PrVeloUT/include/PrVeloUT.cuh"
-
+#include "PrVeloUT.cuh"
+#include "Logger.h"
 
 void call_PrVeloUT(
     const uint* velo_track_hit_number,

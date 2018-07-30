@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../../../main/include/Common.h"
+#include "Common.h"
 
-#include "../../../checker/lib/include/TrackChecker.h"
+#include "TrackChecker.h"
 
-#include "../../../x86/veloUT/PrVeloUT/include/PrVeloUTWrapper.h"
-#include "../../../main/include/Tools.h"
+#include "PrVeloUTWrapper.h"
+#include "Tools.h"
 
 int run_veloUT_on_CPU (
   std::vector< trackChecker::Tracks > * ut_tracks_events,

@@ -1,5 +1,7 @@
 include_directories(lib/include)
 include_directories(lib/SOAContainer/include)
+include_directories(../main/include)
+include_directories(../cuda/velo/common/include)
 
 add_subdirectory(lib)
 

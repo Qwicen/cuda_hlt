@@ -11,13 +11,13 @@
 #include <thrust/count.h>
 #include <thrust/execution_policy.h>
 
-#include "../../../../main/include/Logger.h"
-#include "../../../../main/include/SystemOfUnits.h"
+#include "Logger.h"
+#include "SystemOfUnits.h"
 
-#include "../../../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
-#include "../../../../cuda/veloUT/PrVeloUT/include/PrVeloUTDefinitions.cuh"
-#include "../../../../cuda/veloUT/PrVeloUT/include/PrVeloUTMagnetToolDefinitions.cuh"
-#include "../../../../cuda/velo/common/include/VeloDefinitions.cuh"
+#include "VeloUTDefinitions.cuh"
+#include "PrVeloUTDefinitions.cuh"
+#include "PrVeloUTMagnetToolDefinitions.cuh"
+#include "VeloDefinitions.cuh"
 
 /** PrVeloUT 
    *

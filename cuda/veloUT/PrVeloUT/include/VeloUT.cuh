@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../../velo/common/include/VeloDefinitions.cuh"
-#include "../../common/include/VeloUTDefinitions.cuh"
+#include "VeloDefinitions.cuh"
+#include "VeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.cuh"
 #include "PrVeloUT.cuh"
 

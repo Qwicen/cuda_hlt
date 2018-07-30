@@ -65,8 +65,18 @@ add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
 #add_subdirectory(x86/veloUT/PrVeloUT)
 
-# Include directory
+# Include directories
 include_directories(main/include)
+include_directories(x86/velo/clustering/include)
+include_directories(cuda/veloUT/common/include)
+include_directories(cuda/veloUT/PrVeloUT/include)
+include_directories(cuda/velo/common/include)
+include_directories(cuda/velo/calculate_phi_and_sort/include)
+include_directories(cuda/velo/consolidate_tracks/include)
+include_directories(cuda/velo/mask_clustering/include)
+include_directories(cuda/velo/prefix_sum/include)
+include_directories(cuda/velo/search_by_triplet/include)
+include_directories(cuda/velo/simplified_kalman_filter/include)
 
 # Files from source directories
 file(GLOB main_sources "main/src/*")

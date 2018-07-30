@@ -20,9 +20,9 @@
 
 #include "MCParticle.h"
 
-#include "../../../main/include/Common.h"
-#include "../../../main/include/Logger.h"
-#include "../../../main/include/InputTools.h"
+#include "Common.h"
+#include "Logger.h"
+#include "InputTools.h"
 #include "TrackChecker.h"
 #include "MCParticle.h"
 

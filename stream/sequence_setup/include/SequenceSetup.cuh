@@ -1,18 +1,18 @@
 #pragma once
 
-#include "../../../cuda/velo/calculate_phi_and_sort/include/CalculatePhiAndSort.cuh"
-#include "../../../cuda/velo/consolidate_tracks/include/ConsolidateTracks.cuh"
-#include "../../../cuda/velo/mask_clustering/include/MaskedVeloClustering.cuh"
-#include "../../../cuda/velo/mask_clustering/include/EstimateInputSize.cuh"
-#include "../../../cuda/velo/prefix_sum/include/PrefixSum.cuh"
-#include "../../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
-#include "../../../cuda/velo/simplified_kalman_filter/include/VeloKalmanFilter.cuh"
+#include "CalculatePhiAndSort.cuh"
+#include "ConsolidateTracks.cuh"
+#include "MaskedVeloClustering.cuh"
+#include "EstimateInputSize.cuh"
+#include "PrefixSum.cuh"
+#include "SearchByTriplet.cuh"
+#include "VeloKalmanFilter.cuh"
 
-#include "../../../cuda/veloUT/PrVeloUT/include/VeloUT.cuh"
+#include "VeloUT.cuh"
 
-#include "../../gear/include/Argument.cuh"
-#include "../../gear/include/Sequence.cuh"
-#include "../../gear/include/TupleIndicesChecker.cuh"
+#include "Argument.cuh"
+#include "Sequence.cuh"
+#include "TupleIndicesChecker.cuh"
 #include "SequenceArgumentEnum.cuh"
 
 /**

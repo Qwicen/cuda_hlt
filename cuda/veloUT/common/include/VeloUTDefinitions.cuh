@@ -2,9 +2,8 @@
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-#include "../../../../main/include/Common.h"
-#include "../../../../main/include/Logger.h"
-#include "../../../velo/common/include/VeloDefinitions.cuh"
+#include "Common.h"
+#include "VeloDefinitions.cuh"
 
 #include "assert.h"
 

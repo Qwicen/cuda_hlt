@@ -18,7 +18,7 @@
 #include "LHCbID.h"
 #include "MCParticle.h"
 
-#include "../../../main/include/Logger.h"
+#include "Logger.h"
 
 
 /// simple MC associator

@@ -4,9 +4,10 @@
 #include <string>
 #include <stdint.h>
 
-#include "../../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
-#include "../../../cuda/veloUT/PrVeloUT/include/PrVeloUTMagnetToolDefinitions.cuh"
-
+#include "VeloUTDefinitions.cuh"
+#include "PrVeloUTMagnetToolDefinitions.cuh"
+#include "Logger.h"
+#include "Common.h"
 
 // Forward definition of Stream, to avoid
 // inability to compile kernel calls (due to <<< >>>

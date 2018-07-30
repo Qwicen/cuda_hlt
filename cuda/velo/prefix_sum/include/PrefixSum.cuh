@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../common/include/VeloDefinitions.cuh"
+#include "VeloDefinitions.cuh"
 
 __global__ void prefix_sum_reduce(
   uint* dev_main_array,

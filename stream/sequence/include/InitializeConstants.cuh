@@ -1,9 +1,9 @@
 #pragma once
 
 #include <array>
-#include "../../../main/include/CudaCommon.h"
-#include "../../../cuda/velo/common/include/VeloDefinitions.cuh"
-#include "../../../cuda/velo/common/include/ClusteringDefinitions.cuh"
-#include "../../../x86/velo/clustering/include/ClusteringCommon.h"
+#include "CudaCommon.h"
+#include "VeloDefinitions.cuh"
+#include "ClusteringDefinitions.cuh"
+#include "ClusteringCommon.h"
 
 void initializeConstants();

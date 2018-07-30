@@ -1,7 +1,5 @@
 #include "StreamWrapper.cuh"
 #include "Stream.cuh"
-#include "../../../main/include/Logger.h"
-#include "../../../main/include/Common.h"
 
 void StreamWrapper::initialize_streams(
   const uint n,

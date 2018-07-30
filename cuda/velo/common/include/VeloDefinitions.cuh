@@ -2,7 +2,7 @@
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-#include "../../../../main/include/Common.h"
+#include "Common.h"
 #include "assert.h"
 #include <cstdio>
 #include <cstdlib>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../common/include/VeloDefinitions.cuh"
-#include "../../../../main/include/Common.h"
+#include "VeloDefinitions.cuh"
+#include "Common.h"
 #include <stdint.h>
 
 __device__ VeloState means_square_fit(

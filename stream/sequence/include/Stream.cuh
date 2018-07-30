@@ -6,15 +6,14 @@
 #include <algorithm>
 #include <tuple>
 
-#include "../../../main/include/Common.h"
-#include "../../../main/include/CudaCommon.h"
-#include "../../../main/include/Logger.h"
-#include "../../../main/include/Timer.h"
-#include "../../../main/include/Tools.h"
-#include "../../scheduler/include/BaseDynamicScheduler.cuh"
-#include "../../sequence_setup/include/SequenceSetup.cuh"
-#include "../../../cuda/veloUT/PrVeloUT/include/PrVeloUTMagnetToolDefinitions.cuh"
-#include "../../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
+#include "Common.h"
+#include "CudaCommon.h"
+#include "Logger.h"
+#include "Timer.h"
+#include "Tools.h"
+#include "BaseDynamicScheduler.cuh"
+#include "SequenceSetup.cuh"
+#include "PrVeloUTMagnetToolDefinitions.cuh"
 
 #include "run_VeloUT_CPU.h"
 
