@@ -206,8 +206,8 @@ int run_veloUT_on_CPU (
 	z_hit = host_velo_track_hits_pinned[starting_hit + i_hit].z;
 	
 	t_track_hits->Fill();
-#endif
       }
+#endif
     } // tracks
 
     int n_veloUT_tracks_event = 0;
