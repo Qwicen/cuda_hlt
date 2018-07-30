@@ -15,9 +15,9 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 
-include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/ROOT/6.08.06-d7e12/x86_64-centos7-gcc62-opt/include/")
-include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/include")
-include_directories("/usr/local/root/include")
+#include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/ROOT/6.08.06-d7e12/x86_64-centos7-gcc62-opt/include/")
+#include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/include")
+#include_directories("/usr/local/root/include")
 
 # MC truth matching
 if("${MC_CHECK}" STREQUAL Off OR "${MC_CHECK}" STREQUAL OFF)
@@ -31,6 +31,13 @@ find_package(CUDA REQUIRED)
 set(CUDA_HOST_COMPILER "g++")
 set(CUDA_SEPARABLE_COMPILATION ON)
 option(CUDA_PROPAGATE_HOST_FLAGS OFF)
+
+find_package( ROOT )
+if ( ROOT_FOUND )
+  message("-- Compiling with ROOT: ${ROOT_INCLUDE_DIRS}")
+else()
+  message("Compiling without ROOT")
+endif()
 
 # Cuda: Deal with build type
 if(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
@@ -57,12 +64,25 @@ file(GLOB main_sources "main/src/*")
 
 cuda_add_executable(cu_hlt ${main_sources})
 
-target_link_libraries(cu_hlt
-  tbb
-  Velo
-  VeloUT
-  #x86VeloUT
-  Stream
-  x86Clustering
-  TrackChecking
-  CheckClustering)
+if ( ROOT_FOUND ) 
+  target_link_libraries(cu_hlt
+    tbb
+    Velo
+    VeloUT
+    #x86VeloUT
+    Stream
+    x86Clustering
+    TrackChecking
+    CheckClustering
+    ${ROOT_LIBRARIES})
+else()
+  target_link_libraries(cu_hlt
+    tbb
+    Velo
+    VeloUT
+    #x86VeloUT
+    Stream
+    x86Clustering
+    TrackChecking
+    CheckClustering)
+endif()

@@ -5,4 +5,3 @@ add_library(TrackChecking SHARED
   src/MCAssociator.cc
   src/TrackChecker.cc
   )
-

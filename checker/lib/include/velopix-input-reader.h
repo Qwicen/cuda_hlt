@@ -69,6 +69,7 @@ void callPrChecker(
   const uint start_event_offset,
   const std::string& trackType
 ) {
+
    /* MC information */
   int n_events = all_tracks.size();
   std::vector<VelopixEvent> events = read_mc_folder(folder_name_MC, trackType, n_events, start_event_offset, true );

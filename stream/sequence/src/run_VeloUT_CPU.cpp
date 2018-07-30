@@ -1,8 +1,10 @@
 #include "../include/run_VeloUT_CPU.h"
 
+#ifdef WITH_ROOT
 #include "TH1D.h"
 #include "TFile.h"
 #include "TTree.h"
+#endif
 
 void findPermutation(
   const float* hit_Xs,
@@ -44,7 +46,8 @@ int run_veloUT_on_CPU (
   const int &number_of_events
 ) {
 
-      
+  int backward;
+#ifdef WITH_ROOT
   // Histograms only for checking and debugging
   TFile *f = new TFile("../output/veloUT.root", "RECREATE");
   TTree *t_ut_hits = new TTree("ut_hits","ut_hits");
@@ -55,7 +58,6 @@ int run_veloUT_on_CPU (
   float x, y, tx, ty, chi2, z, drdz;
   unsigned int LHCbID;
   int highThreshold, layer;
-  int backward;
   float x_hit, y_hit, z_hit;
   float first_x, first_y, first_z;
   float last_x, last_y, last_z;
@@ -90,7 +92,7 @@ int run_veloUT_on_CPU (
   t_velo_states->Branch("last_y", &last_y);
   t_velo_states->Branch("last_z", &last_z); 
   t_veloUT_tracks->Branch("qop", &qop);
-
+#endif
    
   int n_veloUT_tracks = 0;
   int n_velo_tracks_in_UT = 0;
@@ -140,7 +142,8 @@ int run_veloUT_on_CPU (
 	hit.m_highThreshold = hits_layers.m_highThreshold[layer_offset + i_hit];
 	
 	inputHits[i_layer].push_back( hit );
-	
+        
+#ifdef WITH_ROOT
 	// For tree filling
 	cos = hit.m_cos;
 	yBegin = hit.m_yBegin;
@@ -154,6 +157,7 @@ int run_veloUT_on_CPU (
         dxDy = hit.dxDy();
         
 	t_ut_hits->Fill();
+#endif
       }
     } // layers
     
@@ -170,10 +174,8 @@ int run_veloUT_on_CPU (
       backward = (int)(host_velo_states_event[i_track].backward);
       if ( !backward ) n_forward_velo_tracks++;
 
-      
-      //////////////////////
+#ifdef WITH_ROOT      
       // For tree filling
-      //////////////////////
       x = host_velo_states_event[i_track].x;
       y = host_velo_states_event[i_track].y;
       tx = host_velo_states_event[i_track].tx;
@@ -204,35 +206,36 @@ int run_veloUT_on_CPU (
 	z_hit = host_velo_track_hits_pinned[starting_hit + i_hit].z;
 	
 	t_track_hits->Fill();
+#endif
       }
     } // tracks
 
     int n_veloUT_tracks_event = 0;
     VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks];
-    call_PrVeloUT(
-      host_velo_track_hit_number_pinned,
-      host_velo_track_hits_pinned,                                                       
-      host_number_of_tracks_pinned[i_event],
-      host_accumulated_tracks[i_event],
-      host_velo_states_event,
-      &(hits_layers),
-      host_ut_magnet_tool,
-      veloUT_tracks,
-      n_velo_tracks_in_UT,
-      n_veloUT_tracks_event
-   );
+    // call_PrVeloUT(
+   //    host_velo_track_hit_number_pinned,
+   //    host_velo_track_hits_pinned,                                                       
+   //    host_number_of_tracks_pinned[i_event],
+   //    host_accumulated_tracks[i_event],
+   //    host_velo_states_event,
+   //    &(hits_layers),
+   //    host_ut_magnet_tool,
+   //    veloUT_tracks,
+   //    n_velo_tracks_in_UT,
+   //    n_veloUT_tracks_event
+   // );
     n_veloUT_tracks += n_veloUT_tracks_event;
-    
+
+#ifdef WITH_ROOT
     // store qop in tree
     for ( int i_track = 0; i_track < n_veloUT_tracks_event; i_track++ ) {
       qop = veloUT_tracks[i_track].qop;
       t_veloUT_tracks->Fill();
     }
+#endif
     
     // save in format for track checker
-    
     trackChecker::Tracks checker_tracks = prepareVeloUTTracksEvent( veloUT_tracks, n_veloUT_tracks_event );
-        
     ut_tracks_events->emplace_back( checker_tracks );
     
   } // events
@@ -241,9 +244,11 @@ int run_veloUT_on_CPU (
   info_cout << "Amount of forward velo tracks = " << float(n_forward_velo_tracks) / float(n_velo_tracks) << std::endl;
   info_cout << "Amount of forward velo tracks in UT acceptance = " << float(n_velo_tracks_in_UT) / float(n_forward_velo_tracks)  << std::endl;
   info_cout << "Amount of UT tracks found ( out of velo tracks in UT acceptance ) " << float(n_veloUT_tracks) / float(n_velo_tracks_in_UT) << std::endl;
-  
+
+#ifdef WITH_ROOT
   f->Write();
   f->Close();
+#endif
   
   return 0;
 }
