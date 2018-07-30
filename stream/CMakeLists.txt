@@ -6,9 +6,6 @@ include_directories(scheduler/include)
 include_directories(sequence/include)
 include_directories(sequence_setup/include)
 
-find_package( ROOT REQUIRED COMPONENTS  Matrix Physics MathCore Thread GenVector )
-
-  
 file(GLOB stream_gear "gear/src/*cu")
 file(GLOB stream_handlers "handlers/src/*cu")
 file(GLOB stream_memory_manager "memory_manager/src/*cu")
@@ -28,7 +25,6 @@ cuda_add_library(Stream STATIC
   )
 
 if ( ROOT_FOUND )
-  target_compile_definitions(Stream PUBLIC WITH_ROOT)
   target_link_libraries(Stream
   Velo
   VeloUT
