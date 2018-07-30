@@ -52,7 +52,7 @@ bool fitVertex( XYZPoint& seedPoint,
     
 
   if( pvTrack_counter < m_minTr ) {
-    //std::cout << pvTracks.size() << " " << m_minTr << std::endl;
+
     std::cout << "Too few tracks to fit PV" << std::endl;
     return false;
     }

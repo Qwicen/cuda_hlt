@@ -59,13 +59,11 @@ void getSeeds( VeloState * inputTracks,
 
 
  double  zseeds[m_max_clusters];
-  //std::cout << "not broken yet1" << std::endl;
+
  int number_final_clusters = findClusters(vclusters, zseeds, number_of_clusters);
- std::cout << *(zseeds+1) << std::endl;
- std::cout << "not broken yet2 getClusterCounter()" << number_final_clusters << std::endl;
-  //seeds.reserve(m_max_clusters);
+
   for(int i = 0; i < number_final_clusters; i++) {
-    //std::cout << i << " not broken yet3 "<< zseeds[i] << std::endl;
+
     seeds[event_number * PatPV::max_number_vertices + i] = XYZPoint{ beamspot.x, beamspot.y, zseeds[i]};
   }
   number_of_seeds[event_number] = number_final_clusters;
@@ -78,7 +76,7 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
 
   //maybe sort in z before merging?
   
-  //why blow up errors??
+
   
   for(int i = 0; i < number_of_clusters; i++) {
     vclus[i].sigsq *= m_factorToIncreaseErrors*m_factorToIncreaseErrors; // blow up errors
@@ -87,19 +85,19 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
 
   int counter_clusters = 0;
    int counter_merges = -1;
-   std::cout<<"inital nubmer of clusters: " << number_of_clusters << std::endl;
+
 
   bool no_merges = false;
   while(!no_merges) {
-   //asume clusters sorted in z
+
   no_merges = true;
   for(int index_cluster = 0; index_cluster < number_of_clusters - 1; index_cluster++) {
-      //only look at next five clusters
-    //skip cluster which have already been merged
-    std::cout << "index cluster " << index_cluster << std::endl;
+
+
+
     int second_cluster_counter = 0;
     for(int index_second_cluster = index_cluster + 1; index_second_cluster < number_of_clusters; index_second_cluster++){
-      std::cout << second_cluster_counter << std::endl;
+
 
 
       //skip cluster which have already been merged
@@ -118,12 +116,10 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
       double zdist = z1 - z2;
       double chi2dist = zdist*zdist/(s1+s2);
       //merge if chi2dist is smaller than max
-      std::cout << "current pair before merging: " << vclus[index_cluster].z << " " << vclus[index_cluster].ntracks << " " << vclus[index_second_cluster].ntracks << std::endl;
       if (chi2dist<m_maxChi2Merge ) {
         no_merges = no_merges && false;
         double w_inv = (s1*s2/(s1+s2));
         double zmerge = w_inv*(z1/s1+z2/s2);
-        std::cout << "before merge: " << vclus[index_cluster].z << " " << vclus[index_second_cluster].z << " " << chi2dist << " " << zmerge << " " << w_inv<< " " << s1 << " " << s2 << std::endl;
 
         vclus[index_cluster].z        = zmerge;
         vclus[index_cluster].sigsq    = w_inv;
@@ -131,11 +127,10 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
         vclus[index_cluster].ntracks += vclus[index_second_cluster].ntracks;
         vclus[index_second_cluster].ntracks  = 0;  // mark second cluster as used
         counter_merges++;
-        std::cout << "after merge " << vclus[index_cluster].z << std::endl;
+
         break;
       }
-      std::cout << "current pair after merging: " << vclus[index_cluster].z << " " << vclus[index_cluster].ntracks << " " << vclus[index_second_cluster].ntracks << std::endl;
-      //stop while loop after first merge
+
 
       
     }

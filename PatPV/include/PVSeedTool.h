@@ -39,7 +39,7 @@
   double m_ratioSig2HighMult = 1.0;
   double m_ratioSig2LowMult = 0.9;
 
-  int m_max_clusters = 200; // maximmum nubmer of clusters 
+  int m_max_clusters = 200; // maximmum number of clusters 
 
   double m_x0MS = 0.01;// X0 (tunable) of MS to add for extrapolation of
                                                        // track parameters to PV

@@ -75,14 +75,7 @@ bool reconstructMultiPVFromTracks(VeloState * tracks2use, Vertex * outvtxvec, in
     if(before_fit == nvtx_after) continue_fitting = false;
   }
     number_of_vertex[event_number] = nvtx_after;
-    std::cout << "reconstructed " << nvtx_after << " vertices!" << std::endl;
-    for (int i = 0; i < nvtx_after; i++) 
-    {
-      std::cout<<"x: "<<outvtxvec[event_number *max_number_vertices + i].pos.x<<std::endl;
-      std::cout<<"y: "<<outvtxvec[event_number *max_number_vertices + i].pos.y<<std::endl;
-      std::cout<<"z: "<<outvtxvec[event_number *max_number_vertices + i].pos.z<<std::endl;
-    }
-  //}//iterate on vtx
+
 
   return true;
   
@@ -105,7 +98,7 @@ int run_PatPV_on_CPU (
 
 XYZPoint beamspot(0.,0.,0.);
 
-//std:std::vector<XYZPoint> seeds = seedtool.getSeeds(host_velo_states, beamspot, *host_number_of_tracks_pinned);
+
 
 /*
 AdaptivePV3DFitter fitter;
@@ -126,37 +119,13 @@ for(int i_event = 0; i_event < number_of_events; i_event++) {
  VeloState * state_base_pointer = host_velo_states + 2 * host_accumulated_tracks[i_event];
 VeloState  kalman_states[number_of_tracks];
 
-//recovers previusoly found vertices in first event
-/*
-for(int i = 0; i < number_of_tracks; i++) kalman_states[i] = state_base_pointer[2*i ];
-std::cout << "least: " << kalman_states[1].x <<std::endl;
-std::cout << "least: " << kalman_states[1].y <<std::endl;
-std::cout << "least: " << kalman_states[1].z <<std::endl;
-std::cout << "least: " << kalman_states[1].tx <<std::endl;
-std::cout << "least: " << kalman_states[1].ty <<std::endl;
-std::cout << "least: " << kalman_states[1].c00 <<std::endl;
-std::cout << "least: " << kalman_states[1].c20 <<std::endl;
-std::cout << "least: " << kalman_states[1].c22 <<std::endl;
-std::cout << "least: " << kalman_states[1].c11 <<std::endl;
-std::cout << "least: " << kalman_states[1].c31 <<std::endl;
-std::cout << "least: " << kalman_states[1].c33 <<std::endl;
-*/
+
  bool  tracks2disable[number_of_tracks];
 
   //works
 for(int i = 0; i < number_of_tracks; i++) kalman_states[i] = state_base_pointer[2*i +1];
 for(int i = 0; i < number_of_tracks; i++) tracks2disable[i] = false;
-std::cout << "kalman: " << kalman_states[1].x <<std::endl;
-std::cout << "kalman: " << kalman_states[1].y <<std::endl;
-std::cout << "kalman: " << kalman_states[1].z <<std::endl;
-std::cout << "kalman: " << kalman_states[1].tx <<std::endl;
-std::cout << "kalman: " << kalman_states[1].ty <<std::endl;
-std::cout << "kalman: " << kalman_states[1].c00 <<std::endl;
-std::cout << "kalman: " << kalman_states[1].c20 <<std::endl;
-std::cout << "kalman: " << kalman_states[1].c22 <<std::endl;
-std::cout << "kalman: " << kalman_states[1].c11 <<std::endl;
-std::cout << "kalman: " << kalman_states[1].c31 <<std::endl;
-std::cout << "least: " << kalman_states[1].c33 <<std::endl;
+
 XYZPoint beamspot = {0.,0.,0.};
 getSeeds( kalman_states, beamspot, number_of_tracks,  seeds, number_of_seeds,  i_event);
 reconstructMultiPVFromTracks(kalman_states, outvtxvec, host_number_of_tracks_pinned[i_event], number_of_vertex, i_event, tracks2disable, seeds, number_of_seeds);

@@ -39,33 +39,20 @@ void AdaptivePVTrack::linearTransportTo( double new_z) {
   void AdaptivePVTrack::updateCache(const XYZPoint& vtx)
   {
     // transport to vtx z
-    // still missing!
-    std::cout << "before transport: "<< vtx.z << " " << m_state.z << std::endl;
-    //std::cout << m_state.y << endl;
     linearTransportTo( vtx.z ) ;
-    std::cout << "after transport: " << m_state.z << std::endl;
-    //std::cout << m_state.y << endl;
 
-    // invert cov matrix
+
 
     //write out inverse covariance matrix
     m_invcov[0] = 1. / m_state.c00;
     m_invcov[1] = 0.;
     m_invcov[2] = 1. / m_state.c11;
 
-    // The following can all be written out, omitting the zeros, once
-    // we know that it works.
+
 
     Vector2 res{ vtx.x - m_state.x, vtx.y - m_state.y };
 
-    //do we even need HW?
-    double HW[6] ;
-    HW[0] = 1. / m_state.c00;
-    HW[1] = 0.;
-    HW[2] = 1. / m_state.c11;
-    HW[3] = - m_state.tx / m_state.c00;
-    HW[4] = - m_state.ty / m_state.c11;
-    HW[5] = 0.;
+
     
     m_halfD2Chi2DX2[0] = 1. / m_state.c00;
     m_halfD2Chi2DX2[1] = 0.;
@@ -78,23 +65,13 @@ void AdaptivePVTrack::linearTransportTo( double new_z) {
     m_halfDChi2DX.y = res.y / m_state.c11;
     m_halfDChi2DX.z = -m_state.tx*res.x / m_state.c00 -m_state.ty*res.y / m_state.c11;
     m_chi2          = res.x*res.x / m_state.c00 +res.y*res.y / m_state.c11;
-    //    std::cout << "calculate chi2:" << std::endl;
-
-    //std::cout << "diff x: " << vtx.x - (m_state.x ) << std::endl;
-    //std::cout << "diff y: " << vtx.y - (m_state.y ) << std::endl;
-    //std::cout << "err x: " << m_state.c00 << std::endl; 
-    //std::cout << "err y: " << m_state.c11 << std::endl;
+ 
   }
 
 
    double AdaptivePVTrack::chi2( const XYZPoint& vtx ) const
   {
     double dz = vtx.z - m_state.z ;
-    //std::cout << "calculate chi2:" << std::endl;
-    //std::cout << "dz: " << dz << std::endl;
-    //std::cout << "diff x: " << vtx.x - (m_state.x + dz*m_state.tx) << std::endl;
-    //std::cout << "err x: " << m_state.c00 << std::endl; 
-    //std::cout << "err <: " << m_state.c11 << std::endl;
     Vector2 res{ vtx.x - (m_state.x + dz*m_state.tx),
                         vtx.y - (m_state.y + dz*m_state.ty) };
     return res.x*res.x / m_state.c00 +res.y*res.y / m_state.c11;
