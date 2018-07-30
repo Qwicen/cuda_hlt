@@ -51,10 +51,11 @@ void getSeeds( VeloState * inputTracks,
     clu.sigsqmin = clu.sigsq;
     clu.ntracks = 1;
     vclusters[number_of_clusters] = clu;
-    std::cout << "seed " << number_of_clusters << " " <<  vclusters[number_of_clusters].z << " " << vclusters[number_of_clusters].sigsq << std::endl;
+    
     number_of_clusters++;
 
   }
+
 
 
 
@@ -93,16 +94,17 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
   no_merges = true;
   for(int index_cluster = 0; index_cluster < number_of_clusters - 1; index_cluster++) {
 
+    //skip cluster which have already been merged
+    if(vclus[index_cluster].ntracks == 0) continue;
 
 
-    int second_cluster_counter = 0;
+    
     for(int index_second_cluster = index_cluster + 1; index_second_cluster < number_of_clusters; index_second_cluster++){
 
 
 
       //skip cluster which have already been merged
-      if(vclus[index_cluster].ntracks == 0) break;
-      if(vclus[index_second_cluster].ntracks == 0) { second_cluster_counter++;continue;}
+      if(vclus[index_second_cluster].ntracks == 0) continue;
       double z1 = vclus[index_cluster].z;
       double z2 = vclus[index_second_cluster].z;
       double s1 = vclus[index_cluster].sigsq;
@@ -146,7 +148,7 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
   pvclus.reserve(number_of_clusters);
   int return_number_of_clusters = 0;
   for(int i = 0; i < number_of_clusters; i++) {
-    if(vclus[i].ntracks != 0)    {zclusters[return_number_of_clusters] = vclus[return_number_of_clusters].z; return_number_of_clusters++;}
+    if(vclus[i].ntracks != 0)    {zclusters[return_number_of_clusters] = vclus[i].z; return_number_of_clusters++;}
   } 
 
   //still missing: cleaning up the clusters like below
