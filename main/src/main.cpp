@@ -33,7 +33,7 @@ void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
     << std::endl << " -f {folder containing .bin files with raw bank information}"
-    << std::endl << (mc_check_enabled ? " " : " [") << "-d {folder containing .root files with MC truth information}"
+    << std::endl << (mc_check_enabled ? " " : " [") << "-d {folder containing .bin files with MC truth information}"
     << (mc_check_enabled ? "" : " ]")
     << std::endl << " -e {folder containing bin files with UT hit information}"
     << std::endl << " -g {folder containing geometry descriptions}"
