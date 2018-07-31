@@ -13,9 +13,9 @@ __device__ void track_forwarding(
   const Module* module_data,
   const uint diff_ttf,
   uint* tracks_to_follow,
-  TrackHits* weak_tracks,
+  TrackletHits* weak_tracks,
   const uint prev_ttf,
-  TrackHits* tracklets,
+  TrackletHits* tracklets,
   TrackHits* tracks,
   const uint number_of_hits
 );

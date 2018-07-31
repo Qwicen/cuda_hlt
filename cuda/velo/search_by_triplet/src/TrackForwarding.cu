@@ -8,8 +8,8 @@
  *          returns FLT_MAX.
  */
 __device__ float fit_hit_to_track(
-  const HitXY& h0,
-  const HitXY& h2,
+  const HitBase& h0,
+  const HitBase& h2,
   const float predx,
   const float predy,
   const float scatterDenom2
@@ -47,9 +47,9 @@ __device__ void track_forwarding(
   const Module* module_data,
   const uint diff_ttf,
   uint* tracks_to_follow,
-  TrackHits* weak_tracks,
+  TrackletHits* weak_tracks,
   const uint prev_ttf,
-  TrackHits* tracklets,
+  TrackletHits* tracklets,
   TrackHits* tracks,
   const uint number_of_hits
 ) {
@@ -61,11 +61,9 @@ __device__ void track_forwarding(
       const bool track_flag = (fulltrackno & 0x80000000) == 0x80000000;
       const auto skipped_modules = (fulltrackno & 0x70000000) >> 28;
       auto trackno = fulltrackno & 0x0FFFFFFF;
-
-      const TrackHits* track_pointer = track_flag ? tracklets : tracks;
-      
       assert(track_flag ? trackno < VeloTracking::ttf_modulo : trackno < VeloTracking::max_tracks);
-      auto t = track_pointer[trackno];
+
+      TrackHits t = track_flag ? TrackHits{tracklets[trackno]} : tracks[trackno];
 
       // Load last two hits in h0, h1
       assert(t.hitsNum < VeloTracking::max_track_size);
@@ -73,16 +71,14 @@ __device__ void track_forwarding(
       const auto h1_num = t.hits[t.hitsNum - 1];
 
       assert(h0_num < number_of_hits);
-      const HitXY h0 {hit_Xs[h0_num], hit_Ys[h0_num]};
-      const auto h0_z = hit_Zs[h0_num];
+      const HitBase h0 {hit_Xs[h0_num], hit_Ys[h0_num], hit_Zs[h0_num]};
 
       assert(h1_num < number_of_hits);
-      const HitXY h1 {hit_Xs[h1_num], hit_Ys[h1_num]};
-      const auto h1_z = hit_Zs[h1_num];
+      const HitBase h1 {hit_Xs[h1_num], hit_Ys[h1_num], hit_Zs[h1_num]};
 
       // Track forwarding over t, for all hits in the next module
       // Line calculations
-      const auto td = 1.0f / (h1_z - h0_z);
+      const auto td = 1.0f / (h1.z - h0.z);
       const auto txn = (h1.x - h0.x);
       const auto tyn = (h1.y - h0.y);
       const auto tx = txn * td;
@@ -92,16 +88,36 @@ __device__ void track_forwarding(
       float best_fit = FLT_MAX;
       unsigned short best_h2;
 
-      // Some constants of fitting
-      const auto h2_z = module_data[2].z;
-      const auto dz = h2_z - h0_z;
-      const auto predx = tx * dz;
-      const auto predy = ty * dz;
-      const auto scatterDenom2 = 1.f / ((h2_z - h1_z) * (h2_z - h1_z));
+      for (auto j=0; j<module_data[4].hitNums; ++j) {
+        const auto h2_index = module_data[4].hitStart + j;
+        const HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
 
-      for (auto j=0; j<module_data[2].hitNums; ++j) {
-        const auto h2_index = module_data[2].hitStart + j;
-        const HitXY h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
+        const auto dz = h2.z - h0.z;
+        const auto predx = tx * dz;
+        const auto predy = ty * dz;
+        const auto scatterDenom2 = 1.f / ((h2.z - h1.z) * (h2.z - h1.z));
+
+        const auto fit = fit_hit_to_track(
+          h0,
+          h2,
+          predx,
+          predy,
+          scatterDenom2
+        );
+        const auto fit_is_better = fit < best_fit;
+        best_fit = fit_is_better*fit + !fit_is_better*best_fit;
+        best_h2 = fit_is_better*h2_index + !fit_is_better*best_h2;
+      }
+
+      for (auto j=0; j<module_data[5].hitNums; ++j) {
+        const auto h2_index = module_data[5].hitStart + j;
+        const HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
+
+        const auto dz = h2.z - h0.z;
+        const auto predx = tx * dz;
+        const auto predy = ty * dz;
+        const auto scatterDenom2 = 1.f / ((h2.z - h1.z) * (h2.z - h1.z));
+
         const auto fit = fit_hit_to_track(
           h0,
           h2,
@@ -151,7 +167,7 @@ __device__ void track_forwarding(
       }
       // A track just skipped a module
       // We keep it for another round
-      else if (skipped_modules <= VeloTracking::max_skipped_modules) {
+      else if (skipped_modules < VeloTracking::max_skipped_modules) {
         // Form the new mask
         trackno = ((skipped_modules + 1) << 28) | (fulltrackno & 0x8FFFFFFF);
 
@@ -163,8 +179,8 @@ __device__ void track_forwarding(
       // mark it as "doubtful"
       else if (t.hitsNum == 3) {
         const auto weakP = atomicAdd(weaktracks_insertPointer, 1) % VeloTracking::ttf_modulo;
-        assert(weakP < number_of_hits);
-        weak_tracks[weakP] = t;
+        assert(weakP < VeloTracking::max_weak_tracks);
+        weak_tracks[weakP] = TrackletHits{t.hits[0], t.hits[1], t.hits[2]};
       }
       // In the "else" case, we couldn't follow up the track,
       // so we won't be track following it anymore.

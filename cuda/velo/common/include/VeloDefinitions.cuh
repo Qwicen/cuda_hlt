@@ -49,7 +49,7 @@ namespace VeloTracking {
 
   // Maximum number of skipped modules allowed for a track
   // before storing it
-  static constexpr uint max_skipped_modules = 3;
+  static constexpr uint max_skipped_modules = 1;
 
   // Total number of atomics required
   // This is just a constant
@@ -57,11 +57,12 @@ namespace VeloTracking {
 
   // Constants for requested storage on device
   static constexpr uint max_tracks = 1200;
-  static constexpr uint max_track_size = 27;
-  static constexpr uint max_numhits_in_module = 300;
+  static constexpr uint max_track_size = 26;
+  static constexpr uint max_numhits_in_module = 350;
 
   // Maximum number of tracks to follow at a time
-  static constexpr uint ttf_modulo = 500;
+  static constexpr uint ttf_modulo = 2000;
+  static constexpr uint max_weak_tracks = 500;
 
   // High number of hits per event
   static constexpr uint max_number_of_hits_per_event = 9500;
@@ -78,25 +79,12 @@ namespace VeloTracking {
 struct Module {
     uint hitStart;
     uint hitNums;
-    float z;
 
     __device__ Module(){}
     __device__ Module(
       const uint _hitStart,
-      const uint _hitNums,
-      const float _z
-    ) : hitStart(_hitStart), hitNums(_hitNums), z(_z) {}
-};
-
-struct HitXY {
-    float x;
-    float y;
-
-    __device__ HitXY(){}
-    __device__ HitXY(
-      const float _x,
-      const float _y
-    ) : x(_x), y(_y) {}
+      const uint _hitNums
+    ) : hitStart(_hitStart), hitNums(_hitNums) {}
 };
 
 struct HitBase { // 3 * 4 = 12 B
@@ -138,12 +126,31 @@ struct Hit<false> : public HitBase { // 4 * 3 = 12 B
     ) : HitBase( _x, _y, _z) {}
 };
 
+/**
+ * @brief TrackletHits struct
+ */
+struct TrackletHits {
+  unsigned short hits[3];
+
+  __device__ TrackletHits(){}
+  __device__ TrackletHits(
+    const unsigned short h0,
+    const unsigned short h1,
+    const unsigned short h2
+  ) {
+    hits[0] = h0;
+    hits[1] = h1;
+    hits[2] = h2;
+  }
+};
+
 /* Structure containing indices to hits within hit array */
-struct TrackHits { // 4 + 26 * 4 = 116 B
+struct TrackHits { // 2 + 26 * 2 = 54 B
   unsigned short hitsNum;
   unsigned short hits[VeloTracking::max_track_size];
 
   __device__ TrackHits(){}
+  
   __device__ TrackHits(
     const unsigned short _hitsNum,
     const unsigned short _h0,
@@ -153,6 +160,13 @@ struct TrackHits { // 4 + 26 * 4 = 116 B
     hits[0] = _h0;
     hits[1] = _h1;
     hits[2] = _h2;
+  }
+
+  __device__ TrackHits(const TrackletHits& tracklet) {
+    hitsNum = 3;
+    hits[0] = tracklet.hits[0];
+    hits[1] = tracklet.hits[1];
+    hits[2] = tracklet.hits[2];
   }
 };
 
