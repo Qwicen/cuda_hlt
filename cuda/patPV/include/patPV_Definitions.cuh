@@ -58,7 +58,9 @@ struct Vector2 {
 class Vertex {
   public:
     Vertex() {};
-    XYZPoint pos{0.,0.,0.};
+    double x = 0.;
+    double y = 0.;
+    double z = 0.;
     double chi2;
     int ndof;
     double cov[6];
@@ -69,9 +71,9 @@ class Vertex {
       ndof = m_ndof;
     }
     void setPosition(XYZPoint& point) {
-      pos.x = point.x;
-      pos.y = point.y;
-      pos.z = point.z;
+      x = point.x;
+      y = point.y;
+      z = point.z;
     }
     void setCovMatrix(double * m_cov) {
       cov[0] = m_cov[0];

@@ -61,9 +61,9 @@ bool reconstructMultiPVFromTracks(VeloState * tracks2use, Vertex * outvtxvec, in
       bool scvfit = fitVertex( seed, rtracks, recvtx, tracks2remove, host_number_of_tracks_pinned, tracks2disable);
       if (!scvfit) continue;
       std::cout<<"got vertex " << std::endl; 
-      std::cout << recvtx.pos.x << std::endl;
-      std::cout << recvtx.pos.y << std::endl;
-      std::cout << recvtx.pos.z << std::endl;
+      std::cout << recvtx.x << std::endl;
+      std::cout << recvtx.y << std::endl;
+      std::cout << recvtx.z << std::endl;
       
       
 
@@ -257,9 +257,9 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   std::cout << "rec vertices with errors:" << std::endl;
   for(int i = 0; i < number_of_vertex[0]; i++) {
     int index = 0  * max_number_vertices + i;
-    std::cout << std::setprecision(4) << "x: " << rec_vertex[index].pos.x << " " << rec_vertex[index].cov[0] << std::endl;
-    std::cout << std::setprecision(4) << "y: " << rec_vertex[index].pos.y << " " << rec_vertex[index].cov[5] << std::endl;
-    std::cout << std::setprecision(4) << "z: " << rec_vertex[index].pos.z << " " << rec_vertex[index].cov[5] << std::endl;
+    std::cout << std::setprecision(4) << "x: " << rec_vertex[index].x << " " << rec_vertex[index].cov[0] << std::endl;
+    std::cout << std::setprecision(4) << "y: " << rec_vertex[index].y << " " << rec_vertex[index].cov[5] << std::endl;
+    std::cout << std::setprecision(4) << "z: " << rec_vertex[index].z << " " << rec_vertex[index].cov[5] << std::endl;
   }
 
 
@@ -307,13 +307,13 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
           //number_reconstructible_vertices++;
           
           //don't forget that covariance is sigma squared!
-          if(abs(rec_vertex[index].pos.z - vtx.z) <  5. * sqrt(rec_vertex[index].cov[5])) {
+          if(abs(rec_vertex[index].z - vtx.z) <  5. * sqrt(rec_vertex[index].cov[5])) {
 
             std::cout << "matched a vertex" << std::endl;
-            std::cout << std::setprecision(4) <<"x: " << rec_vertex[index].pos.x << " " << vtx.x << " " <<  rec_vertex[index].cov[0] << std::endl;
-            std::cout << std::setprecision(4) <<"y: " << rec_vertex[index].pos.y << " " << vtx.y << " " <<  rec_vertex[index].cov[2] << std::endl;
-            std::cout << std::setprecision(4) <<"z: " << rec_vertex[index].pos.z << " " << vtx.z << " " <<  rec_vertex[index].cov[5] << std::endl;
-            pull_file << rec_vertex[index].pos.x << " " << rec_vertex[index].pos.y << " " << rec_vertex[index].pos.z << " " << vtx.x << " " << vtx.y << " " << vtx.z << " " << sqrt(rec_vertex[index].cov[0]) << " " << sqrt(rec_vertex[index].cov[2]) << " " << sqrt(rec_vertex[index].cov[5]) << "\n";
+            std::cout << std::setprecision(4) <<"x: " << rec_vertex[index].x << " " << vtx.x << " " <<  rec_vertex[index].cov[0] << std::endl;
+            std::cout << std::setprecision(4) <<"y: " << rec_vertex[index].y << " " << vtx.y << " " <<  rec_vertex[index].cov[2] << std::endl;
+            std::cout << std::setprecision(4) <<"z: " << rec_vertex[index].z << " " << vtx.z << " " <<  rec_vertex[index].cov[5] << std::endl;
+            pull_file << rec_vertex[index].x << " " << rec_vertex[index].y << " " << rec_vertex[index].z << " " << vtx.x << " " << vtx.y << " " << vtx.z << " " << sqrt(rec_vertex[index].cov[0]) << " " << sqrt(rec_vertex[index].cov[2]) << " " << sqrt(rec_vertex[index].cov[5]) << "\n";
             number_reconstructed_vertices++;
             matched = true;
             break;
@@ -321,9 +321,9 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
         }
         if(!matched) {number_fake_vertices++; 
        std::cout << "have a fake vertex: " << std::endl;
-       std::cout << std::setprecision(4) <<"x: " << rec_vertex[index].pos.x << " " <<  rec_vertex[index].cov[0] << std::endl;
-            std::cout << std::setprecision(4) <<"y: " << rec_vertex[index].pos.y << " " <<  rec_vertex[index].cov[2] << std::endl;
-            std::cout << std::setprecision(4) <<"z: " << rec_vertex[index].pos.z << " "  <<  rec_vertex[index].cov[5] << std::endl;
+       std::cout << std::setprecision(4) <<"x: " << rec_vertex[index].x << " " <<  rec_vertex[index].cov[0] << std::endl;
+            std::cout << std::setprecision(4) <<"y: " << rec_vertex[index].y << " " <<  rec_vertex[index].cov[2] << std::endl;
+            std::cout << std::setprecision(4) <<"z: " << rec_vertex[index].z << " "  <<  rec_vertex[index].cov[5] << std::endl;
         }
       }
     

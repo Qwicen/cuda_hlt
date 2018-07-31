@@ -379,7 +379,7 @@ cudaError_t Stream::run_sequence(
       //loop over reconstructed vertices in an event
       for(uint i = 0; i < number_of_vertex[i_event]; i++) {
         int index = i_event  *max_number_vertices + i;
-        std::cout << std::setprecision(4) << "vertex " << i << " " << out_vertices[index].pos.x << " " << out_vertices[index].pos.y << " " << out_vertices[index].pos.z << std::endl;
+        std::cout << std::setprecision(4) << "vertex " << i << " " << out_vertices[index].x << " " << out_vertices[index].y << " " << out_vertices[index].z << std::endl;
       }
       //loop over seeds on an event
       debug_file_seeds << "Event "  << i_event << "\n";
