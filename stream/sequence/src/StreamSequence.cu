@@ -122,16 +122,29 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::calculate_phi_and_sort>().invoke();
 
+    // Fill candidates
+    argument_sizes[arg::dev_h0_candidates] = argen.size<arg::dev_h0_candidates>(2 * host_total_number_of_velo_clusters[0]);
+    argument_sizes[arg::dev_h2_candidates] = argen.size<arg::dev_h2_candidates>(2 * host_total_number_of_velo_clusters[0]);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    // Setup opts and arguments
+    sequence.item<seq::fill_candidates>().set_opts(dim3(number_of_events, 48), dim3(128), stream);
+    sequence.item<seq::fill_candidates>().set_arguments(
+      argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
+      argen.generate<arg::dev_estimated_input_size>(argument_offsets),
+      argen.generate<arg::dev_module_cluster_num>(argument_offsets),
+      argen.generate<arg::dev_h0_candidates>(argument_offsets),
+      argen.generate<arg::dev_h2_candidates>(argument_offsets)
+    );
+    sequence.item<seq::fill_candidates>().invoke();
+
     // Search by triplet
     argument_sizes[arg::dev_tracks] = argen.size<arg::dev_tracks>(number_of_events * VeloTracking::max_tracks);
     argument_sizes[arg::dev_tracklets] = argen.size<arg::dev_tracklets>(number_of_events * VeloTracking::ttf_modulo);
     argument_sizes[arg::dev_tracks_to_follow] = argen.size<arg::dev_tracks_to_follow>(number_of_events * VeloTracking::ttf_modulo);
-    argument_sizes[arg::dev_weak_tracks] = argen.size<arg::dev_weak_tracks>(number_of_events * VeloTracking::ttf_modulo);
+    argument_sizes[arg::dev_weak_tracks] = argen.size<arg::dev_weak_tracks>(number_of_events * VeloTracking::max_weak_tracks);
     argument_sizes[arg::dev_hit_used] = argen.size<arg::dev_hit_used>(host_total_number_of_velo_clusters[0]);
     argument_sizes[arg::dev_atomics_storage] = argen.size<arg::dev_atomics_storage>(number_of_events * VeloTracking::num_atomics);
-    argument_sizes[arg::dev_h0_candidates] = argen.size<arg::dev_h0_candidates>(2 * host_total_number_of_velo_clusters[0]);
-    argument_sizes[arg::dev_h2_candidates] = argen.size<arg::dev_h2_candidates>(2 * host_total_number_of_velo_clusters[0]);
-    argument_sizes[arg::dev_rel_indices] = argen.size<arg::dev_rel_indices>(number_of_events * VeloTracking::max_numhits_in_module);
+    argument_sizes[arg::dev_rel_indices] = argen.size<arg::dev_rel_indices>(number_of_events * 2 * VeloTracking::max_numhits_in_module);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     // Setup opts and arguments
     sequence.item<seq::search_by_triplet>().set_opts(dim3(number_of_events), dim3(32), stream, 32 * sizeof(float));
@@ -150,6 +163,20 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_rel_indices>(argument_offsets)
     );
     sequence.item<seq::search_by_triplet>().invoke();
+
+    // Weak tracks adder
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    // Setup opts and arguments
+    sequence.item<seq::weak_tracks_adder>().set_opts(dim3(number_of_events), dim3(32), stream);
+    sequence.item<seq::weak_tracks_adder>().set_arguments(
+      argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
+      argen.generate<arg::dev_estimated_input_size>(argument_offsets),
+      argen.generate<arg::dev_tracks>(argument_offsets),
+      argen.generate<arg::dev_weak_tracks>(argument_offsets),
+      argen.generate<arg::dev_hit_used>(argument_offsets),
+      argen.generate<arg::dev_atomics_storage>(argument_offsets)
+    );
+    sequence.item<seq::weak_tracks_adder>().invoke();
     
     // Calculate prefix sum of found tracks
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
@@ -320,41 +347,36 @@ cudaError_t Stream::run_sequence(
       	  host_number_of_tracks,
       	  number_of_events);
       
-        const std::string trackType = "Velo";
+        std::string trackType = "Velo";
       	call_pr_checker (
 	  tracks_events,
       	  folder_name_MC,
           start_event_offset,
     	  trackType);
-      }
-
-      /* CHECKING VeloUT TRACKS */
-      if ( !transmit_device_to_host ) { // Fetch data
-        cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
-        cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
-      }
-
-      const std::vector< trackChecker::Tracks > veloUT_tracks = prepareVeloUTTracks(
-        host_veloUT_tracks,
-        host_atomics_veloUT,
-        number_of_events
-      );
       
-      std::cout << "CHECKING VeloUT TRACKS from GPU" << std::endl;
-      const std::string trackType = "VeloUT";
-      call_pr_checker (
-        veloUT_tracks,
-        folder_name_MC,
-        start_event_offset,
-        trackType);                                                                            
+        /* CHECKING VeloUT TRACKS */
+        if ( !transmit_device_to_host ) { // Fetch data
+          cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
+          cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
+        }
       
-    }
-
-    /* Plugin VeloUT CPU code here 
-       Adjust input types to match PrVeloUT code
-    */
-    if (do_check && i_stream == 0) {
-   
+        const std::vector< trackChecker::Tracks > veloUT_tracks = prepareVeloUTTracks(
+          host_veloUT_tracks,
+          host_atomics_veloUT,
+          number_of_events
+        );  
+      
+        std::cout << "CHECKING VeloUT TRACKS from GPU" << std::endl;
+        trackType = "VeloUT";
+        call_pr_checker (
+          veloUT_tracks,
+          folder_name_MC,
+          start_event_offset,
+          trackType);                                                                            
+      
+        /* Plugin VeloUT CPU code here 
+         Adjust input types to match PrVeloUT code
+      */
       std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
       
       int rv = run_veloUT_on_CPU(
@@ -374,7 +396,7 @@ cudaError_t Stream::run_sequence(
       
       
       std::cout << "CHECKING VeloUT TRACKS from x86" << std::endl;
-      const std::string trackType = "VeloUT";
+      trackType = "VeloUT";
       call_pr_checker (
         *ut_tracks_events,
         folder_name_MC,
@@ -383,9 +405,8 @@ cudaError_t Stream::run_sequence(
       
       delete ut_tracks_events;
       
-      
+      } // only in first repitition
     } // mc_check_enabled     
-    
     
   } // repititions
   return cudaSuccess;

@@ -170,7 +170,6 @@ int run_veloUT_on_CPU (
       
       const uint starting_hit = host_velo_track_hit_number_pinned[accumulated_tracks + i_track];
       const uint number_of_hits = host_velo_track_hit_number_pinned[accumulated_tracks + i_track + 1] - starting_hit;
-
       backward = (int)(host_velo_states_event[i_track].backward);
       if ( !backward ) n_forward_velo_tracks++;
 

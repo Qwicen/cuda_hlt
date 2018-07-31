@@ -13,9 +13,9 @@ __device__ void track_forwarding(
   const VeloTracking::Module* module_data,
   const uint diff_ttf,
   uint* tracks_to_follow,
-  VeloTracking::TrackHits* weak_tracks,
+  VeloTracking::TrackletHits* weak_tracks,
   const uint prev_ttf,
-  VeloTracking::TrackHits* tracklets,
+  VeloTracking::TrackletHits* tracklets,
   VeloTracking::TrackHits* tracks,
   const uint number_of_hits
 );

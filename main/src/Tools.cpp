@@ -158,7 +158,11 @@ void read_UT_magnet_tool( PrUTMagnetTool* host_ut_magnet_tool ) {
   
   //load the deflection and Bdl values from a text file
   std::ifstream deflectionfile;
-  deflectionfile.open("../PrUTMagnetTool/deflection.txt");
+  std::string filename = "../integration_with_LHCb_framework/PrUTMagnetTool/deflection.txt";
+  if (!exists_test(filename)) {
+    throw StrException("Deflection table file could not be found: " + filename);
+  }
+  deflectionfile.open(filename);
   if (deflectionfile.is_open()) {
     int i = 0;
     float deflection;
@@ -170,7 +174,11 @@ void read_UT_magnet_tool( PrUTMagnetTool* host_ut_magnet_tool ) {
   }
   
   std::ifstream bdlfile;
-  bdlfile.open("../PrUTMagnetTool/bdl.txt");
+  filename = "../integration_with_LHCb_framework/PrUTMagnetTool/bdl.txt";
+  if (!exists_test(filename)) {
+    throw StrException("Bdl table file could not be found: " + filename);
+  }
+  bdlfile.open(filename);
   if (bdlfile.is_open()) {
     int i = 0;
     float bdl;
@@ -374,7 +382,6 @@ trackChecker::Tracks prepareVeloUTTracksEvent(
   for ( int i_track = 0; i_track < n_veloUT_tracks; ++i_track ) {
     VeloUTTracking::TrackUT veloUT_track = veloUT_tracks[i_track];
     trackChecker::Track checker_track;
-    //debug_cout << "\t track " << i_track << " has " << veloUT_track.hitsNum << " hits" << std::endl;
     assert( veloUT_track.hitsNum < VeloUTTracking::max_track_size);
     for ( int i_hit = 0; i_hit < veloUT_track.hitsNum; ++i_hit ) {
       LHCbID lhcb_id( veloUT_track.LHCbIDs[i_hit] );

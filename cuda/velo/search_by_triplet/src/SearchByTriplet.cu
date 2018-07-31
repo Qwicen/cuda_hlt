@@ -9,9 +9,9 @@ __global__ void search_by_triplet(
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
   VeloTracking::TrackHits* dev_tracks,
-  VeloTracking::TrackHits* dev_tracklets,
+  VeloTracking::TrackletHits* dev_tracklets,
   uint* dev_tracks_to_follow,
-  VeloTracking::TrackHits* dev_weak_tracks,
+  VeloTracking::TrackletHits* dev_weak_tracks,
   bool* dev_hit_used,
   int* dev_atomics_storage,
   short* dev_h0_candidates,
@@ -48,8 +48,8 @@ __global__ void search_by_triplet(
   short* h2_candidates = dev_h2_candidates + 2*hit_offset;
 
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * VeloTracking::ttf_modulo;
-  VeloTracking::TrackHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
-  VeloTracking::TrackHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
+  VeloTracking::TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::max_weak_tracks;
+ VeloTracking:: TrackletHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
   unsigned short* h1_rel_indices = dev_rel_indices + event_number * VeloTracking::max_numhits_in_module;
 
   // Initialize variables according to event number and module side
@@ -62,7 +62,7 @@ __global__ void search_by_triplet(
 
   // Shared memory
   extern __shared__ float shared_best_fits [];
-  __shared__ int module_data [9];
+  __shared__ int module_data [12];
 
   // Initialize hit_used
   const auto current_event_number_of_hits = module_hitStarts[VeloTracking::n_modules] - hit_offset;
@@ -78,22 +78,12 @@ __global__ void search_by_triplet(
     dev_atomics_storage[ip_shift + threadIdx.x] = 0;
   }
 
-  // Fill candidates for both sides
-  fill_candidates(
-    h0_candidates,
-    h2_candidates,
-    module_hitStarts,
-    module_hitNums,
-    hit_Phis,
-    hit_offset
-  );
-
   // Process modules
   process_modules(
     (VeloTracking::Module*) &module_data[0],
     (float*) &shared_best_fits[0],
     VP::NModules-1,
-    1,
+    2,
     hit_used,
     h0_candidates,
     h2_candidates,
@@ -115,19 +105,5 @@ __global__ void search_by_triplet(
     h1_rel_indices,
     local_number_of_hits,
     hit_offset
-  );
-
-  __syncthreads();
-
-  // Process left weak tracks
-  weak_tracks_adder(
-    weaktracks_insert_pointer,
-    tracks_insert_pointer,
-    weak_tracks,
-    tracks,
-    hit_used,
-    hit_Xs,
-    hit_Ys,
-    hit_Zs
   );
 }
