@@ -212,18 +212,18 @@ int run_veloUT_on_CPU (
 
     int n_veloUT_tracks_event = 0;
     VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks];
-    // call_PrVeloUT(
-   //    host_velo_track_hit_number_pinned,
-   //    host_velo_track_hits_pinned,                                                       
-   //    host_number_of_tracks_pinned[i_event],
-   //    host_accumulated_tracks[i_event],
-   //    host_velo_states_event,
-   //    &(hits_layers),
-   //    host_ut_magnet_tool,
-   //    veloUT_tracks,
-   //    n_velo_tracks_in_UT,
-   //    n_veloUT_tracks_event
-   // );
+    call_PrVeloUT(
+      host_velo_track_hit_number_pinned,
+      host_velo_track_hits_pinned,                                                       
+      host_number_of_tracks_pinned[i_event],
+      host_accumulated_tracks[i_event],
+      host_velo_states_event,
+      &(hits_layers),
+      host_ut_magnet_tool,
+      veloUT_tracks,
+      n_velo_tracks_in_UT,
+      n_veloUT_tracks_event
+   );
     n_veloUT_tracks += n_veloUT_tracks_event;
 
 #ifdef WITH_ROOT

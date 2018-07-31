@@ -41,13 +41,13 @@ if ( ROOT_FOUND )
   target_link_libraries(Stream
   Velo
   VeloUT
-  #x86VeloUT
+  x86VeloUT
   ${ROOT_LIBRAIRES})
 else()
   target_link_libraries(Stream
   Velo
-  VeloUT)
-  #x86VeloUT)
+  VeloUT
+  x86VeloUT)
 endif()
 
 

@@ -9,6 +9,7 @@
 // 2018-07:    Dorothea vom Bruch (convert to C and then CUDA code)
 //-----------------------------------------------------------------------------
 
+
 // -- These things are all hardcopied from the PrTableForFunction
 // -- and PrUTMagnetTool
 // -- If the granularity or whatever changes, this will give wrong results
@@ -49,7 +50,7 @@ __host__ __device__ bool getHits(
   const int posLayers[4][85],
   VeloUTTracking::HitsSoA *hits_layers,
   const float* fudgeFactors, 
-  const VeloState& trState )
+  const VeloState& trState)
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
@@ -73,6 +74,7 @@ __host__ __device__ bool getHits(
 
   int nLayers = 0;
 
+  float dxDyHelper[VeloUTTracking::n_layers] = {0., 1., -1., 0};
   for(int iStation = 0; iStation < 2; ++iStation) {
 
     if( iStation == 1 && nLayers == 0 ) return false;
@@ -84,17 +86,12 @@ __host__ __device__ bool getHits(
       int layer_offset = hits_layers->layer_offset[layer];
       
       if( hits_layers->n_hits_layers[layer] == 0 ) continue;
-
       const float dxDy   = hits_layers->dxDy(layer_offset + 0);
       const float zLayer = hits_layers->zAtYEq0(layer_offset + 0); 
 
       const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
       const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
-#ifdef __CUDA_ARCH__
-      const float yLayer = yAtZ + yTol*PrVeloUTConst::dev_dxDyHelper[2*iStation+iLayer];
-#else
-      const float yLayer = yAtZ + yTol*PrVeloUTConst::dxDyHelper[2*iStation+iLayer];
-#endif
+      const float yLayer = yAtZ + yTol * dxDyHelper[layer];
 
       const float normFactNum = normFact[2*iStation + iLayer];
       const float invNormFact = 1.0/normFactNum;
@@ -291,21 +288,18 @@ __host__ __device__ void prepareOutputTrack(
   const float bdls[3] = { bdlTable[masterIndex(index1+1, index2,index3)],
                           bdlTable[masterIndex(index1,index2+1,index3)],
                           bdlTable[masterIndex(index1,index2,index3+1)] };
-
-  const float boundaries[3] = { -0.3f + float(index1)*PrVeloUTConst::deltaBdl[0],
-                                -250.0f + float(index2)*PrVeloUTConst::deltaBdl[1],
-                                0.0f + float(index3)*PrVeloUTConst::deltaBdl[2] };
+  const float deltaBdl[3]   = { 0.02, 50.0, 80.0 };
+  const float boundaries[3] = { -0.3f + float(index1)*deltaBdl[0],
+                                -250.0f + float(index2)*deltaBdl[1],
+                                0.0f + float(index3)*deltaBdl[2] };
 
   // -- This is an interpolation, to get a bit more precision
   float addBdlVal = 0.0;
+  const float minValsBdl[3] = { -0.3, -250.0, 0.0 };
+  const float maxValsBdl[3] = { 0.3, 250.0, 800.0 };
   for(int i=0; i<3; ++i) {
-#ifdef __CUDA_ARCH__
-    if( var[i] < PrVeloUTConst::dev_minValsBdl[i] || var[i] > PrVeloUTConst::dev_maxValsBdl[i] ) continue;
-    const float dTab_dVar =  (bdls[i] - bdl) / PrVeloUTConst::dev_deltaBdl[i];
-#else
-    if( var[i] < PrVeloUTConst::minValsBdl[i] || var[i] > PrVeloUTConst::maxValsBdl[i] ) continue;
-    const float dTab_dVar =  (bdls[i] - bdl) / PrVeloUTConst::deltaBdl[i];
-#endif
+    if( var[i] < minValsBdl[i] || var[i] > maxValsBdl[i] ) continue;
+    const float dTab_dVar =  (bdls[i] - bdl) / deltaBdl[i];
     const float dVar = (var[i]-boundaries[i]);
     addBdlVal += dTab_dVar*dVar;
   }
@@ -324,11 +318,9 @@ __host__ __device__ void prepareOutputTrack(
 
 #ifdef __CUDA_ARCH__
   uint n_tracks = atomicAdd(n_veloUT_tracks, 1);
-  //assert( n_tracks < VeloUTTracking::max_num_tracks );
- // #else
-//   assert( *n_veloUT_tracks < VeloUTTracking::max_num_tracks );
-//   VeloUT_tracks[*n_veloUT_tracks] = track;
-//   (*n_veloUT_tracks)++;
+#else
+  (*n_veloUT_tracks)++;
+  uint n_tracks = *n_veloUT_tracks - 1;
 #endif
 
   
@@ -376,11 +368,9 @@ __host__ __device__ void prepareOutputTrack(
       break;
     }
   }
-#ifdef __CUDA_ARCH__
   assert( n_tracks < VeloUTTracking::max_num_tracks );
   VeloUT_tracks[n_tracks] = track;
-#endif
-#endif
+#endif // MC_CHECK
 
   /*
   outTr.x = helper.state.x;

@@ -21,11 +21,6 @@ namespace VeloUTTracking {
      -> check which information
      needs to be saved for the forward tracking
   */
-  // layer configuration: XUVX, U and V layers tilted by +/- 5 degrees = 0.087 radians
-  
-  static constexpr float dxDyTable[n_layers] = {0., 0.08748867, -0.08748867, 0.};
-  extern __constant__ float dev_dxDyTable[n_layers];
-
   static constexpr int planeCode[n_layers] = {0, 1, 2, 3};
     
   /* Cut-offs */
@@ -57,13 +52,16 @@ namespace VeloUTTracking {
     
     __host__ __device__ inline float cos(const int i_hit) const { return m_cos[i_hit]; }
     __host__ __device__ inline int planeCode(const int i_hit) const { return m_planeCode[i_hit]; }
+    // layer configuration: XUVX, U and V layers tilted by +/- 5 degrees = 0.087 radians
     __host__ __device__ inline float dxDy(const int i_hit) const {
       const int i_plane = m_planeCode[i_hit];
-#ifdef __CUDA_ARCH__
-      return dev_dxDyTable[i_plane];
-#else
-      return dxDyTable[i_plane];
-#endif
+      if ( i_plane == 0 || i_plane == 3 )
+        return 0.;
+      else if ( i_plane == 1 )
+        return 0.08748867;
+      else if ( i_plane == 2 )
+        return -0.08748867;
+      else return -1;
     }
     __host__ __device__ inline float cosT(const int i_hit) const { return ( std::fabs( m_xAtYEq0[i_hit] ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy(i_hit) * dxDy(i_hit) ) : cos(i_hit); }
     __host__ __device__ inline bool highThreshold(const int i_hit) const { return m_highThreshold[i_hit]; }
@@ -75,7 +73,6 @@ namespace VeloUTTracking {
     __host__ __device__ inline float weight(const int i_hit) const { return m_weight[i_hit]; }
     __host__ __device__  inline float xAt( const int i_hit, const float globalY ) const { return m_xAtYEq0[i_hit] + globalY * dxDy(i_hit); }
     __host__ __device__ inline float xAtYEq0(const int i_hit) const { return m_xAtYEq0[i_hit]; }
-    //__host__ __device__ inline float xAtYMid(const int i_hit) const { return m_x[i_hit]; }  // not used, have to initialize properly if this  will be used
     __host__ __device__ inline float xMax(const int i_hit) const { return std::max( xAt( i_hit, yBegin(i_hit) ), xAt( i_hit, yEnd(i_hit) ) ); }
     __host__ __device__ inline float xMin(const int i_hit) const { return std::min( xAt( i_hit, yBegin(i_hit) ), xAt( i_hit, yEnd(i_hit) ) ); }
     __host__ __device__ inline float xT(const int i_hit) const { return cos(i_hit); }
@@ -104,19 +101,22 @@ namespace VeloUTTracking {
     __host__ __device__ Hit(){}
     
     __host__ __device__ inline float cos() const { return m_cos; }
+    __host__ __device__ inline int planeCode() const { return m_planeCode; }
     __host__ __device__ inline float dxDy() const {
-#ifdef __CUDA_ARCH__
-      return dev_dxDyTable[m_planeCode];
-#else
-      return dxDyTable[m_planeCode];
-#endif
+      const int i_plane = m_planeCode;
+      if ( i_plane == 0 || i_plane == 3 )
+        return 0.;
+      else if ( i_plane == 1 )
+        return 0.08748867;
+      else if ( i_plane == 2 )
+        return -0.08748867;
+      else return -1;
     }
     __host__ __device__ inline float cosT() const { return ( std::fabs( m_xAtYEq0 ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy() * dxDy() ) : cos(); }
     __host__ __device__ inline bool highThreshold() const { return m_highThreshold; }
     __host__ __device__ inline bool isYCompatible( const float y, const float tol ) const { return yMin() - tol <= y && y <= yMax() + tol; }
     __host__ __device__ inline bool isNotYCompatible( const float y, const float tol ) const { return yMin() - tol > y || y > yMax() + tol; }
     __host__ __device__ inline int LHCbID() const { return m_LHCbID; }
-    __host__ __device__ inline int planeCode() const { return m_planeCode; }
     __host__ __device__ inline float sinT() const { return tanT() * cosT(); }
     __host__ __device__ inline float tanT() const { return -1 * dxDy(); }
     __host__ __device__ inline float weight() const { return m_weight; }

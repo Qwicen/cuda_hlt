@@ -49,7 +49,6 @@ struct TrackHelper{
     }
   };
 
-
 __host__ __device__ bool veloTrackInUTAcceptance( const VeloState& state );
 
 __host__ __device__ bool getHits(
@@ -59,7 +58,7 @@ __host__ __device__ bool getHits(
   const int posLayers[4][85],
   VeloUTTracking::HitsSoA *hits_layers,
   const float* fudgeFactors, 
-  const VeloState& trState ); 
+  const VeloState& trState); 
 
 __host__ __device__ bool formClusters(
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],

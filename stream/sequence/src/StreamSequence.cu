@@ -342,7 +342,7 @@ cudaError_t Stream::run_sequence(
         number_of_events
       );
       
-      std::cout << "CHECKING VeloUT TRACKS" << std::endl;
+      std::cout << "CHECKING VeloUT TRACKS from GPU" << std::endl;
       const std::string trackType = "VeloUT";
       call_pr_checker (
         veloUT_tracks,

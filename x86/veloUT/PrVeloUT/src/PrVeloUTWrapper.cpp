@@ -41,18 +41,46 @@ void call_PrVeloUT (
     
     if( !veloTrackInUTAcceptance( velo_states_event[i_track] ) ) continue;
     n_velo_tracks_in_UT++;
+
+    // for storing calculated x position of hits for this track
+    float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
+
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
     }
-    if( !getHits(hitCandidatesInLayers, n_hitCandidatesInLayers, posLayers, hits_layers, fudgeFactors, velo_states_event[i_track] ) ) continue;
+    if( !getHits(
+          hitCandidatesInLayers,
+          n_hitCandidatesInLayers,
+          x_pos_layers,
+          posLayers,
+          hits_layers,
+          fudgeFactors,
+          velo_states_event[i_track] ) ) continue;
     
     TrackHelper helper(velo_states_event[i_track]);
+
+    // indices within hitCandidatesInLayers for selected hits belonging to best track 
+    int hitCandidateIndices[VeloUTTracking::n_layers];
     
     // go through UT layers in forward direction
-    if( !formClusters(hitCandidatesInLayers, n_hitCandidatesInLayers, hits_layers, helper, true) ){
+    if( !formClusters(
+          hitCandidatesInLayers,
+          n_hitCandidatesInLayers,
+          x_pos_layers,
+          hitCandidateIndices,
+          hits_layers,
+          helper,
+          true) ){
       
       // go through UT layers in backward direction
-      formClusters(hitCandidatesInLayers, n_hitCandidatesInLayers, hits_layers, helper, false);
+      formClusters(
+        hitCandidatesInLayers,
+        n_hitCandidatesInLayers,
+        x_pos_layers,
+        hitCandidateIndices,
+        hits_layers,
+        helper,
+        false);
     }
     
     if ( helper.n_hits > 0 ) {
@@ -65,8 +93,10 @@ void call_PrVeloUT (
         hitCandidatesInLayers,
         n_hitCandidatesInLayers,
         hits_layers,
+        x_pos_layers,
+        hitCandidateIndices,
         VeloUT_tracks,
-        n_veloUT_tracks,
+        &n_veloUT_tracks,
         bdlTable);
     }
   }
