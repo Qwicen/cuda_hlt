@@ -1,13 +1,7 @@
 #include "../include/run_PatPV_CPU.h"
 //#include "../../../PatPV/include/PVSeedTool.h"
 
-/*
-XYZPoint& seedPoint,
-              std::vector<Track*>& rTracks,
-             Vertex& vtx,
-             std::vector<Track*>& tracks2remove
 
-*/
 #include "../../../PatPV/include/PVSeedTool.h"
 
 //int getSeeds( VeloState* inputTracks,
@@ -55,10 +49,9 @@ bool reconstructMultiPVFromTracks(VeloState * tracks2use, Vertex * outvtxvec, in
       std::cout << seed.z << std::endl;
 
 
-      //VeloState * tracks2remove;
-      std::vector<VeloState> tracks2remove;
+
       // fitting
-      bool scvfit = fitVertex( seed, rtracks, recvtx, tracks2remove, host_number_of_tracks_pinned, tracks2disable);
+      bool scvfit = fitVertex( seed, rtracks, recvtx, host_number_of_tracks_pinned, tracks2disable);
       if (!scvfit) continue;
       std::cout<<"got vertex " << std::endl; 
       std::cout << recvtx.x << std::endl;
@@ -70,7 +63,7 @@ bool reconstructMultiPVFromTracks(VeloState * tracks2use, Vertex * outvtxvec, in
       
       outvtxvec[event_number *max_number_vertices + nvtx_after] = recvtx;
       nvtx_after++;
-      //removeTracks(rtracks, tracks2remove);
+
     }//iterate on seeds
     if(before_fit == nvtx_after) continue_fitting = false;
   }
@@ -100,17 +93,7 @@ XYZPoint beamspot(0.,0.,0.);
 
 
 
-/*
-AdaptivePV3DFitter fitter;
-Vertex recvtx;
-std::vector<VeloState> tracks2remove;
-XYZPoint seed = seeds.at(0);
-fitter.fitVertex(seed, host_velo_states, recvtx, tracks2remove, number_of_events);
-*/
-//Vertex  outvtxvec[100];
-//std::vector<VeloState> velostate_vec;
 
-//for(int i = 0; i < *host_number_of_tracks_pinned; i++)  velostate_vec.push_back(host_velo_states[i]); 
 
 
 for(int i_event = 0; i_event < number_of_events; i_event++) {

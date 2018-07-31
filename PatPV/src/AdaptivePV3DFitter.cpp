@@ -25,9 +25,8 @@
 bool fitVertex( XYZPoint& seedPoint,
               VeloState * host_velo_states,
              Vertex& vtx,
-             std::vector<VeloState>& tracks2remove, int number_of_tracks, bool * tracks2disable) 
+              int number_of_tracks, bool * tracks2disable) 
 {
-  //tracks2remove.clear();
 
   // position at which derivatives are evaluated
   XYZPoint refpos = seedPoint ;
@@ -165,17 +164,11 @@ bool fitVertex( XYZPoint& seedPoint,
   vtx.setCovMatrix( vtxcov ) ;
   // Set tracks. Compute final chi2.
   vtx.clearTracks();
-  int tracks2remove_counter = 0;
   for( int index = 0; index < pvTrack_counter; index++) {
     AdaptivePVTrack trk = pvTracks[index];
     if( trk.weight() > m_minTrackWeight)
       vtx.addToTracks( trk.track(), trk.weight() ) ;
     // remove track for next PV search
-    if( trk.chi2(vtxpos) < m_trackMaxChi2Remove) {
-      //tracks2remove[tracks2remove_counter] = trk.track() ;
-      tracks2remove.push_back( trk.track() );
-      tracks2remove_counter++;
-    }
   }
 
 
