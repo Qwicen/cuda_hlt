@@ -41,7 +41,7 @@ int run_veloUT_on_CPU (
   const VeloState* host_velo_states,
   const int* host_accumulated_tracks,
   const uint* host_velo_track_hit_number_pinned,
-  const VeloTracking::Hit<true>* host_velo_track_hits_pinned,   
+  const VeloTracking::Hit<mc_check_enabled>* host_velo_track_hits_pinned,   
   const int* host_number_of_tracks_pinned,
   const int &number_of_events
 ) {

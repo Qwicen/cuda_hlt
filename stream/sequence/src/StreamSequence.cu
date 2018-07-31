@@ -366,7 +366,7 @@ cudaError_t Stream::run_sequence(
         	 host_velo_states,
         	 host_accumulated_tracks,
                  host_velo_track_hit_number,
-                 reinterpret_cast<VeloTracking::Hit<true>*>(host_velo_track_hits),
+                 host_velo_track_hits,
         	 host_number_of_tracks,
         	 number_of_events
                );
