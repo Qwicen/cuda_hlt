@@ -1,4 +1,4 @@
-#include "../include/run_VeloUT_CPU.h"
+#include "run_VeloUT_CPU.h"
 
 #ifdef WITH_ROOT
 #include "TH1D.h"
