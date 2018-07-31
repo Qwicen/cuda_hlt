@@ -31,10 +31,16 @@
   double m_maxChi2Merge = 25.;
   double m_factorToIncreaseErrors = 15.;
 
+   //try parameters from RecoUpgradeTracking.p
+   int    m_minClusterMult = 4;
+    int    m_minCloseTracksInCluster = 3;
+
+
+
   // steering parameters for final cluster selection
-  int    m_minClusterMult = 3;
+ // int    m_minClusterMult = 3;
   double m_dzCloseTracksInCluster = 5.; // unit: mm
-  int    m_minCloseTracksInCluster = 3;
+ // int    m_minCloseTracksInCluster = 3;
   int    m_highMult = 10;
   double m_ratioSig2HighMult = 1.0;
   double m_ratioSig2LowMult = 0.9;
