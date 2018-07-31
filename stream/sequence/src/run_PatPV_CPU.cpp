@@ -257,9 +257,9 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   std::cout << "rec vertices with errors:" << std::endl;
   for(int i = 0; i < number_of_vertex[0]; i++) {
     int index = 0  * max_number_vertices + i;
-    std::cout << "x: " << rec_vertex[index].pos.x << " " << rec_vertex[index].cov[0] << std::endl;
-    std::cout << "y: " << rec_vertex[index].pos.y << " " << rec_vertex[index].cov[5] << std::endl;
-    std::cout << "z: " << rec_vertex[index].pos.z << " " << rec_vertex[index].cov[5] << std::endl;
+    std::cout << std::setprecision(4) << "x: " << rec_vertex[index].pos.x << " " << rec_vertex[index].cov[0] << std::endl;
+    std::cout << std::setprecision(4) << "y: " << rec_vertex[index].pos.y << " " << rec_vertex[index].cov[5] << std::endl;
+    std::cout << std::setprecision(4) << "z: " << rec_vertex[index].pos.z << " " << rec_vertex[index].cov[5] << std::endl;
   }
 
 
@@ -282,37 +282,51 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   int i_event = 0;
 
 
+  std::ofstream pull_file;
+  pull_file.open ("../pulls.txt");
 
+  //loop over events/files
   std::cout << "start comparison" << std::endl;
-  for(auto vtx_vec : events_vertices) {
-    //std::cout << "-----------" << std::endl; 
+  for(int i_event = 0; i_event < number_of_files; i_event++) {
+    //for each file, loop over reconstructed PVs
     for(uint i = 0; i < number_of_vertex[i_event]; i++) {
       int index = i_event  *max_number_vertices + i;
-      //std::cout << std::setprecision(4) << "vertex " << i << " " << rec_vertex[index].pos.x << " " << rec_vertex[index].pos.y << " " << rec_vertex[index].pos.z << std::endl;
+      
+
+      //double r2 = rec_vertex[index].pos.x * rec_vertex[index].pos.x + rec_vertex[index].pos.y * rec_vertex[index].pos.y;
+      //try r cut to reduce fake rate
+      //if(r2 > 0.02) continue;
       //look if reconstructed vertex matches with reconstrutible by distance criterion
-        std::cout << "reconstructed vertex " << i << std::endl;
-        std::cout << rec_vertex[index].pos.x << std::endl;
-        std::cout << rec_vertex[index].pos.y << std::endl;
-        std::cout << rec_vertex[index].pos.z << std::endl;
+        
       
         bool matched = false;
+        //for each reconstructed PV, loop over MC PVs
+        auto vtx_vec = events_vertices.at(i_event);
         for (auto vtx : vtx_vec) {
           if(vtx.numberTracks < 4) continue;
           //number_reconstructible_vertices++;
           
           //don't forget that covariance is sigma squared!
           if(abs(rec_vertex[index].pos.z - vtx.z) <  5. * sqrt(rec_vertex[index].cov[5])) {
-          //if(abs(rec_vertex[index].pos.z - vtx.z) <  1.) {
-            //std::cout<< std::setprecision(4) <<"compare vertex positions: " << rec_vertex[index].pos.z << " " << vtx.z << " " <<  rec_vertex[index].cov[5] << std::endl;
-            std::cout<< std::setprecision(4)  << rec_vertex[index].pos.z << " " << vtx.z << " " <<  rec_vertex[index].cov[5] << std::endl;
+
+            std::cout << "matched a vertex" << std::endl;
+            std::cout << std::setprecision(4) <<"x: " << rec_vertex[index].pos.x << " " << vtx.x << " " <<  rec_vertex[index].cov[0] << std::endl;
+            std::cout << std::setprecision(4) <<"y: " << rec_vertex[index].pos.y << " " << vtx.y << " " <<  rec_vertex[index].cov[2] << std::endl;
+            std::cout << std::setprecision(4) <<"z: " << rec_vertex[index].pos.z << " " << vtx.z << " " <<  rec_vertex[index].cov[5] << std::endl;
+            pull_file << rec_vertex[index].pos.x << " " << rec_vertex[index].pos.y << " " << rec_vertex[index].pos.z << " " << vtx.x << " " << vtx.y << " " << vtx.z << " " << sqrt(rec_vertex[index].cov[0]) << " " << sqrt(rec_vertex[index].cov[2]) << " " << sqrt(rec_vertex[index].cov[5]) << "\n";
             number_reconstructed_vertices++;
             matched = true;
             break;
           }
         }
-        if(!matched) number_fake_vertices++;
+        if(!matched) {number_fake_vertices++; 
+       std::cout << "have a fake vertex: " << std::endl;
+       std::cout << std::setprecision(4) <<"x: " << rec_vertex[index].pos.x << " " <<  rec_vertex[index].cov[0] << std::endl;
+            std::cout << std::setprecision(4) <<"y: " << rec_vertex[index].pos.y << " " <<  rec_vertex[index].cov[2] << std::endl;
+            std::cout << std::setprecision(4) <<"z: " << rec_vertex[index].pos.z << " "  <<  rec_vertex[index].cov[5] << std::endl;
+        }
       }
-    i_event++;
+    
   }
   std::cout << "end comparison" << std::endl;
 

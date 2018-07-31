@@ -1,5 +1,6 @@
 #include "Stream.cuh"
 
+
 cudaError_t Stream::run_sequence(
   const uint i_stream,
   const char* host_events,
@@ -368,14 +369,26 @@ cudaError_t Stream::run_sequence(
 
      checkPVs("../../lxplus_work/public/recept/Brunel_trackerdumper2/PVDumper/", true, number_of_events, out_vertices, number_of_vertex);
 
+    std::ofstream debug_file_seeds;
+    debug_file_seeds.open ("../seeds.txt");
+    
+    
 
     for(int i_event = 0; i_event < number_of_events; i_event++) {
       std::cout << "event number " << i_event << std::endl;
+      //loop over reconstructed vertices in an event
       for(uint i = 0; i < number_of_vertex[i_event]; i++) {
         int index = i_event  *max_number_vertices + i;
         std::cout << std::setprecision(4) << "vertex " << i << " " << out_vertices[index].pos.x << " " << out_vertices[index].pos.y << " " << out_vertices[index].pos.z << std::endl;
       }
+      //loop over seeds on an event
+      debug_file_seeds << "Event "  << i_event << "\n";
+      for(uint i = 0; i < number_of_seeds[i_event]; i++) {
+        int index = i_event  *max_number_vertices + i;
+        debug_file_seeds << seeds[index].z << "\n";
+      }
     }
+    debug_file_seeds.close();
       
 
 
