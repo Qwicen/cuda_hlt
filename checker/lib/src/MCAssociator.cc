@@ -28,7 +28,6 @@ MCAssociator::MCAssociator(const MCParticles& mcps) :
     }
     ++idx;
   }
-  //printf("map has size %u \n", m_map.size() );
   // sort map by LHCbID for fast lookups
   std::sort(m_map.begin(), m_map.end(),
       [] (const LHCbIDWithIndex& a, const LHCbIDWithIndex& b) noexcept
