@@ -13,13 +13,16 @@
 #include <cmath>
 #include <stdint.h>
 #include "Logger.h"
-#include "../../cuda/velo/common/include/VeloDefinitions.cuh"
-#include "../../cuda/velo/common/include/ClusteringDefinitions.cuh"
-#include "../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
-#include "../../cuda/veloUT/PrVeloUT/include/PrVeloUTMagnetToolDefinitions.cuh"
-#include "../../cuda/veloUT/PrVeloUT/include/PrVeloUTDefinitions.cuh"
-#include "../../checker/lib/include/Tracks.h"
-#include "../include/InputTools.h"
+#include "VeloDefinitions.cuh"
+#include "ClusteringDefinitions.cuh"
+#include "VeloUTDefinitions.cuh"
+#include "PrVeloUTMagnetToolDefinitions.cuh"
+#include "PrVeloUTDefinitions.cuh"
+#include "Tracks.h"
+#include "InputTools.h"
+#include "velopix-input-reader.h"
+#include "TrackChecker.h"
+#include "MCParticle.h"
 
 void readGeometry(
   const std::string& foldername,

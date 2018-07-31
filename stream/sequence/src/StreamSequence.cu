@@ -293,8 +293,6 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    debug_cout << "n tracks first event = " << *(host_atomics_veloUT+1) << std::endl;
-
     ///////////////////////
     // Monte Carlo Check //
     ///////////////////////

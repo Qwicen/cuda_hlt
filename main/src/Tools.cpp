@@ -1,7 +1,4 @@
 #include "Tools.h"
-#include "../../checker/lib/include/velopix-input-reader.h"
-#include "../../checker/lib/include/TrackChecker.h"
-#include "../../checker/lib/include/MCParticle.h"
 
 /**
  * @brief Reads the geometry from foldername.
