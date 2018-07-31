@@ -32,7 +32,7 @@ find_package(CUDA REQUIRED)
 set(CUDA_SEPARABLE_COMPILATION ON)
 option(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
-if ( $ENV{ROOTSYS} )
+if ( EXISTS $ENV{ROOTSYS} )
    if(EXISTS $ENV{ROOTSYS}/cmake/ROOTConfig.cmake) # ROOT was compiled with cmake
      list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
    else() # ROOT was compiled with configure/make
