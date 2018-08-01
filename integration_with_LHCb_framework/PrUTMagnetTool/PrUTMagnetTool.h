@@ -1,3 +1,6 @@
+//This code was extracted from the LHCb experiment's LHCb project at https://gitlab.cern.ch/lhcb/Rec/blob/master/Pr/PrVeloUT/src/PrUTMagnetTool.h
+
+
 // $Id: PrUTMagnetTool.h,v 1.5 2009-10-30 13:20:50 wouter Exp $ 
 #ifndef PRUTMAGNETTOOL_H
 #define PRUTMAGNETTOOL_H 1

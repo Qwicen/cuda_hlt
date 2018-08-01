@@ -1,3 +1,6 @@
+//This code was extracted from the LHCb experiment's LHCb project at https://gitlab.cern.ch/lhcb/LHCb/blob/master/Det/DetDesc/DetDesc/MagneticFieldGrid.h
+
+
 #ifndef MAGFIELDGRID_H
 #define MAGFIELDGRID_H
 

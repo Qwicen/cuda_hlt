@@ -1,3 +1,6 @@
+//This code was extracted from the LHCb experiment's LHCb project at https://gitlab.cern.ch/lhcb/Rec/blob/master/Pr/PrVeloUT/src/PrUTMagnetTool.cpp
+
+
 // Include files
 
 
