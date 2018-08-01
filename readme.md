@@ -71,6 +71,7 @@ A run of the program with no arguments will let you know the basic options:
     -m {reserve Megabytes}=1024
     -v {verbosity}=3 (info)
     -p (print memory usage)
+    -x {run algorithms on x86 architecture as well (if possible)}=0
 
 
 Here are some example run options:
@@ -94,3 +95,5 @@ Here are some example run options:
     
     # Run one stream and print all memory allocations
     ./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -g ../input/geometry -n 5000 -t 1 -r 1 -p
+
+[This readme](readme_cuda_developer.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define globab memory variables for this sequence and pass on the dependencies.
