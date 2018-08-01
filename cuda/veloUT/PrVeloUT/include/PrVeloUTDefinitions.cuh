@@ -28,8 +28,8 @@ namespace PrVeloUTConst {
   static constexpr float invSigmaVeloSlope = 1./sigmaVeloSlope;
   static constexpr float zKink = 1780.0;
  
-  static constexpr float minMomentum =       1.5*Gaudi::Units::GeV;
-  static constexpr float minPT =             0.3*Gaudi::Units::GeV;
+  static constexpr float minMomentum =       1.5 * Gaudi::Units::GeV;
+  static constexpr float minPT =             0.3 * Gaudi::Units::GeV;
   static constexpr float maxPseudoChi2 =     1280.;
   static constexpr float yTol =              0.5 * Gaudi::Units::mm;
   static constexpr float yTolSlope =         0.08;

@@ -68,7 +68,7 @@ __host__ __device__ bool getHits(
   // to do: change back!
   const float invTheta = std::min(500.,1.0/std::sqrt(trState.tx*trState.tx+trState.ty*trState.ty));
   //const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, PrVeloUTConst::minMomentum);
-  const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, float(1.5e3));
+  const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, float(1.5)*Gaudi::Units::GeV);
   const float xTol     = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
   const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
 
@@ -239,7 +239,7 @@ __host__ __device__ bool formClusters(
   return fourLayerSolution;
 }
 //=========================================================================
-// Create the Velo-TU tracks
+// Create the Velo-UT tracks
 //=========================================================================
 __host__ __device__ void prepareOutputTrack(
   const uint* velo_track_hit_number,   
