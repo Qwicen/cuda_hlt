@@ -1,3 +1,5 @@
+//This code was extracted from the LHCb experiment's LHCb project at https://gitlab.cern.ch/lhcb/LHCb/blob/master/Det/DetDesc/src/Lib/MagneticFieldGrid.cpp
+
 // Include files
 
 // local

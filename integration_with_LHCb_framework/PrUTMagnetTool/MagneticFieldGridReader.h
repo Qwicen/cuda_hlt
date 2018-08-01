@@ -1,3 +1,4 @@
+//This code was extracted from the LHCb experiment's LHCb project at https://gitlab.cern.ch/lhcb/LHCb/blob/master/Det/Magnet/src/MagneticFieldGridReader.h
 
 #pragma once
 

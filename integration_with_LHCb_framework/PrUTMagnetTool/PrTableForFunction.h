@@ -1,3 +1,5 @@
+//This code was extracted from the LHCb experiment's LHCb project at https://gitlab.cern.ch/lhcb/Rec/blob/master/Pr/PrVeloUT/src/PrTableForFunction.h
+
 // $Id: PrTableForFunction.h,v 1.3 2009-10-30 13:19:13 wouter Exp $
 
 #ifndef PRTABLEFORFUNCTION_H
