@@ -47,6 +47,7 @@ void printUsage(char* argv[]){
     << std::endl << " -m {reserve Megabytes}=1024"
     << std::endl << " -v {verbosity}=3 (info)"
     << std::endl << " -p (print memory usage)"
+    << std::endl << " -x {run algorithms on x86 architecture as well (if possible)}=0"
     << std::endl;
 }
 
@@ -66,10 +67,11 @@ int main(int argc, char *argv[])
   // By default, do_check will be true when mc_check is enabled 
   bool do_check = mc_check_enabled;
   bool do_simplified_kalman_filter = false;
+  bool run_on_x86 = false;
   size_t reserve_mb = 1024;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:d:e:n:o:t:r:pha:b:d:v:c:k:m:g:")) != -1) {
+  while ((c = getopt(argc, argv, "f:d:e:n:o:t:r:pha:b:d:v:c:k:m:g:x:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_velopix_raw = std::string(optarg);
@@ -106,6 +108,9 @@ int main(int argc, char *argv[])
       break;
     case 'k':
       do_simplified_kalman_filter = atoi(optarg);
+      break;
+    case 'x':
+      run_on_x86 = atoi(optarg);
       break;
     case 'v':
       verbosity = atoi(optarg);
@@ -173,6 +178,7 @@ int main(int argc, char *argv[])
     << " run checkers (-c): " << do_check << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
+    << " run algorithms on x86 architecture as well (-x): " << run_on_x86 << std::endl
     << " print memory usage (-p): " << print_memory_usage << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
@@ -188,6 +194,10 @@ int main(int argc, char *argv[])
     return -1;
   }
 
+  if ( !do_check && run_on_x86) {
+    std::cerr << "Running on x86 only works if MC check is enabled" << std::endl;
+    return -1;
+  }
   
   // Read velopix raw data 
   std::vector<char> velopix_events;
@@ -251,6 +261,7 @@ int main(int argc, char *argv[])
     do_check,
     do_simplified_kalman_filter,
     print_memory_usage,
+    run_on_x86, 
     folder_name_MC,
     start_event_offset,
     reserve_mb

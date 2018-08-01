@@ -11,6 +11,7 @@ cudaError_t Stream::initialize(
   const bool param_do_check,
   const bool param_do_simplified_kalman_filter,
   const bool param_do_print_memory_manager,
+  const bool param_run_on_x86,
   const std::string& param_folder_name_MC,
   const uint param_start_event_offset,
   const size_t reserve_mb,
@@ -28,6 +29,7 @@ cudaError_t Stream::initialize(
   do_check = param_do_check;
   do_simplified_kalman_filter = param_do_simplified_kalman_filter;
   do_print_memory_manager = param_do_print_memory_manager;
+  run_on_x86 = param_run_on_x86;
   folder_name_MC = param_folder_name_MC;
   start_event_offset = param_start_event_offset;
 

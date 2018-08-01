@@ -38,6 +38,7 @@ struct StreamWrapper {
     const bool do_check,
     const bool do_simplified_kalman_filter,
     const bool print_memory_usage,
+    const bool run_on_x86,
     const std::string& folder_name_MC,
     const uint start_event_offset,
     const size_t reserve_mb

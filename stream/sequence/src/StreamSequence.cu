@@ -374,37 +374,34 @@ cudaError_t Stream::run_sequence(
           start_event_offset,
           trackType);                                                                            
       
-        /* Plugin VeloUT CPU code here 
-         Adjust input types to match PrVeloUT code
-      */
-      std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
-      
-      int rv = run_veloUT_on_CPU(
-                 ut_tracks_events,
-        	 host_ut_hits_events,
-                 host_ut_magnet_tool,
-        	 host_velo_states,
-        	 host_accumulated_tracks,
-                 host_velo_track_hit_number,
-                 host_velo_track_hits,
-        	 host_number_of_tracks,
-        	 number_of_events
-               );
+        /* Run VeloUT on x86 architecture */
+        if ( run_on_x86 ) {
+          std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
+        
+          int rv = run_veloUT_on_CPU(
+                     ut_tracks_events,
+                     host_ut_hits_events,
+                     host_ut_magnet_tool,
+                     host_velo_states,
+                     host_accumulated_tracks,
+                     host_velo_track_hit_number,
+                     host_velo_track_hits,
+                     host_number_of_tracks,
+                     number_of_events );
 
-      if ( rv != 0 )
-        continue;
-      
-      
-      std::cout << "CHECKING VeloUT TRACKS from x86" << std::endl;
-      trackType = "VeloUT";
-      call_pr_checker (
-        *ut_tracks_events,
-        folder_name_MC,
-        start_event_offset,
-        trackType); 
-      
-      delete ut_tracks_events;
-      
+          if ( rv != 0 )
+            continue;
+          
+          std::cout << "CHECKING VeloUT TRACKS from x86" << std::endl;
+          trackType = "VeloUT";
+          call_pr_checker (
+            *ut_tracks_events,
+            folder_name_MC,
+            start_event_offset,
+            trackType); 
+          
+          delete ut_tracks_events;
+        }
       } // only in first repitition
     } // mc_check_enabled     
     
