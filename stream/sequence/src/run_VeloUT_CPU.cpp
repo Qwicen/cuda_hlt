@@ -104,9 +104,7 @@ int run_veloUT_on_CPU (
     VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
     
     // Prepare hits
-    std::array<std::vector<VeloUTTracking::Hit>,VeloUTTracking::n_layers> inputHits;
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      inputHits[i_layer].clear();
       int layer_offset = hits_layers.layer_offset[i_layer];
       uint n_hits = hits_layers.n_hits_layers[i_layer];
       
@@ -128,39 +126,25 @@ int run_veloUT_on_CPU (
       applyXPermutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers.m_LHCbID );
       applyXPermutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_planeCode );
       applyXPermutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_highThreshold );
-      
-      for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
-	VeloUTTracking::Hit hit;
-	hit.m_cos = hits_layers.m_cos[layer_offset + i_hit];
-	hit.m_weight = hits_layers.m_weight[layer_offset + i_hit];
-	hit.m_xAtYEq0 = hits_layers.m_xAtYEq0[layer_offset + i_hit];
-	hit.m_yBegin = hits_layers.m_yBegin[layer_offset + i_hit];
-	hit.m_yEnd = hits_layers.m_yEnd[layer_offset + i_hit];
-	hit.m_zAtYEq0 = hits_layers.m_zAtYEq0[layer_offset + i_hit];
-	hit.m_LHCbID = hits_layers.m_LHCbID[layer_offset + i_hit];
-	hit.m_planeCode = hits_layers.m_planeCode[layer_offset + i_hit];
-	hit.m_highThreshold = hits_layers.m_highThreshold[layer_offset + i_hit];
-	
-	inputHits[i_layer].push_back( hit );
-        
+
 #ifdef WITH_ROOT
-	// For tree filling
-	cos = hit.m_cos;
-	yBegin = hit.m_yBegin;
-	yEnd = hit.m_yEnd;
-	zAtYEq0 = hit.m_zAtYEq0;
-	xAtYEq0 = hit.m_xAtYEq0;
-	weight = hit.m_weight;
-	LHCbID = hit.m_LHCbID;
-	highThreshold = hit.m_highThreshold;
+      for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
+	cos = hits_layers.m_cos[layer_offset + i_hit];
+	weight = hits_layers.m_weight[layer_offset + i_hit];
+	xAtYEq0 = hits_layers.m_xAtYEq0[layer_offset + i_hit];
+	yBegin = hits_layers.m_yBegin[layer_offset + i_hit];
+	yEnd = hits_layers.m_yEnd[layer_offset + i_hit];
+	zAtYEq0 = hits_layers.m_zAtYEq0[layer_offset + i_hit];
+	LHCbID = hits_layers.m_LHCbID[layer_offset + i_hit];
 	layer = i_layer;
-        dxDy = hit.dxDy();
-        
+	highThreshold = hits_layers.m_highThreshold[layer_offset + i_hit];
+        dxDy = hits_layers.dxDy(layer_offset + i_hit);
+                
 	t_ut_hits->Fill();
-#endif
       }
+#endif
     } // layers
-    
+  
     // Prepare Velo tracks
     const int accumulated_tracks = host_accumulated_tracks[i_event];
     const VeloState* host_velo_states_event = host_velo_states + accumulated_tracks;

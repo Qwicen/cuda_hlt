@@ -85,58 +85,6 @@ namespace VeloUTTracking {
 
   };
 
-  struct Hit {
-    
-    float m_cos;     
-    float m_weight;  ///< The hit weight^2 (1/error^2)
-    float m_xAtYEq0; ///< The value of x at the point y=0
-    float m_yBegin;  ///< The y value at the start point of the line
-    float m_yEnd;    ///< The y value at the end point of the line
-    float m_zAtYEq0; ///< The value of z at the point y=0
-    unsigned int m_LHCbID;
-    int m_planeCode;
-    
-    bool  m_highThreshold;
-    
-    __host__ __device__ Hit(){}
-    
-    __host__ __device__ inline float cos() const { return m_cos; }
-    __host__ __device__ inline int planeCode() const { return m_planeCode; }
-    __host__ __device__ inline float dxDy() const {
-      const int i_plane = m_planeCode;
-      if ( i_plane == 0 || i_plane == 3 )
-        return 0.;
-      else if ( i_plane == 1 )
-        return 0.08748867;
-      else if ( i_plane == 2 )
-        return -0.08748867;
-      else return -1;
-    }
-    __host__ __device__ inline float cosT() const { return ( std::fabs( m_xAtYEq0 ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy() * dxDy() ) : cos(); }
-    __host__ __device__ inline bool highThreshold() const { return m_highThreshold; }
-    __host__ __device__ inline bool isYCompatible( const float y, const float tol ) const { return yMin() - tol <= y && y <= yMax() + tol; }
-    __host__ __device__ inline bool isNotYCompatible( const float y, const float tol ) const { return yMin() - tol > y || y > yMax() + tol; }
-    __host__ __device__ inline int LHCbID() const { return m_LHCbID; }
-    __host__ __device__ inline float sinT() const { return tanT() * cosT(); }
-    __host__ __device__ inline float tanT() const { return -1 * dxDy(); }
-    __host__ __device__ inline float weight() const { return m_weight; }
-    __host__ __device__ inline float xAt( const float globalY ) const { return m_xAtYEq0 + globalY * dxDy(); }
-    __host__ __device__ inline float xAtYEq0() const { return m_xAtYEq0; }
-    __host__ __device__ inline float xMax() const { return std::max( xAt( yBegin() ), xAt( yEnd() ) ); }
-    __host__ __device__ inline float xMin() const { return std::min( xAt( yBegin() ), xAt( yEnd() ) ); }
-    __host__ __device__ inline float xT() const { return cos(); }
-    __host__ __device__ inline float yBegin() const { return m_yBegin; }
-    __host__ __device__ inline float yEnd() const { return m_yEnd; }
-    __host__ __device__ inline float yMax() const { return std::max( yBegin(), yEnd() ); }
-    __host__ __device__ inline float yMid() const { return 0.5 * ( yBegin() + yEnd() ); }
-    __host__ __device__ inline float yMin() const { return std::min( yBegin(), yEnd() ); }
-    __host__ __device__ inline float zAtYEq0() const { return m_zAtYEq0; }
-  };
-
-  __host__ __device__ Hit createHit( HitsSoA *hits_layers, const int hit_index );
-  
-  typedef std::vector<Hit> Hits;
-
   struct TrackUT {
     
     unsigned int LHCbIDs[VeloUTTracking::max_track_size];
