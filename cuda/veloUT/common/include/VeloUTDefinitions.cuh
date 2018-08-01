@@ -133,7 +133,7 @@ namespace VeloUTTracking {
     __host__ __device__ inline float zAtYEq0() const { return m_zAtYEq0; }
   };
 
-  __host__ __device__ Hit createHit( HitsSoA *hits_layers, const int i_layer, const int i_hit );
+  __host__ __device__ Hit createHit( HitsSoA *hits_layers, const int hit_index );
   
   typedef std::vector<Hit> Hits;
 
