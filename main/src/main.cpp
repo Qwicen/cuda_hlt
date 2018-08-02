@@ -1,6 +1,6 @@
 /**
  *      CUDA HLT1
- *      
+ *
  *      author  -  GPU working group
  *      e-mail  -  lhcb-parallelization@cern.ch
  *
@@ -31,10 +31,10 @@
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
-    << std::endl << " -f {folder containing .bin files with raw bank information}"
+    << std::endl << " -f {folder containing .bin files with VP raw bank information}"
     << std::endl << (mc_check_enabled ? " " : " [") << "-g {folder containing .bin files with MC truth information}"
     << (mc_check_enabled ? "" : " ]")
-    << std::endl << " -i {folder containing .bin files with FT clusters}"
+    << std::endl << " -i {folder containing .bin files with FT raw bank information}"
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=1]"
     << std::endl << " [-r {number of repetitions per thread / stream}=1]"
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
   bool do_check = mc_check_enabled;
   bool do_simplified_kalman_filter = false;
   size_t reserve_mb = 1024;
-   
+
   signed char c;
   while ((c = getopt(argc, argv, "f:g:i:n:t:r:pha:b:d:v:c:k:m:")) != -1) {
     switch (c) {
@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
     folder_name_MC,
     reserve_mb
   );
-  
+
   // Attempt to execute all in one go
   Timer t;
   tbb::parallel_for(

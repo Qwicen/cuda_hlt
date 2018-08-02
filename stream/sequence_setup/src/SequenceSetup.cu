@@ -1,4 +1,4 @@
-#include "SequenceSetup.cuh" 
+#include "SequenceSetup.cuh"
 
 std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_names() {
   std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> a;
@@ -17,7 +17,7 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_single_block_velo_track_hit_number] = "Prefix sum single block (2)";
   a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2)";
   a[seq::consolidate_tracks] = "Consolidate tracks";
-  a[seq::preprocessing] = "Preprocess SciFi clusters";
+  a[seq::preprocessing] = "Preprocess SciFi data";
   return a;
 }
 
