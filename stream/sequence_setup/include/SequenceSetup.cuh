@@ -82,8 +82,8 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_prefix_sum_auxiliary_array_2, uint>,
   Argument<arg::dev_velo_track_hits, Hit<mc_check_enabled>>,
   Argument<arg::dev_velo_states, VeloState>,
-  Argument<arg::dev_ft_events, char>,
-  Argument<arg::dev_ft_event_offsets, uint>
+  Argument<arg::dev_ft_event_offsets, uint>,
+  Argument<arg::dev_ft_events, char>
 >;
 
 /**
@@ -100,7 +100,7 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
  * @brief Retrieves the sequence dependencies.
  * @details The sequence dependencies specifies for each algorithm
  *          in the sequence the datatypes it depends on from the arguments.
- *          
+ *
  *          Note that this vector of arguments may vary from the actual
  *          arguments in the kernel invocation: ie. some cases:
  *          * if something is passed by value

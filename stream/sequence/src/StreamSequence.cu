@@ -176,7 +176,7 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_atomics_storage>(argument_offsets)
     );
     sequence.item<seq::weak_tracks_adder>().invoke();
-    
+
     // Calculate prefix sum of found tracks
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::copy_and_prefix_sum_single_block>().set_arguments(
@@ -281,8 +281,8 @@ cudaError_t Stream::run_sequence(
 
     sequence.item<seq::preprocessing>().set_opts(dim3(number_of_events), dim3(1), stream);
     sequence.item<seq::preprocessing>().set_arguments(
-      argen.generate<arg::dev_ft_events>(argument_offsets),
-      argen.generate<arg::dev_ft_event_offsets>(argument_offsets)
+      argen.generate<arg::dev_ft_event_offsets>(argument_offsets),
+      argen.generate<arg::dev_ft_events>(argument_offsets)
     );
     sequence.item<seq::preprocessing>().invoke();
 
@@ -301,7 +301,7 @@ cudaError_t Stream::run_sequence(
     //     print_individual_rates
     //   );
     // }
-    
+
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));

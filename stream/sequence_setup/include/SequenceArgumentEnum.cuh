@@ -52,7 +52,7 @@ enum arg_enum_t {
   dev_prefix_sum_auxiliary_array_2,
   dev_velo_track_hits,
   dev_velo_states,
-  dev_ft_events,
-  dev_ft_event_offsets
+  dev_ft_event_offsets,
+  dev_ft_events
 };
 }
