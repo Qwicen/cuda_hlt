@@ -27,7 +27,7 @@ constexpr static const int s_p2mstatic = 5000;
 // getSeeds
 //=============================================================================
 void getSeeds( VeloState * inputTracks,
-                     const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds, uint * number_of_seeds,  int event_number)  {
+                     const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds, uint * number_of_seeds,  int event_number, bool * tracks2disable)  {
   
   
   //if(inputTracks.size() < 3 ) return seeds;
@@ -37,6 +37,8 @@ void getSeeds( VeloState * inputTracks,
   int number_of_clusters = 0;
   for (int i = 0; i < number_of_tracks; i++) {
 
+    //don't reuse used tracks
+    if (tracks2disable[i]) continue;
     double sigsq;
     double zclu;
     auto trk = inputTracks[i];
