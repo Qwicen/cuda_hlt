@@ -1,11 +1,8 @@
 #include "../include/run_PatPV_CPU.h"
 //#include "../../../PatPV/include/PVSeedTool.h"
-
-
 #include "../../../PatPV/include/PVSeedTool.h"
 
-//int getSeeds( VeloState* inputTracks,
-  //     const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds)  ;
+
 
 
 bool reconstructMultiPVFromTracks(VeloState * tracks2use, Vertex * outvtxvec, int host_number_of_tracks_pinned,
@@ -20,20 +17,12 @@ bool reconstructMultiPVFromTracks(VeloState * tracks2use, Vertex * outvtxvec, in
     
   //PatPv::max_number_vertices
 
-  int nvtx_before = -1;
+
   int nvtx_after  =  0;
-  //for (int i = 0; i < 5 ; i++) {
-  //do we really need this loop?
-  //while ( nvtx_after > nvtx_before ) {
-    nvtx_before = nvtx_after;
+
     // reconstruct vertices
 
 
-
-  //XYZPoint  seeds[PatPV::max_number_vertices];
-  //int number_seeds = getSeeds(rtracks, beamspot, host_number_of_tracks_pinned, seeds, event_number);
-  //nubmer of seeds should be in same order as nubmer of priamry vertices
-  //std::cout << "number of seeds: " << seeds.size() << std::endl;
   
   int number_rec_vtx = 0;
   bool continue_fitting = true;
@@ -275,6 +264,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   //loop over events/files
   std::cout << "start comparison" << std::endl;
   for(int i_event = 0; i_event < number_of_files; i_event++) {
+    std::cout << "-------------- event " << i_event << "____" << std::endl;
     //for each file, loop over reconstructed PVs
     for(uint i = 0; i < number_of_vertex[i_event]; i++) {
       int index = i_event  *max_number_vertices + i;
