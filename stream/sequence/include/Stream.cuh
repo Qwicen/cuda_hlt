@@ -55,6 +55,14 @@ struct Stream {
   VeloState* host_velo_states;
   VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
+  
+  /* UT DECODING */
+  uint32_t * host_ut_raw_banks;
+  uint32_t * host_ut_raw_banks_offsets;
+  uint32_t * host_ut_sourceIDs;
+  uint32_t * host_ut_number_of_hits;
+  uint32_t host_ut_number_of_raw_banks = 256; //actually 180
+  uint32_t host_ut_max_size_raw_bank = 32;    //actually ~18
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;

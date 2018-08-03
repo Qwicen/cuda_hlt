@@ -18,6 +18,7 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2)";
   a[seq::consolidate_tracks] = "Consolidate tracks";
   a[seq::veloUT] = "VeloUT tracking";
+  a[seq::decode_raw_banks] = "UT decode_raw_banks";
   return a;
 }
 
@@ -48,6 +49,8 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_ut_hits] = "dev_ut_hits";
   a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
   a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
+  a[arg::dev_ut_raw_banks] = "dev_ut_raw_banks";
+  a[arg::dev_ut_raw_banks_offsets] = "dev_ut_raw_banks_offsets";
   return a;
 }
 
@@ -159,6 +162,13 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_states,
     arg::dev_veloUT_tracks,
     arg::dev_atomics_veloUT
+  };
+
+  sequence_dependencies[seq::decode_raw_banks] = {
+    arg::dev_ut_raw_banks,
+    arg::dev_ut_raw_banks_offsets,
+    arg::dev_ut_sourceIDs,
+    arg::dev_ut_number_of_hits
   };
 
   return sequence_dependencies;

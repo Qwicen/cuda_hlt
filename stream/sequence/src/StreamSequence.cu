@@ -268,6 +268,13 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::consolidate_tracks>().invoke();
 
+
+    for (int i = 0; i < host_ut_number_of_raw_banks; ++i) {
+      host_ut_raw_banks[i] = i;
+    }
+    
+   
+
     ////////////////////////////////////////
     // Optional: Simplified Kalman filter //
     ////////////////////////////////////////
@@ -403,7 +410,106 @@ cudaError_t Stream::run_sequence(
           delete ut_tracks_events;
         }
       } // only in first repitition
-    } // mc_check_enabled     
+    } // mc_check_enabled
+
+    /* UT DECODING */
+    std::ifstream inRawEvent("../input/minbias/ut_raw/0.bin", std::ios::in | std::ios::binary);
+    
+    uint32_t number_of_raw_banks = 0;
+    std::vector<uint32_t> raw_bank_offsets;
+    std::vector<uint32_t> raw_bank_data;
+
+    inRawEvent.read((char *) &(number_of_raw_banks), sizeof(uint32_t));
+  
+    raw_bank_offsets.push_back(0); //first item has no offset
+    for (uint32_t i = 0; i < number_of_raw_banks; ++i) {
+      uint32_t offset;
+      inRawEvent.read((char *) &(offset), sizeof(uint32_t));
+      raw_bank_offsets.push_back(offset);
+    }
+    
+    uint32_t maxOffset = raw_bank_offsets.back();
+    for (uint32_t i = 0; i < maxOffset; ++i) {
+      uint32_t data;
+      inRawEvent.read((char *) &(data), sizeof(uint32_t));
+      raw_bank_data.push_back(data);
+    }
+    
+    inRawEvent.close();
+
+    for (uint32_t i = 0; i < number_of_raw_banks; ++i) {
+      host_ut_raw_banks_offsets[i] = raw_bank_offsets[i];
+    }
+
+    for (uint32_t i = 0; i < raw_bank_data.size(); ++i) {
+      host_ut_raw_banks[i] = raw_bank_data[i];
+    }
+
+    argument_sizes[arg::dev_ut_raw_banks] = argen.size<arg::dev_ut_raw_banks>(host_ut_max_size_raw_bank * host_ut_number_of_raw_banks);
+    argument_sizes[arg::dev_ut_raw_banks_offsets] = argen.size<arg::dev_ut_raw_banks>(host_ut_number_of_raw_banks);
+    argument_sizes[arg::dev_ut_sourceIDs] = argen.size<arg::dev_ut_sourceIDs>(host_ut_number_of_raw_banks);
+    argument_sizes[arg::dev_ut_number_of_hits] = argen.size<arg::dev_ut_number_of_hits>(host_ut_number_of_raw_banks);
+
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+
+
+    cudaCheck(cudaMemcpyAsync(
+      argen.generate<arg::dev_ut_raw_banks>(argument_offsets),
+      host_ut_raw_banks,
+      host_ut_max_size_raw_bank * host_ut_number_of_raw_banks * sizeof(uint32_t),
+      cudaMemcpyHostToDevice,
+      stream
+    ));
+
+    cudaCheck(cudaMemcpyAsync(
+      argen.generate<arg::dev_ut_raw_banks_offsets>(argument_offsets),
+      host_ut_raw_banks_offsets,
+      host_ut_number_of_raw_banks * sizeof(uint32_t),
+      cudaMemcpyHostToDevice,
+      stream
+    ));
+
+    sequence.item<seq::decode_raw_banks>().set_opts(dim3(1), dim3(host_ut_number_of_raw_banks), stream);
+
+    sequence.item<seq::decode_raw_banks>().set_arguments(
+      argen.generate<arg::dev_ut_raw_banks>(argument_offsets),
+      argen.generate<arg::dev_ut_raw_banks_offsets>(argument_offsets),
+      argen.generate<arg::dev_ut_sourceIDs>(argument_offsets),
+      argen.generate<arg::dev_ut_number_of_hits>(argument_offsets),
+      number_of_raw_banks
+    );
+
+    std::cout << "BEFORE INVOKE" << std::endl;
+
+    sequence.item<seq::decode_raw_banks>().invoke();
+
+    cudaCheck(cudaMemcpyAsync(
+      host_ut_sourceIDs,
+      argen.generate<arg::dev_ut_sourceIDs>(argument_offsets),
+      argen.size<arg::dev_ut_sourceIDs>(host_ut_number_of_raw_banks),
+      cudaMemcpyDeviceToHost,
+      stream
+    ));
+
+    cudaCheck(cudaMemcpyAsync(
+      host_ut_number_of_hits,
+      argen.generate<arg::dev_ut_number_of_hits>(argument_offsets),
+      argen.size<arg::dev_ut_number_of_hits>(host_ut_number_of_raw_banks),
+      cudaMemcpyDeviceToHost,
+      stream
+    ));
+
+    // Wait to receive the result
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+
+    for (uint32_t i = 0; i < number_of_raw_banks; ++i) {
+      std::cout << "[" << i << "] = " << host_ut_number_of_hits[i] << "\t-\t" << host_ut_sourceIDs[i] << std::endl;
+    }
+
+    // Check the output
+    info_cout << "decode_raw_banks finished" << std::endl << std::endl;  
     
   } // repititions
   return cudaSuccess;
