@@ -53,34 +53,66 @@ bool fitVertex( XYZPoint& seedPoint,
   XYZPoint refpos = seedPoint ;
 
   // prepare tracks
-  AdaptivePVTrack pvTracks[number_of_tracks] ;
+ 
 
   int pvTrack_counter = 0;
   //for( const auto& track : rTracks ) {
-  for(int i = 0; i < number_of_tracks; i++) {  
-      AdaptivePVTrack pvTrack(host_velo_states[i], refpos);
+  for(int index = 0; index < number_of_tracks; index++) {  
+    //don't use disabled tracks
+    if(tracks2disable[index]) continue;
 
-      //don't use disabled tracks
-      if(tracks2disable[i]) continue;
-      if(pvTrack.chi2() < m_maxChi2) {
+    double new_z = refpos.z;
 
-        tr_state_x[pvTrack_counter] = host_velo_states[i].x;
-        tr_state_y[pvTrack_counter] = host_velo_states[i].y;
-        tr_state_z[pvTrack_counter] = host_velo_states[i].z;
+      
 
-        tr_state_tx[pvTrack_counter] = host_velo_states[i].tx;
-        tr_state_ty[pvTrack_counter] = host_velo_states[i].ty;
+      double m_state_x = host_velo_states[index].x;
+      double m_state_y = host_velo_states[index].y;
+      double m_state_z = host_velo_states[index].z;
 
-        tr_state_c00[pvTrack_counter] = host_velo_states[i].c00;
-        tr_state_c11[pvTrack_counter] = host_velo_states[i].c11;
-        tr_state_c20[pvTrack_counter] = host_velo_states[i].c20;
-        tr_state_c22[pvTrack_counter] = host_velo_states[i].c22;
-        tr_state_c31[pvTrack_counter] = host_velo_states[i].c31;
-        tr_state_c33[pvTrack_counter] = host_velo_states[i].c33;
+      double m_state_tx = host_velo_states[index].tx;
+      double m_state_ty = host_velo_states[index].ty;
 
+      double m_state_c00 = host_velo_states[index].c00;
+      double m_state_c11 = host_velo_states[index].c11;
+      double m_state_c20 = host_velo_states[index].c20;
+      double m_state_c22 = host_velo_states[index].c22;
+      double m_state_c31 = host_velo_states[index].c31;
+      double m_state_c33 = host_velo_states[index].c33;
 
+      const double dz = new_z - m_state_z ;
+      const double dz2 = dz*dz ;
 
-        pvTracks[pvTrack_counter] = pvTrack;
+      m_state_x += dz * m_state_tx ;
+      m_state_y += dz * m_state_ty ;
+      m_state_z = new_z;
+      m_state_c00 += dz2 * m_state_c22 + 2*dz* m_state_c20 ;
+      m_state_c20 += dz* m_state_c22 ;
+      m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
+      m_state_c31 += dz* m_state_c33 ;
+
+      Vector2 res{ refpos.x - m_state_x, refpos.y - m_state_y };
+
+      
+      double  tr_chi2 = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
+      
+
+      
+      if(tr_chi2 < m_maxChi2) {
+
+        tr_state_x[pvTrack_counter] = host_velo_states[index].x;
+        tr_state_y[pvTrack_counter] = host_velo_states[index].y;
+        tr_state_z[pvTrack_counter] = host_velo_states[index].z;
+
+        tr_state_tx[pvTrack_counter] = host_velo_states[index].tx;
+        tr_state_ty[pvTrack_counter] = host_velo_states[index].ty;
+
+        tr_state_c00[pvTrack_counter] = host_velo_states[index].c00;
+        tr_state_c11[pvTrack_counter] = host_velo_states[index].c11;
+        tr_state_c20[pvTrack_counter] = host_velo_states[index].c20;
+        tr_state_c22[pvTrack_counter] = host_velo_states[index].c22;
+        tr_state_c31[pvTrack_counter] = host_velo_states[index].c31;
+        tr_state_c33[pvTrack_counter] = host_velo_states[index].c33;
+
         pvTrack_counter++;
       }
 
@@ -117,10 +149,7 @@ bool fitVertex( XYZPoint& seedPoint,
     
     // update cache if too far from reference position. this is the slow part.
     
-    if( std::abs(refpos.z - vtxpos.z) > m_maxDeltaZCache ) {
-      refpos = vtxpos ;
-      for( int index = 0; index < pvTrack_counter; index++)  pvTracks[index].updateCache( refpos ) ;
-    };
+    if( std::abs(refpos.z - vtxpos.z) > m_maxDeltaZCache )   refpos = vtxpos ;
 
     // add contribution from all tracks
     double chi2(0) ;
@@ -171,11 +200,9 @@ bool fitVertex( XYZPoint& seedPoint,
       double tr_halfDChi2DX_z = -m_state_tx*res.x / m_state_c00-m_state_ty*res.y / m_state_c11;
       double tr_chi2          = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
 
-      // compute weight
-      AdaptivePVTrack trk = pvTracks[index];
-      double trkchi2 = trk.chi2(vtxpos) ;
+
       double weight = getTukeyWeight(tr_chi2, nbIter) ;
-      trk.setWeight(weight) ;
+
       // add the track
       if ( weight > m_minTrackWeight ) {
         ++ntrin;
@@ -260,21 +287,51 @@ bool fitVertex( XYZPoint& seedPoint,
   vtx.setCovMatrix( vtxcov ) ;
   // Set tracks. Compute final chi2.
   vtx.clearTracks();
-  for( int index = 0; index < pvTrack_counter; index++) {
-    AdaptivePVTrack trk = pvTracks[index];
-    if( trk.weight() > m_minTrackWeight)
-      vtx.addToTracks( trk.track(), trk.weight() ) ;
-    // remove track for next PV search
-  }
+
 
 
   //disable tracks added to this vertex
-    for(int i = 0; i < number_of_tracks; i++) {  
-      AdaptivePVTrack pvTrack(host_velo_states[i], refpos);
-
+    for(int index = 0; index < number_of_tracks; index++) {  
       //don't use disabled tracks
-      if(tracks2disable[i]) continue;
-      if( pvTrack.chi2(vtxpos) < m_trackMaxChi2Remove) tracks2disable[i] = true;
+      if(tracks2disable[index]) continue;
+
+      double new_z = vtxpos.z;
+
+      
+
+      double m_state_x = host_velo_states[index].x;
+      double m_state_y = host_velo_states[index].y;
+      double m_state_z = host_velo_states[index].z;
+
+      double m_state_tx = host_velo_states[index].tx;
+      double m_state_ty = host_velo_states[index].ty;
+
+      double m_state_c00 = host_velo_states[index].c00;
+      double m_state_c11 = host_velo_states[index].c11;
+      double m_state_c20 = host_velo_states[index].c20;
+      double m_state_c22 = host_velo_states[index].c22;
+      double m_state_c31 = host_velo_states[index].c31;
+      double m_state_c33 = host_velo_states[index].c33;
+
+      const double dz = new_z - m_state_z ;
+      const double dz2 = dz*dz ;
+
+      m_state_x += dz * m_state_tx ;
+      m_state_y += dz * m_state_ty ;
+      m_state_z = new_z;
+      m_state_c00 += dz2 * m_state_c22 + 2*dz* m_state_c20 ;
+      m_state_c20 += dz* m_state_c22 ;
+      m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
+      m_state_c31 += dz* m_state_c33 ;
+
+      Vector2 res{ refpos.x - m_state_x, refpos.y - m_state_y };
+
+      
+      double tr_chi2          = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
+
+
+      
+      if( tr_chi2 < m_trackMaxChi2Remove) tracks2disable[index] = true;
    
   }
   

@@ -378,13 +378,13 @@ cudaError_t Stream::run_sequence(
       std::cout << "event number " << i_event << std::endl;
       //loop over reconstructed vertices in an event
       for(uint i = 0; i < number_of_vertex[i_event]; i++) {
-        int index = i_event  *max_number_vertices + i;
+        int index = i_event  * PatPV::max_number_vertices + i;
         std::cout << std::setprecision(4) << "vertex " << i << " " << out_vertices[index].x << " " << out_vertices[index].y << " " << out_vertices[index].z << std::endl;
       }
       //loop over seeds on an event
       debug_file_seeds << "Event "  << i_event << "\n";
       for(uint i = 0; i < number_of_seeds[i_event]; i++) {
-        int index = i_event  *max_number_vertices + i;
+        int index = i_event  * PatPV::max_number_vertices + i;
         debug_file_seeds << seeds[index].z << "\n";
       }
     }

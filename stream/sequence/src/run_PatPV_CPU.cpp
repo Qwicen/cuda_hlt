@@ -52,7 +52,7 @@ bool reconstructMultiPVFromTracks(VeloState * tracks2use, Vertex * outvtxvec, in
       
 
       
-      outvtxvec[event_number *max_number_vertices + nvtx_after] = recvtx;
+      outvtxvec[event_number * PatPV::max_number_vertices + nvtx_after] = recvtx;
       nvtx_after++;
 
     }//iterate on seeds
@@ -232,7 +232,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   std::cout << "------------" << std::endl;
   std::cout << "rec vertices with errors:" << std::endl;
   for(int i = 0; i < number_of_vertex[0]; i++) {
-    int index = 0  * max_number_vertices + i;
+    int index = 0  * PatPV::max_number_vertices + i;
     std::cout << std::setprecision(4) << "x: " << rec_vertex[index].x << " " << rec_vertex[index].cov00 << std::endl;
     std::cout << std::setprecision(4) << "y: " << rec_vertex[index].y << " " << rec_vertex[index].cov11 << std::endl;
     std::cout << std::setprecision(4) << "z: " << rec_vertex[index].z << " " << rec_vertex[index].cov22 << std::endl;
@@ -267,7 +267,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
     std::cout << "-------------- event " << i_event << "____" << std::endl;
     //for each file, loop over reconstructed PVs
     for(uint i = 0; i < number_of_vertex[i_event]; i++) {
-      int index = i_event  *max_number_vertices + i;
+      int index = i_event  * PatPV::max_number_vertices + i;
       double r2 = rec_vertex[index].x*rec_vertex[index].x + rec_vertex[index].y * rec_vertex[index].y;
       //radial cut against fake vertices
       double r = 0.;

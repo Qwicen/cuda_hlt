@@ -2,10 +2,10 @@
 #ifndef ADAPTIVE_H
 #define ADAPTIVE_H
 
-//#include "definitions.h"
-#include "AdaptivePVTrack.h"
+
 #include "../../cuda/velo/common/include/VeloDefinitions.cuh"
 #include "../../cuda/patPV/include/patPV_Definitions.cuh"
+
 
 
 
