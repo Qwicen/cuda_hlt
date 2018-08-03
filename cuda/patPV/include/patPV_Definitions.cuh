@@ -64,12 +64,12 @@ class Vertex {
     double chi2;
     int ndof;
 
-    double cov00;
-    double cov10;
-    double cov11;
-    double cov20;
-    double cov21;
-    double cov22;
+    double cov00 = 0.;
+    double cov10 = 0.;
+    double cov11 = 0.;
+    double cov20 = 0.;
+    double cov21 = 0.;
+    double cov22 = 0.;
 
     std::vector<VeloState> tracks;
     std::vector<double> weights;

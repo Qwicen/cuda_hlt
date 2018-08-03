@@ -44,9 +44,6 @@ void AdaptivePVTrack::linearTransportTo( double new_z) {
 
 
     //write out inverse covariance matrix
-    m_invcov[0] = 1. / m_state.c00;
-    m_invcov[1] = 0.;
-    m_invcov[2] = 1. / m_state.c11;
 
 
 

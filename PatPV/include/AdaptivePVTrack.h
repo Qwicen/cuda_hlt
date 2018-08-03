@@ -27,7 +27,6 @@ using namespace PatPV ;
     //express symmetrical amtrices as arrays in in packed representation element m(i,j) (j <= i) is supposed to be in array element  (i * (i + 1)) / 2 + j
 
 
-    double m_invcov[3] ;
     double m_halfD2Chi2DX2[6] ;
     XYZPoint m_halfDChi2DX{1.,2.,3.}  ;
     double m_chi2 ;

@@ -28,6 +28,27 @@ bool fitVertex( XYZPoint& seedPoint,
               int number_of_tracks, bool * tracks2disable) 
 {
 
+
+
+
+  double tr_state_x[number_of_tracks] ;
+  double tr_state_y[number_of_tracks] ;
+  double tr_state_z[number_of_tracks] ;
+
+  double tr_state_tx[number_of_tracks];
+  double tr_state_ty[number_of_tracks] ;
+
+  double tr_state_c00[number_of_tracks] ;
+  double tr_state_c11[number_of_tracks] ;
+  double tr_state_c20[number_of_tracks] ;
+  double tr_state_c22[number_of_tracks] ;
+  double tr_state_c31[number_of_tracks] ;
+  double tr_state_c33[number_of_tracks] ;
+
+
+ 
+
+
   // position at which derivatives are evaluated
   XYZPoint refpos = seedPoint ;
 
@@ -42,6 +63,23 @@ bool fitVertex( XYZPoint& seedPoint,
       //don't use disabled tracks
       if(tracks2disable[i]) continue;
       if(pvTrack.chi2() < m_maxChi2) {
+
+        tr_state_x[pvTrack_counter] = host_velo_states[i].x;
+        tr_state_y[pvTrack_counter] = host_velo_states[i].y;
+        tr_state_z[pvTrack_counter] = host_velo_states[i].z;
+
+        tr_state_tx[pvTrack_counter] = host_velo_states[i].tx;
+        tr_state_ty[pvTrack_counter] = host_velo_states[i].ty;
+
+        tr_state_c00[pvTrack_counter] = host_velo_states[i].c00;
+        tr_state_c11[pvTrack_counter] = host_velo_states[i].c11;
+        tr_state_c20[pvTrack_counter] = host_velo_states[i].c20;
+        tr_state_c22[pvTrack_counter] = host_velo_states[i].c22;
+        tr_state_c31[pvTrack_counter] = host_velo_states[i].c31;
+        tr_state_c33[pvTrack_counter] = host_velo_states[i].c33;
+
+
+
         pvTracks[pvTrack_counter] = pvTrack;
         pvTrack_counter++;
       }
@@ -67,11 +105,19 @@ bool fitVertex( XYZPoint& seedPoint,
   {
     ++nbIter;
 
-    double halfD2Chi2DX2[6] = {0.,0.,0.,0.,0.,0.};
+    double halfD2Chi2DX2_00 = 0.;
+    double halfD2Chi2DX2_10 = 0.;
+    double halfD2Chi2DX2_11 = 0.;
+    double halfD2Chi2DX2_20 = 0.;
+    double halfD2Chi2DX2_21 = 0.;
+    double halfD2Chi2DX2_22 = 0.;
     XYZPoint halfDChi2DX(0.,0.,0.) ;
+
+
     
     // update cache if too far from reference position. this is the slow part.
-    if( std::abs(refpos.z - vtxpos.z > m_maxDeltaZCache) ) {
+    
+    if( std::abs(refpos.z - vtxpos.z) > m_maxDeltaZCache ) {
       refpos = vtxpos ;
       for( int index = 0; index < pvTrack_counter; index++)  pvTracks[index].updateCache( refpos ) ;
     };
@@ -80,28 +126,78 @@ bool fitVertex( XYZPoint& seedPoint,
     double chi2(0) ;
     size_t ntrin(0) ;
     for( int index = 0; index < pvTrack_counter; index++) {
+      //update cache
+
+      double new_z = refpos.z;
+
+      
+
+      double m_state_x = tr_state_x[index];
+      double m_state_y = tr_state_y[index];
+      double m_state_z = tr_state_z[index];
+
+      double m_state_tx = tr_state_tx[index];
+      double m_state_ty = tr_state_ty[index];
+
+      double m_state_c00 = tr_state_c00[index];
+      double m_state_c11 = tr_state_c11[index];
+      double m_state_c20 = tr_state_c20[index];
+      double m_state_c22 = tr_state_c22[index];
+      double m_state_c31 = tr_state_c31[index];
+      double m_state_c33 = tr_state_c33[index];
+
+      const double dz = new_z - m_state_z ;
+      const double dz2 = dz*dz ;
+
+      m_state_x += dz * m_state_tx ;
+      m_state_y += dz * m_state_ty ;
+      m_state_z = new_z;
+      m_state_c00 += dz2 * m_state_c22 + 2*dz* m_state_c20 ;
+      m_state_c20 += dz* m_state_c22 ;
+      m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
+      m_state_c31 += dz* m_state_c33 ;
+
+      Vector2 res{ refpos.x - m_state_x, refpos.y - m_state_y };
+
+      double tr_halfD2Chi2DX2_00 = 1. / m_state_c00;
+      double tr_halfD2Chi2DX2_10 = 0.;
+      double tr_halfD2Chi2DX2_11 = 1. / m_state_c11;
+      double tr_halfD2Chi2DX2_20 = - m_state_tx / m_state_c00;
+      double tr_halfD2Chi2DX2_21 = - m_state_ty / m_state_c11;
+      double tr_halfD2Chi2DX2_22 = m_state_tx * m_state_tx / m_state_c00 + m_state_ty * m_state_ty / m_state_c11;
+
+      double tr_halfDChi2DX_x = res.x / m_state_c00;
+      double tr_halfDChi2DX_y = res.y / m_state_c11;
+      double tr_halfDChi2DX_z = -m_state_tx*res.x / m_state_c00-m_state_ty*res.y / m_state_c11;
+      double tr_chi2          = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
+
       // compute weight
       AdaptivePVTrack trk = pvTracks[index];
       double trkchi2 = trk.chi2(vtxpos) ;
-      double weight = getTukeyWeight(trkchi2, nbIter) ;
+      double weight = getTukeyWeight(tr_chi2, nbIter) ;
       trk.setWeight(weight) ;
       // add the track
       if ( weight > m_minTrackWeight ) {
         ++ntrin;
-        halfD2Chi2DX2[0] += weight * trk.halfD2Chi2DX2()[0] ;
-        halfD2Chi2DX2[1] += weight * trk.halfD2Chi2DX2()[1] ;
-        halfD2Chi2DX2[2] += weight * trk.halfD2Chi2DX2()[2] ;
-        halfD2Chi2DX2[3] += weight * trk.halfD2Chi2DX2()[3] ;
-        halfD2Chi2DX2[4] += weight * trk.halfD2Chi2DX2()[4] ;
-        halfD2Chi2DX2[5] += weight * trk.halfD2Chi2DX2()[5] ;
+        halfD2Chi2DX2_00 += weight * tr_halfD2Chi2DX2_00 ;
+        halfD2Chi2DX2_10 += weight * tr_halfD2Chi2DX2_10 ;
+        halfD2Chi2DX2_11 += weight * tr_halfD2Chi2DX2_11 ;
+        halfD2Chi2DX2_20 += weight * tr_halfD2Chi2DX2_20 ;
+        halfD2Chi2DX2_21 += weight * tr_halfD2Chi2DX2_21 ;
+        halfD2Chi2DX2_22 += weight * tr_halfD2Chi2DX2_22 ;
 
-        halfDChi2DX.x   += weight * trk.halfDChi2DX().x ;
-        halfDChi2DX.y   += weight * trk.halfDChi2DX().y ;
-        halfDChi2DX.z   += weight * trk.halfDChi2DX().z ;
 
-        chi2 += weight * trk.chi2() ;
+
+        halfDChi2DX.x   += weight * tr_halfDChi2DX_x ;
+        halfDChi2DX.y   += weight * tr_halfDChi2DX_y ;
+        halfDChi2DX.z   += weight * tr_halfDChi2DX_z ;
+
+        chi2 += weight * tr_chi2 ;
+
+
       }
     }
+    
 
     // check nr of tracks that entered the fit
     if(ntrin < m_minTr) {
@@ -113,12 +209,12 @@ bool fitVertex( XYZPoint& seedPoint,
 
 
     //repalce Cholesky inverter by analytical solution
-    double a00 = halfD2Chi2DX2[0];
-    double a10 = halfD2Chi2DX2[1];
-    double a11 = halfD2Chi2DX2[2];
-    double a20 = halfD2Chi2DX2[3];
-    double a21 = halfD2Chi2DX2[4];
-    double a22 = halfD2Chi2DX2[5];
+    double a00 = halfD2Chi2DX2_00;
+    double a10 = halfD2Chi2DX2_10;
+    double a11 = halfD2Chi2DX2_11;
+    double a20 = halfD2Chi2DX2_20;
+    double a21 = halfD2Chi2DX2_21;
+    double a22 = halfD2Chi2DX2_22;
 
     double det = a00 * (a22 * a11 - a21 * a21) - a10 * (a22 * a10 - a21 * a20) + a20 * (a21*a10 - a11*a20);
     if (det == 0) return false;
