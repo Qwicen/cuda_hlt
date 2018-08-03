@@ -63,7 +63,14 @@ class Vertex {
     double z = 0.;
     double chi2;
     int ndof;
-    double cov[6];
+
+    double cov00;
+    double cov10;
+    double cov11;
+    double cov20;
+    double cov21;
+    double cov22;
+
     std::vector<VeloState> tracks;
     std::vector<double> weights;
     void setChi2AndDoF(double m_chi2, int m_ndof) {
@@ -76,12 +83,12 @@ class Vertex {
       z = point.z;
     }
     void setCovMatrix(double * m_cov) {
-      cov[0] = m_cov[0];
-      cov[1] = m_cov[1];
-      cov[2] = m_cov[2];
-      cov[3] = m_cov[3];
-      cov[4] = m_cov[4];
-      cov[5] = m_cov[5];
+      cov00 = m_cov[0];
+      cov10 = m_cov[1];
+      cov11 = m_cov[2];
+      cov20 = m_cov[3];
+      cov21 = m_cov[4];
+      cov22 = m_cov[5];
     }
 
     void clearTracks() {
