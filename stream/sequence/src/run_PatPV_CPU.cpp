@@ -268,6 +268,12 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
     //for each file, loop over reconstructed PVs
     for(uint i = 0; i < number_of_vertex[i_event]; i++) {
       int index = i_event  *max_number_vertices + i;
+      double r2 = rec_vertex[index].x*rec_vertex[index].x + rec_vertex[index].y * rec_vertex[index].y;
+      //radial cut against fake vertices
+      double r = 0.;
+      if(rec_vertex[index].tracks.size() < 10) r = 0.2;
+      else r = 0.4;
+      if(r2 >  r*r) continue;
       
 
       //double r2 = rec_vertex[index].pos.x * rec_vertex[index].pos.x + rec_vertex[index].pos.y * rec_vertex[index].pos.y;
@@ -296,6 +302,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
             break;
           }
         }
+        
         if(!matched) {number_fake_vertices++; 
        std::cout << "have a fake vertex: " << std::endl;
        std::cout << std::setprecision(4) <<"x: " << rec_vertex[index].x << " " <<  rec_vertex[index].cov[0] << std::endl;
