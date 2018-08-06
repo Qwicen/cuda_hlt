@@ -13,57 +13,38 @@
 #include <cmath>
 #include <stdint.h>
 #include "Logger.h"
-#include "../../cuda/velo/common/include/VeloDefinitions.cuh"
-#include "../../cuda/velo/common/include/ClusteringDefinitions.cuh"
-#include "../../checker/lib/include/Tracks.h"
-
-bool exists_test(const std::string& name);
-
-bool naturalOrder(
-  const std::string& s1,
-  const std::string& s2
-);
-
-void readFileIntoVector(
-  const std::string& filename,
-  std::vector<char>& events
-);
-
-void appendFileToVector(
-  const std::string& filename,
-  std::vector<char>& events,
-  std::vector<unsigned int>& event_sizes
-);
+#include "VeloDefinitions.cuh"
+#include "ClusteringDefinitions.cuh"
+#include "VeloUTDefinitions.cuh"
+#include "PrVeloUTMagnetToolDefinitions.cuh"
+#include "PrVeloUTDefinitions.cuh"
+#include "Tracks.h"
+#include "InputTools.h"
+#include "velopix-input-reader.h"
+#include "TrackChecker.h"
+#include "MCParticle.h"
 
 void readGeometry(
   const std::string& foldername,
   std::vector<char>& geometry
 );
 
-void check_events(
-  const std::vector<char>& events,
-  const std::vector<unsigned int>& event_offsets,
+void check_velopix_events(
+  const std::vector<char> events,
+  const std::vector<unsigned int> event_offsets,
   int n_events
 );
 
-std::vector<std::string> list_folder(
-  const std::string& foldername,
-  const bool print_num_elems = false
-);
+void read_ut_events_into_arrays(  VeloUTTracking::HitsSoA *ut_hits_events,
+                                  const std::vector<char> events,
+				  const std::vector<unsigned int> event_offsets,
+				  int n_events );
 
-void read_folder(
-  const std::string& foldername,
-  unsigned int fileNumber,
-  std::vector<char>& events,
-  std::vector<unsigned int>& event_offsets
-);
+void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
+                      const int n_events
+		      );
 
-void read_mc_folder(
-  const std::string& foldername,
-  unsigned int fileNumber,
-  std::vector<char>& events,
-  std::vector<unsigned int>& event_offsets
-);
+void read_UT_magnet_tool( PrUTMagnetTool* host_magnet_tool );
 
 std::map<std::string, float> calcResults(
   std::vector<float>& times
@@ -71,14 +52,14 @@ std::map<std::string, float> calcResults(
 
 template <bool mc_check>
 void printTrack(
-  Track<mc_check>* tracks,
+  VeloTracking::Track<mc_check>* tracks,
   const int trackNumber,
   std::ofstream& outstream
 );
 
 template <bool mc_check>
 void printTracks(
-  Track<mc_check>* tracks,
+  VeloTracking::Track<mc_check>* tracks,
   int* n_tracks,
   int n_events,
   std::ofstream& outstream
@@ -87,20 +68,32 @@ void printTracks(
 template <bool mc_check>
 void writeBinaryTrack(
   const unsigned int* hit_IDs,
-  const Track <mc_check> & track,
+  const VeloTracking::Track <mc_check> & track,
   std::ofstream& outstream
 );
 
-void call_PrChecker(
-  const std::vector<trackChecker::Tracks>& all_tracks,
-  const std::string& folder_name_MC
+std::vector< trackChecker::Tracks > prepareTracks(
+  uint* host_velo_track_hit_number_pinned,
+  VeloTracking::Hit<true>* host_velo_track_hits_pinned,                                       
+  int* host_accumulated_tracks,
+  int* host_number_of_tracks_pinned,
+  const int &number_of_events
 );
 
-void checkTracks(
-  int* host_number_of_tracks_pinned,
-  int* host_accumulated_tracks,
-  uint* host_velo_track_hit_number_pinned,
-  Hit<true>* host_velo_track_hits_pinned,
-  const int number_of_events,
-  const std::string& folder_name_MC
+trackChecker::Tracks prepareVeloUTTracksEvent(
+  const VeloUTTracking::TrackUT* veloUT_tracks,
+  const int n_veloUT_tracks
+);
+
+std::vector< trackChecker::Tracks > prepareVeloUTTracks(
+  const VeloUTTracking::TrackUT* veloUT_tracks,
+  const int* n_veloUT_tracks,
+  const int number_of_events
+);
+
+void call_pr_checker(
+  const std::vector< trackChecker::Tracks >& all_tracks,
+  const std::string& folder_name_MC,
+  const uint start_event_offset, 
+  const std::string& trackType
 );

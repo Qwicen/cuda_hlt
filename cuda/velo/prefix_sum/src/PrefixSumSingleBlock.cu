@@ -155,13 +155,13 @@ __global__ void copy_and_prefix_sum_single_block(
  * @brief Copies Velo track hit numbers on a consecutive container
  */
 __global__ void copy_velo_track_hit_number(
-  const TrackHits* dev_tracks,
+  const VeloTracking::TrackHits* dev_tracks,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
-  const TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
+  const VeloTracking::TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
   const int accumulated_tracks = dev_atomics_storage[number_of_events + event_number];
   const int number_of_tracks = dev_atomics_storage[event_number];
 

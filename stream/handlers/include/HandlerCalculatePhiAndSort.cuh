@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../sequence_setup/include/SequenceArgumentEnum.cuh"
+#include "SequenceArgumentEnum.cuh"
 #include "HandlerDispatcher.cuh"
 #include <iostream>
 

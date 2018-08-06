@@ -10,12 +10,12 @@ __device__ void track_forwarding(
   uint* tracks_insertPointer,
   uint* ttf_insertPointer,
   uint* weaktracks_insertPointer,
-  const Module* module_data,
+  const VeloTracking::Module* module_data,
   const uint diff_ttf,
   uint* tracks_to_follow,
-  TrackletHits* weak_tracks,
+  VeloTracking::TrackletHits* weak_tracks,
   const uint prev_ttf,
-  TrackletHits* tracklets,
-  TrackHits* tracks,
+  VeloTracking::TrackletHits* tracklets,
+  VeloTracking::TrackHits* tracks,
   const uint number_of_hits
 );

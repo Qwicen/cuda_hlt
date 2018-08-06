@@ -20,7 +20,8 @@ enum seq_enum_t {
   prefix_sum_reduce_velo_track_hit_number,
   prefix_sum_single_block_velo_track_hit_number,
   prefix_sum_scan_velo_track_hit_number,
-  consolidate_tracks
+  consolidate_tracks,
+  veloUT
 };
 }
 
@@ -50,6 +51,9 @@ enum arg_enum_t {
   dev_velo_track_hit_number,
   dev_prefix_sum_auxiliary_array_2,
   dev_velo_track_hits,
-  dev_velo_states
+  dev_velo_states,
+  dev_ut_hits,
+  dev_veloUT_tracks,
+  dev_atomics_veloUT
 };
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "../../common/include/VeloDefinitions.cuh"
+#include "VeloDefinitions.cuh"
 
 __device__ void calculate_phi(
   const uint* module_hitStarts,

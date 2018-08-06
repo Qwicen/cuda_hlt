@@ -1,8 +1,8 @@
 #include <list>
 #include <algorithm>
-#include "../../../main/include/Common.h"
-#include "../../../main/include/Logger.h"
-#include "../../sequence_setup/include/SequenceSetup.cuh"
+#include "Common.h"
+#include "Logger.h"
+#include "SequenceSetup.cuh"
 
 struct MemoryManager {
   size_t max_available_memory = (size_t) 8 * 1024 * 1024 * 1024; // 8 GiB
