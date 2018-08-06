@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "../include/AdaptivePV3DFitter.h"
+
 //#include "../../PrVeloUT/include/CholeskyDecomp.h"
 
   size_t m_minTr = 4;
@@ -50,7 +51,7 @@ bool fitVertex( XYZPoint& seedPoint,
 
 
   // position at which derivatives are evaluated
-  XYZPoint refpos = seedPoint ;
+  XYZPoint vtxpos = seedPoint ;
 
   // prepare tracks
  
@@ -61,7 +62,7 @@ bool fitVertex( XYZPoint& seedPoint,
     //don't use disabled tracks
     if(tracks2disable[index]) continue;
 
-    double new_z = refpos.z;
+    double new_z = vtxpos.z;
 
       
 
@@ -90,7 +91,7 @@ bool fitVertex( XYZPoint& seedPoint,
       m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
       m_state_c31 += dz* m_state_c33 ;
 
-      Vector2 res{ refpos.x - m_state_x, refpos.y - m_state_y };
+      Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
       
       double  tr_chi2 = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
@@ -127,7 +128,7 @@ bool fitVertex( XYZPoint& seedPoint,
     }
 
   // current vertex position
-  XYZPoint vtxpos = refpos ;
+  //XYZPoint vtxpos = refpos ;
   // vertex covariance matrix
   double vtxcov[6] ;
   bool converged = false;
@@ -149,7 +150,7 @@ bool fitVertex( XYZPoint& seedPoint,
     
     // update cache if too far from reference position. this is the slow part.
     
-    if( std::abs(refpos.z - vtxpos.z) > m_maxDeltaZCache )   refpos = vtxpos ;
+   // if( std::abs(vtxpos.z - vtxpos.z) > m_maxDeltaZCache )   vtxpos = vtxpos ;
 
     // add contribution from all tracks
     double chi2(0) ;
@@ -157,7 +158,7 @@ bool fitVertex( XYZPoint& seedPoint,
     for( int index = 0; index < pvTrack_counter; index++) {
       //update cache
 
-      double new_z = refpos.z;
+      double new_z = vtxpos.z;
 
       
 
@@ -186,7 +187,7 @@ bool fitVertex( XYZPoint& seedPoint,
       m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
       m_state_c31 += dz* m_state_c33 ;
 
-      Vector2 res{ refpos.x - m_state_x, refpos.y - m_state_y };
+      Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
       double tr_halfD2Chi2DX2_00 = 1. / m_state_c00;
       double tr_halfD2Chi2DX2_10 = 0.;
@@ -266,12 +267,16 @@ bool fitVertex( XYZPoint& seedPoint,
     chi2  += delta.x * halfDChi2DX.x + delta.y * halfDChi2DX.y + delta.z * halfDChi2DX.z;
 
     // deltaz needed for convergence
-    const double deltaz = refpos.z + delta.z - vtxpos.z ;
+    const double deltaz = vtxpos.z + delta.z - vtxpos.z ;
 
     // update the position
-    vtxpos.x = ( refpos.x + delta.x ) ;
-    vtxpos.y = ( refpos.y + delta.y ) ;
-    vtxpos.z = ( refpos.z + delta.z ) ;
+    vtxpos.x = ( vtxpos.x + delta.x ) ;
+    vtxpos.y = ( vtxpos.y + delta.y ) ;
+    vtxpos.z = ( vtxpos.z + delta.z ) ;
+    std::cout.precision(4);
+    std::cout  << "Iterx: " << nbIter << " " << vtxpos.x << std::endl;
+    std::cout  << "Itery: " << nbIter << " " << vtxpos.y << std::endl;
+    std::cout  << "Iterz: " << nbIter << " " << vtxpos.z << std::endl;
     vtx.setChi2AndDoF( chi2, 2*ntrin-3 ) ;
 
     // loose convergence criteria if close to end of iterations
@@ -324,7 +329,7 @@ bool fitVertex( XYZPoint& seedPoint,
       m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
       m_state_c31 += dz* m_state_c33 ;
 
-      Vector2 res{ refpos.x - m_state_x, refpos.y - m_state_y };
+      Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
       
       double tr_chi2          = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
