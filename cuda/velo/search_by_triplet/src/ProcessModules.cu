@@ -6,7 +6,7 @@
  * @brief Processes modules in decreasing order with some stride
  */
 __device__ void process_modules(
-  Module* module_data,
+  VeloTracking::Module* module_data,
   float* shared_best_fits,
   const uint starting_module,
   const uint stride,
@@ -24,9 +24,9 @@ __device__ void process_modules(
   uint* ttf_insert_pointer,
   uint* tracks_insert_pointer,
   uint* tracks_to_follow,
-  TrackletHits* weak_tracks,
-  TrackletHits* tracklets,
-  TrackHits* tracks,
+  VeloTracking::TrackletHits* weak_tracks,
+  VeloTracking::TrackletHits* tracklets,
+  VeloTracking::TrackHits* tracks,
   const uint number_of_hits,
   unsigned short* h1_rel_indices,
   uint* local_number_of_hits,

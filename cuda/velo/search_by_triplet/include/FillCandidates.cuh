@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../common/include/VeloDefinitions.cuh"
+#include "VeloDefinitions.cuh"
 
 __device__ void fill_candidates_impl(
   short* h0_candidates,

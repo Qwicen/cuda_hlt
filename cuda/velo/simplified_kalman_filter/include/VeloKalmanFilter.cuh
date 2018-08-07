@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdint.h>
-#include "../../common/include/VeloDefinitions.cuh"
-#include "../../../../main/include/Common.h"
+#include "VeloDefinitions.cuh"
+#include "Common.h"
 
 __device__ float velo_kalman_filter_step(
   const float z,
@@ -22,7 +22,7 @@ __device__ float velo_kalman_filter_step(
  */
 template<bool upstream>
 __device__ void simplified_fit(
-  const Track<mc_check_enabled>& track,
+  const VeloTracking::Track<mc_check_enabled>& track,
   const VeloState& stateAtBeamLine,
   VeloState* velo_state
 ) {
@@ -91,6 +91,6 @@ __global__ void velo_fit(
   const uint32_t* dev_velo_cluster_container,
   const uint* dev_module_cluster_start,
   const int* dev_atomics_storage,
-  const Track<mc_check_enabled>* dev_tracks,
+  const VeloTracking::Track<mc_check_enabled>* dev_tracks,
   VeloState* dev_velo_states
 );

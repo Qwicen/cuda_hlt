@@ -4,8 +4,8 @@
  * @brief Calculates the parameters according to a root means square fit
  */
  __device__ VeloState means_square_fit(
-  const Hit<mc_check_enabled>* velo_track_hits,
-  const TrackHits& track
+  const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
+  const VeloTracking::TrackHits& track
 ) {
   VeloState state;
 
@@ -52,6 +52,8 @@
     state.y = (uy * uz2 - uyz * uz) * denu;
 
     state.z = -(state.x * state.tx + state.y * state.ty) / (state.tx * state.tx + state.ty * state.ty);
+
+    state.backward = state.z > velo_track_hits[0].z;
   }
 
   {
@@ -110,18 +112,18 @@
 
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
-  const TrackHits* dev_tracks,
+  const VeloTracking::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
-  Hit<mc_check_enabled>* dev_velo_track_hits,
+  VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
   VeloState* dev_velo_states
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
 
-  const TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
+  const VeloTracking::TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
   int* tracks_insert_pointer = dev_atomics_storage + event_number;
   const int number_of_tracks = *tracks_insert_pointer;
 
@@ -148,16 +150,16 @@ __global__ void consolidate_tracks(
   for (uint i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
     const uint element = i * blockDim.x + threadIdx.x;
     if (element < number_of_tracks) {
-      const TrackHits track = event_tracks[element];
+      const VeloTracking::TrackHits track = event_tracks[element];
 
       // Pointer to velo_track_hit container
-      Hit<mc_check_enabled>* velo_track_hits = dev_velo_track_hits +
+      VeloTracking::Hit<mc_check_enabled>* velo_track_hits = dev_velo_track_hits +
         dev_velo_track_hit_number[accumulated_tracks + element];
 
       // Store X, Y, Z and ID in consolidated container
       for (uint j=0; j<track.hitsNum; ++j) {
         const auto hit_index = track.hits[j];
-        velo_track_hits[j] = Hit<mc_check_enabled>{
+        velo_track_hits[j] = VeloTracking::Hit<mc_check_enabled>{
           hit_Xs[hit_index],
           hit_Ys[hit_index],
           hit_Zs[hit_index]
@@ -173,10 +175,6 @@ __global__ void consolidate_tracks(
         track
       );
 
-      // Note: With the state, the following parameters can be calculated:
-      // backward = state.z > track.hits[0].z;
-      // tx = state.tx;
-      // ty = state.ty;
     }
   }
 }

@@ -44,7 +44,7 @@ __global__ void velo_fit(
   const uint32_t* dev_velo_cluster_container,
   const uint* dev_module_cluster_start,
   const int* dev_atomics_storage,
-  const Track<mc_check_enabled>* dev_tracks,
+  const VeloTracking::Track<mc_check_enabled>* dev_tracks,
   VeloState* dev_velo_states
 ) {
   /* Data initialization */
@@ -56,7 +56,7 @@ __global__ void velo_fit(
   const uint number_of_tracks = dev_atomics_storage[event_number];
   const uint track_start = dev_atomics_storage[number_of_events + event_number];
   const uint total_number_of_tracks = dev_atomics_storage[2*number_of_events];
-  const Track<mc_check_enabled>* tracks = dev_tracks + track_start;
+  const VeloTracking::Track<mc_check_enabled>* tracks = dev_tracks + track_start;
   VeloState* velo_states = dev_velo_states + track_start;
 
   // Iterate over the tracks and calculate fits
@@ -80,14 +80,14 @@ __global__ void velo_fit(
       // Upstream is equivalent to
       // (m_stateClosestToBeamKalmanFit || m_addStateFirstLastMeasurementKalmanFit)
       
-      // Downstream fit
+      // Downstream fit (away from the interaction region: lowest z for backward tracks, highest z for forward tracks)
       simplified_fit<false>(
         track,
         stateAtBeamLine,
         velo_state_base + total_number_of_tracks
       );
 
-      // Upstream fit
+      // Upstream fit (towards the interaction region: highest z for backward tracks, lowest z for forward tracks)
       simplified_fit<true>(
         track,
         stateAtBeamLine,

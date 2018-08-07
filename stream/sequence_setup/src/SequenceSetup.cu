@@ -17,6 +17,7 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_single_block_velo_track_hit_number] = "Prefix sum single block (2)";
   a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2)";
   a[seq::consolidate_tracks] = "Consolidate tracks";
+  a[seq::veloUT] = "VeloUT tracking";
   a[seq::preprocessing] = "Preprocess SciFi data";
   return a;
 }
@@ -45,6 +46,9 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_prefix_sum_auxiliary_array_2] = "dev_prefix_sum_auxiliary_array_2";
   a[arg::dev_velo_track_hits] = "dev_velo_track_hits";
   a[arg::dev_velo_states] = "dev_velo_states";
+  a[arg::dev_ut_hits] = "dev_ut_hits";
+  a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
+  a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
   a[arg::dev_ft_events] = "dev_ft_events";
   a[arg::dev_ft_event_offsets] = "dev_ft_event_offsets";
   return a;
@@ -149,6 +153,15 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_module_cluster_num,
     arg::dev_velo_track_hits,
     arg::dev_velo_states
+  };
+  sequence_dependencies[seq::veloUT] = {
+    arg::dev_ut_hits,
+    arg::dev_atomics_storage,
+    arg::dev_velo_track_hit_number,
+    arg::dev_velo_track_hits,
+    arg::dev_velo_states,
+    arg::dev_veloUT_tracks,
+    arg::dev_atomics_veloUT
   };
   sequence_dependencies[seq::preprocessing] = {
     arg::dev_ft_events,

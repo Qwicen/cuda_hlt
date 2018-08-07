@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "../../common/include/ClusteringDefinitions.cuh"
+#include "ClusteringDefinitions.cuh"
 
 __global__ void masked_velo_clustering(
   char* dev_raw_input,

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../../../main/include/Timer.h"
-#include "../../../../main/include/Logger.h"
-#include "../../../../cuda/velo/common/include/ClusteringDefinitions.cuh"
+#include "Timer.h"
+#include "Logger.h"
+#include "ClusteringDefinitions.cuh"
 #include "ClusteringCommon.h"
 #include <cstring>
 
