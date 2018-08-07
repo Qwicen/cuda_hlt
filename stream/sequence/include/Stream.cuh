@@ -17,6 +17,8 @@
 
 #include "run_VeloUT_CPU.h"
 
+#include "UTDefinitions.cuh"
+
 class Timer;
 
 
@@ -59,8 +61,10 @@ struct Stream {
   /* UT DECODING */
   uint32_t * host_ut_raw_banks;
   uint32_t * host_ut_raw_banks_offsets;
-  uint32_t * host_ut_sourceIDs;
-  uint32_t * host_ut_number_of_hits;
+  uint32_t * host_ut_stripsPerHybrid;
+  UTExpandedChannelIDs * host_ut_expanded_channels;
+  UTGeometry * host_ut_geometry;
+  UTHits * host_ut_hits_decoded;
   uint32_t host_ut_number_of_raw_banks = 256; //actually 180
   uint32_t host_ut_max_size_raw_bank = 32;    //actually ~18
 

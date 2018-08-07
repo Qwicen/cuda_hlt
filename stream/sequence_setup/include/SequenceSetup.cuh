@@ -16,6 +16,7 @@
 #include "TupleIndicesChecker.cuh"
 #include "SequenceArgumentEnum.cuh"
 
+
 /**
  * @brief Algorithm tuple definition. All algorithms in the sequence
  *        should be added here in the same order as seq_enum_t
@@ -87,10 +88,13 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_ut_hits, VeloUTTracking::HitsSoA>,
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
   Argument<arg::dev_atomics_veloUT, int>,
+  
   Argument<arg::dev_ut_raw_banks, uint32_t>,
   Argument<arg::dev_ut_raw_banks_offsets, uint32_t>,
-  Argument<arg::dev_ut_sourceIDs, uint32_t>,
-  Argument<arg::dev_ut_number_of_hits, uint32_t>
+  Argument<arg::dev_ut_stripsPerHybrid, uint32_t>,
+  Argument<arg::dev_ut_expanded_channels, UTExpandedChannelIDs>,
+  Argument<arg::dev_ut_geometry, UTGeometry>,
+  Argument<arg::dev_ut_hits_decoded, UTHits>
 >;
 
 /**

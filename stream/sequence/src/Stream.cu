@@ -57,8 +57,10 @@ cudaError_t Stream::initialize(
 /* UT DECODING */
   cudaCheck(cudaMallocHost((void**)&host_ut_raw_banks, host_ut_max_size_raw_bank * host_ut_number_of_raw_banks * sizeof(uint32_t)));
   cudaCheck(cudaMallocHost((void**)&host_ut_raw_banks_offsets, host_ut_number_of_raw_banks * sizeof(uint32_t)));
-  cudaCheck(cudaMallocHost((void**)&host_ut_sourceIDs, host_ut_number_of_raw_banks * sizeof(uint32_t)));
-  cudaCheck(cudaMallocHost((void**)&host_ut_number_of_hits, host_ut_number_of_raw_banks * sizeof(uint32_t)));
+  cudaCheck(cudaMallocHost((void**)&host_ut_stripsPerHybrid, ut_number_of_boards * sizeof(uint32_t)));
+  cudaCheck(cudaMallocHost((void**)&host_ut_expanded_channels, sizeof(UTExpandedChannelIDs)));
+  cudaCheck(cudaMallocHost((void**)&host_ut_geometry, sizeof(UTGeometry)));
+  cudaCheck(cudaMallocHost((void**)&host_ut_hits_decoded, sizeof(UTHits)));
 
   // Define sequence of algorithms to execute
   sequence.set(sequence_algorithms());

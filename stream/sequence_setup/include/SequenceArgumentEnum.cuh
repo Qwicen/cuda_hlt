@@ -56,9 +56,12 @@ enum arg_enum_t {
   dev_ut_hits,
   dev_veloUT_tracks,
   dev_atomics_veloUT,
+
   dev_ut_raw_banks,
   dev_ut_raw_banks_offsets,
-  dev_ut_sourceIDs,
-  dev_ut_number_of_hits
+  dev_ut_stripsPerHybrid,
+  dev_ut_expanded_channels,
+  dev_ut_geometry,
+  dev_ut_hits_decoded
 };
 }
