@@ -422,6 +422,20 @@ void PrVeloUT::prepareOutputTrack(
 
   VeloUTTracking::TrackVeloUT outputtrack; 
   outputtrack.track = veloTrack.track;
+  // Set the state on the output track
+  outputtrack.state_endvelo.x = veloTrack.state.x;
+  outputtrack.state_endvelo.y = veloTrack.state.y;
+  outputtrack.state_endvelo.z = veloTrack.state.z;
+  outputtrack.state_endvelo.tx = veloTrack.state.tx;
+  outputtrack.state_endvelo.ty = veloTrack.state.ty;
+  outputtrack.state_endvelo.chi2 = veloTrack.state.chi2;
+  outputtrack.state_endvelo.c00 = veloTrack.state.c00;
+  outputtrack.state_endvelo.c20 = veloTrack.state.c20;
+  outputtrack.state_endvelo.c22 = veloTrack.state.c22;
+  outputtrack.state_endvelo.c11 = veloTrack.state.c11;
+  outputtrack.state_endvelo.c31 = veloTrack.state.c31;
+  outputtrack.state_endvelo.c33 = veloTrack.state.c33;
+  outputtrack.state_endvelo.qOverP = qop; 
   outputTracks.emplace_back( outputtrack );
   
   // Adding overlap hits
