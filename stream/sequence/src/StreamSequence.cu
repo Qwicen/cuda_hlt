@@ -345,7 +345,6 @@ cudaError_t Stream::run_sequence(
       forward_tracks = run_forward_on_CPU(
                  forward_tracks_events,
                  hits_layers_events_ft,
-                 n_hits_layers_events_ft,
 	         ut_tracks,
                  number_of_events
                );

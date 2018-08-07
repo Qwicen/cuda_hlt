@@ -19,8 +19,7 @@ PrForward::PrForward() :
 //=============================================================================
 std::vector<VeloUTTracking::TrackVeloUT> PrForward::operator() (
   const std::vector<VeloUTTracking::TrackVeloUT>& inputTracks,
-  ForwardTracking::HitsSoAFwd *hits_layers,
-  const uint32_t n_hits_layers[ForwardTracking::n_layers]
+  ForwardTracking::HitsSoAFwd *hits_layers
   ) const
 {
 
@@ -35,6 +34,11 @@ std::vector<VeloUTTracking::TrackVeloUT> PrForward::operator() (
     // for a start copy input to output
     prepareOutputTrack(veloTr, oneOutput);
     for (auto track : oneOutput) outputTracks.emplace_back(track);
+    // Reset used hits etc.
+    for (int i =0; i< ForwardTracking::max_numhits_per_event; i++){
+      m_hits_layers.m_used[i] = false;
+      m_hits_layers.m_coord[i] = 0.0;
+    }
  
   }
 
@@ -50,15 +54,6 @@ void PrForward::prepareOutputTrack(
   // Cache state information from state at the end of the VELO for
   // all subsequent processing
   VeloUTTracking::FullState state_at_endvelo = veloUTTrack.state_endvelo;
-  m_x0     = state_at_endvelo.x;
-  m_y0     = state_at_endvelo.y;
-  m_z0     = state_at_endvelo.z;
-  m_tx     = state_at_endvelo.tx;
-  m_ty     = state_at_endvelo.ty;
-  m_qOverP = state_at_endvelo.qOverP;
-  m_tx2    = m_tx * m_tx;
-  m_ty2    = m_ty * m_ty;
-  m_slope2 = m_tx2 + m_ty2;
 
   // The LHCb framework code had a PT preselection for the VeloUT tracks
   // here, which I am removing because this should be done explicitly through
@@ -67,29 +62,28 @@ void PrForward::prepareOutputTrack(
   // Some values related to the forward track which were stored in a dedicated
   // forward track class, let's see if I can get rid of that here
   const float m_zRef_track    = m_zReference; 
-  const float m_xParams_seed[4] = {m_x0 + (m_zRef_track - m_z0)*m_tx,m_tx,0.f,0.f};
-  const float m_yParams_seed[4] = {m_y0 + (m_zRef_track - m_z0)*m_ty,m_ty,0.f,0.f};
+  const float m_xParams_seed[4] = {state_at_endvelo.x + (m_zRef_track - state_at_endvelo.z)*state_at_endvelo.tx,state_at_endvelo.tx,0.f,0.f};
+  const float m_yParams_seed[4] = {state_at_endvelo.y + (m_zRef_track - state_at_endvelo.z)*state_at_endvelo.ty,state_at_endvelo.ty,0.f,0.f};
 
-  float yAtRef = yFromVelo( m_zReference );
+  float yAtRef = yFromVelo( m_zReference, state_at_endvelo );
 
   // First loop Hough cluster search, set initial search windows
-  m_minXHits_cur        = m_minXHits;
-  m_maxXWindow_cur      = m_maxXWindow;
-  m_maxXWindowSlope_cur = m_maxXWindowSlope ;
-  m_maxXGap_cur         = m_maxXGap;
-  m_minStereoHits_cur   = 0;
+  PrParameters pars_first{m_minXHits,m_maxXWindow,m_maxXWindowSlope,m_maxXGap,4u};
+  PrParameters pars_second{m_minXHits_2nd,m_maxXWindow_2nd,m_maxXWindowSlope_2nd,m_maxXGap_2nd,4u};
 
   std::vector<int> allXHits[2];
 
-  if(yAtRef>-5.f)collectAllXHits(allXHits[1], m_xParams_seed, m_yParams_seed, 1); 
-  if(yAtRef< 5.f)collectAllXHits(allXHits[0], m_xParams_seed, m_yParams_seed, -1);
+  if(yAtRef>-5.f)collectAllXHits(allXHits[1], m_xParams_seed, m_yParams_seed, state_at_endvelo, 1); 
+  if(yAtRef< 5.f)collectAllXHits(allXHits[0], m_xParams_seed, m_yParams_seed, state_at_endvelo, -1);
 
   std::vector<VeloUTTracking::TrackVeloUT> outputTracks1;
   
-  if(yAtRef>-5.f)selectXCandidates(allXHits[1], veloUTTrack, outputTracks1, m_zRef_track, m_xParams_seed, m_yParams_seed, 1);
-  if(yAtRef< 5.f)selectXCandidates(allXHits[0], veloUTTrack, outputTracks1, m_zRef_track, m_xParams_seed, m_yParams_seed, -1); 
+  if(yAtRef>-5.f)selectXCandidates(allXHits[1], veloUTTrack, outputTracks1, m_zRef_track, 
+				   m_xParams_seed, m_yParams_seed, state_at_endvelo, pars_first,  1);
+  if(yAtRef< 5.f)selectXCandidates(allXHits[0], veloUTTrack, outputTracks1, m_zRef_track, 
+				   m_xParams_seed, m_yParams_seed, state_at_endvelo, pars_first, -1); 
 
-  selectFullCandidates(outputTracks1,m_xParams_seed,m_yParams_seed);
+  selectFullCandidates(outputTracks1,m_xParams_seed,m_yParams_seed, state_at_endvelo, pars_first);
 
   bool ok = std::any_of(outputTracks1.begin(), outputTracks1.end(),
                         [](const auto& track) {
@@ -98,13 +92,11 @@ void PrForward::prepareOutputTrack(
 
   std::vector<VeloUTTracking::TrackVeloUT> outputTracks2; 
   if (!ok && m_secondLoop) { // If you found nothing begin the 2nd loop
-    m_minXHits_cur        = m_minXHits_2nd;
-    m_maxXWindow_cur      = m_maxXWindow_2nd;
-    m_maxXWindowSlope_cur = m_maxXWindowSlope_2nd ;
-    m_maxXGap_cur         = m_maxXGap_2nd;   
-    if(yAtRef>-5.f)selectXCandidates(allXHits[1], veloUTTrack, outputTracks2, m_zRef_track, m_xParams_seed, m_yParams_seed, 1);
-    if(yAtRef< 5.f)selectXCandidates(allXHits[0], veloUTTrack, outputTracks2, m_zRef_track, m_xParams_seed, m_yParams_seed, -1);  
-    selectFullCandidates(outputTracks2,m_xParams_seed,m_yParams_seed);
+    if(yAtRef>-5.f)selectXCandidates(allXHits[1], veloUTTrack, outputTracks2, m_zRef_track, 
+				     m_xParams_seed, m_yParams_seed, state_at_endvelo, pars_second, 1);
+    if(yAtRef< 5.f)selectXCandidates(allXHits[0], veloUTTrack, outputTracks2, m_zRef_track, 
+				     m_xParams_seed, m_yParams_seed, state_at_endvelo, pars_second, -1);  
+    selectFullCandidates(outputTracks2,m_xParams_seed,m_yParams_seed, state_at_endvelo, pars_second);
     // Merge
     outputTracks1.insert(std::end(outputTracks1),
 		 	 std::begin(outputTracks2),
@@ -130,7 +122,9 @@ void PrForward::prepareOutputTrack(
 //=========================================================================
 void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
                                      const float m_xParams_seed[4],
-                                     const float m_yParams_seed[4]) const {
+                                     const float m_yParams_seed[4],
+				     VeloUTTracking::FullState state_at_endvelo,
+				     PrParameters& pars ) const {
 
   std::vector<unsigned int> pc;
   std::vector<float> mlpInput(7, 0.); 
@@ -140,14 +134,14 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
   for (std::vector<VeloUTTracking::TrackVeloUT>::iterator cand = std::begin(outputTracks);
        cand != std::end(outputTracks); ++cand) {
     bool isValid = false; // In c++ this is in track class, try to understand why later
-    m_minStereoHits_cur = 4;
+    pars.minStereoHits = 4;
 
-    if(cand->trackForward.hitsNum + m_minStereoHits_cur < m_minTotalHits) {
-      m_minStereoHits_cur = m_minTotalHits - cand->trackForward.hitsNum;
+    if(cand->trackForward.hitsNum + pars.minStereoHits < m_minTotalHits) {
+      pars.minStereoHits = m_minTotalHits - cand->trackForward.hitsNum;
     }
     // search for hits in U/V layers
-    std::vector<int> stereoHits = collectStereoHits(*cand);
-    if(stereoHits.size() < m_minStereoHits_cur) continue;
+    std::vector<int> stereoHits = collectStereoHits(*cand, state_at_endvelo, pars);
+    if(stereoHits.size() < pars.minStereoHits) continue;
     // DIRTY HACK
     std::vector<std::pair<float,int> > tempforsort;
     tempforsort.clear();
@@ -157,7 +151,7 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
     for (auto pair : tempforsort) {stereoHits.emplace_back(pair.second);}
 
     // select best U/V hits
-    if ( !selectStereoHits(*cand, stereoHits) ) continue;
+    if ( !selectStereoHits(*cand, stereoHits, state_at_endvelo, pars) ) continue;
 
     pc.clear();
     int planelist[12] = {0};
@@ -168,35 +162,35 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
     }
     
     //make a fit of ALL hits
-    if(!fitXProjection(cand->trackForward.trackParams, pc, planelist))continue;
+    if(!fitXProjection(cand->trackForward.trackParams, pc, planelist, pars))continue;
     
     //check in empty x layers for hits 
     auto checked_empty = (cand->trackForward.trackParams[4]  < 0.f) ?
         addHitsOnEmptyXLayers(cand->trackForward.trackParams, m_xParams_seed, m_yParams_seed,
-                              true, pc, planelist, -1)
+                              true, pc, planelist, pars, -1)
         : 
         addHitsOnEmptyXLayers(cand->trackForward.trackParams, m_xParams_seed, m_yParams_seed,
-                              true, pc, planelist, 1);
+                              true, pc, planelist, pars, 1);
 
     if (not checked_empty) continue;
 
     //track has enough hits, calcualte quality and save if good enough
     if(nbDifferent(planelist) >= m_minTotalHits){
 
-      const float qOverP  = calcqOverP(cand->trackForward.trackParams[1]);
+      const float qOverP  = calcqOverP(cand->trackForward.trackParams[1], state_at_endvelo);
       //orig params before fitting , TODO faster if only calc once?? mem usage?
       const float xAtRef = cand->trackForward.trackParams[0];
-      float dSlope  = ( m_x0 + (m_zReference - m_z0) * m_tx - xAtRef ) / ( m_zReference - m_zMagnetParams[0]);
-      const float zMagSlope = m_zMagnetParams[2] * m_tx2 +  m_zMagnetParams[3] * m_ty2;
+      float dSlope  = ( state_at_endvelo.x + (m_zReference - state_at_endvelo.z) * state_at_endvelo.tx - xAtRef ) / ( m_zReference - m_zMagnetParams[0]);
+      const float zMagSlope = m_zMagnetParams[2] * pow(state_at_endvelo.tx,2) +  m_zMagnetParams[3] * pow(state_at_endvelo.ty,2);
       const float zMag    = m_zMagnetParams[0] + m_zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
-      const float xMag    = m_x0 + (zMag- m_z0) * m_tx;
+      const float xMag    = state_at_endvelo.x + (zMag- state_at_endvelo.z) * state_at_endvelo.tx;
       const float slopeT  = ( xAtRef - xMag ) / ( m_zReference - zMag );
-      dSlope        = slopeT - m_tx;
-      const float dyCoef  = dSlope * dSlope * m_ty;
+      dSlope        = slopeT - state_at_endvelo.tx;
+      const float dyCoef  = dSlope * dSlope * state_at_endvelo.ty;
 
       float bx = slopeT;
-      float ay = m_y0 + (m_zReference - m_z0) * m_ty;
-      float by = m_ty + dyCoef * m_byParams;
+      float ay = state_at_endvelo.y + (m_zReference - state_at_endvelo.z) * state_at_endvelo.ty;
+      float by = state_at_endvelo.ty + dyCoef * m_byParams;
 
       //ay,by,bx params
       const float ay1  = cand->trackForward.trackParams[4];
@@ -205,16 +199,16 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
 
       mlpInput[0] = nbDifferent(planelist);
       mlpInput[1] = qOverP;
-      mlpInput[2] = m_qOverP - qOverP; //veloUT - scifi
-      if(std::fabs(m_qOverP) < 1e-9f) mlpInput[2] = 0.f; //no momentum estiamte
-      mlpInput[3] = m_slope2;
+      mlpInput[2] = state_at_endvelo.qOverP - qOverP; //veloUT - scifi
+      if(std::fabs(state_at_endvelo.qOverP) < 1e-9f) mlpInput[2] = 0.f; //no momentum estiamte
+      mlpInput[3] = pow(state_at_endvelo.tx,2) + pow(state_at_endvelo.ty,2);
       mlpInput[4] = by - by1;
       mlpInput[5] = bx - bx1;
       mlpInput[6] = ay - ay1;
 
       float quality = 0.f;
       /// WARNING: if the NN classes straight out of TMVA are used, put a mutex here!
-      if(m_minXHits_cur > 4) quality = m_MLPReader_1st.GetMvaValue(mlpInput); //1st loop NN
+      if(pars.minXHits > 4) quality = m_MLPReader_1st.GetMvaValue(mlpInput); //1st loop NN
       else                   quality = m_MLPReader_2nd.GetMvaValue(mlpInput); //2nd loop NN
 
       quality = 1.f-quality; //backward compability
@@ -236,7 +230,9 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
 //  Fit the stereo hits
 //=========================================================================
 bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track, 
-				 std::vector<int> stereoHits) const {
+				 std::vector<int> stereoHits,
+				 VeloUTTracking::FullState state_at_endvelo, 
+				 PrParameters& pars) const {
   //why do we rely on xRef? --> coord is NOT xRef for stereo HITS!
   std::vector<int> bestStereoHits;
   float originalYParams[3] = {track.trackForward.trackParams[4],
@@ -246,8 +242,8 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
   float bestMeanDy       = 1e9f;
 
   auto beginRange = std::begin(stereoHits)-1;
-  if(m_minStereoHits_cur > stereoHits.size()) return false; //otherwise crash if minHits is too large
-  auto endLoop = std::end(stereoHits) - m_minStereoHits_cur;
+  if(pars.minStereoHits > stereoHits.size()) return false; //otherwise crash if minHits is too large
+  auto endLoop = std::end(stereoHits) - pars.minStereoHits;
   std::vector<unsigned int> pc;
   int planelist[12] = {0};
   while ( beginRange < endLoop ) {
@@ -257,7 +253,7 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
     auto endRange = beginRange;
     float sumCoord = 0.;
     // BAD CODE RELIES ON FIRST CONDITION ALWAYS BEING TRUE AT START NOT TO SEGFAULT
-    while( nbDifferent(planelist) < m_minStereoHits_cur ||
+    while( nbDifferent(planelist) < pars.minStereoHits ||
            m_hits_layers.m_coord[*endRange] < m_hits_layers.m_coord[*(endRange-1)] + m_minYGap ) {
       pc.push_back(*endRange);
       sumCoord += m_hits_layers.m_coord[*endRange];
@@ -312,9 +308,9 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
                    [](const int& hit) { return hit; });
 
     //fit Y Projection of track using stereo hits
-    if(!fitYProjection(track, trackStereoHits, pc, planelist))continue;
+    if(!fitYProjection(track, trackStereoHits, pc, planelist, state_at_endvelo, pars))continue;
 
-    if(!addHitsOnEmptyStereoLayers(track, trackStereoHits, pc, planelist))continue;
+    if(!addHitsOnEmptyStereoLayers(track, trackStereoHits, pc, planelist, state_at_endvelo, pars))continue;
 
     if(trackStereoHits.size() < bestStereoHits.size()) continue; //number of hits most important selection criteria!
 
@@ -354,7 +350,9 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
 bool PrForward::addHitsOnEmptyStereoLayers(VeloUTTracking::TrackVeloUT& track,
                                		   std::vector<int>& stereoHits,
                                		   std::vector<unsigned int> &pc,
-                               		   int planelist[]) const {
+                               		   int planelist[],
+                                     	   VeloUTTracking::FullState state_at_endvelo,
+                                 	   PrParameters& pars) const {
   //at this point pc is counting only stereo HITS!
   if(nbDifferent(planelist)  > 5) return true;
 
@@ -383,7 +381,7 @@ bool PrForward::addHitsOnEmptyStereoLayers(VeloUTTracking::TrackVeloUT& track,
     if(!triangleSearch && (2.f*float((((m_uvZones[zone])%2)==0))-1.f) * yZone > 0.f) continue;
 
     //only version without triangle search!
-    const float dxTol = m_tolY + m_tolYSlope * ( fabs( xPred - m_x0 + (zZone - m_z0) * m_tx) + fabs(yZone) );
+    const float dxTol = m_tolY + m_tolYSlope * ( fabs( xPred - state_at_endvelo.x + (zZone - state_at_endvelo.z) * state_at_endvelo.tx) + fabs(yZone) );
     // -- Use a binary search to find the lower bound of the range of x values
     // -- This takes the y value into account
     const float lower_bound_at = -dxTol - yZone * m_uvZone_dxdy[zone] + xPred;
@@ -427,7 +425,7 @@ bool PrForward::addHitsOnEmptyStereoLayers(VeloUTTracking::TrackVeloUT& track,
     }
   }
   if ( !added ) return true;
-  return fitYProjection( track, stereoHits, pc, planelist );
+  return fitYProjection( track, stereoHits, pc, planelist, state_at_endvelo, pars );
 }
 //=========================================================================
 //  Fit the Y projection of a track, return OK if fit sucecssfull
@@ -435,13 +433,15 @@ bool PrForward::addHitsOnEmptyStereoLayers(VeloUTTracking::TrackVeloUT& track,
 bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
                                std::vector<int>& stereoHits,
 			       std::vector<unsigned int> &pc,
-                               int planelist[]) const {
-  if ( nbDifferent(planelist) < m_minStereoHits_cur ) return false;
+                               int planelist[],
+                               VeloUTTracking::FullState state_at_endvelo,
+                               PrParameters& pars) const {
+  if ( nbDifferent(planelist) < pars.minStereoHits ) return false;
   float maxChi2 = 1.e9f;
   bool parabola = false; //first linear than parabola
   //== Fit a line
   const float txs  = track.trackForward.trackParams[0]; // simplify overgeneral c++ calculation
-  const float tsxz = m_x0 + (m_zReference - m_z0) * m_tx; 
+  const float tsxz = state_at_endvelo.x + (m_zReference - state_at_endvelo.z) * state_at_endvelo.tx; 
   const float tolYMag = m_tolYMag + m_tolYMagSlope * fabs(txs-tsxz);
   const float wMag   = 1./(tolYMag * tolYMag );
 
@@ -449,9 +449,9 @@ bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
   while ( doFit ) {
     //Use position in magnet as constrain in fit
     //although bevause wMag is quite small only little influence...
-    float zMag  = zMagnet();
+    float zMag  = zMagnet(state_at_endvelo);
     const float tys = track.trackForward.trackParams[4]+(zMag-m_zReference)*track.trackForward.trackParams[5];
-    const float tsyz = m_y0 + (zMag-m_z0)*m_ty;
+    const float tsyz = state_at_endvelo.y + (zMag-state_at_endvelo.z)*state_at_endvelo.ty;
     const float dyMag = tys-tsyz;
     zMag -= m_zReference;
     float s0   = wMag;
@@ -546,7 +546,7 @@ bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
         }
       }
       pc = pc_temp;
-      if ( nbDifferent(planelist) < m_minStereoHits_cur ) {
+      if ( nbDifferent(planelist) < pars.minStereoHits ) {
         return false;
       }
       stereoHits.erase( worst );
@@ -559,7 +559,9 @@ bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
 //=========================================================================
 //  Collect all hits in the stereo planes compatible with the track
 //=========================================================================
-std::vector<int> PrForward::collectStereoHits(VeloUTTracking::TrackVeloUT& track) const {
+std::vector<int> PrForward::collectStereoHits(VeloUTTracking::TrackVeloUT& track,
+                                     	      VeloUTTracking::FullState state_at_endvelo,
+                                 	      PrParameters& pars) const {
   
   std::vector<int> stereoHits;
   // Skip a reserve call for now, save that for CUDA
@@ -583,7 +585,7 @@ std::vector<int> PrForward::collectStereoHits(VeloUTTracking::TrackVeloUT& track
 
     //float dxDySign = 1.f - 2.f *(float)(zone.dxDy()<0); // same as ? zone.dxDy()<0 : -1 : +1 , but faster??!!
     const float dxDySign = m_uvZone_dxdy[zone]<0?-1.f:1.f;
-    const float seed_x_at_zZone = m_x0 + (zZone - m_z0) * m_tx;//Cached as we are upgrading one at a time, revisit
+    const float seed_x_at_zZone = state_at_endvelo.x + (zZone - state_at_endvelo.z) * state_at_endvelo.tx;//Cached as we are upgrading one at a time, revisit
     const float dxTol = m_tolY + m_tolYSlope * (std::fabs(xPred - seed_x_at_zZone) + std::fabs(yZone));
 
     // -- Use a binary search to find the lower bound of the range of x values
@@ -626,23 +628,25 @@ std::vector<int> PrForward::collectStereoHits(VeloUTTracking::TrackVeloUT& track
 //
 void PrForward::collectAllXHits(std::vector<int>& allXHits,
 				const float m_xParams_seed[4], 
-				const float m_yParams_seed[4],  
+				const float m_yParams_seed[4],
+                                VeloUTTracking::FullState state_at_endvelo,  
 				int side) const {
   // A bunch of hardcoded numbers to set the search window
   // really this should all be made configurable
-  float dxRef = 0.9 * calcDxRef(m_minPt);
-  float zMag = zMagnet();
+  float dxRef = 0.9 * calcDxRef(m_minPt, state_at_endvelo);
+  float zMag = zMagnet(state_at_endvelo);
  
-  const float q = m_qOverP>0.f ? 1.f :-1.f;
+  const float q = state_at_endvelo.qOverP>0.f ? 1.f :-1.f;
   const float dir = q*m_magscalefactor*(-1.f);
 
-  // Is PT at end VELO same as PT at beamline? Check output of VeloUT 
-  const float pt = std::sqrt(std::fabs(1./(m_qOverP*m_qOverP))*(m_slope2)/(1.+m_slope2));
+  // Is PT at end VELO same as PT at beamline? Check output of VeloUT
+  float m_slope2 = pow(state_at_endvelo.tx,2) + pow(state_at_endvelo.ty,2); 
+  const float pt = std::sqrt(std::fabs(1./(state_at_endvelo.qOverP*state_at_endvelo.qOverP))*(m_slope2)/(1.+m_slope2));
   const bool wSignTreatment = m_useWrongSignWindow && pt>m_wrongSignPT;
 
   float dxRefWS = 0.0; 
   if( wSignTreatment ){
-    dxRefWS = 0.9 * calcDxRef(m_wrongSignPT); //make windows a bit too small - FIXME check effect of this, seems wrong
+    dxRefWS = 0.9 * calcDxRef(m_wrongSignPT, state_at_endvelo); //make windows a bit too small - FIXME check effect of this, seems wrong
   }
 
   std::array<int, 7> iZoneEnd; //6 x planes
@@ -754,7 +758,7 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
     const int iEnd = allXHits.size();
     iZoneEnd[cptZone++] = iEnd;
     if( !(iStart == iEnd) ){
-      xAtRef_SamePlaneHits(allXHits, m_xParams_seed, iStart, iEnd); //calc xRef for all hits on same layer
+      xAtRef_SamePlaneHits(allXHits, m_xParams_seed, state_at_endvelo, iStart, iEnd); //calc xRef for all hits on same layer
     } 
   }
   // Drop the more sophisticated sort in the C++ code for now, not sure if this
@@ -777,29 +781,32 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
 				  std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
 			          const float m_zRef_track, 
                                   const float m_xParams_seed[4],
-				  const float m_yParams_seed[4], 
+				  const float m_yParams_seed[4],
+				  VeloUTTracking::FullState state_at_endvelo,
+                                  PrParameters& pars,
 				  int side) const {
-  if ( allXHits.size() < m_minXHits_cur ) return;
+  if ( allXHits.size() < pars.minXHits ) return;
   int itEnd = allXHits.back();
   const float xStraight = straightLineExtend(m_xParams_seed,m_zReference);
   int it1 = allXHits.front();
   int it2 = it1; 
+  pars.minStereoHits = 0;
 
   //Parameters for X-hit only fit, thus do not require stereo hits
   std::vector<int> otherHits[12];
 
   while( true ) {
     //find next unused Hits
-    while (it1+m_minXHits_cur - 1 < itEnd && !isValid(allXHits[it1])) ++it1;
-    it2 = it1 + m_minXHits_cur;
+    while (it1+pars.minXHits - 1 < itEnd && !isValid(allXHits[it1])) ++it1;
+    it2 = it1 + pars.minXHits;
     while (it2 <= itEnd && !isValid(allXHits[it2-1])) ++it2;
     if (it2 > itEnd) break;
 
     //define search window for Cluster
     //TODO better xWindow calculation?? how to tune this???
-    const float xWindow = m_maxXWindow_cur + (std::fabs(m_hits_layers.m_coord[allXHits[it1]]) + 
+    const float xWindow = pars.maxXWindow + (std::fabs(m_hits_layers.m_coord[allXHits[it1]]) + 
                                               std::fabs(m_hits_layers.m_coord[allXHits[it1]]-xStraight)
-                                             ) * m_maxXWindowSlope_cur;
+                                             ) * pars.maxXWindowSlope;
     //If window is to small, go one step right
     if ((m_hits_layers.m_coord[allXHits[it2 - 1]] - 
          m_hits_layers.m_coord[allXHits[it1]]) > xWindow
@@ -831,7 +838,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
       //Add next hit,
       // if there is only a small gap between the hits
       //    or insidetofill window and plane is still empty
-      if ( ( m_hits_layers.m_coord[allXHits[it2]] < m_hits_layers.m_coord[allXHits[itLast]] + m_maxXGap_cur )
+      if ( ( m_hits_layers.m_coord[allXHits[it2]] < m_hits_layers.m_coord[allXHits[itLast]] + pars.maxXGap )
            || 
            ( (m_hits_layers.m_coord[allXHits[it2]] - m_hits_layers.m_coord[allXHits[it1]] < xWindow) && 
              (planelist[m_hits_layers.m_planeCode[allXHits[it2]]] == 0) 
@@ -850,7 +857,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
     std::vector<int> coordToFit;
     coordToFit.clear();// In framework came with a reserve 16 call
     //if not enough different planes, start again from the very beginning with next right hit
-    if (nbDifferent(planelist) < m_minXHits_cur) {
+    if (nbDifferent(planelist) < pars.minXHits) {
       ++it1;
       continue;
     }
@@ -995,18 +1002,18 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
     if(ok){
       // In LHCb code this is a move operation replacing hits on the track candidate
       // Here I will work directly with the hits in coordToFit for now
-      trackParameters = getTrackParameters(xAtRef); 
-      fastLinearFit(trackParameters, pc, pcplanelist);
+      trackParameters = getTrackParameters(xAtRef, state_at_endvelo); 
+      fastLinearFit(trackParameters, pc, pcplanelist,pars);
       addHitsOnEmptyXLayers(trackParameters, m_xParams_seed, m_yParams_seed,
-                            false, pc, planelist, side);
+                            false, pc, planelist, pars, side);
       
       ok = nbDifferent(pcplanelist) > 3;
     }
     //== Fit and remove hits...
-    if (ok) ok = fitXProjection(trackParameters, pc, pcplanelist);
+    if (ok) ok = fitXProjection(trackParameters, pc, pcplanelist, pars);
     if (ok) ok = trackParameters[7]/trackParameters[8] < m_maxChi2PerDoF;
     if (ok) ok = addHitsOnEmptyXLayers(trackParameters, m_xParams_seed, m_yParams_seed,
-                                       true, pc, planelist, side);
+                                       true, pc, planelist, pars, side);
     if (ok) {
       //set ModPrHits used , challenge in c++: we don't have the link any more!
       //here it is fairly trivial... :)
@@ -1034,13 +1041,14 @@ bool PrForward::addHitsOnEmptyXLayers(std::vector<float> &trackParameters,
 				      bool fullFit,
                                       std::vector<unsigned int> &pc,
                                       int planelist[],
+                                      PrParameters& pars,
 				      int side) const {
   //is there an empty plane? otherwise skip here!
   if (nbDifferent(planelist) > 11) return true;
   bool  added = false;
   const float x1 = trackParameters[0];
   const float xStraight = straightLineExtend(m_xParams_seed,m_zReference);
-  const float xWindow = m_maxXWindow_cur + ( fabs( x1 ) + fabs( x1 - xStraight ) ) * m_maxXWindowSlope_cur;
+  const float xWindow = pars.maxXWindow + ( fabs( x1 ) + fabs( x1 - xStraight ) ) * pars.maxXWindowSlope;
 
   int iZoneStartingPoint = side > 0 ? m_zoneoffsetpar : 0;
 
@@ -1082,17 +1090,18 @@ bool PrForward::addHitsOnEmptyXLayers(std::vector<float> &trackParameters,
   }
   if ( !added ) return true;
   if ( fullFit ) {
-    return fitXProjection(trackParameters, pc, planelist);
+    return fitXProjection(trackParameters, pc, planelist,pars);
   }
-  fastLinearFit( trackParameters, pc, planelist);
+  fastLinearFit( trackParameters, pc, planelist,pars);
   return true;
 }
 
 bool PrForward::fitXProjection(std::vector<float> &trackParameters,
                                std::vector<unsigned int> &pc,
-                               int planelist[]) const {
+                               int planelist[],
+			       PrParameters& pars) const {
 
-  if (nbDifferent(planelist) < m_minXHits_cur) return false;
+  if (nbDifferent(planelist) < pars.minXHits) return false;
   bool doFit = true;
   while ( doFit ) {
     //== Fit a cubic
@@ -1169,7 +1178,7 @@ bool PrForward::fitXProjection(std::vector<float> &trackParameters,
         if (hit != worst) pc_temp.emplace_back(hit);
       }
       pc = pc_temp;
-      if (nbDifferent(planelist) < m_minXHits_cur + m_minStereoHits_cur) return false;
+      if (nbDifferent(planelist) < pars.minXHits + pars.minStereoHits) return false;
       doFit = true;
     }    
   }
@@ -1178,7 +1187,8 @@ bool PrForward::fitXProjection(std::vector<float> &trackParameters,
 
 void PrForward::fastLinearFit(std::vector<float> &trackParameters, 
 			      std::vector<unsigned int> &pc,
-			      int planelist[]) const {
+			      int planelist[],
+                              PrParameters& pars) const {
   bool fit = true;
   while (fit) {
     //== Fit a line
@@ -1212,7 +1222,7 @@ void PrForward::fastLinearFit(std::vector<float> &trackParameters,
     trackParameters[1] += db;
     fit = false;
 
-    if ( pc.size() < m_minXHits_cur ) return;
+    if ( pc.size() < pars.minXHits ) return;
 
     int worst = pc.back();
     float maxChi2 = 0.f; 
@@ -1250,14 +1260,15 @@ void PrForward::fastLinearFit(std::vector<float> &trackParameters,
 }
 
 inline void PrForward::xAtRef_SamePlaneHits(std::vector<int>& allXHits,
-				            const float m_xParams_seed[4], 
+				            const float m_xParams_seed[4],
+                                     	    VeloUTTracking::FullState state_at_endvelo, 
 					    int itH, int itEnd) const {
   //calculate xref for this plane
   //in the c++ this is vectorized, undoing because no point before CUDA (but vectorization is obvious)
   //this is quite computationally expensive mind, should take care when porting
   float zHit    = m_hits_layers.m_z[allXHits[itH]]; //all hits in same layer
   float xFromVelo_Hit = straightLineExtend(m_xParams_seed,zHit);
-  float zMagSlope = m_zMagnetParams[2] * m_tx2 +  m_zMagnetParams[3] * m_ty2;
+  float zMagSlope = m_zMagnetParams[2] * pow(state_at_endvelo.tx,2) +  m_zMagnetParams[3] * pow(state_at_endvelo.ty,2);
   float dSlopeDivPart = 1.f / ( zHit - m_zMagnetParams[0]);
   float dz      = 1.e-3f * ( zHit - m_zReference );
   
@@ -1265,7 +1276,7 @@ inline void PrForward::xAtRef_SamePlaneHits(std::vector<int>& allXHits,
     float xHit = m_hits_layers.m_x[allXHits[itH]];
     float dSlope  = ( xFromVelo_Hit - xHit ) * dSlopeDivPart;
     float zMag    = m_zMagnetParams[0] + m_zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
-    float xMag    = xFromVelo_Hit + m_tx * (zMag - zHit);
+    float xMag    = xFromVelo_Hit + state_at_endvelo.tx * (zMag - zHit);
     float dxCoef  = dz * dz * ( m_xParams[0] + dz * m_xParams[1] ) * dSlope;
     float ratio   = (  m_zReference - zMag ) / ( zHit - zMag );
     m_hits_layers.m_coord[allXHits[itH]] = xMag + ratio * (xHit + dxCoef  - xMag);
