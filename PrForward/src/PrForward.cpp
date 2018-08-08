@@ -56,7 +56,7 @@ std::vector<VeloUTTracking::TrackVeloUT> PrForward::operator() (
       m_hits_layers.m_used[i] = false;
       m_hits_layers.m_coord[i] = 0.0;
     }
-    break;
+    //break;
  
   }
 
@@ -132,13 +132,15 @@ void PrForward::prepareOutputTrack(
 	 		 std::end(outputTracks2));
     ok = not outputTracks1.empty();
   }
-  
+ 
+  std::cout << "About to do final arbitration of tracks " << ok << std::endl; 
   if(ok || !m_secondLoop){
     std::sort(outputTracks1.begin(), outputTracks1.end(), lowerByQuality );
     float minQuality = m_maxQuality;
-    for ( auto& track : outputTracks ){
+    for ( auto& track : outputTracks1 ){
+      std::cout << track.trackForward.quality << " " << m_deltaQuality << " " << minQuality << std::endl;
       if(track.trackForward.quality + m_deltaQuality < minQuality) minQuality = track.trackForward.quality + m_deltaQuality;
-      if(track.trackForward.quality < minQuality) {
+      if(!(track.trackForward.quality > minQuality)) {
         outputTracks.emplace_back(track);
         std::cout << "Found a forward track corresponding to a velo track!" << std::endl;
       }
@@ -173,6 +175,7 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
     }
     // search for hits in U/V layers
     std::vector<int> stereoHits = collectStereoHits(*cand, state_at_endvelo, pars);
+    std::cout << "Collected " << stereoHits.size() << " valid stereo hits for full track search, with requirement of " << pars.minStereoHits << std::endl;
     if(stereoHits.size() < pars.minStereoHits) continue;
     // DIRTY HACK
     std::vector<std::pair<float,int> > tempforsort;
@@ -184,6 +187,7 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
 
     // select best U/V hits
     if ( !selectStereoHits(*cand, stereoHits, state_at_endvelo, pars) ) continue;
+    std::cout << "Passed the stereo hits selection!" << std::endl;
 
     pc.clear();
     int planelist[12] = {0};
@@ -195,7 +199,8 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
     
     //make a fit of ALL hits
     if(!fitXProjection(cand->trackForward.trackParams, pc, planelist, pars))continue;
-    
+    std::cout << "Passed the X projection fit" << std::endl;   
+ 
     //check in empty x layers for hits 
     auto checked_empty = (cand->trackForward.trackParams[4]  < 0.f) ?
         addHitsOnEmptyXLayers(cand->trackForward.trackParams, m_xParams_seed, m_yParams_seed,
@@ -205,9 +210,12 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
                               true, pc, planelist, pars, 1);
 
     if (not checked_empty) continue;
+    std::cout << "Passed the empty check" << std::endl;
 
     //track has enough hits, calcualte quality and save if good enough
+    std::cout << "Full track candidate has " << pc.size() << " hits on " << nbDifferent(planelist) << " different layers" << std::endl;    
     if(nbDifferent(planelist) >= m_minTotalHits){
+      std::cout << "Computing final quality with NNs" << std::endl;
 
       const float qOverP  = calcqOverP(cand->trackForward.trackParams[1], state_at_endvelo);
       //orig params before fitting , TODO faster if only calc once?? mem usage?
@@ -245,6 +253,8 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
 
       quality = 1.f-quality; //backward compability
 
+      std::cout << "Track candidate has NN quality " << quality << std::endl;
+
       if(quality < m_maxQuality){
 	cand->trackForward.quality = quality;
 	cand->trackForward.hitsNum = pc.size();
@@ -274,6 +284,7 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
   float bestMeanDy       = 1e9f;
 
   auto beginRange = std::begin(stereoHits)-1;
+  std::cout << "About to select stereo hits from list of " << stereoHits.size() << " looking for " << pars.minStereoHits << std::endl;
   if(pars.minStereoHits > stereoHits.size()) return false; //otherwise crash if minHits is too large
   auto endLoop = std::end(stereoHits) - pars.minStereoHits;
   std::vector<unsigned int> pc;
@@ -287,7 +298,9 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
     // BAD CODE RELIES ON FIRST CONDITION ALWAYS BEING TRUE AT START NOT TO SEGFAULT
     while( nbDifferent(planelist) < pars.minStereoHits ||
            m_hits_layers.m_coord[*endRange] < m_hits_layers.m_coord[*(endRange-1)] + m_minYGap ) {
+      std::cout << "Pushing back a stereo hit " << *endRange << " on plane " << m_hits_layers.m_planeCode[*endRange] << std::endl;
       pc.push_back(*endRange);
+      planelist[m_hits_layers.m_planeCode[*endRange]/2] += 1;
       sumCoord += m_hits_layers.m_coord[*endRange];
       ++endRange;
       if ( endRange == stereoHits.end() ) break;
@@ -301,12 +314,13 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
       if ( planelist[m_hits_layers.m_planeCode[*beginRange]/2] > 1 &&
            ((averageCoord - m_hits_layers.m_coord[*beginRange]) > 1.0f * 
 	    (m_hits_layers.m_coord[*(endRange-1)] - averageCoord)) ) { //tune this value has only little effect?!
+	std::cout << "Removing stereo hit " << *beginRange << " on plane " << m_hits_layers.m_planeCode[*beginRange] << std::endl;
         planelist[m_hits_layers.m_planeCode[*beginRange]/2] -= 1;
 	std::vector<unsigned int> pc_temp;
         pc_temp.clear();
         for (auto hit : pc) {
           if (hit != *beginRange){
-            pc_temp.emplace_back(hit);
+            pc_temp.push_back(hit);
           }
         }
         pc = pc_temp;
@@ -321,13 +335,18 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
            (averageCoord - m_hits_layers.m_coord[*beginRange] > 
 	    m_hits_layers.m_coord[*endRange] - averageCoord )
          ) {
+        std::cout << "Pushing back a stereo hit " << *endRange << " on plane " << m_hits_layers.m_planeCode[*endRange] << std::endl;
         pc.push_back(*endRange);
+	planelist[m_hits_layers.m_planeCode[*endRange]/2] += 1;
         sumCoord += m_hits_layers.m_coord[*endRange++];
         continue;
       }
 
       break;
     }
+
+    std::cout << "Found a stereo candidate, about to fit!" << std::endl;
+
     //Now we have a candidate, lets fit him
     // track = original; //only yparams are changed
     track.trackForward.trackParams[4] = originalYParams[0];
@@ -341,11 +360,14 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
 
     //fit Y Projection of track using stereo hits
     if(!fitYProjection(track, trackStereoHits, pc, planelist, state_at_endvelo, pars))continue;
+    std::cout << "Passed the Y fit" << std::endl;
 
     if(!addHitsOnEmptyStereoLayers(track, trackStereoHits, pc, planelist, state_at_endvelo, pars))continue;
+    std::cout << "Passed adding hits on empty stereo layers" << std::endl;
 
+    std::cout << "Selecting on size have " << trackStereoHits.size() << " want " << bestStereoHits.size() << std::endl;
     if(trackStereoHits.size() < bestStereoHits.size()) continue; //number of hits most important selection criteria!
-
+ 
     //== Calculate  dy chi2 /ndf
     float meanDy = 0.;
     for ( const auto& hit : trackStereoHits ){
@@ -468,6 +490,7 @@ bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
                                int planelist[],
                                VeloUTTracking::FullState state_at_endvelo,
                                PrParameters& pars) const {
+  std::cout << "About to fit a Y projection with " << pc.size() << " hits on " << nbDifferent(planelist) << " different planes looking for " << pars.minStereoHits << std::endl;
   if ( nbDifferent(planelist) < pars.minStereoHits ) return false;
   float maxChi2 = 1.e9f;
   bool parabola = false; //first linear than parabola
@@ -522,7 +545,10 @@ bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
       const float c2 = sz3 * sz2m - sz * sz4; 
       const float d2 = sdz * sz2m - sz * sdz2;
       const float den = (b1 * c2 - b2 * c1 );
-      if(!(std::fabs(den) > 1e-5))return false;
+      if(!(std::fabs(den) > 1e-5)) {
+        std::cout << "Failing Y projection fit at first possible place" << std::endl;
+	return false;
+      }
 
       const float db  = (d1 * c2 - d2 * c1 ) / den; 
       const float dc  = (d2 * b1 - d1 * b2 ) / den; 
@@ -544,7 +570,10 @@ bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
         sdz  += w * d * z;
       }
       const float den = (s0 * sz2 - sz * sz );
-      if(!(std::fabs(den) > 1e-5))return false;
+      if(!(std::fabs(den) > 1e-5)) { 
+        std::cout << "Failing Y projection fit at second possible place" << std::endl;
+        return false;
+      }
       const float da  = (sd * sz2 - sdz * sz ) / den;
       const float db  = (sdz * s0 - sd  * sz ) / den;
       track.trackForward.trackParams[4] += da;
@@ -563,22 +592,25 @@ bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
     }
 
     if ( maxChi2 < m_maxChi2StereoLinear && !parabola ) {
+      std::cout << "Maximum chi2 from linear fit was relatively small " << maxChi2 << " do parabolic fit" << std::endl;
       parabola = true;
       maxChi2 = 1.e9f;
       continue;
     }
 
     if ( maxChi2 > m_maxChi2Stereo ) {
+      std::cout << "Removing hit " << *worst << " with chi2 " << maxChi2 << " allowable was " << m_maxChi2Stereo << std::endl;
       planelist[m_hits_layers.m_planeCode[*worst]/2] -= 1;
       std::vector<unsigned int> pc_temp;
       pc_temp.clear();
       for (auto hit : pc) {
         if (hit != *worst){
-          pc_temp.emplace_back(hit);
+          pc_temp.push_back(hit);
         }
       }
       pc = pc_temp;
       if ( nbDifferent(planelist) < pars.minStereoHits ) {
+	std::cout << "Failing because we have " << nbDifferent(planelist) << " different planes and we need " << pars.minStereoHits << std::endl;
         return false;
       }
       stereoHits.erase( worst );
@@ -987,7 +1019,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
       int lplanelist[12] = {0};
       for (int itH = itWindowStart; itH != itWindowEnd; ++itH) {
         if (isValid(allXHits[itH])) {
-          lpc.emplace_back(allXHits[itH]);
+          lpc.push_back(allXHits[itH]);
           lplanelist[m_hits_layers.m_planeCode[allXHits[itH]]/2] += 1;
 	}
       } 
@@ -1005,7 +1037,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
           ++itWindowEnd;
           while( itWindowEnd<=it2  &&  !isValid(allXHits[itWindowEnd-1])) ++itWindowEnd;
           if( itWindowEnd > it2) break;
-          lpc.emplace_back(allXHits[itWindowEnd-1]);
+          lpc.push_back(allXHits[itWindowEnd-1]);
           lplanelist[m_hits_layers.m_planeCode[allXHits[itWindowEnd-1]]/2] += 1;
           continue;
         } 
@@ -1017,7 +1049,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
         lpc_temp.clear();
         for (auto hit : lpc) { 
           if (hit != allXHits[itWindowStart]) {
-            lpc_temp.emplace_back(hit);
+            lpc_temp.push_back(hit);
           }
         }
         lpc = lpc_temp;
@@ -1048,7 +1080,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
     pc.clear();
     int pcplanelist[12] = {0};
     for (int j=0;j<coordToFit.size();++j){
-      pc.emplace_back(allXHits[coordToFit[j]]);
+      pc.push_back(allXHits[coordToFit[j]]);
       pcplanelist[m_hits_layers.m_planeCode[allXHits[coordToFit[j]]]/2] += 1;
     }
     // Only unused(!) hits in coordToFit now
@@ -1140,7 +1172,7 @@ bool PrForward::addHitsOnEmptyXLayers(std::vector<float> &trackParameters,
       }    
     }    
     if ( 0 != best ) {
-      pc.emplace_back(best); // add the best hit here
+      pc.push_back(best); // add the best hit here
       planelist[m_hits_layers.m_planeCode[best]/2] += 1;
       added = true;
     }    
@@ -1232,7 +1264,7 @@ bool PrForward::fitXProjection(std::vector<float> &trackParameters,
       std::vector<unsigned int> pc_temp;
       pc_temp.clear();
       for (auto hit : pc) {
-        if (hit != worst) pc_temp.emplace_back(hit);
+        if (hit != worst) pc_temp.push_back(hit);
       }
       pc = pc_temp;
       if (nbDifferent(planelist) < pars.minXHits + pars.minStereoHits) return false;
@@ -1309,7 +1341,7 @@ void PrForward::fastLinearFit(std::vector<float> &trackParameters,
       std::vector<unsigned int> pc_temp;
       pc_temp.clear();
       for (auto hit : pc) {
-        if (hit != worst) pc_temp.emplace_back(hit);
+        if (hit != worst) pc_temp.push_back(hit);
       }
       pc = pc_temp; 
     }
