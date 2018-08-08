@@ -145,8 +145,8 @@ private:
   // CHECK THESE VALUES USING FRAMEWORK
   const float        m_xLim_Max               = 2700.;
   const float        m_yLim_Max               = 2417.5;
-  const float        m_xLim_Min               = 0.;
-  const float        m_yLim_Min               = 0.;
+  const float        m_xLim_Min               = -2700.;
+  const float        m_yLim_Min               = -25.;
 
   // other variables which get initialized
   float              m_xHits[8]               = {0.,0.,0.,0.,0.,0.,0.,0.};

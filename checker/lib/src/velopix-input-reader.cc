@@ -243,7 +243,8 @@ void readNtupleIntoVelopixEvent(
    
     if ( trackType == "Velo" && !hasVelo ) continue;
     if ( trackType == "VeloUT" && !(hasVelo && hasUT) ) continue;
-        
+    if ( trackType == "Forward" && !(hasVelo && hasUT && hasSciFi) ) continue;       
+ 
     MCParticle mcp;
     mcp.m_key = key;
     mcp.m_id = pid;
@@ -261,17 +262,17 @@ void readNtupleIntoVelopixEvent(
     mcp.m_fromd = fromCharmDecay;
     
     std::vector<uint32_t> hits;
-    if ( trackType == "Velo" || trackType == "VeloUT" || trackType == "SciFi" )
+    if ( trackType == "Velo" || trackType == "VeloUT" || trackType == "Forward" )
       for(int index = 0; index < Velo_lhcbID->size(); index++) {
 	hits.push_back( Velo_lhcbID->at(index) );
       }
 
-    if ( trackType == "VeloUT" || trackType == "SciFi" )
+    if ( trackType == "VeloUT" || trackType == "Forward" )
       for(int index = 0; index < UT_lhcbID->size(); index++) {
 	hits.push_back( UT_lhcbID->at(index) );
       }
     
-    if ( trackType == "SciFi" )
+    if ( trackType == "Forward" )
       for(int index = 0; index < FT_lhcbID->size(); index++) {
 	hits.push_back( FT_lhcbID->at(index) );
       }

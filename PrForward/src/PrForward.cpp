@@ -28,19 +28,39 @@ std::vector<VeloUTTracking::TrackVeloUT> PrForward::operator() (
   std::vector<VeloUTTracking::TrackVeloUT> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
+  std::cout << "About to run forward tracking for " << inputTracks.size() << " input tracks!" << std::endl;
+  int numfound = 0;
+
   for(const VeloUTTracking::TrackVeloUT& veloTr : inputTracks) {
+
+    std::cout << std::setprecision( 6 )
+	      << "Searching for forward track for VELO-UT track with parameters " << veloTr.state_endvelo.x 
+									 	  << " " 
+									 	  << veloTr.state_endvelo.y
+										  << " "
+										  << veloTr.state_endvelo.z 
+										  << " " 
+										  << veloTr.state_endvelo.tx 
+										  << " " 
+										  << veloTr.state_endvelo.ty
+										  << " " 
+										  << veloTr.state_endvelo.qOverP << std::endl;
 
     std::vector<VeloUTTracking::TrackVeloUT> oneOutput; 
     // for a start copy input to output
     prepareOutputTrack(veloTr, oneOutput);
+    numfound += oneOutput.size();
     for (auto track : oneOutput) outputTracks.emplace_back(track);
     // Reset used hits etc.
     for (int i =0; i< ForwardTracking::max_numhits_per_event; i++){
       m_hits_layers.m_used[i] = false;
       m_hits_layers.m_coord[i] = 0.0;
     }
+    break;
  
   }
+
+  std::cout << "Found " << numfound << " forward tracks for this event!" << std::endl;
 
   return outputTracks;
 }
@@ -83,7 +103,11 @@ void PrForward::prepareOutputTrack(
   if(yAtRef< 5.f)selectXCandidates(allXHits[0], veloUTTrack, outputTracks1, m_zRef_track, 
 				   m_xParams_seed, m_yParams_seed, state_at_endvelo, pars_first, -1); 
 
+  std::cout << "Found " << outputTracks1.size() << " X candidates in first loop" << std::endl;
+
   selectFullCandidates(outputTracks1,m_xParams_seed,m_yParams_seed, state_at_endvelo, pars_first);
+
+  std::cout << "Found " << outputTracks1.size() << " full candidates in first loop" << std::endl;
 
   bool ok = std::any_of(outputTracks1.begin(), outputTracks1.end(),
                         [](const auto& track) {
@@ -96,7 +120,12 @@ void PrForward::prepareOutputTrack(
 				     m_xParams_seed, m_yParams_seed, state_at_endvelo, pars_second, 1);
     if(yAtRef< 5.f)selectXCandidates(allXHits[0], veloUTTrack, outputTracks2, m_zRef_track, 
 				     m_xParams_seed, m_yParams_seed, state_at_endvelo, pars_second, -1);  
+
+    std::cout << "Found " << outputTracks1.size() << " X candidates in second loop" << std::endl;
+
     selectFullCandidates(outputTracks2,m_xParams_seed,m_yParams_seed, state_at_endvelo, pars_second);
+
+    std::cout << "Found " << outputTracks1.size() << " full candidates in second loop" << std::endl;
     // Merge
     outputTracks1.insert(std::end(outputTracks1),
 		 	 std::begin(outputTracks2),
@@ -109,7 +138,10 @@ void PrForward::prepareOutputTrack(
     float minQuality = m_maxQuality;
     for ( auto& track : outputTracks ){
       if(track.trackForward.quality + m_deltaQuality < minQuality) minQuality = track.trackForward.quality + m_deltaQuality;
-      if(track.trackForward.quality < minQuality) outputTracks.emplace_back(track);
+      if(track.trackForward.quality < minQuality) {
+        outputTracks.emplace_back(track);
+        std::cout << "Found a forward track corresponding to a velo track!" << std::endl;
+      }
     }
   }
 }
@@ -158,7 +190,7 @@ void PrForward::selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& o
     // Hijacks LHCbIDs to store the values of the hits in the SoA for now, to be changed
     for (auto hit : cand->trackForward.LHCbIDs) {
       pc.push_back(hit);
-      planelist[m_hits_layers.m_planeCode[hit]] += 1;
+      planelist[m_hits_layers.m_planeCode[hit]/2] += 1;
     }
     
     //make a fit of ALL hits
@@ -266,10 +298,10 @@ bool PrForward::selectStereoHits(VeloUTTracking::TrackVeloUT& track,
       const float averageCoord = sumCoord / float(endRange-beginRange);
 
       // remove first if not single and farest from mean
-      if ( planelist[m_hits_layers.m_planeCode[*beginRange]] > 1 &&
+      if ( planelist[m_hits_layers.m_planeCode[*beginRange]/2] > 1 &&
            ((averageCoord - m_hits_layers.m_coord[*beginRange]) > 1.0f * 
 	    (m_hits_layers.m_coord[*(endRange-1)] - averageCoord)) ) { //tune this value has only little effect?!
-        planelist[m_hits_layers.m_planeCode[*beginRange]] -= 1;
+        planelist[m_hits_layers.m_planeCode[*beginRange]/2] -= 1;
 	std::vector<unsigned int> pc_temp;
         pc_temp.clear();
         for (auto hit : pc) {
@@ -420,7 +452,7 @@ bool PrForward::addHitsOnEmptyStereoLayers(VeloUTTracking::TrackVeloUT& track,
     if ( -1 != best ) {
       stereoHits.push_back(best);
       pc.push_back(best);
-      planelist[m_hits_layers.m_planeCode[best]] += 1;
+      planelist[m_hits_layers.m_planeCode[best]/2] += 1;
       added = true;
     }
   }
@@ -537,7 +569,7 @@ bool PrForward::fitYProjection(VeloUTTracking::TrackVeloUT& track,
     }
 
     if ( maxChi2 > m_maxChi2Stereo ) {
-      planelist[m_hits_layers.m_planeCode[*worst]] -= 1;
+      planelist[m_hits_layers.m_planeCode[*worst]/2] -= 1;
       std::vector<unsigned int> pc_temp;
       pc_temp.clear();
       for (auto hit : pc) {
@@ -655,8 +687,10 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
 
   int iZoneStartingPoint = side > 0 ? m_zoneoffsetpar : 0;
 
+  //std::cout << "About to collect X hits for candidate from " << iZoneStartingPoint << std::endl;
+
   for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + m_zoneoffsetpar; iZone++) {
-    std::cout  << "Processing zone" << iZone << std::endl;
+    //std::cout  << "Processing zone" << iZone << std::endl;
     const float zZone   = m_xZone_zPos[iZone-iZoneStartingPoint];
     const float xInZone = straightLineExtend(m_xParams_seed,zZone);
     const float yInZone = straightLineExtend(m_yParams_seed,zZone);
@@ -668,7 +702,13 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
     // be read from some file blablabla although actually I suspect having some general tolerances
     // here is anyway good enough since we are doing a straight line extrapolation in the first place
     // so we are hardly looking precisely if the track could have hit this plane
-    if (!isInside(xInZone,side*m_xLim_Min,side*m_xLim_Max) || !isInside(yInZone,side*m_xLim_Min,side*m_xLim_Max)) continue;
+    //std::cout << "Looking for hits compatible with x = " << xInZone << " and y = " << yInZone << " on side " << side << std::endl;
+    if (side > 0) {
+      if (!isInside(xInZone,m_xLim_Min,m_xLim_Max) || !isInside(yInZone,m_yLim_Min,m_yLim_Max)) continue;
+    } else {
+      if (!isInside(xInZone,m_xLim_Min,m_xLim_Max) || !isInside(yInZone,side*m_yLim_Max,side*m_yLim_Min)) continue;
+    }
+    //std::cout << "Found hits inside zone limits for plane " << iZone << " at " << zZone << std::endl;
 
     const float xTol  = ( zZone < m_zReference ) ? dxRef * zZone / m_zReference :  dxRef * (zZone - zMag) / ( m_zReference - zMag );
     float xMin        = xInZone - xTol;
@@ -694,7 +734,7 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
     int itH   = getLowerBound(m_hits_layers.m_x,xMin,x_zone_offset_begin,x_zone_offset_end); 
     int itEnd = getLowerBound(m_hits_layers.m_x,xMax,x_zone_offset_begin,x_zone_offset_end);
 
-    std::cout << itEnd << " " << itH << std::endl;
+    //std::cout << itEnd << " " << itH << std::endl;
 
     // Skip making range but continue if the end is before or equal to the start
     if (!(itEnd > itH)) continue; 
@@ -712,10 +752,10 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
     int uv_zone_offset_begin = m_hits_layers.layer_offset[m_uvZones[iZone]];
     int uv_zone_offset_end   = m_hits_layers.layer_offset[m_uvZones[iZone]+1];  
     int triangleOffset       = side > 0 ? -1 : 1;
-    std::cout<<iZone<<" " << m_uvZones[iZone] << " " << m_zoneoffsetpar << " " << triangleOffset << std::endl;
+    //std::cout<<iZone<<" " << m_uvZones[iZone] << " " << m_zoneoffsetpar << " " << triangleOffset << std::endl;
     int triangle_zone_offset_begin = m_hits_layers.layer_offset[m_uvZones[iZone + m_zoneoffsetpar*triangleOffset]];
     int triangle_zone_offset_end   = m_hits_layers.layer_offset[m_uvZones[iZone + m_zoneoffsetpar*triangleOffset]+1];
-    std::cout<<triangle_zone_offset_begin << " " << triangle_zone_offset_end << std::endl;
+    //std::cout<<triangle_zone_offset_begin << " " << triangle_zone_offset_end << std::endl;
     int itUV1                = getLowerBound(m_hits_layers.m_x,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);    
     int itUV2                = getLowerBound(m_hits_layers.m_x,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
 
@@ -790,6 +830,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
 				  VeloUTTracking::FullState state_at_endvelo,
                                   PrParameters& pars,
 				  int side) const {
+  //std::cout << "Searching for X candidate based on " << allXHits.size() << " hits"<<std::endl;
   if ( allXHits.size() < pars.minXHits ) return;
   int itEnd = allXHits.size();//back();
   const float xStraight = straightLineExtend(m_xParams_seed,m_zReference);
@@ -805,6 +846,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
     while (it1+pars.minXHits - 1 < itEnd && !isValid(allXHits[it1])) ++it1;
     it2 = it1 + pars.minXHits;
     while (it2 <= itEnd && !isValid(allXHits[it2-1])) ++it2;
+    //std::cout << "Searching for X candidate with window " << it1 << " " << it2 << " " << itEnd << std::endl;
     if (it2 > itEnd) break;
 
     //define search window for Cluster
@@ -817,8 +859,11 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
          m_hits_layers.m_coord[allXHits[it1]]) > xWindow
         ) {
       ++it1;
+      //std::cout << "Window is too small " << m_hits_layers.m_coord[allXHits[it2 - 1]] << " " << m_hits_layers.m_coord[allXHits[it1]] << " " << xWindow << " moving one step right" << std::endl;
       continue;
-    } 
+    }
+    //std::cout << "Found suitable window " << m_hits_layers.m_coord[allXHits[it2 - 1]] << " " << m_hits_layers.m_coord[allXHits[it1]] << " " << xWindow << std::endl;
+ 
     // Cluster candidate found, now count planes
     // Skip this for now, it1 and it2 already encompass what we need at this point
     // try to get rid of this helper class (as pretty much all helper classes)
@@ -827,8 +872,9 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
     int planelist[12] = {0};
     for (int itH = it1; itH != it2; ++itH) {
       if (isValid(allXHits[itH])) {
+	//std::cout << "Pushing back valid hit " << itH << " on plane " << m_hits_layers.m_planeCode[allXHits[itH]] << std::endl;
         pc.push_back(allXHits[itH]);
-        planelist[m_hits_layers.m_planeCode[allXHits[itH]]] += 1;
+        planelist[m_hits_layers.m_planeCode[allXHits[itH]]/2] += 1;
       }
     }   
     // Improve cluster (at the moment only add hits to the right)
@@ -846,11 +892,12 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
       if ( ( m_hits_layers.m_coord[allXHits[it2]] < m_hits_layers.m_coord[allXHits[itLast]] + pars.maxXGap )
            || 
            ( (m_hits_layers.m_coord[allXHits[it2]] - m_hits_layers.m_coord[allXHits[it1]] < xWindow) && 
-             (planelist[m_hits_layers.m_planeCode[allXHits[it2]]] == 0) 
+             (planelist[m_hits_layers.m_planeCode[allXHits[it2]]/2] == 0) 
            ) 
          ) {
-        pc.emplace_back(allXHits[it2]);
-        planelist[m_hits_layers.m_planeCode[allXHits[it2]]] += 1;
+	//std::cout << "Adding valid hit " << it2 << " on plane " << m_hits_layers.m_planeCode[allXHits[it2]] << std::endl;
+        pc.push_back(allXHits[it2]);
+        planelist[m_hits_layers.m_planeCode[allXHits[it2]]/2] += 1;
         itLast = it2; 
         ++it2;
         continue;
@@ -864,8 +911,11 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
     //if not enough different planes, start again from the very beginning with next right hit
     if (nbDifferent(planelist) < pars.minXHits) {
       ++it1;
+      //std::cout<<"Not enough different planes " << nbDifferent(planelist) << " starting again" <<std::endl;
       continue;
     }
+
+    std::cout << "Found a partial X candidate" << std::endl;
 
     //====================================================================
     //  Now we have a (rather) clean candidate, do best hit selection
@@ -890,7 +940,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
       //seperate single and double hits
       for(auto itH = it1; it2 > itH; ++itH ){
         if( !isValid(allXHits[itH]) ) continue;
-        int planeCode = m_hits_layers.m_planeCode[allXHits[itH]];
+        int planeCode = m_hits_layers.m_planeCode[allXHits[itH]]/2;
         if( planelist[planeCode] == 1 ){
           lineFitter.emplace_back(allXHits[itH]);
 	  incrementLineFitParameters(lineFitParameters,allXHits[itH]);
@@ -938,7 +988,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
       for (int itH = itWindowStart; itH != itWindowEnd; ++itH) {
         if (isValid(allXHits[itH])) {
           lpc.emplace_back(allXHits[itH]);
-          lplanelist[m_hits_layers.m_planeCode[allXHits[itH]]] += 1;
+          lplanelist[m_hits_layers.m_planeCode[allXHits[itH]]/2] += 1;
 	}
       } 
       while ( itWindowEnd <= it2 ) {
@@ -956,13 +1006,13 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
           while( itWindowEnd<=it2  &&  !isValid(allXHits[itWindowEnd-1])) ++itWindowEnd;
           if( itWindowEnd > it2) break;
           lpc.emplace_back(allXHits[itWindowEnd-1]);
-          lplanelist[m_hits_layers.m_planeCode[allXHits[itWindowEnd-1]]] += 1;
+          lplanelist[m_hits_layers.m_planeCode[allXHits[itWindowEnd-1]]/2] += 1;
           continue;
         } 
         // move on to the right
         // OK this is super annoying but the way I've set it up, sans pointers, I have to now go through this crap
         // and remove this hit. Very very irritating but hey no pointers or helper class shit!
-        lplanelist[m_hits_layers.m_planeCode[allXHits[itWindowStart]]] -= 1;
+        lplanelist[m_hits_layers.m_planeCode[allXHits[itWindowStart]]/2] -= 1;
         std::vector<unsigned int> lpc_temp;
         lpc_temp.clear();
         for (auto hit : lpc) { 
@@ -989,6 +1039,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
       }
       xAtRef /= ((float)coordToFit.size());
     }
+    std::cout << "Found an X candidate" << std::endl;
     //=== We have a candidate :)
     //
     // The objective of what follows is to add the candidate to m_candidateOutputTracks if it passes some checks
@@ -998,7 +1049,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
     int pcplanelist[12] = {0};
     for (int j=0;j<coordToFit.size();++j){
       pc.emplace_back(allXHits[coordToFit[j]]);
-      pcplanelist[m_hits_layers.m_planeCode[allXHits[coordToFit[j]]]] += 1;
+      pcplanelist[m_hits_layers.m_planeCode[allXHits[coordToFit[j]]]/2] += 1;
     }
     // Only unused(!) hits in coordToFit now
     // The objective of what follows is to add the candidate to m_candidateOutputTracks if it passes some checks
@@ -1024,6 +1075,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
       //here it is fairly trivial... :)
       //Do we really need isUsed in Forward? We can otherwise speed up the search quite a lot!
       // --> we need it for the second loop
+      std::cout << "Pushed back an X candidate for stereo search!" << std::endl;
       VeloUTTracking::TrackVeloUT track = veloUTTrack;
       track.trackForward.LHCbIDs.clear();
       track.trackForward.chi2 = trackParameters[7];
@@ -1089,7 +1141,7 @@ bool PrForward::addHitsOnEmptyXLayers(std::vector<float> &trackParameters,
     }    
     if ( 0 != best ) {
       pc.emplace_back(best); // add the best hit here
-      planelist[m_hits_layers.m_planeCode[best]] += 1;
+      planelist[m_hits_layers.m_planeCode[best]/2] += 1;
       added = true;
     }    
   }
@@ -1160,7 +1212,7 @@ bool PrForward::fitXProjection(std::vector<float> &trackParameters,
       float chi2 = d*d*m_hits_layers.m_w[itH];
       totChi2 += chi2;
       ++nDoF;
-      if ( chi2 > maxChi2 && ( notMultiple || planelist[m_hits_layers.m_planeCode[itH]] > 1 ) ) {
+      if ( chi2 > maxChi2 && ( notMultiple || planelist[m_hits_layers.m_planeCode[itH]/2] > 1 ) ) {
         maxChi2 = chi2;
         worst   = itH; 
       }    
@@ -1176,7 +1228,7 @@ bool PrForward::fitXProjection(std::vector<float> &trackParameters,
     if ( totChi2/nDoF > m_maxChi2PerDoF  ||
          maxChi2 > m_maxChi2XProjection ) {
       // Should really make this bit of code into a function... 
-      planelist[m_hits_layers.m_planeCode[worst]] -= 1;
+      planelist[m_hits_layers.m_planeCode[worst]/2] -= 1;
       std::vector<unsigned int> pc_temp;
       pc_temp.clear();
       for (auto hit : pc) {
@@ -1246,14 +1298,14 @@ void PrForward::fastLinearFit(std::vector<float> &trackParameters,
       float hitdist = m_hits_layers.m_x[hit] - track_x_at_zHit; 
       float chi2 = hitdist*hitdist*m_hits_layers.m_w[hit];
 
-      if ( chi2 > maxChi2 && ( notMultiple || planelist[m_hits_layers.m_planeCode[hit]] > 1 ) ) {
+      if ( chi2 > maxChi2 && ( notMultiple || planelist[m_hits_layers.m_planeCode[hit]/2] > 1 ) ) {
         maxChi2 = chi2;
         worst   = hit; 
       }    
     }    
     //== Remove grossly out hit, or worst in multiple layers
     if ( maxChi2 > m_maxChi2LinearFit || ( !notMultiple && maxChi2 > 4.f ) ) {
-      planelist[m_hits_layers.m_planeCode[worst]] -= 1;
+      planelist[m_hits_layers.m_planeCode[worst]/2] -= 1;
       std::vector<unsigned int> pc_temp;
       pc_temp.clear();
       for (auto hit : pc) {

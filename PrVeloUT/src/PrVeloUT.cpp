@@ -399,16 +399,19 @@ void PrVeloUT::prepareOutputTrack(
   float addBdlVal = 0.0;
   for(int i=0; i<3; ++i) {
 
+
     if( var[i] < minValsBdl[i] || var[i] > maxValsBdl[i] ) continue;
 
     const float dTab_dVar =  (bdls[i] - bdl) / deltaBdl[i];
     const float dVar = (var[i]-boundaries[i]);
     addBdlVal += dTab_dVar*dVar;
   }
+
   bdl += addBdlVal;
   // ----
 
   const float qpxz2p =-1*std::sqrt(1.+helper.state.ty*helper.state.ty)/bdl*3.3356/Gaudi::Units::GeV;
+  const float mytest = helper.bestParams[0]*qpxz2p;
   const float qop = (std::abs(bdl) < 1.e-8) ? 0.0 : helper.bestParams[0]*qpxz2p;
 
   // -- Don't make tracks that have grossly too low momentum

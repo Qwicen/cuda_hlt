@@ -245,7 +245,7 @@ cudaError_t Stream::run_sequence(
     // Optional: Simplified Kalman filter //
     ////////////////////////////////////////
 
-    // if (do_simplified_kalman_filter) {
+    //if (do_simplified_kalman_filter) {
     //   Helper::invoke(
     //     simplifiedKalmanFilter,
     //     "Simplified Kalman filter",
@@ -254,7 +254,7 @@ cudaError_t Stream::run_sequence(
     //     cuda_event_stop,
     //     print_individual_rates
     //   );
-    // }
+    //}
     
     // Transmission device to host
     if (transmit_device_to_host) {
