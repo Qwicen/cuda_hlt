@@ -143,16 +143,16 @@ private:
   const float        m_uvZone_dxdy[12]        = {0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892};
   const float        m_Zone_dzdy[24]          = {0.0036010};
   // CHECK THESE VALUES USING FRAMEWORK
-  const float        m_xLim_Max               = 2700.;
-  const float        m_yLim_Max               = 2417.5;
-  const float        m_xLim_Min               = -2700.;
+  const float        m_xLim_Max               = 3300.;
+  const float        m_yLim_Max               = 2500.;
+  const float        m_xLim_Min               = -3300.;
   const float        m_yLim_Min               = -25.;
 
   // other variables which get initialized
   float              m_xHits[8]               = {0.,0.,0.,0.,0.,0.,0.,0.};
 
   // TO BE READ FROM XML EVENTUALLY
-  float              m_magscalefactor         = 1;
+  float              m_magscalefactor         = -1;
 
   // Vectors of selected hits
   mutable ForwardTracking::HitsSoAFwd  m_hits_layers;
