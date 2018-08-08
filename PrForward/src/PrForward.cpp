@@ -656,6 +656,7 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
   int iZoneStartingPoint = side > 0 ? m_zoneoffsetpar : 0;
 
   for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + m_zoneoffsetpar; iZone++) {
+    std::cout  << "Processing zone" << iZone << std::endl;
     const float zZone   = m_xZone_zPos[iZone-iZoneStartingPoint];
     const float xInZone = straightLineExtend(m_xParams_seed,zZone);
     const float yInZone = straightLineExtend(m_yParams_seed,zZone);
@@ -693,6 +694,8 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
     int itH   = getLowerBound(m_hits_layers.m_x,xMin,x_zone_offset_begin,x_zone_offset_end); 
     int itEnd = getLowerBound(m_hits_layers.m_x,xMax,x_zone_offset_begin,x_zone_offset_end);
 
+    std::cout << itEnd << " " << itH << std::endl;
+
     // Skip making range but continue if the end is before or equal to the start
     if (!(itEnd > itH)) continue; 
  
@@ -709,8 +712,10 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
     int uv_zone_offset_begin = m_hits_layers.layer_offset[m_uvZones[iZone]];
     int uv_zone_offset_end   = m_hits_layers.layer_offset[m_uvZones[iZone]+1];  
     int triangleOffset       = side > 0 ? -1 : 1;
-    int triangle_zone_offset_begin = m_hits_layers.layer_offset[m_uvZones[iZone] + m_zoneoffsetpar*triangleOffset];
-    int triangle_zone_offset_end   = m_hits_layers.layer_offset[m_uvZones[iZone]+1 + m_zoneoffsetpar*triangleOffset];
+    std::cout<<iZone<<" " << m_uvZones[iZone] << " " << m_zoneoffsetpar << " " << triangleOffset << std::endl;
+    int triangle_zone_offset_begin = m_hits_layers.layer_offset[m_uvZones[iZone + m_zoneoffsetpar*triangleOffset]];
+    int triangle_zone_offset_end   = m_hits_layers.layer_offset[m_uvZones[iZone + m_zoneoffsetpar*triangleOffset]+1];
+    std::cout<<triangle_zone_offset_begin << " " << triangle_zone_offset_end << std::endl;
     int itUV1                = getLowerBound(m_hits_layers.m_x,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);    
     int itUV2                = getLowerBound(m_hits_layers.m_x,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
 
@@ -786,9 +791,9 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
                                   PrParameters& pars,
 				  int side) const {
   if ( allXHits.size() < pars.minXHits ) return;
-  int itEnd = allXHits.back();
+  int itEnd = allXHits.size();//back();
   const float xStraight = straightLineExtend(m_xParams_seed,m_zReference);
-  int it1 = allXHits.front();
+  int it1 = 0;//allXHits.front();
   int it2 = it1; 
   pars.minStereoHits = 0;
 
