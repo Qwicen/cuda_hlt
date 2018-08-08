@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
   size_t reserve_mb = 1024;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:g:e:n:t:r:pha:b:d:v:c:k:m:")) != -1) {
+  while ((c = getopt(argc, argv, "f:g:e:s:n:t:r:pha:b:d:v:c:k:m:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_velopix_raw = std::string(optarg);
