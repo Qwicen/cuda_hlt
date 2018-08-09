@@ -5,6 +5,8 @@
  */
 cudaError_t Stream::initialize(
   const std::vector<char>& velopix_geometry,
+  const std::vector<char>& ut_boards,
+  const std::vector<char>& ut_geometry,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const uint max_number_of_events,
   const bool param_transmit_device_to_host,
@@ -38,6 +40,13 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_velo_geometry, velopix_geometry.size()));
   cudaCheck(cudaMemcpyAsync(dev_velo_geometry, velopix_geometry.data(), velopix_geometry.size(), cudaMemcpyHostToDevice, stream));
 
+  // Populate ut boards and geometry
+  cudaCheck(cudaMalloc((void**)&dev_ut_boards, ut_boards.size()));
+  cudaCheck(cudaMalloc((void**)&dev_ut_geometry, ut_geometry.size()));
+  cudaCheck(cudaMemcpyAsync(dev_ut_boards, ut_boards.data(), ut_boards.size(), cudaMemcpyHostToDevice, stream));
+  cudaCheck(cudaMemcpyAsync(dev_ut_geometry, ut_geometry.data(), ut_geometry.size(), cudaMemcpyHostToDevice, stream));
+
+
   // Populate UT magnet tool values
   cudaCheck(cudaMalloc((void**)&dev_ut_magnet_tool, sizeof(PrUTMagnetTool)));
   cudaCheck(cudaMemcpyAsync(dev_ut_magnet_tool, host_ut_magnet_tool, sizeof(PrUTMagnetTool), cudaMemcpyHostToDevice, stream));
@@ -57,9 +66,6 @@ cudaError_t Stream::initialize(
 /* UT DECODING */
   cudaCheck(cudaMallocHost((void**)&host_ut_raw_banks, host_ut_max_size_raw_bank * host_ut_number_of_raw_banks * sizeof(uint32_t)));
   cudaCheck(cudaMallocHost((void**)&host_ut_raw_banks_offsets, host_ut_number_of_raw_banks * sizeof(uint32_t)));
-  cudaCheck(cudaMallocHost((void**)&host_ut_stripsPerHybrid, ut_number_of_boards * sizeof(uint32_t)));
-  cudaCheck(cudaMallocHost((void**)&host_ut_expanded_channels, sizeof(UTExpandedChannelIDs)));
-  cudaCheck(cudaMallocHost((void**)&host_ut_geometry, sizeof(UTGeometry)));
   cudaCheck(cudaMallocHost((void**)&host_ut_hits_decoded, sizeof(UTHits)));
 
   // Define sequence of algorithms to execute

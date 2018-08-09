@@ -414,109 +414,6 @@ cudaError_t Stream::run_sequence(
 
     /* UT DECODING */
 
-    // START BOARDS
-    // Some boards could be NOT PRESENT
-    uint32_t number_of_boards = 0;
-    std::ifstream inReadout("../input/geometry/ut_boards.bin", std::ios::in | std::ios::binary);
-    inReadout.read((char *) &(number_of_boards), sizeof(uint32_t));
-    
-    for (uint32_t i = 0; i < number_of_boards; ++i) {
-      
-      uint32_t number_of_sectors = 0;
-      uint32_t stripsPerHybrid = 0;
-      uint32_t boardID = 0;
-      
-      inReadout.read((char *) &(boardID),           sizeof(uint32_t));
-      inReadout.read((char *) &(stripsPerHybrid),   sizeof(uint32_t));
-      inReadout.read((char *) &(number_of_sectors), sizeof(uint32_t));
-
-      host_ut_stripsPerHybrid[boardID] = stripsPerHybrid;
-
-      if (number_of_sectors != 6) {
-        info_cout << "ERROR LOADING BOARDS GEOMETRY" << std::endl;
-      }
-      
-      for (uint32_t j = 0; j < number_of_sectors; ++j) {
-        
-        uint32_t layer = 0;
-        uint32_t station = 0;
-        uint32_t detRegion = 0;
-        uint32_t sector = 0;
-        uint32_t chanID = 0;
-        
-        inReadout.read((char *) &(layer),   sizeof(uint32_t));
-        inReadout.read((char *) &(station), sizeof(uint32_t));
-        inReadout.read((char *) &(detRegion), sizeof(uint32_t));
-        inReadout.read((char *) &(sector),  sizeof(uint32_t));
-        inReadout.read((char *) &(chanID),  sizeof(uint32_t));
-        
-        const uint32_t boardIndex = boardID * 6 + j;
-        host_ut_expanded_channels->stations   [boardIndex] = station;
-        host_ut_expanded_channels->layers     [boardIndex] = layer;
-        host_ut_expanded_channels->detRegions [boardIndex] = detRegion;
-        host_ut_expanded_channels->sectors    [boardIndex] = sector;
-        host_ut_expanded_channels->chanIDs    [boardIndex] = chanID;
-      }
-    }
-    inReadout.close();
-    // END BOARDS
-
-
-    // START GEOMETRY
-    uint32_t number_of_sectors = 0;
-    std::ifstream inSectors("../input/geometry/ut_geometry.bin", std::ios::in | std::ios::binary);
-
-    inSectors.read((char *) &(number_of_sectors), sizeof(uint32_t));
-    
-    for (uint32_t i = 0; i < number_of_sectors; ++i) {
-      
-      uint32_t m_id = 0; //unused but useful to read the binary file
-      uint32_t m_firstStrip = 0;
-      float m_pitch = 0.f;
-      float m_dxdy = 0.f;
-      float m_dzdy = 0.f;
-      float m_dy = 0.f;
-      float m_dp0diX = 0.f;
-      float m_dp0diY = 0.f;
-      float m_dp0diZ = 0.f;
-      float m_p0X = 0.f;
-      float m_p0Y = 0.f;
-      float m_p0Z = 0.f;
-      float m_cosAngle = 0.f;
-
-      inSectors.read((char *) &(m_id),          sizeof(uint32_t));
-      inSectors.read((char *) &(m_dp0diX),      sizeof(float));
-      inSectors.read((char *) &(m_dp0diY),      sizeof(float));
-      inSectors.read((char *) &(m_dp0diZ),      sizeof(float));
-      inSectors.read((char *) &(m_p0X),         sizeof(float));
-      inSectors.read((char *) &(m_p0Y),         sizeof(float));
-      inSectors.read((char *) &(m_p0Z),         sizeof(float));
-      inSectors.read((char *) &(m_firstStrip),  sizeof(float));
-      inSectors.read((char *) &(m_dxdy),        sizeof(float));
-      inSectors.read((char *) &(m_dzdy),        sizeof(float));
-      inSectors.read((char *) &(m_dy),          sizeof(float));
-      inSectors.read((char *) &(m_cosAngle),    sizeof(float));
-      inSectors.read((char *) &(m_pitch),       sizeof(float));
-
-      
-      host_ut_geometry->m_firstStrip  [i] = m_firstStrip;
-      host_ut_geometry->m_pitch       [i] = m_pitch;
-      host_ut_geometry->m_dxdy        [i] = m_dxdy;
-      host_ut_geometry->m_dzdy        [i] = m_dzdy;
-      host_ut_geometry->m_dy          [i] = m_dy;
-      host_ut_geometry->m_dp0diX      [i] = m_dp0diX;
-      host_ut_geometry->m_dp0diY      [i] = m_dp0diY;
-      host_ut_geometry->m_dp0diZ      [i] = m_dp0diZ;
-      host_ut_geometry->m_p0X         [i] = m_p0X;
-      host_ut_geometry->m_p0Y         [i] = m_p0Y;
-      host_ut_geometry->m_p0Z         [i] = m_p0Z;
-      host_ut_geometry->m_cosAngle    [i] = m_cosAngle;
-    }
-    
-    inSectors.close();
-    // END GEOMETRY
-
-
     // START RAW EVENT
     std::ifstream inRawEvent("../input/minbias/ut_raw/0.bin", std::ios::in | std::ios::binary);
     
@@ -553,9 +450,6 @@ cudaError_t Stream::run_sequence(
 
     argument_sizes[arg::dev_ut_raw_banks] = argen.size<arg::dev_ut_raw_banks>(host_ut_max_size_raw_bank * host_ut_number_of_raw_banks);
     argument_sizes[arg::dev_ut_raw_banks_offsets] = argen.size<arg::dev_ut_raw_banks>(host_ut_number_of_raw_banks);
-    argument_sizes[arg::dev_ut_stripsPerHybrid] = argen.size<arg::dev_ut_stripsPerHybrid>(ut_number_of_boards);
-    argument_sizes[arg::dev_ut_expanded_channels] = argen.size<arg::dev_ut_expanded_channels>(1);
-    argument_sizes[arg::dev_ut_geometry] = argen.size<arg::dev_ut_geometry>(1);
     argument_sizes[arg::dev_ut_hits_decoded] = argen.size<arg::dev_ut_hits_decoded>(1);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
 
@@ -576,38 +470,13 @@ cudaError_t Stream::run_sequence(
       stream
     ));
 
-    cudaCheck(cudaMemcpyAsync(
-      argen.generate<arg::dev_ut_stripsPerHybrid>(argument_offsets),
-      host_ut_stripsPerHybrid,
-      ut_number_of_boards * sizeof(uint32_t),
-      cudaMemcpyHostToDevice,
-      stream
-    ));
-
-    cudaCheck(cudaMemcpyAsync(
-      argen.generate<arg::dev_ut_expanded_channels>(argument_offsets),
-      host_ut_expanded_channels,
-      sizeof(UTExpandedChannelIDs),
-      cudaMemcpyHostToDevice,
-      stream
-    ));
-
-    cudaCheck(cudaMemcpyAsync(
-      argen.generate<arg::dev_ut_geometry>(argument_offsets),
-      host_ut_geometry,
-      sizeof(UTGeometry),
-      cudaMemcpyHostToDevice,
-      stream
-    ));
-
     sequence.item<seq::decode_raw_banks>().set_opts(dim3(1), dim3(host_ut_number_of_raw_banks), stream);
 
     sequence.item<seq::decode_raw_banks>().set_arguments(
       argen.generate<arg::dev_ut_raw_banks>(argument_offsets),
       argen.generate<arg::dev_ut_raw_banks_offsets>(argument_offsets),
-      argen.generate<arg::dev_ut_stripsPerHybrid>(argument_offsets),
-      argen.generate<arg::dev_ut_expanded_channels>(argument_offsets),
-      argen.generate<arg::dev_ut_geometry>(argument_offsets),
+      dev_ut_boards,
+      dev_ut_geometry,
       argen.generate<arg::dev_ut_hits_decoded>(argument_offsets),
       number_of_raw_banks
     );
@@ -633,7 +502,7 @@ cudaError_t Stream::run_sequence(
     //   std::cout << "[" << i << "] = " << host_ut_number_of_hits[i] << "\tsource: " << host_ut_sourceIDs[i] << "\tchan: " << host_ut_channelIDs[i] << std::endl;
     // }
 
-    for (uint32_t i = 0; i < 20; ++i) {
+    for (uint32_t i = 0; i < 1; ++i) {
       std::cout << "\nUTHit {"
       << "\n  ut_cos\t"            << host_ut_hits_decoded->m_cos          [i] 
       << "\n  ut_yBegin:\t"        << host_ut_hits_decoded->m_yBegin       [i]

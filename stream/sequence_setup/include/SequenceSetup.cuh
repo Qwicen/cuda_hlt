@@ -91,9 +91,6 @@ using argument_tuple_t = std::tuple<
   
   Argument<arg::dev_ut_raw_banks, uint32_t>,
   Argument<arg::dev_ut_raw_banks_offsets, uint32_t>,
-  Argument<arg::dev_ut_stripsPerHybrid, uint32_t>,
-  Argument<arg::dev_ut_expanded_channels, UTExpandedChannelIDs>,
-  Argument<arg::dev_ut_geometry, UTGeometry>,
   Argument<arg::dev_ut_hits_decoded, UTHits>
 >;
 

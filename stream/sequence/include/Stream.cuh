@@ -61,9 +61,6 @@ struct Stream {
   /* UT DECODING */
   uint32_t * host_ut_raw_banks;
   uint32_t * host_ut_raw_banks_offsets;
-  uint32_t * host_ut_stripsPerHybrid;
-  UTExpandedChannelIDs * host_ut_expanded_channels;
-  UTGeometry * host_ut_geometry;
   UTHits * host_ut_hits_decoded;
   uint32_t host_ut_number_of_raw_banks = 256; //actually 180
   uint32_t host_ut_max_size_raw_bank = 32;    //actually ~18
@@ -73,6 +70,8 @@ struct Stream {
 
   // GPU pointers
   char* dev_velo_geometry;
+  char* dev_ut_boards;
+  char* dev_ut_geometry;
   char* dev_base_pointer;
   PrUTMagnetTool* dev_ut_magnet_tool;
   
@@ -82,6 +81,8 @@ struct Stream {
 
   cudaError_t initialize(
     const std::vector<char>& velopix_geometry,
+    const std::vector<char>& ut_boards,
+    const std::vector<char>& ut_geometry,
     const PrUTMagnetTool* host_ut_magnet_tool,
     const uint max_number_of_events,
     const bool param_transmit_device_to_host,

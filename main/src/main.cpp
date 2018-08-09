@@ -35,6 +35,7 @@ void printUsage(char* argv[]){
     << std::endl << " -f {folder containing .bin files with raw bank information}"
     << std::endl << (mc_check_enabled ? " " : " [") << "-d {folder containing .bin files with MC truth information}"
     << (mc_check_enabled ? "" : " ]")
+    << std::endl << " -u {folder containing bin files with UT raw bank information}"
     << std::endl << " -e {folder containing bin files with UT hit information}"
     << std::endl << " -g {folder containing geometry descriptions}"
     << std::endl << " -n {number of events to process}=0 (all)"
@@ -54,6 +55,7 @@ void printUsage(char* argv[]){
 int main(int argc, char *argv[])
 {
   std::string folder_name_velopix_raw;
+  std::string folder_name_UT_raw = "";
   std::string folder_name_MC = "";
   std::string folder_name_ut_hits = "";
   std::string folder_name_geometry = "";
@@ -71,13 +73,16 @@ int main(int argc, char *argv[])
   size_t reserve_mb = 1024;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:d:e:n:o:t:r:pha:b:d:v:c:k:m:g:x:")) != -1) {
+  while ((c = getopt(argc, argv, "f:d:u:e:n:o:t:r:pha:b:d:v:c:k:m:g:x:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_velopix_raw = std::string(optarg);
       break;
     case 'd':
       folder_name_MC = std::string(optarg);
+      break;
+    case 'u':
+      folder_name_UT_raw = std::string(optarg);
       break;
     case 'e':
       folder_name_ut_hits = std::string(optarg);
@@ -133,6 +138,13 @@ int main(int argc, char *argv[])
     printUsage(argv);
     return -1;
   }
+
+  // if(folder_name_UT_raw.empty()){
+  //   std::cerr << "No folder for UT raw events specified" << std::endl;
+  //   printUsage(argv);
+  //   return -1;
+  // }
+
   if(folder_name_ut_hits.empty()){
     std::cerr << "No folder for ut hits specified" << std::endl;
     printUsage(argv);
@@ -167,6 +179,7 @@ int main(int argc, char *argv[])
   // Show call options
   std::cout << "Requested options:" << std::endl
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
+    << " folder with UT raw bank input (-f): " << folder_name_UT_raw << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " folder with ut hits input (-e): " << folder_name_ut_hits << std::endl
     << " folder with geometry input (-g): " << folder_name_geometry << std::endl
@@ -225,6 +238,26 @@ int main(int argc, char *argv[])
   std::copy_n(std::begin(velopix_events), velopix_events.size(), host_velopix_events);
   std::copy_n(std::begin(velopix_event_offsets), velopix_event_offsets.size(), host_velopix_event_offsets);
 
+  /* UT Decoding*/
+  // std::vector<char> UT_events;
+  // std::vector<uint32_t> UT_event_offsets;
+  // verbose_cout << "Reading UT raw events" << std::endl;
+  // read_folder(
+  //   folder_name_UT_raw,
+  //   number_of_files,
+  //   UT_events,
+  //   UT_event_offsets,
+  //   start_event_offset );
+
+  std::string filename_ut_boards = folder_name_geometry + "ut_boards.bin";
+  std::vector<char> ut_boards;
+  readGeometry(filename_ut_boards, ut_boards);
+
+  std::string filename_ut_geometry = folder_name_geometry + "ut_geometry.bin";
+  std::vector<char> ut_geometry;
+  readGeometry(filename_ut_geometry, ut_geometry);
+
+
   // Read ut hits
   std::vector<char> ut_events;
   std::vector<unsigned int> ut_event_offsets;
@@ -255,6 +288,8 @@ int main(int argc, char *argv[])
   stream_wrapper.initialize_streams(
     tbb_threads,
     velopix_geometry,
+    ut_boards,
+    ut_geometry,
     host_ut_magnet_tool,
     number_of_events,
     transmit_device_to_host,
@@ -274,12 +309,12 @@ int main(int argc, char *argv[])
     static_cast<uint>(tbb_threads),
     [&] (uint i) {
       stream_wrapper.run_stream(
-        i,
+        0,
         host_velopix_events,
         host_velopix_event_offsets,
         velopix_events.size(),
         velopix_event_offsets.size(),
-	host_ut_hits_events,
+        host_ut_hits_events,
         host_ut_magnet_tool,
         number_of_events,
         number_of_repetitions
@@ -287,7 +322,6 @@ int main(int argc, char *argv[])
     }
   );
   t.stop();
-
   std::cout << (number_of_events * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
