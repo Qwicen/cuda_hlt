@@ -18,7 +18,7 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2)";
   a[seq::consolidate_tracks] = "Consolidate tracks";
   a[seq::veloUT] = "VeloUT tracking";
-  a[seq::preprocessing] = "Preprocess SciFi data";
+  a[seq::estimate_cluster_count] = "Estimate SciFi cluster count";
   return a;
 }
 
@@ -49,8 +49,9 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_ut_hits] = "dev_ut_hits";
   a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
   a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
-  a[arg::dev_ft_events] = "dev_ft_events";
   a[arg::dev_ft_event_offsets] = "dev_ft_event_offsets";
+  a[arg::dev_ft_events] = "dev_ft_events";
+  a[arg::dev_ft_cluster_count] = "dev_ft_cluster_count";
   return a;
 }
 
@@ -163,9 +164,10 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_veloUT_tracks,
     arg::dev_atomics_veloUT
   };
-  sequence_dependencies[seq::preprocessing] = {
-    arg::dev_ft_events,
-    arg::dev_ft_event_offsets
+  sequence_dependencies[seq::estimate_cluster_count] = {
+    arg::dev_ft_event_offsets,
+    arg::dev_ft_cluster_count,
+    arg::dev_ft_events
   };
 
   return sequence_dependencies;

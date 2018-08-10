@@ -1,5 +1,5 @@
 #include <inttypes.h>
-__global__ void preprocessing(uint *ft_event_offsets, char *ft_events);
+__global__ void estimate_cluster_count(uint *ft_event_offsets,  uint *dev_ft_cluster_count, char *ft_events);
 
 struct FTRawEvent {
   uint32_t number_of_raw_banks;

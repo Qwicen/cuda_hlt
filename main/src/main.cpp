@@ -291,17 +291,17 @@ int main(int argc, char *argv[])
     static_cast<uint>(tbb_threads),
     [&] (uint i) {
       stream_wrapper.run_stream(
-        i,
+        0,
         host_velopix_events,
         host_velopix_event_offsets,
         velopix_events.size(),
         velopix_event_offsets.size(),
         host_ut_hits_events,
         host_ut_magnet_tool,
-        host_ft_events_pinned,
         host_ft_event_offsets_pinned,
-        ft_events.size(),
+        host_ft_events_pinned,
         ft_event_offsets.size(),
+        ft_events.size(),
         number_of_events,
         number_of_repetitions
       );

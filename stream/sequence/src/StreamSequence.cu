@@ -11,10 +11,10 @@ cudaError_t Stream::run_sequence(
   const size_t host_velopix_event_offsets_size,
   VeloUTTracking::HitsSoA *host_ut_hits_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
-  char* host_ft_events,
   uint* host_ft_event_offsets,
-  const size_t host_ft_events_size,
+  char* host_ft_events,
   const size_t host_ft_event_offsets_size,
+  const size_t host_ft_events_size,
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -50,7 +50,6 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_module_candidate_num>(argument_offsets),
       argen.generate<arg::dev_cluster_candidates>(argument_offsets)
     );
-
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input>(argument_offsets), host_velopix_events, host_velopix_events_size, cudaMemcpyHostToDevice, stream));
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input_offsets>(argument_offsets), host_velopix_event_offsets, host_velopix_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
     cudaEventRecord(cuda_generic_event, stream);
@@ -273,26 +272,6 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::consolidate_tracks>().invoke();
 
-    //FT preprocessing
-    argument_sizes[arg::dev_ft_events] = argen.size<arg::dev_ft_events>(host_ft_events_size);
-    argument_sizes[arg::dev_ft_event_offsets] = argen.size<arg::dev_ft_event_offsets>(host_ft_event_offsets_size);
-    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-
-    if (transmit_host_to_device) {
-      cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ft_events>(argument_offsets), host_ft_events, host_ft_events_size, cudaMemcpyHostToDevice, stream));
-      cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ft_event_offsets>(argument_offsets), host_ft_event_offsets, host_ft_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
-      cudaEventRecord(cuda_generic_event, stream);
-      cudaEventSynchronize(cuda_generic_event);
-    }
-
-    sequence.item<seq::preprocessing>().set_opts(dim3(number_of_events), dim3(1), stream);
-    sequence.item<seq::preprocessing>().set_arguments(
-      argen.generate<arg::dev_ft_event_offsets>(argument_offsets),
-      argen.generate<arg::dev_ft_events>(argument_offsets)
-    );
-    sequence.item<seq::preprocessing>().invoke();
-
-
     ////////////////////////////////////////
     // Optional: Simplified Kalman filter //
     ////////////////////////////////////////
@@ -307,6 +286,7 @@ cudaError_t Stream::run_sequence(
     //     print_individual_rates
     //   );
     // }
+
 
     // Transmission device to host
     if (transmit_device_to_host) {
@@ -335,11 +315,51 @@ cudaError_t Stream::run_sequence(
       dev_ut_magnet_tool );
     sequence.item<seq::veloUT>().invoke();
 
+    // Transmission device to host
+    if ( transmit_device_to_host) {
     cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
     cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
+    }
+
+    //FT preprocessing
+    argument_sizes[arg::dev_ft_event_offsets] = argen.size<arg::dev_ft_event_offsets>(host_ft_event_offsets_size);
+    argument_sizes[arg::dev_ft_cluster_count] = argen.size<arg::dev_ft_cluster_count>(number_of_events);
+    argument_sizes[arg::dev_ft_events] = argen.size<arg::dev_ft_events>(host_ft_events_size);
+    // std::cerr << "host_ft_events_size: " << argument_sizes[arg::dev_ft_events] << std::endl;
+    // std::cerr << "host_ft_event_offsets_size: " << argument_sizes[arg::dev_ft_event_offsets] << std::endl;
+    // std::cerr << "arg::dev_ft_events: " << arg::dev_ft_events <<std::endl;
+    // std::cerr << "arg::dev_ft_event_offsets: " << arg::dev_ft_event_offsets <<std::endl;
+    // std::cerr << "arg::dev_ft_cluster_count " << arg::dev_ft_cluster_count <<std::endl;
+    // for(int i = 0; i < argument_sizes.size(); i++)
+    //   std::cerr << i << ": " << argument_sizes[i] << std::endl;
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ft_events>(argument_offsets), host_ft_events, host_ft_events_size, cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ft_event_offsets>(argument_offsets), host_ft_event_offsets, host_ft_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemsetAsync(argen.generate<arg::dev_ft_cluster_count>(argument_offsets), 0, host_ft_event_offsets_size * sizeof(uint)))
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    sequence.item<seq::estimate_cluster_count>().set_opts(dim3(number_of_events), dim3(1), stream);
+    sequence.item<seq::estimate_cluster_count>().set_arguments(
+      argen.generate<arg::dev_ft_event_offsets>(argument_offsets),
+      argen.generate<arg::dev_ft_cluster_count>(argument_offsets),
+      argen.generate<arg::dev_ft_events>(argument_offsets)
+    );
+    sequence.item<seq::estimate_cluster_count>().invoke();
 
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
+
+    // Checking
+
+    //if ( transmit_device_to_host) {
+    uint* host_ft_cluster_count;
+    cudaCheck(cudaMallocHost((void**)&host_ft_cluster_count, host_ft_event_offsets_size * sizeof(uint)));
+    cudaCheck(cudaMemcpyAsync(host_ft_cluster_count, argen.generate<arg::dev_ft_cluster_count>(argument_offsets), argen.size<arg::dev_ft_cluster_count>(number_of_events), cudaMemcpyDeviceToHost, stream));
+    for(size_t i = 0; i < number_of_events; i++)
+      std::cerr << host_ft_cluster_count[i] << std::endl;
+    //}
 
     ///////////////////////
     // Monte Carlo Check //

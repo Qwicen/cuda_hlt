@@ -56,8 +56,8 @@ struct Stream {
   VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
 
-  char* host_ft_events;
   uint* host_ft_event_offsets_pinned;
+  char* host_ft_events;
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;
@@ -94,10 +94,10 @@ struct Stream {
     const size_t host_velopix_event_offsets_size,
     VeloUTTracking::HitsSoA *host_ut_hits_events,
     const PrUTMagnetTool* host_ut_magnet_tool,
-    char* host_ft_events_pinned,
     uint* host_ft_event_offsets_pinned,
-    const size_t ft_events_size,
+    char* host_ft_events_pinned,
     const size_t ft_event_offsets_size,
+    const size_t ft_events_size,
     const uint number_of_events,
     const uint number_of_repetitions
   );

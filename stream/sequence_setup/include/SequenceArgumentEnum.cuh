@@ -22,7 +22,7 @@ enum seq_enum_t {
   prefix_sum_scan_velo_track_hit_number,
   consolidate_tracks,
   veloUT,
-  preprocessing
+  estimate_cluster_count
 };
 }
 
@@ -57,6 +57,7 @@ enum arg_enum_t {
   dev_veloUT_tracks,
   dev_atomics_veloUT,
   dev_ft_event_offsets,
+  dev_ft_cluster_count,
   dev_ft_events
 };
 }
