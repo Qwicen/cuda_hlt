@@ -59,3 +59,21 @@ __device__ __host__ UTGeometry::UTGeometry(
   p0Z        = (float *)   p; p += ut_number_of_geometry_sectors;
   cos        = (float *)   p; p += ut_number_of_geometry_sectors;
 }
+
+__device__ __host__ UTRawEvent::UTRawEvent (
+  const uint32_t * ut_event
+) {
+  uint32_t * p = (uint32_t *) ut_event;
+  number_of_raw_banks = *p; p += 1;
+  raw_bank_offsets    =  p; p += number_of_raw_banks + 1;
+  data                =  p;
+}
+
+__device__ __host__ UTRawBank::UTRawBank (
+  const uint32_t * ut_raw_bank
+) {
+  uint32_t * p = (uint32_t *)ut_raw_bank;
+  sourceID       = *p;              p++;
+  number_of_hits = *p & 0x0000FFFF; p++; 
+  data           = (uint16_t*)p;
+}

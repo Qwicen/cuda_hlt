@@ -40,7 +40,7 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_velo_geometry, velopix_geometry.size()));
   cudaCheck(cudaMemcpyAsync(dev_velo_geometry, velopix_geometry.data(), velopix_geometry.size(), cudaMemcpyHostToDevice, stream));
 
-  // Populate ut boards and geometry
+  // Populate UT boards and geometry
   cudaCheck(cudaMalloc((void**)&dev_ut_boards, ut_boards.size()));
   cudaCheck(cudaMalloc((void**)&dev_ut_geometry, ut_geometry.size()));
   cudaCheck(cudaMemcpyAsync(dev_ut_boards, ut_boards.data(), ut_boards.size(), cudaMemcpyHostToDevice, stream));
@@ -64,9 +64,7 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_atomics_veloUT, VeloUTTracking::num_atomics * max_number_of_events * sizeof(int)));
 
 /* UT DECODING */
-  cudaCheck(cudaMallocHost((void**)&host_ut_raw_banks, host_ut_max_size_raw_bank * host_ut_number_of_raw_banks * sizeof(uint32_t)));
-  cudaCheck(cudaMallocHost((void**)&host_ut_raw_banks_offsets, host_ut_number_of_raw_banks * sizeof(uint32_t)));
-  cudaCheck(cudaMallocHost((void**)&host_ut_hits_decoded, sizeof(UTHits)));
+  cudaCheck(cudaMallocHost((void**)&host_ut_hits_decoded, max_number_of_events * sizeof(UTHits)));
 
   // Define sequence of algorithms to execute
   sequence.set(sequence_algorithms());

@@ -89,8 +89,13 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
   Argument<arg::dev_atomics_veloUT, int>,
   
-  Argument<arg::dev_ut_raw_banks, uint32_t>,
-  Argument<arg::dev_ut_raw_banks_offsets, uint32_t>,
+  // TODO: check and try to use char instead of uint32_t for dev_ut_raw_input variable
+  // Changing uint32_t to char cause a strange error:
+  // Error: Internal Compiler Error (codegen): "there was an error in verifying the lgenfe output!"
+  //
+  // Possibile way to check: use int instead of uint32_t and see what happens
+  Argument<arg::dev_ut_raw_input, uint32_t>,
+  Argument<arg::dev_ut_raw_input_offsets, uint32_t>,
   Argument<arg::dev_ut_hits_decoded, UTHits>
 >;
 

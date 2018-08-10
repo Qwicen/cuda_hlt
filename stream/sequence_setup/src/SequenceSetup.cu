@@ -49,8 +49,8 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_ut_hits] = "dev_ut_hits";
   a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
   a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
-  a[arg::dev_ut_raw_banks] = "dev_ut_raw_banks";
-  a[arg::dev_ut_raw_banks_offsets] = "dev_ut_raw_banks_offsets";
+  a[arg::dev_ut_raw_input] = "dev_ut_raw_input";
+  a[arg::dev_ut_raw_input_offsets] = "dev_ut_raw_input_offsets";
   a[arg::dev_ut_hits_decoded] = "dev_ut_hits_decoded";
   return a;
 }
@@ -166,8 +166,8 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
   };
 
   sequence_dependencies[seq::decode_raw_banks] = {
-    arg::dev_ut_raw_banks,
-    arg::dev_ut_raw_banks_offsets,
+    arg::dev_ut_raw_input,
+    arg::dev_ut_raw_input_offsets,
     arg::dev_ut_hits_decoded
   };
 

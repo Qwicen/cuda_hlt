@@ -239,15 +239,15 @@ int main(int argc, char *argv[])
   std::copy_n(std::begin(velopix_event_offsets), velopix_event_offsets.size(), host_velopix_event_offsets);
 
   /* UT Decoding*/
-  // std::vector<char> UT_events;
-  // std::vector<uint32_t> UT_event_offsets;
-  // verbose_cout << "Reading UT raw events" << std::endl;
-  // read_folder(
-  //   folder_name_UT_raw,
-  //   number_of_files,
-  //   UT_events,
-  //   UT_event_offsets,
-  //   start_event_offset );
+  std::vector<char> ut_raw_events;
+  std::vector<uint32_t> ut_raw_event_offsets;
+  verbose_cout << "Reading UT raw events" << std::endl;
+  read_folder(
+    folder_name_UT_raw,
+    number_of_files,
+    ut_raw_events,
+    ut_raw_event_offsets,
+    start_event_offset );
 
   std::string filename_ut_boards = folder_name_geometry + "ut_boards.bin";
   std::vector<char> ut_boards;
@@ -257,6 +257,12 @@ int main(int argc, char *argv[])
   std::vector<char> ut_geometry;
   readGeometry(filename_ut_geometry, ut_geometry);
 
+  char * host_ut_events;
+  uint32_t * host_ut_event_offsets;
+  cudaCheck(cudaMallocHost((void**)&host_ut_events, ut_raw_events.size()));
+  cudaCheck(cudaMallocHost((void**)&host_ut_event_offsets, ut_raw_event_offsets.size() * sizeof(uint32_t)));
+  std::copy_n(std::begin(ut_raw_events), ut_raw_events.size(), host_ut_events);
+  std::copy_n(std::begin(ut_raw_event_offsets), ut_raw_event_offsets.size(), host_ut_event_offsets);
 
   // Read ut hits
   std::vector<char> ut_events;
@@ -314,6 +320,10 @@ int main(int argc, char *argv[])
         host_velopix_event_offsets,
         velopix_events.size(),
         velopix_event_offsets.size(),
+        host_ut_events,
+        host_ut_event_offsets,
+        ut_raw_events.size(),
+        ut_raw_event_offsets.size(),
         host_ut_hits_events,
         host_ut_magnet_tool,
         number_of_events,

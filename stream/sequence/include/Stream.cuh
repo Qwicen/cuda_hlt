@@ -59,11 +59,7 @@ struct Stream {
   int* host_atomics_veloUT;
   
   /* UT DECODING */
-  uint32_t * host_ut_raw_banks;
-  uint32_t * host_ut_raw_banks_offsets;
   UTHits * host_ut_hits_decoded;
-  uint32_t host_ut_number_of_raw_banks = 256; //actually 180
-  uint32_t host_ut_max_size_raw_bank = 32;    //actually ~18
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;
@@ -102,6 +98,10 @@ struct Stream {
     const uint* host_event_offsets,
     const size_t host_events_size,
     const size_t host_event_offsets_size,
+    const char* host_ut_events,
+    const uint* host_ut_event_offsets,
+    const size_t host_ut_events_size,
+    const size_t host_ut_event_offsets_size,
     VeloUTTracking::HitsSoA *host_ut_hits_events,
     const PrUTMagnetTool* host_ut_magnet_tool,
     const uint number_of_events,

@@ -44,6 +44,27 @@
     );
   };
 
+
+  struct  UTRawEvent {
+    uint32_t number_of_raw_banks;
+    uint32_t * raw_bank_offsets;
+    uint32_t * data;
+
+    __device__ __host__ UTRawEvent (
+      const uint32_t * ut_event
+    );
+  };
+
+  struct  UTRawBank {
+    uint32_t sourceID;
+    uint32_t number_of_hits;
+    uint16_t * data;
+
+    __device__ __host__ UTRawBank (
+      const uint32_t * ut_raw_bank
+    );
+  };
+
     /*      Copied from cuda/veloUT/common/include/VeloUTDefinitions.cuh     */
   static constexpr uint ut_number_of_layers = 4;
   static constexpr uint ut_max_number_of_hits_per_event = 4096;

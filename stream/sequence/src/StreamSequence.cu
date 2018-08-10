@@ -9,6 +9,10 @@ cudaError_t Stream::run_sequence(
   const uint* host_velopix_event_offsets,
   const size_t host_velopix_events_size,
   const size_t host_velopix_event_offsets_size,
+  const char* host_ut_events,
+  const uint* host_ut_event_offsets,
+  const size_t host_ut_events_size,
+  const size_t host_ut_event_offsets_size,
   VeloUTTracking::HitsSoA *host_ut_hits_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const uint number_of_events,
@@ -268,13 +272,6 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::consolidate_tracks>().invoke();
 
-
-    for (int i = 0; i < host_ut_number_of_raw_banks; ++i) {
-      host_ut_raw_banks[i] = i;
-    }
-    
-   
-
     ////////////////////////////////////////
     // Optional: Simplified Kalman filter //
     ////////////////////////////////////////
@@ -413,82 +410,47 @@ cudaError_t Stream::run_sequence(
     } // mc_check_enabled
 
     /* UT DECODING */
-
-    // START RAW EVENT
-    std::ifstream inRawEvent("../input/minbias/ut_raw/0.bin", std::ios::in | std::ios::binary);
-    
-    uint32_t number_of_raw_banks = 0;
-    std::vector<uint32_t> raw_bank_offsets;
-    std::vector<uint32_t> raw_bank_data;
-
-    inRawEvent.read((char *) &(number_of_raw_banks), sizeof(uint32_t));
-  
-    raw_bank_offsets.push_back(0); //first item has no offset
-    for (uint32_t i = 0; i < number_of_raw_banks; ++i) {
-      uint32_t offset;
-      inRawEvent.read((char *) &(offset), sizeof(uint32_t));
-      raw_bank_offsets.push_back(offset);
-    }
-    
-    uint32_t maxOffset = raw_bank_offsets.back();
-    for (uint32_t i = 0; i < maxOffset; ++i) {
-      uint32_t data;
-      inRawEvent.read((char *) &(data), sizeof(uint32_t));
-      raw_bank_data.push_back(data);
-    }
-    
-    inRawEvent.close();
-
-    for (uint32_t i = 0; i < number_of_raw_banks; ++i) {
-      host_ut_raw_banks_offsets[i] = raw_bank_offsets[i];
-    }
-
-    for (uint32_t i = 0; i < raw_bank_data.size(); ++i) {
-      host_ut_raw_banks[i] = raw_bank_data[i];
-    }
-    // END RAW EVENT
-
-    argument_sizes[arg::dev_ut_raw_banks] = argen.size<arg::dev_ut_raw_banks>(host_ut_max_size_raw_bank * host_ut_number_of_raw_banks);
-    argument_sizes[arg::dev_ut_raw_banks_offsets] = argen.size<arg::dev_ut_raw_banks>(host_ut_number_of_raw_banks);
-    argument_sizes[arg::dev_ut_hits_decoded] = argen.size<arg::dev_ut_hits_decoded>(1);
+    argument_sizes[arg::dev_ut_raw_input] = argen.size<arg::dev_ut_raw_input>(host_ut_events_size);
+    argument_sizes[arg::dev_ut_raw_input_offsets] = argen.size<arg::dev_ut_raw_input_offsets>(host_ut_event_offsets_size);
+    argument_sizes[arg::dev_ut_hits_decoded] = argen.size<arg::dev_ut_hits_decoded>(number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
 
+    cudaCheck(cudaMemcpyAsync(
+      argen.generate<arg::dev_ut_raw_input>(argument_offsets),
+      host_ut_events,
+      host_ut_events_size,
+      cudaMemcpyHostToDevice,
+      stream));
 
     cudaCheck(cudaMemcpyAsync(
-      argen.generate<arg::dev_ut_raw_banks>(argument_offsets),
-      host_ut_raw_banks,
-      host_ut_max_size_raw_bank * host_ut_number_of_raw_banks * sizeof(uint32_t),
+      argen.generate<arg::dev_ut_raw_input_offsets>(argument_offsets),
+      host_ut_event_offsets,
+      host_ut_event_offsets_size * sizeof(uint32_t),
       cudaMemcpyHostToDevice,
-      stream
-    ));
+      stream));
 
-    cudaCheck(cudaMemcpyAsync(
-      argen.generate<arg::dev_ut_raw_banks_offsets>(argument_offsets),
-      host_ut_raw_banks_offsets,
-      host_ut_number_of_raw_banks * sizeof(uint32_t),
-      cudaMemcpyHostToDevice,
-      stream
-    ));
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
 
-    sequence.item<seq::decode_raw_banks>().set_opts(dim3(1), dim3(host_ut_number_of_raw_banks), stream);
+    sequence.item<seq::decode_raw_banks>().set_opts(dim3(number_of_events), dim3(32), stream);
 
+    //TODO: remove nrb variable from decode_raw_banks kernel
+    uint32_t nrb = 1;
     sequence.item<seq::decode_raw_banks>().set_arguments(
-      argen.generate<arg::dev_ut_raw_banks>(argument_offsets),
-      argen.generate<arg::dev_ut_raw_banks_offsets>(argument_offsets),
+      argen.generate<arg::dev_ut_raw_input>(argument_offsets),
+      argen.generate<arg::dev_ut_raw_input_offsets>(argument_offsets),
       dev_ut_boards,
       dev_ut_geometry,
       argen.generate<arg::dev_ut_hits_decoded>(argument_offsets),
-      number_of_raw_banks
+      nrb
     );
-
-    std::cout << "BEFORE INVOKE" << std::endl;
 
     sequence.item<seq::decode_raw_banks>().invoke();
 
     cudaCheck(cudaMemcpyAsync(
       host_ut_hits_decoded,
       argen.generate<arg::dev_ut_hits_decoded>(argument_offsets),
-      argen.size<arg::dev_ut_hits_decoded>(1),
+      argen.size<arg::dev_ut_hits_decoded>(number_of_events),
       cudaMemcpyDeviceToHost,
       stream
     ));
@@ -498,24 +460,30 @@ cudaError_t Stream::run_sequence(
     cudaEventSynchronize(cuda_generic_event);
 
 
-    // for (uint32_t i = 0; i < number_of_raw_banks; ++i) {
-    //   std::cout << "[" << i << "] = " << host_ut_number_of_hits[i] << "\tsource: " << host_ut_sourceIDs[i] << "\tchan: " << host_ut_channelIDs[i] << std::endl;
-    // }
+    // // for (uint32_t i = 0; i < number_of_raw_banks; ++i) {
+    // //   std::cout << "[" << i << "] = " << host_ut_number_of_hits[i] << "\tsource: " << host_ut_sourceIDs[i] << "\tchan: " << host_ut_channelIDs[i] << std::endl;
+    // // }
 
-    for (uint32_t i = 0; i < 1; ++i) {
-      std::cout << "\nUTHit {"
-      << "\n  ut_cos\t"            << host_ut_hits_decoded->m_cos          [i] 
-      << "\n  ut_yBegin:\t"        << host_ut_hits_decoded->m_yBegin       [i]
-      << "\n  ut_yEnd:\t"          << host_ut_hits_decoded->m_yEnd         [i]
-      << "\n  ut_zAtYEq0:\t"       << host_ut_hits_decoded->m_zAtYEq0      [i]
-      << "\n  ut_xAtYEq0:\t"       << host_ut_hits_decoded->m_xAtYEq0      [i]
-      << "\n  ut_weight:\t"        << host_ut_hits_decoded->m_weight       [i]
-      << "\n  ut_highThreshold:\t" << host_ut_hits_decoded->m_highThreshold[i]
-      << "\n  ut_LHCbID:\t"        << host_ut_hits_decoded->m_LHCbID       [i]
-      << "\n  ut_planeCode:\t"     << host_ut_hits_decoded->m_planeCode    [i]
-      << "\n}\n";
+    std::cout << "sizeof(UTHits): " << sizeof(UTHits) << std::endl;
+    for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
+      std::cout << "ut_event_number: " << ut_event_number << std::endl;
+      for (uint32_t i = 0; i < 33; ++i) {
+        std::cout << "\nUTHit {"
+        << "\n  ut_cos\t"            << host_ut_hits_decoded[ut_event_number].m_cos          [i] 
+        << "\n  ut_yBegin:\t"        << host_ut_hits_decoded[ut_event_number].m_yBegin       [i]
+        << "\n  ut_yEnd:\t"          << host_ut_hits_decoded[ut_event_number].m_yEnd         [i]
+        << "\n  ut_zAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_zAtYEq0      [i]
+        << "\n  ut_xAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_xAtYEq0      [i]
+        << "\n  ut_weight:\t"        << host_ut_hits_decoded[ut_event_number].m_weight       [i]
+        << "\n  ut_highThreshold:\t" << host_ut_hits_decoded[ut_event_number].m_highThreshold[i]
+        << "\n  ut_LHCbID:\t"        << host_ut_hits_decoded[ut_event_number].m_LHCbID       [i]
+        << "\n  ut_planeCode:\t"     << host_ut_hits_decoded[ut_event_number].m_planeCode    [i]
+        << "\n}\n";
+      }
     }
 
+    //TODO: check the correctness of all the hits 
+    //TODO: sort host_ut_hits_decoded 
 
     // Check the output
     info_cout << "decode_raw_banks finished" << std::endl << std::endl;  
