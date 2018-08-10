@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
     static_cast<uint>(tbb_threads),
     [&] (uint i) {
       stream_wrapper.run_stream(
-        0,
+        i,
         host_velopix_events,
         host_velopix_event_offsets,
         velopix_events.size(),
