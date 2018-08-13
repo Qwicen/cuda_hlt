@@ -467,17 +467,17 @@ cudaError_t Stream::run_sequence(
     std::cout << "sizeof(UTHits): " << sizeof(UTHits) << std::endl;
     for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
       std::cout << "ut_event_number: " << ut_event_number << std::endl;
-      for (uint32_t i = 0; i < 33; ++i) {
+      for (uint32_t i = 0; i < 33; i += 1) {
         std::cout << "\nUTHit {"
-        << "\n  ut_cos\t"            << host_ut_hits_decoded[ut_event_number].m_cos          [i] 
-        << "\n  ut_yBegin:\t"        << host_ut_hits_decoded[ut_event_number].m_yBegin       [i]
-        << "\n  ut_yEnd:\t"          << host_ut_hits_decoded[ut_event_number].m_yEnd         [i]
-        << "\n  ut_zAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_zAtYEq0      [i]
-        << "\n  ut_xAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_xAtYEq0      [i]
-        << "\n  ut_weight:\t"        << host_ut_hits_decoded[ut_event_number].m_weight       [i]
-        << "\n  ut_highThreshold:\t" << host_ut_hits_decoded[ut_event_number].m_highThreshold[i]
-        << "\n  ut_LHCbID:\t"        << host_ut_hits_decoded[ut_event_number].m_LHCbID       [i]
-        << "\n  ut_planeCode:\t"     << host_ut_hits_decoded[ut_event_number].m_planeCode    [i]
+        << "\n  ut_cos\t"            << host_ut_hits_decoded[ut_event_number].m_cos          [1024 + i] 
+        << "\n  ut_yBegin:\t"        << host_ut_hits_decoded[ut_event_number].m_yBegin       [1024 + i]
+        << "\n  ut_yEnd:\t"          << host_ut_hits_decoded[ut_event_number].m_yEnd         [1024 + i]
+        << "\n  ut_zAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_zAtYEq0      [1024 + i]
+        << "\n  ut_xAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_xAtYEq0      [1024 + i]
+        << "\n  ut_weight:\t"        << host_ut_hits_decoded[ut_event_number].m_weight       [1024 + i]
+        << "\n  ut_highThreshold:\t" << host_ut_hits_decoded[ut_event_number].m_highThreshold[1024 + i]
+        << "\n  ut_LHCbID:\t"        << host_ut_hits_decoded[ut_event_number].m_LHCbID       [1024 + i]
+        << "\n  ut_planeCode:\t"     << host_ut_hits_decoded[ut_event_number].m_planeCode    [1024 + i]
         << "\n}\n";
       }
     }
