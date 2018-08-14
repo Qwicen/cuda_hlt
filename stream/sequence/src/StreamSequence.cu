@@ -376,7 +376,7 @@ cudaError_t Stream::run_sequence(
           veloUT_tracks,
           folder_name_MC,
           start_event_offset,
-          trackType);                                                                            
+          trackType);
       
         /* Run VeloUT on x86 architecture */
         if ( run_on_x86 ) {
@@ -434,15 +434,12 @@ cudaError_t Stream::run_sequence(
 
     sequence.item<seq::decode_raw_banks>().set_opts(dim3(number_of_events), dim3(32), stream);
 
-    //TODO: remove nrb variable from decode_raw_banks kernel
-    uint32_t nrb = 1;
     sequence.item<seq::decode_raw_banks>().set_arguments(
       argen.generate<arg::dev_ut_raw_input>(argument_offsets),
       argen.generate<arg::dev_ut_raw_input_offsets>(argument_offsets),
       dev_ut_boards,
       dev_ut_geometry,
-      argen.generate<arg::dev_ut_hits_decoded>(argument_offsets),
-      nrb
+      argen.generate<arg::dev_ut_hits_decoded>(argument_offsets)
     );
 
     sequence.item<seq::decode_raw_banks>().invoke();

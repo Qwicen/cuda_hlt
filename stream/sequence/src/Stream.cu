@@ -42,8 +42,9 @@ cudaError_t Stream::initialize(
 
   // Populate UT boards and geometry
   cudaCheck(cudaMalloc((void**)&dev_ut_boards, ut_boards.size()));
-  cudaCheck(cudaMalloc((void**)&dev_ut_geometry, ut_geometry.size()));
   cudaCheck(cudaMemcpyAsync(dev_ut_boards, ut_boards.data(), ut_boards.size(), cudaMemcpyHostToDevice, stream));
+
+  cudaCheck(cudaMalloc((void**)&dev_ut_geometry, ut_geometry.size()));
   cudaCheck(cudaMemcpyAsync(dev_ut_geometry, ut_geometry.data(), ut_geometry.size(), cudaMemcpyHostToDevice, stream));
 
 
