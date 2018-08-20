@@ -44,17 +44,6 @@
     );
   };
 
-
-  struct  UTRawEvent {
-    uint32_t number_of_raw_banks;
-    uint32_t * raw_bank_offsets;
-    uint32_t * data;
-
-    __device__ __host__ UTRawEvent (
-      const uint32_t * ut_event
-    );
-  };
-
   struct  UTRawBank {
     uint32_t sourceID;
     uint32_t number_of_hits;
@@ -63,6 +52,42 @@
     __device__ __host__ UTRawBank (
       const uint32_t * ut_raw_bank
     );
+  };
+
+  struct  UTRawEvent {
+    uint32_t number_of_raw_banks;
+    uint32_t * raw_bank_offsets;
+    uint32_t * data;
+
+    __device__ __host__ UTRawEvent (
+      const uint32_t * ut_raw_event
+    );
+
+    __device__ __host__ UTRawBank getUTRawBank(
+      const uint32_t index
+    ) const;
+  };
+
+  struct UTHit {
+    float cos;
+    float yBegin;
+    float yEnd;
+    float zAtYEq0;
+    float xAtYEq0;
+    float weight;
+    uint32_t highThreshold;
+    uint32_t LHCbID;
+    uint32_t planeCode;
+    UTHit(float cos,
+          float yBegin,
+          float yEnd,
+          float zAtYEq0,
+          float xAtYEq0,
+          float weight,
+          uint32_t highThreshold,
+          uint32_t LHCbID,
+          uint32_t planeCode
+          );
   };
 
     /*      Copied from cuda/veloUT/common/include/VeloUTDefinitions.cuh     */
@@ -89,4 +114,6 @@
     uint32_t m_highThreshold  [ut_max_number_of_hits_per_event];
     uint32_t m_LHCbID         [ut_max_number_of_hits_per_event];
     uint32_t m_planeCode      [ut_max_number_of_hits_per_event];
+
+    UTHit getHit(uint32_t index, uint32_t layer) const;
   };

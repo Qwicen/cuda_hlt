@@ -1,10 +1,6 @@
 #include "UTDecoding.cuh"
 #include <stdio.h>
 
-#define leng_mask       0xFFFFU  // length
-#define leng_offset           0  // length
-
-
 #define frac_mask 0x0003U   // frac
 #define chan_mask 0x3FFCU   // channel
 #define thre_mask 0x8000U    // threshold
@@ -46,6 +42,19 @@ __global__ void decode_raw_banks (
         for (uint32_t i = 0; i < ut_number_of_layers; ++i) {
             dev_ut_hits_decoded[event_number].n_hits_layers[i] = 0;
         }
+
+        #pragma unroll 16
+        for (uint32_t i = 0; i < ut_max_number_of_hits_per_event; ++i) {
+            dev_ut_hits_decoded[event_number].m_cos          [i] = 0;
+            dev_ut_hits_decoded[event_number].m_yBegin       [i] = 0;
+            dev_ut_hits_decoded[event_number].m_yEnd         [i] = 0;
+            dev_ut_hits_decoded[event_number].m_zAtYEq0      [i] = 0;
+            dev_ut_hits_decoded[event_number].m_xAtYEq0      [i] = 0;
+            dev_ut_hits_decoded[event_number].m_weight       [i] = 0;
+            dev_ut_hits_decoded[event_number].m_highThreshold[i] = 0;
+            dev_ut_hits_decoded[event_number].m_LHCbID       [i] = 0;
+            dev_ut_hits_decoded[event_number].m_planeCode    [i] = 0;
+        }
     }
 
     __syncthreads();
@@ -55,8 +64,7 @@ __global__ void decode_raw_banks (
     
     for (uint32_t raw_bank_index = tid; raw_bank_index < raw_event.number_of_raw_banks; raw_bank_index += blockDim.x) {
 
-        const uint32_t raw_bank_offset = raw_event.raw_bank_offsets[raw_bank_index];
-        const UTRawBank raw_bank(raw_event.data + raw_bank_offset);
+        UTRawBank raw_bank = raw_event.getUTRawBank(raw_bank_index);
         const uint32_t m_nStripsPerHybrid = boards.stripsPerHybrids[raw_bank.sourceID];
 
         for (uint32_t i = 0; i < raw_bank.number_of_hits; ++i) {

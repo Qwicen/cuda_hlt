@@ -456,31 +456,80 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
+    // std::cout << "sizeof(UTHits): " << sizeof(UTHits) << std::endl;
+    // for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
+    //   std::cout << "ut_event_number: " << ut_event_number << std::endl;
+    //   for (uint32_t i = 0; i < 33; i += 1) {
+    //     std::cout << "\nUTHit {"
+    //     << "\n  ut_cos\t"            << host_ut_hits_decoded[ut_event_number].m_cos          [1024 + i] 
+    //     << "\n  ut_yBegin:\t"        << host_ut_hits_decoded[ut_event_number].m_yBegin       [1024 + i]
+    //     << "\n  ut_yEnd:\t"          << host_ut_hits_decoded[ut_event_number].m_yEnd         [1024 + i]
+    //     << "\n  ut_zAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_zAtYEq0      [1024 + i]
+    //     << "\n  ut_xAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_xAtYEq0      [1024 + i]
+    //     << "\n  ut_weight:\t"        << host_ut_hits_decoded[ut_event_number].m_weight       [1024 + i]
+    //     << "\n  ut_highThreshold:\t" << host_ut_hits_decoded[ut_event_number].m_highThreshold[1024 + i]
+    //     << "\n  ut_LHCbID:\t"        << host_ut_hits_decoded[ut_event_number].m_LHCbID       [1024 + i]
+    //     << "\n  ut_planeCode:\t"     << host_ut_hits_decoded[ut_event_number].m_planeCode    [1024 + i]
+    //     << "\n}\n";
+    //   }
+    // }
 
-    // // for (uint32_t i = 0; i < number_of_raw_banks; ++i) {
-    // //   std::cout << "[" << i << "] = " << host_ut_number_of_hits[i] << "\tsource: " << host_ut_sourceIDs[i] << "\tchan: " << host_ut_channelIDs[i] << std::endl;
-    // // }
+    // for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
 
-    std::cout << "sizeof(UTHits): " << sizeof(UTHits) << std::endl;
+    //   for (uint32_t i = 0; i < ut_number_of_layers; ++i) {
+    //     std::cout << "number_of_hit[" << i << "] = " << host_ut_hits_decoded[ut_event_number].n_hits_layers[i] << std::endl;
+    //   }
+    // }
+
+    // for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
+      
+    //   for (uint32_t hit_layer = 0; hit_layer < ut_number_of_layers; ++hit_layer) {
+    //     const UTHits & hits_event = host_ut_hits_decoded[ut_event_number];
+    //     for (uint32_t hit_number = 0; hit_number < 1024; ++hit_number) {
+    //       UTHit hit = hits_event.getHit(hit_number, hit_layer);
+    //       std::cout << "Hit( " << hit_number << "): " << hit.LHCbID << "\n";
+    //     }
+    //   }
+
+    // }
+
+    
+
     for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
-      std::cout << "ut_event_number: " << ut_event_number << std::endl;
-      for (uint32_t i = 0; i < 33; i += 1) {
-        std::cout << "\nUTHit {"
-        << "\n  ut_cos\t"            << host_ut_hits_decoded[ut_event_number].m_cos          [1024 + i] 
-        << "\n  ut_yBegin:\t"        << host_ut_hits_decoded[ut_event_number].m_yBegin       [1024 + i]
-        << "\n  ut_yEnd:\t"          << host_ut_hits_decoded[ut_event_number].m_yEnd         [1024 + i]
-        << "\n  ut_zAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_zAtYEq0      [1024 + i]
-        << "\n  ut_xAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_xAtYEq0      [1024 + i]
-        << "\n  ut_weight:\t"        << host_ut_hits_decoded[ut_event_number].m_weight       [1024 + i]
-        << "\n  ut_highThreshold:\t" << host_ut_hits_decoded[ut_event_number].m_highThreshold[1024 + i]
-        << "\n  ut_LHCbID:\t"        << host_ut_hits_decoded[ut_event_number].m_LHCbID       [1024 + i]
-        << "\n  ut_planeCode:\t"     << host_ut_hits_decoded[ut_event_number].m_planeCode    [1024 + i]
+      
+      std::vector<UTHit> hits_vector;
+
+      for (uint32_t hit_layer = 0; hit_layer < ut_number_of_layers; ++hit_layer) {
+        const UTHits & hits_event = host_ut_hits_decoded[ut_event_number];
+        for (uint32_t hit_number = 0; hit_number < hits_event.n_hits_layers[hit_layer]; ++hit_number) {
+          UTHit hit = hits_event.getHit(hit_number, hit_layer);
+          hits_vector.push_back(hit);
+        }
+      }
+
+      sort(hits_vector.begin(), hits_vector.end(), 
+          [](const UTHit & a, const UTHit & b) -> bool
+      { 
+          return a.LHCbID > b.LHCbID; 
+      });
+
+      for (uint32_t hit_number = 0; hit_number < 10; ++hit_number) {
+        UTHit & hit = hits_vector[hit_number];
+        std::cout << "\nUTHit( " << ut_event_number << " ) {"
+        << "\n  ut_cos\t"            << hit.cos          
+        << "\n  ut_yBegin:\t"        << hit.yBegin       
+        << "\n  ut_yEnd:\t"          << hit.yEnd         
+        << "\n  ut_zAtYEq0:\t"       << hit.zAtYEq0      
+        << "\n  ut_xAtYEq0:\t"       << hit.xAtYEq0      
+        << "\n  ut_weight:\t"        << hit.weight       
+        << "\n  ut_highThreshold:\t" << hit.highThreshold
+        << "\n  ut_LHCbID:\t"        << hit.LHCbID       
+        << "\n  ut_planeCode:\t"     << hit.planeCode    
         << "\n}\n";
       }
     }
 
     //TODO: check the correctness of all the hits 
-    //TODO: sort host_ut_hits_decoded 
 
     // Check the output
     info_cout << "decode_raw_banks finished" << std::endl << std::endl;  
