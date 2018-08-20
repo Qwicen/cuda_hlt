@@ -474,7 +474,7 @@ void call_pr_checker(
       fromNtuple,
       trackType);
   }
-  else if ( trackType == "VeloUT" ) {
+  else if ( trackType == "VeloUT" or  trackType == "Forward") {
     callPrChecker< TrackCheckerVeloUT> (
       all_tracks,
       folder_name_MC,

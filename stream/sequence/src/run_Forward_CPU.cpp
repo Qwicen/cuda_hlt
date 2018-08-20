@@ -51,9 +51,10 @@ std::vector< std::vector< VeloUTTracking::TrackVeloUT > > run_forward_on_CPU (
     std::cout<<"run_Forward_CPU"<<std::endl;
     trackChecker::Tracks checker_tracks = prepareForwardTracks( forward_tracks_reduced );
     std::cout << "Passing " << checker_tracks.size() << " tracks to PrChecker" << std::endl;
-    
     forward_tracks_events->emplace_back( checker_tracks );
     forward_tracks_all.push_back(forward_tracks);
+
+    std::cout << "End event loop run_forward_CPU " <<std::endl; 
     
   }
   
