@@ -450,6 +450,7 @@ trackChecker::Tracks prepareForwardTracks(
   for ( VeloUTTracking::TrackUT forward_track : forward_tracks ) {
     trackChecker::Track checker_track;
     for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
+      std::cout<<"LHCbIDs["<<i_hit<<"] = "<<forward_track.LHCbIDs[i_hit]<<std::endl;
       LHCbID lhcb_id( forward_track.LHCbIDs[i_hit] );
       checker_track.addId( lhcb_id );
     }
