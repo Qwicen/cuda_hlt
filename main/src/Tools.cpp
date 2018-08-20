@@ -434,6 +434,7 @@ trackChecker::Tracks prepareVeloUTTracks(
   for ( VeloUTTracking::TrackUT ut_track : ut_tracks ) {
     trackChecker::Track checker_track;
     for ( int i_hit = 0; i_hit < ut_track.hitsNum; ++i_hit ) {
+      std::cout<<"LHCbIDsVelo["<<i_hit<<"] = "<<ut_track.LHCbIDs[i_hit]<<std::endl;
       LHCbID lhcb_id( ut_track.LHCbIDs[i_hit] );
       checker_track.addId( lhcb_id );
     }
@@ -450,7 +451,7 @@ trackChecker::Tracks prepareForwardTracks(
   for ( VeloUTTracking::TrackUT forward_track : forward_tracks ) {
     trackChecker::Track checker_track;
     for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
-      std::cout<<"LHCbIDs["<<i_hit<<"] = "<<forward_track.LHCbIDs[i_hit]<<std::endl;
+      std::cout<<"LHCbIDsForward["<<i_hit<<"] = "<<forward_track.LHCbIDs[i_hit]<<std::endl;
       LHCbID lhcb_id( forward_track.LHCbIDs[i_hit] );
       checker_track.addId( lhcb_id );
     }
