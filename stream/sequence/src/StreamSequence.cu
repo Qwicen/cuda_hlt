@@ -432,8 +432,34 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    sequence.item<seq::decode_raw_banks>().set_opts(dim3(number_of_events), dim3(32), stream);
+    sequence.item<seq::ut_estimate_number_of_hits>().set_opts(dim3(number_of_events), dim3(192), stream);
+    sequence.item<seq::ut_estimate_number_of_hits>().set_arguments(
+      argen.generate<arg::dev_ut_raw_input>(argument_offsets),
+      argen.generate<arg::dev_ut_raw_input_offsets>(argument_offsets),
+      dev_ut_boards,
+      argen.generate<arg::dev_ut_hits_decoded>(argument_offsets)
+    );
+    sequence.item<seq::ut_estimate_number_of_hits>().invoke();
 
+
+    cudaCheck(cudaMemcpyAsync(
+      host_ut_hits_decoded,
+      argen.generate<arg::dev_ut_hits_decoded>(argument_offsets),
+      argen.size<arg::dev_ut_hits_decoded>(number_of_events),
+      cudaMemcpyDeviceToHost,
+      stream
+    ));
+
+    // Wait to receive the result
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    for (uint32_t i = 0; i < 4; ++i) {
+      std::cout << "n_hits_layers[" << i << "]" << host_ut_hits_decoded[0].n_hits_layers[i] << std::endl;
+      std::cout << "layer_offset[" << i << "]" << host_ut_hits_decoded[0].layer_offset[i] << std::endl;
+    }
+
+    sequence.item<seq::decode_raw_banks>().set_opts(dim3(number_of_events), dim3(192), stream);
     sequence.item<seq::decode_raw_banks>().set_arguments(
       argen.generate<arg::dev_ut_raw_input>(argument_offsets),
       argen.generate<arg::dev_ut_raw_input_offsets>(argument_offsets),
@@ -441,7 +467,6 @@ cudaError_t Stream::run_sequence(
       dev_ut_geometry,
       argen.generate<arg::dev_ut_hits_decoded>(argument_offsets)
     );
-
     sequence.item<seq::decode_raw_banks>().invoke();
 
     cudaCheck(cudaMemcpyAsync(
@@ -456,45 +481,6 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    // std::cout << "sizeof(UTHits): " << sizeof(UTHits) << std::endl;
-    // for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
-    //   std::cout << "ut_event_number: " << ut_event_number << std::endl;
-    //   for (uint32_t i = 0; i < 33; i += 1) {
-    //     std::cout << "\nUTHit {"
-    //     << "\n  ut_cos\t"            << host_ut_hits_decoded[ut_event_number].m_cos          [1024 + i] 
-    //     << "\n  ut_yBegin:\t"        << host_ut_hits_decoded[ut_event_number].m_yBegin       [1024 + i]
-    //     << "\n  ut_yEnd:\t"          << host_ut_hits_decoded[ut_event_number].m_yEnd         [1024 + i]
-    //     << "\n  ut_zAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_zAtYEq0      [1024 + i]
-    //     << "\n  ut_xAtYEq0:\t"       << host_ut_hits_decoded[ut_event_number].m_xAtYEq0      [1024 + i]
-    //     << "\n  ut_weight:\t"        << host_ut_hits_decoded[ut_event_number].m_weight       [1024 + i]
-    //     << "\n  ut_highThreshold:\t" << host_ut_hits_decoded[ut_event_number].m_highThreshold[1024 + i]
-    //     << "\n  ut_LHCbID:\t"        << host_ut_hits_decoded[ut_event_number].m_LHCbID       [1024 + i]
-    //     << "\n  ut_planeCode:\t"     << host_ut_hits_decoded[ut_event_number].m_planeCode    [1024 + i]
-    //     << "\n}\n";
-    //   }
-    // }
-
-    // for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
-
-    //   for (uint32_t i = 0; i < ut_number_of_layers; ++i) {
-    //     std::cout << "number_of_hit[" << i << "] = " << host_ut_hits_decoded[ut_event_number].n_hits_layers[i] << std::endl;
-    //   }
-    // }
-
-    // for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
-      
-    //   for (uint32_t hit_layer = 0; hit_layer < ut_number_of_layers; ++hit_layer) {
-    //     const UTHits & hits_event = host_ut_hits_decoded[ut_event_number];
-    //     for (uint32_t hit_number = 0; hit_number < 1024; ++hit_number) {
-    //       UTHit hit = hits_event.getHit(hit_number, hit_layer);
-    //       std::cout << "Hit( " << hit_number << "): " << hit.LHCbID << "\n";
-    //     }
-    //   }
-
-    // }
-
-    
-
     for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
       
       std::vector<UTHit> hits_vector;
@@ -507,32 +493,56 @@ cudaError_t Stream::run_sequence(
         }
       }
 
-      sort(hits_vector.begin(), hits_vector.end(), 
-          [](const UTHit & a, const UTHit & b) -> bool
-      { 
+      sort(hits_vector.begin(), hits_vector.end(), [](const UTHit & a, const UTHit & b) -> bool {
           return a.LHCbID > b.LHCbID; 
       });
 
-      for (uint32_t hit_number = 0; hit_number < 10; ++hit_number) {
-        UTHit & hit = hits_vector[hit_number];
-        std::cout << "\nUTHit( " << ut_event_number << " ) {"
-        << "\n  ut_cos\t"            << hit.cos          
-        << "\n  ut_yBegin:\t"        << hit.yBegin       
-        << "\n  ut_yEnd:\t"          << hit.yEnd         
-        << "\n  ut_zAtYEq0:\t"       << hit.zAtYEq0      
-        << "\n  ut_xAtYEq0:\t"       << hit.xAtYEq0      
-        << "\n  ut_weight:\t"        << hit.weight       
-        << "\n  ut_highThreshold:\t" << hit.highThreshold
-        << "\n  ut_LHCbID:\t"        << hit.LHCbID       
-        << "\n  ut_planeCode:\t"     << hit.planeCode    
-        << "\n}\n";
+
+
+      std::vector<UTHit> hits_compare;
+      const std::string fileName = "../input/minbias/ut_hits_compare/" + std::to_string(ut_event_number) + ".bin";
+      std::ifstream in_hits(fileName.c_str(), std::ios::in | std::ios::binary);
+
+      if (!in_hits) {
+        std::cout << "Error while loading file: " << fileName << std::endl;
+        continue;
+      }
+
+      uint32_t number_of_hits_compare = 0;
+      in_hits.read((char *) &(number_of_hits_compare), sizeof(float));
+
+      for (uint32_t i = 0; i < number_of_hits_compare; ++i) {
+
+        UTHit hit;
+        float ut_dxDy; // Unused
+        in_hits.read((char *) &(hit.cos           ), sizeof(float));
+        in_hits.read((char *) &(hit.yBegin        ), sizeof(float));
+        in_hits.read((char *) &(hit.yEnd          ), sizeof(float));
+        in_hits.read((char *) &(ut_dxDy           ), sizeof(float));
+        in_hits.read((char *) &(hit.zAtYEq0       ), sizeof(float));
+        in_hits.read((char *) &(hit.xAtYEq0       ), sizeof(float));
+        in_hits.read((char *) &(hit.weight        ), sizeof(float));
+        in_hits.read((char *) &(hit.highThreshold ), sizeof(float));
+        in_hits.read((char *) &(hit.LHCbID        ), sizeof(float));
+
+        hits_compare.push_back(hit);
+      }
+
+      in_hits.close();
+
+      sort(hits_compare.begin(), hits_compare.end(), [](const UTHit & a, const UTHit & b) -> bool {
+          return a.LHCbID > b.LHCbID; 
+      });
+
+      for (uint32_t i = 0; i < number_of_hits_compare; ++i) {
+        if (hits_compare[i] != hits_vector[i]) {
+          std::cout << "ERROR nHit: " << i << "\t";
+          std::cout << hits_vector[i].LHCbID << "\t" << hits_compare[i].LHCbID << std::endl;
+        }
       }
     }
-
-    //TODO: check the correctness of all the hits 
-
     // Check the output
-    info_cout << "decode_raw_banks finished" << std::endl << std::endl;  
+    info_cout << "decode_raw_banks finished" << std::endl << std::endl;
     
   } // repititions
   return cudaSuccess;

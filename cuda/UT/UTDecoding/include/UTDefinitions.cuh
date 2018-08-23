@@ -78,6 +78,9 @@
     uint32_t highThreshold;
     uint32_t LHCbID;
     uint32_t planeCode;
+
+    UTHit() = default;
+
     UTHit(float cos,
           float yBegin,
           float yEnd,
@@ -88,11 +91,28 @@
           uint32_t LHCbID,
           uint32_t planeCode
           );
+
+    #define cmpf(a, b) (fabs((a) - (b)) > 0.000065f)
+
+    bool operator != (const UTHit & h) const {
+        
+        if (cmpf(cos,        h.cos))          return true;
+        if (cmpf(yBegin,     h.yBegin))       return true;
+        if (cmpf(yEnd,       h.yEnd))         return true;
+        if (cmpf(zAtYEq0,    h.zAtYEq0))      return true;
+        if (cmpf(xAtYEq0,    h.xAtYEq0))      return true;
+        if (cmpf(weight,     h.weight))       return true;
+        if (highThreshold != h.highThreshold) return true;
+        if (LHCbID        != h.LHCbID)        return true;
+        
+        return false;
+      }
   };
 
     /*      Copied from cuda/veloUT/common/include/VeloUTDefinitions.cuh     */
   static constexpr uint ut_number_of_layers = 4;
-  static constexpr uint ut_max_number_of_hits_per_event = 4096;
+  static constexpr uint ut_max_number_of_hits_per_layer = 1024;
+  static constexpr uint ut_max_number_of_hits_per_event = ut_number_of_layers * ut_max_number_of_hits_per_layer;
 
   /* 
      SoA for hit variables

@@ -9,16 +9,86 @@
 #define chan_offset      2  // channel
 #define thre_offset     15  // threshold
 
-__global__ void decode_raw_banks (
-    uint32_t * dev_ut_raw_input,
-    uint32_t * dev_ut_raw_input_offsets,
-    char * ut_boards,
-    char * ut_geometry,
-    UTHits * dev_ut_hits_decoded
+// HINT: This estimation could be done inside the decoding kernel just for the first hit
+
+
+__global__ void ut_estimate_number_of_hits (
+    const uint32_t * __restrict__ dev_ut_raw_input,
+    const uint32_t * __restrict__ dev_ut_raw_input_offsets,
+    const char * __restrict__ ut_boards,
+    UTHits * __restrict__ dev_ut_hits_decoded
 ) {
     const uint32_t tid          = threadIdx.x;
     const uint32_t event_number = blockIdx.x;
     const uint32_t event_offset = dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
+
+    if (tid == 0) {
+        #pragma unroll
+        for (uint32_t i = 0; i < ut_number_of_layers; ++i) {
+            dev_ut_hits_decoded[event_number].n_hits_layers[i] = 0;
+        }
+    }
+    __syncthreads();
+
+    const UTRawEvent raw_event(dev_ut_raw_input + event_offset);
+    if (tid >= raw_event.number_of_raw_banks) return;
+
+    const UTBoards boards(ut_boards);
+
+    for (uint32_t raw_bank_index = tid; raw_bank_index < raw_event.number_of_raw_banks; raw_bank_index += blockDim.x) {
+
+        const UTRawBank raw_bank = raw_event.getUTRawBank(raw_bank_index);
+        const uint32_t m_nStripsPerHybrid = boards.stripsPerHybrids[raw_bank.sourceID];
+        const uint32_t channelID = (raw_bank.data[0] & chan_mask) >> chan_offset;
+        const uint32_t index = channelID / m_nStripsPerHybrid;
+        const uint32_t fullChanIndex = raw_bank.sourceID * ut_number_of_sectors_per_board + index;
+        const uint32_t station       = boards.stations   [fullChanIndex] - 1;
+        const uint32_t layer         = boards.layers     [fullChanIndex] - 1;
+        const uint32_t planeCode     = 2 * station + (layer & 1);
+
+        uint32_t * hits_layer = dev_ut_hits_decoded[event_number].n_hits_layers + planeCode;
+        uint32_t hitIndex = atomicAdd(hits_layer, raw_bank.number_of_hits);
+    }
+
+    __syncthreads();
+
+    if (tid == 0) {
+        uint32_t layer_offset = 0;
+        dev_ut_hits_decoded[event_number].layer_offset[0] = 0;
+        #pragma unroll
+        for (uint32_t i = 1; i < ut_number_of_layers; ++i) {
+            const uint32_t n_hits_layers = dev_ut_hits_decoded[event_number].n_hits_layers[i];
+            layer_offset += n_hits_layers;
+            dev_ut_hits_decoded[event_number].layer_offset[i] = layer_offset;
+        }
+
+        #pragma unroll
+        for (uint32_t i = 0; i < ut_number_of_layers; ++i) {
+            dev_ut_hits_decoded[event_number].n_hits_layers[i] = 0;
+        }
+    }
+}
+
+__global__ void decode_raw_banks (
+    const uint32_t * __restrict__ dev_ut_raw_input,
+    const uint32_t * __restrict__ dev_ut_raw_input_offsets,
+    const char * __restrict__ ut_boards,
+    const char * __restrict__ ut_geometry,
+    UTHits * __restrict__ dev_ut_hits_decoded
+) {
+
+    const uint32_t tid          = threadIdx.x;
+    const uint32_t event_number = blockIdx.x;
+    const uint32_t event_offset = dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
+
+    __shared__ uint32_t layer_offset[ut_number_of_layers];
+
+    if (tid == 0) {
+        #pragma unroll
+        for (uint32_t i = 0; i < ut_number_of_layers; ++i) {
+            layer_offset[i] = dev_ut_hits_decoded[event_number].layer_offset[i];
+        }
+    }
 
     const UTRawEvent raw_event(dev_ut_raw_input + event_offset);
     if (tid >= raw_event.number_of_raw_banks) return;
@@ -27,41 +97,13 @@ __global__ void decode_raw_banks (
     const UTBoards boards(ut_boards);
     const UTGeometry geometry(ut_geometry);
 
+    // uint32_t layer_offset[ut_number_of_layers];
+    // #pragma unroll
+    // for (uint32_t i = 0; i < ut_number_of_layers; ++i) {
+    //     layer_offset[i] = dev_ut_hits_decoded[event_number].layer_offset[i];
+    // }
 
-    // WARNING: if "ut_max_number_of_hits_per_event" is not a multiple of "ut_number_of_layers"
-    //          could cause hit overwrites
-    const uint32_t chunkSize = (ut_max_number_of_hits_per_event / ut_number_of_layers);
 
-    if (tid == 0) {
-
-        #pragma unroll
-        for (uint32_t i = 0; i < ut_number_of_layers; ++i) {
-            dev_ut_hits_decoded[event_number].layer_offset[i] = i * chunkSize;
-        }
-        #pragma unroll
-        for (uint32_t i = 0; i < ut_number_of_layers; ++i) {
-            dev_ut_hits_decoded[event_number].n_hits_layers[i] = 0;
-        }
-
-        #pragma unroll 16
-        for (uint32_t i = 0; i < ut_max_number_of_hits_per_event; ++i) {
-            dev_ut_hits_decoded[event_number].m_cos          [i] = 0;
-            dev_ut_hits_decoded[event_number].m_yBegin       [i] = 0;
-            dev_ut_hits_decoded[event_number].m_yEnd         [i] = 0;
-            dev_ut_hits_decoded[event_number].m_zAtYEq0      [i] = 0;
-            dev_ut_hits_decoded[event_number].m_xAtYEq0      [i] = 0;
-            dev_ut_hits_decoded[event_number].m_weight       [i] = 0;
-            dev_ut_hits_decoded[event_number].m_highThreshold[i] = 0;
-            dev_ut_hits_decoded[event_number].m_LHCbID       [i] = 0;
-            dev_ut_hits_decoded[event_number].m_planeCode    [i] = 0;
-        }
-    }
-
-    __syncthreads();
-
-    // number of raw_banks computed by a thread
-//    const uint32_t raw_bank_chunk_size = (raw_event.number_of_raw_banks + blockDim.x - 1) / blockDim.x;
-    
     for (uint32_t raw_bank_index = tid; raw_bank_index < raw_event.number_of_raw_banks; raw_bank_index += blockDim.x) {
 
         UTRawBank raw_bank = raw_event.getUTRawBank(raw_bank_index);
@@ -117,8 +159,7 @@ __global__ void decode_raw_banks (
             uint32_t * hits_layer = dev_ut_hits_decoded[event_number].n_hits_layers + planeCode;
             uint32_t hitIndex = atomicAdd(hits_layer, 1);
 
-            // WARNING: if ("hitIndex" >= "chunkSize") there is a hit overwrite
-            hitIndex += planeCode * chunkSize;
+            hitIndex += layer_offset[planeCode];
             dev_ut_hits_decoded[event_number].m_cos          [hitIndex] = cos;
             dev_ut_hits_decoded[event_number].m_yBegin       [hitIndex] = yBegin;
             dev_ut_hits_decoded[event_number].m_yEnd         [hitIndex] = yEnd;
@@ -131,3 +172,5 @@ __global__ void decode_raw_banks (
         }
     }
 }
+
+

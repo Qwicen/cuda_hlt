@@ -22,6 +22,7 @@ enum seq_enum_t {
   prefix_sum_scan_velo_track_hit_number,
   consolidate_tracks,
   veloUT,
+  ut_estimate_number_of_hits,
   decode_raw_banks
 };
 }

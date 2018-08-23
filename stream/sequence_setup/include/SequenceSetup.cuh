@@ -40,6 +40,7 @@ constexpr auto sequence_algorithms() {
     prefix_sum_scan,
     consolidate_tracks,
     veloUT,
+    ut_estimate_number_of_hits,
     decode_raw_banks
   );
 }
