@@ -30,6 +30,21 @@ You can check your compiler standard compatibility by scrolling to the `C++14 fe
 
 Optional: you can compile the project with ROOT. Then, trees will be filled with variables to check when running the VeloUT algorithm on x86 architecture.
 
+<details><summary>Building and running inside Docker: (click to expand)</summary><p>
+
+The following lines will build the code base from any computer with NVidia-Docker, assuming you are in the directory with the code checkout and want to build in `build`:
+
+```bash
+docker run --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 --rm -v $(pwd):/cuda_hlt -it nvidia/cuda:9.2-devel-ubuntu18.04 bash
+
+apt update && apt install -y cmake libtbb-dev
+mkdir build
+cmake ..
+make
+```
+
+</p></details>
+
 Where to find input
 -------------
 Input from 10k events can be found here: /afs/cern.ch/work/d/dovombru/public/gpu_input/10kevents
