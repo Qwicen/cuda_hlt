@@ -18,6 +18,7 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2)";
   a[seq::consolidate_tracks] = "Consolidate tracks";
   a[seq::veloUT] = "VeloUT tracking";
+  a[seq::catboost_evaluator] = "Catboost model evaluation";
   return a;
 }
 
@@ -48,6 +49,11 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_ut_hits] = "dev_ut_hits";
   a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
   a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
+  a[arg::dev_bin_features] = "dev_bin_features";
+  a[arg::dev_tree_splits] = "dev_tree_splits";
+  a[arg::dev_leaf_values] = "dev_leaf_values";
+  a[arg::dev_tree_sizes] = "dev_tree_sizes";
+  a[arg::dev_catboost_output] = "dev_catboost_output";
   return a;
 }
 
@@ -159,6 +165,13 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_states,
     arg::dev_veloUT_tracks,
     arg::dev_atomics_veloUT
+  };
+  sequence_dependencies[seq::catboost_evaluator] = {
+    arg::dev_tree_splits,
+    arg::dev_leaf_values,
+    arg::dev_tree_sizes,
+    arg::dev_catboost_output,
+    arg::dev_bin_features
   };
 
   return sequence_dependencies;
