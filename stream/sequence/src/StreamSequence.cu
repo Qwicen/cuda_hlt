@@ -322,28 +322,32 @@ cudaError_t Stream::run_sequence(
     }
 
     //FT preprocessing
+    //estimate_cluster_count
     argument_sizes[arg::dev_ft_event_offsets] = argen.size<arg::dev_ft_event_offsets>(host_ft_event_offsets_size);
-    argument_sizes[arg::dev_ft_cluster_count] = argen.size<arg::dev_ft_cluster_count>(number_of_events);
+    argument_sizes[arg::dev_ft_cluster_offsets] = argen.size<arg::dev_ft_cluster_offsets>(number_of_events);
+    argument_sizes[arg::dev_ft_cluster_num] = argen.size<arg::dev_ft_cluster_num>(1);
     argument_sizes[arg::dev_ft_events] = argen.size<arg::dev_ft_events>(host_ft_events_size);
+
     // std::cerr << "host_ft_events_size: " << argument_sizes[arg::dev_ft_events] << std::endl;
     // std::cerr << "host_ft_event_offsets_size: " << argument_sizes[arg::dev_ft_event_offsets] << std::endl;
     // std::cerr << "arg::dev_ft_events: " << arg::dev_ft_events <<std::endl;
     // std::cerr << "arg::dev_ft_event_offsets: " << arg::dev_ft_event_offsets <<std::endl;
     // std::cerr << "arg::dev_ft_cluster_count " << arg::dev_ft_cluster_count <<std::endl;
-    // for(int i = 0; i < argument_sizes.size(); i++)
-    //   std::cerr << i << ": " << argument_sizes[i] << std::endl;
+
+
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
 
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ft_events>(argument_offsets), host_ft_events, host_ft_events_size, cudaMemcpyHostToDevice, stream));
+    //cudaCheck(cudaMemsetAsync(argen.generate<arg::dev_ft_cluster_count>(argument_offsets), 10u, number_of_events * sizeof(uint)))
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ft_event_offsets>(argument_offsets), host_ft_event_offsets, host_ft_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
-    cudaCheck(cudaMemsetAsync(argen.generate<arg::dev_ft_cluster_count>(argument_offsets), 0, host_ft_event_offsets_size * sizeof(uint)))
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
     sequence.item<seq::estimate_cluster_count>().set_opts(dim3(number_of_events), dim3(1), stream);
     sequence.item<seq::estimate_cluster_count>().set_arguments(
       argen.generate<arg::dev_ft_event_offsets>(argument_offsets),
-      argen.generate<arg::dev_ft_cluster_count>(argument_offsets),
+      argen.generate<arg::dev_ft_cluster_offsets>(argument_offsets),
+      argen.generate<arg::dev_ft_cluster_num>(argument_offsets),
       argen.generate<arg::dev_ft_events>(argument_offsets)
     );
     sequence.item<seq::estimate_cluster_count>().invoke();
@@ -351,15 +355,29 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    // Checking
+    uint host_ft_cluster_num;
+    cudaCheck(cudaMemcpyAsync(&host_ft_cluster_num, argen.generate<arg::dev_ft_cluster_num>(argument_offsets), sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+    //std::cerr << host_ft_cluster_num;
 
-    //if ( transmit_device_to_host) {
-    uint* host_ft_cluster_count;
-    cudaCheck(cudaMallocHost((void**)&host_ft_cluster_count, host_ft_event_offsets_size * sizeof(uint)));
-    cudaCheck(cudaMemcpyAsync(host_ft_cluster_count, argen.generate<arg::dev_ft_cluster_count>(argument_offsets), argen.size<arg::dev_ft_cluster_count>(number_of_events), cudaMemcpyDeviceToHost, stream));
-    for(size_t i = 0; i < number_of_events; i++)
-      std::cerr << host_ft_cluster_count[i] << std::endl;
-    //}
+    //raw_bank_decoder
+
+    argument_sizes[arg::dev_ft_clusters] = argen.size<arg::dev_ft_clusters>(host_ft_cluster_num);
+    argument_sizes[arg::dev_ft_cluster_nums] = argen.size<arg::dev_ft_cluster_nums>(number_of_events);
+
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+
+    sequence.item<seq::raw_bank_decoder>().set_opts(dim3(number_of_events), dim3(1), stream);
+    sequence.item<seq::raw_bank_decoder>().set_arguments(
+      argen.generate<arg::dev_ft_event_offsets>(argument_offsets),
+      argen.generate<arg::dev_ft_cluster_offsets>(argument_offsets),
+      argen.generate<arg::dev_ft_events>(argument_offsets),
+      argen.generate<arg::dev_ft_clusters>(argument_offsets),
+      argen.generate<arg::dev_ft_cluster_nums>(argument_offsets)
+    );
+    sequence.item<seq::raw_bank_decoder>().invoke();
+
 
     ///////////////////////
     // Monte Carlo Check //

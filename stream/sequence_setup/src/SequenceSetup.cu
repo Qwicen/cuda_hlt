@@ -51,7 +51,8 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
   a[arg::dev_ft_event_offsets] = "dev_ft_event_offsets";
   a[arg::dev_ft_events] = "dev_ft_events";
-  a[arg::dev_ft_cluster_count] = "dev_ft_cluster_count";
+  a[arg::dev_ft_cluster_offsets] = "dev_ft_cluster_offsets";
+  a[arg::dev_ft_cluster_num] = "dev_ft_cluster_num";
   return a;
 }
 
@@ -166,8 +167,16 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
   };
   sequence_dependencies[seq::estimate_cluster_count] = {
     arg::dev_ft_event_offsets,
-    arg::dev_ft_cluster_count,
+    arg::dev_ft_cluster_offsets,
+    arg::dev_ft_cluster_num,
     arg::dev_ft_events
+  };
+  sequence_dependencies[seq::raw_bank_decoder] = {
+    arg::dev_ft_event_offsets,
+    arg::dev_ft_cluster_offsets,
+    arg::dev_ft_events,
+    arg::dev_ft_clusters,
+    arg::dev_ft_cluster_nums
   };
 
   return sequence_dependencies;

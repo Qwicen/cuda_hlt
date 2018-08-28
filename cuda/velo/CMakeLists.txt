@@ -7,11 +7,11 @@ file(GLOB velo_simplified_kalman_filter "simplified_kalman_filter/src/*cu")
 file(GLOB velo_consolidate_tracks "consolidate_tracks/src/*cu")
 
 include_directories(common/include)
-include_directories(prefix_sum/include) 
+include_directories(prefix_sum/include)
 include_directories(mask_clustering/include)
 include_directories(calculate_phi_and_sort/include)
 include_directories(search_by_triplet/include)
-include_directories(simplified_kalman_filter/include) 
+include_directories(simplified_kalman_filter/include)
 include_directories(consolidate_tracks/include)
 include_directories(../../main/include)
 
@@ -28,4 +28,3 @@ cuda_add_library(Velo STATIC
 if ( MC_CHECK )
   target_compile_definitions(Velo PUBLIC MC_CHECK)
 endif()
- 

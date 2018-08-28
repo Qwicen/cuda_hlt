@@ -11,6 +11,7 @@
 #include "VeloUT.cuh"
 
 #include "EstimateClusterCount.cuh"
+#include "RawBankDecoder.cuh"
 
 #include "Argument.cuh"
 #include "Sequence.cuh"
@@ -41,7 +42,8 @@ constexpr auto sequence_algorithms() {
     prefix_sum_scan,
     consolidate_tracks,
     veloUT,
-    estimate_cluster_count
+    estimate_cluster_count,
+    raw_bank_decoder
   );
 }
 
@@ -90,7 +92,10 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
   Argument<arg::dev_atomics_veloUT, int>,
   Argument<arg::dev_ft_event_offsets, uint>,
-  Argument<arg::dev_ft_cluster_count, uint>,
+  Argument<arg::dev_ft_cluster_offsets, uint>,
+  Argument<arg::dev_ft_cluster_num, uint>,
+  Argument<arg::dev_ft_cluster_nums, uint>,
+  Argument<arg::dev_ft_clusters, FTLiteCluster>,
   Argument<arg::dev_ft_events, char>
 >;
 

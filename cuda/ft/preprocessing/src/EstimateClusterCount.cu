@@ -2,36 +2,27 @@
 #include <stdio.h>
 #include "assert.h"
 
-__global__ void estimate_cluster_count(uint *ft_event_offsets, uint *dev_ft_cluster_count, char *ft_events) {
+__global__ void estimate_cluster_count(uint *ft_event_offsets, uint *dev_ft_cluster_offsets, uint *dev_ft_cluster_num, char *ft_events) {
+  // TODO: Optimize parallelization.
   //printf("Preprocessing FT event %u, offset: %u...\n", blockIdx.x, ft_event_offsets[blockIdx.x]);
   //printf("blockIdx.x = %u\n", blockIdx.x);
   const uint event_id = blockIdx.x;
+
+  //if first thread...
+  *(dev_ft_cluster_offsets + event_id) = 0;
+  *(dev_ft_cluster_num) = 0;
+  __syncthreads();
+
   const auto event = FTRawEvent(ft_events + ft_event_offsets[event_id]);
-  printf("Event No: %u, Number of Raw Banks: %u, Version: %u\n", event_id, event.number_of_raw_banks, event.version);
   assert(event.version == 5u);
+  uint byte_count = 0;
   for(size_t rawbank = 0; rawbank < event.number_of_raw_banks; rawbank++)
   {
-    atomicAdd(dev_ft_cluster_count + event_id, event.raw_bank_offset[rawbank]);
+    byte_count += event.raw_bank_offset[rawbank] - (rawbank == 0? 0 : event.raw_bank_offset[rawbank-1]);
   }
+  //approx. 2 bytes per cluster in v5 (overestimates a little). See LHCb::FTDAQ::nbFTClusters (FTDAQHelper.cpp)
+  atomicAdd(dev_ft_cluster_offsets + event_id, byte_count / 2);
+  atomicAdd(dev_ft_cluster_num, byte_count / 2);
+  printf("Event No: %u, Number of Raw Banks: %u, Version: %u, Total Rawbank Size: %u\n", event_id, event.number_of_raw_banks, event.version, byte_count);
   //dev_ft_cluster_count[event_id] = event.number_of_raw_banks
-}
-
-__device__ __host__ FTRawEvent::FTRawEvent(
-  const char* event
-) {
-  const char* p = event;
-  number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
-  version = *((uint32_t*)p); p += sizeof(uint32_t);
-  raw_bank_offset = (uint32_t*) p; p += number_of_raw_banks * sizeof(uint32_t);
-  payload = (char*) p;
-}
-
-__device__ __host__ FTRawBank::FTRawBank(
-  const char* raw_bank,
-  unsigned int len
-) {
-  const char* p = raw_bank;
-  sourceID = *((uint32_t*)p); p += sizeof(uint32_t);
-  length = len;
-  data = (uint32_t*) p;
 }
