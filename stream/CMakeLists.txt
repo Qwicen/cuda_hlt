@@ -38,6 +38,7 @@ cuda_add_library(Stream STATIC
   )
 
 if ( ROOT_FOUND )
+  target_compile_definitions(Stream PUBLIC WITH_ROOT)
   target_link_libraries(Stream
   Velo
   VeloUT
@@ -49,5 +50,3 @@ else()
   VeloUT
   x86VeloUT)
 endif()
-
-
