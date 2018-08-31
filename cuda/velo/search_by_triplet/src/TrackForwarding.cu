@@ -104,9 +104,11 @@ __device__ void track_forwarding(
           predy,
           scatterDenom2
         );
-        const auto fit_is_better = fit < best_fit;
-        best_fit = fit_is_better*fit + !fit_is_better*best_fit;
-        best_h2 = fit_is_better*h2_index + !fit_is_better*best_h2;
+        
+        if (fit < best_fit) {
+          best_fit = fit;
+          best_h2 = h2_index;
+        }
       }
 
       for (auto j=0; j<module_data[5].hitNums; ++j) {
@@ -125,9 +127,11 @@ __device__ void track_forwarding(
           predy,
           scatterDenom2
         );
-        const auto fit_is_better = fit < best_fit;
-        best_fit = fit_is_better*fit + !fit_is_better*best_fit;
-        best_h2 = fit_is_better*h2_index + !fit_is_better*best_h2;
+
+        if (fit < best_fit) {
+          best_fit = fit;
+          best_h2 = h2_index;
+        }
       }
 
       // Condition for finding a h2
