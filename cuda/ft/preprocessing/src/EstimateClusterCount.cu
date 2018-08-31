@@ -5,7 +5,6 @@
 __global__ void estimate_cluster_count(uint *ft_event_offsets, uint *dev_ft_cluster_offsets, uint *dev_ft_cluster_num, char *ft_events) {
   // TODO: Optimize parallelization.
   //printf("Preprocessing FT event %u, offset: %u...\n", blockIdx.x, ft_event_offsets[blockIdx.x]);
-  //printf("blockIdx.x = %u\n", blockIdx.x);
   const uint event_id = blockIdx.x;
 
   //if first thread...
@@ -23,6 +22,5 @@ __global__ void estimate_cluster_count(uint *ft_event_offsets, uint *dev_ft_clus
   //approx. 2 bytes per cluster in v5 (overestimates a little). See LHCb::FTDAQ::nbFTClusters (FTDAQHelper.cpp)
   atomicAdd(dev_ft_cluster_offsets + event_id, byte_count / 2);
   atomicAdd(dev_ft_cluster_num, byte_count / 2);
-  printf("Event No: %u, Number of Raw Banks: %u, Version: %u, Total Rawbank Size: %u\n", event_id, event.number_of_raw_banks, event.version, byte_count);
-  //dev_ft_cluster_count[event_id] = event.number_of_raw_banks
+  //printf("Event No: %u, Number of Raw Banks: %u, Version: %u, Total Rawbank Size: %u\n", event_id, event.number_of_raw_banks, event.version, byte_count);
 }

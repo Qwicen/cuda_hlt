@@ -376,7 +376,40 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_ft_clusters>(argument_offsets),
       argen.generate<arg::dev_ft_cluster_nums>(argument_offsets)
     );
+
+    //only for testing, TODO: REMOVE
+    cudaCheck(cudaMemset(argen.generate<arg::dev_ft_clusters>(argument_offsets), 0, host_ft_cluster_num*sizeof(FTLiteCluster)));
     sequence.item<seq::raw_bank_decoder>().invoke();
+
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    //DtoH is temporary here.
+
+    uint* host_ft_cluster_offsets = new uint[number_of_events];
+    uint* host_ft_cluster_nums = new uint[number_of_events];
+    FTLiteCluster* host_ft_clusters = new FTLiteCluster[host_ft_cluster_num];
+    //std::cout << "Copying " << host_ft_cluster_num << " clusters to host..." << std::endl;
+
+    cudaCheck(cudaMemcpyAsync(host_ft_cluster_offsets, argen.generate<arg::dev_ft_cluster_offsets>(argument_offsets), argen.size<arg::dev_ft_cluster_offsets>(number_of_events), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_ft_cluster_nums, argen.generate<arg::dev_ft_cluster_nums>(argument_offsets), argen.size<arg::dev_ft_cluster_nums>(number_of_events), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_ft_clusters, argen.generate<arg::dev_ft_clusters>(argument_offsets), argen.size<arg::dev_ft_clusters>(host_ft_cluster_num), cudaMemcpyDeviceToHost, stream));
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    /*for(size_t j = 0; j < host_ft_cluster_num; j++) {
+      std::cout << "host cluster " << j << ": chan ";
+      std::cout << std::to_string(host_ft_clusters[j].channelID.channelID) << std::endl;
+    }*/
+
+    for(size_t i = 0; i < number_of_events; i++) {
+      std::cout << "Event " << i << ": decoded " << host_ft_cluster_nums[i] << " clusters." << std::endl;
+      /*for(size_t j = 0; j < host_ft_cluster_nums[i]; j++) {
+        uint start = (i == 0? 0 : host_ft_cluster_offsets[i-1]);
+        std::cout << "host cluster " << start + j << ": chan ";
+        std::cout << (host_ft_clusters[start + j].channelID.toString()) << std::endl;
+      }*/
+    }
 
 
     ///////////////////////

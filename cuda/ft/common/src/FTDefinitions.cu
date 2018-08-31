@@ -1,4 +1,5 @@
 #include "FTDefinitions.cuh"
+#include <sstream>
 
 /*                     ---Geometry format---
 | name                         | type     | size               |
@@ -78,9 +79,24 @@ __device__ __host__ FTRawBank::FTRawBank(const char* raw_bank, const char* end) 
   last = (uint16_t*) --end;
 }
 
-__device__ __host__ FTChannelID FTChannelID::operator+(const uint32_t& other){
+__device__ __host__ FTChannelID FTChannelID::operator+=(const uint32_t& other){
   channelID += other;
   return *this;
+}
+
+__host__ std::string FTChannelID::toString()
+{
+  std::ostringstream s;
+  s << "{ FTChannelID : "
+    << " channel =" << std::to_string(channel())
+    << " sipm ="    << std::to_string(sipm())
+    << " mat ="     << std::to_string(mat())
+    << " module="   << std::to_string(module())
+    << " quarter="  << std::to_string(quarter())
+    << " layer="    << std::to_string(layer())
+    << " station="  << std::to_string(station())
+    << " }";
+  return s.str();
 }
 
 __device__ __host__ uint8_t FTChannelID::channel() const {

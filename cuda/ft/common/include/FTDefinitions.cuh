@@ -95,7 +95,8 @@ struct FTChannelID {
   __device__ __host__ uint8_t quarter() const;
   __device__ __host__ uint8_t layer() const;
   __device__ __host__ uint8_t station() const;
-  __device__ __host__ FTChannelID operator+(const uint32_t& other);
+  __device__ __host__ FTChannelID operator+=(const uint32_t& other);
+  __host__ std::string toString();
   //from FTChannelID.h (generated)
   enum channelIDMasks{channelMask       = 0x7fL,
                       sipmMask          = 0x180L,
