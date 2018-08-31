@@ -19,6 +19,7 @@ include_directories(../x86/velo/clustering/include)
 include_directories(../checker/tracking/include)
 include_directories(../x86/veloUT/PrVeloUT/include)
 include_directories(../cuda/utils/include)
+include_directories(../cuda/veloUT/sorting/include)
 
 file(GLOB stream_gear "gear/src/*cu")
 file(GLOB stream_handlers "handlers/src/*cu")

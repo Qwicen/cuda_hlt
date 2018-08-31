@@ -293,15 +293,28 @@ cudaError_t Stream::run_sequence(
       cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
     }
 
-    // VeloUT tracking
+    // UT hit sorting by x
     argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(number_of_events);
+    argument_sizes[arg::dev_ut_hits_sorted] = argen.size<arg::dev_ut_hits_sorted>(number_of_events);
+    argument_sizes[arg::dev_ut_hit_permutations] = argen.size<arg::dev_ut_hit_permutations>(number_of_events * VeloUTTracking::n_layers * VeloUTTracking::max_numhits_per_event);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
+    sequence.item<seq::sort_by_x>().set_opts(dim3(number_of_events), dim3(32), stream);
+    sequence.item<seq::sort_by_x>().set_arguments(
+      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hits_sorted>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_permutations>(argument_offsets) );
+    sequence.item<seq::sort_by_x>().invoke();
+    
+    // VeloUT tracking
+    //argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(number_of_events);
     argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks);
     argument_sizes[arg::dev_atomics_veloUT] = argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
+    //cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
     sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(32), stream);
     sequence.item<seq::veloUT>().set_arguments(
-      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hits_sorted>(argument_offsets),
       argen.generate<arg::dev_atomics_storage>(argument_offsets),
       argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
       argen.generate<arg::dev_velo_track_hits>(argument_offsets),
