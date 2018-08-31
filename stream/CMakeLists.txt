@@ -43,7 +43,7 @@ if ( ROOT_FOUND )
   Velo
   VeloUT
   x86VeloUT
-  ${ROOT_LIBRAIRES})
+  ${ROOT_LIBRARIES})
 else()
   target_link_libraries(Stream
   Velo

@@ -35,7 +35,7 @@ void findPermutation(
 
 
 int run_veloUT_on_CPU (
-  std::vector< trackChecker::Tracks >* ut_tracks_events,
+  std::vector<trackChecker::Tracks>& ut_tracks_events,
   VeloUTTracking::HitsSoA* hits_layers_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const VeloState* host_velo_states,
@@ -219,7 +219,7 @@ int run_veloUT_on_CPU (
     
     // save in format for track checker
     trackChecker::Tracks checker_tracks = prepareVeloUTTracksEvent( veloUT_tracks, n_veloUT_tracks_event );
-    ut_tracks_events->emplace_back( checker_tracks );
+    ut_tracks_events.emplace_back( checker_tracks );
     
   } // events
 

@@ -268,22 +268,6 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::consolidate_tracks>().invoke();
 
-    ////////////////////////////////////////
-    // Optional: Simplified Kalman filter //
-    ////////////////////////////////////////
-
-    // if (do_simplified_kalman_filter) {
-    //   Helper::invoke(
-    //     simplifiedKalmanFilter,
-    //     "Simplified Kalman filter",
-    //     times,
-    //     cuda_event_start,
-    //     cuda_event_stop,
-    //     print_individual_rates
-    //   );
-    // }
-
-   
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
@@ -372,11 +356,12 @@ cudaError_t Stream::run_sequence(
           veloUT_tracks,
           folder_name_MC,
           start_event_offset,
-          trackType);                                                                            
+          trackType
+        );
       
         /* Run VeloUT on x86 architecture */
         if ( run_on_x86 ) {
-          std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
+          std::vector<trackChecker::Tracks> ut_tracks_events;
         
           int rv = run_veloUT_on_CPU(
                      ut_tracks_events,
@@ -387,7 +372,8 @@ cudaError_t Stream::run_sequence(
                      host_velo_track_hit_number,
                      host_velo_track_hits,
                      host_number_of_tracks,
-                     number_of_events );
+                     number_of_events
+                    );
 
           if ( rv != 0 )
             continue;
@@ -395,12 +381,10 @@ cudaError_t Stream::run_sequence(
           std::cout << "CHECKING VeloUT TRACKS from x86" << std::endl;
           trackType = "VeloUT";
           call_pr_checker (
-            *ut_tracks_events,
+            ut_tracks_events,
             folder_name_MC,
             start_event_offset,
-            trackType); 
-          
-          delete ut_tracks_events;
+            trackType);
         }
       } // only in first repitition
     } // mc_check_enabled     

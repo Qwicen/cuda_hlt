@@ -15,7 +15,7 @@
 #include "SequenceSetup.cuh"
 #include "PrVeloUTMagnetToolDefinitions.cuh"
 
-#include "run_VeloUT_CPU.h"
+#include "../../../x86/veloUT/PrVeloUT/include/run_VeloUT_CPU.h"
 
 class Timer;
 

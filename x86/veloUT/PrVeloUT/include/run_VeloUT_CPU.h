@@ -1,14 +1,12 @@
 #pragma once
 
 #include "Common.h"
-
 #include "TrackChecker.h"
-
 #include "PrVeloUTWrapper.h"
 #include "Tools.h"
 
 int run_veloUT_on_CPU (
-  std::vector< trackChecker::Tracks > * ut_tracks_events,
+  std::vector<trackChecker::Tracks>& ut_tracks_events,
   VeloUTTracking::HitsSoA * hits_layers_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const VeloState * host_velo_states,
