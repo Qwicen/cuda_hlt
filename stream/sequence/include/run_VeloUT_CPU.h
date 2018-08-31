@@ -1,11 +1,10 @@
 #pragma once
 
 #include "Common.h"
-
 #include "TrackChecker.h"
-
 #include "PrVeloUTWrapper.h"
 #include "Tools.h"
+#include "Sorting.cuh"
 
 int run_veloUT_on_CPU (
   std::vector< trackChecker::Tracks > * ut_tracks_events,
@@ -19,12 +18,6 @@ int run_veloUT_on_CPU (
   const int &number_of_events
 );
 
-void findPermutation(
-  const float* hit_Xs,
-  const uint hit_start,
-  uint* hit_permutations,
-  const uint n_hits
-); 
 
 template<class T>
 void applyXPermutation(
@@ -33,7 +26,6 @@ void applyXPermutation(
   const uint number_of_hits,
   T* container
 ) {
-  // To do: find better solution such that not all arrays have to be copied
   T interim_container[number_of_hits];
   for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
     interim_container[i_hit] = container[hit_start + i_hit];

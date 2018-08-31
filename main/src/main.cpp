@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
   cudaCheck(cudaMallocHost((void**)&host_ut_hits_events, number_of_events * sizeof(VeloUTTracking::HitsSoA)));
 
   read_ut_events_into_arrays( host_ut_hits_events, ut_events, ut_event_offsets, number_of_events );
-
+  
   //check_ut_events( host_ut_hits_events, number_of_events );
 
   // Read LUTs from PrUTMagnetTool into pinned host memory

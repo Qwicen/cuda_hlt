@@ -5,21 +5,28 @@
  * @brief Apply permutation from prev container to new container
  */
 template<class T>
-__device__ void apply_permutation(
+__host__ __device__ void apply_permutation(
   uint* permutation,
-  const uint event_hit_start,
-  const uint event_number_of_hits,
+  const uint hit_start,
+  const uint number_of_hits,
   T* prev_container,
   T* new_container
 ) {
   // Apply permutation across all hits in the module (coalesced)
-  for (uint i=0; i<(event_number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
+#ifdef __CUDA_ARCH__
+  for (uint i=0; i<(number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
     const auto permutation_index = i*blockDim.x + threadIdx.x;
-    if (permutation_index < event_number_of_hits) {
-      const auto hit_index = permutation[event_hit_start + permutation_index];
-      new_container[event_hit_start + permutation_index] = prev_container[hit_index];
+    if (permutation_index < number_of_hits) {
+      const auto hit_index = permutation[hit_start + permutation_index];
+      new_container[hit_start + permutation_index] = prev_container[hit_index];
     }
   }
+#else
+  for (uint i=0; i<number_of_hits; ++i) {
+    const auto hit_index = permutation[hit_start + i];
+    new_container[hit_start + i] = prev_container[hit_index];
+  }
+#endif 
 }
 
 /**
