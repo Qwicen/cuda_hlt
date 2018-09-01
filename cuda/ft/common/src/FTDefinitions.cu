@@ -76,7 +76,7 @@ __device__ __host__ FTRawBank::FTRawBank(const char* raw_bank, const char* end) 
   const char* p = raw_bank;
   sourceID = *((uint32_t*)p); p += sizeof(uint32_t);
   data = (uint16_t*) p;
-  last = (uint16_t*) --end;
+  last = (uint16_t*) end;
 }
 
 __device__ __host__ FTChannelID FTChannelID::operator+=(const uint32_t& other){

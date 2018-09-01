@@ -67,7 +67,7 @@ __global__ void raw_bank_decoder(uint *ft_event_offsets,  uint *ft_cluster_offse
   for(size_t i = 0; i < event.number_of_raw_banks; i++)
   {
     uint start = (i == 0? 0 : event.raw_bank_offset[i-1]);
-    FTRawBank rawbank(event.payload + start, event.payload + event.raw_bank_offset[i] - 1);
+    FTRawBank rawbank(event.payload + start, event.payload + event.raw_bank_offset[i]);
 
     uint16_t* it = rawbank.data + 2;
     uint16_t* last = rawbank.last;

@@ -397,9 +397,11 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    /*for(size_t j = 0; j < host_ft_cluster_num; j++) {
-      std::cout << "host cluster " << j << ": chan ";
-      std::cout << std::to_string(host_ft_clusters[j].channelID.channelID) << std::endl;
+
+    /*std::ofstream dumpfile("host_channels.txt");
+    for(size_t j = 0; j < host_ft_cluster_num; j++) {
+      //std::cout << "host cluster " << j << ": chan ";
+      dumpfile << std::to_string(host_ft_clusters[j].channelID.channelID) << std::endl;
     }*/
 
     for(size_t i = 0; i < number_of_events; i++) {
