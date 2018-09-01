@@ -343,7 +343,7 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    sequence.item<seq::estimate_cluster_count>().set_opts(dim3(number_of_events), dim3(1), stream);
+    sequence.item<seq::estimate_cluster_count>().set_opts(dim3(number_of_events), dim3(240), stream);
     sequence.item<seq::estimate_cluster_count>().set_arguments(
       argen.generate<arg::dev_ft_event_offsets>(argument_offsets),
       argen.generate<arg::dev_ft_cluster_offsets>(argument_offsets),
@@ -359,7 +359,7 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(&host_ft_cluster_num, argen.generate<arg::dev_ft_cluster_num>(argument_offsets), sizeof(uint), cudaMemcpyDeviceToHost, stream));
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
-    //std::cerr << host_ft_cluster_num;
+    //std::cerr << "Reserving space for " << host_ft_cluster_num << " clusters." << std::endl;
 
     //raw_bank_decoder
 
@@ -368,7 +368,7 @@ cudaError_t Stream::run_sequence(
 
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
 
-    sequence.item<seq::raw_bank_decoder>().set_opts(dim3(number_of_events), dim3(1), stream);
+    sequence.item<seq::raw_bank_decoder>().set_opts(dim3(number_of_events), dim3(240), stream);
     sequence.item<seq::raw_bank_decoder>().set_arguments(
       argen.generate<arg::dev_ft_event_offsets>(argument_offsets),
       argen.generate<arg::dev_ft_cluster_offsets>(argument_offsets),
@@ -398,20 +398,21 @@ cudaError_t Stream::run_sequence(
     cudaEventSynchronize(cuda_generic_event);
 
 
-    /*std::ofstream dumpfile("host_channels.txt");
-    for(size_t j = 0; j < host_ft_cluster_num; j++) {
+    //std::ofstream dumpfile("host_channels.txt");
+    /*for(size_t j = 0; j < host_ft_cluster_num; j++) {
       //std::cout << "host cluster " << j << ": chan ";
       dumpfile << std::to_string(host_ft_clusters[j].channelID.channelID) << std::endl;
     }*/
 
-    for(size_t i = 0; i < number_of_events; i++) {
+    /*for(size_t i = 0; i < number_of_events; i++) {
       std::cout << "Event " << i << ": decoded " << host_ft_cluster_nums[i] << " clusters." << std::endl;
-      /*for(size_t j = 0; j < host_ft_cluster_nums[i]; j++) {
+      for(size_t j = 0; j < host_ft_cluster_nums[i]; j++) {
         uint start = (i == 0? 0 : host_ft_cluster_offsets[i-1]);
-        std::cout << "host cluster " << start + j << ": chan ";
-        std::cout << (host_ft_clusters[start + j].channelID.toString()) << std::endl;
-      }*/
-    }
+        //std::cout << "host cluster " << start + j << ": chan ";
+        //std::cout << (host_ft_clusters[start + j].channelID.toString()) << std::endl;
+        dumpfile << std::to_string(host_ft_clusters[start+j].channelID.channelID) << std::endl;
+      }
+    }*/
 
 
     ///////////////////////
