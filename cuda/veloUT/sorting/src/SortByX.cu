@@ -12,7 +12,7 @@ __global__ void sort_by_x(
   VeloUTTracking::HitsSoA* hits_layers        = dev_ut_hits + event_number;
   VeloUTTracking::HitsSoA* hits_layers_sorted = dev_ut_hits_sorted + event_number;
 
-  uint* hit_permutations = dev_hit_permutations + event_number * VeloUTTracking::n_layers * VeloUTTracking::max_numhits_per_event ;
+  uint* hit_permutations = dev_hit_permutations + event_number * VeloUTTracking::max_numhits_per_event;
   for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
     const uint n_hits = hits_layers->n_hits_layers[i_layer];
     const uint layer_offset = hits_layers->layer_offset[i_layer];
