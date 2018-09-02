@@ -54,6 +54,28 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_veloUT_tracks, max_number_of_events * VeloUTTracking::max_num_tracks * sizeof(VeloUTTracking::TrackUT)));
   cudaCheck(cudaMallocHost((void**)&host_atomics_veloUT, VeloUTTracking::num_atomics * max_number_of_events * sizeof(int)));
 
+  //Catboost initialization
+  NCatboostStandalone::TOwningEvaluator evaluator("../input/catboost/MuID-Run2-MC-570-v1.cb");
+  model_float_feature_num = (size_t)evaluator.GetFloatFeatureCount();
+  model_bin_feature_num = (size_t)evaluator.GetBinFeatureCount();
+  ObliviousTrees = evaluator.GetObliviousTrees();
+  tree_num = ObliviousTrees->TreeSizes()->size();
+  treeSplitsPtr_flat = ObliviousTrees->TreeSplits()->data();
+  leafValuesPtr_flat = ObliviousTrees->LeafValues()->data();
+  
+  cudaCheck(cudaMallocHost((void**)&host_bin_features, model_bin_feature_num * max_number_of_events * sizeof(char)));
+  cudaCheck(cudaMallocHost((void***)&host_leaf_values, tree_num * sizeof(double*)));
+  cudaCheck(cudaMallocHost((void***)&host_tree_splits, tree_num * sizeof(int*)));
+  cudaCheck(cudaMallocHost((void**)&host_catboost_output, max_number_of_events * sizeof(float)));
+  cudaCheck(cudaMallocHost((void**)&host_tree_sizes, tree_num * sizeof(int)));
+
+  for (size_t i = 0; i < tree_num; i++) {
+    int depth = ObliviousTrees->TreeSizes()->Get(i);
+    host_tree_sizes[i] = depth;
+    cudaCheck(cudaMallocHost((void**)&host_leaf_values[i], (1 << depth)*sizeof(double)));
+    cudaCheck(cudaMallocHost((void**)&host_tree_splits[i], depth*sizeof(int)));
+  }
+
   // Define sequence of algorithms to execute
   sequence.set(sequence_algorithms());
 

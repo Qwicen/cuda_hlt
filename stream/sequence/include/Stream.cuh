@@ -11,6 +11,7 @@
 #include "Logger.h"
 #include "Timer.h"
 #include "Tools.h"
+#include "Catboost.h"
 #include "BaseDynamicScheduler.cuh"
 #include "SequenceSetup.cuh"
 #include "PrVeloUTMagnetToolDefinitions.cuh"
@@ -55,6 +56,19 @@ struct Stream {
   VeloState* host_velo_states;
   VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
+
+   //Catboost
+   int tree_num;
+   int model_float_feature_num;
+   int model_bin_feature_num;
+   int* host_tree_sizes;
+   int** host_tree_splits;
+   float* host_catboost_output;
+   double** host_leaf_values;
+   unsigned char* host_bin_features;
+   const int* treeSplitsPtr_flat;
+   const double* leafValuesPtr_flat;
+   const NCatBoostFbs::TObliviousTrees* ObliviousTrees;
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;

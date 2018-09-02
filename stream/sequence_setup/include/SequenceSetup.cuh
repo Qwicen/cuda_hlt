@@ -9,6 +9,7 @@
 #include "VeloKalmanFilter.cuh"
 
 #include "VeloUT.cuh"
+#include "Evaluator.cuh"
 
 #include "Argument.cuh"
 #include "Sequence.cuh"
@@ -37,7 +38,8 @@ constexpr auto sequence_algorithms() {
     prefix_sum_single_block,
     prefix_sum_scan,
     consolidate_tracks,
-    veloUT
+    veloUT,
+    catboost_evaluator
   );
 }
 
@@ -84,7 +86,12 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_velo_states, VeloState>,
   Argument<arg::dev_ut_hits, VeloUTTracking::HitsSoA>,
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
-  Argument<arg::dev_atomics_veloUT, int>
+  Argument<arg::dev_atomics_veloUT, int>,
+  Argument<arg::dev_tree_splits, int*>,
+  Argument<arg::dev_leaf_values, double*>,
+  Argument<arg::dev_tree_sizes, int>,
+  Argument<arg::dev_catboost_output, float>,
+  Argument<arg::dev_bin_features, unsigned char>,
 >;
 
 /**

@@ -15,6 +15,7 @@ include_directories(../cuda/velo/mask_clustering/include)
 include_directories(../cuda/velo/prefix_sum/include)
 include_directories(../cuda/velo/search_by_triplet/include)
 include_directories(../cuda/velo/simplified_kalman_filter/include)
+include_directories(../cuda/catboost_evaluator/evaluator/include)
 include_directories(../x86/velo/clustering/include)
 include_directories(../checker/tracking/include)
 include_directories(../x86/veloUT/PrVeloUT/include)
@@ -42,11 +43,13 @@ if ( ROOT_FOUND )
   Velo
   VeloUT
   x86VeloUT
+  Evaluator
   ${ROOT_LIBRAIRES})
 else()
   target_link_libraries(Stream
   Velo
   VeloUT
+  Evaluator
   x86VeloUT)
 endif()
 

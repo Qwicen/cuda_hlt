@@ -21,7 +21,8 @@ enum seq_enum_t {
   prefix_sum_single_block_velo_track_hit_number,
   prefix_sum_scan_velo_track_hit_number,
   consolidate_tracks,
-  veloUT
+  veloUT,
+  catboost_evaluator
 };
 }
 
@@ -54,6 +55,11 @@ enum arg_enum_t {
   dev_velo_states,
   dev_ut_hits,
   dev_veloUT_tracks,
-  dev_atomics_veloUT
+  dev_atomics_veloUT,
+  dev_tree_splits,
+  dev_leaf_values,
+  dev_tree_sizes,
+  dev_catboost_output,
+  dev_bin_features,
 };
 }
