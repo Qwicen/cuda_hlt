@@ -16,19 +16,19 @@ __host__ __device__ void applyPermutation(
   T* prev_container,
   T* new_container
 ) {
-  // Apply permutation across all hits in the module (coalesced)
+  // Apply permutation across all hits
 #ifdef __CUDA_ARCH__
   for (uint i=0; i<(number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
     const auto permutation_index = i*blockDim.x + threadIdx.x;
     if (permutation_index < number_of_hits) {
-      const auto hit_index = permutation[hit_start + permutation_index];
-      new_container[hit_start + permutation_index] = prev_container[hit_start + hit_index];
+      const auto hit_index_global = permutation[hit_start + permutation_index];
+      new_container[hit_start + permutation_index] = prev_container[hit_index_global];
     }
   }
 #else
   for (uint i=0; i<number_of_hits; ++i) {
-    const auto hit_index = permutation[hit_start + i];
-    new_container[hit_start + i] = prev_container[hit_start + hit_index];
+    const auto hit_index_global = permutation[hit_start + i];
+    new_container[hit_start + i] = prev_container[hit_index_global];
   }
 #endif 
 }
@@ -37,7 +37,6 @@ __host__ __device__ void applyPermutation(
 
 /**
  * @brief Sort by var stored in sorting_vars, store index in hit_permutations
- * to do: use shared memory (?)
  */
 template<class T>
 __host__ __device__
@@ -65,7 +64,7 @@ void findPermutation(
       assert(position < n_hits);
       
       // Store it in hit_permutations 
-      hit_permutations[hit_start + position] = hit_rel_index;
+      hit_permutations[hit_start + position] = hit_index; 
     }
   }
 #else
@@ -84,7 +83,7 @@ void findPermutation(
     assert(position < n_hits);
     
     // Store it in hit_permutations 
-    hit_permutations[hit_start + position] = i;
+    hit_permutations[hit_start + position] = hit_index; 
   }
 #endif
   
