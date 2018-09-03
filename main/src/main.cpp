@@ -27,7 +27,7 @@
 #include "InputTools.h"
 #include "Timer.h"
 #include "../../stream/sequence/include/StreamWrapper.cuh"
-#include "../../stream/sequence/include/InitializeConstants.cuh"
+#include "../../stream/sequence/include/Constants.cuh"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
@@ -248,7 +248,8 @@ int main(int argc, char *argv[])
   
   
   // Initialize detector constants on GPU
-  initializeConstants();
+  GpuConstants gpu_constants;
+  gpu_constants.reserve_and_initialize();
 
   // Create streams
   StreamWrapper stream_wrapper;
@@ -264,7 +265,8 @@ int main(int argc, char *argv[])
     run_on_x86, 
     folder_name_MC,
     start_event_offset,
-    reserve_mb
+    reserve_mb,
+    gpu_constants
   );
   
   // Attempt to execute all in one go
@@ -279,7 +281,7 @@ int main(int argc, char *argv[])
         host_velopix_event_offsets,
         velopix_events.size(),
         velopix_event_offsets.size(),
-	host_ut_hits_events,
+	      host_ut_hits_events,
         host_ut_magnet_tool,
         number_of_events,
         number_of_repetitions
