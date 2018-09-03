@@ -127,7 +127,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
 
 {
    std::cout << "Checking PVs: " << std::endl;
-   std::vector<std::string> folderContents = list_folder(foldername, fromNtuple);
+   std::vector<std::string> folderContents = list_folder(foldername);
   
   uint requestedFiles = number_of_files==0 ? folderContents.size() : number_of_files;
   verbose_cout << "Requested " << requestedFiles << " files" << std::endl;
@@ -153,10 +153,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
     std::string readingFile = folderContents[i % folderContents.size()];
     std::string filename = foldername + "/" + readingFile;
 
-    // Check if file exists
-    if (!fileExists(filename)){
-    throw StrException("Error: File " + filename + " does not exist.");
-     }
+
    
     TFile *file = new TFile(filename.data(),"READ");
     TTree *tree = (TTree*)file->Get("pv");
