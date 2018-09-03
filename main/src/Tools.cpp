@@ -378,6 +378,7 @@ trackChecker::Tracks prepareVeloUTTracksEvent(
   const VeloUTTracking::TrackUT* veloUT_tracks,
   const int n_veloUT_tracks
 ) {
+  debug_cout << "event has " << n_veloUT_tracks << " tracks" << std::endl;
   trackChecker::Tracks checker_tracks;
   for ( int i_track = 0; i_track < n_veloUT_tracks; ++i_track ) {
     VeloUTTracking::TrackUT veloUT_track = veloUT_tracks[i_track];
@@ -400,7 +401,6 @@ std::vector< trackChecker::Tracks > prepareVeloUTTracks(
 ) {
   std::vector< trackChecker::Tracks > checker_tracks;
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
-    //debug_cout << "checking event " << i_event << " with " << n_veloUT_tracks[i_event] << " tracks" << std::endl;
     trackChecker::Tracks ch_tracks = prepareVeloUTTracksEvent(
       veloUT_tracks + i_event * VeloUTTracking::max_num_tracks,
       n_veloUT_tracks[i_event]);
