@@ -4,42 +4,52 @@
  * @brief Search for compatible triplets in
  *        three neighbouring modules on one side
  */
-__device__ void trackSeeding(
+__device__ void track_seeding(
   float* shared_best_fits,
   const float* hit_Xs,
   const float* hit_Ys,
+  const float* hit_Zs,
   const VeloTracking::Module* module_data,
   const short* h0_candidates,
   const short* h2_candidates,
   bool* hit_used,
   uint* tracklets_insertPointer,
   uint* ttf_insertPointer,
-  VeloTracking::TrackHits* tracklets,
+ VeloTracking:: TrackletHits* tracklets,
   uint* tracks_to_follow,
-  unsigned short* h1_rel_indices,
+  unsigned short* h1_indices,
   uint* local_number_of_hits
 ) {
   // Add to an array all non-used h1 hits with candidates
-  for (int i=0; i<(module_data[1].hitNums + blockDim.x - 1) / blockDim.x; ++i) {
+  for (int i=0; i<(module_data[2].hitNums + blockDim.x - 1) / blockDim.x; ++i) {
     const unsigned short h1_rel_index = i*blockDim.x + threadIdx.x;
-    if (h1_rel_index < module_data[1].hitNums) {
-      const auto h1_index = module_data[1].hitStart + h1_rel_index;
+    if (h1_rel_index < module_data[2].hitNums) {
+      const auto h1_index = module_data[2].hitStart + h1_rel_index;
       const auto h0_first_candidate = h0_candidates[2*h1_index];
       const auto h2_first_candidate = h2_candidates[2*h1_index];
       if (!hit_used[h1_index] && h0_first_candidate!=-1 && h2_first_candidate!=-1) {
         const auto current_hit = atomicAdd(local_number_of_hits, 1);
-        h1_rel_indices[current_hit] = h1_rel_index;
+        h1_indices[current_hit] = h1_index;
       }
     }
   }
 
-  // Due to h1_rel_indices
-  __syncthreads();
+  // Also add other side
+  for (int i=0; i<(module_data[3].hitNums + blockDim.x - 1) / blockDim.x; ++i) {
+    const unsigned short h1_rel_index = i*blockDim.x + threadIdx.x;
+    if (h1_rel_index < module_data[3].hitNums) {
+      const auto h1_index = module_data[3].hitStart + h1_rel_index;
+      const auto h0_first_candidate = h0_candidates[2*h1_index];
+      const auto h2_first_candidate = h2_candidates[2*h1_index];
+      if (!hit_used[h1_index] && h0_first_candidate!=-1 && h2_first_candidate!=-1) {
+        const auto current_hit = atomicAdd(local_number_of_hits, 1);
+        h1_indices[current_hit] = h1_index;
+      }
+    }
+  }
 
-  // Some constants of the calculation below
-  const auto dmax = VeloTracking::max_slope * (module_data[0].z - module_data[1].z);
-  const auto scatterDenom2 = 1.f / ((module_data[2].z - module_data[1].z) * (module_data[2].z - module_data[1].z));
-  const auto z2_tz = (module_data[2].z - module_data[0].z) / (module_data[1].z - module_data[0].z);
+  // Due to h1_indices
+  __syncthreads();
 
   // Adaptive number of xthreads and ythreads,
   // depending on number of hits in h1 to process
@@ -89,12 +99,12 @@ __device__ void trackSeeding(
     // Ie. if processing 30 h1 hits, with max_concurrent_h1 = 8, #h1 in each iteration to process are:
     // {8, 8, 8, 6}
     // On the fourth iteration, we should start from 3*max_concurrent_h1 (24 + thread_id_x)
-    const auto h1_rel_rel_index = i*VeloTracking::max_concurrent_h1 + thread_id_x;
-    if (h1_rel_rel_index < number_of_hits_h1) {
+    const auto h1_rel_index = i*VeloTracking::max_concurrent_h1 + thread_id_x;
+    if (h1_rel_index < number_of_hits_h1) {
       // Fetch h1
-      const auto h1_rel_index = h1_rel_indices[h1_rel_rel_index];
-      h1_index = module_data[1].hitStart + h1_rel_index;
-      const VeloTracking::HitXY h1 {hit_Xs[h1_index], hit_Ys[h1_index]};
+      // const auto h1_rel_index = h1_indices[h1_rel_index];
+      h1_index = h1_indices[h1_rel_index];
+      const VeloTracking::HitBase h1 {hit_Xs[h1_index], hit_Ys[h1_index], hit_Zs[h1_index]};
 
       // Iterate over all h0, h2 combinations
       // Ignore used hits
@@ -111,7 +121,7 @@ __device__ void trackSeeding(
           const auto h0_index = h0_first_candidate + h0_rel_candidate;
           if (!hit_used[h0_index]) {
             // Fetch h0
-            const VeloTracking::HitXY h0 {hit_Xs[h0_index], hit_Ys[h0_index]};
+            const VeloTracking::HitBase h0 {hit_Xs[h0_index], hit_Ys[h0_index], hit_Zs[h0_index]};
 
             // Finally, iterate over all h2 indices
             for (auto h2_index=h2_first_candidate; h2_index<h2_last_candidate; ++h2_index) {
@@ -121,7 +131,11 @@ __device__ void trackSeeding(
                 // Our triplet is h0_index, h1_index, h2_index
                 // Fit it and check if it's better than what this thread had
                 // for any triplet with h1
-                const VeloTracking::HitXY h2 {hit_Xs[h2_index], hit_Ys[h2_index]};
+                const VeloTracking::HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
+
+                const auto dmax = VeloTracking::max_slope * (h0.z - h1.z);
+                const auto scatterDenom2 = 1.f / ((h2.z - h1.z) * (h2.z - h1.z));
+                const auto z2_tz = (h2.z - h0.z) / (h1.z - h0.z);
 
                 // Calculate prediction
                 const auto x = h0.x + (h1.x - h0.x) * z2_tz;
@@ -171,7 +185,7 @@ __device__ void trackSeeding(
     if (threadIdx.x == winner_thread) {
       // Add the track to the bag of tracks
       const auto trackP = atomicAdd(tracklets_insertPointer, 1) % VeloTracking::ttf_modulo;
-      tracklets[trackP] = VeloTracking::TrackHits {3, best_h0, h1_index, best_h2};
+      tracklets[trackP] = VeloTracking::TrackletHits {best_h0, h1_index, best_h2};
 
       // Add the tracks to the bag of tracks to_follow
       // Note: The first bit flag marks this is a tracklet (hitsNum == 3),

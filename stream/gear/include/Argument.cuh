@@ -7,13 +7,8 @@ template<int I, typename T>
 struct Argument {
   constexpr static int i = I;
   T type_obj;
-  std::string name;
-  size_t size;
 
   Argument() = default;
-  
-  Argument(const std::string& param_name, const size_t param_size)
-    : name(param_name), size(param_size) {}
 };
 
 /**

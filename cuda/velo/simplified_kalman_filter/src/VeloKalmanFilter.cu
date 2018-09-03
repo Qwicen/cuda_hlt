@@ -80,14 +80,14 @@ __global__ void velo_fit(
       // Upstream is equivalent to
       // (m_stateClosestToBeamKalmanFit || m_addStateFirstLastMeasurementKalmanFit)
       
-      // Downstream fit
+      // Downstream fit (away from the interaction region: lowest z for backward tracks, highest z for forward tracks)
       simplified_fit<false>(
         track,
         stateAtBeamLine,
         velo_state_base + total_number_of_tracks
       );
 
-      // Upstream fit
+      // Upstream fit (towards the interaction region: highest z for backward tracks, lowest z for forward tracks)
       simplified_fit<true>(
         track,
         stateAtBeamLine,

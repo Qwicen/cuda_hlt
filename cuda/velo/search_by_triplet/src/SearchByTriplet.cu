@@ -4,14 +4,14 @@
 /**
  * @brief Track forwarding algorithm based on triplet finding
  */
-__global__ void searchByTriplet(
+__global__ void search_by_triplet(
   uint32_t* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
   VeloTracking::TrackHits* dev_tracks,
-  VeloTracking::TrackHits* dev_tracklets,
+  VeloTracking::TrackletHits* dev_tracklets,
   uint* dev_tracks_to_follow,
-  uint* dev_weak_tracks,
+  VeloTracking::TrackletHits* dev_weak_tracks,
   bool* dev_hit_used,
   int* dev_atomics_storage,
   short* dev_h0_candidates,
@@ -48,8 +48,8 @@ __global__ void searchByTriplet(
   short* h2_candidates = dev_h2_candidates + 2*hit_offset;
 
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * VeloTracking::ttf_modulo;
-  uint* weak_tracks = dev_weak_tracks + event_number * VeloTracking::ttf_modulo;
-  VeloTracking::TrackHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
+  VeloTracking::TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::max_weak_tracks;
+ VeloTracking:: TrackletHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
   unsigned short* h1_rel_indices = dev_rel_indices + event_number * VeloTracking::max_numhits_in_module;
 
   // Initialize variables according to event number and module side
@@ -62,7 +62,7 @@ __global__ void searchByTriplet(
 
   // Shared memory
   extern __shared__ float shared_best_fits [];
-  __shared__ int module_data [9];
+  __shared__ int module_data [12];
 
   // Initialize hit_used
   const auto current_event_number_of_hits = module_hitStarts[VeloTracking::n_modules] - hit_offset;
@@ -78,22 +78,12 @@ __global__ void searchByTriplet(
     dev_atomics_storage[ip_shift + threadIdx.x] = 0;
   }
 
-  // Fill candidates for both sides
-  fillCandidates(
-    h0_candidates,
-    h2_candidates,
-    module_hitStarts,
-    module_hitNums,
-    hit_Phis,
-    hit_offset
-  );
-
   // Process modules
-  processModules(
+  process_modules(
     (VeloTracking::Module*) &module_data[0],
     (float*) &shared_best_fits[0],
     VP::NModules-1,
-    1,
+    2,
     hit_used,
     h0_candidates,
     h2_candidates,

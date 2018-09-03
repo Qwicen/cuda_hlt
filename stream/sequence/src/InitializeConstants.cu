@@ -23,4 +23,5 @@ void initializeConstants() {
   cudaCheck(cudaMemcpyToSymbol(VeloClustering::sp_patterns, sp_patterns.data(), sp_patterns.size()));
   cudaCheck(cudaMemcpyToSymbol(VeloClustering::sp_fx, sp_fx.data(), sp_fx.size() * sizeof(float)));
   cudaCheck(cudaMemcpyToSymbol(VeloClustering::sp_fy, sp_fy.data(), sp_fy.size() * sizeof(float)));
+
 }

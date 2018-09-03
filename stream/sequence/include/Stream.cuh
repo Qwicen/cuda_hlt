@@ -6,17 +6,20 @@
 #include <algorithm>
 #include <tuple>
 
-#include "../../../main/include/Common.h"
-#include "../../../main/include/CudaCommon.h"
-#include "../../../main/include/Logger.h"
-#include "../../../main/include/Timer.h"
-#include "../../../main/include/Tools.h"
-#include "../../scheduler/include/BaseDynamicScheduler.cuh"
-#include "../../sequence_setup/include/SequenceSetup.cuh"
+#include "Common.h"
+#include "CudaCommon.h"
+#include "Logger.h"
+#include "Timer.h"
+#include "Tools.h"
+#include "BaseDynamicScheduler.cuh"
+#include "SequenceSetup.cuh"
+#include "PrVeloUTMagnetToolDefinitions.cuh"
+
 #include "run_VeloUT_CPU.h"
 #include "run_Forward_CPU.h"
 
 class Timer;
+
 
 struct Stream {
   // Sequence and arguments
@@ -40,6 +43,7 @@ struct Stream {
   bool do_check;
   bool do_simplified_kalman_filter;
   bool do_print_memory_manager;
+  bool run_on_x86;
 
   // Pinned host datatypes
   int* host_number_of_tracks;
@@ -50,6 +54,8 @@ struct Stream {
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   VeloState* host_velo_states;
+  VeloUTTracking::TrackUT* host_veloUT_tracks;
+  int* host_atomics_veloUT;
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;
@@ -57,21 +63,23 @@ struct Stream {
   // GPU pointers
   char* dev_velo_geometry;
   char* dev_base_pointer;
-
+  PrUTMagnetTool* dev_ut_magnet_tool;
+  
   // Monte Carlo folder name
   std::string folder_name_MC;
+  uint start_event_offset;
 
   cudaError_t initialize(
-    const std::vector<char>& raw_events,
-    const std::vector<uint>& event_offsets,
-    const std::vector<char>& geometry,
+    const std::vector<char>& velopix_geometry,
+    const PrUTMagnetTool* host_ut_magnet_tool,
     const uint max_number_of_events,
-    const bool param_transmit_host_to_device,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
     const bool param_do_simplified_kalman_filter,
     const bool param_print_memory_usage,
+    const bool param_run_on_x86,
     const std::string& param_folder_name_MC,
+    const uint param_start_event_offset,
     const size_t param_reserve_mb,
     const uint param_stream_number
   );
@@ -82,9 +90,9 @@ struct Stream {
     const uint* host_event_offsets,
     const size_t host_events_size,
     const size_t host_event_offsets_size,
-    VeloUTTracking::HitsSoA *hits_layers_events_ut,
-    const uint32_t n_hits_layers_events_ut[][VeloUTTracking::n_layers],
-    ForwardTracking::HitsSoAFwd *hits_layers_events_ft,
+    VeloUTTracking::HitsSoA *host_ut_hits_events,
+    const PrUTMagnetTool* host_ut_magnet_tool,
+     ForwardTracking::HitsSoAFwd *hits_layers_events_ft,
     const uint32_t n_hits_layers_events_ft[][ForwardTracking::n_layers],
     const uint number_of_events,
     const uint number_of_repetitions

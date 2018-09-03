@@ -8,13 +8,16 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_scan] = "Prefix sum scan";
   a[seq::masked_velo_clustering] = "Masked Velo clustering";
   a[seq::calculate_phi_and_sort] = "Calculate phi and sort";
+  a[seq::fill_candidates] = "Fill candidates";
   a[seq::search_by_triplet] = "Search by triplet";
+  a[seq::weak_tracks_adder] = "Weak tracks adder";
   a[seq::copy_and_prefix_sum_single_block] = "Copy and prefix sum single block";
   a[seq::copy_velo_track_hit_number] = "Copy Velo track hit number";
   a[seq::prefix_sum_reduce_velo_track_hit_number] = "Prefix sum reduce (2)";
   a[seq::prefix_sum_single_block_velo_track_hit_number] = "Prefix sum single block (2)";
   a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2)";
   a[seq::consolidate_tracks] = "Consolidate tracks";
+  a[seq::veloUT] = "VeloUT tracking";
   return a;
 }
 
@@ -42,6 +45,9 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_prefix_sum_auxiliary_array_2] = "dev_prefix_sum_auxiliary_array_2";
   a[arg::dev_velo_track_hits] = "dev_velo_track_hits";
   a[arg::dev_velo_states] = "dev_velo_states";
+  a[arg::dev_ut_hits] = "dev_ut_hits";
+  a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
+  a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
   return a;
 }
 
@@ -86,6 +92,13 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_cluster_container,
     arg::dev_hit_permutation
   };
+  sequence_dependencies[seq::fill_candidates] = {
+    arg::dev_velo_cluster_container,
+    arg::dev_estimated_input_size,
+    arg::dev_module_cluster_num,
+    arg::dev_h0_candidates,
+    arg::dev_h2_candidates
+  };
   sequence_dependencies[seq::search_by_triplet] = {
     arg::dev_velo_cluster_container,
     arg::dev_estimated_input_size,
@@ -99,6 +112,14 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_h0_candidates,
     arg::dev_h2_candidates,
     arg::dev_rel_indices
+  };
+  sequence_dependencies[seq::weak_tracks_adder] = {
+    arg::dev_velo_cluster_container,
+    arg::dev_estimated_input_size,
+    arg::dev_tracks,
+    arg::dev_weak_tracks,
+    arg::dev_hit_used,
+    arg::dev_atomics_storage
   };
   sequence_dependencies[seq::copy_and_prefix_sum_single_block] = {
     arg::dev_atomics_storage
@@ -129,6 +150,15 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_module_cluster_num,
     arg::dev_velo_track_hits,
     arg::dev_velo_states
+  };
+  sequence_dependencies[seq::veloUT] = {
+    arg::dev_ut_hits,
+    arg::dev_atomics_storage,
+    arg::dev_velo_track_hit_number,
+    arg::dev_velo_track_hits,
+    arg::dev_velo_states,
+    arg::dev_veloUT_tracks,
+    arg::dev_atomics_veloUT
   };
 
   return sequence_dependencies;

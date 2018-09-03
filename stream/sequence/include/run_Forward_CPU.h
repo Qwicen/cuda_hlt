@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../../../main/include/Common.h"
+#include "Common.h"
 
-#include "../../../checker/lib/include/TrackChecker.h"
-#include "../../../PrForward/src/PrForward.h"
-#include "../../../main/include/Tools.h"
+#include "TrackChecker.h"
+#include "PrForward.h"
+#include "Tools.h"
 
 std::vector< std::vector< VeloUTTracking::TrackVeloUT > > run_forward_on_CPU (
   std::vector< trackChecker::Tracks > * ft_tracks_events,

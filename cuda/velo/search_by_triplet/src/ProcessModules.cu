@@ -1,12 +1,11 @@
 #include "ProcessModules.cuh"
-#include "TrackSeedingFirst.cuh"
 #include "TrackSeeding.cuh"
 #include "TrackForwarding.cuh"
 
 /**
  * @brief Processes modules in decreasing order with some stride
  */
-__device__ void processModules(
+__device__ void process_modules(
   VeloTracking::Module* module_data,
   float* shared_best_fits,
   const uint starting_module,
@@ -25,8 +24,8 @@ __device__ void processModules(
   uint* ttf_insert_pointer,
   uint* tracks_insert_pointer,
   uint* tracks_to_follow,
-  uint* weak_tracks,
-  VeloTracking::TrackHits* tracklets,
+  VeloTracking::TrackletHits* weak_tracks,
+  VeloTracking::TrackletHits* tracklets,
   VeloTracking::TrackHits* tracks,
   const uint number_of_hits,
   unsigned short* h1_rel_indices,
@@ -37,33 +36,35 @@ __device__ void processModules(
 
   // Prepare the first seeding iteration
   // Load shared module information
-  if (threadIdx.x < 3) {
-    const auto module_number = first_module - threadIdx.x * 2;
+  if (threadIdx.x < 6) {
+    const auto module_number = first_module - threadIdx.x;
     module_data[threadIdx.x].hitStart = module_hitStarts[module_number] - hit_offset;
     module_data[threadIdx.x].hitNums = module_hitNums[module_number];
-    module_data[threadIdx.x].z = VeloTracking::velo_module_zs[module_number];
   }
 
   // Due to shared module data loading
   __syncthreads();
 
   // Do first track seeding
-  trackSeedingFirst(
+  track_seeding(
     shared_best_fits,
     hit_Xs,
     hit_Ys,
+    hit_Zs,
     module_data,
     h0_candidates,
     h2_candidates,
+    hit_used,
     tracklets_insert_pointer,
     ttf_insert_pointer,
     tracklets,
-    tracks_to_follow
+    tracks_to_follow,
+    h1_rel_indices,
+    local_number_of_hits
   );
 
   // Prepare forwarding - seeding loop
   uint last_ttf = 0;
-  uint last_weak_tracks = 0;
   first_module -= stride;
 
   while (first_module >= 4) {
@@ -73,11 +74,10 @@ __device__ void processModules(
     
     // Iterate in modules
     // Load in shared
-    if (threadIdx.x < 3) {
-      const int module_number = first_module - threadIdx.x * 2;
+    if (threadIdx.x < 6) {
+      const auto module_number = first_module - threadIdx.x;
       module_data[threadIdx.x].hitStart = module_hitStarts[module_number] - hit_offset;
       module_data[threadIdx.x].hitNums = module_hitNums[module_number];
-      module_data[threadIdx.x].z = VeloTracking::velo_module_zs[module_number];
     }
 
     const auto prev_ttf = last_ttf;
@@ -87,32 +87,11 @@ __device__ void processModules(
     // Reset atomics
     local_number_of_hits[0] = 0;
 
-    const auto prev_weak_tracks = last_weak_tracks;
-    last_weak_tracks = weaktracks_insert_pointer[0];
-    const auto diff_weak_tracks = last_weak_tracks - prev_weak_tracks;
-
-    // Store weak tracks
-    for (int i=0; i<(diff_weak_tracks + blockDim.x - 1) / blockDim.x; ++i) {
-      const auto rel_weaktrack_no = blockDim.x * i + threadIdx.x;
-      if (rel_weaktrack_no < diff_weak_tracks) {
-        const auto weaktrack_no = (prev_weak_tracks + rel_weaktrack_no) % VeloTracking::ttf_modulo;;
-        const VeloTracking::TrackHits t = tracklets[weak_tracks[weaktrack_no]];
-        const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
-
-        // Store them in the tracks bag
-        if (!any_used) {
-          const uint trackno = atomicAdd(tracks_insert_pointer, 1);
-          assert(trackno < VeloTracking::max_tracks);
-          tracks[trackno] = t;
-        }
-      }
-    }
-
     // Due to module data loading
     __syncthreads();
 
     // Track Forwarding
-    trackForwarding(
+    track_forwarding(
       hit_Xs,
       hit_Ys,
       hit_Zs,
@@ -134,10 +113,11 @@ __device__ void processModules(
     __syncthreads();
 
     // Seeding
-    trackSeeding(
+    track_seeding(
       shared_best_fits,
       hit_Xs,
       hit_Ys,
+      hit_Zs,
       module_data,
       h0_candidates,
       h2_candidates,
@@ -172,16 +152,9 @@ __device__ void processModules(
       // Here we are only interested in three-hit tracks,
       // to mark them as "doubtful"
       if (track_flag) {
-        // Store weak tracks if no hits are used
-        const VeloTracking::TrackHits t = tracklets[trackno];
-        const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
-
-        // Store them in the tracks bag
-        if (!any_used) {
-          const uint trackno = atomicAdd(tracks_insert_pointer, 1);
-          assert(trackno < VeloTracking::max_tracks);
-          tracks[trackno] = t;
-        }
+        const auto weakP = atomicAdd(weaktracks_insert_pointer, 1);
+        assert(weakP < number_of_hits);
+        weak_tracks[weakP] = tracklets[trackno];
       }
     }
   }

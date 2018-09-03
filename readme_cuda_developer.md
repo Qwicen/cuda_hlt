@@ -151,7 +151,7 @@ Next, we need to define the arguments to be passed to our function. We need to d
 
 We will distinguish arguments just passed by value from pointers to device memory. We don't need to schedule those simply passed by value like `n` and `a`. We care however about `x` and `y`, since they require some reserving and freeing in memory.
 
-Let's give these arguments a name that won't collide, like `dev_x` and `dev_y`. Now, we need to add them in three places. First, `arg_enum_t` in `Stream/sequence_setup/include/SequenceArgumentEnum.cuh`:
+Let's give these arguments a name that won't collide, like `dev_x` and `dev_y`. Now, we need to add them in three places. First, `arg_enum_t` in `stream/sequence_setup/include/SequenceArgumentEnum.cuh`:
 
 ```clike
 /**
@@ -168,7 +168,7 @@ enum arg_enum_t {
 };
 ```
 
-Again, order matters. Next, we will populate the arguments and their types without the `*` in `argument_tuple_t` in `Stream/sequence_setup/include/SequenceSetup.cuh`:
+Again, order matters. Next, we will populate the arguments and their types without the `*` in `argument_tuple_t` in `stream/sequence_setup/include/SequenceSetup.cuh`:
 
 ```clike
 /**
@@ -187,7 +187,7 @@ using argument_tuple_t = std::tuple<
 >;
 ```
 
-Finally, we populate the _dependency tree_, ie. where are these arguments needed. For that, go to the body of `get_sequence_dependencies`, in `Stream/sequence_setup/src/SequenceSetup.cu`:
+Finally, we populate the _dependency tree_, ie. where are these arguments needed. For that, go to the body of `get_sequence_dependencies`, in `stream/sequence_setup/src/SequenceSetup.cu`:
 
 ```clike
 std::vector<std::vector<int>> get_sequence_dependencies() {
@@ -201,7 +201,7 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
 }
 ```
 
-Optionally, we can give names to our algorithm and arguments. This will help when debugging ie. the memory manager. `Stream/sequence_setup/src/SequenceSetup.cu`:
+Optionally, we can give names to our algorithm and arguments. This will help when debugging ie. the memory manager. `stream/sequence_setup/src/SequenceSetup.cu`:
 
 ```clike
 std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_names() {
@@ -364,13 +364,13 @@ Finally, go to `stream/sequence/src/StreamSequence.cu` and insert the following 
     ...
 ```
 
-We can compile the code and run the program with simple settings, something like `./cu_hlt -f ../velopix_minbias_raw -g ../velopix_minbias_MC`. If everything went well, the following text should appear:
+We can compile the code and run the program with simple settings, something like `./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -g ../input/geometry/`. If everything went well, the following text should appear:
 
 ```
 Saxpy max error: 0.00
 ```
 
-The cool thing is your algorithm is now part of the sequence. You can see how memory is managed, taking into account your algorithm, and how it changes on every step by appending the `-p` option: `./cu_hlt -f ../velopix_minbias_raw -g ../velopix_minbias_MC -p`
+The cool thing is your algorithm is now part of the sequence. You can see how memory is managed, taking into account your algorithm, and how it changes on every step by appending the `-p` option: `./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -g ../input/geometry/ -p`
 
 ```
 Sequence step 13 "Saxpy test" memory segments (MiB):

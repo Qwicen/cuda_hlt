@@ -2,8 +2,10 @@
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-#include "../../../../main/include/Common.h"
-#include "../../../../main/include/Logger.h"
+#include "Common.h"
+#include "Logger.h"
+#include "VeloUTDefinitions.cuh"
+
 
 #include "assert.h"
 
@@ -66,4 +68,29 @@ namespace ForwardTracking {
     float m_sc = 0.; 
     float m_scz = 0.;   
   };
+
+  struct TrackForward {
+
+#ifndef __CUDA_ARCH__
+    std::vector< unsigned int > LHCbIDs;
+#endif
+    float qop;
+    unsigned short hitsNum = 0;
+    float quality;
+    float chi2;
+#ifndef __CUDA_ARCH__
+    std::vector<float> trackParams;
+#endif
+
+#ifndef __CUDA_ARCH__
+    __host__  void addLHCbID( unsigned int id ) {
+      LHCbIDs[hitsNum++] = id;
+    }
+#endif
+    
+    __host__ void set_qop( float _qop ) {
+      qop = _qop;
+    }
+  };
+  
 }

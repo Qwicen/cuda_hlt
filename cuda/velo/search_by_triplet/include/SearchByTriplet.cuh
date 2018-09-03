@@ -6,16 +6,16 @@
 #include "ProcessModules.cuh"
 #include "TrackForwarding.cuh"
 #include "TrackSeeding.cuh"
-#include "TrackSeedingFirst.cuh"
+#include "WeakTracksAdder.cuh"
 
-__global__ void searchByTriplet(
+__global__ void search_by_triplet(
   uint32_t* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
   VeloTracking::TrackHits* dev_tracks,
-  VeloTracking::TrackHits* dev_tracklets,
+  VeloTracking::TrackletHits* dev_tracklets,
   uint* dev_tracks_to_follow,
-  uint* dev_weak_tracks,
+  VeloTracking::TrackletHits* dev_weak_tracks,
   bool* dev_hit_used,
   int* dev_atomics_storage,
   short* dev_h0_candidates,

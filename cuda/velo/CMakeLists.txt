@@ -13,6 +13,7 @@ include_directories(calculate_phi_and_sort/include)
 include_directories(search_by_triplet/include)
 include_directories(simplified_kalman_filter/include) 
 include_directories(consolidate_tracks/include)
+include_directories(../../main/include)
 
 cuda_add_library(Velo STATIC
   ${velo_common}
