@@ -36,6 +36,7 @@ void printUsage(char* argv[]){
     << std::endl << (mc_check_enabled ? " " : " [") << "-g {folder containing .root files with MC truth information}"
     << (mc_check_enabled ? "" : " ]")
     << std::endl << " -e {folder containing, bin files with UT hit information}"
+    << std::endl << " -i {folder containing .root files with PV truth information}"
     << std::endl << " [-n {number of files to process}=0 (all)]"
     << std::endl << " [-t {number of threads / streams}=1]"
     << std::endl << " [-r {number of repetitions per thread / stream}=1]"
@@ -54,6 +55,7 @@ int main(int argc, char *argv[])
   std::string folder_name_velopix_raw;
   std::string folder_name_MC = "";
   std::string folder_name_ut_hits = "";
+  std::string folder_name_pv = "";
   uint number_of_files = 0;
   uint tbb_threads = 1;
   uint number_of_repetitions = 1;
@@ -67,7 +69,7 @@ int main(int argc, char *argv[])
   size_t reserve_mb = 1024;
    
   signed char c;
-  while ((c = getopt(argc, argv, "f:g:e:n:t:r:pha:b:d:v:c:k:m:")) != -1) {
+  while ((c = getopt(argc, argv, "f:g:e:i:n:t:r:pha:b:d:v:c:k:m:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_velopix_raw = std::string(optarg);
@@ -77,6 +79,9 @@ int main(int argc, char *argv[])
       break;
     case 'e':
       folder_name_ut_hits = std::string(optarg);
+      break;
+    case 'i':
+      folder_name_pv = std::string(optarg);
       break;
     case 'm':
       reserve_mb = atoi(optarg);
@@ -135,6 +140,12 @@ int main(int argc, char *argv[])
     return -1;
   }
 
+  if(folder_name_pv.empty() && do_check){
+    std::cerr << "No PV truth folder specified, but MC CHECK turned on" << std::endl;
+    printUsage(argv);
+    return -1;
+  }
+
   // Set verbosity level
   std::cout << std::fixed << std::setprecision(2);
   logger::ll.verbosityLevel = verbosity;
@@ -148,6 +159,7 @@ int main(int argc, char *argv[])
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
     << " folder with MC truth input (-g): " << folder_name_MC << std::endl
     << " folder with ut hits input (-e): " << folder_name_ut_hits << std::endl
+    << " folder with PV truth input (-i): " << folder_name_pv << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
@@ -225,6 +237,7 @@ int main(int argc, char *argv[])
     do_simplified_kalman_filter,
     print_memory_usage,
     folder_name_MC,
+    folder_name_pv,
     reserve_mb
   );
   

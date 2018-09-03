@@ -14,6 +14,7 @@ cudaError_t Stream::initialize(
   const bool param_do_simplified_kalman_filter,
   const bool param_do_print_memory_manager,
   const std::string& param_folder_name_MC,
+  const std::string& param_folder_name_pv,
   const size_t reserve_mb,
   const uint param_stream_number
 ) {
@@ -31,6 +32,7 @@ cudaError_t Stream::initialize(
   do_simplified_kalman_filter = param_do_simplified_kalman_filter;
   do_print_memory_manager = param_do_print_memory_manager;
   folder_name_MC = param_folder_name_MC;
+  folder_name_pv = param_folder_name_pv;
 
   // Special case
   // Populate velo geometry

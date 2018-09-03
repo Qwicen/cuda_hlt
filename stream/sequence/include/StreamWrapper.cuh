@@ -38,6 +38,7 @@ struct StreamWrapper {
     const bool do_simplified_kalman_filter,
     const bool print_memory_usage,
     const std::string& folder_name_MC,
+    const std::string& folder_name_pv,
     const size_t reserve_mb
   );
 

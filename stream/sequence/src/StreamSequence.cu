@@ -367,7 +367,7 @@ cudaError_t Stream::run_sequence(
 
          );
 
-     checkPVs("../../lxplus_work/public/recept/Brunel_trackerdumper2/PVDumper/", true, number_of_events, out_vertices, number_of_vertex);
+     checkPVs(folder_name_pv, true, number_of_events, out_vertices, number_of_vertex);
 
     std::ofstream debug_file_seeds;
     debug_file_seeds.open ("../seeds.txt");

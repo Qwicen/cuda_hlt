@@ -60,6 +60,8 @@ struct Stream {
 
   // Monte Carlo folder name
   std::string folder_name_MC;
+  //PV truth folder name
+  std::string folder_name_pv;
 
   cudaError_t initialize(
     const std::vector<char>& raw_events,
@@ -72,6 +74,7 @@ struct Stream {
     const bool param_do_simplified_kalman_filter,
     const bool param_print_memory_usage,
     const std::string& param_folder_name_MC,
+    const std::string& param_folder_name_pv,
     const size_t param_reserve_mb,
     const uint param_stream_number
   );
