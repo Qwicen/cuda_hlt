@@ -8,6 +8,7 @@
 #include "PrVeloUTMagnetToolDefinitions.cuh"
 #include "Logger.h"
 #include "Common.h"
+#include "Constants.cuh"
 
 // Forward definition of Stream, to avoid
 // inability to compile kernel calls (due to <<< >>>
@@ -41,7 +42,8 @@ struct StreamWrapper {
     const bool run_on_x86,
     const std::string& folder_name_MC,
     const uint start_event_offset,
-    const size_t reserve_mb
+    const size_t reserve_mb,
+    const GpuConstants& gpu_constants
   );
 
   /**

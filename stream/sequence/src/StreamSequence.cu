@@ -44,7 +44,8 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_estimated_input_size>(argument_offsets),
       argen.generate<arg::dev_module_cluster_num>(argument_offsets),
       argen.generate<arg::dev_module_candidate_num>(argument_offsets),
-      argen.generate<arg::dev_cluster_candidates>(argument_offsets)
+      argen.generate<arg::dev_cluster_candidates>(argument_offsets),
+      gpu_constants.dev_velo_candidate_ks
     );
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input>(argument_offsets), host_velopix_events, host_velopix_events_size, cudaMemcpyHostToDevice, stream));
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input_offsets>(argument_offsets), host_velopix_event_offsets, host_velopix_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
@@ -106,7 +107,10 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_module_candidate_num>(argument_offsets),
       argen.generate<arg::dev_cluster_candidates>(argument_offsets),
       argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
-      dev_velo_geometry
+      dev_velo_geometry,
+      gpu_constants.dev_velo_sp_patterns,
+      gpu_constants.dev_velo_sp_fx,
+      gpu_constants.dev_velo_sp_fy
     );
     sequence.item<seq::masked_velo_clustering>().invoke();
 
