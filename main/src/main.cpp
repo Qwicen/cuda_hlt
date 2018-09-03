@@ -26,8 +26,8 @@
 #include "Tools.h"
 #include "InputTools.h"
 #include "Timer.h"
-#include "../../stream/sequence/include/StreamWrapper.cuh"
-#include "../../stream/sequence/include/Constants.cuh"
+#include "StreamWrapper.cuh"
+#include "Constants.cuh"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
