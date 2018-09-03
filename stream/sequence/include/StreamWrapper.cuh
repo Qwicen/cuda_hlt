@@ -4,7 +4,10 @@
 #include <string>
 #include <stdint.h>
 
-#include "../../../cuda/veloUT/common/include/VeloUTDefinitions.cuh"
+#include "VeloUTDefinitions.cuh"
+#include "PrVeloUTMagnetToolDefinitions.cuh"
+#include "Logger.h"
+#include "Common.h"
 
 // Forward definition of Stream, to avoid
 // inability to compile kernel calls (due to <<< >>>
@@ -28,17 +31,17 @@ struct StreamWrapper {
    */
   void initialize_streams(
     const uint n,
-    const std::vector<char>& velopix_events,
-    const std::vector<uint>& velopix_event_offsets,
-    const std::vector<char>& geometry,
+    const std::vector<char>& velopix_geometry,
+    const PrUTMagnetTool* host_ut_magnet_tool,
     const uint number_of_events,
-    const bool transmit_host_to_device,
     const bool transmit_device_to_host,
     const bool do_check,
     const bool do_simplified_kalman_filter,
     const bool print_memory_usage,
+    const bool run_on_x86,
     const std::string& folder_name_MC,
     const std::string& folder_name_pv,
+    const uint start_event_offset,
     const size_t reserve_mb
   );
 
@@ -47,12 +50,12 @@ struct StreamWrapper {
    */
   void run_stream(
     const uint i,
-    char* host_velopix_events_pinned,
-    uint* host_velopix_event_offsets_pinned,
+    char* host_velopix_events,
+    uint* host_velopix_event_offsets,
     const size_t velopix_events_size,
     const size_t velopix_event_offsets_size,
-    VeloUTTracking::HitsSoA *hits_layers_events_ut,
-    const uint32_t n_hits_layers_events_ut[][VeloUTTracking::n_layers],
+    VeloUTTracking::HitsSoA *host_ut_hits_events,
+    const PrUTMagnetTool* host_ut_magnet_tool,
     const uint number_of_events,
     const uint number_of_repetitions
   );

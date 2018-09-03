@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdint.h>
-#include "../../common/include/VeloDefinitions.cuh"
-#include "../../../../main/include/Common.h"
+#include "VeloDefinitions.cuh"
+#include "Common.h"
 
 __device__ float velo_kalman_filter_step(
   const float z,

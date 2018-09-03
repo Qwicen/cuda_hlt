@@ -1,13 +1,16 @@
 #include "Tools.h"
-#include "../../checker/lib/include/velopix-input-reader.h"
-#include "../../checker/lib/include/TrackChecker.h"
-#include "../../checker/lib/include/MCParticle.h"
 
+/**
+ * @brief Reads the geometry from foldername.
+ */
 void readGeometry(
-  const std::string& foldername,
+  const std::string& filename,
   std::vector<char>& geometry
 ) {
-  readFileIntoVector(foldername + "/geometry.bin", geometry);
+  if (!exists_test(filename)) {
+    throw StrException("Geometry file could not be found: " + filename);
+  }
+  readFileIntoVector(filename, geometry);
 }
 
 void check_velopix_events(
@@ -50,14 +53,15 @@ void check_velopix_events(
 }
 
 void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
-				 uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
-				 const std::vector<char> events,
+                                 const std::vector<char> events,
 				 const std::vector<unsigned int> event_offsets,
 				 const int n_events ) {
 
   
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
     const char* raw_input = events.data() + event_offsets[i_event];
+
+    VeloUTTracking::HitsSoA* hits_layers = hits_layers_events + i_event;
     
     /* In the binary input file, the ut hit variables are stored in arrays,
        there are two stations with two layers each,
@@ -68,38 +72,40 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
     int accumulated_hits = 0;
     int accumulated_hits_layers[4];
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      n_hits_layers_events[i_event][i_layer] = *((uint32_t*)raw_input);
-      n_hits_total += n_hits_layers_events[i_event][i_layer];
+      hits_layers->n_hits_layers[i_layer] = *((uint32_t*)raw_input);
+      n_hits_total += hits_layers->n_hits_layers[i_layer];
       raw_input += sizeof(uint32_t);
+      if ( n_hits_total >= VeloUTTracking::max_numhits_per_event )
+        printf(" n_hits_total UT: %u >= %u \n", n_hits_total, VeloUTTracking::max_numhits_per_event);
       assert( n_hits_total < VeloUTTracking::max_numhits_per_event );
-      hits_layers_events[i_event].layer_offset[i_layer] = accumulated_hits;
-      accumulated_hits += n_hits_layers_events[i_event][i_layer];
+      hits_layers->layer_offset[i_layer] = accumulated_hits;
+      accumulated_hits += hits_layers->n_hits_layers[i_layer];
     }
     // then the hit variables, sorted by layer
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &( hits_layers_events[i_event].m_cos[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_yBegin[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_yEnd[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
+      int layer_offset = hits_layers->layer_offset[i_layer];
+      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &( hits_layers->m_cos[ layer_offset ]) );
+      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
+      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->m_yBegin[ layer_offset ]) );
+      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
+      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->m_yEnd[ layer_offset ]) );
+      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
       // to do: change tracker dumper to not dump dxDy
-      //std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_dxDy[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_zAtYEq0[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_xAtYEq0[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_weight2[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_highThreshold[ layer_offset ]) );
-      raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((unsigned int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_LHCbID[ layer_offset ]) );
-      raw_input += sizeof(unsigned int) * n_hits_layers_events[i_event][i_layer];
+      //std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->m_dxDy[ layer_offset ]) );
+      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
+      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->m_zAtYEq0[ layer_offset ]) );
+      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
+      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->m_xAtYEq0[ layer_offset ]) );
+      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
+      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->m_weight[ layer_offset ]) );
+      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
+      std::copy_n((int*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->m_highThreshold[ layer_offset ]) );
+      raw_input += sizeof(int) * hits_layers->n_hits_layers[i_layer];
+      std::copy_n((unsigned int*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->m_LHCbID[ layer_offset ]) );
+      raw_input += sizeof(unsigned int) * hits_layers->n_hits_layers[i_layer];
 
-      for ( int i_hit = 0; i_hit < n_hits_layers_events[i_event][i_layer]; ++i_hit ) {
-	hits_layers_events[i_event].m_planeCode[ layer_offset + i_hit ] = i_layer;
+      for ( int i_hit = 0; i_hit < hits_layers->n_hits_layers[i_layer]; ++i_hit ) {
+	hits_layers->m_planeCode[ layer_offset + i_hit ] = i_layer;
       }
     }
  
@@ -109,31 +115,30 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
 
 
 void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
-		      const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
 		      const int n_events ) {
 
   float average_number_of_hits_per_event = 0;
   
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
-    // sanity checks
     float number_of_hits = 0;
+    const VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
 
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      debug_cout << "checks on layer " << i_layer << ", with " << n_hits_layers_events[i_event][i_layer] << " hits" << std::endl;
-      number_of_hits += n_hits_layers_events[i_event][i_layer];
-      int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
+      debug_cout << "checks on layer " << i_layer << ", with " << hits_layers.n_hits_layers[i_layer] << " hits" << std::endl;
+      number_of_hits += hits_layers.n_hits_layers[i_layer];
+      int layer_offset = hits_layers.layer_offset[i_layer];
       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
-	printf("\t at hit %u, cos = %f, yBegin = %f, yEnd = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight2 = %f, highThreshold = %u, LHCbID = %u, dxDy = %f \n",
+	printf("\t at hit %u, cos = %f, yBegin = %f, yEnd = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight = %f, highThreshold = %u, LHCbID = %u, dxDy = %f \n",
 	       i_hit,
-	       hits_layers_events[i_event].m_cos[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].m_yBegin[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].m_yEnd[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].m_zAtYEq0[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].m_xAtYEq0[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].m_weight2[ layer_offset + i_hit ],
-	       hits_layers_events[i_event].m_highThreshold[ layer_offset + i_hit ],
-               hits_layers_events[i_event].m_LHCbID[ layer_offset + i_hit ],
-               hits_layers_events[i_event].dxDy( layer_offset + i_hit ) );
+	       hits_layers.m_cos[ layer_offset + i_hit ],
+	       hits_layers.m_yBegin[ layer_offset + i_hit ],
+	       hits_layers.m_yEnd[ layer_offset + i_hit ],
+	       hits_layers.m_zAtYEq0[ layer_offset + i_hit ],
+	       hits_layers.m_xAtYEq0[ layer_offset + i_hit ],
+	       hits_layers.m_weight[ layer_offset + i_hit ],
+	       hits_layers.m_highThreshold[ layer_offset + i_hit ],
+               hits_layers.m_LHCbID[ layer_offset + i_hit ],
+               hits_layers.dxDy( layer_offset + i_hit ) );
       }
     }
 
@@ -146,6 +151,43 @@ void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
   average_number_of_hits_per_event = average_number_of_hits_per_event / n_events;
   debug_cout << "average # of UT hits / event = " << average_number_of_hits_per_event << std::endl;
     
+  
+}
+
+void read_UT_magnet_tool( PrUTMagnetTool* host_ut_magnet_tool ) {
+  
+  //load the deflection and Bdl values from a text file
+  std::ifstream deflectionfile;
+  std::string filename = "../integration_with_LHCb_framework/PrUTMagnetTool/deflection.txt";
+  if (!exists_test(filename)) {
+    throw StrException("Deflection table file could not be found: " + filename);
+  }
+  deflectionfile.open(filename);
+  if (deflectionfile.is_open()) {
+    int i = 0;
+    float deflection;
+    while (!deflectionfile.eof()) {
+      deflectionfile >> deflection;
+      assert( i < PrUTMagnetTool::N_dxLay_vals );
+      host_ut_magnet_tool->dxLayTable[i++] = deflection;
+    }
+  }
+  
+  std::ifstream bdlfile;
+  filename = "../integration_with_LHCb_framework/PrUTMagnetTool/bdl.txt";
+  if (!exists_test(filename)) {
+    throw StrException("Bdl table file could not be found: " + filename);
+  }
+  bdlfile.open(filename);
+  if (bdlfile.is_open()) {
+    int i = 0;
+    float bdl;
+    while (!bdlfile.eof()) {
+      bdlfile >> bdl;
+      assert( i < PrUTMagnetTool::N_bdl_vals );
+      host_ut_magnet_tool->bdlTable[i++] = bdl;
+    }
+  }
   
 }
 
@@ -272,8 +314,8 @@ void check_roughly(
       // find associated IDs from mcps
       for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
         MCParticle part = mcps[i_mcp];
-        auto it = std::find( part.m_hits.begin(), part.m_hits.end(), id_int );
-        if ( it != part.m_hits.end() ) {
+        auto it = std::find( part.hits.begin(), part.hits.end(), id_int );
+        if ( it != part.hits.end() ) {
           mcp_ids.push_back( i_mcp );
         }
       }
@@ -295,7 +337,7 @@ void check_roughly(
 
   int long_tracks = 0;
   for (auto& part : mcps) {
-    if (part.isLong())
+    if (part.isLong)
       long_tracks++;
   }
   
@@ -332,14 +374,17 @@ std::vector< trackChecker::Tracks > prepareTracks(
 }
 
 
-trackChecker::Tracks prepareVeloUTTracks(
-  std::vector< VeloUTTracking::TrackUT > ut_tracks
+trackChecker::Tracks prepareVeloUTTracksEvent(
+  const VeloUTTracking::TrackUT* veloUT_tracks,
+  const int n_veloUT_tracks
 ) {
   trackChecker::Tracks checker_tracks;
-  for ( VeloUTTracking::TrackUT ut_track : ut_tracks ) {
+  for ( int i_track = 0; i_track < n_veloUT_tracks; ++i_track ) {
+    VeloUTTracking::TrackUT veloUT_track = veloUT_tracks[i_track];
     trackChecker::Track checker_track;
-    for ( int i_hit = 0; i_hit < ut_track.hitsNum; ++i_hit ) {
-      LHCbID lhcb_id( ut_track.LHCbIDs[i_hit] );
+    assert( veloUT_track.hitsNum < VeloUTTracking::max_track_size);
+    for ( int i_hit = 0; i_hit < veloUT_track.hitsNum; ++i_hit ) {
+      LHCbID lhcb_id( veloUT_track.LHCbIDs[i_hit] );
       checker_track.addId( lhcb_id );
     }
     checker_tracks.push_back( checker_track );
@@ -348,25 +393,40 @@ trackChecker::Tracks prepareVeloUTTracks(
   return checker_tracks;
 }
 
+std::vector< trackChecker::Tracks > prepareVeloUTTracks(
+  const VeloUTTracking::TrackUT* veloUT_tracks,
+  const int* n_veloUT_tracks,
+  const int number_of_events
+) {
+  std::vector< trackChecker::Tracks > checker_tracks;
+  for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
+    //debug_cout << "checking event " << i_event << " with " << n_veloUT_tracks[i_event] << " tracks" << std::endl;
+    trackChecker::Tracks ch_tracks = prepareVeloUTTracksEvent(
+      veloUT_tracks + i_event * VeloUTTracking::max_num_tracks,
+      n_veloUT_tracks[i_event]);
+    checker_tracks.push_back( ch_tracks );
+  }
+  return checker_tracks;
+}
 
 void call_pr_checker(
   const std::vector< trackChecker::Tracks >& all_tracks,
   const std::string& folder_name_MC,
-  const bool& fromNtuple,
+  const uint start_event_offset,
   const std::string& trackType
 ) {
   if ( trackType == "Velo" ) {
     callPrChecker< TrackCheckerVelo> (
       all_tracks,
       folder_name_MC,
-      fromNtuple,
+      start_event_offset,
       trackType);
   }
   else if ( trackType == "VeloUT" ) {
     callPrChecker< TrackCheckerVeloUT> (
       all_tracks,
       folder_name_MC,
-      fromNtuple,
+      start_event_offset,
       trackType);
   }
   else {

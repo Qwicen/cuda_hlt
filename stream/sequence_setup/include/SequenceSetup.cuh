@@ -1,15 +1,18 @@
 #pragma once
 
-#include "../../../cuda/velo/calculate_phi_and_sort/include/CalculatePhiAndSort.cuh"
-#include "../../../cuda/velo/consolidate_tracks/include/ConsolidateTracks.cuh"
-#include "../../../cuda/velo/mask_clustering/include/MaskedVeloClustering.cuh"
-#include "../../../cuda/velo/mask_clustering/include/EstimateInputSize.cuh"
-#include "../../../cuda/velo/prefix_sum/include/PrefixSum.cuh"
-#include "../../../cuda/velo/search_by_triplet/include/SearchByTriplet.cuh"
-#include "../../../cuda/velo/simplified_kalman_filter/include/VeloKalmanFilter.cuh"
-#include "../../gear/include/Argument.cuh"
-#include "../../gear/include/Sequence.cuh"
-#include "../../gear/include/TupleIndicesChecker.cuh"
+#include "CalculatePhiAndSort.cuh"
+#include "ConsolidateTracks.cuh"
+#include "MaskedVeloClustering.cuh"
+#include "EstimateInputSize.cuh"
+#include "PrefixSum.cuh"
+#include "SearchByTriplet.cuh"
+#include "VeloKalmanFilter.cuh"
+
+#include "VeloUT.cuh"
+
+#include "Argument.cuh"
+#include "Sequence.cuh"
+#include "TupleIndicesChecker.cuh"
 #include "SequenceArgumentEnum.cuh"
 
 /**
@@ -24,15 +27,18 @@ constexpr auto sequence_algorithms() {
     prefix_sum_single_block,
     prefix_sum_scan,
     masked_velo_clustering,
-    calculatePhiAndSort,
-    searchByTriplet,
+    calculate_phi_and_sort,
+    fill_candidates,
+    search_by_triplet,
+    weak_tracks_adder,
     copy_and_prefix_sum_single_block,
     copy_velo_track_hit_number,
     prefix_sum_reduce,
     prefix_sum_single_block,
     prefix_sum_scan,
     consolidate_tracks,
-    velo_fit
+    velo_fit,
+    veloUT
   );
 }
 
@@ -67,8 +73,8 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_tracks_to_follow, uint>,
   Argument<arg::dev_hit_used, bool>,
   Argument<arg::dev_atomics_storage, int>,
-  Argument<arg::dev_tracklets, VeloTracking::TrackHits>,
-  Argument<arg::dev_weak_tracks, uint>,
+  Argument<arg::dev_tracklets, VeloTracking::TrackletHits>,
+  Argument<arg::dev_weak_tracks, VeloTracking::TrackletHits>,
   Argument<arg::dev_h0_candidates, short>,
   Argument<arg::dev_h2_candidates, short>,
   Argument<arg::dev_rel_indices, unsigned short>,
@@ -76,7 +82,10 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_velo_track_hit_number, uint>,
   Argument<arg::dev_prefix_sum_auxiliary_array_2, uint>,
   Argument<arg::dev_velo_track_hits, VeloTracking::Hit<mc_check_enabled>>,
-  Argument<arg::dev_velo_states, VeloState>
+  Argument<arg::dev_velo_states, VeloState>,
+  Argument<arg::dev_ut_hits, VeloUTTracking::HitsSoA>,
+  Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
+  Argument<arg::dev_atomics_veloUT, int>
 >;
 
 /**

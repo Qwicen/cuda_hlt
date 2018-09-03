@@ -91,8 +91,10 @@ __global__ void velo_fit(
       const VeloState first = (dev_velo_states + accumulated_tracks)[element];
 
       
+
       simplified_fit<true>(        velo_track_hits,        first,        state_pointer,        track.hitsNum    );
       
+
 
     }
   }

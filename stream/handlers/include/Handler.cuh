@@ -4,7 +4,7 @@
 #include <ostream>
 #include <tuple>
 #include <utility>
-#include "../../gear/include/Common.cuh"
+#include "Common.cuh"
 
 template<class Fn, class Tuple, unsigned long... I>
 auto call_impl(

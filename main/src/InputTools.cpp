@@ -1,6 +1,14 @@
 #include "../include/InputTools.h"
 
 /**
+ * @brief Test to check existence of filename.
+ */
+bool exists_test(const std::string& name) {
+  std::ifstream f(name.c_str());
+  return f.good();
+}
+
+/**
  * @brief Natural ordering for strings.
  */
 bool naturalOrder(const std::string& s1, const std::string& s2 ) {
@@ -57,8 +65,7 @@ void appendFileToVector(
  
 
 std::vector<std::string> list_folder(
-  const std::string& foldername,
-  const bool fromNtuple				     
+  const std::string& foldername
 ) {
   std::vector<std::string> folderContents;
   DIR *dir;
@@ -69,22 +76,13 @@ std::vector<std::string> list_folder(
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
       std::string filename = std::string(ent->d_name);
-      if ( !fromNtuple ) {
-	if (filename.find(".bin") != std::string::npos &&
-	    filename.find("geometry") == std::string::npos) 
-	  folderContents.push_back(filename);
-      }
-      else {
-	if (filename.find(".root") != std::string::npos) 
-	  folderContents.push_back(filename);
-      }
+      if (filename.find(".bin") != std::string::npos &&
+          filename.find("geometry") == std::string::npos) 
+        folderContents.push_back(filename);
     }
     closedir(dir);
     if (folderContents.size() == 0) {
-      if ( fromNtuple )
-	error_cout << "No root files found in folder " << foldername << std::endl;
-      else
-	error_cout << "No binary files found in folder " << foldername << std::endl;
+      error_cout << "No binary files found in folder " << foldername << std::endl;
       exit(-1);
     } else {
       verbose_cout << "Found " << folderContents.size() << " binary files" << std::endl;
@@ -99,16 +97,6 @@ std::vector<std::string> list_folder(
   return folderContents;
 }
 
-bool fileExists (const std::string& name) {
-  if (FILE *file = fopen(name.c_str(), "r")) {
-    fclose(file);
-    return true;
-  } else {
-    return false;
-  }
-}
-
-
 /**
  * @brief Reads a number of events from a folder name.
  */
@@ -116,7 +104,8 @@ void read_folder(
   const std::string& foldername,
   uint number_of_files,
   std::vector<char>& events,
-  std::vector<uint>& event_offsets
+  std::vector<uint>& event_offsets,
+  const uint start_event_offset
 ) {
   std::vector<std::string> folderContents = list_folder(foldername);
 
@@ -130,7 +119,7 @@ void read_folder(
   // Read all requested events
   unsigned int accumulated_size=0;
   std::vector<unsigned int> event_sizes;
-  for (int i=0; i<number_of_files; ++i) {
+  for (int i = start_event_offset; i < number_of_files + start_event_offset; ++i) {
     // Read event #i in the list and add it to the inputs
     std::string readingFile = folderContents[i % folderContents.size()];
     appendFileToVector(foldername + "/" + readingFile, events, event_sizes);

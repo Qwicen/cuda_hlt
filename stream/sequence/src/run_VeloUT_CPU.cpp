@@ -1,8 +1,10 @@
-#include "../include/run_VeloUT_CPU.h"
+#include "run_VeloUT_CPU.h"
 
+#ifdef WITH_ROOT
 #include "TH1D.h"
 #include "TFile.h"
 #include "TTree.h"
+#endif
 
 void findPermutation(
   const float* hit_Xs,
@@ -33,32 +35,29 @@ void findPermutation(
 
 
 int run_veloUT_on_CPU (
-  std::vector< trackChecker::Tracks > * ut_tracks_events,
-  VeloUTTracking::HitsSoA * hits_layers_events,
-  const uint32_t n_hits_layers_events[][VeloUTTracking::n_layers],
-  VeloState * host_velo_states,
-  int * host_accumulated_tracks,
-  uint* host_velo_track_hit_number_pinned,
-  VeloTracking::Hit<true>* host_velo_track_hits_pinned,   
-  int * host_number_of_tracks_pinned,
+  std::vector< trackChecker::Tracks >* ut_tracks_events,
+  VeloUTTracking::HitsSoA* hits_layers_events,
+  const PrUTMagnetTool* host_ut_magnet_tool,
+  const VeloState* host_velo_states,
+  const int* host_accumulated_tracks,
+  const uint* host_velo_track_hit_number_pinned,
+  const VeloTracking::Hit<mc_check_enabled>* host_velo_track_hits_pinned,   
+  const int* host_number_of_tracks_pinned,
   const int &number_of_events
 ) {
 
-  PrVeloUT velout;
-
-  
-      
+  int backward;
+#ifdef WITH_ROOT
   // Histograms only for checking and debugging
   TFile *f = new TFile("../output/veloUT.root", "RECREATE");
   TTree *t_ut_hits = new TTree("ut_hits","ut_hits");
   TTree *t_velo_states = new TTree("velo_states", "velo_states");
   TTree *t_track_hits = new TTree("track_hits", "track_hits");
   TTree *t_veloUT_tracks = new TTree("veloUT_tracks", "veloUT_tracks");
-  float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight2;
+  float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
   float x, y, tx, ty, chi2, z, drdz;
   unsigned int LHCbID;
   int highThreshold, layer;
-  int backward;
   float x_hit, y_hit, z_hit;
   float first_x, first_y, first_z;
   float last_x, last_y, last_z;
@@ -71,7 +70,7 @@ int run_veloUT_on_CPU (
   t_ut_hits->Branch("dxDy", &dxDy);
   t_ut_hits->Branch("zAtYEq0", &zAtYEq0);
   t_ut_hits->Branch("xAtYEq0", &xAtYEq0);
-  t_ut_hits->Branch("weight2", &weight2);
+  t_ut_hits->Branch("weight", &weight);
   t_ut_hits->Branch("LHCbID", &LHCbID);
   t_ut_hits->Branch("highThreshold", &highThreshold);
   t_ut_hits->Branch("layer", &layer);
@@ -93,104 +92,84 @@ int run_veloUT_on_CPU (
   t_velo_states->Branch("last_y", &last_y);
   t_velo_states->Branch("last_z", &last_z); 
   t_veloUT_tracks->Branch("qop", &qop);
-
+#endif
    
-  if ( !velout.initialize() ) {
-    error_cout << "Could not initialize VeloUT" << std::endl;
-    return -1;
-  }
+  int n_veloUT_tracks = 0;
+  int n_velo_tracks_in_UT = 0;
+  int n_velo_tracks = 0;
+  int n_forward_velo_tracks = 0;
   
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
 
+    VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
+    
     // Prepare hits
-    std::array<std::vector<VeloUTTracking::Hit>,VeloUTTracking::n_layers> inputHits;
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      inputHits[i_layer].clear();
-      int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
-      uint n_hits = n_hits_layers_events[i_event][i_layer];
+      int layer_offset = hits_layers.layer_offset[i_layer];
+      uint n_hits = hits_layers.n_hits_layers[i_layer];
       
       // sort according to xAtyEq0
-      uint hit_permutations[ n_hits_layers_events[i_event][i_layer] ];
+      uint hit_permutations[ hits_layers.n_hits_layers[i_layer] ];
       findPermutation( 
-        hits_layers_events[i_event].m_xAtYEq0,
+        hits_layers.m_xAtYEq0,
       	layer_offset,
       	hit_permutations,
       	n_hits
       );
 
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_cos );
-      //      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_dxDy );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_weight2 );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_xAtYEq0 );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_yBegin );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_yEnd );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_zAtYEq0 );
-      applyXPermutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_LHCbID );
-      applyXPermutation<int>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_planeCode );
-      applyXPermutation<int>( hit_permutations, layer_offset, n_hits, hits_layers_events[i_event].m_highThreshold );
-      
+      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_cos );
+      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_weight );
+      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_xAtYEq0 );
+      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_yBegin );
+      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_yEnd );
+      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_zAtYEq0 );
+      applyXPermutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers.m_LHCbID );
+      applyXPermutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_planeCode );
+      applyXPermutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_highThreshold );
+
+#ifdef WITH_ROOT
       for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
-	VeloUTTracking::Hit hit;
-	hit.m_cos = hits_layers_events[i_event].m_cos[layer_offset + i_hit];
-	//hit.m_dxDy = hits_layers_events[i_event].m_dxDy[layer_offset + i_hit];
-	hit.m_weight2 = hits_layers_events[i_event].m_weight2[layer_offset + i_hit];
-	hit.m_xAtYEq0 = hits_layers_events[i_event].m_xAtYEq0[layer_offset + i_hit];
-	hit.m_yBegin = hits_layers_events[i_event].m_yBegin[layer_offset + i_hit];
-	hit.m_yEnd = hits_layers_events[i_event].m_yEnd[layer_offset + i_hit];
-	hit.m_zAtYEq0 = hits_layers_events[i_event].m_zAtYEq0[layer_offset + i_hit];
-	hit.m_LHCbID = hits_layers_events[i_event].m_LHCbID[layer_offset + i_hit];
-	hit.m_planeCode = hits_layers_events[i_event].m_planeCode[layer_offset + i_hit];
-	hit.m_highThreshold = hits_layers_events[i_event].m_highThreshold[layer_offset + i_hit];
-	
-	inputHits[i_layer].push_back( hit );
-	
-	// For tree filling
-	cos = hit.m_cos;
-	yBegin = hit.m_yBegin;
-	yEnd = hit.m_yEnd;
-	zAtYEq0 = hit.m_zAtYEq0;
-	xAtYEq0 = hit.m_xAtYEq0;
-	weight2 = hit.m_weight2;
-	LHCbID = hit.m_LHCbID;
-	highThreshold = hit.m_highThreshold;
+	cos = hits_layers.m_cos[layer_offset + i_hit];
+	weight = hits_layers.m_weight[layer_offset + i_hit];
+	xAtYEq0 = hits_layers.m_xAtYEq0[layer_offset + i_hit];
+	yBegin = hits_layers.m_yBegin[layer_offset + i_hit];
+	yEnd = hits_layers.m_yEnd[layer_offset + i_hit];
+	zAtYEq0 = hits_layers.m_zAtYEq0[layer_offset + i_hit];
+	LHCbID = hits_layers.m_LHCbID[layer_offset + i_hit];
 	layer = i_layer;
-        dxDy = hit.dxDy();
-        
+	highThreshold = hits_layers.m_highThreshold[layer_offset + i_hit];
+        dxDy = hits_layers.dxDy(layer_offset + i_hit);
+                
 	t_ut_hits->Fill();
       }
-      // sort hits according to xAtYEq0
-      //std::sort( inputHits[i_layer].begin(), inputHits[i_layer].end(), [](VeloUTTracking::Hit a, VeloUTTracking::Hit b) { return a.xAtYEq0() < b.xAtYEq0(); } );
-    }
-    
+#endif
+    } // layers
+  
     // Prepare Velo tracks
     const int accumulated_tracks = host_accumulated_tracks[i_event];
-    VeloState* velo_states_event = host_velo_states + 2*accumulated_tracks;
-    std::vector<VeloUTTracking::TrackVelo> tracks;
+
+    const VeloState* velo_states_event = host_velo_states + 2*accumulated_tracks;
+
+
     for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+
+      n_velo_tracks++;
       
-      VeloUTTracking::TrackVelo track;
-      
-      VeloUTTracking::TrackUT ut_track;
       const uint starting_hit = host_velo_track_hit_number_pinned[accumulated_tracks + i_track];
       const uint number_of_hits = host_velo_track_hit_number_pinned[accumulated_tracks + i_track + 1] - starting_hit;
-      backward = (int)(velo_states_event[2*i_track].backward);
-      ut_track.hitsNum = number_of_hits;
-      for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
-	ut_track.LHCbIDs.push_back( host_velo_track_hits_pinned[starting_hit + i_hit].LHCbID );
-      }
-      track.track = ut_track;
-      
-      track.state = ( velo_states_event[2*i_track] );
-      
-      //////////////////////
+
+      backward = (int)(velo_states_event[i_track].backward);
+      if ( !backward ) n_forward_velo_tracks++;
+
+#ifdef WITH_ROOT      
+
       // For tree filling
-      //////////////////////
-      x = track.state.x;
-      y = track.state.y;
-      tx = track.state.tx;
-      ty = track.state.ty;
-      chi2 = track.state.chi2;
-      z = track.state.z;
+      x = velo_states_event[i_track].x;
+      y = velo_states_event[i_track].y;
+      tx = velo_states_event[i_track].tx;
+      ty = velo_states_event[i_track].ty;
+      chi2 = velo_states_event[i_track].chi2;
+      z = velo_states_event[i_track].z;
       // study (sign of) (dr/dz) -> track moving away from beamline?
       // drop 1/sqrt(x^2+y^2) to avoid sqrt calculation, no effect on sign
       const uint last_hit = starting_hit + number_of_hits - 1;
@@ -216,33 +195,48 @@ int run_veloUT_on_CPU (
 	
 	t_track_hits->Fill();
       }
-      
-      
-      if ( backward ) continue;
-      tracks.push_back( track );
-    }
-    //debug_cout << "at event " << i_event << ", pass " << tracks.size() << " tracks and " << inputHits[0].size() << " hits in layer 0, " << inputHits[1].size() << " hits in layer 1, " << inputHits[2].size() << " hits in layer 2, " << inputHits[3].size() << " in layer 3 to velout" << std::endl;
-    
-    std::vector< VeloUTTracking::TrackUT > ut_tracks = velout(tracks, &(hits_layers_events[i_event]), n_hits_layers_events[i_event]);
-    //debug_cout << "\t got " << (uint)ut_tracks.size() << " tracks from VeloUT " << std::endl;
-    
+#endif
+    } // tracks
+
+    int n_veloUT_tracks_event = 0;
+    VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks];
+    call_PrVeloUT(
+      host_velo_track_hit_number_pinned,
+      host_velo_track_hits_pinned,                                                       
+      host_number_of_tracks_pinned[i_event],
+      host_accumulated_tracks[i_event],
+      velo_states_event,
+      &(hits_layers),
+      host_ut_magnet_tool,
+      veloUT_tracks,
+      n_velo_tracks_in_UT,
+      n_veloUT_tracks_event
+   );
+    n_veloUT_tracks += n_veloUT_tracks_event;
+
+#ifdef WITH_ROOT
     // store qop in tree
-    for ( auto veloUT_track : ut_tracks ) {
-      qop = veloUT_track.qop;
+    for ( int i_track = 0; i_track < n_veloUT_tracks_event; i_track++ ) {
+      qop = veloUT_tracks[i_track].qop;
       t_veloUT_tracks->Fill();
     }
+#endif
     
     // save in format for track checker
-    trackChecker::Tracks checker_tracks = prepareVeloUTTracks( ut_tracks );
-    //debug_cout << "Passing " << checker_tracks.size() << " tracks to PrChecker" << std::endl;
-    
+    trackChecker::Tracks checker_tracks = prepareVeloUTTracksEvent( veloUT_tracks, n_veloUT_tracks_event );
     ut_tracks_events->emplace_back( checker_tracks );
     
-  }
-  
-  
+  } // events
+
+  info_cout << "Number of velo tracks per event = " << float(n_velo_tracks) / float(number_of_events) << std::endl;
+  info_cout << "Amount of forward velo tracks = " << float(n_forward_velo_tracks) / float(n_velo_tracks) << std::endl;
+  info_cout << "Amount of forward velo tracks in UT acceptance = " << float(n_velo_tracks_in_UT) / float(n_forward_velo_tracks)  << std::endl;
+  info_cout << "Amount of UT tracks found ( out of velo tracks in UT acceptance ) " << float(n_veloUT_tracks) / float(n_velo_tracks_in_UT) << std::endl;
+
+#ifdef WITH_ROOT
   f->Write();
   f->Close();
+#endif
   
   return 0;
 }

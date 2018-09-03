@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "../../common/include/ClusteringDefinitions.cuh"
+#include "ClusteringDefinitions.cuh"
 
 __global__ void estimate_input_size(
   char* dev_raw_input,
