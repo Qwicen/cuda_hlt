@@ -24,11 +24,11 @@ __device__ void sort_by_phi(
   uint* new_hit_IDs = (uint*) hit_Zs;
   
   // Apply permutation across all arrays
-  applyPermutation(hit_permutations, event_hit_start, event_number_of_hits, hit_Xs, new_hit_Xs);
+  apply_permutation(hit_permutations, event_hit_start, event_number_of_hits, hit_Xs, new_hit_Xs);
   __syncthreads();
-  applyPermutation(hit_permutations, event_hit_start, event_number_of_hits, hit_Ys, new_hit_Ys);
+  apply_permutation(hit_permutations, event_hit_start, event_number_of_hits, hit_Ys, new_hit_Ys);
   __syncthreads();
-  applyPermutation(hit_permutations, event_hit_start, event_number_of_hits, hit_Zs, new_hit_Zs);
+  apply_permutation(hit_permutations, event_hit_start, event_number_of_hits, hit_Zs, new_hit_Zs);
   __syncthreads();
-  applyPermutation(hit_permutations, event_hit_start, event_number_of_hits, hit_IDs, new_hit_IDs);
+  apply_permutation(hit_permutations, event_hit_start, event_number_of_hits, hit_IDs, new_hit_IDs);
 }

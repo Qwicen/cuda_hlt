@@ -9,7 +9,7 @@
  * @brief Apply permutation from prev container to new container
  */
 template<class T>
-__host__ __device__ void applyPermutation(
+__host__ __device__ void apply_permutation(
   uint* permutation,
   const uint hit_start,
   const uint number_of_hits,
@@ -40,7 +40,7 @@ __host__ __device__ void applyPermutation(
  */
 template<class T>
 __host__ __device__
-void findPermutation(
+void find_permutation(
   const T* sorting_vars,
   const uint hit_start,
   uint* hit_permutations,
