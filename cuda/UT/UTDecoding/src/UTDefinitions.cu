@@ -111,7 +111,8 @@ UTHit::UTHit(float    ut_cos,
 
 UTHit UTHits::getHit(uint32_t index, uint32_t layer) const {
   //const uint32_t offset = (ut_max_number_of_hits_per_event / ut_number_of_layers) * layer;//layer_offset[layer];
-  const uint32_t offset = layer_offset[layer];
+  // const uint32_t offset = layer_offset[layer];
+  auto offset = 0;
   const float cos              = m_cos          [offset + index];
   const float yBegin           = m_yBegin       [offset + index];
   const float yEnd             = m_yEnd         [offset + index];

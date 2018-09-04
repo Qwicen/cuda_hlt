@@ -14,6 +14,7 @@
 #include "BaseDynamicScheduler.cuh"
 #include "SequenceSetup.cuh"
 #include "PrVeloUTMagnetToolDefinitions.cuh"
+#include "Constants.cuh"
 
 #include "run_VeloUT_CPU.h"
 
@@ -55,6 +56,7 @@ struct Stream {
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   VeloState* host_velo_states;
+  uint32_t* host_ut_hit_count;
   VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
   
@@ -75,6 +77,9 @@ struct Stream {
   std::string folder_name_MC;
   uint start_event_offset;
 
+  // Gpu constants
+  GpuConstants gpu_constants;
+
   cudaError_t initialize(
     const std::vector<char>& velopix_geometry,
     const std::vector<char>& ut_boards,
@@ -89,7 +94,8 @@ struct Stream {
     const std::string& param_folder_name_MC,
     const uint param_start_event_offset,
     const size_t param_reserve_mb,
-    const uint param_stream_number
+    const uint param_stream_number,
+    const GpuConstants& param_gpu_constants
   );
   
   cudaError_t run_sequence(

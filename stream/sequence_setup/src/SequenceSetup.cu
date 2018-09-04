@@ -17,9 +17,10 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_single_block_velo_track_hit_number] = "Prefix sum single block (2)";
   a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2)";
   a[seq::consolidate_tracks] = "Consolidate tracks";
-  a[seq::veloUT] = "VeloUT tracking";
   a[seq::ut_estimate_number_of_hits] = "UT estimate number of hits";
   a[seq::decode_raw_banks] = "UT decode_raw_banks";
+  a[seq::sort_by_x] = "Sort hits by X";
+  a[seq::veloUT] = "VeloUT tracking";
   return a;
 }
 
@@ -47,12 +48,15 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_prefix_sum_auxiliary_array_2] = "dev_prefix_sum_auxiliary_array_2";
   a[arg::dev_velo_track_hits] = "dev_velo_track_hits";
   a[arg::dev_velo_states] = "dev_velo_states";
-  a[arg::dev_ut_hits] = "dev_ut_hits";
-  a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
-  a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
   a[arg::dev_ut_raw_input] = "dev_ut_raw_input";
   a[arg::dev_ut_raw_input_offsets] = "dev_ut_raw_input_offsets";
+  a[arg::dev_ut_hit_count] = "dev_ut_hit_count";
   a[arg::dev_ut_hits_decoded] = "dev_ut_hits_decoded";
+  a[arg::dev_ut_hits] = "dev_ut_hits";
+  a[arg::dev_ut_hits_sorted] = "dev_ut_hits_sorted";
+  a[arg::dev_ut_hit_permutations] = "dev_ut_hit_permutations";
+  a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
+  a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
   return a;
 }
 
@@ -156,26 +160,30 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_track_hits,
     arg::dev_velo_states
   };
-  sequence_dependencies[seq::veloUT] = {
+  sequence_dependencies[seq::ut_estimate_number_of_hits] = {
+    arg::dev_ut_raw_input,
+    arg::dev_ut_raw_input_offsets,
+    arg::dev_ut_hit_count
+  };
+  sequence_dependencies[seq::decode_raw_banks] = {
+    arg::dev_ut_raw_input,
+    arg::dev_ut_raw_input_offsets,
+    arg::dev_ut_hits_decoded,
+    arg::dev_ut_hit_count
+  };
+  sequence_dependencies[seq::sort_by_x] = {
     arg::dev_ut_hits,
+    arg::dev_ut_hits_sorted,
+    arg::dev_ut_hit_permutations
+  };
+  sequence_dependencies[seq::veloUT] = {
+    arg::dev_ut_hits_sorted,
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,
     arg::dev_velo_states,
     arg::dev_veloUT_tracks,
     arg::dev_atomics_veloUT
-  };
-
-  sequence_dependencies[seq::ut_estimate_number_of_hits] = {
-    arg::dev_ut_raw_input,
-    arg::dev_ut_raw_input_offsets,
-    arg::dev_ut_hits_decoded
-  };
-
-  sequence_dependencies[seq::decode_raw_banks] = {
-    arg::dev_ut_raw_input,
-    arg::dev_ut_raw_input_offsets,
-    arg::dev_ut_hits_decoded
   };
 
   return sequence_dependencies;
@@ -185,6 +193,8 @@ std::vector<int> get_sequence_output_arguments() {
   return {
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number,
-    arg::dev_velo_track_hits
+    arg::dev_velo_track_hits,
+    arg::dev_atomics_veloUT,
+    arg::dev_veloUT_tracks
   };
 }

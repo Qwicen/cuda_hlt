@@ -6,36 +6,8 @@
 #include "TTree.h"
 #endif
 
-void findPermutation(
-  const float* hit_Xs,
-  const uint hit_start,
-  uint* hit_permutations,
-  const uint n_hits
-) {
-
-  for (unsigned int i = 0; i < n_hits; ++i) {
-    const int hit_index = hit_start + i;
-    const float x = hit_Xs[hit_index];
-    
-    // Find out local position
-    unsigned int position = 0;
-    for (unsigned int j = 0; j < n_hits; ++j) {
-      const int other_hit_index = hit_start + j;
-      const float other_x = hit_Xs[other_hit_index];
-      // Stable sorting
-      position += x > other_x || ( x == other_x && i > j );
-    }
-    assert(position < n_hits);
-    
-    // Store it in hit_permutations 
-    hit_permutations[position] = i;
-  }
-  
-}
-
-
 int run_veloUT_on_CPU (
-  std::vector< trackChecker::Tracks >* ut_tracks_events,
+  std::vector<trackChecker::Tracks>& ut_tracks_events,
   VeloUTTracking::HitsSoA* hits_layers_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const VeloState* host_velo_states,
@@ -98,35 +70,41 @@ int run_veloUT_on_CPU (
   int n_velo_tracks_in_UT = 0;
   int n_velo_tracks = 0;
   int n_forward_velo_tracks = 0;
+
+  uint hit_permutations[ VeloUTTracking::n_layers * VeloUTTracking::max_numhits_per_event ];
   
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
 
-    VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
-    
     // Prepare hits
+    VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
+    VeloUTTracking::HitsSoA hits_layers_sorted;
+    
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      int layer_offset = hits_layers.layer_offset[i_layer];
-      uint n_hits = hits_layers.n_hits_layers[i_layer];
+      const uint layer_offset = hits_layers.layer_offset[i_layer];
+      const uint n_hits = hits_layers.n_hits_layers[i_layer];
+
+      hits_layers_sorted.n_hits_layers[i_layer] = n_hits;
+      hits_layers_sorted.layer_offset[i_layer] = layer_offset;
       
       // sort according to xAtyEq0
-      uint hit_permutations[ hits_layers.n_hits_layers[i_layer] ];
-      findPermutation( 
+      find_permutation<float>( 
         hits_layers.m_xAtYEq0,
-      	layer_offset,
+        layer_offset,
       	hit_permutations,
       	n_hits
       );
-
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_cos );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_weight );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_xAtYEq0 );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_yBegin );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_yEnd );
-      applyXPermutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_zAtYEq0 );
-      applyXPermutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers.m_LHCbID );
-      applyXPermutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_planeCode );
-      applyXPermutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_highThreshold );
-
+          
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_cos, hits_layers_sorted.m_cos );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_weight, hits_layers_sorted.m_weight );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_xAtYEq0, hits_layers_sorted.m_xAtYEq0 );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_yBegin, hits_layers_sorted.m_yBegin );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_yEnd, hits_layers_sorted.m_yEnd );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_zAtYEq0, hits_layers_sorted.m_zAtYEq0 );
+      apply_permutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers.m_LHCbID, hits_layers_sorted.m_LHCbID );
+      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_planeCode, hits_layers_sorted.m_planeCode );
+      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_highThreshold, hits_layers_sorted.m_highThreshold );
+       
+     
 #ifdef WITH_ROOT
       for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
 	cos = hits_layers.m_cos[layer_offset + i_hit];
@@ -201,7 +179,7 @@ int run_veloUT_on_CPU (
       host_number_of_tracks_pinned[i_event],
       host_accumulated_tracks[i_event],
       host_velo_states_event,
-      &(hits_layers),
+      &(hits_layers_sorted),
       host_ut_magnet_tool,
       veloUT_tracks,
       n_velo_tracks_in_UT,
@@ -219,7 +197,7 @@ int run_veloUT_on_CPU (
     
     // save in format for track checker
     trackChecker::Tracks checker_tracks = prepareVeloUTTracksEvent( veloUT_tracks, n_veloUT_tracks_event );
-    ut_tracks_events->emplace_back( checker_tracks );
+    ut_tracks_events.emplace_back( checker_tracks );
     
   } // events
 

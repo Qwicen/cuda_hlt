@@ -7,15 +7,13 @@
 #include "PrefixSum.cuh"
 #include "SearchByTriplet.cuh"
 #include "VeloKalmanFilter.cuh"
-
 #include "VeloUT.cuh"
 #include "UTDecoding.cuh"
-
+#include "SortByX.cuh"
 #include "Argument.cuh"
 #include "Sequence.cuh"
 #include "TupleIndicesChecker.cuh"
 #include "SequenceArgumentEnum.cuh"
-
 
 /**
  * @brief Algorithm tuple definition. All algorithms in the sequence
@@ -39,9 +37,10 @@ constexpr auto sequence_algorithms() {
     prefix_sum_single_block,
     prefix_sum_scan,
     consolidate_tracks,
-    veloUT,
     ut_estimate_number_of_hits,
-    decode_raw_banks
+    decode_raw_banks,
+    sort_by_x,
+    veloUT
   );
 }
 
@@ -86,18 +85,19 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_prefix_sum_auxiliary_array_2, uint>,
   Argument<arg::dev_velo_track_hits, VeloTracking::Hit<mc_check_enabled>>,
   Argument<arg::dev_velo_states, VeloState>,
-  Argument<arg::dev_ut_hits, VeloUTTracking::HitsSoA>,
-  Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
-  Argument<arg::dev_atomics_veloUT, int>,
-  
+
   // TODO: check and try to use char instead of uint32_t for dev_ut_raw_input variable
   // Changing uint32_t to char cause a strange error:
   // Error: Internal Compiler Error (codegen): "there was an error in verifying the lgenfe output!"
-  //
-  // Possibile way to check: use int instead of uint32_t and see what happens
   Argument<arg::dev_ut_raw_input, uint32_t>,
   Argument<arg::dev_ut_raw_input_offsets, uint32_t>,
-  Argument<arg::dev_ut_hits_decoded, UTHits>
+  Argument<arg::dev_ut_hit_count, uint32_t>,
+  Argument<arg::dev_ut_hits_decoded, UTHits>,
+  Argument<arg::dev_ut_hits, VeloUTTracking::HitsSoA>,
+  Argument<arg::dev_ut_hits_sorted, VeloUTTracking::HitsSoA>,
+  Argument<arg::dev_ut_hit_permutations, uint>,
+  Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
+  Argument<arg::dev_atomics_veloUT, int>
 >;
 
 /**

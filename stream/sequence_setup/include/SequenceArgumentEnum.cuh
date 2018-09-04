@@ -21,9 +21,10 @@ enum seq_enum_t {
   prefix_sum_single_block_velo_track_hit_number,
   prefix_sum_scan_velo_track_hit_number,
   consolidate_tracks,
-  veloUT,
   ut_estimate_number_of_hits,
-  decode_raw_banks
+  decode_raw_banks,
+  sort_by_x,
+  veloUT
 };
 }
 
@@ -54,11 +55,14 @@ enum arg_enum_t {
   dev_prefix_sum_auxiliary_array_2,
   dev_velo_track_hits,
   dev_velo_states,
-  dev_ut_hits,
-  dev_veloUT_tracks,
-  dev_atomics_veloUT,
   dev_ut_raw_input,
   dev_ut_raw_input_offsets,
-  dev_ut_hits_decoded
+  dev_ut_hit_count,
+  dev_ut_hits_decoded,
+  dev_ut_hits,
+  dev_ut_hits_sorted,
+  dev_ut_hit_permutations,
+  dev_veloUT_tracks,
+  dev_atomics_veloUT
 };
 }

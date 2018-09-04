@@ -17,7 +17,8 @@ cudaError_t Stream::initialize(
   const std::string& param_folder_name_MC,
   const uint param_start_event_offset,
   const size_t reserve_mb,
-  const uint param_stream_number
+  const uint param_stream_number,
+  const GpuConstants& param_gpu_constants
 ) {
   // Set stream and events
   cudaCheck(cudaStreamCreate(&stream));
@@ -34,6 +35,7 @@ cudaError_t Stream::initialize(
   run_on_x86 = param_run_on_x86;
   folder_name_MC = param_folder_name_MC;
   start_event_offset = param_start_event_offset;
+  gpu_constants = param_gpu_constants;
 
   // Special case
   // Populate velo geometry
@@ -63,8 +65,9 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_velo_states, max_number_of_events * VeloTracking::max_tracks * sizeof(VeloState)));
   cudaCheck(cudaMallocHost((void**)&host_veloUT_tracks, max_number_of_events * VeloUTTracking::max_num_tracks * sizeof(VeloUTTracking::TrackUT)));
   cudaCheck(cudaMallocHost((void**)&host_atomics_veloUT, VeloUTTracking::num_atomics * max_number_of_events * sizeof(int)));
+  cudaCheck(cudaMallocHost((void**)&host_ut_hit_count, (2 * max_number_of_events * VeloUTTracking::n_layers + 1) * sizeof(uint32_t)));
 
-/* UT DECODING */
+  /* UT DECODING */
   cudaCheck(cudaMallocHost((void**)&host_ut_hits_decoded, max_number_of_events * sizeof(UTHits)));
 
   // Define sequence of algorithms to execute

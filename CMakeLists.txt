@@ -78,6 +78,7 @@ include_directories(cuda/velo/prefix_sum/include)
 include_directories(cuda/velo/search_by_triplet/include)
 include_directories(cuda/velo/simplified_kalman_filter/include)
 include_directories(checker/tracking/include)
+include_directories(stream/sequence/include)
 
 # Files from source directories
 file(GLOB main_sources "main/src/*")

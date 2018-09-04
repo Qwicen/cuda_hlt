@@ -153,10 +153,12 @@ __device__ void track_seeding(
                                        scatter < VeloTracking::max_scatter_seeding &&
                                        scatter < best_fit;
 
-                // Populate fit, h0 and h2 in case we have found a better one
-                best_fit = condition*scatter + !condition*best_fit;
-                best_h0 = condition*h0_index + !condition*best_h0;
-                best_h2 = condition*h2_index + !condition*best_h2;
+                if (condition) {
+                  // Populate fit, h0 and h2 in case we have found a better one
+                  best_fit = scatter;
+                  best_h0 = h0_index;
+                  best_h2 = h2_index;
+                }
               }
             }
           }
