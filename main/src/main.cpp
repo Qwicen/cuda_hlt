@@ -34,7 +34,7 @@ void printUsage(char* argv[]){
     << argv[0]
     << std::endl << " -f {folder containing .bin files with raw bank information}"
     << std::endl << (mc_check_enabled ? " " : " [") << "-d {folder containing .bin files with MC truth information}"
-    << (mc_check_enabled ? "" : " ]")
+    << (mc_check_enabled ? "" : "]")
     << std::endl << " -u {folder containing bin files with UT raw bank information}"
     << std::endl << " -e {folder containing bin files with UT hit information}"
     << std::endl << " -g {folder containing geometry descriptions}"
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
   // Show call options
   std::cout << "Requested options:" << std::endl
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
-    << " folder with UT raw bank input (-f): " << folder_name_UT_raw << std::endl
+    << " folder with UT raw bank input (-u): " << folder_name_UT_raw << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " folder with ut hits input (-e): " << folder_name_ut_hits << std::endl
     << " folder with geometry input (-g): " << folder_name_geometry << std::endl

@@ -482,6 +482,7 @@ cudaError_t Stream::run_sequence(
     cudaEventSynchronize(cuda_generic_event);
 
     for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
+      std::cout << "UT event number " << ut_event_number << std::endl;
       
       std::vector<UTHit> hits_vector;
 
@@ -489,13 +490,19 @@ cudaError_t Stream::run_sequence(
         const UTHits & hits_event = host_ut_hits_decoded[ut_event_number];
         for (uint32_t hit_number = 0; hit_number < hits_event.n_hits_layers[hit_layer]; ++hit_number) {
           UTHit hit = hits_event.getHit(hit_number, hit_layer);
+
+          if (hit.LHCbID == 19733777) {
+            info_cout << "LHCb ID, hit number, hit layer: "
+              << hit.LHCbID << ", " << hit_number << ", " << hit_layer << std::endl;
+          }
+
           hits_vector.push_back(hit);
         }
       }
 
-      sort(hits_vector.begin(), hits_vector.end(), [](const UTHit & a, const UTHit & b) -> bool {
-          return a.LHCbID > b.LHCbID; 
-      });
+      // sort(hits_vector.begin(), hits_vector.end(), [](const UTHit & a, const UTHit & b) -> bool {
+      //     return a.LHCbID > b.LHCbID; 
+      // });
 
 
 
@@ -530,14 +537,32 @@ cudaError_t Stream::run_sequence(
 
       in_hits.close();
 
-      sort(hits_compare.begin(), hits_compare.end(), [](const UTHit & a, const UTHit & b) -> bool {
-          return a.LHCbID > b.LHCbID; 
-      });
+      // sort(hits_compare.begin(), hits_compare.end(), [](const UTHit & a, const UTHit & b) -> bool {
+      //     return a.LHCbID > b.LHCbID; 
+      // });
 
-      for (uint32_t i = 0; i < number_of_hits_compare; ++i) {
-        if (hits_compare[i] != hits_vector[i]) {
-          std::cout << "ERROR nHit: " << i << "\t";
-          std::cout << hits_vector[i].LHCbID << "\t" << hits_compare[i].LHCbID << std::endl;
+      info_cout << " Expected " << hits_compare.size() << " hits" << std::endl
+        << " Found " << hits_vector.size() << " hits" << std::endl;
+
+      for (auto hit : hits_compare) {
+        if (std::find(hits_vector.begin(), hits_vector.end(), hit) == std::end(hits_vector)) {
+          error_cout << "hit " << hit << " only in hits_compare" << std::endl;
+        }
+
+        const auto count_instances = std::count(hits_compare.begin(), hits_compare.end(), hit);
+        if (count_instances > 1) {
+          info_cout << "Hit " << hit << " found " << count_instances << " times in hits_compare" << std::endl;
+        }
+      }
+
+      for (auto hit : hits_vector) {
+        if (std::find(hits_compare.begin(), hits_compare.end(), hit) == std::end(hits_compare)) {
+          error_cout << "hit " << hit << " only in hits_vector" << std::endl;
+        }
+
+        const auto count_instances = std::count(hits_vector.begin(), hits_vector.end(), hit);
+        if (count_instances > 1) {
+          info_cout << "Hit " << hit << " found " << count_instances << " times in hits_vector" << std::endl;
         }
       }
     }
