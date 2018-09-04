@@ -351,24 +351,24 @@ cudaError_t Stream::run_sequence(
           cudaEventSynchronize(cuda_generic_event);
         }
 
-	std::cout << "CHECKING VELO TRACKS " << std::endl; 
-	/*
+
+  std::cout << "CHECKING VELO TRACKS " << std::endl;
+
         const std::vector< trackChecker::Tracks > tracks_events = prepareTracks(
           host_velo_track_hit_number,
           reinterpret_cast<VeloTracking::Hit<true>*>(host_velo_track_hits),
-      	  host_accumulated_tracks,
-      	  host_number_of_tracks,
-      	  number_of_events);
+          host_accumulated_tracks,
+          host_number_of_tracks,
+          number_of_events);
       
-        
-      	call_pr_checker (
-	  tracks_events,
-      	  folder_name_MC,
+        std::string trackType = "Velo";
+        call_pr_checker (
+    tracks_events,
+          folder_name_MC,
           start_event_offset,
-    	  trackType);
-   */
+        trackType);
 
-      std::string trackType = "Velo";
+
 
         if ( !transmit_device_to_host ) { // Fetch data
           cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
