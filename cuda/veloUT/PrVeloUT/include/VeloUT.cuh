@@ -13,5 +13,6 @@ __global__ void veloUT(
   VeloState* dev_velo_states,
   VeloUTTracking::TrackUT* dev_veloUT_tracks,
   int* dev_atomics_veloUT,
-  PrUTMagnetTool* dev_ut_magnet_tool
+  PrUTMagnetTool* dev_ut_magnet_tool,
+  float* dev_ut_dxDy
 );

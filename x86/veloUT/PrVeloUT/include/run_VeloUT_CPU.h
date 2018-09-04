@@ -5,11 +5,13 @@
 #include "PrVeloUTWrapper.h"
 #include "Tools.h"
 #include "Sorting.cuh"
+#include "VeloUTDefinitions.cuh"
 
 int run_veloUT_on_CPU (
   std::vector<trackChecker::Tracks>& ut_tracks_events,
   VeloUTTracking::HitsSoA * hits_layers_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
+  const float host_ut_dxDy[VeloUTTracking::n_layers],
   const VeloState * host_velo_states,
   const int * host_accumulated_tracks,
   const uint* host_velo_track_hit_number_pinned,

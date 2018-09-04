@@ -17,12 +17,7 @@ namespace VeloUTTracking {
   */
   static constexpr uint n_layers           = 4;
   static constexpr uint n_ut_hit_variables = 8;
-  /* For now, the planeCode is an attribute of every hit,
-     -> check which information
-     needs to be saved for the forward tracking
-  */
-  static constexpr int planeCode[n_layers] = {0, 1, 2, 3};
-    
+  
   /* Cut-offs */
   static constexpr uint max_numhits_per_layer = 500;
   static constexpr uint max_numhits_per_event = 6000;

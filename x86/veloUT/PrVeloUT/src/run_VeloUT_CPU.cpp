@@ -10,6 +10,7 @@ int run_veloUT_on_CPU (
   std::vector<trackChecker::Tracks>& ut_tracks_events,
   VeloUTTracking::HitsSoA* hits_layers_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
+  const float * host_ut_dxDy,
   const VeloState* host_velo_states,
   const int* host_accumulated_tracks,
   const uint* host_velo_track_hit_number_pinned,
@@ -116,7 +117,7 @@ int run_veloUT_on_CPU (
 	LHCbID = hits_layers.m_LHCbID[layer_offset + i_hit];
 	layer = i_layer;
 	highThreshold = hits_layers.m_highThreshold[layer_offset + i_hit];
-        dxDy = hits_layers.dxDy(layer_offset + i_hit);
+        dxDy = host_ut_dxDy[layer]; //hits_layers.dxDy(layer_offset + i_hit);
                 
 	t_ut_hits->Fill();
       }
@@ -175,12 +176,13 @@ int run_veloUT_on_CPU (
     VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks];
     call_PrVeloUT(
       host_velo_track_hit_number_pinned,
-      host_velo_track_hits_pinned,                                                       
+      host_velo_track_hits_pinned,                                                      
       host_number_of_tracks_pinned[i_event],
       host_accumulated_tracks[i_event],
       host_velo_states_event,
       &(hits_layers_sorted),
       host_ut_magnet_tool,
+      host_ut_dxDy,
       veloUT_tracks,
       n_velo_tracks_in_UT,
       n_veloUT_tracks_event

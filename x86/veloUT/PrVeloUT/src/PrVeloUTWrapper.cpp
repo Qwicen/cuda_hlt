@@ -21,6 +21,7 @@ void call_PrVeloUT (
   const VeloState* velo_states_event,
   VeloUTTracking::HitsSoA *hits_layers,
   const PrUTMagnetTool *magnet_tool,
+  const float* ut_dxDy,
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
   int &n_velo_tracks_in_UT,
   int &n_veloUT_tracks )
