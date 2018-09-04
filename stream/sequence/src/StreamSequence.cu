@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <string>
 
 cudaError_t Stream::run_sequence(
   const uint i_stream,
@@ -320,6 +321,44 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
+    NCatboostStandalone::TOwningEvaluator evaluator("../input/catboost/MuID-Run2-MC-570-v1.cb");
+
+    std::ifstream file("../input/catboost/background.csv");
+    std::vector<float> features;
+    std::string line;
+    std::string cell;
+
+    int index = 0;
+    float result = 0;
+    while( file ) {
+      index++;
+      std::getline(file,line);
+      std::stringstream lineStream(line);
+      features.clear();
+
+      while( std::getline( lineStream, cell, ',' ) )
+        features.push_back( std::stof(cell) );
+      
+      result += evaluator.Apply(features, NCatboostStandalone::EPredictionType::Probability);
+    }
+    std::cout<< "background: " << result / index << std::endl;
+
+    file = std::ifstream("../input/catboost/signal.csv");
+    index = 0;
+    result = 0;
+    while( file ) {
+      index++;
+      std::getline(file,line);
+      std::stringstream lineStream(line);
+      rofeatures.clear();
+
+      while( std::getline( lineStream, cell, ',' ) )
+        features.push_back( std::stof(cell) );
+      
+      result += evaluator.Apply(features, NCatboostStandalone::EPredictionType::Probability);
+    }
+    std::cout<< "signal: " << result / index << std::endl;
+    
     ///////////////////////
     // Monte Carlo Check //
     ///////////////////////
