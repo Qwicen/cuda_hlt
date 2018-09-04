@@ -484,18 +484,17 @@ cudaError_t Stream::run_sequence(
     // // Check the output
     // info_cout << "decode_raw_banks finished" << std::endl << std::endl;
     
-    // // UT hit sorting by x
-    // argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(number_of_events);
-    // argument_sizes[arg::dev_ut_hits_sorted] = argen.size<arg::dev_ut_hits_sorted>(number_of_events);
-    // argument_sizes[arg::dev_ut_hit_permutations] = argen.size<arg::dev_ut_hit_permutations>(number_of_events * VeloUTTracking::max_numhits_per_event);
-    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    // cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, argen.size<arg::dev_ut_hits>(number_of_events), cudaMemcpyHostToDevice, stream ));
-    // sequence.item<seq::sort_by_x>().set_opts(dim3(number_of_events), dim3(32), stream);
-    // sequence.item<seq::sort_by_x>().set_arguments(
-    //   argen.generate<arg::dev_ut_hits>(argument_offsets),
-    //   argen.generate<arg::dev_ut_hits_sorted>(argument_offsets),
-    //   argen.generate<arg::dev_ut_hit_permutations>(argument_offsets) );
-    // sequence.item<seq::sort_by_x>().invoke();
+    // UT hit sorting by x
+    argument_sizes[arg::dev_ut_hit_permutations] = argen.size<arg::dev_ut_hit_permutations>(host_accumulated_number_of_ut_hits[0]);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, argen.size<arg::dev_ut_hits>(number_of_events), cudaMemcpyHostToDevice, stream ));
+    sequence.item<seq::sort_by_x>().set_opts(dim3(number_of_events), dim3(32), stream);
+    sequence.item<seq::sort_by_x>().set_arguments(
+      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_count>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_permutations>(argument_offsets)
+    );
+    sequence.item<seq::sort_by_x>().invoke();
     
     // // VeloUT tracking
     // argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks);

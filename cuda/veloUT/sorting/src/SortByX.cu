@@ -1,13 +1,19 @@
 #include "SortByX.cuh"
 
 __global__ void sort_by_x(
-  VeloUTTracking::HitsSoA* dev_ut_hits,
-  VeloUTTracking::HitsSoA* dev_ut_hits_sorted,
+  uint32_t* dev_ut_hits,
+  uint32_t* dev_ut_hit_count,
   uint* dev_hit_permutations
 ) {
+  const uint number_of_events = gridDim.x;
+  const uint event_number = blockIdx.x;
 
-  const int number_of_events = gridDim.x;
-  const int event_number = blockIdx.x;
+  // Two UTHits objects are created: one typecasts the base_pointer assuming
+  // the data is unsorted, the other assuming the data is sorted.
+  // This makes sorting more readable
+  UTHits unsorted_ut_hits, sorted_ut_hits;
+  unsorted_ut_hits.typecast_unsorted(dev_ut_hits, dev_ut_hit_count[number_of_events * VeloUTTracking::n_layers]);
+  sorted_ut_hits.typecast_sorted(dev_ut_hits, dev_ut_hit_count[number_of_events * VeloUTTracking::n_layers]);
 
   VeloUTTracking::HitsSoA* hits_layers        = dev_ut_hits + event_number;
   VeloUTTracking::HitsSoA* hits_layers_sorted = dev_ut_hits_sorted + event_number;
@@ -41,14 +47,14 @@ __global__ void sort_by_x(
     __syncthreads();
 
     apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_cos, hits_layers_sorted->m_cos );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_weight, hits_layers_sorted->m_weight );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_xAtYEq0, hits_layers_sorted->m_xAtYEq0 );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_yBegin, hits_layers_sorted->m_yBegin );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_yEnd, hits_layers_sorted->m_yEnd );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_zAtYEq0, hits_layers_sorted->m_zAtYEq0 );
-      apply_permutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers->m_LHCbID, hits_layers_sorted->m_LHCbID );
-      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers->m_planeCode, hits_layers_sorted->m_planeCode );
-      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers->m_highThreshold, hits_layers_sorted->m_highThreshold );
+    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_weight, hits_layers_sorted->m_weight );
+    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_xAtYEq0, hits_layers_sorted->m_xAtYEq0 );
+    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_yBegin, hits_layers_sorted->m_yBegin );
+    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_yEnd, hits_layers_sorted->m_yEnd );
+    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_zAtYEq0, hits_layers_sorted->m_zAtYEq0 );
+    apply_permutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers->m_LHCbID, hits_layers_sorted->m_LHCbID );
+    apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers->m_planeCode, hits_layers_sorted->m_planeCode );
+    apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers->m_highThreshold, hits_layers_sorted->m_highThreshold );
   }
   
 }

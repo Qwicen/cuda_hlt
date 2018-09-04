@@ -4,7 +4,6 @@
 #include "Sorting.cuh"
 
 __global__ void sort_by_x(
-  VeloUTTracking::HitsSoA* dev_ut_hits,
-  VeloUTTracking::HitsSoA* dev_ut_hits_sorted,
+  uint32_t* dev_ut_hits,
   uint* dev_hit_permutations
  );
