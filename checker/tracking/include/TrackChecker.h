@@ -26,7 +26,7 @@
 class TrackChecker
 {
    protected:
-        using AcceptFn = std::function<bool (const MCParticles::const_reference&)>;
+        using AcceptFn = std::function<bool (MCParticles::const_reference&)>;
         struct TrackEffReport {
             std::string m_name;
             AcceptFn m_accept;
@@ -64,8 +64,8 @@ class TrackChecker
             /// register MC particles
             void operator()(const MCParticles& mcps);
             /// register track and its MC association
-	  void operator()(const trackChecker::Tracks::const_reference& track,
-                    const MCParticles::const_reference& mcp,
+	  void operator()(trackChecker::Tracks::const_reference& track,
+                    MCParticles::const_reference& mcp,
                     const float weight);
             /// notify of end of event
             void evtEnds();

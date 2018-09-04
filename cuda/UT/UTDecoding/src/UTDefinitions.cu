@@ -110,29 +110,29 @@ UTHit::UTHit(float    ut_cos,
 }
 
 void UTHits::typecast_unsorted(uint32_t* base_pointer, uint32_t total_number_of_hits) {
-  float* m_cos = reinterpret_cast<float*>(base_pointer);
-  float* m_yBegin = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
-  float* m_yEnd = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
-  float* m_zAtYEq0 = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
-  float* m_xAtYEq0 = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
-  float* m_weight = reinterpret_cast<float*>(base_pointer + 5*total_number_of_hits);
-  uint32_t* m_highThreshold = base_pointer + 6*total_number_of_hits;
-  uint32_t* m_LHCbID = base_pointer + 7*total_number_of_hits;
-  uint32_t* m_planeCode = base_pointer + 8*total_number_of_hits;
-  uint32_t* m_temp = base_pointer + 9*total_number_of_hits;
+  m_cos = reinterpret_cast<float*>(base_pointer);
+  m_yBegin = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
+  m_yEnd = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
+  m_zAtYEq0 = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
+  m_xAtYEq0 = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
+  m_weight = reinterpret_cast<float*>(base_pointer + 5*total_number_of_hits);
+  m_highThreshold = base_pointer + 6*total_number_of_hits;
+  m_LHCbID = base_pointer + 7*total_number_of_hits;
+  m_planeCode = base_pointer + 8*total_number_of_hits;
+  m_temp = base_pointer + 9*total_number_of_hits;
 }
 
 void UTHits::typecast_sorted(uint32_t* base_pointer, uint32_t total_number_of_hits) {
-  uint32_t* m_temp = base_pointer;
-  float* m_cos = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
-  float* m_yBegin = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
-  float* m_yEnd = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
-  float* m_zAtYEq0 = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
-  float* m_xAtYEq0 = reinterpret_cast<float*>(base_pointer + 5*total_number_of_hits);
-  float* m_weight = reinterpret_cast<float*>(base_pointer + 6*total_number_of_hits);
-  uint32_t* m_highThreshold = base_pointer + 7*total_number_of_hits;
-  uint32_t* m_LHCbID = base_pointer + 8*total_number_of_hits;
-  uint32_t* m_planeCode = base_pointer + 9*total_number_of_hits;
+  m_temp = base_pointer;
+  m_cos = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
+  m_yBegin = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
+  m_yEnd = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
+  m_zAtYEq0 = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
+  m_xAtYEq0 = reinterpret_cast<float*>(base_pointer + 5*total_number_of_hits);
+  m_weight = reinterpret_cast<float*>(base_pointer + 6*total_number_of_hits);
+  m_highThreshold = base_pointer + 7*total_number_of_hits;
+  m_LHCbID = base_pointer + 8*total_number_of_hits;
+  m_planeCode = base_pointer + 9*total_number_of_hits;
 }
 
 UTHit UTHits::getHit(uint32_t index) const {
