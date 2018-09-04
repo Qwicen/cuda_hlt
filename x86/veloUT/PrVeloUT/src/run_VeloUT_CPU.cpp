@@ -88,32 +88,32 @@ int run_veloUT_on_CPU (
       
       // sort according to xAtyEq0
       find_permutation<float>( 
-        hits_layers.m_xAtYEq0,
+        hits_layers.xAtYEq0,
         layer_offset,
       	hit_permutations,
       	n_hits
       );
           
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_weight, hits_layers_sorted.m_weight );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_xAtYEq0, hits_layers_sorted.m_xAtYEq0 );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_yBegin, hits_layers_sorted.m_yBegin );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_yEnd, hits_layers_sorted.m_yEnd );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_zAtYEq0, hits_layers_sorted.m_zAtYEq0 );
-      apply_permutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers.m_LHCbID, hits_layers_sorted.m_LHCbID );
-      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_planeCode, hits_layers_sorted.m_planeCode );
-      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_highThreshold, hits_layers_sorted.m_highThreshold );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.weight, hits_layers_sorted.weight );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.xAtYEq0, hits_layers_sorted.xAtYEq0 );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.yBegin, hits_layers_sorted.yBegin );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.yEnd, hits_layers_sorted.yEnd );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.zAtYEq0, hits_layers_sorted.zAtYEq0 );
+      apply_permutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers.LHCbID, hits_layers_sorted.LHCbID );
+      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.planeCode, hits_layers_sorted.planeCode );
+      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.highThreshold, hits_layers_sorted.highThreshold );
        
      
 #ifdef WITH_ROOT
       for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
-	weight = hits_layers.m_weight[layer_offset + i_hit];
-	xAtYEq0 = hits_layers.m_xAtYEq0[layer_offset + i_hit];
-	yBegin = hits_layers.m_yBegin[layer_offset + i_hit];
-	yEnd = hits_layers.m_yEnd[layer_offset + i_hit];
-	zAtYEq0 = hits_layers.m_zAtYEq0[layer_offset + i_hit];
-	LHCbID = hits_layers.m_LHCbID[layer_offset + i_hit];
+	weight = hits_layers.weight[layer_offset + i_hit];
+	xAtYEq0 = hits_layers.xAtYEq0[layer_offset + i_hit];
+	yBegin = hits_layers.yBegin[layer_offset + i_hit];
+	yEnd = hits_layers.yEnd[layer_offset + i_hit];
+	zAtYEq0 = hits_layers.zAtYEq0[layer_offset + i_hit];
+	LHCbID = hits_layers.LHCbID[layer_offset + i_hit];
 	layer = i_layer;
-	highThreshold = hits_layers.m_highThreshold[layer_offset + i_hit];
+	highThreshold = hits_layers.highThreshold[layer_offset + i_hit];
         dxDy = host_ut_dxDy[layer]; 
                 
 	t_ut_hits->Fill();

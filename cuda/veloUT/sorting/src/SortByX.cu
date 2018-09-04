@@ -32,7 +32,7 @@ __global__ void sort_by_x(
     }
     
     find_permutation<float>( 
-        hits_layers->m_xAtYEq0,
+        hits_layers->xAtYEq0,
         layer_offset,
       	hit_permutations,
       	n_hits
@@ -40,14 +40,14 @@ __global__ void sort_by_x(
 
     __syncthreads();
 
-    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_weight, hits_layers_sorted->m_weight );
-    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_xAtYEq0, hits_layers_sorted->m_xAtYEq0 );
-    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_yBegin, hits_layers_sorted->m_yBegin );
-    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_yEnd, hits_layers_sorted->m_yEnd );
-    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->m_zAtYEq0, hits_layers_sorted->m_zAtYEq0 );
-    apply_permutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers->m_LHCbID, hits_layers_sorted->m_LHCbID );
-    apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers->m_planeCode, hits_layers_sorted->m_planeCode );
-    apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers->m_highThreshold, hits_layers_sorted->m_highThreshold );
+    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->weight, hits_layers_sorted->weight );
+    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->xAtYEq0, hits_layers_sorted->xAtYEq0 );
+    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->yBegin, hits_layers_sorted->yBegin );
+    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->yEnd, hits_layers_sorted->yEnd );
+    apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers->zAtYEq0, hits_layers_sorted->zAtYEq0 );
+    apply_permutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers->LHCbID, hits_layers_sorted->LHCbID );
+    apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers->planeCode, hits_layers_sorted->planeCode );
+    apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers->highThreshold, hits_layers_sorted->highThreshold );
   }
   
 }

@@ -133,13 +133,13 @@ __host__ __device__ void addHits(
   
   for ( int i_hit = 0; i_hit < N; ++i_hit ) {
     const int hit_index = hitIndices[i_hit];
-    const int planeCode = hits_layers->planeCode(hit_index);
+    const int planeCode = hits_layers->planeCode[hit_index];
     const float ui = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
     const float dxDy = ut_dxDy[planeCode];
     const float ci = hits_layers->cosT(hit_index, dxDy);
-    const float z  = hits_layers->zAtYEq0( hit_index );
+    const float z  = hits_layers->zAtYEq0[hit_index];
     const float dz = 0.001*(z - PrVeloUTConst::zMidUT);
-    const float wi = hits_layers->weight(hit_index);
+    const float wi = hits_layers->weight[hit_index];
 
     mat[0] += wi * ci;
     mat[1] += wi * ci * dz;
@@ -162,12 +162,12 @@ __host__ __device__ void addChi2s(
   
   for ( int i_hit = 0; i_hit < N; ++i_hit ) {
     const int hit_index = hitIndices[i_hit];
-    const int planeCode = hits_layers->planeCode(hit_index);
-    const float zd = hits_layers->zAtYEq0(hit_index);
+    const int planeCode = hits_layers->planeCode[hit_index];
+    const float zd = hits_layers->zAtYEq0[hit_index];
     const float xd = xUTFit + xSlopeUTFit*(zd-PrVeloUTConst::zMidUT);
     const float x  = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
     const float du = xd - x;
-    chi2 += (du*du)*hits_layers->weight(hit_index);
+    chi2 += (du*du)*hits_layers->weight[hit_index];
   }
 }
 
@@ -179,7 +179,7 @@ __host__ __device__ int countHitsWithHighThreshold(
 
   int nHighThres = 0;
   for ( int i_hit = 0; i_hit < N; ++i_hit ) {
-    nHighThres += hits_layers->highThreshold( hitIndices[i_hit] );
+    nHighThres += hits_layers->highThreshold[hitIndices[i_hit]];
   }
   return nHighThres;
 }
