@@ -146,73 +146,42 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
     int number_reconstructible_vertices = 0; 
     int number_reconstructed_vertices = 0;
     int number_fake_vertices = 0;
+
+
+// vector containing MC vertices
+    std::vector<MCVertex> vertices;
   
   for (uint i=0; i<requestedFiles; ++i) {
     // Read event #i in the list and add it to the inputs
     // if more files are requested than present in folder, read them again
     std::string readingFile = folderContents[i % folderContents.size()];
     std::string filename = foldername + "/" + readingFile;
+    std::vector<char> inputContents;
+    readFileIntoVector(foldername + "/" + readingFile, inputContents);
 
+    uint8_t* input = (uint8_t*) inputContents.data();
 
-   
-    TFile *file = new TFile(filename.data(),"READ");
-    TTree *tree = (TTree*)file->Get("pv");
-    assert( tree);
+    int number_mcpv = *((int*)  input); input += sizeof(int);
+    //std::cout << "num MCPs = " << number_mcp << std::endl;
+    for (uint32_t i=0; i<number_mcpv; ++i) {
+      MCVertex vertex;
+      int VertexNumberOfTracks = *((int*)  input); input += sizeof(int);
+      if(VertexNumberOfTracks >= 4) number_reconstructible_vertices++;
+      vertex.numberTracks = VertexNumberOfTracks;
+      vertex.x = *((double*)  input); input += sizeof(double);
+      vertex.y = *((double*)  input); input += sizeof(double);
+      vertex.z = *((double*)  input); input += sizeof(double);
 
-    TBranch        *b_ovtx_x;   //!
-    TBranch        *b_ovtx_y;   //!
-    TBranch        *b_ovtx_z;   //!
-    TBranch        *b_p;
-    TBranch        *b_MCVertexType;
-    TBranch        *b_VertexNumberOfTracks;
-    TBranch        *b_MCVertexNumberOfTracks;
-
-
-    Double_t        ovtx_x;
-    Double_t        ovtx_y;
-    Double_t        ovtx_z;
-    Int_t           VertexNumberOfTracks;
-    Int_t           MCVertexNumberOfTracks;
-    
-
-    TTree* fChain = tree;
-
-    fChain->SetBranchAddress("pv_x", &ovtx_x, &b_ovtx_x);
-    fChain->SetBranchAddress("pv_y", &ovtx_y, &b_ovtx_y);
-    fChain->SetBranchAddress("pv_z", &ovtx_z, &b_ovtx_z);
-
-    fChain->SetBranchAddress("number_rec_tracks", &VertexNumberOfTracks, &b_VertexNumberOfTracks);
-   //fChain->SetBranchAddress("MCVertexNumberOfTracks", &MCVertexNumberOfTracks, &b_MCVertexNumberOfTracks);
-
-    // vector containing MC vertices
-    std::vector<MCVertex> vertices;
-
-
-
-    
-    Long64_t maxEntries = fChain->GetTree()->GetEntries();
-    std::cout << "-------" << std::endl;
-    for(Long64_t entry = 0; entry< maxEntries ; ++entry){
-      fChain->GetTree()->GetEntry(entry);
-
-
-        std::cout <<  "MC vertex " << entry << std::endl;
-        std::cout << "x: " << ovtx_x << std::endl;
-        std::cout << "y: " << ovtx_y << std::endl;
-        std::cout << "z: " << ovtx_z << std::endl;
-        std::cout << "number of reconstructible tracks: " << VertexNumberOfTracks << std::endl;
-        if(VertexNumberOfTracks >= 4) number_reconstructible_vertices++;
-        
-        MCVertex vertex;
-        vertex.x = ovtx_x;
-        vertex.y = ovtx_y;
-        vertex.z = ovtx_z;
-        vertex.numberTracks = VertexNumberOfTracks;
-        vertices.push_back(vertex);
-      
+      if(vertex.numberTracks >= 4) vertices.push_back(vertex);
 
     }
-    std::cout << " ----" << std::endl;
+
+
+
+
+
+
+
 
     events_vertices.push_back(vertices);
   }
