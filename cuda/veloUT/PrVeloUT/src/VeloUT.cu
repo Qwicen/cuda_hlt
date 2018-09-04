@@ -78,7 +78,8 @@ __global__ void veloUT(
           posLayers,
           hits_layers_event,
           fudgeFactors,
-          velo_states_event[i_track] )
+          velo_states_event[i_track],
+          dev_ut_dxDy )
         ) continue;
 
     TrackHelper helper(velo_states_event[i_track]);
@@ -94,6 +95,7 @@ __global__ void veloUT(
           hitCandidateIndices,
           hits_layers_event,
           helper,
+          dev_ut_dxDy,
           true )){
       
       // go through UT layers in backward direction
@@ -104,6 +106,7 @@ __global__ void veloUT(
         hitCandidateIndices,
         hits_layers_event,
         helper,
+        dev_ut_dxDy,
         false);
     }
     

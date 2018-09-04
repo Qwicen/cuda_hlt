@@ -117,7 +117,7 @@ int run_veloUT_on_CPU (
 	LHCbID = hits_layers.m_LHCbID[layer_offset + i_hit];
 	layer = i_layer;
 	highThreshold = hits_layers.m_highThreshold[layer_offset + i_hit];
-        dxDy = host_ut_dxDy[layer]; //hits_layers.dxDy(layer_offset + i_hit);
+        dxDy = host_ut_dxDy[layer]; 
                 
 	t_ut_hits->Fill();
       }

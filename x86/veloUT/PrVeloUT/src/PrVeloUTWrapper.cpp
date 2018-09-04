@@ -56,7 +56,8 @@ void call_PrVeloUT (
           posLayers,
           hits_layers,
           fudgeFactors,
-          velo_states_event[i_track] ) ) continue;
+          velo_states_event[i_track],
+          ut_dxDy ) ) continue;
     
     TrackHelper helper(velo_states_event[i_track]);
 
@@ -71,6 +72,7 @@ void call_PrVeloUT (
           hitCandidateIndices,
           hits_layers,
           helper,
+          ut_dxDy,
           true) ){
       
       // go through UT layers in backward direction
@@ -81,6 +83,7 @@ void call_PrVeloUT (
         hitCandidateIndices,
         hits_layers,
         helper,
+        ut_dxDy,
         false);
     }
     

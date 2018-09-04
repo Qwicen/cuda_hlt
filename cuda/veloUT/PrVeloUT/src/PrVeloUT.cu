@@ -50,7 +50,8 @@ __host__ __device__ bool getHits(
   const int posLayers[4][85],
   VeloUTTracking::HitsSoA *hits_layers,
   const float* fudgeFactors, 
-  const VeloState& trState)
+  const VeloState& trState,
+  const float* ut_dxDy)
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
@@ -86,7 +87,7 @@ __host__ __device__ bool getHits(
       int layer_offset = hits_layers->layer_offset[layer];
       
       if( hits_layers->n_hits_layers[layer] == 0 ) continue;
-      const float dxDy   = hits_layers->dxDy(layer_offset + 0);
+      const float dxDy   = ut_dxDy[layer];
       const float zLayer = hits_layers->zAtYEq0(layer_offset + 0); 
 
       const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
@@ -115,7 +116,7 @@ __host__ __device__ bool getHits(
       if (posBeg == hits_layers->n_hits_layers[layer]) continue;
 
       findHits(posBeg, posEnd,
-        hits_layers, layer_offset, layer,
+        hits_layers, layer_offset, layer, ut_dxDy,
         trState, xTol*invNormFact, invNormFact,
         hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer],
         x_pos_layers);
@@ -137,6 +138,7 @@ __host__ __device__ bool formClusters(
   int bestHitCandidateIndices[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
   TrackHelper& helper,
+  const float* ut_dxDy,
   const bool forward)
 {
 
@@ -211,7 +213,7 @@ __host__ __device__ bool formClusters(
       // -- All hits found
       if ( IndexBestHit1 > 0 && IndexBestHit3 > 0 ) {
         const int hitIndices[4] = {hit_index0, IndexBestHit1, hit_index2, IndexBestHit3};
-        simpleFit<4>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, hits_layers, hitIndices, helper);
+        simpleFit<4>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, hits_layers, hitIndices, helper, ut_dxDy);
         
         if(!fourLayerSolution && helper.n_hits > 0){
           fourLayerSolution = true;
@@ -222,14 +224,14 @@ __host__ __device__ bool formClusters(
       // -- Nothing found in layer 3
       if( !fourLayerSolution && IndexBestHit1 > 0 ){
         const int hitIndices[3] = {hit_index0, IndexBestHit1, hit_index2};
-        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, hits_layers, hitIndices, helper);
+        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, hits_layers, hitIndices, helper, ut_dxDy);
         continue;
       }
       // -- Nothing found in layer 1
       if( !fourLayerSolution && IndexBestHit3 > 0 ){
         hitCandidateIndices[1] = hitCandidateIndices[3];  // hit3 saved in second position of hits4fit
         const int hitIndices[3] = {hit_index0, IndexBestHit3, hit_index2};
-        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, hits_layers, hitIndices, helper);
+        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, hits_layers, hitIndices, helper, ut_dxDy);
         continue;
       }
       
@@ -440,8 +442,8 @@ __host__ __device__ void findHits(
   const size_t posEnd,
   VeloUTTracking::HitsSoA *hits_layers,
   const int layer_offset,
-  // to do: pass array for this layer -> get rid of i_layer index
   const int i_layer,
+  const float* ut_dxDy,
   const VeloState& myState, 
   const float xTolNormFact,
   const float invNormFact,
@@ -462,8 +464,8 @@ __host__ __device__ void findHits(
   const auto yyProto =       myState.y - myState.ty*myState.z;
   
   for (int i=pos; i<posEnd; ++i) {
-    
-    const auto xx = hits_layers->xAt( layer_offset + i, yApprox ); 
+    const float dxDy = ut_dxDy[i_layer];
+    const auto xx = hits_layers->xAt( layer_offset + i, yApprox, dxDy ); 
     const auto dx = xx - xOnTrackProto;
     
     if( dx < -xTolNormFact ) continue;
@@ -474,7 +476,7 @@ __host__ __device__ void findHits(
     
     const auto zz = hits_layers->zAtYEq0( layer_offset + i ); 
     const auto yy = yyProto +  myState.ty*zz;
-    const auto xx2 = hits_layers->xAt( layer_offset + i, yy );
+    const auto xx2 = hits_layers->xAt( layer_offset + i, yy, dxDy );
         
     hitCandidatesInLayer[n_hitCandidatesInLayer] = i;
     x_pos_layers[i_layer][n_hitCandidatesInLayer] = xx2;
