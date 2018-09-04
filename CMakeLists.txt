@@ -64,6 +64,7 @@ add_subdirectory(stream)
 add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
 add_subdirectory(x86/veloUT/PrVeloUT)
+add_subdirectory(catboost)
 
 # Include directories
 include_directories(main/include)
@@ -78,6 +79,7 @@ include_directories(cuda/velo/prefix_sum/include)
 include_directories(cuda/velo/search_by_triplet/include)
 include_directories(cuda/velo/simplified_kalman_filter/include)
 include_directories(checker/tracking/include)
+include_directories(catboost/include)
 
 # Files from source directories
 file(GLOB main_sources "main/src/*")
@@ -95,6 +97,7 @@ if ( ROOT_FOUND )
     x86Clustering
     TrackChecking
     CheckClustering
+    Catboost
     ${ROOT_LIBRARIES})
 else()
   target_link_libraries(cu_hlt
@@ -105,5 +108,6 @@ else()
     Stream
     x86Clustering
     TrackChecking
-    CheckClustering)
+    CheckClustering
+    Catboost)
 endif()

@@ -1,3 +1,4 @@
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}") 
 
 include_directories(gear/include)
 include_directories(handlers/include)
@@ -18,6 +19,10 @@ include_directories(../cuda/velo/simplified_kalman_filter/include)
 include_directories(../x86/velo/clustering/include)
 include_directories(../checker/tracking/include)
 include_directories(../x86/veloUT/PrVeloUT/include)
+include_directories(../catboost/include)
+
+find_package(flatbuffers)
+include_directories(${flatbuffers_INCLUDE_DIRS})
 
 file(GLOB stream_gear "gear/src/*cu")
 file(GLOB stream_handlers "handlers/src/*cu")
@@ -42,12 +47,14 @@ if ( ROOT_FOUND )
   Velo
   VeloUT
   x86VeloUT
+  Catboost
   ${ROOT_LIBRAIRES})
 else()
   target_link_libraries(Stream
   Velo
   VeloUT
-  x86VeloUT)
+  x86VeloUT
+  Catboost)
 endif()
 
 
