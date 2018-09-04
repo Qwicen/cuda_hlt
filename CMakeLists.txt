@@ -37,9 +37,9 @@ if ( EXISTS $ENV{ROOTSYS} )
      list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
    else() # ROOT was compiled with configure/make
      list(APPEND CMAKE_MODULE_PATH $ENV{ROOTSYS}/etc/cmake)
-   endif() 
-   find_package( ROOT )	
-   if ( ROOT_FOUND )  
+   endif()
+   find_package( ROOT )
+   if ( ROOT_FOUND )
       message("-- Compiling with ROOT: ${ROOT_INCLUDE_DIRS}")
     else()
       message("-- Compiling without ROOT")
@@ -84,8 +84,8 @@ file(GLOB main_sources "main/src/*")
 
 cuda_add_executable(cu_hlt ${main_sources})
 
-if ( ROOT_FOUND ) 
-  target_compile_definitions(cu_hlt PUBLIC WITH_ROOT)	
+if ( ROOT_FOUND )
+  target_compile_definitions(cu_hlt PUBLIC WITH_ROOT)
   target_link_libraries(cu_hlt
     tbb
     Velo
