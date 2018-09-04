@@ -162,16 +162,35 @@ struct UTHitCount {
    one Hits structure exists per event
 */
 struct UTHits {
-  float m_cos     [ut_max_number_of_hits_per_event];
-  float m_yBegin  [ut_max_number_of_hits_per_event];
-  float m_yEnd    [ut_max_number_of_hits_per_event];
-  float m_zAtYEq0 [ut_max_number_of_hits_per_event];
-  float m_xAtYEq0 [ut_max_number_of_hits_per_event];
-  float m_weight  [ut_max_number_of_hits_per_event];
-  
-  uint32_t m_highThreshold  [ut_max_number_of_hits_per_event];
-  uint32_t m_LHCbID         [ut_max_number_of_hits_per_event];
-  uint32_t m_planeCode      [ut_max_number_of_hits_per_event];
+  float* m_cos;
+  float* m_yBegin;
+  float* m_yEnd;
+  float* m_zAtYEq0;
+  float* m_xAtYEq0;
+  float* m_weight;
+  uint32_t* m_highThreshold;
+  uint32_t* m_LHCbID;
+  uint32_t* m_planeCode;
+  uint32_t* m_temp;
 
-  UTHit getHit(uint32_t index, uint32_t layer) const;
+  UTHits() = default;
+
+  /**
+   * @brief Populates the UTHits object pointers from an unsorted array of data
+   *        pointed by base_pointer.
+   */
+  __host__ __device__ 
+  void typecast_unsorted(uint32_t* base_pointer, uint32_t total_number_of_hits);
+
+  /**
+   * @brief Populates the UTHits object pointers from a sorted array of data
+   *        pointed by base_pointer.
+   */
+  __host__ __device__ 
+  void typecast_sorted(uint32_t* base_pointer, uint32_t total_number_of_hits);
+
+  /**
+   * @brief Gets a hit in the UTHit format from the global hit index.
+   */
+  UTHit getHit(uint32_t index) const;
 };

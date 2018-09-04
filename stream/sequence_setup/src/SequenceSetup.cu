@@ -54,9 +54,7 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_ut_raw_input] = "dev_ut_raw_input";
   a[arg::dev_ut_raw_input_offsets] = "dev_ut_raw_input_offsets";
   a[arg::dev_ut_hit_count] = "dev_ut_hit_count";
-  a[arg::dev_ut_hits_decoded] = "dev_ut_hits_decoded";
   a[arg::dev_ut_hits] = "dev_ut_hits";
-  a[arg::dev_ut_hits_sorted] = "dev_ut_hits_sorted";
   a[arg::dev_ut_hit_permutations] = "dev_ut_hit_permutations";
   a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
   a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
@@ -183,16 +181,15 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
   sequence_dependencies[seq::decode_raw_banks] = {
     arg::dev_ut_raw_input,
     arg::dev_ut_raw_input_offsets,
-    arg::dev_ut_hits_decoded,
+    arg::dev_ut_hits,
     arg::dev_ut_hit_count
   };
   sequence_dependencies[seq::sort_by_x] = {
     arg::dev_ut_hits,
-    arg::dev_ut_hits_sorted,
     arg::dev_ut_hit_permutations
   };
   sequence_dependencies[seq::veloUT] = {
-    arg::dev_ut_hits_sorted,
+    arg::dev_ut_hits,
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,

@@ -59,7 +59,7 @@ __global__ void decode_raw_banks (
   const uint32_t* __restrict__ dev_ut_raw_input_offsets,
   const char* __restrict__ ut_boards,
   const char* __restrict__ ut_geometry,
-  UTHits* __restrict__ dev_ut_hits_decoded,
+  uint32_t* __restrict__ dev_ut_hits,
   uint32_t* __restrict__ dev_ut_hit_count
 ) {
   const uint32_t number_of_events = gridDim.x;
@@ -68,6 +68,9 @@ __global__ void decode_raw_banks (
   const uint32_t event_offset = dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
   const uint32_t* layer_offset = dev_ut_hit_count + event_number * VeloUTTracking::n_layers;
   uint32_t* n_hits_layers = dev_ut_hit_count + number_of_events * VeloUTTracking::n_layers + 1 + event_number * VeloUTTracking::n_layers;
+  
+  UTHits ut_hits;
+  ut_hits.typecast_unsorted(dev_ut_hits, dev_ut_hit_count[number_of_events * VeloUTTracking::n_layers]);
 
   __shared__ uint32_t shared_layer_offset[ut_number_of_layers];
 
@@ -143,17 +146,15 @@ __global__ void decode_raw_banks (
       uint32_t hitIndex = atomicAdd(hits_layer, 1);
 
       hitIndex += shared_layer_offset[planeCode];
-      dev_ut_hits_decoded[event_number].m_cos          [hitIndex] = cos;
-      dev_ut_hits_decoded[event_number].m_yBegin       [hitIndex] = yBegin;
-      dev_ut_hits_decoded[event_number].m_yEnd         [hitIndex] = yEnd;
-      dev_ut_hits_decoded[event_number].m_zAtYEq0      [hitIndex] = zAtYEq0;
-      dev_ut_hits_decoded[event_number].m_xAtYEq0      [hitIndex] = xAtYEq0;
-      dev_ut_hits_decoded[event_number].m_weight       [hitIndex] = weight;
-      dev_ut_hits_decoded[event_number].m_highThreshold[hitIndex] = highThreshold;
-      dev_ut_hits_decoded[event_number].m_LHCbID       [hitIndex] = LHCbID;
-      dev_ut_hits_decoded[event_number].m_planeCode    [hitIndex] = planeCode;
+      ut_hits.m_cos[hitIndex]           = cos;
+      ut_hits.m_yBegin[hitIndex]        = yBegin;
+      ut_hits.m_yEnd[hitIndex]          = yEnd;
+      ut_hits.m_zAtYEq0[hitIndex]       = zAtYEq0;
+      ut_hits.m_xAtYEq0[hitIndex]       = xAtYEq0;
+      ut_hits.m_weight[hitIndex]        = weight;
+      ut_hits.m_highThreshold[hitIndex] = highThreshold;
+      ut_hits.m_LHCbID[hitIndex]        = LHCbID;
+      ut_hits.m_planeCode[hitIndex]     = planeCode;
     }
   }
 }
-
-

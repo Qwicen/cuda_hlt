@@ -62,9 +62,7 @@ enum arg_enum_t {
   dev_ut_raw_input_offsets,
   dev_ut_hit_count,
   dev_prefix_sum_auxiliary_array_3,
-  dev_ut_hits_decoded,
   dev_ut_hits,
-  dev_ut_hits_sorted,
   dev_ut_hit_permutations,
   dev_veloUT_tracks,
   dev_atomics_veloUT

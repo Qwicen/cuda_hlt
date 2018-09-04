@@ -96,9 +96,7 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_ut_raw_input_offsets, uint>,
   Argument<arg::dev_ut_hit_count, uint>,
   Argument<arg::dev_prefix_sum_auxiliary_array_3, uint>,
-  Argument<arg::dev_ut_hits_decoded, UTHits>,
-  Argument<arg::dev_ut_hits, VeloUTTracking::HitsSoA>,
-  Argument<arg::dev_ut_hits_sorted, VeloUTTracking::HitsSoA>,
+  Argument<arg::dev_ut_hits, uint>,
   Argument<arg::dev_ut_hit_permutations, uint>,
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
   Argument<arg::dev_atomics_veloUT, int>

@@ -15,7 +15,7 @@ __global__ void decode_raw_banks (
     const uint32_t* __restrict__ dev_ut_raw_input_offsets,
     const char* __restrict__ ut_boards,
     const char* __restrict__ ut_geometry,
-    UTHits* __restrict__ dev_ut_hits_decoded,
+    uint32_t* __restrict__ dev_ut_hits_decoded,
     uint32_t* __restrict__ dev_ut_hit_count
 );
 
