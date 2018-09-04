@@ -13,11 +13,14 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::weak_tracks_adder] = "Weak tracks adder";
   a[seq::copy_and_prefix_sum_single_block] = "Copy and prefix sum single block";
   a[seq::copy_velo_track_hit_number] = "Copy Velo track hit number";
-  a[seq::prefix_sum_reduce_velo_track_hit_number] = "Prefix sum reduce (2)";
-  a[seq::prefix_sum_single_block_velo_track_hit_number] = "Prefix sum single block (2)";
-  a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2)";
+  a[seq::prefix_sum_reduce_velo_track_hit_number] = "Prefix sum reduce (2) Velo track hit number";
+  a[seq::prefix_sum_single_block_velo_track_hit_number] = "Prefix sum single block (2) Velo track hit number";
+  a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2) Velo track hit number";
   a[seq::consolidate_tracks] = "Consolidate tracks";
-  a[seq::ut_estimate_number_of_hits] = "UT estimate number of hits";
+  a[seq::ut_calculate_number_of_hits] = "UT calculate number of hits";
+  a[seq::prefix_sum_reduce_ut_hits] = "Prefix sum reduce (3) UT hits";
+  a[seq::prefix_sum_single_block_ut_hits] = "Prefix sum single block (3) UT hits";
+  a[seq::prefix_sum_scan_ut_hits] = "Prefix sum scan (3) UT hits";
   a[seq::decode_raw_banks] = "UT decode_raw_banks";
   a[seq::sort_by_x] = "Sort hits by X";
   a[seq::veloUT] = "VeloUT tracking";
@@ -160,10 +163,22 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_track_hits,
     arg::dev_velo_states
   };
-  sequence_dependencies[seq::ut_estimate_number_of_hits] = {
+  sequence_dependencies[seq::ut_calculate_number_of_hits] = {
     arg::dev_ut_raw_input,
     arg::dev_ut_raw_input_offsets,
     arg::dev_ut_hit_count
+  };
+  sequence_dependencies[seq::prefix_sum_reduce_ut_hits] = {
+    arg::dev_ut_hit_count,
+    arg::dev_prefix_sum_auxiliary_array_3
+  };
+  sequence_dependencies[seq::prefix_sum_single_block_ut_hits] = {
+    arg::dev_ut_hit_count,
+    arg::dev_prefix_sum_auxiliary_array_3
+  };
+  sequence_dependencies[seq::prefix_sum_scan_ut_hits] = {
+    arg::dev_ut_hit_count,
+    arg::dev_prefix_sum_auxiliary_array_3
   };
   sequence_dependencies[seq::decode_raw_banks] = {
     arg::dev_ut_raw_input,

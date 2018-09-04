@@ -56,7 +56,8 @@ struct Stream {
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   VeloState* host_velo_states;
-  uint32_t* host_ut_hit_count;
+  uint* host_accumulated_number_of_ut_hits;
+  uint* host_ut_hit_count;
   VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
   

@@ -3,7 +3,7 @@
 #include "UTDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
 
-__global__ void ut_estimate_number_of_hits (
+__global__ void ut_calculate_number_of_hits (
     const uint32_t* __restrict__ dev_ut_raw_input,
     const uint32_t* __restrict__ dev_ut_raw_input_offsets,
     const char* __restrict__ ut_boards,

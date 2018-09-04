@@ -65,6 +65,8 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_velo_states, max_number_of_events * VeloTracking::max_tracks * sizeof(VeloState)));
   cudaCheck(cudaMallocHost((void**)&host_veloUT_tracks, max_number_of_events * VeloUTTracking::max_num_tracks * sizeof(VeloUTTracking::TrackUT)));
   cudaCheck(cudaMallocHost((void**)&host_atomics_veloUT, VeloUTTracking::num_atomics * max_number_of_events * sizeof(int)));
+  cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_ut_hits, sizeof(uint)));
+
   cudaCheck(cudaMallocHost((void**)&host_ut_hit_count, (2 * max_number_of_events * VeloUTTracking::n_layers + 1) * sizeof(uint32_t)));
 
   /* UT DECODING */
@@ -84,6 +86,7 @@ cudaError_t Stream::initialize(
   sequence.item<seq::prefix_sum_single_block>().set_opts(                      dim3(1), dim3(1024), stream);
   sequence.item<seq::copy_and_prefix_sum_single_block>().set_opts(             dim3(1), dim3(1024), stream);
   sequence.item<seq::prefix_sum_single_block_velo_track_hit_number>().set_opts(dim3(1), dim3(1024), stream);
+  sequence.item<seq::prefix_sum_single_block_ut_hits>().set_opts(              dim3(1), dim3(1024), stream);
 
   // Get dependencies for each algorithm
   std::vector<std::vector<int>> sequence_dependencies = get_sequence_dependencies();
