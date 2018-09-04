@@ -34,7 +34,6 @@ namespace VeloUTTracking {
     int layer_offset[n_layers];
     int n_hits_layers[n_layers];
     
-    float m_cos[max_numhits_per_event];
     float m_yBegin[max_numhits_per_event];
     float m_yEnd[max_numhits_per_event];
     float m_zAtYEq0[max_numhits_per_event];
@@ -45,9 +44,8 @@ namespace VeloUTTracking {
     int m_planeCode[max_numhits_per_event];
 
     
-    __host__ __device__ inline float cos(const int i_hit) const { return m_cos[i_hit]; }
     __host__ __device__ inline int planeCode(const int i_hit) const { return m_planeCode[i_hit]; }
-    __host__ __device__ inline float cosT(const int i_hit, const float dxDy) const { return ( std::fabs( m_xAtYEq0[i_hit] ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy * dxDy ) : cos(i_hit); }
+    __host__ __device__ inline float cosT(const int i_hit, const float dxDy) const { return ( std::fabs( m_xAtYEq0[i_hit] ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy * dxDy ) : std::cos(dxDy); }
     __host__ __device__ inline bool highThreshold(const int i_hit) const { return m_highThreshold[i_hit]; }
     __host__ __device__ inline bool isYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol <= y && y <= yMax(i_hit) + tol; }
     __host__ __device__ inline bool isNotYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol > y || y > yMax(i_hit) + tol; }
@@ -59,7 +57,6 @@ namespace VeloUTTracking {
     __host__ __device__ inline float xAtYEq0(const int i_hit) const { return m_xAtYEq0[i_hit]; }
     __host__ __device__ inline float xMax(const int i_hit, const float dxDy) const { return std::max( xAt(i_hit, yBegin(i_hit), dxDy), xAt(i_hit, yEnd(i_hit), dxDy) ); }
     __host__ __device__ inline float xMin(const int i_hit, const float dxDy) const { return std::min( xAt(i_hit, yBegin(i_hit), dxDy), xAt(i_hit, yEnd(i_hit), dxDy) ); }
-    __host__ __device__ inline float xT(const int i_hit) const { return cos(i_hit); }
     __host__ __device__ inline float yBegin(const int i_hit) const { return m_yBegin[i_hit]; }
     __host__ __device__ inline float yEnd(const int i_hit) const { return m_yEnd[i_hit]; }
     __host__ __device__ inline float yMax(const int i_hit) const { return std::max( yBegin(i_hit), yEnd(i_hit) ); }

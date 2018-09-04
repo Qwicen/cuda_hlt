@@ -27,7 +27,7 @@ int run_veloUT_on_CPU (
   TTree *t_velo_states = new TTree("velo_states", "velo_states");
   TTree *t_track_hits = new TTree("track_hits", "track_hits");
   TTree *t_veloUT_tracks = new TTree("veloUT_tracks", "veloUT_tracks");
-  float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
+  float yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
   float x, y, tx, ty, chi2, z, drdz;
   unsigned int LHCbID;
   int highThreshold, layer;
@@ -37,7 +37,6 @@ int run_veloUT_on_CPU (
   float qop;
   
   
-  t_ut_hits->Branch("cos", &cos);
   t_ut_hits->Branch("yBegin", &yBegin);
   t_ut_hits->Branch("yEnd", &yEnd);
   t_ut_hits->Branch("dxDy", &dxDy);
@@ -95,7 +94,6 @@ int run_veloUT_on_CPU (
       	n_hits
       );
           
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_cos, hits_layers_sorted.m_cos );
       apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_weight, hits_layers_sorted.m_weight );
       apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_xAtYEq0, hits_layers_sorted.m_xAtYEq0 );
       apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_yBegin, hits_layers_sorted.m_yBegin );
@@ -108,7 +106,6 @@ int run_veloUT_on_CPU (
      
 #ifdef WITH_ROOT
       for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
-	cos = hits_layers.m_cos[layer_offset + i_hit];
 	weight = hits_layers.m_weight[layer_offset + i_hit];
 	xAtYEq0 = hits_layers.m_xAtYEq0[layer_offset + i_hit];
 	yBegin = hits_layers.m_yBegin[layer_offset + i_hit];

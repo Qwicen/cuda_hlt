@@ -84,7 +84,8 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
     // then the hit variables, sorted by layer
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       int layer_offset = hits_layers->layer_offset[i_layer];
-      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &( hits_layers->m_cos[ layer_offset ]) );
+      // to do: change tracker dumper to not dump cos
+      //std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &( hits_layers->m_cos[ layer_offset ]) );
       raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
       std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->m_yBegin[ layer_offset ]) );
       raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
@@ -127,9 +128,8 @@ void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
       number_of_hits += hits_layers.n_hits_layers[i_layer];
       int layer_offset = hits_layers.layer_offset[i_layer];
       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
-	printf("\t at hit %u, cos = %f, yBegin = %f, yEnd = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight = %f, highThreshold = %u, LHCbID = %u \n",
+	printf("\t at hit %u, yBegin = %f, yEnd = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight = %f, highThreshold = %u, LHCbID = %u \n",
 	       i_hit,
-	       hits_layers.m_cos[ layer_offset + i_hit ],
 	       hits_layers.m_yBegin[ layer_offset + i_hit ],
 	       hits_layers.m_yEnd[ layer_offset + i_hit ],
 	       hits_layers.m_zAtYEq0[ layer_offset + i_hit ],
