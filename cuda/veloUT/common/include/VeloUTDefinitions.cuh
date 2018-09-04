@@ -47,20 +47,14 @@ namespace VeloUTTracking {
     __host__ __device__ inline int planeCode(const int i_hit) const { return m_planeCode[i_hit]; }
     __host__ __device__ inline float cosT(const int i_hit, const float dxDy) const { return ( std::fabs( m_xAtYEq0[i_hit] ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy * dxDy ) : std::cos(dxDy); }
     __host__ __device__ inline bool highThreshold(const int i_hit) const { return m_highThreshold[i_hit]; }
-    __host__ __device__ inline bool isYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol <= y && y <= yMax(i_hit) + tol; }
     __host__ __device__ inline bool isNotYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol > y || y > yMax(i_hit) + tol; }
     __host__ __device__ inline int LHCbID(const int i_hit) const { return m_LHCbID[i_hit]; }
-    __host__ __device__ inline float sinT(const int i_hit, const float dxDy) const { return tanT(i_hit) * cosT(i_hit, dxDy); }
-    __host__ __device__ inline float tanT(const float dxDy) const { return -1 * dxDy; }
     __host__ __device__ inline float weight(const int i_hit) const { return m_weight[i_hit]; }
     __host__ __device__  inline float xAt( const int i_hit, const float globalY, const float dxDy ) const { return m_xAtYEq0[i_hit] + globalY * dxDy; }
     __host__ __device__ inline float xAtYEq0(const int i_hit) const { return m_xAtYEq0[i_hit]; }
-    __host__ __device__ inline float xMax(const int i_hit, const float dxDy) const { return std::max( xAt(i_hit, yBegin(i_hit), dxDy), xAt(i_hit, yEnd(i_hit), dxDy) ); }
-    __host__ __device__ inline float xMin(const int i_hit, const float dxDy) const { return std::min( xAt(i_hit, yBegin(i_hit), dxDy), xAt(i_hit, yEnd(i_hit), dxDy) ); }
     __host__ __device__ inline float yBegin(const int i_hit) const { return m_yBegin[i_hit]; }
     __host__ __device__ inline float yEnd(const int i_hit) const { return m_yEnd[i_hit]; }
     __host__ __device__ inline float yMax(const int i_hit) const { return std::max( yBegin(i_hit), yEnd(i_hit) ); }
-    __host__ __device__ inline float yMid(const int i_hit) const { return 0.5 * ( yBegin(i_hit) + yEnd(i_hit) ); }
     __host__ __device__ inline float yMin(const int i_hit) const { return std::min( yBegin(i_hit), yEnd(i_hit) ); }
     __host__ __device__ inline float zAtYEq0(const int i_hit) const { return m_zAtYEq0[i_hit]; } 
 
