@@ -91,7 +91,7 @@ if ( ROOT_FOUND )
     tbb
     Velo
     VeloUT
-    PatPV
+    x86PatPV
     x86VeloUT
     Stream
     x86Clustering
@@ -103,7 +103,7 @@ else()
     tbb
     Velo
     VeloUT
-    PatPV
+    x86PatPV
     x86VeloUT
     Stream
     x86Clustering
