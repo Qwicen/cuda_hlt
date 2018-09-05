@@ -231,9 +231,7 @@ for (auto vtx : MC_vertices) {
   std::vector<MCPVInfo> not_rble;
   int nmrc = 0;
 
-  //configuration for PV checker -> check values
-int m_nTracksToBeRecble = 5;
-double m_dzIsolated = 10;
+
 
   std::vector<MCPVInfo>::iterator itmc;
   for (itmc = mcpvvec.begin(); mcpvvec.end() != itmc; itmc++) {
@@ -307,6 +305,24 @@ double m_dzIsolated = 10;
  }
 
 
+  // Fill distance to closest recble MC PV and its multiplicity
+  std::vector<MCPVInfo>::iterator itmcl;
+  for(itmcl = rblemcpv.begin(); rblemcpv.end() != itmcl; itmcl++) {
+    std::vector<MCPVInfo>::iterator cmc = closestMCPV(rblemcpv,itmcl);
+    double dist = 999999.;
+    int mult = 0;
+    if(cmc != rblemcpv.end()) {
+      
+      double diff_x = cmc->pMCPV->x - itmcl->pMCPV->x;
+      double diff_y = cmc->pMCPV->y - itmcl->pMCPV->y;
+      double diff_z = cmc->pMCPV->z - itmcl->pMCPV->z;
+      double dist = sqrt(diff_x*diff_x + diff_y*diff_y + diff_z*diff_z);
+      mult = cmc->nRecTracks;
+    }
+    itmcl->distToClosestMCPV = dist;
+    itmcl->multClosestMCPV = mult;
+  }
+
    // Counters
   int nMCPV                 = rblemcpv.size()-nmrc;
   int nRecMCPV              = 0;
@@ -344,6 +360,24 @@ double m_dzIsolated = 10;
   std::cout << "found " << number_reconstructed_vertices << " / " << number_reconstructible_vertices << " vertices! -> efficiency: " << (double)number_reconstructed_vertices / (double)number_reconstructible_vertices << std::endl; 
   std::cout << "fakes: " << number_fake_vertices << std::endl;
 
+
+
+  std::cout << " ============================================" << std::endl;
+  std::cout << " Efficiencies for reconstructible MC vertices: " << std::endl;
+  std::cout << " ============================================" << std::endl;
+  std::cout << " " << std::endl;
+
+  std::cout << " MC PV is reconstructible if at least " << m_nTracksToBeRecble
+         << "  tracks are reconstructed" << std::endl;
+  std::cout << " MC PV is isolated if dz to closest reconstructible MC PV >  "
+         << m_dzIsolated << " mm" << std::endl;
+  std::string ff = "by counting tracks";
+  if ( !m_matchByTracks ) ff = "by dz distance";
+  std::cout << " REC and MC vertices matched:  "
+         <<  ff << std::endl;
+
+
+  std::cout << " " << std::endl;
 
 
             printRat("All",       m_nRecMCPV ,       m_nMCPV );

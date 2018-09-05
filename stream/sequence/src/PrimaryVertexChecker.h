@@ -95,6 +95,36 @@ void printRat(std::string mes, int a, int b) {
   }
   pmes+= " : ";
 
-  std::cout << pmes << " " << rat << std::endl;
+  std::cout << pmes << " " << rat << "( " << a << " / " << b << " )" << std::endl;
 
 }
+
+
+
+std::vector<MCPVInfo>::iterator closestMCPV(std::vector<MCPVInfo>& rblemcpv,
+                                                                  std::vector<MCPVInfo>::iterator& itmc) {
+
+  std::vector<MCPVInfo>::iterator itret = rblemcpv.end();
+  double mindist = 999999.;
+  if(rblemcpv.size() < 2) return itret;
+  std::vector<MCPVInfo>::iterator it;
+  for (it = rblemcpv.begin(); it != rblemcpv.end(); it++) {
+    if(it->pMCPV != itmc->pMCPV ) {
+      double diff_x = it->pMCPV->x - itmc->pMCPV->x;
+      double diff_y = it->pMCPV->y - itmc->pMCPV->y;
+      double diff_z = it->pMCPV->z - itmc->pMCPV->z;
+      double dist = sqrt(diff_x*diff_x + diff_y*diff_y + diff_z*diff_z);
+      
+      if(dist < mindist) {
+        mindist = dist;
+        itret = it;
+      }
+    }
+  }
+  return itret;
+}
+
+  //configuration for PV checker -> check values
+int m_nTracksToBeRecble = 5;
+double m_dzIsolated = 10; //mm
+bool m_matchByTracks = false;
