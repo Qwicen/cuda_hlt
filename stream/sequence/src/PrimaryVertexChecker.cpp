@@ -1,6 +1,10 @@
 #include "PrimaryVertexChecker.h"
 
-
+#ifdef WITH_ROOT
+#include "TH1D.h"
+#include "TFile.h"
+#include "TTree.h"
+#endif
 
 
 void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint number_of_files, Vertex * rec_vertex, uint* number_of_vertex)
@@ -41,6 +45,15 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   int m_nRecMCPV_close = 0;
   int m_nFalsePV = 0;
   int m_nFalsePV_real = 0;
+
+  //vectors to collect the pulls and erros
+  std::vector<double> vec_diff_x;
+  std::vector<double> vec_diff_y;
+  std::vector<double> vec_diff_z;
+
+  std::vector<double> vec_err_x;
+  std::vector<double> vec_err_y;
+  std::vector<double> vec_err_z;
   
   //loop over files/events
   for (uint i_event=0; i_event<requestedFiles; ++i_event) {
@@ -148,7 +161,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   //do checking of collision type and mother here or in dumping?
   
   
-  //vecotr with MCPVinfo
+  //vector with MCPVinfo
  std::vector<MCPVInfo> mcpvvec;
                    
   for(std::vector<MCVertex>::iterator itMCV = MC_vertices.begin();
@@ -181,7 +194,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   int nmrc = 0;
 
 
-
+  //count not reconstructible MC PVs
   std::vector<MCPVInfo>::iterator itmc;
   for (itmc = mcpvvec.begin(); mcpvvec.end() != itmc; itmc++) {
     rblemcpv.push_back(*itmc);
@@ -201,6 +214,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
 
   }
 
+     //match by distance
       for(int ipv = 0; ipv < (int) recpvvec.size(); ipv++) {
       match_mc_vertex_by_distance(ipv, recpvvec, rblemcpv);
     };
@@ -300,6 +314,28 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   m_nFalsePV_real         +=  nFalsePV_real;
 
 
+  //loop over matched MC PVs and get pull and errors
+  for(auto mc_vertex_info : rblemcpv) {
+    int rec_index = mc_vertex_info.indexRecPVInfo;
+    if(rec_index < 0) continue;
+    MCVertex* mc_vertex = mc_vertex_info.pMCPV; 
+    double diff_x = recpvvec[rec_index].x - mc_vertex->x;
+    double diff_y = recpvvec[rec_index].y - mc_vertex->y;
+    double diff_z = recpvvec[rec_index].z - mc_vertex->z;
+    vec_diff_x.push_back(diff_x);
+    vec_diff_y.push_back(diff_y);
+    vec_diff_z.push_back(diff_z);
+
+    double err_x = recpvvec[rec_index].positionSigma.x;
+    double err_y = recpvvec[rec_index].positionSigma.y;
+    double err_z = recpvvec[rec_index].positionSigma.z;
+
+    vec_err_x.push_back(err_x);
+    vec_err_y.push_back(err_y);
+    vec_err_z.push_back(err_z);
+    
+  }
+
   MC_vertices.clear();
   } //end loop over files/events
   
@@ -338,6 +374,45 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
 
           
     
+
+  //save information about matched reconstructed PVs for pulls distributions
+  #ifdef WITH_ROOT
+  TFile * out_fille = new TFile("PV.root", "RECREATE");
+  TTree * tree = new TTree("PV_tree","PV_tree");
+  //double x_true, y_true, z_true;
+  double diff_x, diff_y, diff_z;
+  double err_x, err_y, err_z;
+
+  tree->Branch("diff_x", &diff_x);
+  tree->Branch("diff_y", &diff_y);
+  tree->Branch("diff_z", &diff_z);
+
+  tree->Branch("err_x", &err_x);
+  tree->Branch("err_y", &err_y);
+  tree->Branch("err_z", &err_z);
+
+  //tree->Branch("x_true", &x_true);
+  //tree->Branch("y_true", &y_true);
+  //tree->Branch("z_true", &z_true);
+
+  for(int i = 0; i < vec_diff_x.size(); i++) {
+    diff_x = vec_diff_x.at(i);
+    diff_y = vec_diff_y.at(i);
+    diff_z = vec_diff_z.at(i);
+
+    err_x = vec_err_x.at(i);
+    err_y = vec_err_y.at(i);
+    err_z = vec_err_z.at(i);
+
+    tree->Fill();
+
+
+  }
+
+
+  tree->Write();
+  out_fille->Close();
+   #endif
     
     
  
