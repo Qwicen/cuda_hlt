@@ -148,9 +148,7 @@ bool fitVertex( XYZPoint& seedPoint,
 
 
     
-    // update cache if too far from reference position. this is the slow part.
     
-   // if( std::abs(vtxpos.z - vtxpos.z) > m_maxDeltaZCache )   vtxpos = vtxpos ;
 
     // add contribution from all tracks
     double chi2(0) ;
@@ -273,10 +271,7 @@ bool fitVertex( XYZPoint& seedPoint,
     vtxpos.x = ( vtxpos.x + delta.x ) ;
     vtxpos.y = ( vtxpos.y + delta.y ) ;
     vtxpos.z = ( vtxpos.z + delta.z ) ;
-    std::cout.precision(4);
-    std::cout  << "Iterx: " << nbIter << " " << vtxpos.x << std::endl;
-    std::cout  << "Itery: " << nbIter << " " << vtxpos.y << std::endl;
-    std::cout  << "Iterz: " << nbIter << " " << vtxpos.z << std::endl;
+
     vtx.setChi2AndDoF( chi2, 2*ntrin-3 ) ;
 
     // loose convergence criteria if close to end of iterations

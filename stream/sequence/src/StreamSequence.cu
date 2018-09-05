@@ -446,71 +446,7 @@ cudaError_t Stream::run_sequence(
 
      checkPVs(folder_name_pv, true, number_of_events, out_vertices, number_of_vertex);
 
-    std::ofstream debug_file_seeds;
-    debug_file_seeds.open ("../seeds.txt");
     
-    
-
-    for(int i_event = 0; i_event < number_of_events; i_event++) {
-      std::cout << "event number " << i_event << std::endl;
-      //loop over reconstructed vertices in an event
-      for(uint i = 0; i < number_of_vertex[i_event]; i++) {
-        int index = i_event  * PatPV::max_number_vertices + i;
-        std::cout << std::setprecision(4) << "vertex " << i << " " << out_vertices[index].x << " " << out_vertices[index].y << " " << out_vertices[index].z << std::endl;
-      }
-      //loop over seeds on an event
-      debug_file_seeds << "Event "  << i_event << "\n";
-      for(uint i = 0; i < number_of_seeds[i_event]; i++) {
-        int index = i_event  * PatPV::max_number_vertices + i;
-        debug_file_seeds << seeds[index].z << "\n";
-      }
-    }
-    debug_file_seeds.close();
-      
-
-
-      //loop over events
-      
-      for(int i = 0; i < number_of_events; i++) {
-        std::cout<<"------------------"<<std::endl;
-        std::cout <<  host_accumulated_tracks[i] << " "  << host_number_of_tracks[i] << " " << host_number_of_reconstructed_velo_tracks[0] << std::endl;
-      
-        //std::cout <<  "accumulated nubmer hits:  " << host_accumulated_number_of_hits_in_velo_tracks[i] << std::endl;
-        
-        //loop over tracks in event
-        const int accumulated_tracks = host_accumulated_tracks[i];
-        //for(int j = 0; j < host_number_of_tracks[i]; j++)
-        /*
-        for(int j = 0; j < 3; j++)
-          {
-            
-            std::cout << "track number " << j << std::endl;
-            //index gives current position in state aray
-            uint index = accumulated_tracks + j;
-
-            VeloState * state_least       = host_velo_states + VeloTracking::number_of_saved_velo_states * index;
-            VeloState * state_kalman      = host_velo_states + VeloTracking::number_of_saved_velo_states * index + 1;
-            
-            
-
-            std::cout << "host velo state x: " << state_least->x << " " << state_kalman->x << std::endl;
-            std::cout << "host velo state y: " << state_least->y << " " << state_kalman->y << std::endl;
-            std::cout << "host velo state z: " << state_least->z << " " << state_kalman->z << std::endl;
-            std::cout << std::setprecision(4) << "host velo state tx: " << state_least->tx << " " << state_kalman->tx << std::endl;
-            std::cout << std::setprecision(4)<< "host velo state ty: " << state_least->ty << " " << state_kalman->ty << std::endl;
-
-            //loop over hits in track
-            const uint starting_hit = host_velo_track_hit_number[index];
-            const uint number_of_hits = host_velo_track_hit_number[index  + 1] - starting_hit;
-            for (int k = 0 ; k < number_of_hits; k++) {
-              std::cout << host_velo_track_hits[starting_hit + k].x << " "  << host_velo_track_hits[starting_hit + k].y << " " << host_velo_track_hits[starting_hit + k].z << std::endl;
-            }
-            
-           // std::cout <<  host_velo_track_hit_number[j] << " " << host_accumulated_number_of_hits_in_velo_tracks[j] << std::endl;
-            //std::cout << host_velo_track_hits[host_accumulated_tracks[i] + j ].x << " " << host_velo_track_hits[host_accumulated_tracks[i] + j ].y << " " << host_velo_track_hits[host_accumulated_tracks[i] + j ].z << std::endl; 
-          }
-          */
-      }
 
 
 

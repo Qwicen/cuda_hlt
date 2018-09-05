@@ -57,7 +57,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
     uint8_t* input = (uint8_t*) inputContents.data();
 
     int number_mcpv = *((int*)  input); input += sizeof(int);
-    //std::cout << "num MCPs = " << number_mcp << std::endl;
+    
     std::vector<MCVertex> MC_vertices;
     for (uint32_t i=0; i<number_mcpv; ++i) {
       MCVertex mc_vertex;
@@ -68,11 +68,6 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
       mc_vertex.x = *((double*)  input); input += sizeof(double);
       mc_vertex.y = *((double*)  input); input += sizeof(double);
       mc_vertex.z = *((double*)  input); input += sizeof(double);
-      std::cout << "read MC vertex " << i << std::endl;
-      std::cout << "nubmer tracks: " << mc_vertex.numberTracks << std::endl;
-      std::cout << "x: " << mc_vertex.x << std::endl;
-      std::cout << "y: " << mc_vertex.y << std::endl;
-      std::cout << "z: " << mc_vertex.z << std::endl;
 
       //if(mc_vertex.numberTracks >= 4) vertices.push_back(mc_vertex);
       MC_vertices.push_back(mc_vertex);
@@ -179,7 +174,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
       
     
   }
-  std::cout << "nubmer of MCPVinfo:" << i_event << " " << mcpvvec.size() << std::endl;
+ 
 
   std::vector<MCPVInfo> rblemcpv;
   std::vector<MCPVInfo> not_rble_but_visible;
@@ -191,7 +186,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   std::vector<MCPVInfo>::iterator itmc;
   for (itmc = mcpvvec.begin(); mcpvvec.end() != itmc; itmc++) {
     rblemcpv.push_back(*itmc);
-    std::cout << "number of tracks: " << (*itmc).nRecTracks << std::endl;;
+
     if (itmc->nRecTracks < m_nTracksToBeRecble)
       {
         nmrc++;
@@ -206,8 +201,6 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
       }
 
   }
-  std::cout << "nubmer of rblemcpv:" << i_event << " " << rblemcpv.size() << std::endl;
-  std::cout << "nubmer of nmrc:" << i_event << " " << nmrc << std::endl;
 
       for(int ipv = 0; ipv < (int) recpvvec.size(); ipv++) {
       match_mc_vertex_by_distance(ipv, recpvvec, rblemcpv);
@@ -312,8 +305,6 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
   } //end loop over files/events
   
 
-  std::cout << "found " << number_reconstructed_vertices << " / " << number_reconstructible_vertices << " vertices! -> efficiency: " << (double)number_reconstructed_vertices / (double)number_reconstructible_vertices << std::endl; 
-  std::cout << "fakes: " << number_fake_vertices << std::endl;
 
 
 

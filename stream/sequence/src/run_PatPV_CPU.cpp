@@ -1,5 +1,5 @@
 #include "../include/run_PatPV_CPU.h"
-//#include "../../../PatPV/include/PVSeedTool.h"
+
 #include "../../../PatPV/include/PVSeedTool.h"
 
 
@@ -34,20 +34,14 @@ bool reconstructMultiPVFromTracks(VeloState * tracks2use, Vertex * outvtxvec, in
       XYZPoint seed = seeds[event_number * PatPV::max_number_vertices + i ]; 
       Vertex recvtx;
 
-      std::cout << "trying to fit with seed " << i << std::endl;
-      std::cout << seed.x << std::endl;
-      std::cout << seed.y << std::endl;
-      std::cout << seed.z << std::endl;
+
 
 
 
       // fitting
       bool scvfit = fitVertex( seed, rtracks, recvtx, host_number_of_tracks_pinned, tracks2disable);
       if (!scvfit) continue;
-      std::cout<<"got vertex " << std::endl; 
-      std::cout << recvtx.x << std::endl;
-      std::cout << recvtx.y << std::endl;
-      std::cout << recvtx.z << std::endl;
+
       
       
 

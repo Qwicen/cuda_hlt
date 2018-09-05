@@ -208,8 +208,7 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
   }
 
 
-  std::cout << "compare return clsuter to good clusters:" << std::endl;
-  std::cout << return_number_of_clusters << " " << number_good_clusters << std::endl;
+
   //return return_number_of_clusters;
   return number_good_clusters;
 
