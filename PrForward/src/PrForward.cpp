@@ -28,7 +28,7 @@ std::vector<VeloUTTracking::TrackVeloUT> PrForward::operator() (
   std::vector<VeloUTTracking::TrackVeloUT> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
-  std::cout << "About to run forward tracking for " << inputTracks.size() << " input tracks!" << std::endl;
+  debug_cout << "About to run forward tracking for " << inputTracks.size() << " input tracks!" << std::endl;
   int numfound = 0;
 
   for(const VeloUTTracking::TrackVeloUT& veloTr : inputTracks) {
@@ -67,7 +67,7 @@ std::vector<VeloUTTracking::TrackVeloUT> PrForward::operator() (
  
   }
 
-  std::cout << "Found " << numfound << " forward tracks for this event!" << std::endl;
+  debug_cout << "Found " << numfound << " forward tracks for this event!" << std::endl;
   
 
   return outputTracks;

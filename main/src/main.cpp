@@ -263,6 +263,7 @@ int main(int argc, char *argv[])
   read_ft_events_into_arrays( ft_hits_events, ft_n_hits_layers_events,
                               ft_events, ft_event_offsets, number_of_events );
 
+  //check_ft_events( ft_hits_events, ft_n_hits_layers_events, number_of_events );
   
   // Read LUTs from PrUTMagnetTool into pinned host memory
   PrUTMagnetTool* host_ut_magnet_tool;

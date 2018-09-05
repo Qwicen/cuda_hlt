@@ -110,12 +110,7 @@ namespace VeloUTTracking {
     unsigned int LHCbIDs[VeloUTTracking::max_track_size];
     float qop;
     unsigned short hitsNum = 0;
-    float quality;
-    float chi2;
-#ifndef __CUDA_ARCH__
-    std::vector<float> trackParams;
-#endif
-    
+  
     __host__ __device__ void addLHCbID( unsigned int id ) {
       LHCbIDs[hitsNum++] = id;
     }
