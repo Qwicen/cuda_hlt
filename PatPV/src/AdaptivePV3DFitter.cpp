@@ -2,7 +2,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "../include/AdaptivePV3DFitter.h"
+#include "AdaptivePV3DFitter.h"
 
 //#include "../../PrVeloUT/include/CholeskyDecomp.h"
 

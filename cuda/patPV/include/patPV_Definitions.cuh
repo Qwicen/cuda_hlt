@@ -2,7 +2,7 @@
 #define DEFINITIONS_H
 
 #include <vector>
-#include "../../velo/common/include/VeloDefinitions.cuh"
+#include "VeloDefinitions.cuh"
 
 namespace PatPV {
 

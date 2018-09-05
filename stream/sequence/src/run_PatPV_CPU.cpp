@@ -1,6 +1,6 @@
-#include "../include/run_PatPV_CPU.h"
+#include "run_PatPV_CPU.h"
 
-#include "../../../PatPV/include/PVSeedTool.h"
+#include "PVSeedTool.h"
 
 
 

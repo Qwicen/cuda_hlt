@@ -3,8 +3,8 @@
 #define ADAPTIVE_H
 
 
-#include "../../cuda/velo/common/include/VeloDefinitions.cuh"
-#include "../../cuda/patPV/include/patPV_Definitions.cuh"
+#include "VeloDefinitions.cuh"
+#include "patPV_Definitions.cuh"
 
 
 
