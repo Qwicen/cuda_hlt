@@ -79,51 +79,6 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
     }
     
 
-//fill a vector with bools to check for fakes
-    std::vector<bool> isFake;
-    for(uint i = 0; i < number_of_vertex[i_event]; i++) isFake.push_back(true);
-
-for (auto vtx : MC_vertices) {
-          if(vtx.numberTracks < 4) continue;
-    //collect reconstruced vertices in a event
-          bool matched = false;
-    for(uint i = 0; i < number_of_vertex[i_event]; i++) {
-      int index = i_event  * PatPV::max_number_vertices + i;
-      double r2 = rec_vertex[index].x*rec_vertex[index].x + rec_vertex[index].y * rec_vertex[index].y;
-      //radial cut against fake vertices
-      double r = 0.;
-      if(rec_vertex[index].tracks.size() < 10) r = 0.2;
-      else r = 0.4;
-      if(r2 >  r*r) continue;
-
-
-
-      
-        
-        //for each reconstructed PV, loop over MC PVs
-        
-        
-          //number_reconstructible_vertices++;
-          
-          //don't forget that covariance is sigma squared!
-          if(abs(rec_vertex[index].z - vtx.z) <  5. * sqrt(rec_vertex[index].cov22)) {
-
-            number_reconstructed_vertices++;
-            matched = true;
-            isFake.at(i) = false;
-            break;
-          }
-
-        }
-        //if(!matched) number_fake_vertices++; 
-
-     }
-
-
-     for (auto fake : isFake) {if (fake) number_fake_vertices++;};
-
-
-    //events_vertices.push_back(vertices);
 
 
   //try to implement nominal PV checker
