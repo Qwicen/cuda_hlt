@@ -447,7 +447,7 @@ cudaError_t Stream::run_sequence(
           cudaEventSynchronize(cuda_generic_event);
         }
 
-        std::cout << "CHECKING VELO TRACKS " << std::endl; 
+        std::cout << "Checking Velo tracks reconstructed on GPU" << std::endl; 
   
         const std::vector<trackChecker::Tracks> tracks_events = prepareTracks(
           host_velo_track_hit_number,
@@ -476,7 +476,7 @@ cudaError_t Stream::run_sequence(
           number_of_events
         );  
       
-        std::cout << "CHECKING VeloUT TRACKS from GPU" << std::endl;
+        std::cout << "Checking VeloUT tracks reconstructed on GPU" << std::endl;
         trackType = "VeloUT";
         call_pr_checker (
           veloUT_tracks,
@@ -504,7 +504,7 @@ cudaError_t Stream::run_sequence(
         //   if ( rv != 0 )
         //     continue;
           
-        //   std::cout << "CHECKING VeloUT TRACKS from x86" << std::endl;
+        //   std::cout << "CHECKING VeloUT TRACKS reconstructed on x86" << std::endl;
         //   trackType = "VeloUT";
         //   call_pr_checker (
         //     ut_tracks_events,

@@ -190,6 +190,8 @@ int main(int argc, char *argv[])
   // Read LUTs from PrUTMagnetTool
   PrUTMagnetTool ut_magnet_tool;
   read_UT_magnet_tool(&ut_magnet_tool);
+
+  info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
   
   // Initialize detector constants on GPU
   GpuConstants gpu_constants;
