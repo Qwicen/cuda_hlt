@@ -33,10 +33,13 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
 // vector containing MC vertices
     std::vector<MCVertex> vertices;
   
-  for (uint i=0; i<requestedFiles; ++i) {
+  //loop over files/events
+  for (uint i_event=0; i_event<requestedFiles; ++i_event) {
     // Read event #i in the list and add it to the inputs
     // if more files are requested than present in folder, read them again
-    std::string readingFile = folderContents[i % folderContents.size()];
+
+    //collect true PV vertices in a event
+    std::string readingFile = folderContents[i_event % folderContents.size()];
     std::string filename = foldername + "/" + readingFile;
     std::vector<char> inputContents;
     readFileIntoVector(foldername + "/" + readingFile, inputContents);
@@ -45,76 +48,29 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
 
     int number_mcpv = *((int*)  input); input += sizeof(int);
     //std::cout << "num MCPs = " << number_mcp << std::endl;
+    std::vector<MCVertex> MC_vertices;
     for (uint32_t i=0; i<number_mcpv; ++i) {
-      MCVertex vertex;
+      MCVertex mc_vertex;
       int VertexNumberOfTracks = *((int*)  input); input += sizeof(int);
       if(VertexNumberOfTracks >= 4) number_reconstructible_vertices++;
-      vertex.numberTracks = VertexNumberOfTracks;
-      vertex.x = *((double*)  input); input += sizeof(double);
-      vertex.y = *((double*)  input); input += sizeof(double);
-      vertex.z = *((double*)  input); input += sizeof(double);
+      mc_vertex.numberTracks = VertexNumberOfTracks;
+      mc_vertex.x = *((double*)  input); input += sizeof(double);
+      mc_vertex.y = *((double*)  input); input += sizeof(double);
+      mc_vertex.z = *((double*)  input); input += sizeof(double);
 
-      if(vertex.numberTracks >= 4) vertices.push_back(vertex);
-
+      if(mc_vertex.numberTracks >= 4) vertices.push_back(mc_vertex);
+      MC_vertices.push_back(mc_vertex);
     }
+    
 
+//fill a vector with bools to check for fakes
+    std::vector<bool> isFake;
+    for(uint i = 0; i < number_of_vertex[i_event]; i++) isFake.push_back(true);
 
-
-
-
-
-
-
-    events_vertices.push_back(vertices);
-  }
-  /*
-  std::cout << "here are the MC vertices!" << std::endl;
-  for(auto vtx_vec : events_vertices) {
-    for (auto vtx : vtx_vec) {
-      std::cout << "x: " << vtx.x << std::endl;
-        std::cout << "y: " << vtx.y << std::endl;
-        std::cout << "z: " << vtx.z << std::endl;
-        std::cout << "number of tracks: " << vtx.numberTracks << std::endl;
-    }
-  }*/
-
-  std::cout << "------------" << std::endl;
-  std::cout << "rec vertices with errors:" << std::endl;
-  for(int i = 0; i < number_of_vertex[0]; i++) {
-    int index = 0  * PatPV::max_number_vertices + i;
-    std::cout << std::setprecision(4) << "x: " << rec_vertex[index].x << " " << rec_vertex[index].cov00 << std::endl;
-    std::cout << std::setprecision(4) << "y: " << rec_vertex[index].y << " " << rec_vertex[index].cov11 << std::endl;
-    std::cout << std::setprecision(4) << "z: " << rec_vertex[index].z << " " << rec_vertex[index].cov22 << std::endl;
-  }
-
-
-  //now, for each event, loop over MCVertices and check if it has been found (distance criterion) -> calculate efficiency
-  //again, loop over events/files
-  //loop first over rec vertices, hten over files/events
-  /*
-  for(int i_event = 0; i_event < number_of_files; i_event++) {
-    std::cout << "number_of_vertex: " << number_of_vertex[i_event] << std::endl;
-    for(uint i = 0; i < number_of_vertex[i_event]; i++) {
-      int index = i_event  *max_number_vertices + i;
-      std::cout << "reconstructed vertex " << i << std::endl;
-        std::cout << rec_vertex[index].pos.x << std::endl;
-        std::cout << rec_vertex[index].pos.y << std::endl;
-        std::cout << rec_vertex[index].pos.z << std::endl;
-    }
-  }
-*/
-
-  int i_event = 0;
-
-
-  std::ofstream pull_file;
-  pull_file.open ("../pulls.txt");
-
-  //loop over events/files
-  std::cout << "start comparison" << std::endl;
-  for(int i_event = 0; i_event < number_of_files; i_event++) {
-    std::cout << "-------------- event " << i_event << "____" << std::endl;
-    //for each file, loop over reconstructed PVs
+for (auto vtx : MC_vertices) {
+          if(vtx.numberTracks < 4) continue;
+    //collect reconstruced vertices in a event
+          bool matched = false;
     for(uint i = 0; i < number_of_vertex[i_event]; i++) {
       int index = i_event  * PatPV::max_number_vertices + i;
       double r2 = rec_vertex[index].x*rec_vertex[index].x + rec_vertex[index].y * rec_vertex[index].y;
@@ -123,86 +79,43 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
       if(rec_vertex[index].tracks.size() < 10) r = 0.2;
       else r = 0.4;
       if(r2 >  r*r) continue;
-      
 
-      //double r2 = rec_vertex[index].pos.x * rec_vertex[index].pos.x + rec_vertex[index].pos.y * rec_vertex[index].pos.y;
-      //try r cut to reduce fake rate
-      //if(r2 > 0.02) continue;
-      //look if reconstructed vertex matches with reconstrutible by distance criterion
-        
+
+
       
-        bool matched = false;
+        
         //for each reconstructed PV, loop over MC PVs
-        auto vtx_vec = events_vertices.at(i_event);
-        for (auto vtx : vtx_vec) {
-          if(vtx.numberTracks < 4) continue;
+        
+        
           //number_reconstructible_vertices++;
           
           //don't forget that covariance is sigma squared!
           if(abs(rec_vertex[index].z - vtx.z) <  5. * sqrt(rec_vertex[index].cov22)) {
 
-            std::cout << "matched a vertex" << std::endl;
-            std::cout << std::setprecision(4) <<"x: " << rec_vertex[index].x << " " << vtx.x << " " <<  rec_vertex[index].cov00 << std::endl;
-            std::cout << std::setprecision(4) <<"y: " << rec_vertex[index].y << " " << vtx.y << " " <<  rec_vertex[index].cov11 << std::endl;
-            std::cout << std::setprecision(4) <<"z: " << rec_vertex[index].z << " " << vtx.z << " " <<  rec_vertex[index].cov22 << std::endl;
-            pull_file << rec_vertex[index].x << " " << rec_vertex[index].y << " " << rec_vertex[index].z << " " << vtx.x << " " << vtx.y << " " << vtx.z << " " << sqrt(rec_vertex[index].cov00) << " " << sqrt(rec_vertex[index].cov11) << " " << sqrt(rec_vertex[index].cov22) << "\n";
             number_reconstructed_vertices++;
             matched = true;
+            isFake.at(i) = false;
             break;
           }
+
         }
-        
-        if(!matched) {number_fake_vertices++; 
-       std::cout << "have a fake vertex: " << std::endl;
-       std::cout << std::setprecision(4) <<"x: " << rec_vertex[index].x << " " <<  rec_vertex[index].cov00 << std::endl;
-            std::cout << std::setprecision(4) <<"y: " << rec_vertex[index].y << " " <<  rec_vertex[index].cov11 << std::endl;
-            std::cout << std::setprecision(4) <<"z: " << rec_vertex[index].z << " "  <<  rec_vertex[index].cov22 << std::endl;
-        }
-      }
-    
-  }
-  std::cout << "end comparison" << std::endl;
+        //if(!matched) number_fake_vertices++; 
+
+     }
+
+
+     for (auto fake : isFake) {if (fake) number_fake_vertices++;};
+
+
+    events_vertices.push_back(vertices);
+  } //end loop over files/events
+  
 
   std::cout << "found " << number_reconstructed_vertices << " / " << number_reconstructible_vertices << " vertices! -> efficiency: " << (double)number_reconstructed_vertices / (double)number_reconstructible_vertices << std::endl; 
   std::cout << "fakes: " << number_fake_vertices << std::endl;
     
     
     
-  
-
-
-/*
-  int i_event = 0;
-  for(auto vtx_vec : events_vertices) {
-    for (auto vtx : vtx_vec) {
-      //std::cout << "x: " << vtx.x << std::endl;
-        //std::cout << "y: " << vtx.y << std::endl;
-        //std::cout << "z: " << vtx.z << std::endl;
-        //std::cout << "number of tracks: " << vtx.numberTracks << std::endl;
-      //only look at MC vertices with enough tracks
-      if(vtx.numberTracks < 4) continue;
-      number_reconstructible_vertices++;
-      std::cout << "-----------" << std::endl; 
-      bool 
-      for(uint i = 0; i < number_of_vertex[i_event]; i++) {
-        int index = i_event  *max_number_vertices + i;
-        //std::cout << std::setprecision(4) << "vertex " << i << " " << rec_vertex[index].pos.x << " " << rec_vertex[index].pos.y << " " << rec_vertex[index].pos.z << std::endl;
-        //look if reconstructed vertex matches with reconstrutible by distance criterion
-        std::cout <<"compare vertex positions: " << rec_vertex[index].pos.z << " " << vtx.z << " " << 5. * rec_vertex[index].cov[5] << std::endl;
-        if(abs(rec_vertex[index].pos.z - vtx.z) <  5. * rec_vertex[index].cov[5]) {
-        //if(abs(rec_vertex[index].pos.z - vtx.z) <  1.) {
-          number_reconstructed_vertices++;
-
-          continue;
-        }
-        else number_fake_vertices++;
-        
-      }
-    }
-    i_event++;
-  }
-  std::cout << "found " << number_reconstructed_vertices << " / " << number_reconstructible_vertices << " vertices!" << std::endl; 
-  std::cout << "fakes: " << number_fake_vertices << std::endl;
-*/
+ 
 
 }
