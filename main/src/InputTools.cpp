@@ -1,4 +1,4 @@
-#include "../include/InputTools.h"
+#include "InputTools.h"
 
 /**
  * @brief Test to check existence of filename.
@@ -113,7 +113,7 @@ void read_folder(
     number_of_files = folderContents.size();
   }
 
-  info_cout << "Requested " << number_of_files << " files" << std::endl;
+  debug_cout << "Requested " << number_of_files << " files" << std::endl;
   int readFiles = 0;
 
   // Read all requested events
@@ -137,8 +137,18 @@ void read_folder(
   // Add last offset
   event_offsets.push_back(accumulated_size);
 
-  info_cout << std::endl << (event_offsets.size() - 1) << " files read" << std::endl << std::endl;
-
+  debug_cout << std::endl << (event_offsets.size() - 1) << " files read" << std::endl << std::endl;
 }
 
- 
+/**
+ * @brief Reads the geometry from foldername.
+ */
+void read_geometry(
+  const std::string& filename,
+  std::vector<char>& geometry
+) {
+  if (!exists_test(filename)) {
+    throw StrException("Geometry file could not be found: " + filename);
+  }
+  readFileIntoVector(filename, geometry);
+}

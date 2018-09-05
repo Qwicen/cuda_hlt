@@ -13,7 +13,6 @@ cudaError_t Stream::run_sequence(
   const uint* host_ut_event_offsets,
   const size_t host_ut_events_size,
   const size_t host_ut_event_offsets_size,
-  VeloUTTracking::HitsSoA *host_ut_hits_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const uint number_of_events,
   const uint number_of_repetitions
@@ -384,110 +383,9 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::decode_raw_banks>().invoke();
 
-    // cudaCheck(cudaMemcpyAsync(
-    //   host_ut_hits_decoded,
-    //   argen.generate<arg::dev_ut_hits_decoded>(argument_offsets),
-    //   argen.size<arg::dev_ut_hits_decoded>(number_of_events),
-    //   cudaMemcpyDeviceToHost,
-    //   stream
-    // ));
-
-    // // Wait to receive the result
-    // cudaEventRecord(cuda_generic_event, stream);
-    // cudaEventSynchronize(cuda_generic_event);
-
-    // for (uint32_t ut_event_number = 0; ut_event_number < number_of_events; ++ut_event_number) {
-    //   std::cout << "UT event number " << ut_event_number << std::endl;
-      
-    //   std::vector<UTHit> hits_vector;
-
-    //   for (uint32_t hit_layer = 0; hit_layer < ut_number_of_layers; ++hit_layer) {
-    //     const UTHits & hits_event = host_ut_hits_decoded[ut_event_number];
-    //     for (uint32_t hit_number = 0; hit_number < hits_event.n_hits_layers[hit_layer]; ++hit_number) {
-    //       UTHit hit = hits_event.getHit(hit_number, hit_layer);
-
-    //       if (hit.LHCbID == 19733777) {
-    //         info_cout << "LHCb ID, hit number, hit layer: "
-    //           << hit.LHCbID << ", " << hit_number << ", " << hit_layer << std::endl;
-    //       }
-
-    //       hits_vector.push_back(hit);
-    //     }
-    //   }
-
-    //   // sort(hits_vector.begin(), hits_vector.end(), [](const UTHit & a, const UTHit & b) -> bool {
-    //   //     return a.LHCbID > b.LHCbID; 
-    //   // });
-
-
-
-    //   std::vector<UTHit> hits_compare;
-    //   const std::string fileName = "../input/minbias/ut_hits_compare/" + std::to_string(ut_event_number) + ".bin";
-    //   std::ifstream in_hits(fileName.c_str(), std::ios::in | std::ios::binary);
-
-    //   if (!in_hits) {
-    //     std::cout << "Error while loading file: " << fileName << std::endl;
-    //     continue;
-    //   }
-
-    //   uint32_t number_of_hits_compare = 0;
-    //   in_hits.read((char *) &(number_of_hits_compare), sizeof(float));
-
-    //   for (uint32_t i = 0; i < number_of_hits_compare; ++i) {
-
-    //     UTHit hit;
-    //     float ut_dxDy; // Unused
-    //     in_hits.read((char *) &(hit.cos           ), sizeof(float));
-    //     in_hits.read((char *) &(hit.yBegin        ), sizeof(float));
-    //     in_hits.read((char *) &(hit.yEnd          ), sizeof(float));
-    //     in_hits.read((char *) &(ut_dxDy           ), sizeof(float));
-    //     in_hits.read((char *) &(hit.zAtYEq0       ), sizeof(float));
-    //     in_hits.read((char *) &(hit.xAtYEq0       ), sizeof(float));
-    //     in_hits.read((char *) &(hit.weight        ), sizeof(float));
-    //     in_hits.read((char *) &(hit.highThreshold ), sizeof(float));
-    //     in_hits.read((char *) &(hit.LHCbID        ), sizeof(float));
-
-    //     hits_compare.push_back(hit);
-    //   }
-
-    //   in_hits.close();
-
-    //   // sort(hits_compare.begin(), hits_compare.end(), [](const UTHit & a, const UTHit & b) -> bool {
-    //   //     return a.LHCbID > b.LHCbID; 
-    //   // });
-
-    //   info_cout << " Expected " << hits_compare.size() << " hits" << std::endl
-    //     << " Found " << hits_vector.size() << " hits" << std::endl;
-
-    //   for (auto hit : hits_compare) {
-    //     if (std::find(hits_vector.begin(), hits_vector.end(), hit) == std::end(hits_vector)) {
-    //       error_cout << "hit " << hit << " only in hits_compare" << std::endl;
-    //     }
-
-    //     const auto count_instances = std::count(hits_compare.begin(), hits_compare.end(), hit);
-    //     if (count_instances > 1) {
-    //       info_cout << "Hit " << hit << " found " << count_instances << " times in hits_compare" << std::endl;
-    //     }
-    //   }
-
-    //   for (auto hit : hits_vector) {
-    //     if (std::find(hits_compare.begin(), hits_compare.end(), hit) == std::end(hits_compare)) {
-    //       error_cout << "hit " << hit << " only in hits_vector" << std::endl;
-    //     }
-
-    //     const auto count_instances = std::count(hits_vector.begin(), hits_vector.end(), hit);
-    //     if (count_instances > 1) {
-    //       info_cout << "Hit " << hit << " found " << count_instances << " times in hits_vector" << std::endl;
-    //     }
-    //   }
-    // }
-    // // Check the output
-    // info_cout << "decode_raw_banks finished" << std::endl << std::endl;
-    
     // UT hit sorting by x
     argument_sizes[arg::dev_ut_hit_permutations] = argen.size<arg::dev_ut_hit_permutations>(host_accumulated_number_of_ut_hits[0]);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, argen.size<arg::dev_ut_hits>(number_of_events), cudaMemcpyHostToDevice, stream ));
     sequence.item<seq::sort_by_x>().set_opts(dim3(number_of_events), dim3(32), stream);
     sequence.item<seq::sort_by_x>().set_arguments(
       argen.generate<arg::dev_ut_hits>(argument_offsets),
@@ -496,7 +394,7 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::sort_by_x>().invoke();
     
-    // // VeloUT tracking
+    // VeloUT tracking
     argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events * VeloUTTracking::max_num_tracks);
     argument_sizes[arg::dev_atomics_veloUT] = argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics * number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
@@ -510,7 +408,8 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_velo_states>(argument_offsets),
       argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
       argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
-      dev_ut_magnet_tool );
+      dev_ut_magnet_tool
+    );
     sequence.item<seq::veloUT>().invoke();
 
     // Transmission device to host
@@ -538,7 +437,7 @@ cudaError_t Stream::run_sequence(
       if (repetition == 0) { // only check efficiencies once
 
         /* CHECKING Velo TRACKS */
-        if ( !transmit_device_to_host ) { // Fetch data
+        if (!transmit_device_to_host) { // Fetch data
           cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
           cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
           cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
@@ -548,9 +447,9 @@ cudaError_t Stream::run_sequence(
           cudaEventSynchronize(cuda_generic_event);
         }
 
-  std::cout << "CHECKING VELO TRACKS " << std::endl; 
+        std::cout << "CHECKING VELO TRACKS " << std::endl; 
   
-        const std::vector< trackChecker::Tracks > tracks_events = prepareTracks(
+        const std::vector<trackChecker::Tracks> tracks_events = prepareTracks(
           host_velo_track_hit_number,
           reinterpret_cast<VeloTracking::Hit<true>*>(host_velo_track_hits),
           host_accumulated_tracks,
@@ -586,7 +485,7 @@ cudaError_t Stream::run_sequence(
           trackType
         );
       
-        /* Run VeloUT on x86 architecture */
+        // /* Run VeloUT on x86 architecture */
         // if ( run_on_x86 ) {
         //   std::vector<trackChecker::Tracks> ut_tracks_events;
         
@@ -613,7 +512,7 @@ cudaError_t Stream::run_sequence(
         //     start_event_offset,
         //     trackType);
         // }
-      } // only in first repitition
+      } // only in first repetition
     } // mc_check_enabled
   } // repetitions
 

@@ -109,7 +109,6 @@ struct Stream {
     const uint* host_ut_event_offsets,
     const size_t host_ut_events_size,
     const size_t host_ut_event_offsets_size,
-    VeloUTTracking::HitsSoA *host_ut_hits_events,
     const PrUTMagnetTool* host_ut_magnet_tool,
     const uint number_of_events,
     const uint number_of_repetitions

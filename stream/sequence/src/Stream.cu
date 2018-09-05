@@ -49,7 +49,6 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_ut_geometry, ut_geometry.size()));
   cudaCheck(cudaMemcpyAsync(dev_ut_geometry, ut_geometry.data(), ut_geometry.size(), cudaMemcpyHostToDevice, stream));
 
-
   // Populate UT magnet tool values
   cudaCheck(cudaMalloc((void**)&dev_ut_magnet_tool, sizeof(PrUTMagnetTool)));
   cudaCheck(cudaMemcpyAsync(dev_ut_magnet_tool, host_ut_magnet_tool, sizeof(PrUTMagnetTool), cudaMemcpyHostToDevice, stream));

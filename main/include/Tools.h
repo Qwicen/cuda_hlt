@@ -24,25 +24,16 @@
 #include "TrackChecker.h"
 #include "MCParticle.h"
 
-void readGeometry(
-  const std::string& foldername,
-  std::vector<char>& geometry
-);
-
-void check_velopix_events(
+bool check_velopix_events(
   const std::vector<char> events,
   const std::vector<unsigned int> event_offsets,
   int n_events
 );
 
-void read_ut_events_into_arrays(  VeloUTTracking::HitsSoA *ut_hits_events,
-                                  const std::vector<char> events,
-				  const std::vector<unsigned int> event_offsets,
-				  int n_events );
-
-void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
-                      const int n_events
-		      );
+// void check_ut_events(
+//   const VeloUTTracking::HitsSoA *hits_layers_events,
+//   const int n_events
+// );
 
 void read_UT_magnet_tool( PrUTMagnetTool* host_magnet_tool );
 
@@ -62,13 +53,6 @@ void printTracks(
   VeloTracking::Track<mc_check>* tracks,
   int* n_tracks,
   int n_events,
-  std::ofstream& outstream
-);
-
-template <bool mc_check>
-void writeBinaryTrack(
-  const unsigned int* hit_IDs,
-  const VeloTracking::Track <mc_check> & track,
   std::ofstream& outstream
 );
 

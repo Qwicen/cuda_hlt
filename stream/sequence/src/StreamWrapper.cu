@@ -62,7 +62,6 @@ void StreamWrapper::run_stream(
   uint* host_ut_event_offsets,
   const size_t ut_events_size,
   const size_t ut_event_offsets_size,
-  VeloUTTracking::HitsSoA *host_ut_hits_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const uint number_of_events,
   const uint number_of_repetitions
@@ -78,7 +77,6 @@ void StreamWrapper::run_stream(
     host_ut_event_offsets,
     ut_events_size,
     ut_event_offsets_size,
-    host_ut_hits_events,
     host_ut_magnet_tool,
     number_of_events,
     number_of_repetitions

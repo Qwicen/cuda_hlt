@@ -1,13 +1,13 @@
 #include "PrVeloUTWrapper.h"
 
-// //-----------------------------------------------------------------------------
-// // Implementation file for PrVeloUT
-// //
-// // 2007-05-08: Mariusz Witek
-// // 2017-03-01: Christoph Hasse (adapt to future framework)
-// // 2018-05-05: Plácido Fernández (make standalone)
-// // 2018-07:    Dorothea vom Bruch (convert to C code for GPU compatability)
-// //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Implementation file for PrVeloUT
+//
+// 2007-05-08: Mariusz Witek
+// 2017-03-01: Christoph Hasse (adapt to future framework)
+// 2018-05-05: Plácido Fernández (make standalone)
+// 2018-07:    Dorothea vom Bruch (convert to C code for GPU compatability)
+//-----------------------------------------------------------------------------
 
 
 // //=============================================================================
@@ -102,4 +102,3 @@
 //   }
  
 // }
- 
