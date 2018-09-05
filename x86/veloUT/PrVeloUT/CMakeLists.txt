@@ -1,5 +1,6 @@
 include_directories(include)
 include_directories(../../../cuda/velo/common/include)
+include_directories(../../../cuda/UT/UTDecoding/include)
 include_directories(../../../cuda/UT/PrVeloUT/include)
 include_directories(../../../cuda/UT/common/include)
 include_directories(../../../cuda/utils/include)

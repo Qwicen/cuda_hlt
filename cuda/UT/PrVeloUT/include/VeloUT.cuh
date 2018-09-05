@@ -6,7 +6,8 @@
 #include "PrVeloUT.cuh"
 
 __global__ void veloUT(
-  VeloUTTracking::HitsSoA* dev_ut_hits,
+  uint* dev_ut_hits,
+  uint* dev_ut_hit_count,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,

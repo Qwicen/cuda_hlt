@@ -186,10 +186,12 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
   };
   sequence_dependencies[seq::sort_by_x] = {
     arg::dev_ut_hits,
+    arg::dev_ut_hit_count,
     arg::dev_ut_hit_permutations
   };
   sequence_dependencies[seq::veloUT] = {
     arg::dev_ut_hits,
+    arg::dev_ut_hit_count,
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,

@@ -370,7 +370,7 @@ cudaError_t Stream::run_sequence(
     // }
     // info_cout << "Total number of UT hits: " << *host_accumulated_number_of_ut_hits << std::endl;
 
-    // Reserve buffer for UT hits
+    // Decode UT raw banks
     argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(10 * host_accumulated_number_of_ut_hits[0]);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::decode_raw_banks>().set_opts(dim3(number_of_events), dim3(192), stream);
@@ -497,37 +497,38 @@ cudaError_t Stream::run_sequence(
     sequence.item<seq::sort_by_x>().invoke();
     
     // // VeloUT tracking
-    // argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks);
-    // argument_sizes[arg::dev_atomics_veloUT] = argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events);
-    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    // sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(32), stream);
-    // sequence.item<seq::veloUT>().set_arguments(
-    //   argen.generate<arg::dev_ut_hits_sorted>(argument_offsets),
-    //   argen.generate<arg::dev_atomics_storage>(argument_offsets),
-    //   argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
-    //   argen.generate<arg::dev_velo_track_hits>(argument_offsets),
-    //   argen.generate<arg::dev_velo_states>(argument_offsets),
-    //   argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
-    //   argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
-    //   dev_ut_magnet_tool );
-    // sequence.item<seq::veloUT>().invoke();
+    argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events * VeloUTTracking::max_num_tracks);
+    argument_sizes[arg::dev_atomics_veloUT] = argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics * number_of_events);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(32), stream);
+    sequence.item<seq::veloUT>().set_arguments(
+      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_count>(argument_offsets),
+      argen.generate<arg::dev_atomics_storage>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hits>(argument_offsets),
+      argen.generate<arg::dev_velo_states>(argument_offsets),
+      argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
+      argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
+      dev_ut_magnet_tool );
+    sequence.item<seq::veloUT>().invoke();
 
-    // // Transmission device to host
-    // if (transmit_device_to_host) {
-    //   // Velo tracks
-    //   cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-    //   cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-    //   cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
-    //   cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]), cudaMemcpyDeviceToHost, stream));
-    //   cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
+    // Transmission device to host
+    if (transmit_device_to_host) {
+      // Velo tracks
+      cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
 
-    //   // VeloUT tracks
-    //   cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
-    //   cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
-    // }
+      // VeloUT tracks
+      cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
+      cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
+    }
 
-    // cudaEventRecord(cuda_generic_event, stream);
-    // cudaEventSynchronize(cuda_generic_event);
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
 
     ///////////////////////
     // Monte Carlo Check //
@@ -586,32 +587,32 @@ cudaError_t Stream::run_sequence(
         );
       
         /* Run VeloUT on x86 architecture */
-        if ( run_on_x86 ) {
-          std::vector<trackChecker::Tracks> ut_tracks_events;
+        // if ( run_on_x86 ) {
+        //   std::vector<trackChecker::Tracks> ut_tracks_events;
         
-          int rv = run_veloUT_on_CPU(
-                     ut_tracks_events,
-                     host_ut_hits_events,
-                     host_ut_magnet_tool,
-                     host_velo_states,
-                     host_accumulated_tracks,
-                     host_velo_track_hit_number,
-                     host_velo_track_hits,
-                     host_number_of_tracks,
-                     number_of_events
-                    );
+        //   int rv = run_veloUT_on_CPU(
+        //              ut_tracks_events,
+        //              host_ut_hits_events,
+        //              host_ut_magnet_tool,
+        //              host_velo_states,
+        //              host_accumulated_tracks,
+        //              host_velo_track_hit_number,
+        //              host_velo_track_hits,
+        //              host_number_of_tracks,
+        //              number_of_events
+        //             );
 
-          if ( rv != 0 )
-            continue;
+        //   if ( rv != 0 )
+        //     continue;
           
-          std::cout << "CHECKING VeloUT TRACKS from x86" << std::endl;
-          trackType = "VeloUT";
-          call_pr_checker (
-            ut_tracks_events,
-            folder_name_MC,
-            start_event_offset,
-            trackType);
-        }
+        //   std::cout << "CHECKING VeloUT TRACKS from x86" << std::endl;
+        //   trackType = "VeloUT";
+        //   call_pr_checker (
+        //     ut_tracks_events,
+        //     folder_name_MC,
+        //     start_event_offset,
+        //     trackType);
+        // }
       } // only in first repitition
     } // mc_check_enabled
   } // repetitions

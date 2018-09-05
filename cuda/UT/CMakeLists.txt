@@ -7,9 +7,9 @@ include_directories(../../main/include)
 include_directories(../velo/common/include)
 include_directories(../utils/include)
 include_directories(common/include)
+include_directories(UTDecoding/include)
 include_directories(PrVeloUT/include)
 include_directories(sorting/include)
-include_directories(UTDecoding/include)
 
 cuda_add_library(VeloUT STATIC
   ${UT_decoding}
