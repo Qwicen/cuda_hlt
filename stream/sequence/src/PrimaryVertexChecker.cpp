@@ -61,12 +61,18 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
     std::vector<MCVertex> MC_vertices;
     for (uint32_t i=0; i<number_mcpv; ++i) {
       MCVertex mc_vertex;
+
       int VertexNumberOfTracks = *((int*)  input); input += sizeof(int);
       if(VertexNumberOfTracks >= 4) number_reconstructible_vertices++;
       mc_vertex.numberTracks = VertexNumberOfTracks;
       mc_vertex.x = *((double*)  input); input += sizeof(double);
       mc_vertex.y = *((double*)  input); input += sizeof(double);
       mc_vertex.z = *((double*)  input); input += sizeof(double);
+      std::cout << "read MC vertex " << i << std::endl;
+      std::cout << "nubmer tracks: " << mc_vertex.numberTracks << std::endl;
+      std::cout << "x: " << mc_vertex.x << std::endl;
+      std::cout << "y: " << mc_vertex.y << std::endl;
+      std::cout << "z: " << mc_vertex.z << std::endl;
 
       //if(mc_vertex.numberTracks >= 4) vertices.push_back(mc_vertex);
       MC_vertices.push_back(mc_vertex);
@@ -188,24 +194,24 @@ for (auto vtx : MC_vertices) {
   }
 
     // Fill MC PV info
-  //convert vector of MC PVs to vector of pointer to MC PVs
+  
 
   //do checking of collision type and mother here or in dumping?
-  std::vector<MCVertex*> ptr_MC_vertices;
-  for(auto mc_vtx : MC_vertices) ptr_MC_vertices.push_back(&mc_vtx);
+  
   
   //vecotr with MCPVinfo
  std::vector<MCPVInfo> mcpvvec;
                    
-  for(std::vector<MCVertex*>::const_iterator itMCV = ptr_MC_vertices.begin();
-      ptr_MC_vertices.end() != itMCV; itMCV++) {
+  for(std::vector<MCVertex>::iterator itMCV = MC_vertices.begin();
+      MC_vertices.end() != itMCV; itMCV++) {
     
     
       
         MCPVInfo mcprimvert;
-        mcprimvert.pMCPV = *itMCV;
+        mcprimvert.pMCPV = &(*itMCV);
         //mcprimvert.nRecTracks = 0;
-        mcprimvert.nRecTracks = (*itMCV)->numberTracks;
+        mcprimvert.nRecTracks = (*itMCV).numberTracks;
+        //mcprimvert.nRecTracks = 99;
         mcprimvert.nRecBackTracks = 0;
         mcprimvert.indexRecPVInfo = -1;
         mcprimvert.nCorrectTracks = 0;
