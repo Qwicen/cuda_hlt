@@ -14,7 +14,7 @@ void StreamWrapper::initialize_streams(
   const std::string& folder_name_MC,
   const uint start_event_offset,
   const size_t reserve_mb,
-  const GpuConstants& gpu_constants
+  const Constants& constants
 ) {
   for (uint i=0; i<n; ++i) {
     streams.push_back(new Stream());
@@ -34,7 +34,7 @@ void StreamWrapper::initialize_streams(
       start_event_offset,
       reserve_mb,
       i,
-      gpu_constants
+      constants
     );
 
     // Memory consumption

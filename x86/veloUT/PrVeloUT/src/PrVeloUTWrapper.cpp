@@ -21,6 +21,7 @@ void call_PrVeloUT (
   const VeloState* velo_states_event,
   VeloUTTracking::HitsSoA *hits_layers,
   const PrUTMagnetTool *magnet_tool,
+  const float* ut_dxDy,
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
   int &n_velo_tracks_in_UT,
   int &n_veloUT_tracks )
@@ -55,7 +56,8 @@ void call_PrVeloUT (
           posLayers,
           hits_layers,
           fudgeFactors,
-          velo_states_event[i_track] ) ) continue;
+          velo_states_event[i_track],
+          ut_dxDy ) ) continue;
     
     TrackHelper helper(velo_states_event[i_track]);
 
@@ -70,6 +72,7 @@ void call_PrVeloUT (
           hitCandidateIndices,
           hits_layers,
           helper,
+          ut_dxDy,
           true) ){
       
       // go through UT layers in backward direction
@@ -80,6 +83,7 @@ void call_PrVeloUT (
         hitCandidateIndices,
         hits_layers,
         helper,
+        ut_dxDy,
         false);
     }
     

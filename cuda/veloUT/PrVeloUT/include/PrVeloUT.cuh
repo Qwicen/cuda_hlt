@@ -58,7 +58,8 @@ __host__ __device__ bool getHits(
   const int posLayers[4][85],
   VeloUTTracking::HitsSoA *hits_layers,
   const float* fudgeFactors, 
-  const VeloState& trState); 
+  const VeloState& trState,
+  const float* ut_dxDy); 
 
 __host__ __device__ bool formClusters(
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
@@ -67,6 +68,7 @@ __host__ __device__ bool formClusters(
   int hitCandidateIndices[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
   TrackHelper& helper,
+  const float* ut_dxDy,
   const bool forward);
 
 __host__ __device__ void prepareOutputTrack(
@@ -105,6 +107,7 @@ __host__ __device__ void findHits(
   VeloUTTracking::HitsSoA *hits_layers,
   const int layer_offset,
   const int i_layer,
+  const float* ut_dxDy,
   const VeloState& myState, 
   const float xTolNormFact,
   const float invNormFact,
@@ -125,16 +128,18 @@ __host__ __device__ void addHits(
   const int hitCandidateIndices[VeloUTTracking::n_layers],
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   VeloUTTracking::HitsSoA *hits_layers,
-  const int hitIndices[N] ) {
+  const int hitIndices[N],
+ const float* ut_dxDy) {
   
   for ( int i_hit = 0; i_hit < N; ++i_hit ) {
     const int hit_index = hitIndices[i_hit];
-    const int planeCode = hits_layers->planeCode(hit_index);
+    const int planeCode = hits_layers->planeCode[hit_index];
     const float ui = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
-    const float ci = hits_layers->cosT(hit_index);
-    const float z  = hits_layers->zAtYEq0( hit_index );
+    const float dxDy = ut_dxDy[planeCode];
+    const float ci = hits_layers->cosT(hit_index, dxDy);
+    const float z  = hits_layers->zAtYEq0[hit_index];
     const float dz = 0.001*(z - PrVeloUTConst::zMidUT);
-    const float wi = hits_layers->weight(hit_index);
+    const float wi = hits_layers->weight[hit_index];
 
     mat[0] += wi * ci;
     mat[1] += wi * ci * dz;
@@ -157,12 +162,12 @@ __host__ __device__ void addChi2s(
   
   for ( int i_hit = 0; i_hit < N; ++i_hit ) {
     const int hit_index = hitIndices[i_hit];
-    const int planeCode = hits_layers->planeCode(hit_index);
-    const float zd = hits_layers->zAtYEq0(hit_index);
+    const int planeCode = hits_layers->planeCode[hit_index];
+    const float zd = hits_layers->zAtYEq0[hit_index];
     const float xd = xUTFit + xSlopeUTFit*(zd-PrVeloUTConst::zMidUT);
     const float x  = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
     const float du = xd - x;
-    chi2 += (du*du)*hits_layers->weight(hit_index);
+    chi2 += (du*du)*hits_layers->weight[hit_index];
   }
 }
 
@@ -174,7 +179,7 @@ __host__ __device__ int countHitsWithHighThreshold(
 
   int nHighThres = 0;
   for ( int i_hit = 0; i_hit < N; ++i_hit ) {
-    nHighThres += hits_layers->highThreshold( hitIndices[i_hit] );
+    nHighThres += hits_layers->highThreshold[hitIndices[i_hit]];
   }
   return nHighThres;
 }
@@ -187,7 +192,8 @@ __host__ __device__ void simpleFit(
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   VeloUTTracking::HitsSoA *hits_layers,
   const int hitIndices[N],
-  TrackHelper& helper ) {
+  TrackHelper& helper,
+  const float* ut_dxDy) {
   assert( N==3||N==4 );
  
   const int nHighThres = countHitsWithHighThreshold<N>(hitIndices, hits_layers);
@@ -209,7 +215,7 @@ __host__ __device__ void simpleFit(
   float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
   
   // then add to sum values from hits on track
-  addHits<N>( mat, rhs, x_pos_layers, hitCandidateIndices, hitCandidatesInLayers, hits_layers, hitIndices );
+  addHits<N>( mat, rhs, x_pos_layers, hitCandidateIndices, hitCandidatesInLayers, hits_layers, hitIndices, ut_dxDy );
   
   const float denom       = 1. / (mat[0]*mat[2] - mat[1]*mat[1]);
   const float xSlopeUTFit = 0.001*(mat[0]*rhs[1] - mat[1]*rhs[0]) * denom;

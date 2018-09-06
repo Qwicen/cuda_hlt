@@ -10,6 +10,7 @@ int run_veloUT_on_CPU (
   std::vector<trackChecker::Tracks>& ut_tracks_events,
   VeloUTTracking::HitsSoA* hits_layers_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
+  const float * host_ut_dxDy,
   const VeloState* host_velo_states,
   const int* host_accumulated_tracks,
   const uint* host_velo_track_hit_number_pinned,
@@ -26,7 +27,7 @@ int run_veloUT_on_CPU (
   TTree *t_velo_states = new TTree("velo_states", "velo_states");
   TTree *t_track_hits = new TTree("track_hits", "track_hits");
   TTree *t_veloUT_tracks = new TTree("veloUT_tracks", "veloUT_tracks");
-  float cos, yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
+  float yBegin, yEnd, dxDy, zAtYEq0, xAtYEq0, weight;
   float x, y, tx, ty, chi2, z, drdz;
   unsigned int LHCbID;
   int highThreshold, layer;
@@ -36,7 +37,6 @@ int run_veloUT_on_CPU (
   float qop;
   
   
-  t_ut_hits->Branch("cos", &cos);
   t_ut_hits->Branch("yBegin", &yBegin);
   t_ut_hits->Branch("yEnd", &yEnd);
   t_ut_hits->Branch("dxDy", &dxDy);
@@ -88,35 +88,33 @@ int run_veloUT_on_CPU (
       
       // sort according to xAtyEq0
       find_permutation<float>( 
-        hits_layers.m_xAtYEq0,
+        hits_layers.xAtYEq0,
         layer_offset,
       	hit_permutations,
       	n_hits
       );
           
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_cos, hits_layers_sorted.m_cos );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_weight, hits_layers_sorted.m_weight );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_xAtYEq0, hits_layers_sorted.m_xAtYEq0 );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_yBegin, hits_layers_sorted.m_yBegin );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_yEnd, hits_layers_sorted.m_yEnd );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.m_zAtYEq0, hits_layers_sorted.m_zAtYEq0 );
-      apply_permutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers.m_LHCbID, hits_layers_sorted.m_LHCbID );
-      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_planeCode, hits_layers_sorted.m_planeCode );
-      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.m_highThreshold, hits_layers_sorted.m_highThreshold );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.weight, hits_layers_sorted.weight );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.xAtYEq0, hits_layers_sorted.xAtYEq0 );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.yBegin, hits_layers_sorted.yBegin );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.yEnd, hits_layers_sorted.yEnd );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.zAtYEq0, hits_layers_sorted.zAtYEq0 );
+      apply_permutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers.LHCbID, hits_layers_sorted.LHCbID );
+      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.planeCode, hits_layers_sorted.planeCode );
+      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.highThreshold, hits_layers_sorted.highThreshold );
        
      
 #ifdef WITH_ROOT
       for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
-	cos = hits_layers.m_cos[layer_offset + i_hit];
-	weight = hits_layers.m_weight[layer_offset + i_hit];
-	xAtYEq0 = hits_layers.m_xAtYEq0[layer_offset + i_hit];
-	yBegin = hits_layers.m_yBegin[layer_offset + i_hit];
-	yEnd = hits_layers.m_yEnd[layer_offset + i_hit];
-	zAtYEq0 = hits_layers.m_zAtYEq0[layer_offset + i_hit];
-	LHCbID = hits_layers.m_LHCbID[layer_offset + i_hit];
+	weight = hits_layers.weight[layer_offset + i_hit];
+	xAtYEq0 = hits_layers.xAtYEq0[layer_offset + i_hit];
+	yBegin = hits_layers.yBegin[layer_offset + i_hit];
+	yEnd = hits_layers.yEnd[layer_offset + i_hit];
+	zAtYEq0 = hits_layers.zAtYEq0[layer_offset + i_hit];
+	LHCbID = hits_layers.LHCbID[layer_offset + i_hit];
 	layer = i_layer;
-	highThreshold = hits_layers.m_highThreshold[layer_offset + i_hit];
-        dxDy = hits_layers.dxDy(layer_offset + i_hit);
+	highThreshold = hits_layers.highThreshold[layer_offset + i_hit];
+        dxDy = host_ut_dxDy[layer]; 
                 
 	t_ut_hits->Fill();
       }
@@ -175,12 +173,13 @@ int run_veloUT_on_CPU (
     VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks];
     call_PrVeloUT(
       host_velo_track_hit_number_pinned,
-      host_velo_track_hits_pinned,                                                       
+      host_velo_track_hits_pinned,                                                      
       host_number_of_tracks_pinned[i_event],
       host_accumulated_tracks[i_event],
       host_velo_states_event,
       &(hits_layers_sorted),
       host_ut_magnet_tool,
+      host_ut_dxDy,
       veloUT_tracks,
       n_velo_tracks_in_UT,
       n_veloUT_tracks_event
