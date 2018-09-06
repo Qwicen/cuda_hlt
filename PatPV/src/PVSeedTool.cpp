@@ -61,7 +61,7 @@ void getSeeds( VeloState * inputTracks,
 
 
 
-  double  zseeds[m_max_clusters];
+  double  zseeds[number_of_clusters];
 
   int number_final_clusters = findClusters(vclusters, zseeds, number_of_clusters);
 
@@ -86,7 +86,6 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
   }
 
   int counter_clusters = 0;
-  int counter_merges = -1;
 
 
   bool no_merges = false;
@@ -117,7 +116,7 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
         double chi2dist = zdist*zdist/(s1+s2);
         //merge if chi2dist is smaller than max
         if (chi2dist<m_maxChi2Merge ) {
-          no_merges = no_merges && false;
+          no_merges = false;
           double w_inv = (s1*s2/(s1+s2));
           double zmerge = w_inv*(z1/s1+z2/s2);
 
@@ -125,8 +124,7 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
           vclus[index_cluster].sigsq    = w_inv;
           vclus[index_cluster].sigsqmin = sigsqmin;
           vclus[index_cluster].ntracks += vclus[index_second_cluster].ntracks;
-          vclus[index_second_cluster].ntracks  = 0;  // mark second cluster as used
-          counter_merges++;
+          vclus[index_second_cluster].ntracks = 0;  // mark second cluster as used
 
           break;
         } 
@@ -138,7 +136,7 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
 
   int return_number_of_clusters = 0;
   //count final number of clusters
-   vtxCluster pvclus[number_of_clusters];
+  vtxCluster pvclus[number_of_clusters];
   for(int i = 0; i < number_of_clusters; i++) {
     if(vclus[i].ntracks != 0)     {pvclus[return_number_of_clusters] = vclus[i]; return_number_of_clusters++;}
   } 
