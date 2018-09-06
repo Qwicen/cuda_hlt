@@ -15,7 +15,7 @@
   // Fitting
   bool fitVertex( XYZPoint& seedPoint,
               VeloState * host_velo_states,
-             Vertex& vtx, int number_of_tracks, bool * tracks2disable) ;
+             Vertex& vtx, int number_of_tracks, bool * tracks2disable, bool * tracks2remove) ;
 
 
 

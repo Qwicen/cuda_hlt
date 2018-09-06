@@ -4,8 +4,8 @@
 
 #include "AdaptivePV3DFitter.h"
 
-//#include "../../PrVeloUT/include/CholeskyDecomp.h"
 
+//configuration
   size_t m_minTr = 4;
   int    m_Iterations = 20;
   int    m_minIter = 5;
@@ -26,7 +26,7 @@
 bool fitVertex( XYZPoint& seedPoint,
               VeloState * host_velo_states,
              Vertex& vtx,
-              int number_of_tracks, bool * tracks2disable) 
+              int number_of_tracks, bool * tracks2disable, bool * tracks2remove) 
 {
 
 
@@ -134,6 +134,7 @@ bool fitVertex( XYZPoint& seedPoint,
   bool converged = false;
   double maxdz = m_maxDeltaZ;
   int nbIter = 0;
+  int tracks_in_vertex = 0;
   while( (nbIter < m_minIter) || (!converged && nbIter < m_Iterations) )
   {
     ++nbIter;
@@ -277,7 +278,7 @@ bool fitVertex( XYZPoint& seedPoint,
     // loose convergence criteria if close to end of iterations
     if ( 1.*nbIter > 0.8*m_Iterations ) maxdz = 10.*m_maxDeltaZ;
     converged = std::abs(deltaz) < maxdz ;
-
+   tracks_in_vertex = ntrin;
   } // end iteration loop
   if(!converged) return false;
 
@@ -287,6 +288,20 @@ bool fitVertex( XYZPoint& seedPoint,
   vtx.setCovMatrix( vtxcov ) ;
   // Set tracks. Compute final chi2.
   vtx.clearTracks();
+
+
+
+
+/*
+  //radial cut against fakes?
+      double m_beamSpotRCut  = 0.6;
+    double m_beamSpotRCutHMC = 0.4;
+    int m_beamSpotRMT =  10;
+    std::cout << "tracks_in_vertex: " << tracks_in_vertex << std::endl;
+    double r2 = std::pow(vtxpos.x- 0.,2) + std::pow( vtxpos.y- 0.,2);
+       double r  = (  tracks_in_vertex <  m_beamSpotRMT ? m_beamSpotRCut : m_beamSpotRCutHMC );
+        if ( r2 > r*r ) return false;
+        */
 
 
 
@@ -327,11 +342,12 @@ bool fitVertex( XYZPoint& seedPoint,
       Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
       
-      double tr_chi2          = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
+      double tr_chi2          = res.x*res.x / m_state_c00 + res.y*res.y / m_state_c11;
 
 
       
-      if( tr_chi2 < m_trackMaxChi2Remove) tracks2disable[index] = true;
+      //if( tr_chi2 < m_trackMaxChi2Remove) tracks2disable[index] = true;
+      if( tr_chi2 < m_trackMaxChi2Remove) tracks2remove[index] = true;
    
   }
   
