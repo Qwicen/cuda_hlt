@@ -31,7 +31,7 @@
   double m_maxChi2Merge = 25.;
   double m_factorToIncreaseErrors = 15.;
 
-   //try parameters from RecoUpgradeTracking.p
+   //try parameters from RecoUpgradeTracking.py
    int    m_minClusterMult = 4;
     int    m_minCloseTracksInCluster = 3;
 
@@ -49,7 +49,10 @@
 
   double m_x0MS = 0.01;// X0 (tunable) of MS to add for extrapolation of
                                                        // track parameters to PV
-  double  m_scatCons = 0;     // calculated from m_x0MS
 
+  //don't forget to actually calcualte this!!
+  //double  m_scatCons = 0;     // calculated from m_x0MS
+  double X0 = m_x0MS;
+  double m_scatCons = (13.6*sqrt(X0)*(1.+0.038*log(X0)));
 
 #endif PATPV_PVSEEDTOOL_H // PATPV_PVSEEDTOOL_H
