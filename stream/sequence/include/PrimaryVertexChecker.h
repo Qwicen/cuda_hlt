@@ -1,3 +1,6 @@
+#ifndef PVCHECKER_H
+#define PVCHECKER_H
+
 #include "Common.h"
 
 #include "Tools.h"
@@ -10,6 +13,11 @@
 #include "TTree.h"
 #include <algorithm>
 
+
+ //configuration for PV checker -> check values
+int m_nTracksToBeRecble = 5;
+double m_dzIsolated = 10; //mm
+bool m_matchByTracks = false;
 
 
 struct MCVertex {
@@ -123,7 +131,6 @@ std::vector<MCPVInfo>::iterator closestMCPV(std::vector<MCPVInfo>& rblemcpv,
   return itret;
 }
 
-  //configuration for PV checker -> check values
-int m_nTracksToBeRecble = 5;
-double m_dzIsolated = 10; //mm
-bool m_matchByTracks = false;
+
+
+#endif PVCHECKER_H

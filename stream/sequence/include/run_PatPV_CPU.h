@@ -12,21 +12,9 @@
 #include "TTree.h"
 #include <algorithm>
 
-/*
-template <typename C>
-void removeTracks(std::vector< Track*>& tracks,
-                                  C& tracks2remove) 
-{
+void checkPVs(  const std::string& folder_name_MC,  const bool& fromNtuple, uint number_of_files, Vertex * rec_vertex, uint* number_of_vertex);
 
 
-  for( Track* trk : tracks2remove) {
-    auto i = std::find(tracks.begin(),tracks.end(), trk);
-    if ( i != tracks.end()) tracks.erase(i);
-  }
-
-
-}
-*/
 
 int run_PatPV_on_CPU (
   VeloState * host_velo_states,
@@ -40,4 +28,4 @@ int run_PatPV_on_CPU (
   
 );
 
-void checkPVs(  const std::string& folder_name_MC,  const bool& fromNtuple, uint number_of_files, Vertex * rec_vertex, uint* number_of_vertex);
+
