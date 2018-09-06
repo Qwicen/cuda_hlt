@@ -20,7 +20,6 @@ bool  multcomp( vtxCluster *first, vtxCluster *second ) {
 
 
 
-constexpr static const int s_p2mstatic = 5000;
 
 
 
@@ -31,7 +30,7 @@ void getSeeds( VeloState * inputTracks,
                      const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds, uint * number_of_seeds,  int event_number, bool * tracks2disable)  {
   
   
-  //if(inputTracks.size() < 3 ) return seeds;
+  
 
   vtxCluster  vclusters[number_of_tracks];
 
@@ -62,14 +61,13 @@ void getSeeds( VeloState * inputTracks,
 
 
 
- double  zseeds[m_max_clusters];
+  double  zseeds[m_max_clusters];
 
- int number_final_clusters = findClusters(vclusters, zseeds, number_of_clusters);
+  int number_final_clusters = findClusters(vclusters, zseeds, number_of_clusters);
 
-  for(int i = 0; i < number_final_clusters; i++) {
+  for(int i = 0; i < number_final_clusters; i++) seeds[event_number * PatPV::max_number_vertices + i] = XYZPoint{ beamspot.x, beamspot.y, zseeds[i]};
+  
 
-    seeds[event_number * PatPV::max_number_vertices + i] = XYZPoint{ beamspot.x, beamspot.y, zseeds[i]};
-  }
   number_of_seeds[event_number] = number_final_clusters;
 
 }
@@ -88,82 +86,65 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
   }
 
   int counter_clusters = 0;
-   int counter_merges = -1;
+  int counter_merges = -1;
 
 
   bool no_merges = false;
   while(!no_merges) {
 
-  no_merges = true;
-  for(int index_cluster = 0; index_cluster < number_of_clusters - 1; index_cluster++) {
-
-    //skip cluster which have already been merged
-    if(vclus[index_cluster].ntracks == 0) continue;
-
-
-    
-    for(int index_second_cluster = index_cluster + 1; index_second_cluster < number_of_clusters; index_second_cluster++){
-
-
+    no_merges = true;
+    for(int index_cluster = 0; index_cluster < number_of_clusters - 1; index_cluster++) {
 
       //skip cluster which have already been merged
-      if(vclus[index_second_cluster].ntracks == 0) continue;
-      double z1 = vclus[index_cluster].z;
-      double z2 = vclus[index_second_cluster].z;
-      double s1 = vclus[index_cluster].sigsq;
-      double s2 = vclus[index_second_cluster].sigsq;
-      double s1min = vclus[index_cluster].sigsqmin;
-      double s2min = vclus[index_second_cluster].sigsqmin;
-      double sigsqmin = s1min;
-      if(s2min<s1min) sigsqmin = s2min;
-
-
-      double zdist = z1 - z2;
-      double chi2dist = zdist*zdist/(s1+s2);
-      //merge if chi2dist is smaller than max
-      if (chi2dist<m_maxChi2Merge ) {
-        no_merges = no_merges && false;
-        double w_inv = (s1*s2/(s1+s2));
-        double zmerge = w_inv*(z1/s1+z2/s2);
-
-        vclus[index_cluster].z        = zmerge;
-        vclus[index_cluster].sigsq    = w_inv;
-        vclus[index_cluster].sigsqmin = sigsqmin;
-        vclus[index_cluster].ntracks += vclus[index_second_cluster].ntracks;
-        vclus[index_second_cluster].ntracks  = 0;  // mark second cluster as used
-        counter_merges++;
-
-        break;
-      }
+      if(vclus[index_cluster].ntracks == 0) continue;
 
 
       
-    }
-    
+      for(int index_second_cluster = index_cluster + 1; index_second_cluster < number_of_clusters; index_second_cluster++) {
+        //skip cluster which have already been merged
+        if(vclus[index_second_cluster].ntracks == 0) continue;
+        double z1 = vclus[index_cluster].z;
+        double z2 = vclus[index_second_cluster].z;
+        double s1 = vclus[index_cluster].sigsq;
+        double s2 = vclus[index_second_cluster].sigsq;
+        double s1min = vclus[index_cluster].sigsqmin;
+        double s2min = vclus[index_second_cluster].sigsqmin;
+        double sigsqmin = s1min;
+        if(s2min<s1min) sigsqmin = s2min;
 
-   }
-}
+
+        double zdist = z1 - z2;
+        double chi2dist = zdist*zdist/(s1+s2);
+        //merge if chi2dist is smaller than max
+        if (chi2dist<m_maxChi2Merge ) {
+          no_merges = no_merges && false;
+          double w_inv = (s1*s2/(s1+s2));
+          double zmerge = w_inv*(z1/s1+z2/s2);
+
+          vclus[index_cluster].z        = zmerge;
+          vclus[index_cluster].sigsq    = w_inv;
+          vclus[index_cluster].sigsqmin = sigsqmin;
+          vclus[index_cluster].ntracks += vclus[index_second_cluster].ntracks;
+          vclus[index_second_cluster].ntracks  = 0;  // mark second cluster as used
+          counter_merges++;
+
+          break;
+        } 
+      }
+    }
+  }
  
   
 
-
-  
   int return_number_of_clusters = 0;
   //count final number of clusters
-    vtxCluster pvclus[number_of_clusters];
+   vtxCluster pvclus[number_of_clusters];
   for(int i = 0; i < number_of_clusters; i++) {
     if(vclus[i].ntracks != 0)     {pvclus[return_number_of_clusters] = vclus[i]; return_number_of_clusters++;}
   } 
 
 
-//clean up clusters, do we gain much from this?
-
-
-
-
- std::cout << "number_of_clusters: " << number_of_clusters << std::endl;
-  std::cout << "return_number_of_clusters: " << return_number_of_clusters << std::endl;
-
+  //clean up clusters, do we gain much from this?
 
   // Select good clusters.
 
@@ -172,16 +153,13 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
   for(int index = 0; index < return_number_of_clusters; index++) {
 
     int n_tracks_close = 0;
-    for(int i = 0; i < number_of_clusters; i++) {
-      if(fabs(vclus[i].z - pvclus[index].z ) < m_dzCloseTracksInCluster ) n_tracks_close++; 
-    }
-//ivc = index, ivc1 = index2
+    for(int i = 0; i < number_of_clusters; i++) if(fabs(vclus[i].z - pvclus[index].z ) < m_dzCloseTracksInCluster ) n_tracks_close++;
+  
+
     double dist_to_closest = 1000000.;
     if(return_number_of_clusters > 1) {
       for(int index2 = 0; index2 < return_number_of_clusters; index2++) {
-  if( index!=index2 && ( fabs( pvclus[index2].z - pvclus[index].z) < dist_to_closest) ) {
-    dist_to_closest = fabs( pvclus[index2].z - pvclus[index].z);
-  }
+        if( index!=index2 && ( fabs( pvclus[index2].z - pvclus[index].z) < dist_to_closest) )  dist_to_closest = fabs( pvclus[index2].z - pvclus[index].z);
       }
     }
 
@@ -210,7 +188,7 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
 
 void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
-  // the seeding results depend weakly on this eror parametrization
+    // the seeding results depend weakly on this eror parametrization
 
     double pMean = 3000.; // unit: MeV
 
