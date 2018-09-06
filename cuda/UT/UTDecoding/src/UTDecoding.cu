@@ -20,6 +20,8 @@ __global__ void ut_calculate_number_of_hits (
 ) {
   const uint32_t number_of_events = gridDim.x;
   const uint32_t event_number = blockIdx.x;
+
+  // Note: Once the lgenfe error is fixed in CUDA, we can switch to char* and drop the "/ sizeof(uint32_t);"
   const uint32_t event_offset = dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
 
   // Note: Only in this algorithm, n_hit_layers is accessed by the shift event_number * VeloUTTracking::n_layers.

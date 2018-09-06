@@ -422,7 +422,7 @@ __host__ __device__ void fillIterators(
       float val = std::copysign(float(bound*bound)/2.0, bound);
       
       // TODO add bounds checking
-      for ( ; pos != n_hits_layers[layer]; ++pos) {
+      for ( ; pos != n_hits_layer; ++pos) {
         while( ut_hits.xAtYEq0(layer_offset + pos) > val){
           posLayers[layer][bound+42] = pos;
           ++bound;
@@ -434,7 +434,7 @@ __host__ __device__ void fillIterators(
         posLayers[layer],
         42 + bound,
         85 - 42 - bound,
-        n_hits_layers[layer]
+        n_hits_layer
       );
     }
   }

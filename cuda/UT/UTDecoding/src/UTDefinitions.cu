@@ -1,7 +1,6 @@
 #include "UTDefinitions.cuh"
 
 UTBoards::UTBoards(const std::vector<char> & ut_boards) {
-
   uint32_t * p = (uint32_t *) ut_boards.data();
   number_of_boards   = *p; p += 1;
   number_of_channels = ut_number_of_sectors_per_board * number_of_boards;
@@ -61,21 +60,21 @@ __device__ __host__ UTGeometry::UTGeometry(
 }
 
 __device__ __host__ UTRawBank::UTRawBank (
-  const uint32_t * ut_raw_bank
+  const char* ut_raw_bank
 ) {
-  uint32_t * p = (uint32_t *)ut_raw_bank;
-  sourceID       = *p;               p++;
-  number_of_hits = *p & 0x0000FFFFU; p++; 
+  uint32_t* p = (uint32_t*) ut_raw_bank;
+  sourceID       = *p;               p+=1;
+  number_of_hits = *p & 0x0000FFFFU; p+=1; 
   data           = (uint16_t*)p;
 }
 
 __device__ __host__ UTRawEvent::UTRawEvent (
   const uint32_t * ut_raw_event
 ) {
-  uint32_t * p = (uint32_t *) ut_raw_event;
+  uint32_t* p = (uint32_t *) ut_raw_event;
   number_of_raw_banks = *p; p += 1;
-  raw_bank_offsets    =  p; p += number_of_raw_banks + 1;
-  data                =  p;
+  raw_bank_offsets    =  p; p += number_of_raw_banks;
+  data                =  (char*) p;
 }
 
 __device__ __host__
@@ -86,7 +85,6 @@ UTRawBank UTRawEvent::getUTRawBank (
   UTRawBank raw_bank(data + offset);
   return raw_bank;
 }
-
 
 UTHit::UTHit(float    ut_cos,
              float    ut_yBegin,

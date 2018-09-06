@@ -25,7 +25,6 @@ struct UTBoards {
 };
 
 struct UTGeometry {
-  
   uint32_t number_of_sectors;
   uint32_t* firstStrip;
   float* pitch;
@@ -51,14 +50,14 @@ struct  UTRawBank {
   uint16_t* data;
 
   __device__ __host__ UTRawBank (
-    const uint32_t* ut_raw_bank
+    const char* ut_raw_bank
   );
 };
 
 struct  UTRawEvent {
   uint32_t number_of_raw_banks;
   uint32_t* raw_bank_offsets;
-  uint32_t* data;
+  char* data;
 
   __device__ __host__ UTRawEvent (
     const uint32_t* ut_raw_event
@@ -79,19 +78,6 @@ struct UTHit {
   uint32_t highThreshold;
   uint32_t LHCbID;
   uint32_t planeCode;
-
-  // int layer_offset[n_layers];
-  // int n_hits_layers[n_layers];
-  
-  // float m_cos[max_numhits_per_event];
-  // float m_yBegin[max_numhits_per_event];
-  // float m_yEnd[max_numhits_per_event];
-  // float m_zAtYEq0[max_numhits_per_event];
-  // float m_xAtYEq0[max_numhits_per_event];
-  // float m_weight[max_numhits_per_event];
-  // int   m_highThreshold[max_numhits_per_event];
-  // unsigned int m_LHCbID[max_numhits_per_event];
-  // int m_planeCode[max_numhits_per_event];
 
   UTHit() = default;
 
