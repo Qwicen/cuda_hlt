@@ -6,17 +6,17 @@
 
 
 //configuration
-  size_t m_minTr = 4;
-  int    m_Iterations = 20;
-  int    m_minIter = 5;
-  double m_maxDeltaZ = 0.0005; // unit:: mm
-  double m_minTrackWeight = 0.00000001;
-  double m_TrackErrorScaleFactor = 1.0;
-  double m_maxChi2 = 400.0;
-  double m_trackMaxChi2 = 12.;
-  double m_trackChi = std::sqrt(m_trackMaxChi2);     // sqrt of trackMaxChi2
-  double m_trackMaxChi2Remove = 25.;
-  double m_maxDeltaZCache = 1.; //unit: mm
+size_t m_minTr = 4;
+int    m_Iterations = 20;
+int    m_minIter = 5;
+double m_maxDeltaZ = 0.0005; // unit:: mm
+double m_minTrackWeight = 0.00000001;
+double m_TrackErrorScaleFactor = 1.0;
+double m_maxChi2 = 400.0;
+double m_trackMaxChi2 = 12.;
+double m_trackChi = std::sqrt(m_trackMaxChi2);     // sqrt of trackMaxChi2
+double m_trackMaxChi2Remove = 25.;
+double m_maxDeltaZCache = 1.; //unit: mm
 
 
 
@@ -51,92 +51,87 @@ bool fitVertex( XYZPoint& seedPoint,
 
 
   // position at which derivatives are evaluated
+
   XYZPoint vtxpos = seedPoint ;
 
   // prepare tracks
  
 
   int pvTrack_counter = 0;
-  //for( const auto& track : rTracks ) {
+
   for(int index = 0; index < number_of_tracks; index++) {  
     //don't use disabled tracks
     if(tracks2disable[index]) continue;
 
     double new_z = vtxpos.z;
 
+    double m_state_x = host_velo_states[index].x;
+    double m_state_y = host_velo_states[index].y;
+    double m_state_z = host_velo_states[index].z;
+
+    double m_state_tx = host_velo_states[index].tx;
+    double m_state_ty = host_velo_states[index].ty;
+
+    double m_state_c00 = host_velo_states[index].c00;
+    double m_state_c11 = host_velo_states[index].c11;
+    double m_state_c20 = host_velo_states[index].c20;
+    double m_state_c22 = host_velo_states[index].c22;
+    double m_state_c31 = host_velo_states[index].c31;
+    double m_state_c33 = host_velo_states[index].c33;
+
+    const double dz = new_z - m_state_z ;
+    const double dz2 = dz*dz ;
+
+    m_state_x += dz * m_state_tx ;
+    m_state_y += dz * m_state_ty ;
+    m_state_z = new_z;
+    m_state_c00 += dz2 * m_state_c22 + 2*dz* m_state_c20 ;
+    m_state_c20 += dz* m_state_c22 ;
+    m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
+    m_state_c31 += dz* m_state_c33 ;
+
+    Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
+
+
+    double  tr_chi2 = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
       
 
-      double m_state_x = host_velo_states[index].x;
-      double m_state_y = host_velo_states[index].y;
-      double m_state_z = host_velo_states[index].z;
 
-      double m_state_tx = host_velo_states[index].tx;
-      double m_state_ty = host_velo_states[index].ty;
+    if(tr_chi2 < m_maxChi2) {
 
-      double m_state_c00 = host_velo_states[index].c00;
-      double m_state_c11 = host_velo_states[index].c11;
-      double m_state_c20 = host_velo_states[index].c20;
-      double m_state_c22 = host_velo_states[index].c22;
-      double m_state_c31 = host_velo_states[index].c31;
-      double m_state_c33 = host_velo_states[index].c33;
+      tr_state_x[pvTrack_counter] = host_velo_states[index].x;
+      tr_state_y[pvTrack_counter] = host_velo_states[index].y;
+      tr_state_z[pvTrack_counter] = host_velo_states[index].z;
 
-      const double dz = new_z - m_state_z ;
-      const double dz2 = dz*dz ;
+      tr_state_tx[pvTrack_counter] = host_velo_states[index].tx;
+      tr_state_ty[pvTrack_counter] = host_velo_states[index].ty;
 
-      m_state_x += dz * m_state_tx ;
-      m_state_y += dz * m_state_ty ;
-      m_state_z = new_z;
-      m_state_c00 += dz2 * m_state_c22 + 2*dz* m_state_c20 ;
-      m_state_c20 += dz* m_state_c22 ;
-      m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
-      m_state_c31 += dz* m_state_c33 ;
+      tr_state_c00[pvTrack_counter] = host_velo_states[index].c00;
+      tr_state_c11[pvTrack_counter] = host_velo_states[index].c11;
+      tr_state_c20[pvTrack_counter] = host_velo_states[index].c20;
+      tr_state_c22[pvTrack_counter] = host_velo_states[index].c22;
+      tr_state_c31[pvTrack_counter] = host_velo_states[index].c31;
+      tr_state_c33[pvTrack_counter] = host_velo_states[index].c33;
 
-      Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
-
-      
-      double  tr_chi2 = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
-      
-
-      
-      if(tr_chi2 < m_maxChi2) {
-
-        tr_state_x[pvTrack_counter] = host_velo_states[index].x;
-        tr_state_y[pvTrack_counter] = host_velo_states[index].y;
-        tr_state_z[pvTrack_counter] = host_velo_states[index].z;
-
-        tr_state_tx[pvTrack_counter] = host_velo_states[index].tx;
-        tr_state_ty[pvTrack_counter] = host_velo_states[index].ty;
-
-        tr_state_c00[pvTrack_counter] = host_velo_states[index].c00;
-        tr_state_c11[pvTrack_counter] = host_velo_states[index].c11;
-        tr_state_c20[pvTrack_counter] = host_velo_states[index].c20;
-        tr_state_c22[pvTrack_counter] = host_velo_states[index].c22;
-        tr_state_c31[pvTrack_counter] = host_velo_states[index].c31;
-        tr_state_c33[pvTrack_counter] = host_velo_states[index].c33;
-
-        pvTrack_counter++;
-      }
+      pvTrack_counter++;
+    }
 
       
   }
     
 
   if( pvTrack_counter < m_minTr ) {
-
     std::cout << "Too few tracks to fit PV" << std::endl;
     return false;
-    }
+  }
 
-  // current vertex position
-  //XYZPoint vtxpos = refpos ;
-  // vertex covariance matrix
+
   double vtxcov[6] ;
   bool converged = false;
   double maxdz = m_maxDeltaZ;
   int nbIter = 0;
   int tracks_in_vertex = 0;
-  while( (nbIter < m_minIter) || (!converged && nbIter < m_Iterations) )
-  {
+  while( (nbIter < m_minIter) || (!converged && nbIter < m_Iterations) ) {
     ++nbIter;
 
     double halfD2Chi2DX2_00 = 0.;
@@ -225,7 +220,6 @@ bool fitVertex( XYZPoint& seedPoint,
       }
     }
     
-
     // check nr of tracks that entered the fit
     if(ntrin < m_minTr) {
       std::cout << "Too few tracks after PV fit" << std::endl;
@@ -278,8 +272,9 @@ bool fitVertex( XYZPoint& seedPoint,
     // loose convergence criteria if close to end of iterations
     if ( 1.*nbIter > 0.8*m_Iterations ) maxdz = 10.*m_maxDeltaZ;
     converged = std::abs(deltaz) < maxdz ;
-   tracks_in_vertex = ntrin;
+    tracks_in_vertex = ntrin;
   } // end iteration loop
+
   if(!converged) return false;
 
   
@@ -306,48 +301,45 @@ bool fitVertex( XYZPoint& seedPoint,
 
 
   //disable tracks added to this vertex
-    for(int index = 0; index < number_of_tracks; index++) {  
-      //don't use disabled tracks
-      if(tracks2disable[index]) continue;
+  for(int index = 0; index < number_of_tracks; index++) {
+    //don't use disabled tracks
+    if(tracks2disable[index]) continue;
 
-      double new_z = vtxpos.z;
-
-      
-
-      double m_state_x = host_velo_states[index].x;
-      double m_state_y = host_velo_states[index].y;
-      double m_state_z = host_velo_states[index].z;
-
-      double m_state_tx = host_velo_states[index].tx;
-      double m_state_ty = host_velo_states[index].ty;
-
-      double m_state_c00 = host_velo_states[index].c00;
-      double m_state_c11 = host_velo_states[index].c11;
-      double m_state_c20 = host_velo_states[index].c20;
-      double m_state_c22 = host_velo_states[index].c22;
-      double m_state_c31 = host_velo_states[index].c31;
-      double m_state_c33 = host_velo_states[index].c33;
-
-      const double dz = new_z - m_state_z ;
-      const double dz2 = dz*dz ;
-
-      m_state_x += dz * m_state_tx ;
-      m_state_y += dz * m_state_ty ;
-      m_state_z = new_z;
-      m_state_c00 += dz2 * m_state_c22 + 2*dz* m_state_c20 ;
-      m_state_c20 += dz* m_state_c22 ;
-      m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
-      m_state_c31 += dz* m_state_c33 ;
-
-      Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
-
-      
-      double tr_chi2          = res.x*res.x / m_state_c00 + res.y*res.y / m_state_c11;
+    double new_z = vtxpos.z;
 
 
-      
-      //if( tr_chi2 < m_trackMaxChi2Remove) tracks2disable[index] = true;
-      if( tr_chi2 < m_trackMaxChi2Remove) tracks2remove[index] = true;
+    double m_state_x = host_velo_states[index].x;
+    double m_state_y = host_velo_states[index].y;
+    double m_state_z = host_velo_states[index].z;
+
+    double m_state_tx = host_velo_states[index].tx;
+    double m_state_ty = host_velo_states[index].ty;
+
+    double m_state_c00 = host_velo_states[index].c00;
+    double m_state_c11 = host_velo_states[index].c11;
+    double m_state_c20 = host_velo_states[index].c20;
+    double m_state_c22 = host_velo_states[index].c22;
+    double m_state_c31 = host_velo_states[index].c31;
+    double m_state_c33 = host_velo_states[index].c33;
+
+    const double dz = new_z - m_state_z ;
+    const double dz2 = dz*dz ;
+
+    m_state_x += dz * m_state_tx ;
+    m_state_y += dz * m_state_ty ;
+    m_state_z = new_z;
+    m_state_c00 += dz2 * m_state_c22 + 2*dz* m_state_c20 ;
+    m_state_c20 += dz* m_state_c22 ;
+    m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
+    m_state_c31 += dz* m_state_c33 ;
+
+    Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
+
+    double tr_chi2          = res.x*res.x / m_state_c00 + res.y*res.y / m_state_c11;
+
+
+    //if( tr_chi2 < m_trackMaxChi2Remove) tracks2disable[index] = true;
+    if( tr_chi2 < m_trackMaxChi2Remove) tracks2remove[index] = true;
    
   }
   

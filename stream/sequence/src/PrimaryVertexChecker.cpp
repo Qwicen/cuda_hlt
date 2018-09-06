@@ -342,7 +342,7 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
 
 
 
-
+  std::cout.precision(4);
   std::cout << " ============================================" << std::endl;
   std::cout << " Efficiencies for reconstructible MC vertices: " << std::endl;
   std::cout << " ============================================" << std::endl;
