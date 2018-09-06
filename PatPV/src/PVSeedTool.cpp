@@ -150,25 +150,19 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
   
   int return_number_of_clusters = 0;
   //count final number of clusters
+    vtxCluster pvclus[number_of_clusters];
   for(int i = 0; i < number_of_clusters; i++) {
-    if(vclus[i].ntracks != 0)     return_number_of_clusters++;
+    if(vclus[i].ntracks != 0)     {pvclus[return_number_of_clusters] = vclus[i]; return_number_of_clusters++;}
   } 
-  /*
-  for(int i = 0; i < number_of_clusters; i++) {
-    if(vclus[i].ntracks != 0)    {zclusters[return_number_of_clusters] = vclus[i].z; return_number_of_clusters++;}
-  } 
-*/
+
 
 //clean up clusters, do we gain much from this?
-  vtxCluster pvclus[return_number_of_clusters];
-  int counter = 0;
-  for(int i = 0; i < number_of_clusters; i++) {
-    if(vclus[i].ntracks != 0)    {pvclus[counter] = vclus[i]; counter++;}
-  } 
 
 
 
 
+ std::cout << "number_of_clusters: " << number_of_clusters << std::endl;
+  std::cout << "return_number_of_clusters: " << return_number_of_clusters << std::endl;
 
 
   // Select good clusters.
