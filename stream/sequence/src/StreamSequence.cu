@@ -484,6 +484,10 @@ cudaError_t Stream::run_sequence(
           trackType
         );
       
+        // Note: Disabled, as the input to execute this algorithm
+        //       is not existent at this point anymore (it would require
+        //       running the reco again).
+        // 
         // /* Run VeloUT on x86 architecture */
         // if ( run_on_x86 ) {
         //   std::vector<trackChecker::Tracks> ut_tracks_events;
