@@ -12,6 +12,12 @@ std::vector<char> GeometryReader::read_geometry(const std::string& filename) {
   return geometry;
 }
 
+std::vector<char> UTMagnetToolReader::read_UT_magnet_tool() {
+  std::vector<char> ut_magnet_tool;
+  ::read_UT_magnet_tool(folder_name, ut_magnet_tool);
+  return ut_magnet_tool;
+}
+
 void EventReader::read_events(uint number_of_files, uint start_event_offset) {
   std::vector<char> events;
   std::vector<uint> event_offsets;

@@ -16,8 +16,6 @@
 #include "VeloDefinitions.cuh"
 #include "ClusteringDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
-#include "PrVeloUTMagnetToolDefinitions.cuh"
-#include "PrVeloUTDefinitions.cuh"
 #include "Tracks.h"
 #include "InputTools.h"
 #include "velopix-input-reader.h"

@@ -13,7 +13,6 @@ cudaError_t Stream::run_sequence(
   const uint* host_ut_event_offsets,
   const size_t host_ut_events_size,
   const size_t host_ut_event_offsets_size,
-  const PrUTMagnetTool* host_ut_magnet_tool,
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -488,10 +487,28 @@ cudaError_t Stream::run_sequence(
         // /* Run VeloUT on x86 architecture */
         // if ( run_on_x86 ) {
         //   std::vector<trackChecker::Tracks> ut_tracks_events;
+
+        //   std::vector<uint> ut_hit_count (2 * number_of_events * VeloUTTracking::n_layers + 1);
+        //   std::vector<uint> ut_hits (10 * host_accumulated_number_of_ut_hits[0]);
+
+        //   cudaCheck(cudaMemcpyAsync(ut_hit_count.data(),
+        //     argen.generate<arg::dev_ut_hit_count>(argument_offsets),
+        //     argen.size<arg::dev_ut_hit_count>(ut_hit_count.size()),
+        //     cudaMemcpyDeviceToHost,
+        //     stream
+        //   ));
+
+        //   cudaCheck(cudaMemcpyAsync(ut_hits.data(),
+        //     argen.generate<arg::dev_ut_hits>(argument_offsets),
+        //     argen.size<arg::dev_ut_hits>(ut_hit_count.size()),
+        //     cudaMemcpyDeviceToHost,
+        //     stream
+        //   ));
         
         //   int rv = run_veloUT_on_CPU(
         //              ut_tracks_events,
-        //              host_ut_hits_events,
+        //              ut_hits,
+        //              ut_hit_count,
         //              host_ut_magnet_tool,
         //              host_velo_states,
         //              host_accumulated_tracks,

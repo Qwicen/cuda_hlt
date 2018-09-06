@@ -16,7 +16,7 @@
 
 #include "VeloUTDefinitions.cuh"
 #include "PrVeloUTDefinitions.cuh"
-#include "PrVeloUTMagnetToolDefinitions.cuh"
+#include "PrVeloUTMagnetToolDefinitions.h"
 #include "VeloDefinitions.cuh"
 #include "UTDefinitions.cuh"
 

@@ -11,8 +11,6 @@
    *  2018-07:    Dorothea vom Bruch (convert to C code for GPU compatability)
 
  */
-
-
 struct PrUTMagnetTool {
   static const int N_dxLay_vals = 124;
   static const int N_bdl_vals   = 3752;
@@ -32,5 +30,4 @@ struct PrUTMagnetTool {
       bdlTable[i] = _bdlTable[i];
     }
   }
- 
 };

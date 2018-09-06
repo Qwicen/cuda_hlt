@@ -152,3 +152,47 @@ void read_geometry(
   }
   readFileIntoVector(filename, geometry);
 }
+
+/**
+ * @brief Reads the UT magnet tool.
+ */
+void read_UT_magnet_tool(
+  const std::string& folder_name,
+  std::vector<char>& ut_magnet_tool
+) {
+  ut_magnet_tool.resize(sizeof(PrUTMagnetTool));
+  PrUTMagnetTool* pr_ut_magnet_tool = (PrUTMagnetTool*) ut_magnet_tool.data();
+
+  //load the deflection and Bdl values from a text file
+  std::ifstream deflectionfile;
+  std::string filename = folder_name + "/deflection.txt";
+  if (!exists_test(filename)) {
+    throw StrException("Deflection table file could not be found: " + filename);
+  }
+  deflectionfile.open(filename);
+  if (deflectionfile.is_open()) {
+    int i = 0;
+    float deflection;
+    while (!deflectionfile.eof()) {
+      deflectionfile >> deflection;
+      assert( i < PrUTMagnetTool::N_dxLay_vals );
+      pr_ut_magnet_tool->dxLayTable[i++] = deflection;
+    }
+  }
+  
+  std::ifstream bdlfile;
+  filename = folder_name + "/bdl.txt";
+  if (!exists_test(filename)) {
+    throw StrException("Bdl table file could not be found: " + filename);
+  }
+  bdlfile.open(filename);
+  if (bdlfile.is_open()) {
+    int i = 0;
+    float bdl;
+    while (!bdlfile.eof()) {
+      bdlfile >> bdl;
+      assert( i < PrUTMagnetTool::N_bdl_vals );
+      pr_ut_magnet_tool->bdlTable[i++] = bdl;
+    }
+  }
+}

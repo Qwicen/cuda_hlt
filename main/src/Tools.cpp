@@ -85,41 +85,6 @@ bool check_velopix_events(
 //   debug_cout << "average # of UT hits / event = " << average_number_of_hits_per_event << std::endl;
 // }
 
-void read_UT_magnet_tool( PrUTMagnetTool* host_ut_magnet_tool ) {
-  //load the deflection and Bdl values from a text file
-  std::ifstream deflectionfile;
-  std::string filename = "../integration_with_LHCb_framework/PrUTMagnetTool/deflection.txt";
-  if (!exists_test(filename)) {
-    throw StrException("Deflection table file could not be found: " + filename);
-  }
-  deflectionfile.open(filename);
-  if (deflectionfile.is_open()) {
-    int i = 0;
-    float deflection;
-    while (!deflectionfile.eof()) {
-      deflectionfile >> deflection;
-      assert( i < PrUTMagnetTool::N_dxLay_vals );
-      host_ut_magnet_tool->dxLayTable[i++] = deflection;
-    }
-  }
-  
-  std::ifstream bdlfile;
-  filename = "../integration_with_LHCb_framework/PrUTMagnetTool/bdl.txt";
-  if (!exists_test(filename)) {
-    throw StrException("Bdl table file could not be found: " + filename);
-  }
-  bdlfile.open(filename);
-  if (bdlfile.is_open()) {
-    int i = 0;
-    float bdl;
-    while (!bdlfile.eof()) {
-      bdlfile >> bdl;
-      assert( i < PrUTMagnetTool::N_bdl_vals );
-      host_ut_magnet_tool->bdlTable[i++] = bdl;
-    }
-  }
-}
-
 /**
  * @brief Obtains results statistics.
  */

@@ -9,17 +9,12 @@
 // 2018-07:    Dorothea vom Bruch (convert to C and then CUDA code)
 //-----------------------------------------------------------------------------
 
-
 // -- These things are all hardcopied from the PrTableForFunction
 // -- and PrUTMagnetTool
 // -- If the granularity or whatever changes, this will give wrong results
-
-  __host__ __device__ int masterIndex(const int index1, const int index2, const int index3){
-    return (index3*11 + index2)*31 + index1;
-  }
-
- 
-
+__host__ __device__ int masterIndex(const int index1, const int index2, const int index3){
+  return (index3*11 + index2)*31 + index1;
+}
 
 //=============================================================================
 // Reject tracks outside of acceptance or pointing to the beam pipe
@@ -112,8 +107,10 @@ __host__ __device__ bool getHits(
       size_t posBeg = posLayers[layer][ indexLow ];
       size_t posEnd = posLayers[layer][ indexHi  ];
 
-      while ( (ut_hits.xAtYEq0(layer_offset + posBeg) < lowerBoundX) && (posBeg != n_hits_layers[layer] ) )
-	++posBeg;
+      while ( (ut_hits.xAtYEq0(layer_offset + posBeg) < lowerBoundX) && (posBeg != n_hits_layers[layer] ) ) {
+        ++posBeg;
+      }
+      
       if (posBeg == n_hits_layers[layer]) continue;
 
       findHits(posBeg, posEnd,

@@ -23,6 +23,15 @@ struct GeometryReader : public Reader {
   std::vector<char> read_geometry(const std::string& filename);
 };
 
+struct UTMagnetToolReader : public Reader {
+  UTMagnetToolReader(const std::string& folder_name) : Reader(folder_name) {}
+
+  /**
+   * @brief Reads the UT magnet tool from the specified folder.
+   */
+  std::vector<char> read_UT_magnet_tool();
+};
+
 struct EventReader : public Reader {
   char* host_events;
   uint* host_event_offsets;

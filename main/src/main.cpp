@@ -34,7 +34,7 @@ void printUsage(char* argv[]){
     << argv[0]
     << std::endl << " -f {folder containing .bin files with raw bank information}"
     << std::endl << " -u {folder containing bin files with UT raw bank information}"
-    << std::endl << " -g {folder containing geometry descriptions}"
+    << std::endl << " -g {folder containing detector configuration}"
     << std::endl << (mc_check_enabled ? " " : " [") << "-d {folder containing .bin files with MC truth information}"
     << (mc_check_enabled ? "" : "]")
     << std::endl << " -n {number of events to process}=0 (all)"
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
   std::string folder_name_velopix_raw;
   std::string folder_name_UT_raw = "";
   std::string folder_name_MC = "";
-  std::string folder_name_geometry = "";
+  std::string folder_name_detector_configuration = "";
   uint number_of_files = 0;
   uint start_event_offset = 0;
   uint tbb_threads = 1;
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
       folder_name_UT_raw = std::string(optarg);
       break;
     case 'g':
-      folder_name_geometry = std::string(optarg);
+      folder_name_detector_configuration = std::string(optarg);
       break;
     case 'm':
       reserve_mb = atoi(optarg);
@@ -128,12 +128,12 @@ int main(int argc, char *argv[])
 
   // Options sanity check
   if (folder_name_velopix_raw.empty() || folder_name_UT_raw.empty() ||
-    folder_name_geometry.empty() || (folder_name_MC.empty() && mc_check_enabled)) {
+    folder_name_detector_configuration.empty() || (folder_name_MC.empty() && mc_check_enabled)) {
     std::string missing_folder = "";
 
     if (folder_name_velopix_raw.empty()) missing_folder = "velopix raw events";
     else if (folder_name_UT_raw.empty()) missing_folder = "UT raw events";
-    else if (folder_name_geometry.empty()) missing_folder = "detector geometry";
+    else if (folder_name_detector_configuration.empty()) missing_folder = "detector geometry";
     else if (folder_name_MC.empty() && mc_check_enabled) missing_folder = "Monte Carlo";
 
     error_cout << "No folder for " << missing_folder << " specified" << std::endl;
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
   std::cout << "Requested options:" << std::endl
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
     << " folder with UT raw bank input (-u): " << folder_name_UT_raw << std::endl
-    << " folder with geometry input (-g): " << folder_name_geometry << std::endl
+    << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " start event offset (-o): " << start_event_offset << std::endl
@@ -177,19 +177,17 @@ int main(int argc, char *argv[])
   // Read all inputs
   info_cout << "Reading input datatypes" << std::endl;
 
-  auto geometry_reader = GeometryReader(folder_name_geometry);
+  auto geometry_reader = GeometryReader(folder_name_detector_configuration);
+  auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
   auto velo_reader = VeloReader(folder_name_velopix_raw);
   auto ut_reader = EventReader(folder_name_UT_raw);
   
   std::vector<char> velo_geometry = geometry_reader.read_geometry("velo_geometry.bin");
   std::vector<char> ut_boards = geometry_reader.read_geometry("ut_boards.bin");
   std::vector<char> ut_geometry = geometry_reader.read_geometry("ut_geometry.bin");
+  std::vector<char> ut_magnet_tool = ut_magnet_tool_reader.read_UT_magnet_tool();
   velo_reader.read_events(number_of_files, start_event_offset);
   ut_reader.read_events(number_of_files, start_event_offset);
-
-  // Read LUTs from PrUTMagnetTool
-  PrUTMagnetTool ut_magnet_tool;
-  read_UT_magnet_tool(&ut_magnet_tool);
 
   info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
   
@@ -204,7 +202,7 @@ int main(int argc, char *argv[])
     velo_geometry,
     ut_boards,
     ut_geometry,
-    &ut_magnet_tool,
+    ut_magnet_tool,
     number_of_files,
     transmit_device_to_host,
     do_check,
@@ -233,7 +231,6 @@ int main(int argc, char *argv[])
         ut_reader.host_event_offsets,
         ut_reader.host_events_size,
         ut_reader.host_event_offsets_size,
-        &ut_magnet_tool,
         number_of_files,
         number_of_repetitions
       );

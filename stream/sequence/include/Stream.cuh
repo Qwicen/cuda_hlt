@@ -13,7 +13,7 @@
 #include "Tools.h"
 #include "BaseDynamicScheduler.cuh"
 #include "SequenceSetup.cuh"
-#include "PrVeloUTMagnetToolDefinitions.cuh"
+#include "PrVeloUTMagnetToolDefinitions.h"
 #include "Constants.cuh"
 
 #include "run_VeloUT_CPU.h"
@@ -85,7 +85,7 @@ struct Stream {
     const std::vector<char>& velopix_geometry,
     const std::vector<char>& ut_boards,
     const std::vector<char>& ut_geometry,
-    const PrUTMagnetTool* host_ut_magnet_tool,
+    const std::vector<char>& ut_magnet_tool,
     const uint max_number_of_events,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
@@ -109,7 +109,6 @@ struct Stream {
     const uint* host_ut_event_offsets,
     const size_t host_ut_events_size,
     const size_t host_ut_event_offsets_size,
-    const PrUTMagnetTool* host_ut_magnet_tool,
     const uint number_of_events,
     const uint number_of_repetitions
   );

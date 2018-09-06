@@ -2,7 +2,7 @@
 
 #include "VeloDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
-#include "PrVeloUTMagnetToolDefinitions.cuh"
+#include "PrVeloUTMagnetToolDefinitions.h"
 #include "PrVeloUT.cuh"
 
 __global__ void veloUT(

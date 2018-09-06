@@ -2,6 +2,7 @@
 
 #include <dirent.h>
 #include <stdint.h>
+#include <cassert>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -13,6 +14,8 @@
 #include <cmath>
 #include "Logger.h"
 #include "Common.h"
+#include "PrVeloUTMagnetToolDefinitions.h"
+// #include "PrVeloUTDefinitions.cuh"
 
 bool exists_test(
   const std::string& name
@@ -49,4 +52,9 @@ void read_folder(
 void read_geometry(
   const std::string& foldername,
   std::vector<char>& geometry
+);
+
+void read_UT_magnet_tool(
+  const std::string& folder_name,
+  std::vector<char>& ut_magnet_tool
 );
