@@ -65,7 +65,6 @@ __global__ void decode_raw_banks (
   uint32_t* __restrict__ dev_ut_hit_count
 ) {
   const uint32_t number_of_events = gridDim.x;
-  const uint32_t tid          = threadIdx.x;
   const uint32_t event_number = blockIdx.x;
   const uint32_t event_offset = dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
   const uint32_t* layer_offset = dev_ut_hit_count + event_number * VeloUTTracking::n_layers;
@@ -85,7 +84,6 @@ __global__ void decode_raw_banks (
   }
 
   const UTRawEvent raw_event(dev_ut_raw_input + event_offset);
-  if (tid >= raw_event.number_of_raw_banks) return;
 
   const uint32_t m_offset[12] = {0, 84, 164, 248, 332, 412, 496, 594, 674, 772, 870, 950};
   const UTBoards boards(ut_boards);
@@ -94,11 +92,11 @@ __global__ void decode_raw_banks (
   // Due to layer_offset and n_hits_layers initialization
   __syncthreads();
 
-  for (uint32_t raw_bank_index = tid; raw_bank_index < raw_event.number_of_raw_banks; raw_bank_index += blockDim.x) {
+  for (uint32_t raw_bank_index = threadIdx.x; raw_bank_index < raw_event.number_of_raw_banks; raw_bank_index += blockDim.x) {
     UTRawBank raw_bank = raw_event.getUTRawBank(raw_bank_index);
     const uint32_t m_nStripsPerHybrid = boards.stripsPerHybrids[raw_bank.sourceID];
 
-    for (uint32_t i = 0; i < raw_bank.number_of_hits; ++i) {
+    for (uint32_t i = threadIdx.y; i < raw_bank.number_of_hits; i+=blockDim.y) {
       // Extract values from raw_data
       const uint16_t value     = raw_bank.data[i];
       const uint32_t fracStrip = (value & frac_mask) >> frac_offset;

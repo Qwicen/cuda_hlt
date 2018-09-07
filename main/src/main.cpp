@@ -154,22 +154,18 @@ int main(int argc, char *argv[])
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
     << " folder with UT raw bank input (-u): " << folder_name_UT_raw << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
-    << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " start event offset (-o): " << start_event_offset << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
     << " transmit device to host (-b): " << transmit_device_to_host << std::endl
-    << " run checkers (-c): " << do_check << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
     << " run algorithms on x86 architecture as well (-x): " << run_on_x86 << std::endl
     << " print memory usage (-p): " << print_memory_usage << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
-    << std::endl;
-
-  std::cout << "MC check (compile opt): " << (mc_check_enabled ? "On" : "Off") << std::endl
+    << " MC check (compile opt): " << (mc_check_enabled ? "On" : "Off") << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " run checkers (-c): " << do_check << std::endl
     << std::endl;

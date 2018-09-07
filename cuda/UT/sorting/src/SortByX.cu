@@ -17,34 +17,40 @@ __global__ void sort_by_x(
   unsorted_ut_hits.typecast_unsorted(dev_ut_hits, dev_ut_hit_count[number_of_events * VeloUTTracking::n_layers]);
   sorted_ut_hits.typecast_sorted(dev_ut_hits, dev_ut_hit_count[number_of_events * VeloUTTracking::n_layers]);
 
+  uint total_number_of_hits = 0;
   for (int i_layer=0; i_layer<VeloUTTracking::n_layers; ++i_layer) {
     const uint layer_offset = layer_offsets[i_layer];
     const uint n_hits_layer = n_hits_layers[i_layer];
+    total_number_of_hits += n_hits_layer;
 
-    for (int j=threadIdx.x; j<n_hits_layers[i_layer]; j+=blockDim.x) {
-      dev_hit_permutations[layer_offset + j] = 0;
-    }
-
-    __syncthreads();
-    
     find_permutation<float>( 
-        unsorted_ut_hits.m_xAtYEq0,
-        layer_offset,
-      	dev_hit_permutations,
-      	n_hits_layer
-      );
-
-    __syncthreads();
-
-    // Important note: Order matters, and should be kept as is
-    apply_permutation<uint>( dev_hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.m_planeCode, sorted_ut_hits.m_planeCode );
-    apply_permutation<uint>( dev_hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.m_LHCbID, sorted_ut_hits.m_LHCbID );
-    apply_permutation<uint>( dev_hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.m_highThreshold, sorted_ut_hits.m_highThreshold );
-    apply_permutation<float>( dev_hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.m_weight, sorted_ut_hits.m_weight );
-    apply_permutation<float>( dev_hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.m_xAtYEq0, sorted_ut_hits.m_xAtYEq0 );
-    apply_permutation<float>( dev_hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.m_zAtYEq0, sorted_ut_hits.m_zAtYEq0 );
-    apply_permutation<float>( dev_hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.m_yEnd, sorted_ut_hits.m_yEnd );
-    apply_permutation<float>( dev_hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.m_yBegin, sorted_ut_hits.m_yBegin );
-    apply_permutation<float>( dev_hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.m_cos, sorted_ut_hits.m_cos );
+      unsorted_ut_hits.m_xAtYEq0,
+      layer_offset,
+    	dev_hit_permutations,
+    	n_hits_layer
+    );
   }
+
+  // A thread may have filled in a value in dev_hit_permutations and another
+  // one may be using it in the next step
+  __syncthreads();
+
+  // Important note: Order matters, and should be kept as is
+  apply_permutation<uint>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_planeCode, sorted_ut_hits.m_planeCode );
+  __syncthreads();
+  apply_permutation<uint>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_LHCbID, sorted_ut_hits.m_LHCbID );
+  __syncthreads();
+  apply_permutation<uint>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_highThreshold, sorted_ut_hits.m_highThreshold );
+  __syncthreads();
+  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_weight, sorted_ut_hits.m_weight );
+  __syncthreads();
+  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_xAtYEq0, sorted_ut_hits.m_xAtYEq0 );
+  __syncthreads();
+  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_zAtYEq0, sorted_ut_hits.m_zAtYEq0 );
+  __syncthreads();
+  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_yEnd, sorted_ut_hits.m_yEnd );
+  __syncthreads();
+  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_yBegin, sorted_ut_hits.m_yBegin );
+  __syncthreads();
+  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_cos, sorted_ut_hits.m_cos );
 }
