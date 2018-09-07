@@ -15,7 +15,7 @@
 
 
  //configuration for PV checker -> check values
-int m_nTracksToBeRecble = 5;
+int m_nTracksToBeRecble = 4;
 double m_dzIsolated = 10; //mm
 bool m_matchByTracks = false;
 
