@@ -98,20 +98,20 @@ bool fitVertex( XYZPoint& seedPoint,
 
 
     if(tr_chi2 < m_maxChi2) {
+ // have to use updated values!!
+      tr_state_x[pvTrack_counter] = m_state_x;
+      tr_state_y[pvTrack_counter] = m_state_y;
+      tr_state_z[pvTrack_counter] = m_state_z;
 
-      tr_state_x[pvTrack_counter] = host_velo_states[index].x;
-      tr_state_y[pvTrack_counter] = host_velo_states[index].y;
-      tr_state_z[pvTrack_counter] = host_velo_states[index].z;
+      tr_state_tx[pvTrack_counter] = m_state_tx;
+      tr_state_ty[pvTrack_counter] = m_state_ty;
 
-      tr_state_tx[pvTrack_counter] = host_velo_states[index].tx;
-      tr_state_ty[pvTrack_counter] = host_velo_states[index].ty;
-
-      tr_state_c00[pvTrack_counter] = host_velo_states[index].c00;
-      tr_state_c11[pvTrack_counter] = host_velo_states[index].c11;
-      tr_state_c20[pvTrack_counter] = host_velo_states[index].c20;
-      tr_state_c22[pvTrack_counter] = host_velo_states[index].c22;
-      tr_state_c31[pvTrack_counter] = host_velo_states[index].c31;
-      tr_state_c33[pvTrack_counter] = host_velo_states[index].c33;
+      tr_state_c00[pvTrack_counter] = m_state_c00;
+      tr_state_c11[pvTrack_counter] = m_state_c11;
+      tr_state_c20[pvTrack_counter] = m_state_c20;
+      tr_state_c22[pvTrack_counter] = m_state_c22;
+      tr_state_c31[pvTrack_counter] = m_state_c31;
+      tr_state_c33[pvTrack_counter] = m_state_c33;
 
       pvTrack_counter++;
     }
