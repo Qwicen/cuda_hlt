@@ -418,12 +418,11 @@ cudaError_t Stream::run_sequence(
 
          
           std::cout << "CHECKING Forward TRACKS" << std::endl;
-          const bool fromNtuple = true;
           const std::string trackType = "Forward";
           call_pr_checker (
             forward_tracks_events,
             folder_name_MC,
-            fromNtuple,
+            start_event_offset,
             trackType);
 
           

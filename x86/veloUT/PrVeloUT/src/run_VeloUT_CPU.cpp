@@ -203,6 +203,25 @@ int run_veloUT_on_CPU (
     // save in format for track checker
     trackChecker::Tracks checker_tracks = prepareVeloUTTracksEvent( veloUT_tracks, n_veloUT_tracks_event );
     ut_tracks_events.emplace_back( checker_tracks );
+
+    // debug_cout << "IDs on output tracks: " << std::endl;
+    // int i_track = 0;
+    // for ( const auto& track : outputTracks ) {
+    //   debug_cout << "at track " << std::dec << i_track << std::endl;
+    //   for ( int i_hit = 0; i_hit < track.track.hitsNum; ++i_hit) {
+    //     debug_cout << "\t id = " << std::hex << track.track.LHCbIDs[i_hit] << std::endl;
+    //   }
+    //   i_track++;
+    // }
+    // debug_cout << "IDs on checker tracks: " << std::endl;
+    // i_track = 0;
+    // for ( const auto& track : checker_tracks ) {
+    //   debug_cout << "at track " << std::dec << i_track << std::endl;
+    //   for ( int i_hit = 0; i_hit < track.nIDs(); ++i_hit) {
+    //     debug_cout << "\t id = " << std::hex << uint32_t(track.ids()[i_hit]) << std::endl;
+    //   }
+    //   i_track++;
+    // }
     
   } // events
 
