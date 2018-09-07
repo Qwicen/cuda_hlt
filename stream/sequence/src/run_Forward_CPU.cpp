@@ -58,8 +58,8 @@ std::vector< std::vector< VeloUTTracking::TrackVeloUT > > run_forward_on_CPU (
     }
     //debug_cout<<"run_Forward_CPU"<<std::endl;
     trackChecker::Tracks checker_tracks = prepareForwardTracks( forward_tracks_reduced );
-    debug_cout << "Passing " << std::dec << checker_tracks.size() << " tracks to PrChecker" << std::endl;
-     debug_cout << "# of forward tracks = " << int( forward_tracks.size() ) << ", # of checker tracks = " << int( checker_tracks.size() ) << std::endl;
+    //    debug_cout << "Passing " << std::dec << checker_tracks.size() << " tracks to PrChecker" << std::endl;
+    //debug_cout << "# of forward tracks = " << int( forward_tracks.size() ) << ", # of checker tracks = " << int( checker_tracks.size() ) << std::endl;
     forward_tracks_events.emplace_back( checker_tracks );
     forward_tracks_all.push_back(forward_tracks);
 

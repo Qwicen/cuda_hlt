@@ -108,3 +108,13 @@ class TrackCheckerVeloUT : public TrackChecker
       };
   
 };
+
+class TrackCheckerForward : public TrackChecker
+{
+  public:
+      void SetCategories();
+      TrackCheckerForward() {
+        SetCategories();
+      };
+  
+}; 

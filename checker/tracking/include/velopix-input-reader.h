@@ -83,7 +83,6 @@ void callPrChecker(
     const std::vector<MCParticle>& mcps_vector = ev.mcps;
     MCAssociator mcassoc(mcps);
 
-    debug_cout << "About to run the checker with " << all_tracks[evnum].size() << " tracks " << mcps_vector.size() << " mc particles" << std::endl;
     trackChecker(all_tracks[evnum], mcassoc, mcps);
 
     /* Check for double counting of hits */

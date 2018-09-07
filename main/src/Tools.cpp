@@ -533,14 +533,21 @@ void call_pr_checker(
   const std::string& trackType
 ) {
   if ( trackType == "Velo" ) {
-    callPrChecker< TrackCheckerVelo> (
+    callPrChecker<TrackCheckerVelo> (
       all_tracks,
       folder_name_MC,
       start_event_offset,
       trackType);
   }
-  else if ( trackType == "VeloUT" or  trackType == "Forward") {
-    callPrChecker< TrackCheckerVeloUT> (
+  else if ( trackType == "VeloUT" ) {
+    callPrChecker<TrackCheckerVeloUT> (
+      all_tracks,
+      folder_name_MC,
+      start_event_offset,
+      trackType);
+  }
+  else if ( trackType == "Forward" ) {
+    callPrChecker<TrackCheckerForward> (
       all_tracks,
       folder_name_MC,
       start_event_offset,
