@@ -26,8 +26,8 @@
 #include "Tools.h"
 #include "InputTools.h"
 #include "Timer.h"
-#include "../../stream/sequence/include/StreamWrapper.cuh"
-#include "../../stream/sequence/include/InitializeConstants.cuh"
+#include "StreamWrapper.cuh"
+#include "Constants.cuh"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
@@ -262,7 +262,6 @@ int main(int argc, char *argv[])
   uint32_t ft_n_hits_layers_events[number_of_events][ForwardTracking::n_layers];
   read_ft_events_into_arrays( ft_hits_events, ft_n_hits_layers_events,
                               ft_events, ft_event_offsets, number_of_events );
-
   //check_ft_events( ft_hits_events, ft_n_hits_layers_events, number_of_events );
   
   // Read LUTs from PrUTMagnetTool into pinned host memory
@@ -272,7 +271,8 @@ int main(int argc, char *argv[])
   
   
   // Initialize detector constants on GPU
-  initializeConstants();
+  GpuConstants gpu_constants;
+  gpu_constants.reserve_and_initialize();
 
   // Create streams
   StreamWrapper stream_wrapper;
@@ -288,7 +288,8 @@ int main(int argc, char *argv[])
     run_on_x86, 
     folder_name_MC,
     start_event_offset,
-    reserve_mb
+    reserve_mb,
+    gpu_constants
   );
   
   // Attempt to execute all in one go
@@ -303,7 +304,7 @@ int main(int argc, char *argv[])
         host_velopix_event_offsets,
         velopix_events.size(),
         velopix_event_offsets.size(),
-	host_ut_hits_events,
+	      host_ut_hits_events,
         host_ut_magnet_tool,
         ft_hits_events,
         ft_n_hits_layers_events,

@@ -46,7 +46,8 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_estimated_input_size>(argument_offsets),
       argen.generate<arg::dev_module_cluster_num>(argument_offsets),
       argen.generate<arg::dev_module_candidate_num>(argument_offsets),
-      argen.generate<arg::dev_cluster_candidates>(argument_offsets)
+      argen.generate<arg::dev_cluster_candidates>(argument_offsets),
+      gpu_constants.dev_velo_candidate_ks
     );
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input>(argument_offsets), host_velopix_events, host_velopix_events_size, cudaMemcpyHostToDevice, stream));
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input_offsets>(argument_offsets), host_velopix_event_offsets, host_velopix_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
@@ -108,7 +109,10 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_module_candidate_num>(argument_offsets),
       argen.generate<arg::dev_cluster_candidates>(argument_offsets),
       argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
-      dev_velo_geometry
+      dev_velo_geometry,
+      gpu_constants.dev_velo_sp_patterns,
+      gpu_constants.dev_velo_sp_fx,
+      gpu_constants.dev_velo_sp_fy
     );
     sequence.item<seq::masked_velo_clustering>().invoke();
 
@@ -270,22 +274,6 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::consolidate_tracks>().invoke();
 
-    ////////////////////////////////////////
-    // Optional: Simplified Kalman filter //
-    ////////////////////////////////////////
-
-    //if (do_simplified_kalman_filter) {
-    //   Helper::invoke(
-    //     simplifiedKalmanFilter,
-    //     "Simplified Kalman filter",
-    //     times,
-    //     cuda_event_start,
-    //     cuda_event_stop,
-    //     print_individual_rates
-    //   );
-    // }
-
-   
     // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
@@ -295,15 +283,26 @@ cudaError_t Stream::run_sequence(
       cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
     }
 
-    // VeloUT tracking
+    // UT hit sorting by x
     argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(number_of_events);
+    argument_sizes[arg::dev_ut_hits_sorted] = argen.size<arg::dev_ut_hits_sorted>(number_of_events);
+    argument_sizes[arg::dev_ut_hit_permutations] = argen.size<arg::dev_ut_hit_permutations>(number_of_events * VeloUTTracking::max_numhits_per_event);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, argen.size<arg::dev_ut_hits>(number_of_events), cudaMemcpyHostToDevice, stream ));
+    sequence.item<seq::sort_by_x>().set_opts(dim3(number_of_events), dim3(32), stream);
+    sequence.item<seq::sort_by_x>().set_arguments(
+      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hits_sorted>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_permutations>(argument_offsets) );
+    sequence.item<seq::sort_by_x>().invoke();
+    
+    // VeloUT tracking
     argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks);
     argument_sizes[arg::dev_atomics_veloUT] = argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
     sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(32), stream);
     sequence.item<seq::veloUT>().set_arguments(
-      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hits_sorted>(argument_offsets),
       argen.generate<arg::dev_atomics_storage>(argument_offsets),
       argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
       argen.generate<arg::dev_velo_track_hits>(argument_offsets),
@@ -378,7 +377,7 @@ cudaError_t Stream::run_sequence(
 
         /* Run VeloUT on x86 architecture */
         if ( run_on_x86 ) {
-          std::vector< trackChecker::Tracks > *ut_checker_tracks_events = new std::vector< trackChecker::Tracks >;
+          std::vector< trackChecker::Tracks > ut_checker_tracks_events;
           std::vector< std::vector< VeloUTTracking::TrackVeloUT > > ut_output_tracks;
                     
           int rv = run_veloUT_on_CPU(
@@ -391,7 +390,8 @@ cudaError_t Stream::run_sequence(
                      host_velo_track_hit_number,
                      host_velo_track_hits,
                      host_number_of_tracks,
-                     number_of_events );
+                     number_of_events
+                    );
 
           if ( rv != 0 )
             continue;
@@ -399,7 +399,7 @@ cudaError_t Stream::run_sequence(
           std::cout << "CHECKING VeloUT TRACKS from x86" << std::endl;
           trackType = "VeloUT";
           call_pr_checker (
-            *ut_checker_tracks_events,
+            ut_checker_tracks_events,
             folder_name_MC,
             start_event_offset,
             trackType); 
@@ -408,7 +408,7 @@ cudaError_t Stream::run_sequence(
           /* Run Forward on x86 architecture  */
           std::vector< std::vector< VeloUTTracking::TrackVeloUT > > forward_tracks;
           
-          std::vector< trackChecker::Tracks > *forward_tracks_events = new std::vector< trackChecker::Tracks >;
+          std::vector< trackChecker::Tracks > forward_tracks_events;
           
           forward_tracks = run_forward_on_CPU(
                              forward_tracks_events,
@@ -420,14 +420,12 @@ cudaError_t Stream::run_sequence(
           const bool fromNtuple = true;
           const std::string trackType = "Forward";
           call_pr_checker (
-            *forward_tracks_events,
+            forward_tracks_events,
             folder_name_MC,
             fromNtuple,
             trackType);
 
-          delete forward_tracks_events;
-          delete ut_checker_tracks_events;
-                    
+          
         } // run on x86
       } // only in first repitition
     } // mc_check_enabled     

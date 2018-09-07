@@ -6,7 +6,8 @@ __global__ void estimate_input_size(
   uint* dev_estimated_input_size,
   uint* dev_module_cluster_num,
   uint* dev_event_candidate_num,
-  uint32_t* dev_cluster_candidates
+  uint32_t* dev_cluster_candidates,
+  uint8_t* dev_velo_candidate_ks
 ) {
   const uint event_number = blockIdx.x;
   const uint raw_bank_starting_chunk = threadIdx.y; // up to 26
@@ -180,7 +181,7 @@ __global__ void estimate_input_size(
             // Add candidates 0-3
             if (candidates_uint8 & 0xF) {
               // Decode the candidate number (ie. find out the active bit)
-              const uint8_t k = VeloClustering::candidate_ks[candidates_uint8 & 0xF];
+              const uint8_t k = dev_velo_candidate_ks[candidates_uint8 & 0xF];
               auto current_cluster_candidate = atomicAdd(event_candidate_num, 1);
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)
@@ -192,7 +193,7 @@ __global__ void estimate_input_size(
 
             // Add candidates 4-7
             if (candidates_uint8 & 0xF0) {
-              const uint8_t k = VeloClustering::candidate_ks[(candidates_uint8 >> 4)] + 4;
+              const uint8_t k = dev_velo_candidate_ks[(candidates_uint8 >> 4)] + 4;
               auto current_cluster_candidate = atomicAdd(event_candidate_num, 1);
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)

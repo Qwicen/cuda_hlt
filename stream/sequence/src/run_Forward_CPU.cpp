@@ -5,7 +5,7 @@
 #include "TTree.h"
 
 std::vector< std::vector< VeloUTTracking::TrackVeloUT > > run_forward_on_CPU (
-  std::vector< trackChecker::Tracks > * forward_tracks_events,
+  std::vector< trackChecker::Tracks >& forward_tracks_events,
   ForwardTracking::HitsSoAFwd * hits_layers_events,
   std::vector< std::vector< VeloUTTracking::TrackVeloUT > > ut_tracks,
   const int &number_of_events
@@ -51,7 +51,7 @@ std::vector< std::vector< VeloUTTracking::TrackVeloUT > > run_forward_on_CPU (
     debug_cout<<"run_Forward_CPU"<<std::endl;
     trackChecker::Tracks checker_tracks = prepareForwardTracks( forward_tracks_reduced );
     debug_cout << "Passing " << checker_tracks.size() << " tracks to PrChecker" << std::endl;
-    forward_tracks_events->emplace_back( checker_tracks );
+    forward_tracks_events.emplace_back( checker_tracks );
     forward_tracks_all.push_back(forward_tracks);
 
     debug_cout << "End event loop run_forward_CPU " <<std::endl; 
