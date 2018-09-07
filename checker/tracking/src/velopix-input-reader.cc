@@ -54,6 +54,10 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const std::string& tr
     std::copy_n((uint32_t*) input, num_SciFi_hits, std::back_inserter(SciFi_hits));
     input += sizeof(uint32_t) * num_SciFi_hits;
 
+    // if ( trackType == "Velo" && !p.hasVelo ) continue;
+    // if ( trackType == "VeloUT" && !(p.hasVelo && p.hasUT) ) continue;
+    // if ( trackType == "Forward" && !(p.hasVelo && p.hasUT && p.hasSciFi) ) continue;
+   
     /* Only save the hits relevant for the track type we are checking
        -> get denominator of efficiency right
      */
@@ -75,7 +79,10 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const std::string& tr
     
     p.numHits    = uint( hits.size() );
     p.hits = hits;
-    mcps.push_back(p);
+    if ( !(num_Velo_hits == 0 && num_UT_hits == 0 && num_SciFi_hits == 0) ) {
+      //debug_cout << "MCP has " << num_Velo_hits << " Velo hits, " << num_UT_hits << " UT hits, " << num_SciFi_hits << " SciFi hits" << std::endl; 
+      mcps.push_back(p);
+    }
   }
 
   size = input - (uint8_t*) event.data();
@@ -156,9 +163,10 @@ std::vector<VelopixEvent> read_mc_folder (
     std::vector<char> inputContents;
     readFileIntoVector(foldername + "/" + readingFile, inputContents);
     event = VelopixEvent(inputContents, trackType, checkEvents);
-    
-    // if ( i == 0 && checkEvents )
-    //   event.print();
+
+    //debug_cout << "At VelopixEvent " << i << ": " << int(event.mcps.size()) << " MCPs" << std::endl;
+    //if ( i == 0 && checkEvents )
+       //   event.print();
        
     input.emplace_back(event);
 

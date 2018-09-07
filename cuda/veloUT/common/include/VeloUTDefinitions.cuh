@@ -120,24 +120,7 @@ namespace VeloUTTracking {
     }
   };
 
-  
-  /* Structure containing indices to hits within hit array */
-  struct TrackHits { 
-    unsigned short hitsNum = 0;
-    unsigned short hits[VeloUTTracking::max_track_size];
-    unsigned short veloTrackIndex;
-    float qop;
-
-    __host__ __device__ void addHit( const unsigned short _h ) {
-      hits[hitsNum] = _h;
-      ++hitsNum;
-    }
-    __host__ __device__ void set_qop( float _qop ) {
-      qop = _qop;
-    }
-  };
-
-  
+   
   struct TrackVeloUT {
     FullState state_endvelo;
     TrackUT track;

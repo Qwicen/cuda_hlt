@@ -204,6 +204,7 @@ class MCAssociator
             for (; last != first; ++first) {
 	      auto it = find(*first);
                 if (m_map.end() == it) continue;
+                //std::cout << "Matched LHCbID to MCP: " << std::hex << *first << std::endl;
 		++n_matched_total;
                 ++assoc[it->second];
 	    }

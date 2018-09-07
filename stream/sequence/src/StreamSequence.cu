@@ -395,7 +395,7 @@ cudaError_t Stream::run_sequence(
 
           if ( rv != 0 )
             continue;
-          
+
           std::cout << "CHECKING VeloUT TRACKS from x86" << std::endl;
           trackType = "VeloUT";
           call_pr_checker (
@@ -416,6 +416,7 @@ cudaError_t Stream::run_sequence(
                              ut_output_tracks,
                              number_of_events );
 
+         
           std::cout << "CHECKING Forward TRACKS" << std::endl;
           const bool fromNtuple = true;
           const std::string trackType = "Forward";

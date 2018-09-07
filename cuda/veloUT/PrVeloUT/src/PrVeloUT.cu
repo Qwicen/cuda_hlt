@@ -355,15 +355,10 @@ __host__ __device__ void prepareOutputTrack(
   }
   assert( n_tracks < VeloUTTracking::max_num_tracks );
   VeloUT_tracks[n_tracks] = track;
+
 #endif // MC_CHECK
 
-  /*
-  outTr.x = helper.state.x;
-  outTr.y = helper.state.y;
-  outTr.z = helper.state.z;
-  outTr.tx = helper.state.tx;
-  outTr.ty = helper.state.ty;
-  */
+ 
 }
 
 __host__ __device__ void fillArray(

@@ -1135,6 +1135,7 @@ void PrForward::selectXCandidates(std::vector<int>& allXHits,
       for (auto hit : pc){
         //std::cout << m_hits_layers.m_LHCbID[hit] << " " << m_hits_layers.m_planeCode[hit] << std::endl;
         track.trackForward.addLHCbID(hit);
+        //debug_cout << "added LHCbID to forward track with " << track.trackForward.hitsNum << " hits: " << std::endl; //std::hex << track.trackForward.LHCbIDs[track.trackForward.hitsNum - 1] << std::endl;
 	m_hits_layers.m_used[hit] = true; //set as used in the SoA!
       }
       outputTracks.emplace_back(track);

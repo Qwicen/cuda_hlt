@@ -221,7 +221,7 @@ void check_ft_events( const ForwardTracking::HitsSoAFwd *hits_layers_events,
       number_of_hits += n_hits_layers_events[i_event][i_layer];
       int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
-	printf("\t at hit %u, x = %f, z = %f, w = %f, dxdy = %f, dzdy = %f, yMin = %f, yMax = %f, LHCbID = %u, planeCode = %i, hitZone = %i \n",
+	printf("\t at hit %u, x = %f, z = %f, w = %f, dxdy = %f, dzdy = %f, yMin = %f, yMax = %f, LHCbID = %x, planeCode = %i, hitZone = %i \n",
 	       i_hit,
 	       hits_layers_events[i_event].m_x[ layer_offset + i_hit ],
 	       hits_layers_events[i_event].m_z[ layer_offset + i_hit ],
@@ -473,14 +473,15 @@ trackChecker::Tracks prepareVeloUTTracksEvent(
   const VeloUTTracking::TrackUT* veloUT_tracks,
   const int n_veloUT_tracks
 ) {
-  debug_cout << "event has " << n_veloUT_tracks << " tracks" << std::endl;
+  //debug_cout << "event has " << n_veloUT_tracks << " tracks" << std::endl;
   trackChecker::Tracks checker_tracks;
   for ( int i_track = 0; i_track < n_veloUT_tracks; ++i_track ) {
     VeloUTTracking::TrackUT veloUT_track = veloUT_tracks[i_track];
     trackChecker::Track checker_track;
     assert( veloUT_track.hitsNum < VeloUTTracking::max_track_size);
+    //debug_cout << "at track " << std::dec << i_track << std::endl;
     for ( int i_hit = 0; i_hit < veloUT_track.hitsNum; ++i_hit ) {
-      debug_cout<<"LHCbIDsVelo["<<i_hit<<"] = "<< std::hex << veloUT_track.LHCbIDs[i_hit] << std::endl;
+      //debug_cout<<"\t LHCbIDsVeloUT["<<i_hit<<"] = "<< std::hex << veloUT_track.LHCbIDs[i_hit] << std::endl;
       LHCbID lhcb_id( veloUT_track.LHCbIDs[i_hit] );
       checker_track.addId( lhcb_id );
     }
@@ -494,16 +495,19 @@ trackChecker::Tracks prepareForwardTracks(
   std::vector< VeloUTTracking::TrackUT > forward_tracks
 ) {
   trackChecker::Tracks checker_tracks;
+  int i_track = 0;
   for ( VeloUTTracking::TrackUT forward_track : forward_tracks ) {
     trackChecker::Track checker_track;
+    //debug_cout << "at track " << std::dec << i_track << std::endl;
     for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
-      debug_cout<<"LHCbIDsForward["<<i_hit<<"] = "<<forward_track.LHCbIDs[i_hit]<<std::endl;
+      // debug_cout<<"\t LHCbIDsForward["<<i_hit<<"] = " << std::hex << forward_track.LHCbIDs[i_hit]<< std::endl;
       LHCbID lhcb_id( forward_track.LHCbIDs[i_hit] );
       checker_track.addId( lhcb_id );
     }
     checker_tracks.push_back( checker_track );
+    ++i_track;
   }
-  debug_cout<<"end prepareForwardTracks"<<std::endl;
+  //debug_cout<<"end prepareForwardTracks"<<std::endl;
 
   return checker_tracks;
 }
