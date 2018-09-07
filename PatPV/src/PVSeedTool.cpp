@@ -76,7 +76,7 @@ void getSeeds( VeloState * inputTracks,
 int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)  {
 
 
-  //maybe sort in z before merging?
+
   
 
   
@@ -85,23 +85,105 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
     vclus[i].sigsqmin = vclus[i].sigsq;
   }
 
+
+  //maybe sort in z before merging? -> does not seem to help
+/*
+  vtxCluster  placeholder[number_of_clusters];
+
+
+
+      double prev_min_z = -1000000;
+      int index = -9999;
+  for(int j = 0; j < number_of_clusters; j++) {
+      double min_z = 100000000. ;
+
+    for (int i = 0; i < number_of_clusters; i++) {
+      if (vclus[i].z < min_z && vclus[i].z > prev_min_z) {min_z = vclus[i].z; index = i;}
+
+    }
+    placeholder[j] = vclus[index];
+    prev_min_z = min_z;
+  }
   int counter_clusters = 0;
-
-
+ for(int j = 0; j < number_of_clusters; j++) vclus[j] = placeholder[j];
+*/
   bool no_merges = false;
   while(!no_merges) {
+    //reset merged flags
+    for (int j = 0; j < number_of_clusters; j++) vclus[j].merged = false;
 
     no_merges = true;
     for(int index_cluster = 0; index_cluster < number_of_clusters - 1; index_cluster++) {
 
+
       //skip cluster which have already been merged
       if(vclus[index_cluster].ntracks == 0) continue;
 
+   //sorting by chi2dist seems to increase efficiency in nominal code
 
+      //first find cluster with minimal chi2dist
+/*
+      double chi2dist_min = 90000.;
+      int index_chi2min = -1;
+      for(int index_second_cluster = 0; index_second_cluster < number_of_clusters ; index_second_cluster++) {
+        //skip cluster which have already been merged
+        if(index_second_cluster == index_cluster) continue;
+        if(vclus[index_second_cluster].ntracks == 0) continue;
+        double z1 = vclus[index_cluster].z;
+        double z2 = vclus[index_second_cluster].z;
+        double s1 = vclus[index_cluster].sigsq;
+        double s2 = vclus[index_second_cluster].sigsq;
+        double s1min = vclus[index_cluster].sigsqmin;
+        double s2min = vclus[index_second_cluster].sigsqmin;
+        double sigsqmin = s1min;
+        if(s2min<s1min) sigsqmin = s2min;
+
+
+        double zdist = z1 - z2;
+        double chi2dist = zdist*zdist/(s1+s2);
+
+        if(chi2dist < chi2dist_min) {
+          chi2dist_min = chi2dist;
+          index_chi2min = index_second_cluster;
+        }
+        //merge if chi2dist is smaller than max
+
+      }
+      if(index_chi2min < 0) continue;
+      std::cout << "index chi2min: " << index_chi2min << std::endl;
+      std::cout << " chi2min: " << chi2dist_min << std::endl; 
+              double z1 = vclus[index_cluster].z;
+        double z2 = vclus[index_chi2min].z;
+         double s1 = vclus[index_cluster].sigsq;
+        double  s2 = vclus[index_chi2min].sigsq;
+         double s1min = vclus[index_cluster].sigsqmin;
+         double s2min = vclus[index_chi2min].sigsqmin;
+        double  sigsqmin = s1min;
+        if(s2min<s1min) sigsqmin = s2min;
+
+
+         double zdist = z1 - z2;
+         double chi2dist = zdist*zdist/(s1+s2);
+
+              if (chi2dist<m_maxChi2Merge ) {
+          no_merges = false;
+          double w_inv = (s1*s2/(s1+s2));
+          double zmerge = w_inv*(z1/s1+z2/s2);
+
+          vclus[index_cluster].z        = zmerge;
+          vclus[index_cluster].sigsq    = w_inv;
+          vclus[index_cluster].sigsqmin = sigsqmin;
+          vclus[index_cluster].ntracks += vclus[index_chi2min].ntracks;
+          vclus[index_chi2min].ntracks = 0;  // mark second cluster as used
+
+          break;
+        } */
       
-      for(int index_second_cluster = index_cluster + 1; index_second_cluster < number_of_clusters; index_second_cluster++) {
+      for(int index_second_cluster = 0; index_second_cluster < number_of_clusters ; index_second_cluster++) {
+        if(vclus[index_second_cluster].merged || vclus[index_cluster].merged) continue;
         //skip cluster which have already been merged
         if(vclus[index_second_cluster].ntracks == 0) continue;
+        if(index_cluster == index_second_cluster) continue;
         double z1 = vclus[index_cluster].z;
         double z2 = vclus[index_second_cluster].z;
         double s1 = vclus[index_cluster].sigsq;
@@ -125,8 +207,10 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
           vclus[index_cluster].sigsqmin = sigsqmin;
           vclus[index_cluster].ntracks += vclus[index_second_cluster].ntracks;
           vclus[index_second_cluster].ntracks = 0;  // mark second cluster as used
+          vclus[index_cluster].merged = true;
+          vclus[index_second_cluster].merged = true;
 
-          break;
+          //break;
         } 
       }
     }
@@ -143,7 +227,32 @@ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)
 
 
   //clean up clusters, do we gain much from this?
+  /*
+  int prev_index = -1;
+  vtxCluster placeholder2[return_number_of_clusters];
+        double prev_min_ntracks = -1000000;
+      index = -9999;
+  for(int j = 0; j < return_number_of_clusters; j=j) {
+      double min_ntracks = 100000000. ;
 
+    for (int i = 0; i < return_number_of_clusters; i++) {
+      if (pvclus[i].ntracks < min_ntracks && pvclus[i].ntracks > prev_min_ntracks) {min_ntracks = pvclus[i].ntracks; index = i;}
+
+    }
+    for(int k=0; k < return_number_of_clusters; k ++) {
+      if(pvclus[k].ntracks == min_ntracks) {placeholder2[j] = pvclus[k]; j++;std::cout <<"sorted? ntracks: " << pvclus[k].ntracks << std::endl;}
+    }
+    std::cout << "index: " << index << std::endl;
+    //placeholder2[j] = pvclus[index];
+    prev_min_ntracks = min_ntracks;
+    prev_index = index;
+    //std::cout << "sorted ntracks:" << min_ntracks << std::endl;
+  }
+ std::cout << "------" << std::endl;
+ for(int j = 0; j < return_number_of_clusters; j++) pvclus[return_number_of_clusters - j -1] = placeholder2[j];
+  //for(int j = 0; j < return_number_of_clusters; j++) std::cout <<"sorted ntracks: " << pvclus[j].ntracks << std::endl;
+  //maybe sort in ntracks before quality check? -> efficiency seems to get worse? -> should sort so that largest multiplicity first -> does not seem to help much
+  */
   // Select good clusters.
 
   int number_good_clusters = 0;
@@ -210,7 +319,6 @@ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 double zCloseBeam( VeloState track, const XYZPoint& beamspot) {
 
   XYZPoint tpoint(track.x, track.y, track.z);
-
   XYZPoint tdir(track.tx, track.ty, 1.);
 
   double wx = ( 1. + tdir.x * tdir.x ) / track.c00;
