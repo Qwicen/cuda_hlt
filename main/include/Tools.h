@@ -103,8 +103,12 @@ std::vector< trackChecker::Tracks > prepareVeloUTTracks(
   const int number_of_events
 );
 
-trackChecker::Tracks prepareForwardTracks(
+trackChecker::Tracks prepareForwardTracksVeloUTOnly(
   std::vector< VeloUTTracking::TrackUT > forward_tracks
+); 
+
+trackChecker::Tracks prepareForwardTracks(
+  std::vector< ForwardTracking::TrackForward > forward_tracks
 );
 
 void call_pr_checker(

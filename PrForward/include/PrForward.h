@@ -48,10 +48,7 @@ public:
 
   PrForward();
 
-  bool initialize(){return true;}
-
-  // std::vector<std::string> GetFieldMaps(;
-  std::vector<VeloUTTracking::TrackVeloUT> operator()(
+  std::vector<ForwardTracking::TrackForward> operator()(
     const std::vector<VeloUTTracking::TrackVeloUT>& inputTracks,
     ForwardTracking::HitsSoAFwd *hits_layers_events
   ) const;
@@ -157,18 +154,18 @@ private:
  
   void prepareOutputTrack(  
     const VeloUTTracking::TrackVeloUT& veloUTTrack,
-    std::vector<VeloUTTracking::TrackVeloUT>& outputTracks
+    std::vector<ForwardTracking::TrackForward>& outputTracks
   ) const;
 
   // The following functions all implicitly operate on the cached VELO track parameters above
-  inline float xFromVelo( const float z, VeloUTTracking::FullState state_at_endvelo )  const { 
+  inline float xFromVelo( const float z, FullState state_at_endvelo )  const { 
     return state_at_endvelo.x + (z-state_at_endvelo.z) * state_at_endvelo.tx; 
   }
-  inline float yFromVelo( const float z, VeloUTTracking::FullState state_at_endvelo )  const { 
+  inline float yFromVelo( const float z, FullState state_at_endvelo )  const { 
     return state_at_endvelo.y + (z-state_at_endvelo.z) * state_at_endvelo.ty; 
   }
 
-  std::vector<float> getTrackParameters ( float xAtRef, VeloUTTracking::FullState state_at_endvelo) const {
+  std::vector<float> getTrackParameters ( float xAtRef, FullState state_at_endvelo) const {
 
     float dSlope  = ( xFromVelo(m_zReference,state_at_endvelo) - xAtRef ) / ( m_zReference - m_zMagnetParams[0]);
     const float zMagSlope = m_zMagnetParams[2] * pow(state_at_endvelo.tx,2) +  m_zMagnetParams[3] * pow(state_at_endvelo.ty,2);
@@ -190,7 +187,7 @@ private:
     return toreturn;
   }
 
-  float calcqOverP ( float bx, VeloUTTracking::FullState state_at_endvelo ) const {
+  float calcqOverP ( float bx, FullState state_at_endvelo ) const {
 
     float qop(1.0f/Gaudi::Units::GeV) ;
     float magscalefactor = m_magscalefactor; 
@@ -208,14 +205,14 @@ private:
 
   }
 
-  float zMagnet(VeloUTTracking::FullState state_at_endvelo) const {
+  float zMagnet(FullState state_at_endvelo) const {
     
     return ( m_zMagnetParams[0] +
              m_zMagnetParams[2] * pow(state_at_endvelo.tx,2) +
              m_zMagnetParams[3] * pow(state_at_endvelo.ty,2) );
   }
 
-  void covariance ( VeloUTTracking::FullState& state, const float qOverP ) const {
+  void covariance ( FullState& state, const float qOverP ) const {
      
     state.c00 = m_covarianceValues[0];
     state.c11 = m_covarianceValues[1];
@@ -224,7 +221,7 @@ private:
     state.c44 = m_covarianceValues[4] * qOverP * qOverP;
   }
 
-  float calcDxRef(float pt, VeloUTTracking::FullState state_at_endvelo) const {
+  float calcDxRef(float pt, FullState state_at_endvelo) const {
     float m_slope2 = pow(state_at_endvelo.tx,2) + pow(state_at_endvelo.ty,2);
     return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  pow(state_at_endvelo.ty,2) - 1000. * pow(state_at_endvelo.tx,2); // tune this window
   }
@@ -304,23 +301,23 @@ private:
     parameters.m_tc  = (parameters.m_sc *  parameters.m_sz - parameters.m_s0 * parameters.m_scz) / den;
   }
 
-  static bool lowerByQuality(VeloUTTracking::TrackVeloUT t1, VeloUTTracking::TrackVeloUT t2) {
-    return t1.trackForward.quality < t2.trackForward.quality;
+  static bool lowerByQuality(ForwardTracking::TrackForward t1, ForwardTracking::TrackForward t2) {
+    return t1.quality < t2.quality;
   }
 
   void collectAllXHits(std::vector<int>& allXHits, 
 		       const float m_xParams_seed[4],
                        const float m_yParams_seed[4],
-		       VeloUTTracking::FullState state_at_endvelo,
+		       FullState state_at_endvelo,
                        int side) const;
 
   void selectXCandidates(std::vector<int>& allXHits,
                          const VeloUTTracking::TrackVeloUT& veloUTTrack,
-                         std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
+                         std::vector<ForwardTracking::TrackForward>& outputTracks,
                          const float m_zRef_track,
                          const float m_xParams_seed[4],
                          const float m_yParams_seed[4],
-			 VeloUTTracking::FullState state_at_endvelo,
+			 FullState state_at_endvelo,
 		         PrParameters& pars_cur,
                          int side) const;
 
@@ -343,38 +340,38 @@ private:
                      int planelist[],
 	             PrParameters& pars_cur) const;
 
-  void selectFullCandidates(std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
+  void selectFullCandidates(std::vector<ForwardTracking::TrackForward>& outputTracks,
                             const float m_xParams_seed[4],
                             const float m_yParams_seed[4],
-			    VeloUTTracking::FullState state_at_endvelo,
+			    FullState state_at_endvelo,
 			    PrParameters& pars_cur) const;
 
-  bool selectStereoHits(VeloUTTracking::TrackVeloUT& track,
+  bool selectStereoHits(ForwardTracking::TrackForward& track,
                         std::vector<int> stereoHits,
-		        VeloUTTracking::FullState state_at_endvelo,
+		        FullState state_at_endvelo,
 		        PrParameters& pars_cur) const;
 
-  bool addHitsOnEmptyStereoLayers(VeloUTTracking::TrackVeloUT& track,
+  bool addHitsOnEmptyStereoLayers(ForwardTracking::TrackForward& track,
                                   std::vector<int>& stereoHits,
                                   std::vector<unsigned int> &pc,
                                   int planelist[],
-  				  VeloUTTracking::FullState state_at_endvelo,
+  				  FullState state_at_endvelo,
 			          PrParameters& pars_cur) const;
 
-  bool fitYProjection(VeloUTTracking::TrackVeloUT& track,
+  bool fitYProjection(ForwardTracking::TrackForward& track,
                       std::vector<int>& stereoHits,
                       std::vector<unsigned int> &pc,
                       int planelist[],
-		      VeloUTTracking::FullState state_at_endvelo,
+		      FullState state_at_endvelo,
 		      PrParameters& pars_cur) const;
 
-  std::vector<int> collectStereoHits(VeloUTTracking::TrackVeloUT& track,
-				     VeloUTTracking::FullState state_at_endvelo,
+  std::vector<int> collectStereoHits(ForwardTracking::TrackForward& track,
+				     FullState state_at_endvelo,
 				     PrParameters& pars_cur) const;
 
   void xAtRef_SamePlaneHits(std::vector<int>& allXHits,
 			    const float m_xParams_seed[4],
-			    VeloUTTracking::FullState state_at_endvelo,
+			    FullState state_at_endvelo,
  			    int itH, int itEnd) const;
 };
 

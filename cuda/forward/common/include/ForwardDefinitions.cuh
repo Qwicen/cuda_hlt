@@ -5,9 +5,17 @@
 #include "Common.h"
 #include "Logger.h"
 #include "VeloUTDefinitions.cuh"
+#include "VeloDefinitions.cuh"
 
 
 #include "assert.h"
+
+ struct FullState { 
+    float x, y, tx, ty, qOverP = 0.;
+    float c00, c11, c22, c33, c44, c10, c20, c30, c40, c21, c31, c41, c32, c42, c43 = 0.;
+    float chi2 = 0.;
+    float z = 0.;
+  };
 
 namespace ForwardTracking {
 
@@ -72,11 +80,13 @@ namespace ForwardTracking {
   struct TrackForward {
 
     std::vector< unsigned int > LHCbIDs;
+    std::vector< unsigned int> hit_indices;
     float qop;
     unsigned short hitsNum = 0;
     float quality;
     float chi2;
     std::vector<float> trackParams;
+    FullState state_endvelo;
 
     __host__  void addLHCbID( unsigned int id ) {
       //LHCbIDs[hitsNum++] = id;

@@ -406,16 +406,16 @@ cudaError_t Stream::run_sequence(
           
           
           /* Run Forward on x86 architecture  */
-          std::vector< std::vector< VeloUTTracking::TrackVeloUT > > forward_tracks;
-          
           std::vector< trackChecker::Tracks > forward_tracks_events;
           
-          forward_tracks = run_forward_on_CPU(
+          rv = run_forward_on_CPU(
                              forward_tracks_events,
                              hits_layers_events_ft,
                              ut_output_tracks,
                              number_of_events );
 
+          if ( rv != 0 )
+            continue;
          
           std::cout << "CHECKING Forward TRACKS" << std::endl;
           const std::string trackType = "Forward";

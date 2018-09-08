@@ -43,12 +43,7 @@ namespace VeloUTTracking {
    *                        c44
    */
 
-  struct FullState { 
-    float x, y, tx, ty, qOverP = 0.;
-    float c00, c11, c22, c33, c44, c10, c20, c30, c40, c21, c31, c41, c32, c42, c43 = 0.;
-    float chi2 = 0.;
-    float z = 0.;
-  };
+ 
 
   /* SoA for hit variables
      The hits for every layer are written behind each other, the offsets 

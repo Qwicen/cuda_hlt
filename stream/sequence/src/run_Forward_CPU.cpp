@@ -4,7 +4,7 @@
 #include "TFile.h"
 #include "TTree.h"
 
-std::vector< std::vector< VeloUTTracking::TrackVeloUT > > run_forward_on_CPU (
+int run_forward_on_CPU (
   std::vector< trackChecker::Tracks >& forward_tracks_events,
   ForwardTracking::HitsSoAFwd * hits_layers_events,
   std::vector< std::vector< VeloUTTracking::TrackVeloUT > > ut_tracks,
@@ -26,42 +26,38 @@ std::vector< std::vector< VeloUTTracking::TrackVeloUT > > run_forward_on_CPU (
   
   t_Forward_tracks->Branch("qop", &qop);
 
-  std::vector<std::vector< VeloUTTracking::TrackVeloUT > > forward_tracks_all;
-   
-  if ( !forward.initialize() ) {
-    error_cout << "Could not initialize Forward" << std::endl;
-    return forward_tracks_all;
-  }
 
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
 
-    std::vector< VeloUTTracking::TrackVeloUT > forward_tracks = forward(ut_tracks[i_event], &(hits_layers_events[i_event]));
+    std::vector< ForwardTracking::TrackForward > forward_tracks = forward(ut_tracks[i_event], &(hits_layers_events[i_event]));
     
     // store qop in tree
-    for ( auto Forward_track : forward_tracks ) {
-      qop = Forward_track.track.qop;
+    for ( auto track : forward_tracks ) {
+      qop = track.qop;
       t_Forward_tracks->Fill();
     }
     
     // save in format for track checker
     // CAUTION: only checking Velo and UT LHCbIDs of this track!!
-    std::vector< VeloUTTracking::TrackUT > forward_tracks_reduced;
+    //std::vector< VeloUTTracking::TrackUT > forward_tracks_reduced;
     //debug_cout << "Making reduced forward tracks out of " << int(forward_tracks.size()) << "forward tracks " << std::endl;
     int i_track = 0;
-    for ( auto veloUT_track : forward_tracks ) {
-      forward_tracks_reduced.push_back(veloUT_track.track);
-      //debug_cout << "at track " << std::dec << i_track << std::endl;
-      for ( int i_hit = 0; i_hit < veloUT_track.track.hitsNum; ++i_hit ) {
-        //debug_cout<<"\t LHCbIDsForward["<<i_hit<<"] = " << std::hex << veloUT_track.track.LHCbIDs[i_hit]<< std::endl;
-      }
-      ++i_track;
-    }
+    // for ( auto veloUT_track : forward_tracks ) {
+    //   forward_tracks_reduced.push_back(veloUT_track.track);
+    //   //debug_cout << "at track " << std::dec << i_track << std::endl;
+    //   for ( int i_hit = 0; i_hit < veloUT_track.track.hitsNum; ++i_hit ) {
+    //     //debug_cout<<"\t LHCbIDsForward["<<i_hit<<"] = " << std::hex << veloUT_track.track.LHCbIDs[i_hit]<< std::endl;
+    //   }
+    //   ++i_track;
+    // }
     //debug_cout<<"run_Forward_CPU"<<std::endl;
-    trackChecker::Tracks checker_tracks = prepareForwardTracks( forward_tracks_reduced );
+    //trackChecker::Tracks checker_tracks = prepareForwardTracksVeloUTOnly( forward_tracks_reduced );
     //    debug_cout << "Passing " << std::dec << checker_tracks.size() << " tracks to PrChecker" << std::endl;
     //debug_cout << "# of forward tracks = " << int( forward_tracks.size() ) << ", # of checker tracks = " << int( checker_tracks.size() ) << std::endl;
+
+    trackChecker::Tracks checker_tracks = prepareForwardTracks( forward_tracks );
+    
     forward_tracks_events.emplace_back( checker_tracks );
-    forward_tracks_all.push_back(forward_tracks);
 
     //debug_cout << "End event loop run_forward_CPU " <<std::endl; 
     
@@ -71,5 +67,5 @@ std::vector< std::vector< VeloUTTracking::TrackVeloUT > > run_forward_on_CPU (
   f->Write();
   f->Close();
   
-  return forward_tracks_all;
+  return 0;
 }

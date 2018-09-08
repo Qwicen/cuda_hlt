@@ -491,7 +491,7 @@ trackChecker::Tracks prepareVeloUTTracksEvent(
   return checker_tracks;
 }
 
-trackChecker::Tracks prepareForwardTracks(
+trackChecker::Tracks prepareForwardTracksVeloUTOnly(
   std::vector< VeloUTTracking::TrackUT > forward_tracks
 ) {
   trackChecker::Tracks checker_tracks;
@@ -511,6 +511,28 @@ trackChecker::Tracks prepareForwardTracks(
 
   return checker_tracks;
 }
+
+trackChecker::Tracks prepareForwardTracks(
+  std::vector< ForwardTracking::TrackForward > forward_tracks
+) {
+  trackChecker::Tracks checker_tracks;
+  int i_track = 0;
+  for ( ForwardTracking::TrackForward forward_track : forward_tracks ) {
+    trackChecker::Track checker_track;
+    debug_cout << "at track " << std::dec << i_track << std::endl;
+    for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
+      debug_cout<<"\t LHCbIDsForward["<<i_hit<<"] = " << std::hex << forward_track.LHCbIDs[i_hit]<< std::endl;
+      LHCbID lhcb_id( forward_track.LHCbIDs[i_hit] );
+      checker_track.addId( lhcb_id );
+    }
+    checker_tracks.push_back( checker_track );
+    ++i_track;
+  }
+  //debug_cout<<"end prepareForwardTracks"<<std::endl;
+
+  return checker_tracks;
+} 
+
 std::vector< trackChecker::Tracks > prepareVeloUTTracks(
   const VeloUTTracking::TrackUT* veloUT_tracks,
   const int* n_veloUT_tracks,
