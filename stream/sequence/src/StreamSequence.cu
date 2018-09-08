@@ -321,9 +321,9 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    NCatboostStandalone::TOwningEvaluator evaluator("../input/catboost/MuID-Run2-MC-570-v1.cb");
+    NCatboostStandalone::TOwningEvaluator evaluator("../../data/MuID-Run2-MC-570-v1.cb");
 
-    std::ifstream file("../input/catboost/background.csv");
+    std::ifstream file("../../data/background.csv");
     std::vector<float> features;
     std::string line;
     std::string cell;
@@ -343,14 +343,14 @@ cudaError_t Stream::run_sequence(
     }
     std::cout<< "background: " << result / index << std::endl;
 
-    file = std::ifstream("../input/catboost/signal.csv");
+    file = std::ifstream("../../data/signal.csv");
     index = 0;
     result = 0;
     while( file ) {
       index++;
       std::getline(file,line);
       std::stringstream lineStream(line);
-      rofeatures.clear();
+      features.clear();
 
       while( std::getline( lineStream, cell, ',' ) )
         features.push_back( std::stof(cell) );
