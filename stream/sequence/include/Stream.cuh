@@ -12,6 +12,7 @@
 #include "Timer.h"
 #include "Tools.h"
 #include "Catboost.h"
+#include "TestCatboost.h"
 #include "BaseDynamicScheduler.cuh"
 #include "SequenceSetup.cuh"
 #include "PrVeloUTMagnetToolDefinitions.cuh"

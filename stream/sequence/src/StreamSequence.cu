@@ -320,45 +320,14 @@ cudaError_t Stream::run_sequence(
 
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
-
-    NCatboostStandalone::TOwningEvaluator evaluator("../../data/MuID-Run2-MC-570-v1.cb");
-
-    std::ifstream file("../../data/background.csv");
-    std::vector<float> features;
-    std::string line;
-    std::string cell;
-
-    int index = 0;
-    float result = 0;
-    while( file ) {
-      index++;
-      std::getline(file,line);
-      std::stringstream lineStream(line);
-      features.clear();
-
-      while( std::getline( lineStream, cell, ',' ) )
-        features.push_back( std::stof(cell) );
-      
-      result += evaluator.Apply(features, NCatboostStandalone::EPredictionType::Probability);
-    }
-    std::cout<< "background: " << result / index << std::endl;
-
-    file = std::ifstream("../../data/signal.csv");
-    index = 0;
-    result = 0;
-    while( file ) {
-      index++;
-      std::getline(file,line);
-      std::stringstream lineStream(line);
-      features.clear();
-
-      while( std::getline( lineStream, cell, ',' ) )
-        features.push_back( std::stof(cell) );
-      
-      result += evaluator.Apply(features, NCatboostStandalone::EPredictionType::Probability);
-    }
-    std::cout<< "signal: " << result / index << std::endl;
     
+    //Test Catboost Evaluator
+    const std::string model_path = "../../data/MuID-Run2-MC-570-v1.cb";
+    const std::string background_data_path = "../../data/background.csv";
+    const std::string signal_data_path = "../../data/signal.csv";
+    test_cpu_catboost_evaluator(model_path, background_data_path);
+    test_cpu_catboost_evaluator(model_path, signal_data_path);
+
     ///////////////////////
     // Monte Carlo Check //
     ///////////////////////

@@ -22,6 +22,7 @@ compile_flatbuffers_schema_to_cpp(model.fbs)
 
 set(SRCS
     src/Catboost.cpp
+    src/TestCatboost.cpp
     features_generated.h
     ctr_data_generated.h
     model_generated.h)
