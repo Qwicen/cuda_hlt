@@ -326,10 +326,11 @@ cudaError_t Stream::run_sequence(
     const std::string background_data_path = "../../data/background.csv";
     const std::string signal_data_path = "../../data/signal.csv";
     std::vector<std::vector<float>> features;
-    read_data(background_data_path, features);
+    
+    features = read_csv_data_file(background_data_path);
     test_cpu_catboost_evaluator(model_path, features);
-    features.clear();
-    read_data(signal_data_path, features);
+
+    features = read_csv_data_file(signal_data_path);
     test_cpu_catboost_evaluator(model_path, features);
 
     ///////////////////////

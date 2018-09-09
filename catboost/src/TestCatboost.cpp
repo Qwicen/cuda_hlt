@@ -5,19 +5,17 @@ void test_cpu_catboost_evaluator(
   std::vector<std::vector<float>>& features
 ) {
   NCatboostStandalone::TOwningEvaluator evaluator(model_path);
-  int index = 0;
   float result = 0;
   for( const std::vector<float> event : features ) {
-    index++;
     result += evaluator.Apply(event, NCatboostStandalone::EPredictionType::Probability);
   }
-  std::cout << "result: " << result / index << std::endl;
+  std::cout << "result: " << result / features.size() << std::endl;
 }
 
-void read_data(
-  const std::string& data_path,
-  std::vector<std::vector<float>>& features
+std::vector<std::vector<float>> read_csv_data_file(
+  const std::string& data_path
 ) {
+  std::vector<std::vector<float>> features;
   std::ifstream file(data_path);
   std::vector<float> event;
   std::string line;
@@ -33,4 +31,5 @@ void read_data(
     if(!event.empty())
       features.push_back(event);
   }
+  return features;
 }

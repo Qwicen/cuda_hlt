@@ -5,9 +5,8 @@
 #include <fstream>
 #include <sstream>
 
-void read_data(
-  const std::string& data_path,
-  std::vector<std::vector<float>>& features
+std::vector<std::vector<float>> read_csv_data_file(
+  const std::string& data_path
 );
 
 void test_cpu_catboost_evaluator(
