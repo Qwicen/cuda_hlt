@@ -325,8 +325,12 @@ cudaError_t Stream::run_sequence(
     const std::string model_path = "../../data/MuID-Run2-MC-570-v1.cb";
     const std::string background_data_path = "../../data/background.csv";
     const std::string signal_data_path = "../../data/signal.csv";
-    test_cpu_catboost_evaluator(model_path, background_data_path);
-    test_cpu_catboost_evaluator(model_path, signal_data_path);
+    std::vector<std::vector<float>> features;
+    read_data(background_data_path, features);
+    test_cpu_catboost_evaluator(model_path, features);
+    features.clear();
+    read_data(signal_data_path, features);
+    test_cpu_catboost_evaluator(model_path, features);
 
     ///////////////////////
     // Monte Carlo Check //
