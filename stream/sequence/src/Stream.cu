@@ -54,6 +54,51 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_veloUT_tracks, max_number_of_events * VeloUTTracking::max_num_tracks * sizeof(VeloUTTracking::TrackUT)));
   cudaCheck(cudaMallocHost((void**)&host_atomics_veloUT, VeloUTTracking::num_atomics * max_number_of_events * sizeof(int)));
 
+  //Catboost initialization
+  NCatboostStandalone::TOwningEvaluator evaluator("../../data/MuID-Run2-MC-570-v1.cb");
+  model_float_feature_num = (int)evaluator.GetFloatFeatureCount();
+  model_bin_feature_num = (int)evaluator.GetBinFeatureCount();
+  ObliviousTrees = evaluator.GetObliviousTrees();
+  tree_num = ObliviousTrees->TreeSizes()->size();
+  treeSplitsPtr_flat = ObliviousTrees->TreeSplits()->data();
+  leafValuesPtr_flat = ObliviousTrees->LeafValues()->data();
+  
+  cudaCheck(cudaMallocHost((void***)&host_features, max_number_of_events * sizeof(float*)));
+  cudaCheck(cudaMallocHost((void***)&host_borders, model_float_feature_num * sizeof(float*)));
+  cudaCheck(cudaMallocHost((void**)&host_border_nums, model_float_feature_num * sizeof(int)));
+
+  cudaCheck(cudaMallocHost((void***)&host_leaf_values, tree_num * sizeof(double*)));
+  cudaCheck(cudaMallocHost((void***)&host_tree_splits, tree_num * sizeof(int*)));
+  cudaCheck(cudaMallocHost((void**)&host_catboost_output, max_number_of_events * sizeof(float)));
+  cudaCheck(cudaMallocHost((void**)&host_tree_sizes, tree_num * sizeof(int)));
+
+  int index = 0;
+  for (const auto& ff : *ObliviousTrees->FloatFeatures()) {
+    int border_num = ff->Borders()->size();
+    host_border_nums[index] = border_num;
+    
+	  cudaCheck(cudaMalloc((void**)&host_borders[index], border_num*sizeof(float)));
+    cudaCheck(cudaMemcpy(host_borders[index], ff->Borders()+1, border_num*sizeof(float),cudaMemcpyHostToDevice));
+    index++;
+  }
+
+  for (int i = 0; i < tree_num; i++) {
+    host_tree_sizes[i] = ObliviousTrees->TreeSizes()->Get(i);
+  }
+
+  for (int i = 0; i < tree_num; i++) {
+    int depth = host_tree_sizes[i];
+
+    cudaMalloc((void**)&host_leaf_values[i], (1 << depth)*sizeof(double));
+    cudaMemcpy(host_leaf_values[i], leafValuesPtr_flat, (1 << depth)*sizeof(double), cudaMemcpyHostToDevice);
+
+    cudaMalloc((void**)&host_tree_splits[i], depth*sizeof(int));
+    cudaMemcpy(host_tree_splits[i], treeSplitsPtr_flat, depth*sizeof(int), cudaMemcpyHostToDevice);
+    
+    leafValuesPtr_flat += (1 << depth);
+    treeSplitsPtr_flat += depth;
+  }
+
   // Define sequence of algorithms to execute
   sequence.set(sequence_algorithms());
 

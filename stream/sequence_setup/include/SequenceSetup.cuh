@@ -10,6 +10,9 @@
 
 #include "VeloUT.cuh"
 
+#include "Evaluator.cuh"
+#include "GenerateBinFeatures.cuh"
+
 #include "Argument.cuh"
 #include "Sequence.cuh"
 #include "TupleIndicesChecker.cuh"
@@ -37,7 +40,9 @@ constexpr auto sequence_algorithms() {
     prefix_sum_single_block,
     prefix_sum_scan,
     consolidate_tracks,
-    veloUT
+    veloUT,
+    gen_bin_features,
+    catboost_evaluator
   );
 }
 
@@ -84,7 +89,15 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_velo_states, VeloState>,
   Argument<arg::dev_ut_hits, VeloUTTracking::HitsSoA>,
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
-  Argument<arg::dev_atomics_veloUT, int>
+  Argument<arg::dev_atomics_veloUT, int>,
+  Argument<arg::dev_borders, float*>,
+  Argument<arg::dev_features, float*>,
+  Argument<arg::dev_border_nums, int>,
+  Argument<arg::dev_bin_features, unsigned char>,
+  Argument<arg::dev_tree_splits, int*>,
+  Argument<arg::dev_leaf_values, double*>,
+  Argument<arg::dev_tree_sizes, int>,
+  Argument<arg::dev_catboost_output, float>,
 >;
 
 /**

@@ -48,13 +48,15 @@ if ( ROOT_FOUND )
   VeloUT
   x86VeloUT
   Catboost
+  Evaluator
   ${ROOT_LIBRAIRES})
 else()
   target_link_libraries(Stream
   Velo
   VeloUT
   x86VeloUT
-  Catboost)
+  Catboost
+  Evaluator)
 endif()
 
 

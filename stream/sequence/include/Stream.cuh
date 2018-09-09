@@ -58,6 +58,22 @@ struct Stream {
   VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
 
+  //Catboost
+  int tree_num;
+  int model_float_feature_num;
+  int model_bin_feature_num;
+  int* host_tree_sizes;
+  int* host_border_nums;
+  int** host_tree_splits;
+  float* host_catboost_output;
+  float** host_borders;
+  float** host_features;
+  double** host_leaf_values;
+  unsigned char* host_bin_features;
+  const int* treeSplitsPtr_flat;
+  const double* leafValuesPtr_flat;
+  const NCatBoostFbs::TObliviousTrees* ObliviousTrees;
+
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;
 

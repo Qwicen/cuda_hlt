@@ -29,4 +29,8 @@ set(SRCS
 
 add_library(Catboost ${SRCS})
 
+file(GLOB catboost_evaluator "src/*cu")
 
+cuda_add_library(Evaluator STATIC
+  ${catboost_evaluator}
+)

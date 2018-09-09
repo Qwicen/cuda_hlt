@@ -333,6 +333,76 @@ cudaError_t Stream::run_sequence(
     features = read_csv_data_file(signal_data_path);
     test_cpu_catboost_evaluator(model_path, features);
 
+	  for (int i = 0; i < number_of_events; ++i) {
+      cudaCheck(cudaMalloc((void**)&host_features[i], model_float_feature_num*sizeof(float)));
+      cudaCheck(cudaMemcpy(host_features[i], features[i].data(), model_float_feature_num*sizeof(float),cudaMemcpyHostToDevice));
+    }
+
+    // Set arguments size
+    argument_sizes[arg::dev_borders] = argen.size<arg::dev_borders>(model_float_feature_num);
+    argument_sizes[arg::dev_features] = argen.size<arg::dev_features>(number_of_events * model_float_feature_num);
+    argument_sizes[arg::dev_border_nums] = argen.size<arg::dev_border_nums>(model_float_feature_num);
+    argument_sizes[arg::dev_bin_features] = argen.size<arg::dev_bin_features>(number_of_events * model_bin_feature_num);
+    
+    // Reserve required arguments for this algorithm in the sequence
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+
+    // Copy memory from host to device
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_borders>(argument_offsets), host_borders, model_float_feature_num * sizeof(float*), cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_features>(argument_offsets), host_features, number_of_events * sizeof(float*), cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_border_nums>(argument_offsets), host_border_nums, model_float_feature_num * sizeof(int), cudaMemcpyHostToDevice, stream));
+    
+    sequence.item<seq::gen_bin_features>().set_opts(dim3(number_of_events), dim3(model_float_feature_num), stream);
+    sequence.item<seq::gen_bin_features>().set_arguments(
+      argen.generate<arg::dev_borders>(argument_offsets),
+      argen.generate<arg::dev_features>(argument_offsets),
+      argen.generate<arg::dev_border_nums>(argument_offsets),
+      argen.generate<arg::dev_bin_features>(argument_offsets),
+      number_of_events,
+      model_bin_feature_num
+    );
+    sequence.item<seq::gen_bin_features>().invoke();
+
+    
+
+    // Set arguments size
+    argument_sizes[arg::dev_tree_splits] = argen.size<arg::dev_tree_splits>(tree_num);
+    argument_sizes[arg::dev_leaf_values] = argen.size<arg::dev_leaf_values>(tree_num);
+    argument_sizes[arg::dev_tree_sizes] = argen.size<arg::dev_tree_sizes>(tree_num);
+    argument_sizes[arg::dev_catboost_output] = argen.size<arg::dev_catboost_output>(number_of_events);
+
+    // Reserve required arguments for this algorithm in the sequence
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+
+    // Copy memory from host to device
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_tree_splits>(argument_offsets), host_tree_splits, tree_num * sizeof(int*), cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_leaf_values>(argument_offsets), host_leaf_values, tree_num * sizeof(double*), cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_tree_sizes>(argument_offsets), host_tree_sizes, tree_num * sizeof(int), cudaMemcpyHostToDevice, stream));
+
+    sequence.item<seq::catboost_evaluator>().set_opts(dim3(number_of_events), dim3(32), stream, 32*sizeof(float));
+    sequence.item<seq::catboost_evaluator>().set_arguments(
+      argen.generate<arg::dev_tree_splits>(argument_offsets),
+      argen.generate<arg::dev_leaf_values>(argument_offsets),
+      argen.generate<arg::dev_tree_sizes>(argument_offsets),
+      argen.generate<arg::dev_catboost_output>(argument_offsets),
+      argen.generate<arg::dev_bin_features>(argument_offsets),
+      tree_num,
+      number_of_events,
+      model_bin_feature_num
+    );
+    sequence.item<seq::catboost_evaluator>().invoke();
+
+    // Retrieve result
+    cudaCheck(cudaMemcpyAsync(host_catboost_output, argen.generate<arg::dev_catboost_output>(argument_offsets), argen.size<arg::dev_catboost_output>(number_of_events), cudaMemcpyDeviceToHost, stream));
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    // Check the output
+    for (int i = 0; i < number_of_events; i++) {
+      info_cout << "CATBOOST KERNEL OUTPUT: " << host_catboost_output[i] << std::endl;
+    }
+    info_cout << "CATBOOST FINISHED" << std::endl << std::endl;
+
     ///////////////////////
     // Monte Carlo Check //
     ///////////////////////
