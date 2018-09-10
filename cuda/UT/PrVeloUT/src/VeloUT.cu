@@ -9,7 +9,8 @@ __global__ void veloUT(
   VeloState* dev_velo_states,
   VeloUTTracking::TrackUT* dev_veloUT_tracks,
   int* dev_atomics_veloUT,
-  PrUTMagnetTool* dev_ut_magnet_tool
+  PrUTMagnetTool* dev_ut_magnet_tool,
+  float* dev_ut_dxDy
 ) {
   const int number_of_events = gridDim.x;
   const int event_number = blockIdx.x;
@@ -86,7 +87,8 @@ __global__ void veloUT(
           layer_offsets,
           n_hits_layers,
           fudgeFactors,
-          velo_states_event[i_track] )
+          velo_states_event[i_track],
+          dev_ut_dxDy )
         ) continue;
 
     TrackHelper helper(velo_states_event[i_track]);
@@ -104,6 +106,7 @@ __global__ void veloUT(
           layer_offsets,
           n_hits_layers,
           helper,
+          dev_ut_dxDy,
           true )){
       
       // go through UT layers in backward direction
@@ -116,6 +119,7 @@ __global__ void veloUT(
         layer_offsets,
         n_hits_layers,
         helper,
+        dev_ut_dxDy,
         false);
     }
     

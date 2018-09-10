@@ -45,7 +45,7 @@ struct StreamWrapper {
     const std::string& folder_name_MC,
     const uint start_event_offset,
     const size_t reserve_mb,
-    const GpuConstants& gpu_constants
+    const Constants& constants
   );
 
   /**

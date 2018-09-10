@@ -127,12 +127,10 @@ __global__ void decode_raw_banks (
       const float    m_p0X        = geometry.p0X        [idx_offset];
       const float    m_p0Y        = geometry.p0Y        [idx_offset];
       const float    m_p0Z        = geometry.p0Z        [idx_offset];
-      const float    m_cosAngle   = geometry.cos        [idx_offset];
 
       const float numstrips = (fracStrip / 4.f) + strip - m_firstStrip;
 
       // Calculate values of the hit
-      const float    cos           = m_cosAngle;
       const float    yBegin        = m_p0Y + numstrips * m_dp0diY;
       const float    yEnd          = m_dy  + yBegin;
       const float    zAtYEq0       = m_p0Z + numstrips * m_dp0diZ;
@@ -146,15 +144,14 @@ __global__ void decode_raw_banks (
       uint32_t hitIndex = atomicAdd(hits_layer, 1);
 
       hitIndex += shared_layer_offset[planeCode];
-      ut_hits.m_cos[hitIndex]           = cos;
-      ut_hits.m_yBegin[hitIndex]        = yBegin;
-      ut_hits.m_yEnd[hitIndex]          = yEnd;
-      ut_hits.m_zAtYEq0[hitIndex]       = zAtYEq0;
-      ut_hits.m_xAtYEq0[hitIndex]       = xAtYEq0;
-      ut_hits.m_weight[hitIndex]        = weight;
-      ut_hits.m_highThreshold[hitIndex] = highThreshold;
-      ut_hits.m_LHCbID[hitIndex]        = LHCbID;
-      ut_hits.m_planeCode[hitIndex]     = planeCode;
+      ut_hits.yBegin[hitIndex]        = yBegin;
+      ut_hits.yEnd[hitIndex]          = yEnd;
+      ut_hits.zAtYEq0[hitIndex]       = zAtYEq0;
+      ut_hits.xAtYEq0[hitIndex]       = xAtYEq0;
+      ut_hits.weight[hitIndex]        = weight;
+      ut_hits.highThreshold[hitIndex] = highThreshold;
+      ut_hits.LHCbID[hitIndex]        = LHCbID;
+      ut_hits.planeCode[hitIndex]     = planeCode;
     }
   }
 }

@@ -47,7 +47,8 @@ __host__ __device__ bool getHits(
   uint* layer_offsets,
   uint* n_hits_layers,
   const float* fudgeFactors, 
-  const VeloState& trState)
+  const VeloState& trState,
+  const float* ut_dxDy)
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
@@ -83,8 +84,8 @@ __host__ __device__ bool getHits(
       int layer_offset = layer_offsets[layer];
       
       if( n_hits_layers[layer] == 0 ) continue;
-      const float dxDy   = ut_hits.dxDy(layer_offset + 0);
-      const float zLayer = ut_hits.zAtYEq0(layer_offset + 0); 
+      const float dxDy   = ut_dxDy[layer];
+      const float zLayer = ut_hits.zAtYEq0[layer_offset + 0]; 
 
       const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
       const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
@@ -107,14 +108,14 @@ __host__ __device__ bool getHits(
       size_t posBeg = posLayers[layer][ indexLow ];
       size_t posEnd = posLayers[layer][ indexHi  ];
 
-      while ( (ut_hits.xAtYEq0(layer_offset + posBeg) < lowerBoundX) && (posBeg != n_hits_layers[layer] ) ) {
+      while ( (ut_hits.xAtYEq0[layer_offset + posBeg] < lowerBoundX) && (posBeg != n_hits_layers[layer] ) ) {
         ++posBeg;
       }
       
       if (posBeg == n_hits_layers[layer]) continue;
 
       findHits(posBeg, posEnd,
-        ut_hits, layer_offset, layer,
+        ut_hits, layer_offset, layer, ut_dxDy,
         trState, xTol*invNormFact, invNormFact,
         hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer],
         x_pos_layers);
@@ -138,6 +139,7 @@ __host__ __device__ bool formClusters(
   uint* layer_offsets,
   uint* n_hits_layers,
   TrackHelper& helper,
+  const float* ut_dxDy,
   const bool forward)
 {
 
@@ -159,7 +161,7 @@ __host__ __device__ bool formClusters(
     const int layer_offset0 = layer_offsets[ layers[0] ];
     const int hit_index0    = layer_offset0 + hitCandidatesInLayers[ layers[0] ][i_hit0];
     const float xhitLayer0  = x_pos_layers[layers[0]][i_hit0];
-    const float zhitLayer0  = ut_hits.zAtYEq0( hit_index0 );
+    const float zhitLayer0  = ut_hits.zAtYEq0[hit_index0];
     hitCandidateIndices[0] = i_hit0;
     
     for ( int i_hit2 = 0; i_hit2 < n_hitCandidatesInLayers[ layers[2] ]; ++i_hit2 ) {
@@ -167,7 +169,7 @@ __host__ __device__ bool formClusters(
       const int layer_offset2 = layer_offsets[ layers[2] ];
       const int hit_index2    = layer_offset2 + hitCandidatesInLayers[ layers[2] ][i_hit2];
       const float xhitLayer2  = x_pos_layers[layers[2]][i_hit2];
-      const float zhitLayer2  = ut_hits.zAtYEq0( hit_index2 );
+      const float zhitLayer2  = ut_hits.zAtYEq0[hit_index2];
       hitCandidateIndices[2] = i_hit2;
       
       const float tx = (xhitLayer2 - xhitLayer0)/(zhitLayer2 - zhitLayer0);
@@ -180,7 +182,7 @@ __host__ __device__ bool formClusters(
         const int layer_offset1 = layer_offsets[ layers[1] ];
         const int hit_index1    = layer_offset1 + hitCandidatesInLayers[ layers[1] ][i_hit1];
         const float xhitLayer1  = x_pos_layers[layers[1]][i_hit1];
-        const float zhitLayer1  = ut_hits.zAtYEq0( hit_index1 );
+        const float zhitLayer1  = ut_hits.zAtYEq0[hit_index1];
        
         const float xextrapLayer1 = xhitLayer0 + tx*(zhitLayer1-zhitLayer0);
         if(std::abs(xhitLayer1 - xextrapLayer1) < hitTol){
@@ -199,7 +201,7 @@ __host__ __device__ bool formClusters(
         const int layer_offset3 = layer_offsets[ layers[3] ];
         const int hit_index3    = layer_offset3 + hitCandidatesInLayers[ layers[3] ][i_hit3];
         const float xhitLayer3  = x_pos_layers[layers[3]][i_hit3];
-        const float zhitLayer3  = ut_hits.zAtYEq0( hit_index3 );
+        const float zhitLayer3  = ut_hits.zAtYEq0[hit_index3];
         
         const float xextrapLayer3 = xhitLayer2 + tx*(zhitLayer3-zhitLayer2);
         if(std::abs(xhitLayer3 - xextrapLayer3) < hitTol){
@@ -212,7 +214,7 @@ __host__ __device__ bool formClusters(
       // -- All hits found
       if ( IndexBestHit1 > 0 && IndexBestHit3 > 0 ) {
         const int hitIndices[4] = {hit_index0, IndexBestHit1, hit_index2, IndexBestHit3};
-        simpleFit<4>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper);
+        simpleFit<4>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, ut_dxDy);
         
         if(!fourLayerSolution && helper.n_hits > 0){
           fourLayerSolution = true;
@@ -223,14 +225,14 @@ __host__ __device__ bool formClusters(
       // -- Nothing found in layer 3
       if( !fourLayerSolution && IndexBestHit1 > 0 ){
         const int hitIndices[3] = {hit_index0, IndexBestHit1, hit_index2};
-        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper);
+        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, ut_dxDy);
         continue;
       }
       // -- Nothing found in layer 1
       if( !fourLayerSolution && IndexBestHit3 > 0 ){
         hitCandidateIndices[1] = hitCandidateIndices[3];  // hit3 saved in second position of hits4fit
         const int hitIndices[3] = {hit_index0, IndexBestHit3, hit_index2};
-        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper);
+        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, ut_dxDy);
         continue;
       }
       
@@ -330,17 +332,17 @@ __host__ __device__ void prepareOutputTrack(
   for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
     const int hit_index = helper.bestHitIndices[i_hit];
     
-    track.addLHCbID( ut_hits.LHCbID(hit_index) );
+    track.addLHCbID( ut_hits.LHCbID[hit_index] );
     assert( track.hitsNum < VeloUTTracking::max_track_size);
     
-    const int planeCode = ut_hits.planeCode(hit_index);
+    const int planeCode = ut_hits.planeCode[hit_index];
     const float xhit = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
-    const float zhit = ut_hits.zAtYEq0( hit_index );
+    const float zhit = ut_hits.zAtYEq0[hit_index];
 
     const int layer_offset = layer_offsets[ planeCode ];
     for ( int i_ohit = 0; i_ohit < n_hitCandidatesInLayers[planeCode]; ++i_ohit ) {
       const int ohit_index = hitCandidatesInLayers[planeCode][i_ohit];
-      const float zohit  = ut_hits.zAtYEq0( layer_offset + ohit_index );
+      const float zohit  = ut_hits.zAtYEq0[layer_offset + ohit_index];
       
       if(zohit==zhit) continue;
       
@@ -349,7 +351,7 @@ __host__ __device__ void prepareOutputTrack(
       if( xohit-xextrap < -PrVeloUTConst::overlapTol) continue;
       if( xohit-xextrap > PrVeloUTConst::overlapTol) break;
       
-      track.addLHCbID( ut_hits.LHCbID(layer_offset + ohit_index) );
+      track.addLHCbID(ut_hits.LHCbID[layer_offset + ohit_index]);
       assert( track.hitsNum < VeloUTTracking::max_track_size);
       
       // -- only one overlap hit
@@ -420,7 +422,7 @@ __host__ __device__ void fillIterators(
       
       // TODO add bounds checking
       for ( ; pos != n_hits_layer; ++pos) {
-        while( ut_hits.xAtYEq0(layer_offset + pos) > val){
+        while( ut_hits.xAtYEq0[layer_offset + pos] > val){
           posLayers[layer][bound+42] = pos;
           ++bound;
           val = std::copysign(float(bound*bound)/2.0, bound);
@@ -446,8 +448,8 @@ __host__ __device__ void findHits(
   const size_t posEnd,
   UTHits& ut_hits,
   const int layer_offset,
-  // to do: pass array for this layer -> get rid of i_layer index
   const int i_layer,
+  const float* ut_dxDy,
   const VeloState& myState, 
   const float xTolNormFact,
   const float invNormFact,
@@ -455,7 +457,7 @@ __host__ __device__ void findHits(
   int &n_hitCandidatesInLayer,
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer])
 {
-  const auto zInit = ut_hits.zAtYEq0( layer_offset + posBeg );
+  const auto zInit = ut_hits.zAtYEq0[layer_offset + posBeg];
   const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
   
   size_t pos = posBeg;
@@ -468,8 +470,8 @@ __host__ __device__ void findHits(
   const auto yyProto =       myState.y - myState.ty*myState.z;
   
   for (int i=pos; i<posEnd; ++i) {
-    
-    const auto xx = ut_hits.xAt( layer_offset + i, yApprox ); 
+    const float dxDy = ut_dxDy[i_layer];
+    const auto xx = ut_hits.xAt(layer_offset + i, yApprox, dxDy); 
     const auto dx = xx - xOnTrackProto;
     
     if( dx < -xTolNormFact ) continue;
@@ -478,9 +480,9 @@ __host__ __device__ void findHits(
     // -- Now refine the tolerance in Y
     if ( ut_hits.isNotYCompatible( layer_offset + i, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx*invNormFact)) ) continue;
     
-    const auto zz = ut_hits.zAtYEq0( layer_offset + i ); 
+    const auto zz = ut_hits.zAtYEq0[layer_offset + i]; 
     const auto yy = yyProto +  myState.ty*zz;
-    const auto xx2 = ut_hits.xAt( layer_offset + i, yy );
+    const auto xx2 = ut_hits.xAt(layer_offset + i, yy, dxDy);
         
     hitCandidatesInLayer[n_hitCandidatesInLayer] = i;
     x_pos_layers[i_layer][n_hitCandidatesInLayer] = xx2;

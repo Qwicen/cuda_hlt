@@ -86,8 +86,7 @@ UTRawBank UTRawEvent::getUTRawBank (
   return raw_bank;
 }
 
-UTHit::UTHit(float    ut_cos,
-             float    ut_yBegin,
+UTHit::UTHit(float    ut_yBegin,
              float    ut_yEnd,
              float    ut_zAtYEq0,
              float    ut_xAtYEq0,
@@ -96,7 +95,6 @@ UTHit::UTHit(float    ut_cos,
              uint32_t ut_LHCbID,
              uint32_t ut_planeCode
              ) {
-  cos           = ut_cos          ;
   yBegin        = ut_yBegin       ;
   yEnd          = ut_yEnd         ;
   zAtYEq0       = ut_zAtYEq0      ;
@@ -108,51 +106,38 @@ UTHit::UTHit(float    ut_cos,
 }
 
 void UTHits::typecast_unsorted(uint32_t* base_pointer, uint32_t total_number_of_hits) {
-  m_cos = reinterpret_cast<float*>(base_pointer);
-  m_yBegin = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
-  m_yEnd = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
-  m_zAtYEq0 = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
-  m_xAtYEq0 = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
-  m_weight = reinterpret_cast<float*>(base_pointer + 5*total_number_of_hits);
-  m_highThreshold = base_pointer + 6*total_number_of_hits;
-  m_LHCbID = base_pointer + 7*total_number_of_hits;
-  m_planeCode = base_pointer + 8*total_number_of_hits;
-  m_temp = base_pointer + 9*total_number_of_hits;
+  yBegin = reinterpret_cast<float*>(base_pointer);
+  yEnd = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
+  zAtYEq0 = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
+  xAtYEq0 = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
+  weight = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
+  highThreshold = base_pointer + 5*total_number_of_hits;
+  LHCbID = base_pointer + 6*total_number_of_hits;
+  planeCode = base_pointer + 7*total_number_of_hits;
+  temp = base_pointer + 8*total_number_of_hits;
 }
 
 void UTHits::typecast_sorted(uint32_t* base_pointer, uint32_t total_number_of_hits) {
-  m_temp = base_pointer;
-  m_cos = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
-  m_yBegin = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
-  m_yEnd = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
-  m_zAtYEq0 = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
-  m_xAtYEq0 = reinterpret_cast<float*>(base_pointer + 5*total_number_of_hits);
-  m_weight = reinterpret_cast<float*>(base_pointer + 6*total_number_of_hits);
-  m_highThreshold = base_pointer + 7*total_number_of_hits;
-  m_LHCbID = base_pointer + 8*total_number_of_hits;
-  m_planeCode = base_pointer + 9*total_number_of_hits;
+  temp = base_pointer;
+  yBegin = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
+  yEnd = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
+  zAtYEq0 = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
+  xAtYEq0 = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
+  weight = reinterpret_cast<float*>(base_pointer + 5*total_number_of_hits);
+  highThreshold = base_pointer + 6*total_number_of_hits;
+  LHCbID = base_pointer + 7*total_number_of_hits;
+  planeCode = base_pointer + 8*total_number_of_hits;
 }
 
 UTHit UTHits::getHit(uint32_t index) const {
-  const float cos              = m_cos          [index];
-  const float yBegin           = m_yBegin       [index];
-  const float yEnd             = m_yEnd         [index];
-  const float zAtYEq0          = m_zAtYEq0      [index];
-  const float xAtYEq0          = m_xAtYEq0      [index];
-  const float weight           = m_weight       [index];
-  const uint32_t highThreshold = m_highThreshold[index];
-  const uint32_t LHCbID        = m_LHCbID       [index];
-  const uint32_t planeCode     = m_planeCode    [index];
-
-  return UTHit(cos,
-               yBegin,
-               yEnd,
-               zAtYEq0,
-               xAtYEq0,
-               weight,
-               highThreshold,
-               LHCbID,
-               planeCode
-               );
+  return {yBegin[index],
+   yEnd[index],
+   zAtYEq0[index],
+   xAtYEq0[index],
+   weight[index],
+   highThreshold[index],
+   LHCbID[index],
+   planeCode[index]
+ };
 }
 

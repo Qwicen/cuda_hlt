@@ -47,7 +47,7 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_module_cluster_num>(argument_offsets),
       argen.generate<arg::dev_module_candidate_num>(argument_offsets),
       argen.generate<arg::dev_cluster_candidates>(argument_offsets),
-      gpu_constants.dev_velo_candidate_ks
+      constants.dev_velo_candidate_ks
     );
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input>(argument_offsets), host_velopix_events, host_velopix_events_size, cudaMemcpyHostToDevice, stream));
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input_offsets>(argument_offsets), host_velopix_event_offsets, host_velopix_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
@@ -110,9 +110,9 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_cluster_candidates>(argument_offsets),
       argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
       dev_velo_geometry,
-      gpu_constants.dev_velo_sp_patterns,
-      gpu_constants.dev_velo_sp_fx,
-      gpu_constants.dev_velo_sp_fy
+      constants.dev_velo_sp_patterns,
+      constants.dev_velo_sp_fx,
+      constants.dev_velo_sp_fy
     );
     sequence.item<seq::masked_velo_clustering>().invoke();
 
@@ -369,7 +369,7 @@ cudaError_t Stream::run_sequence(
     // info_cout << "Total number of UT hits: " << *host_accumulated_number_of_ut_hits << std::endl;
 
     // Decode UT raw banks
-    argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(10 * host_accumulated_number_of_ut_hits[0]);
+    argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(9 * host_accumulated_number_of_ut_hits[0]);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::decode_raw_banks>().set_opts(dim3(number_of_events), dim3(64, 4), stream);
     sequence.item<seq::decode_raw_banks>().set_arguments(
@@ -407,7 +407,8 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_velo_states>(argument_offsets),
       argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
       argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
-      dev_ut_magnet_tool
+      dev_ut_magnet_tool,
+      constants.dev_ut_dxDy
     );
     sequence.item<seq::veloUT>().invoke();
 
@@ -514,6 +515,7 @@ cudaError_t Stream::run_sequence(
         //              ut_hits,
         //              ut_hit_count,
         //              host_ut_magnet_tool,
+        //              constants.host_ut_dxDy,
         //              host_velo_states,
         //              host_accumulated_tracks,
         //              host_velo_track_hit_number,

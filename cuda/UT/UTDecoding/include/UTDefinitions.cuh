@@ -69,7 +69,6 @@ struct  UTRawEvent {
 };
 
 struct UTHit {
-  float cos;
   float yBegin;
   float yEnd;
   float zAtYEq0;
@@ -81,8 +80,7 @@ struct UTHit {
 
   UTHit() = default;
 
-  UTHit(float cos,
-        float yBegin,
+  UTHit(float yBegin,
         float yEnd,
         float zAtYEq0,
         float xAtYEq0,
@@ -95,7 +93,6 @@ struct UTHit {
   #define cmpf(a, b) (fabs((a) - (b)) > 0.000065f)
 
   bool operator!=(const UTHit & h) const {
-    if (cmpf(cos,        h.cos))          return true;
     if (cmpf(yBegin,     h.yBegin))       return true;
     if (cmpf(yEnd,       h.yEnd))         return true;
     if (cmpf(zAtYEq0,    h.zAtYEq0))      return true;
@@ -114,7 +111,6 @@ struct UTHit {
   friend std::ostream& operator<<(std::ostream& stream, const UTHit& ut_hit) {
     stream << "UT hit {"
       << ut_hit.LHCbID << ", "
-      << ut_hit.cos << ", "
       << ut_hit.yBegin << ", "
       << ut_hit.yEnd << ", "
       << ut_hit.zAtYEq0 << ", "
@@ -148,16 +144,15 @@ struct UTHitCount {
    one Hits structure exists per event
 */
 struct UTHits {
-  float* m_cos;
-  float* m_yBegin;
-  float* m_yEnd;
-  float* m_zAtYEq0;
-  float* m_xAtYEq0;
-  float* m_weight;
-  uint32_t* m_highThreshold;
-  uint32_t* m_LHCbID;
-  uint32_t* m_planeCode;
-  uint32_t* m_temp;
+  float* yBegin;
+  float* yEnd;
+  float* zAtYEq0;
+  float* xAtYEq0;
+  float* weight;
+  uint32_t* highThreshold;
+  uint32_t* LHCbID;
+  uint32_t* planeCode;
+  uint32_t* temp;
 
   UTHits() = default;
 
@@ -180,36 +175,13 @@ struct UTHits {
    */
   UTHit getHit(uint32_t index) const;
 
-  __host__ __device__ inline float cos(const int i_hit) const { return m_cos[i_hit]; }
-  __host__ __device__ inline int planeCode(const int i_hit) const { return m_planeCode[i_hit]; }
-  // layer configuration: XUVX, U and V layers tilted by +/- 5 degrees = 0.087 radians
-  __host__ __device__ inline float dxDy(const int i_hit) const {
-    const int i_plane = m_planeCode[i_hit];
-    if ( i_plane == 0 || i_plane == 3 )
-      return 0.;
-    else if ( i_plane == 1 )
-      return 0.08748867;
-    else if ( i_plane == 2 )
-      return -0.08748867;
-    else return -1;
-  }
-  __host__ __device__ inline float cosT(const int i_hit) const { return ( std::fabs( m_xAtYEq0[i_hit] ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy(i_hit) * dxDy(i_hit) ) : cos(i_hit); }
-  __host__ __device__ inline bool highThreshold(const int i_hit) const { return m_highThreshold[i_hit]; }
   __host__ __device__ inline bool isYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol <= y && y <= yMax(i_hit) + tol; }
   __host__ __device__ inline bool isNotYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol > y || y > yMax(i_hit) + tol; }
-  __host__ __device__ inline int LHCbID(const int i_hit) const { return m_LHCbID[i_hit]; }
-  __host__ __device__ inline float sinT(const int i_hit) const { return tanT(i_hit) * cosT(i_hit); }
-  __host__ __device__ inline float tanT(const int i_hit) const { return -1 * dxDy(i_hit); }
-  __host__ __device__ inline float weight(const int i_hit) const { return m_weight[i_hit]; }
-  __host__ __device__ inline float xAt( const int i_hit, const float globalY ) const { return m_xAtYEq0[i_hit] + globalY * dxDy(i_hit); }
-  __host__ __device__ inline float xAtYEq0(const int i_hit) const { return m_xAtYEq0[i_hit]; }
-  __host__ __device__ inline float xMax(const int i_hit) const { return std::max( xAt( i_hit, yBegin(i_hit) ), xAt( i_hit, yEnd(i_hit) ) ); }
-  __host__ __device__ inline float xMin(const int i_hit) const { return std::min( xAt( i_hit, yBegin(i_hit) ), xAt( i_hit, yEnd(i_hit) ) ); }
-  __host__ __device__ inline float xT(const int i_hit) const { return cos(i_hit); }
-  __host__ __device__ inline float yBegin(const int i_hit) const { return m_yBegin[i_hit]; }
-  __host__ __device__ inline float yEnd(const int i_hit) const { return m_yEnd[i_hit]; }
-  __host__ __device__ inline float yMax(const int i_hit) const { return std::max( yBegin(i_hit), yEnd(i_hit) ); }
-  __host__ __device__ inline float yMid(const int i_hit) const { return 0.5 * ( yBegin(i_hit) + yEnd(i_hit) ); }
-  __host__ __device__ inline float yMin(const int i_hit) const { return std::min( yBegin(i_hit), yEnd(i_hit) ); }
-  __host__ __device__ inline float zAtYEq0(const int i_hit) const { return m_zAtYEq0[i_hit]; } 
+  __host__ __device__ inline float cosT(const int i_hit, const float dxDy) const { return ( std::fabs( xAtYEq0[i_hit] ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy * dxDy ) : std::cos(dxDy); }
+  __host__ __device__ inline float sinT(const int i_hit, const float dxDy) const { return tanT(i_hit, dxDy) * cosT(i_hit, dxDy); }
+  __host__ __device__ inline float tanT(const int i_hit, const float dxDy) const { return -1 * dxDy; }
+  __host__ __device__ inline float xAt( const int i_hit, const float globalY, const float dxDy ) const { return xAtYEq0[i_hit] + globalY * dxDy; }
+  __host__ __device__ inline float yMax(const int i_hit) const { return std::max( yBegin[i_hit], yEnd[i_hit] ); }
+  __host__ __device__ inline float yMid(const int i_hit) const { return 0.5 * ( yBegin[i_hit] + yEnd[i_hit] ); }
+  __host__ __device__ inline float yMin(const int i_hit) const { return std::min( yBegin[i_hit], yEnd[i_hit] ); }
 };

@@ -24,7 +24,7 @@ __global__ void sort_by_x(
     total_number_of_hits += n_hits_layer;
 
     find_permutation<float>( 
-      unsorted_ut_hits.m_xAtYEq0,
+      unsorted_ut_hits.xAtYEq0,
       layer_offset,
     	dev_hit_permutations,
     	n_hits_layer
@@ -36,21 +36,19 @@ __global__ void sort_by_x(
   __syncthreads();
 
   // Important note: Order matters, and should be kept as is
-  apply_permutation<uint>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_planeCode, sorted_ut_hits.m_planeCode );
+  apply_permutation<uint>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.planeCode, sorted_ut_hits.planeCode );
   __syncthreads();
-  apply_permutation<uint>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_LHCbID, sorted_ut_hits.m_LHCbID );
+  apply_permutation<uint>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.LHCbID, sorted_ut_hits.LHCbID );
   __syncthreads();
-  apply_permutation<uint>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_highThreshold, sorted_ut_hits.m_highThreshold );
+  apply_permutation<uint>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.highThreshold, sorted_ut_hits.highThreshold );
   __syncthreads();
-  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_weight, sorted_ut_hits.m_weight );
+  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.weight, sorted_ut_hits.weight );
   __syncthreads();
-  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_xAtYEq0, sorted_ut_hits.m_xAtYEq0 );
+  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.xAtYEq0, sorted_ut_hits.xAtYEq0 );
   __syncthreads();
-  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_zAtYEq0, sorted_ut_hits.m_zAtYEq0 );
+  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.zAtYEq0, sorted_ut_hits.zAtYEq0 );
   __syncthreads();
-  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_yEnd, sorted_ut_hits.m_yEnd );
+  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.yEnd, sorted_ut_hits.yEnd );
   __syncthreads();
-  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_yBegin, sorted_ut_hits.m_yBegin );
-  __syncthreads();
-  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.m_cos, sorted_ut_hits.m_cos );
+  apply_permutation<float>( dev_hit_permutations, layer_offsets[0], total_number_of_hits, unsorted_ut_hits.yBegin, sorted_ut_hits.yBegin );
 }

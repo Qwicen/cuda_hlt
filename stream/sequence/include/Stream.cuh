@@ -78,8 +78,8 @@ struct Stream {
   std::string folder_name_MC;
   uint start_event_offset;
 
-  // Gpu constants
-  GpuConstants gpu_constants;
+  // Constants
+  Constants constants;
 
   cudaError_t initialize(
     const std::vector<char>& velopix_geometry,
@@ -96,7 +96,7 @@ struct Stream {
     const uint param_start_event_offset,
     const size_t param_reserve_mb,
     const uint param_stream_number,
-    const GpuConstants& param_gpu_constants
+    const Constants& param_constants
   );
   
   cudaError_t run_sequence(

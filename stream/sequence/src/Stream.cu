@@ -18,7 +18,7 @@ cudaError_t Stream::initialize(
   const uint param_start_event_offset,
   const size_t reserve_mb,
   const uint param_stream_number,
-  const GpuConstants& param_gpu_constants
+  const Constants& param_constants
 ) {
   // Set stream and events
   cudaCheck(cudaStreamCreate(&stream));
@@ -35,7 +35,7 @@ cudaError_t Stream::initialize(
   run_on_x86 = param_run_on_x86;
   folder_name_MC = param_folder_name_MC;
   start_event_offset = param_start_event_offset;
-  gpu_constants = param_gpu_constants;
+  constants = param_constants;
 
   // Special case
   // Populate velo geometry

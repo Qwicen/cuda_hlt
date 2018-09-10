@@ -6,6 +6,7 @@
 #include "VeloDefinitions.cuh"
 #include "ClusteringDefinitions.cuh"
 #include "ClusteringCommon.h"
+#include "VeloUTDefinitions.cuh"
 
 /**
  * @brief Struct intended as a singleton with constants defined on GPU.
@@ -16,13 +17,15 @@
  *          
  *          The pointers are hard-coded. Feel free to write more as needed.
  */
-struct GpuConstants {
+struct Constants {
   float* dev_velo_module_zs;
   uint8_t* dev_velo_candidate_ks;
   uint8_t* dev_velo_sp_patterns;
   float* dev_velo_sp_fx;
   float* dev_velo_sp_fy;
-
+  float* dev_ut_dxDy;
+  float host_ut_dxDy[VeloUTTracking::n_layers];
+  
   void reserve_and_initialize() {
     reserve_constants();
     initialize_constants();

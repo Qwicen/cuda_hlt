@@ -1,14 +1,15 @@
 #include "Constants.cuh"
 
-void GpuConstants::reserve_constants() {
+void Constants::reserve_constants() {
   cudaCheck(cudaMalloc((void**)&dev_velo_module_zs, VeloTracking::n_modules * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_velo_candidate_ks, 9 * sizeof(uint8_t)));
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_patterns, 256 * sizeof(uint8_t)));
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_fx, 512 * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_fy, 512 * sizeof(float)));
+  cudaCheck(cudaMalloc((void**)&dev_ut_dxDy, VeloUTTracking::n_layers * sizeof(float)));
 }
 
-void GpuConstants::initialize_constants() {
+void Constants::initialize_constants() {
   // Velo module constants
   const std::array<float, VeloTracking::n_modules> velo_module_zs = {-287.5, -275, -262.5, -250, -237.5, -225, -212.5, \
     -200, -137.5, -125, -62.5, -50, -37.5, -25, -12.5, 0, 12.5, 25, 37.5, 50, 62.5, 75, 87.5, 100, \
@@ -31,4 +32,13 @@ void GpuConstants::initialize_constants() {
   cudaCheck(cudaMemcpy(dev_velo_sp_patterns, sp_patterns.data(), sp_patterns.size(), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_velo_sp_fx, sp_fx.data(), sp_fx.size() * sizeof(float), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_velo_sp_fy, sp_fy.data(), sp_fy.size() * sizeof(float), cudaMemcpyHostToDevice));
+
+  // UT geometry constants
+  // layer configuration: XUVX, U and V layers tilted by +/- 5 degrees = 0.087 radians
+  host_ut_dxDy[0] = 0.;
+  host_ut_dxDy[1] = 0.08748867;
+  host_ut_dxDy[2] = -0.0874886;
+  host_ut_dxDy[3] = 0.;
+
+  cudaCheck(cudaMemcpy(dev_ut_dxDy, host_ut_dxDy, VeloUTTracking::n_layers * sizeof(float), cudaMemcpyHostToDevice));
 }

@@ -188,8 +188,8 @@ int main(int argc, char *argv[])
   info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
   
   // Initialize detector constants on GPU
-  GpuConstants gpu_constants;
-  gpu_constants.reserve_and_initialize();
+  Constants constants;
+  constants.reserve_and_initialize();
 
   // Create streams
   StreamWrapper stream_wrapper;
@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
     folder_name_MC,
     start_event_offset,
     reserve_mb,
-    gpu_constants
+    constants
   );
   
   // Attempt to execute all in one go
