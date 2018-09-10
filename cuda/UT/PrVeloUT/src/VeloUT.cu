@@ -19,13 +19,14 @@ __global__ void veloUT(
   const int* accumulated_tracks_base_pointer = dev_atomics_storage + number_of_events;
   const int accumulated_tracks_event = accumulated_tracks_base_pointer[event_number];
   VeloState* velo_states_event = dev_velo_states + accumulated_tracks_event;
+  const uint total_number_of_hits = dev_ut_hit_count[number_of_events * VeloUTTracking::n_layers];
+
+  UTHitCount ut_hit_count;
+  ut_hit_count.typecast_after_prefix_sum(dev_ut_hit_count, event_number, number_of_events);
 
   UTHits ut_hits;
-  ut_hits.typecast_sorted(dev_ut_hits, dev_ut_hit_count[number_of_events * VeloUTTracking::n_layers]);
+  ut_hits.typecast_sorted(dev_ut_hits, total_number_of_hits);
   // VeloUTTracking::HitsSoA* hits_layers_event = dev_ut_hits + event_number;
-
-  uint* layer_offsets = dev_ut_hit_count + event_number * VeloUTTracking::n_layers;
-  uint* n_hits_layers = dev_ut_hit_count + number_of_events * VeloUTTracking::n_layers + 1 + event_number * VeloUTTracking::n_layers;
 
   /* dev_atomics_veloUT contains in an SoA:
      1. # of veloUT tracks
@@ -53,7 +54,7 @@ __global__ void veloUT(
   //        hits_layers_event->weight(0),
   //        hits_layers_event->highThreshold(0));
          
-  fillIterators(ut_hits, layer_offsets, n_hits_layers, posLayers);
+  fillIterators(ut_hits, ut_hit_count, posLayers);
 
   const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdlTable     = &(dev_ut_magnet_tool->bdlTable[0]);
@@ -84,8 +85,7 @@ __global__ void veloUT(
           x_pos_layers,
           posLayers,
           ut_hits,
-          layer_offsets,
-          n_hits_layers,
+          ut_hit_count,
           fudgeFactors,
           velo_states_event[i_track],
           dev_ut_dxDy )
@@ -103,8 +103,7 @@ __global__ void veloUT(
           x_pos_layers,
           hitCandidateIndices,
           ut_hits,
-          layer_offsets,
-          n_hits_layers,
+          ut_hit_count,
           helper,
           dev_ut_dxDy,
           true )){
@@ -116,8 +115,7 @@ __global__ void veloUT(
         x_pos_layers,
         hitCandidateIndices,
         ut_hits,
-        layer_offsets,
-        n_hits_layers,
+        ut_hit_count,
         helper,
         dev_ut_dxDy,
         false);
@@ -133,8 +131,7 @@ __global__ void veloUT(
         hitCandidatesInLayers,
         n_hitCandidatesInLayers,
         ut_hits,
-        layer_offsets,
-        n_hits_layers,
+        ut_hit_count,
         x_pos_layers,
         hitCandidateIndices,
         veloUT_tracks_event,

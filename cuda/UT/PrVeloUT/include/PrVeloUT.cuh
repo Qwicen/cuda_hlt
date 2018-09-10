@@ -58,8 +58,7 @@ __host__ __device__ bool getHits(
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int posLayers[4][85],
   UTHits& ut_hits,
-  uint* layer_offsets,
-  uint* n_hits_layers,
+  UTHitCount& ut_hit_count,
   const float* fudgeFactors, 
   const VeloState& trState,
   const float* ut_dxDy); 
@@ -70,8 +69,7 @@ __host__ __device__ bool formClusters(
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int hitCandidateIndices[VeloUTTracking::n_layers],
   UTHits& ut_hits,
-  uint* layer_offsets,
-  uint* n_hits_layers,
+  UTHitCount& ut_hit_count,
   TrackHelper& helper,
   const float* ut_dxDy,
   const bool forward);
@@ -85,8 +83,7 @@ __host__ __device__ void prepareOutputTrack(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   UTHits& ut_hits,
-  uint* layer_offsets,
-  uint* n_hits_layers,
+  UTHitCount& ut_hit_count,
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int hitCandidateIndices[VeloUTTracking::n_layers],
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
@@ -106,15 +103,14 @@ __host__ __device__ void fillArrayAt(
   
 __host__ __device__ void fillIterators(
   UTHits& ut_hits,
-  uint* layer_offsets,
-  uint* n_hits_layers,
+  UTHitCount& ut_hit_count,
   int posLayers[4][85] );
 
 __host__ __device__ void findHits( 
   const size_t posBeg,
   const size_t posEnd,
   UTHits& ut_hits,
-  const int layer_offset,
+  uint layer_offset,
   const int i_layer,
   const float* ut_dxDy,
   const VeloState& myState, 
@@ -243,7 +239,6 @@ __host__ __device__ void simpleFit(
   chi2UT /= (N + 1 - 2);
 
   if( chi2UT < helper.bestParams[1] ){
-    
     // calculate q/p
     const float sinInX  = xSlopeVeloFit * std::sqrt(1.+xSlopeVeloFit*xSlopeVeloFit);
     const float sinOutX = xSlopeUTFit * std::sqrt(1.+xSlopeUTFit*xSlopeUTFit);
@@ -259,11 +254,5 @@ __host__ __device__ void simpleFit(
       bestHitCandidateIndices[i_hit] = hitCandidateIndices[i_hit];
     }
     helper.n_hits = N;
-
   }
-
 }
- 
-  
-
-

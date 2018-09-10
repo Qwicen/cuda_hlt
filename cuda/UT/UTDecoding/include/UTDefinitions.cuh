@@ -3,18 +3,30 @@
 #include <stdint.h>
 #include <vector>
 #include <ostream>
+#include "VeloUTDefinitions.cuh"
 
 static constexpr uint32_t ut_number_of_sectors_per_board = 6;
 static constexpr uint32_t ut_number_of_geometry_sectors = 1048;
 
+/**
+* @brief Offset and number of hits of each layer.
+*/
 struct UTHitCount {
-  uint* n_hits_layers;
   uint* layer_offsets;
+  uint* n_hits_layers;
 
   __device__ __host__
-  void typecast_before_prefix_sum(const uint event_number) {
-    
-  }
+  void typecast_before_prefix_sum(
+    uint* base_pointer,
+    const uint event_number
+  );
+
+  __device__ __host__
+  void typecast_after_prefix_sum(
+    uint* base_pointer,
+    const uint event_number,
+    const uint number_of_events
+  );
 };
 
 struct UTBoards {
@@ -131,20 +143,6 @@ struct UTHit {
 
     return stream;
   }
-};
-
-  /*      Copied from cuda/veloUT/common/include/VeloUTDefinitions.cuh    */
-static constexpr uint ut_number_of_layers = 4;
-static constexpr uint ut_max_number_of_hits_per_layer = 1024;
-static constexpr uint ut_max_number_of_hits_per_event = ut_number_of_layers* ut_max_number_of_hits_per_layer;
-
-/**
-* @brief Offset and number of hits of each layer.
-* 
-*/
-struct UTHitCount {
-  uint32_t layer_offset [ut_number_of_layers];
-  uint32_t n_hits_layers[ut_number_of_layers];
 };
 
 /* 
