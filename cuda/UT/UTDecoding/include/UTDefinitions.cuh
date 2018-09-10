@@ -7,6 +7,16 @@
 static constexpr uint32_t ut_number_of_sectors_per_board = 6;
 static constexpr uint32_t ut_number_of_geometry_sectors = 1048;
 
+struct UTHitCount {
+  uint* n_hits_layers;
+  uint* layer_offsets;
+
+  __device__ __host__
+  void typecast_before_prefix_sum(const uint event_number) {
+    
+  }
+};
+
 struct UTBoards {
   uint32_t number_of_boards;
   uint32_t number_of_channels;
@@ -17,7 +27,7 @@ struct UTBoards {
   uint32_t* sectors;
   uint32_t* chanIDs;
 
-  UTBoards(const std::vector<char> & ut_boards);
+  UTBoards(const std::vector<char>& ut_boards);
   
   __device__ __host__ UTBoards (
     const char* ut_boards
@@ -37,7 +47,7 @@ struct UTGeometry {
   float* p0Z;
   float* cos;
 
-  UTGeometry(const std::vector<char> & ut_geometry);
+  UTGeometry(const std::vector<char>& ut_geometry);
   
   __device__ __host__ UTGeometry (
     const char* ut_geometry
