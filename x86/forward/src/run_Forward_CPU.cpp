@@ -1,8 +1,10 @@
 #include "run_Forward_CPU.h"
 
+#ifdef WITH_ROOT
 #include "TH1D.h"
 #include "TFile.h"
 #include "TTree.h"
+#endif
 
 int run_forward_on_CPU (
   std::vector< trackChecker::Tracks >& forward_tracks_events,
@@ -12,7 +14,8 @@ int run_forward_on_CPU (
 ) {
 
   PrForward forward;
- 
+
+#ifdef WITH_ROOT
   // Histograms only for checking and debugging
   TFile *f = new TFile("../output/Forward.root", "RECREATE");
   TTree *t_Forward_tracks = new TTree("Forward_tracks", "Forward_tracks");
@@ -22,20 +25,21 @@ int run_forward_on_CPU (
   float first_x, first_y, first_z;
   float last_x, last_y, last_z;
   float qop;
-  
-  
+    
   t_Forward_tracks->Branch("qop", &qop);
-
+#endif
 
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
 
     std::vector< ForwardTracking::TrackForward > forward_tracks = forward(ut_tracks[i_event], &(hits_layers_events[i_event]));
-    
+
+#ifdef WITH_ROOT
     // store qop in tree
     for ( auto track : forward_tracks ) {
       qop = track.qop;
       t_Forward_tracks->Fill();
     }
+#endif
     
     // save in format for track checker
     // CAUTION: only checking Velo and UT LHCbIDs of this track!!
@@ -63,9 +67,10 @@ int run_forward_on_CPU (
     
   }
   
-  
+#ifdef WITH_ROOT
   f->Write();
   f->Close();
+#endif
   
   return 0;
 }
