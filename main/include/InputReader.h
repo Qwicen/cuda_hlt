@@ -43,7 +43,7 @@ struct EventReader : public Reader {
   /**
    * @brief Reads files from the specified folder, starting from an event offset.
    */
-  virtual void read_events(uint number_of_files=0, uint start_event_offset=0);
+  virtual void read_events(uint number_of_events_requested=0, uint start_event_offset=0);
 
   /**
    * @brief Checks the consistency of the read buffers.
@@ -51,7 +51,7 @@ struct EventReader : public Reader {
   virtual bool check_events(
     const std::vector<char>& events,
     const std::vector<uint>& event_offsets,
-    uint number_of_files
+    uint number_of_events_requested
   ) {
     return true;
   }

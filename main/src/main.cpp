@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
   std::string folder_name_UT_raw = "";
   std::string folder_name_MC = "";
   std::string folder_name_detector_configuration = "";
-  uint number_of_files = 0;
+  uint number_of_events_requested = 0;
   uint start_event_offset = 0;
   uint tbb_threads = 1;
   uint number_of_repetitions = 1;
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
       reserve_mb = atoi(optarg);
       break;
     case 'n':
-      number_of_files = atoi(optarg);
+      number_of_events_requested = atoi(optarg);
       break;
     case 'o':
       start_event_offset = atoi(optarg);
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
     << " folder with UT raw bank input (-u): " << folder_name_UT_raw << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
-    << " number of files (-n): " << number_of_files << std::endl
+    << " number of files (-n): " << number_of_events_requested << std::endl
     << " start event offset (-o): " << start_event_offset << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
@@ -173,6 +173,9 @@ int main(int argc, char *argv[])
   // Read all inputs
   info_cout << "Reading input datatypes" << std::endl;
 
+  number_of_events_requested = get_number_of_events_requested(
+    number_of_events_requested, folder_name_velopix_raw);
+
   auto geometry_reader = GeometryReader(folder_name_detector_configuration);
   auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
   auto velo_reader = VeloReader(folder_name_velopix_raw);
@@ -182,8 +185,8 @@ int main(int argc, char *argv[])
   std::vector<char> ut_boards = geometry_reader.read_geometry("ut_boards.bin");
   std::vector<char> ut_geometry = geometry_reader.read_geometry("ut_geometry.bin");
   std::vector<char> ut_magnet_tool = ut_magnet_tool_reader.read_UT_magnet_tool();
-  velo_reader.read_events(number_of_files, start_event_offset);
-  ut_reader.read_events(number_of_files, start_event_offset);
+  velo_reader.read_events(number_of_events_requested, start_event_offset);
+  ut_reader.read_events(number_of_events_requested, start_event_offset);
 
   info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
   
@@ -199,7 +202,7 @@ int main(int argc, char *argv[])
     ut_boards,
     ut_geometry,
     ut_magnet_tool,
-    number_of_files,
+    number_of_events_requested,
     transmit_device_to_host,
     do_check,
     do_simplified_kalman_filter,
@@ -227,19 +230,19 @@ int main(int argc, char *argv[])
         ut_reader.host_event_offsets,
         ut_reader.host_events_size,
         ut_reader.host_event_offsets_size,
-        number_of_files,
+        number_of_events_requested,
         number_of_repetitions
       );
     }
   );
   t.stop();
 
-  std::cout << (number_of_files * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
+  std::cout << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
   std::ofstream outfile;
   outfile.open("../tests/test.txt", std::fstream::in | std::fstream::out | std::ios_base::app);
-  outfile << start_event_offset << "\t" << (number_of_files * tbb_threads * number_of_repetitions / t.get()) << std::endl;
+  outfile << start_event_offset << "\t" << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << std::endl;
   outfile.close();
   
   // Reset device

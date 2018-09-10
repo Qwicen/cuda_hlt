@@ -18,24 +18,24 @@ std::vector<char> UTMagnetToolReader::read_UT_magnet_tool() {
   return ut_magnet_tool;
 }
 
-void EventReader::read_events(uint number_of_files, uint start_event_offset) {
+void EventReader::read_events(uint number_of_events_requested, uint start_event_offset) {
   std::vector<char> events;
   std::vector<uint> event_offsets;
 
   read_folder(
     folder_name,
-    number_of_files,
+    number_of_events_requested,
     events,
     event_offsets,
     start_event_offset
   );
 
-  check_events(events, event_offsets, number_of_files);
+  check_events(events, event_offsets, number_of_events_requested);
 
-  // TODO Remove: Temporal check to understand if number_of_files is the same as number_of_events
+  // TODO Remove: Temporal check to understand if number_of_events_requested is the same as number_of_events
   const int number_of_events = event_offsets.size() - 1;
-  if (number_of_files != number_of_events) {
-    throw StrException("Number of files differs from number of events read.");
+  if (number_of_events_requested != number_of_events) {
+    throw StrException("Number of events requested differs from number of events read.");
   }
 
   // Copy raw data to pinned host memory

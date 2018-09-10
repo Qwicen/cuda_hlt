@@ -98,28 +98,40 @@ std::vector<std::string> list_folder(
 }
 
 /**
+ * @brief Processes the number of events requested. If 0,
+ *        returns the size of the passed folder contents.
+ */
+uint get_number_of_events_requested(
+  uint number_of_events_requested,
+  const std::string& foldername
+) {
+  if (number_of_events_requested > 0) {
+    return number_of_events_requested;
+  } else {
+    std::vector<std::string> folderContents = list_folder(foldername);
+    return folderContents.size();
+  }
+}
+
+/**
  * @brief Reads a number of events from a folder name.
  */
 void read_folder(
   const std::string& foldername,
-  uint number_of_files,
+  uint number_of_events_requested,
   std::vector<char>& events,
   std::vector<uint>& event_offsets,
   const uint start_event_offset
 ) {
   std::vector<std::string> folderContents = list_folder(foldername);
 
-  if (number_of_files == 0) {
-    number_of_files = folderContents.size();
-  }
-
-  debug_cout << "Requested " << number_of_files << " files" << std::endl;
+  debug_cout << "Requested " << number_of_events_requested << " files" << std::endl;
   int readFiles = 0;
 
   // Read all requested events
   unsigned int accumulated_size=0;
   std::vector<unsigned int> event_sizes;
-  for (int i = start_event_offset; i < number_of_files + start_event_offset; ++i) {
+  for (int i = start_event_offset; i < number_of_events_requested + start_event_offset; ++i) {
     // Read event #i in the list and add it to the inputs
     std::string readingFile = folderContents[i % folderContents.size()];
     appendFileToVector(foldername + "/" + readingFile, events, event_sizes);
@@ -131,7 +143,6 @@ void read_folder(
     if ((readFiles % 100) == 0) {
       info_cout << "." << std::flush;
     }
-
   }
 
   // Add last offset
