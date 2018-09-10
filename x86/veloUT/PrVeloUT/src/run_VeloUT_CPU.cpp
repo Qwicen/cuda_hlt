@@ -108,7 +108,7 @@ int run_veloUT_on_CPU (
       apply_permutation<float>( hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.yBegin, sorted_ut_hits.yBegin );
      
 #ifdef WITH_ROOT
-      for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
+      for ( int i_hit = 0; i_hit < n_hits_layer; ++i_hit ) {
         weight = sorted_ut_hits.weight[layer_offset + i_hit];
         xAtYEq0 = sorted_ut_hits.xAtYEq0[layer_offset + i_hit];
         yBegin = sorted_ut_hits.yBegin[layer_offset + i_hit];
@@ -117,8 +117,7 @@ int run_veloUT_on_CPU (
         LHCbID = sorted_ut_hits.LHCbID[layer_offset + i_hit];
         layer = i_layer;
         highThreshold = sorted_ut_hits.highThreshold[layer_offset + i_hit];
-        dxDy = sorted_ut_hits.dxDy(layer_offset + i_hit);
-
+        
         t_ut_hits->Fill();
       }
 #endif
