@@ -36,13 +36,13 @@ void check_velopix_events(
   int n_events
 );
 
-void read_ft_events_into_arrays(  ForwardTracking::HitsSoAFwd *ft_hits_events,
+void read_scifi_events_into_arrays(  ForwardTracking::HitsSoAFwd *scifi_hits_events,
                                   uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
                                   const std::vector<char> events,
                                   const std::vector<unsigned int> event_offsets,
                                   int n_events );
 
-void check_ft_events( const ForwardTracking::HitsSoAFwd *hits_layers_events,
+void check_scifi_events( const ForwardTracking::HitsSoAFwd *hits_layers_events,
                       const uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
                       const int n_events
                       );

@@ -36,7 +36,7 @@ void printUsage(char* argv[]){
     << std::endl << (mc_check_enabled ? " " : " [") << "-d {folder containing .bin files with MC truth information}"
     << (mc_check_enabled ? "" : " ]")
     << std::endl << " -e {folder containing bin files with UT hit information}"
-    << std::endl << " -s {folder containing, bin files with FT hit information}"
+    << std::endl << " -s {folder containing, bin files with SciFi hit information}"
     << std::endl << " -g {folder containing geometry descriptions}"
     << std::endl << " -n {number of events to process}=0 (all)"
     << std::endl << " -o {offset of events from which to start}=0 (beginning)"
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
   std::string folder_name_velopix_raw;
   std::string folder_name_MC = "";
   std::string folder_name_ut_hits = "";
-  std::string folder_name_ft_hits = "";
+  std::string folder_name_scifi_hits = "";
   std::string folder_name_geometry = "";
   uint number_of_files = 0;
   uint start_event_offset = 0;
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
       folder_name_ut_hits = std::string(optarg);
       break;
     case 's':
-      folder_name_ft_hits = std::string(optarg);
+      folder_name_scifi_hits = std::string(optarg);
     case 'g':
       folder_name_geometry = std::string(optarg);
       break;
@@ -143,8 +143,8 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  if(folder_name_ft_hits.empty()){
-    std::cerr << "No folder for ft hits specified" << std::endl;
+  if(folder_name_scifi_hits.empty()){
+    std::cerr << "No folder for scifi hits specified" << std::endl;
     printUsage(argv);
     return -1;
   } 
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " folder with ut hits input (-e): " << folder_name_ut_hits << std::endl
-    << " folder with ft hits input (-s): " << folder_name_ft_hits << std::endl
+    << " folder with scifi hits input (-s): " << folder_name_scifi_hits << std::endl
     << " folder with geometry input (-g): " << folder_name_geometry << std::endl
     << " number of files (-n): " << number_of_files << std::endl
     << " start event offset (-o): " << start_event_offset << std::endl
@@ -250,19 +250,19 @@ int main(int argc, char *argv[])
   read_ut_events_into_arrays( host_ut_hits_events, ut_events, ut_event_offsets, number_of_events );
   //check_ut_events( host_ut_hits_events, number_of_events );
 
-  // Read FT hits
-  std::vector<char> ft_events;
-  std::vector<unsigned int> ft_event_offsets;
-  verbose_cout << "Reading FT hits for " << number_of_events << " events " << std::endl;
-  read_folder( folder_name_ft_hits, number_of_files,
-               ft_events, ft_event_offsets,
+  // Read SciFi hits
+  std::vector<char> scifi_events;
+  std::vector<unsigned int> scifi_event_offsets;
+  verbose_cout << "Reading SciFi hits for " << number_of_events << " events " << std::endl;
+  read_folder( folder_name_scifi_hits, number_of_files,
+               scifi_events, scifi_event_offsets,
                start_event_offset );
 
-  ForwardTracking::HitsSoAFwd *ft_hits_events = new ForwardTracking::HitsSoAFwd[number_of_events];
-  uint32_t ft_n_hits_layers_events[number_of_events][ForwardTracking::n_layers];
-  read_ft_events_into_arrays( ft_hits_events, ft_n_hits_layers_events,
-                              ft_events, ft_event_offsets, number_of_events );
-  //check_ft_events( ft_hits_events, ft_n_hits_layers_events, number_of_events );
+  ForwardTracking::HitsSoAFwd *scifi_hits_events = new ForwardTracking::HitsSoAFwd[number_of_events];
+  uint32_t scifi_n_hits_layers_events[number_of_events][ForwardTracking::n_layers];
+  read_scifi_events_into_arrays( scifi_hits_events, scifi_n_hits_layers_events,
+                              scifi_events, scifi_event_offsets, number_of_events );
+  //check_scifi_events( scifi_hits_events, scifi_n_hits_layers_events, number_of_events );
   
   // Read LUTs from PrUTMagnetTool into pinned host memory
   PrUTMagnetTool* host_ut_magnet_tool;
@@ -306,8 +306,8 @@ int main(int argc, char *argv[])
         velopix_event_offsets.size(),
 	      host_ut_hits_events,
         host_ut_magnet_tool,
-        ft_hits_events,
-        ft_n_hits_layers_events,
+        scifi_hits_events,
+        scifi_n_hits_layers_events,
         number_of_events,
         number_of_repetitions
       );
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
   );
   t.stop();
 
-  delete [] ft_hits_events; 
+  delete [] scifi_hits_events; 
  
   std::cout << (number_of_events * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;

@@ -113,7 +113,7 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
   }
 }
 
-void read_ft_events_into_arrays( ForwardTracking::HitsSoAFwd *hits_layers_events,
+void read_scifi_events_into_arrays( ForwardTracking::HitsSoAFwd *hits_layers_events,
                                  uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
                                  const std::vector<char> events,
                                  const std::vector<unsigned int> event_offsets,
@@ -204,7 +204,7 @@ void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
   
 }
 
-void check_ft_events( const ForwardTracking::HitsSoAFwd *hits_layers_events,
+void check_scifi_events( const ForwardTracking::HitsSoAFwd *hits_layers_events,
 		      const uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
 		      const int n_events ) {
 
@@ -236,12 +236,12 @@ void check_ft_events( const ForwardTracking::HitsSoAFwd *hits_layers_events,
 
     
     average_number_of_hits_per_event += number_of_hits;
-    debug_cout << "# of FT hits = " << number_of_hits << std::endl;
+    debug_cout << "# of SciFi hits = " << number_of_hits << std::endl;
     
   }
 
   average_number_of_hits_per_event = average_number_of_hits_per_event / n_events;
-  debug_cout << "average # of FT hits / event = " << average_number_of_hits_per_event << std::endl;
+  debug_cout << "average # of SciFi hits / event = " << average_number_of_hits_per_event << std::endl;
     
   
 }
