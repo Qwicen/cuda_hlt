@@ -35,7 +35,6 @@ bool check_velopix_events(
         const uint32_t sp_col = (sp_addr >> 6);
         const uint32_t no_sp_neighbours = sp_word & 0x80000000U;
       }
-      
     }
     n_sps_all_events += n_sps_event;
   }

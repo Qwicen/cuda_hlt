@@ -40,10 +40,15 @@ void appendFileToVector(
 std::vector<std::string> list_folder(
   const std::string& foldername
 );
- 
+
+uint get_number_of_events_requested(
+  uint number_of_events_requested,
+  const std::string& foldername
+);
+
 void read_folder(
   const std::string& foldername,
-  unsigned int fileNumber,
+  uint number_of_events_requested,
   std::vector<char>& events,
   std::vector<unsigned int>& event_offsets,
   const uint start_event_offset
