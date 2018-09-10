@@ -14,7 +14,6 @@ cuda_add_library(x86VeloUT STATIC
 )
 if ( ROOT_FOUND )
   target_compile_definitions(x86VeloUT PUBLIC WITH_ROOT)
-  message("Found Root, compiling WITH_ROOT")
   target_link_libraries(x86VeloUT
     ${ROOT_LIBRARIES}
   )

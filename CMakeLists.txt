@@ -63,8 +63,8 @@ add_subdirectory(cuda)
 add_subdirectory(stream)
 add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
-add_subdirectory(PrForward)
 add_subdirectory(x86/veloUT/PrVeloUT)
+add_subdirectory(x86/forward)
 
 # Include directories
 include_directories(main/include)
@@ -93,7 +93,7 @@ if ( ROOT_FOUND )
     tbb
     Velo
     VeloUT
-    Forward
+    x86Forward
     x86VeloUT
     Stream
     x86Clustering
@@ -105,7 +105,7 @@ else()
     tbb
     Velo
     VeloUT
-    Forward
+    x86Forward
     x86VeloUT
     Stream
     x86Clustering

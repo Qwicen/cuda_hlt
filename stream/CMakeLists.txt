@@ -22,6 +22,7 @@ include_directories(../cuda/forward/common/include)
 include_directories(../PrForward/include)
 include_directories(../cuda/utils/include)
 include_directories(../cuda/veloUT/sorting/include)
+include_directories(../x86/forward/include)
 
 file(GLOB stream_gear "gear/src/*cu")
 file(GLOB stream_handlers "handlers/src/*cu")
@@ -47,13 +48,13 @@ if ( ROOT_FOUND )
   target_link_libraries(Stream
   Velo
   VeloUT
-  Forward
+  x86Forward
   x86VeloUT
   ${ROOT_LIBRARIES})
 else()
   target_link_libraries(Stream
   Velo
   VeloUT
-  Forward
+  x86Forward
   x86VeloUT)
 endif()
