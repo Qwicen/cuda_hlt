@@ -43,6 +43,7 @@ cuda_add_library(Stream STATIC
 
 if ( ROOT_FOUND )
   target_compile_definitions(Stream PUBLIC WITH_ROOT)
+  message("-- Found ROOT, setting WITH_ROOT to true")
   target_link_libraries(Stream
   Velo
   VeloUT

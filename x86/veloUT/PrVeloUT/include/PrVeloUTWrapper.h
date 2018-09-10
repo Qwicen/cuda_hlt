@@ -9,6 +9,7 @@ void call_PrVeloUT(
     const VeloState* velo_states_event,
     VeloUTTracking::HitsSoA *hits_layers_events,
     const PrUTMagnetTool *magnet_tool,
+    const float* ut_dxDy,
     VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
     std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
     int &n_velo_tracks_in_UT,
