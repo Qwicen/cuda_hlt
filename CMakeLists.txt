@@ -90,7 +90,7 @@ if ( ROOT_FOUND )
   target_link_libraries(cu_hlt
     tbb
     Velo
-    VeloUT
+    UT
     x86VeloUT
     Stream
     x86Clustering
@@ -101,7 +101,7 @@ else()
   target_link_libraries(cu_hlt
     tbb
     Velo
-    VeloUT
+    UT
     x86VeloUT
     Stream
     x86Clustering

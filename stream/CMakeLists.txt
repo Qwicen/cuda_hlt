@@ -45,12 +45,12 @@ if ( ROOT_FOUND )
   message("-- Found ROOT, setting WITH_ROOT to true")
   target_link_libraries(Stream
   Velo
-  VeloUT
+  UT
   x86VeloUT
   ${ROOT_LIBRARIES})
 else()
   target_link_libraries(Stream
   Velo
-  VeloUT
+  UT
   x86VeloUT)
 endif()

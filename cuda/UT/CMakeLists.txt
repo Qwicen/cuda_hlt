@@ -1,7 +1,7 @@
 
 file(GLOB UT_decoding "UTDecoding/src/*cu")
+file(GLOB UT_sorting "sorting/src/*cu")
 file(GLOB veloUT_tracking "PrVeloUT/src/*cu")
-file(GLOB veloUT_sorting "sorting/src/*cu")
 
 include_directories(../../main/include)
 include_directories(../velo/common/include)
@@ -11,12 +11,12 @@ include_directories(UTDecoding/include)
 include_directories(PrVeloUT/include)
 include_directories(sorting/include)
 
-cuda_add_library(VeloUT STATIC
+cuda_add_library(UT STATIC
   ${UT_decoding}
+  ${UT_sorting}
   ${veloUT_tracking}
-  ${veloUT_sorting}
 )
 
 if ( MC_CHECK )
-  target_compile_definitions(VeloUT PUBLIC MC_CHECK)
+  target_compile_definitions(UT PUBLIC MC_CHECK)
 endif()
