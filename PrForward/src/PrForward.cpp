@@ -25,7 +25,6 @@ std::vector<ForwardTracking::TrackForward> PrForward::operator() (
 
   m_hits_layers = *hits_layers; // dereference for local member
 
-  //std::vector<VeloUTTracking::TrackVeloUT> outputTracks;
   std::vector<ForwardTracking::TrackForward> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
@@ -46,9 +45,6 @@ std::vector<ForwardTracking::TrackForward> PrForward::operator() (
 										  << veloTr.state_endvelo.ty
 										  << " " 
 										  << veloTr.state_endvelo.qOverP << std::endl;*/
-
-    //std::cout << "===== VELO-UT LHCbIDs =====" << std::endl;
-    //for (auto lhcbid : veloTr.track.LHCbIDs) { std::cout << lhcbid << std::endl; }
 
     std::vector<ForwardTracking::TrackForward> oneOutput; 
     // for a start copy input to output
@@ -90,15 +86,15 @@ void PrForward::prepareOutputTrack(
 
   // Some values related to the forward track which were stored in a dedicated
   // forward track class, let's see if I can get rid of that here
-  const float m_zRef_track    = m_zReference; 
-  const float m_xParams_seed[4] = {state_at_endvelo.x + (m_zRef_track - state_at_endvelo.z)*state_at_endvelo.tx,state_at_endvelo.tx,0.f,0.f};
-  const float m_yParams_seed[4] = {state_at_endvelo.y + (m_zRef_track - state_at_endvelo.z)*state_at_endvelo.ty,state_at_endvelo.ty,0.f,0.f};
-
-  float yAtRef = yFromVelo( m_zReference, state_at_endvelo );
+  const float m_zRef_track    = m_zReference;
+  const float xAtRef = xFromVelo( m_zRef_track, state_at_endvelo );
+  const float m_xParams_seed[4] = {xAtRef, state_at_endvelo.tx, 0.f, 0.f};
+  const float yAtRef = yFromVelo( m_zRef_track, state_at_endvelo );
+  const float m_yParams_seed[4] = {yAtRef, state_at_endvelo.ty, 0.f, 0.f};
 
   // First loop Hough cluster search, set initial search windows
-  PrParameters pars_first{m_minXHits,m_maxXWindow,m_maxXWindowSlope,m_maxXGap,4u};
-  PrParameters pars_second{m_minXHits_2nd,m_maxXWindow_2nd,m_maxXWindowSlope_2nd,m_maxXGap_2nd,4u};
+  PrParameters pars_first{m_minXHits, m_maxXWindow, m_maxXWindowSlope, m_maxXGap, 4u};
+  PrParameters pars_second{m_minXHits_2nd, m_maxXWindow_2nd, m_maxXWindowSlope_2nd, m_maxXGap_2nd, 4u};
 
   std::vector<int> allXHits[2];
 
@@ -718,13 +714,13 @@ void PrForward::collectAllXHits(std::vector<int>& allXHits,
   float dxRef = 0.9 * calcDxRef(m_minPt, state_at_endvelo);
   float zMag = zMagnet(state_at_endvelo);
  
-  const float q = state_at_endvelo.qOverP>0.f ? 1.f :-1.f;
+  const float q = state_at_endvelo.qOverP > 0.f ? 1.f :-1.f;
   const float dir = q*m_magscalefactor*(-1.f);
 
   // Is PT at end VELO same as PT at beamline? Check output of VeloUT
   float m_slope2 = pow(state_at_endvelo.tx,2) + pow(state_at_endvelo.ty,2); 
-  const float pt = std::sqrt(std::fabs(1./(state_at_endvelo.qOverP*state_at_endvelo.qOverP))*(m_slope2)/(1.+m_slope2));
-  const bool wSignTreatment = m_useWrongSignWindow && pt>m_wrongSignPT;
+  const float pt = std::sqrt( std::fabs(1./ (pow(state_at_endvelo.qOverP,2) ) ) * (m_slope2) / (1. + m_slope2) );
+  const bool wSignTreatment = m_useWrongSignWindow && pt > m_wrongSignPT;
 
   float dxRefWS = 0.0; 
   if( wSignTreatment ){

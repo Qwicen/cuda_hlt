@@ -18,7 +18,19 @@
     return (index3*11 + index2)*31 + index1;
   }
 
- 
+
+//=====================================================================
+// Propagate to end of Velo z position (z=770mm)
+// only propagate x, y, z; covariance matrix is not needed
+//=====================================================================
+__host__ __device__ void propagate_state_to_end_velo(
+  VeloState& velo_state
+) {
+  const float dz = VeloTracking::z_endVelo - velo_state.z;
+  velo_state.x += dz * velo_state.tx;
+  velo_state.y += dz * velo_state.ty;
+  velo_state.z = VeloTracking::z_endVelo;
+}
 
 
 //=============================================================================
@@ -248,7 +260,7 @@ __host__ __device__ void prepareOutputTrack(
   const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
   const int accumulated_tracks_event,
   const int i_Velo_track,
-  const TrackHelper& helper,
+  TrackHelper& helper,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
@@ -259,6 +271,7 @@ __host__ __device__ void prepareOutputTrack(
   const float* bdlTable) {
 
   //== Handle states. copy Velo one, add UT.
+  //propagate_state_to_end_velo( helper.state );
   const float zOrigin = (std::fabs(helper.state.ty) > 0.001)
     ? helper.state.z - helper.state.y / helper.state.ty
     : helper.state.z - helper.state.x / helper.state.tx;

@@ -1,5 +1,6 @@
 #include "../include/ConsolidateTracks.cuh"
 
+
 /**
  * @brief Calculates the parameters according to a root means square fit
  */
@@ -54,6 +55,7 @@
     state.z = -(state.x * state.tx + state.y * state.ty) / (state.tx * state.tx + state.ty * state.ty);
 
     state.backward = state.z > velo_track_hits[0].z;
+
   }
 
   {
@@ -174,6 +176,7 @@ __global__ void consolidate_tracks(
         velo_track_hits,
         track
       );
+      //propagate_state_to_end_velo( velo_states[element] );
 
     }
   }

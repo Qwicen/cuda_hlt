@@ -42,23 +42,6 @@ int run_forward_on_CPU (
 #endif
     
     // save in format for track checker
-    // CAUTION: only checking Velo and UT LHCbIDs of this track!!
-    //std::vector< VeloUTTracking::TrackUT > forward_tracks_reduced;
-    //debug_cout << "Making reduced forward tracks out of " << int(forward_tracks.size()) << "forward tracks " << std::endl;
-    int i_track = 0;
-    // for ( auto veloUT_track : forward_tracks ) {
-    //   forward_tracks_reduced.push_back(veloUT_track.track);
-    //   //debug_cout << "at track " << std::dec << i_track << std::endl;
-    //   for ( int i_hit = 0; i_hit < veloUT_track.track.hitsNum; ++i_hit ) {
-    //     //debug_cout<<"\t LHCbIDsForward["<<i_hit<<"] = " << std::hex << veloUT_track.track.LHCbIDs[i_hit]<< std::endl;
-    //   }
-    //   ++i_track;
-    // }
-    //debug_cout<<"run_Forward_CPU"<<std::endl;
-    //trackChecker::Tracks checker_tracks = prepareForwardTracksVeloUTOnly( forward_tracks_reduced );
-    //    debug_cout << "Passing " << std::dec << checker_tracks.size() << " tracks to PrChecker" << std::endl;
-    //debug_cout << "# of forward tracks = " << int( forward_tracks.size() ) << ", # of checker tracks = " << int( checker_tracks.size() ) << std::endl;
-
     trackChecker::Tracks checker_tracks = prepareForwardTracks( forward_tracks );
     
     forward_tracks_events.emplace_back( checker_tracks );

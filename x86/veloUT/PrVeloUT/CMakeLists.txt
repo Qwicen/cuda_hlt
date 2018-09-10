@@ -11,7 +11,8 @@ file(GLOB x86VeloUT_cpp "src/*cpp")
 
 cuda_add_library(x86VeloUT STATIC
   ${x86VeloUT_cpp}
-)
+  )
+
 if ( ROOT_FOUND )
   target_compile_definitions(x86VeloUT PUBLIC WITH_ROOT)
   target_link_libraries(x86VeloUT

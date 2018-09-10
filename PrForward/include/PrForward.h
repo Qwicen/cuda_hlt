@@ -121,7 +121,7 @@ private:
   const float        m_covarianceValues[5]    = {4.0, 400.0, 4.e-6, 1.e-4, 0.1};
 
   // z Reference plane
-  const float        m_zReference             = 8520.;
+  const float        m_zReference             = 8520.; // between T1 and T2
 
   // definition of zones
   // access upper with offset of 6

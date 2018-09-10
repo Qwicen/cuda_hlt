@@ -50,6 +50,8 @@ struct TrackHelper{
     }
   };
 
+__host__ __device__ void propagate_state_to_end_velo( VeloState& velo_state );
+
 __host__ __device__ bool veloTrackInUTAcceptance( const VeloState& state );
 
 __host__ __device__ bool getHits(
@@ -77,7 +79,7 @@ __host__ __device__ void prepareOutputTrack(
   const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
   const int accumulated_tracks_event,
   const int i_track,
-  const TrackHelper& helper,
+  TrackHelper& helper,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   VeloUTTracking::HitsSoA *hits_layers,
