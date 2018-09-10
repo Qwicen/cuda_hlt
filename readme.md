@@ -75,7 +75,6 @@ A run of the program with no arguments will let you know the basic options:
     -f {folder containing .bin files with raw bank information}
     -u {folder containing bin files with UT raw bank information}
     -d {folder containing .bin files with MC truth information}
-    -e {folder containing bin files with UT hit information}
     -g {folder containing geometry descriptions}
     -n {number of events to process}=0 (all)
     -o {offset of events from which to start}=0 (beginning)
