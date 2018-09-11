@@ -121,7 +121,7 @@ private:
   const float        m_covarianceValues[5]    = {4.0, 400.0, 4.e-6, 1.e-4, 0.1};
 
   // z Reference plane
-  const float        m_zReference             = 8520.; // between T1 and T2
+  const float        m_zReference             = 8520.; // in T2
 
   // definition of zones
   // access upper with offset of 6
@@ -205,6 +205,8 @@ private:
 
   }
 
+  // DvB: what does this do?
+  // -> get position within magnet (?)
   float zMagnet(FullState state_at_endvelo) const {
     
     return ( m_zMagnetParams[0] +
@@ -226,6 +228,7 @@ private:
     return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  pow(state_at_endvelo.ty,2) - 1000. * pow(state_at_endvelo.tx,2); // tune this window
   }
 
+  // params[0] = x/y, params[1] = tx/ty
   float straightLineExtend(const float params[4], float z) const {
     float dz = z - m_zReference;
     return params[0] + (params[1]+(params[2] + params[3]*dz)*dz)*dz;
