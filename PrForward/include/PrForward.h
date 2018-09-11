@@ -16,6 +16,7 @@
 
 #include "VeloUTDefinitions.cuh"
 #include "ForwardDefinitions.cuh"
+#include "PrForwardConstants.h"
 
 /** @class PrForward PrForward.h
    *
@@ -53,106 +54,19 @@ public:
     ForwardTracking::HitsSoAFwd *hits_layers_events
   ) const;
 
-  void setMagScaleFactor(int magscalefactor){m_magscalefactor = magscalefactor;}
-
+  
 private:
 
   const std::vector<std::string> mlpInputVars {{"nPlanes"}, {"dSlope"}, {"dp"}, {"slope2"}, {"dby"}, {"dbx"}, {"day"}};
 
-  // dump a bunch of options here
-  const float        m_deltaQuality = 0.1; // Difference in quality btw two tracks which share hits when clone killing
-  const float        m_cloneFraction = 0.4; // The fraction of shared SciFi hits btw two tracks to trigger the clone killing
  
-  const float        m_yTolUVSearch           =   11.* Gaudi::Units::mm  ;
-  const float        m_tolY                   =    5.* Gaudi::Units::mm  ;
-  const float        m_tolYSlope              =0.002 * Gaudi::Units::mm  ;
-  const float        m_maxChi2LinearFit       =  100.                    ;   
-  const float        m_maxChi2XProjection     =   15.                    ;   
-  const float        m_maxChi2PerDoF          =    7.                    ;   
-
-  const float        m_tolYMag                =   10.* Gaudi::Units::mm  ;
-  const float        m_tolYMagSlope           =    0.015                 ;   
-  const float        m_minYGap                =  0.4 * Gaudi::Units::mm  ;
-
-  const unsigned int m_minTotalHits           =   10                     ;   
-  const float        m_maxChi2StereoLinear    =   60.                    ;   
-  const float        m_maxChi2Stereo          =    4.5                   ; 
- 
-  //first loop Hough Cluster search
-  const unsigned int m_minXHits               =    5                     ;   
-  const float        m_maxXWindow             =  1.2 * Gaudi::Units::mm  ;
-  const float        m_maxXWindowSlope        =0.002 * Gaudi::Units::mm  ;
-  const float        m_maxXGap                =  1.2 * Gaudi::Units::mm  ;
-  const unsigned int m_minSingleHits          =    2                     ; 
- 
-  //second loop Hough Cluster search
-  const bool         m_secondLoop             =  true                    ;   
-  const unsigned int m_minXHits_2nd           =    4                     ;   
-  const float        m_maxXWindow_2nd         =  1.5 * Gaudi::Units::mm  ;
-  const float        m_maxXWindowSlope_2nd    =0.002 * Gaudi::Units::mm  ;
-  const float        m_maxXGap_2nd            =  0.5 * Gaudi::Units::mm  ;
-
-  //collectX search
-  const float        m_minPt                  =  500 * Gaudi::Units::MeV ;
-  //stereo hit matching
-  const float        m_tolYCollectX           =    4.1* Gaudi::Units::mm ;
-  const float        m_tolYSlopeCollectX      =0.0018 * Gaudi::Units::mm ;
-  const float        m_tolYTriangleSearch     =    20.f                  ;   
-  //veloUT momentum estimate
-  const bool         m_useMomentumEstimate    = true                     ;   
-  const bool         m_useWrongSignWindow     = true                     ;   
-  const float        m_wrongSignPT            = 2000.* Gaudi::Units::MeV ; 
-  //Track Quality NN
-  const float        m_maxQuality             =   0.9                    ;   
-  const float        m_deltaQuality_NN        =   0.1                    ; 
-
-  // the Magnet Parametrization
-  const float        m_zMagnetParams[4]       = {5212.38, 406.609, -1102.35, -498.039};
-
-  // more Parametrizations
-  const float        m_xParams[2]             = {18.6195, -5.55793};
-  const float        m_byParams               = -0.667996;
-  const float        m_cyParams               = -3.68424e-05;
- 
-  // momentum Parametrization
-  const float        m_momentumParams[6]      = {1.21014, 0.637339, -0.200292, 0.632298, 3.23793, -27.0259};
-  
-  // covariance values
-  const float        m_covarianceValues[5]    = {4.0, 400.0, 4.e-6, 1.e-4, 0.1};
-
-  // z Reference plane
-  const float        m_zReference             = 8520.; // in T2
-
-  // definition of zones
-  // access upper with offset of 6
-  const int	     m_zoneoffsetpar	      = 6;
-  const int          m_xZones[12]             = {0 , 6 , 8 , 14 , 16 , 22, 1 , 7 , 9 , 15 , 17 , 23 };
-  const int          m_uvZones[12]            = {2 , 4 , 10, 12 , 18 , 20, 3 , 5 , 11, 13 , 19 , 21 };
-
-  // ASSORTED GEOMETRY VALUES, eventually read this from some xml
-  const float        m_xZone_zPos[6]          = {7826., 8036., 8508., 8718., 9193., 9403.};
-  const float        m_uvZone_zPos[12]        = {7896., 7966., 8578., 8648., 9263., 9333., 7896., 7966., 8578., 8648., 9263., 9333.};
-  const float        m_uvZone_dxdy[12]        = {0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892};
-  const float        m_Zone_dzdy[24]          = {0.0036010};
-  // CHECK THESE VALUES USING FRAMEWORK
-  const float        m_xLim_Max               = 3300.;
-  const float        m_yLim_Max               = 2500.;
-  const float        m_xLim_Min               = -3300.;
-  const float        m_yLim_Min               = -25.;
-
-  // other variables which get initialized
-  float              m_xHits[8]               = {0.,0.,0.,0.,0.,0.,0.,0.};
-
-  // TO BE READ FROM XML EVENTUALLY
-  float              m_magscalefactor         = -1;
-
   // Vectors of selected hits
   mutable ForwardTracking::HitsSoAFwd  m_hits_layers;
  
   ReadMLP_Forward1stLoop m_MLPReader_1st;
   ReadMLP_Forward2ndLoop m_MLPReader_2nd;
  
-  void prepareOutputTrack(  
+  void find_forward_tracks(  
     const VeloUTTracking::TrackVeloUT& veloUTTrack,
     std::vector<ForwardTracking::TrackForward>& outputTracks
   ) const;
@@ -167,21 +81,21 @@ private:
 
   std::vector<float> getTrackParameters ( float xAtRef, FullState state_at_endvelo) const {
 
-    float dSlope  = ( xFromVelo(m_zReference,state_at_endvelo) - xAtRef ) / ( m_zReference - m_zMagnetParams[0]);
-    const float zMagSlope = m_zMagnetParams[2] * pow(state_at_endvelo.tx,2) +  m_zMagnetParams[3] * pow(state_at_endvelo.ty,2);
-    const float zMag    = m_zMagnetParams[0] + m_zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
+    float dSlope  = ( xFromVelo(Forward::zReference,state_at_endvelo) - xAtRef ) / ( Forward::zReference - Forward::zMagnetParams[0]);
+    const float zMagSlope = Forward::zMagnetParams[2] * pow(state_at_endvelo.tx,2) +  Forward::zMagnetParams[3] * pow(state_at_endvelo.ty,2);
+    const float zMag    = Forward::zMagnetParams[0] + Forward::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
     const float xMag    = xFromVelo( zMag, state_at_endvelo );
-    const float slopeT  = ( xAtRef - xMag ) / ( m_zReference - zMag );
+    const float slopeT  = ( xAtRef - xMag ) / ( Forward::zReference - zMag );
     dSlope        = slopeT - state_at_endvelo.tx;
     const float dyCoef  = dSlope * dSlope * state_at_endvelo.ty;
 
     std::vector<float> toreturn =  {xAtRef,
                                     slopeT,
-                                    1.e-6f * m_xParams[0] * dSlope,
-                                    1.e-9f * m_xParams[1] * dSlope,
-                                    yFromVelo( m_zReference, state_at_endvelo ),
-                                    state_at_endvelo.ty + dyCoef * m_byParams,
-                                    dyCoef * m_cyParams,
+                                    1.e-6f * Forward::xParams[0] * dSlope,
+                                    1.e-9f * Forward::xParams[1] * dSlope,
+                                    yFromVelo( Forward::zReference, state_at_endvelo ),
+                                    state_at_endvelo.ty + dyCoef * Forward::byParams,
+                                    dyCoef * Forward::cyParams,
 				    0.0,
 				    0.0 }; // last elements are chi2 and ndof, as float 
     return toreturn;
@@ -190,17 +104,16 @@ private:
   float calcqOverP ( float bx, FullState state_at_endvelo ) const {
 
     float qop(1.0f/Gaudi::Units::GeV) ;
-    float magscalefactor = m_magscalefactor; 
     float bx2  = bx * bx;
-    float coef = ( m_momentumParams[0] +
-                   m_momentumParams[1] * bx2 +
-                   m_momentumParams[2] * bx2 * bx2 +
-                   m_momentumParams[3] * bx * state_at_endvelo.tx +
-                   m_momentumParams[4] * pow(state_at_endvelo.ty,2) +
-                   m_momentumParams[5] * pow(state_at_endvelo.ty,2) * pow(state_at_endvelo.ty,2) );
+    float coef = ( Forward::momentumParams[0] +
+                   Forward::momentumParams[1] * bx2 +
+                   Forward::momentumParams[2] * bx2 * bx2 +
+                   Forward::momentumParams[3] * bx * state_at_endvelo.tx +
+                   Forward::momentumParams[4] * pow(state_at_endvelo.ty,2) +
+                   Forward::momentumParams[5] * pow(state_at_endvelo.ty,2) * pow(state_at_endvelo.ty,2) );
     float m_slope2 = pow(state_at_endvelo.tx,2) + pow(state_at_endvelo.ty,2);
     float proj = sqrt( ( 1.f + m_slope2 ) / ( 1.f + pow(state_at_endvelo.tx,2) ) ); 
-    qop = ( state_at_endvelo.tx - bx ) / ( coef * Gaudi::Units::GeV * proj * magscalefactor) ;
+    qop = ( state_at_endvelo.tx - bx ) / ( coef * Gaudi::Units::GeV * proj * Forward::magscalefactor) ;
     return qop ;
 
   }
@@ -209,18 +122,18 @@ private:
   // -> get position within magnet (?)
   float zMagnet(FullState state_at_endvelo) const {
     
-    return ( m_zMagnetParams[0] +
-             m_zMagnetParams[2] * pow(state_at_endvelo.tx,2) +
-             m_zMagnetParams[3] * pow(state_at_endvelo.ty,2) );
+    return ( Forward::zMagnetParams[0] +
+             Forward::zMagnetParams[2] * pow(state_at_endvelo.tx,2) +
+             Forward::zMagnetParams[3] * pow(state_at_endvelo.ty,2) );
   }
 
   void covariance ( FullState& state, const float qOverP ) const {
      
-    state.c00 = m_covarianceValues[0];
-    state.c11 = m_covarianceValues[1];
-    state.c22 = m_covarianceValues[2];
-    state.c33 = m_covarianceValues[3];
-    state.c44 = m_covarianceValues[4] * qOverP * qOverP;
+    state.c00 = Forward::covarianceValues[0];
+    state.c11 = Forward::covarianceValues[1];
+    state.c22 = Forward::covarianceValues[2];
+    state.c33 = Forward::covarianceValues[3];
+    state.c44 = Forward::covarianceValues[4] * qOverP * qOverP;
   }
 
   float calcDxRef(float pt, FullState state_at_endvelo) const {
@@ -230,7 +143,7 @@ private:
 
   // params[0] = x/y, params[1] = tx/ty
   float straightLineExtend(const float params[4], float z) const {
-    float dz = z - m_zReference;
+    float dz = z - Forward::zReference;
     return params[0] + (params[1]+(params[2] + params[3]*dz)*dz)*dz;
   }
 
@@ -309,24 +222,24 @@ private:
   }
 
   void collectAllXHits(std::vector<int>& allXHits, 
-		       const float m_xParams_seed[4],
-                       const float m_yParams_seed[4],
+		       const float xParams_seed[4],
+                       const float yParams_seed[4],
 		       FullState state_at_endvelo,
                        int side) const;
 
   void selectXCandidates(std::vector<int>& allXHits,
                          const VeloUTTracking::TrackVeloUT& veloUTTrack,
                          std::vector<ForwardTracking::TrackForward>& outputTracks,
-                         const float m_zRef_track,
-                         const float m_xParams_seed[4],
-                         const float m_yParams_seed[4],
+                         const float zRef_track,
+                         const float xParams_seed[4],
+                         const float yParams_seed[4],
 			 FullState state_at_endvelo,
 		         PrParameters& pars_cur,
                          int side) const;
 
   bool addHitsOnEmptyXLayers(std::vector<float> &trackParameters,
-                             const float m_xParams_seed[4],
-                             const float m_yParams_seed[4],
+                             const float xParams_seed[4],
+                             const float yParams_seed[4],
                              bool fullFit,
                              std::vector<unsigned int> &pc,
                              int planelist[],
@@ -344,8 +257,8 @@ private:
 	             PrParameters& pars_cur) const;
 
   void selectFullCandidates(std::vector<ForwardTracking::TrackForward>& outputTracks,
-                            const float m_xParams_seed[4],
-                            const float m_yParams_seed[4],
+                            const float xParams_seed[4],
+                            const float yParams_seed[4],
 			    FullState state_at_endvelo,
 			    PrParameters& pars_cur) const;
 
@@ -373,7 +286,7 @@ private:
 				     PrParameters& pars_cur) const;
 
   void xAtRef_SamePlaneHits(std::vector<int>& allXHits,
-			    const float m_xParams_seed[4],
+			    const float xParams_seed[4],
 			    FullState state_at_endvelo,
  			    int itH, int itEnd) const;
 };
