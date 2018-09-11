@@ -159,39 +159,39 @@ void TrackCheckerForward::SetCategories() {
   m_categories = {{ // define which categories to monitor
       TrackEffReport({ "Long",
 	  [] (const MCParticles::const_reference& mcp)
-	    { return mcp.isLong && 11 != std::abs(mcp.pid); },
+	    { return mcp.isLong && !mcp.isElectron() && mcp.inEta2_5(); },
 	  }),
     TrackEffReport({ "Long, p > 5 GeV",
 	  [] (const MCParticles::const_reference& mcp)
-	    { return mcp.isLong && mcp.p > 5e3 && 11 != std::abs(mcp.pid); },
+	    { return mcp.isLong && mcp.p > 5e3 && !mcp.isElectron() && mcp.inEta2_5(); },
 	  }),
     TrackEffReport({ "Long strange",
           [] (const MCParticles::const_reference& mcp)
-            { return mcp.isLong && mcp.fromStrangeDecay && 11 != std::abs(mcp.pid); },
+            { return mcp.isLong && mcp.fromStrangeDecay && !mcp.isElectron() && mcp.inEta2_5(); },
           }),
     TrackEffReport({ "Long strange, p > 5 GeV",
         [] (const MCParticles::const_reference& mcp)
-        { return mcp.isLong && mcp.fromStrangeDecay && 11 != std::abs(mcp.pid) && mcp.p > 5e3; },
+        { return mcp.isLong && mcp.fromStrangeDecay && !mcp.isElectron() && mcp.p > 5e3 && mcp.inEta2_5(); },
         }),
     TrackEffReport({ "Long from B",
 	  [] (const MCParticles::const_reference& mcp)
-	    { return mcp.isLong && mcp.fromBeautyDecay && 11 != std::abs(mcp.pid); },
+	    { return mcp.isLong && mcp.fromBeautyDecay && !mcp.isElectron() && mcp.inEta2_5(); },
 	  }),
     TrackEffReport({ "Long from B, p > 5 GeV",
 	  [] (const MCParticles::const_reference& mcp)
-	    { return mcp.isLong && mcp.fromBeautyDecay && mcp.p > 5e3 && 11 != std::abs(mcp.pid); },
+	    { return mcp.isLong && mcp.fromBeautyDecay && mcp.p > 5e3 && !mcp.isElectron() && mcp.inEta2_5(); },
 	  }),
     TrackEffReport({ "Long electrons",
 	  [] (const MCParticles::const_reference& mcp)
-	    { return mcp.isLong && 11 == std::abs(mcp.pid); },
+	    { return mcp.isLong && mcp.isElectron() && mcp.inEta2_5(); },
 	  }),
     TrackEffReport({ "Long electrons from B",
 	  [] (const MCParticles::const_reference& mcp)
-	    { return mcp.isLong && mcp.fromBeautyDecay && 11 == std::abs(mcp.pid); },
+	    { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.inEta2_5(); },
 	  }),
     TrackEffReport({ "Long electrons from B, p > 5 GeV",
 	  [] (const MCParticles::const_reference& mcp)
-	    { return mcp.isLong && mcp.fromBeautyDecay && mcp.p > 5e3 && 11 == std::abs(mcp.pid); },
+	    { return mcp.isLong && mcp.fromBeautyDecay && mcp.p > 5e3 && mcp.isElectron() && mcp.inEta2_5(); },
 	  }),
     }}; 
 };  
