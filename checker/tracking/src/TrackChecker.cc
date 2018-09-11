@@ -49,7 +49,23 @@ void TrackCheckerVelo::SetCategories() {
     TrackEffReport({ "Long from B, p > 5 GeV",
         [] (const MCParticles::const_reference& mcp)
         { return mcp.isLong && mcp.fromBeautyDecay && !mcp.isElectron() && mcp.p > 5e3 && mcp.inEta2_5(); },
-        })
+          }),
+    TrackEffReport({ "Long electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.isElectron() && mcp.inEta2_5(); },
+          }),
+    TrackEffReport({ "Long from B electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.inEta2_5(); },
+          }),
+    TrackEffReport({ "Long from B electrons, p > 5 GeV",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.p > 5e3 && mcp.inEta2_5(); },
+          }),
+    TrackEffReport({ "Long from B electrons, p > 3 GeV, pt > 0.5 GeV",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.p > 3e3 && mcp.pt > 0.5e3 && mcp.inEta2_5(); },
+          })
     // TrackEffReport({ "Long from D",
     //     [] (const MCParticles::const_reference& mcp)
     //     { return mcp.isLong && mcp.isFromD && !mcp.isElectron() && mcp.inEta2_5(); },
@@ -119,7 +135,23 @@ void TrackCheckerVeloUT::SetCategories() {
     TrackEffReport({ "Long from B, p > 5 GeV",
 	  [] (const MCParticles::const_reference& mcp)
 	    { return mcp.isLong && mcp.fromBeautyDecay && mcp.p > 5e3 && !mcp.isElectron() && mcp.inEta2_5(); },
-	  })
+	  }),
+    TrackEffReport({ "Long electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.isElectron() && mcp.inEta2_5(); },
+          }),
+    TrackEffReport({ "Long from B electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.inEta2_5(); },
+          }),
+    TrackEffReport({ "Long from B electrons, p > 5 GeV",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.p > 5e3 && mcp.inEta2_5(); },
+          }),
+    TrackEffReport({ "Long from B electrons, p > 3 GeV, pt > 0.5 GeV",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.p > 3e3 && mcp.pt > 0.5e3 && mcp.inEta2_5(); },
+          })
     }}; 
 };  
 
