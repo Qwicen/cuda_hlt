@@ -13,8 +13,6 @@ int run_forward_on_CPU (
   const int &number_of_events
 ) {
 
-  PrForward forward;
-
 #ifdef WITH_ROOT
   // Histograms only for checking and debugging
   TFile *f = new TFile("../output/Forward.root", "RECREATE");
@@ -31,7 +29,7 @@ int run_forward_on_CPU (
 
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
 
-    std::vector< SciFi::Constants::TrackForward > forward_tracks = forward(ut_tracks[i_event], &(hits_layers_events[i_event]));
+    std::vector< SciFi::Constants::TrackForward > forward_tracks = PrForward(ut_tracks[i_event], &(hits_layers_events[i_event]));
 
 #ifdef WITH_ROOT
     // store qop in tree

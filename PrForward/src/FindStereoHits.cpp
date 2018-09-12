@@ -131,7 +131,7 @@ bool selectStereoHits(
       if(endRange == stereoHits.end()) break; //already at end, cluster cannot be expanded anymore
 
       //add next, if it decreases the range size and is empty
-      if ( (planelist[*endRange] == 0) &&
+      if ( (planelist[hits_layers->m_planeCode[*beginRange]/2] == 0) &&
            (averageCoord - hits_layers->m_coord[*beginRange] > 
 	    hits_layers->m_coord[*endRange] - averageCoord )
          ) {

@@ -36,31 +36,10 @@
    */
 
 
-class PrForward {
-
-public:
-
-  PrForward();
-
-  std::vector<SciFi::Constants::TrackForward> operator()(
-    const std::vector<VeloUTTracking::TrackVeloUT>& inputTracks,
-    SciFi::Constants::HitsSoAFwd *hits_layers_events
-  ) const;
-
-  
-private:
-
-  const std::vector<std::string> mlpInputVars {{"nPlanes"}, {"dSlope"}, {"dp"}, {"slope2"}, {"dby"}, {"dbx"}, {"day"}};
-
- 
-  // Vectors of selected hits
-  mutable SciFi::Constants::HitsSoAFwd  m_hits_layers;
- 
-  ReadMLP_Forward1stLoop m_MLPReader_1st;
-  ReadMLP_Forward2ndLoop m_MLPReader_2nd;
-
-};
-
+std::vector<SciFi::Constants::TrackForward> PrForward(
+  const std::vector<VeloUTTracking::TrackVeloUT>& inputTracks,
+  SciFi::Constants::HitsSoAFwd *hits_layers_events);
+                                                      
 void find_forward_tracks(
   SciFi::Constants::HitsSoAFwd* hits_layers,  
   const VeloUTTracking::TrackVeloUT& veloUTTrack,

@@ -9,18 +9,13 @@
 // 2016-03-09 : Thomas Nikodem [complete restructuring]
 //-----------------------------------------------------------------------------
 
-PrForward::PrForward() : 
-  m_MLPReader_1st{mlpInputVars},
-  m_MLPReader_2nd{mlpInputVars}
-{}
 
 //=============================================================================
 // Main execution
 //=============================================================================
-std::vector<SciFi::Constants::TrackForward> PrForward::operator() (
+std::vector<SciFi::Constants::TrackForward> PrForward(
   const std::vector<VeloUTTracking::TrackVeloUT>& inputTracks,
-  SciFi::Constants::HitsSoAFwd *hits_layers
-  ) const
+  SciFi::Constants::HitsSoAFwd *hits_layers)
 {
 
   //m_hits_layers = *hits_layers; // dereference for local member
@@ -31,10 +26,15 @@ std::vector<SciFi::Constants::TrackForward> PrForward::operator() (
   //  debug_cout << "About to run forward tracking for " << inputTracks.size() << " input tracks!" << std::endl;
   int numfound = 0;
 
+  // initialize TMVA vars
+  const std::vector<std::string> mlpInputVars {{"nPlanes"}, {"dSlope"}, {"dp"}, {"slope2"}, {"dby"}, {"dbx"}, {"day"}};
+  ReadMLP_Forward1stLoop MLPReader_1st = ReadMLP_Forward1stLoop( mlpInputVars );
+  ReadMLP_Forward2ndLoop MLPReader_2nd = ReadMLP_Forward2ndLoop( mlpInputVars );
+  
   for(const VeloUTTracking::TrackVeloUT& veloTr : inputTracks) {
 
     std::vector<SciFi::Constants::TrackForward> oneOutput; 
-    find_forward_tracks(hits_layers, veloTr, oneOutput, m_MLPReader_1st, m_MLPReader_2nd);
+    find_forward_tracks(hits_layers, veloTr, oneOutput, MLPReader_1st, MLPReader_2nd);
     numfound += oneOutput.size();
     for (auto track : oneOutput) {
       outputTracks.emplace_back(track);
