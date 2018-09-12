@@ -13,14 +13,14 @@
 //=============================================================================
 // Main execution
 //=============================================================================
-std::vector<SciFi::Constants::TrackForward> PrForward(
+std::vector<SciFi::Track> PrForward(
   const std::vector<VeloUTTracking::TrackVeloUT>& inputTracks,
-  SciFi::Constants::HitsSoAFwd *hits_layers)
+  SciFi::HitsSoA *hits_layers)
 {
 
   //m_hits_layers = *hits_layers; // dereference for local member
 
-  std::vector<SciFi::Constants::TrackForward> outputTracks;
+  std::vector<SciFi::Track> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
   //  debug_cout << "About to run forward tracking for " << inputTracks.size() << " input tracks!" << std::endl;
@@ -33,7 +33,7 @@ std::vector<SciFi::Constants::TrackForward> PrForward(
   
   for(const VeloUTTracking::TrackVeloUT& veloTr : inputTracks) {
 
-    std::vector<SciFi::Constants::TrackForward> oneOutput; 
+    std::vector<SciFi::Track> oneOutput; 
     find_forward_tracks(hits_layers, veloTr, oneOutput, MLPReader_1st, MLPReader_2nd);
     numfound += oneOutput.size();
     for (auto track : oneOutput) {
@@ -54,9 +54,9 @@ std::vector<SciFi::Constants::TrackForward> PrForward(
 
 //=============================================================================
 void find_forward_tracks(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
+  SciFi::HitsSoA* hits_layers,
   const VeloUTTracking::TrackVeloUT& veloUTTrack,
-  std::vector<SciFi::Constants::TrackForward>& outputTracks,
+  std::vector<SciFi::Track>& outputTracks,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
   const ReadMLP_Forward2ndLoop& MLPReader_2nd
 ) {
@@ -78,15 +78,15 @@ void find_forward_tracks(
   const float yParams_seed[4] = {yAtRef, state_at_endvelo.ty, 0.f, 0.f};
 
   // First loop Hough cluster search, set initial search windows
-  PrParameters pars_first{SciFi::Tracking::minXHits, SciFi::Tracking::maxXWindow, SciFi::Tracking::maxXWindowSlope, SciFi::Tracking::maxXGap, 4u};
-  PrParameters pars_second{SciFi::Tracking::minXHits_2nd, SciFi::Tracking::maxXWindow_2nd, SciFi::Tracking::maxXWindowSlope_2nd, SciFi::Tracking::maxXGap_2nd, 4u};
+  SciFi::Tracking::HitSearchCuts pars_first{SciFi::Tracking::minXHits, SciFi::Tracking::maxXWindow, SciFi::Tracking::maxXWindowSlope, SciFi::Tracking::maxXGap, 4u};
+  SciFi::Tracking::HitSearchCuts pars_second{SciFi::Tracking::minXHits_2nd, SciFi::Tracking::maxXWindow_2nd, SciFi::Tracking::maxXWindowSlope_2nd, SciFi::Tracking::maxXGap_2nd, 4u};
 
   std::vector<int> allXHits[2];
 
   if(yAtRef>-5.f)collectAllXHits(hits_layers, allXHits[1], xParams_seed, yParams_seed, state_at_endvelo, 1); 
   if(yAtRef< 5.f)collectAllXHits(hits_layers, allXHits[0], xParams_seed, yParams_seed, state_at_endvelo, -1);
 
-  std::vector<SciFi::Constants::TrackForward> outputTracks1;
+  std::vector<SciFi::Track> outputTracks1;
   
   if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], veloUTTrack, outputTracks1, zRef_track, 
 				   xParams_seed, yParams_seed, state_at_endvelo, pars_first,  1);
@@ -104,7 +104,7 @@ void find_forward_tracks(
                            return track.hitsNum > 10;
                         });
 
-  std::vector<SciFi::Constants::TrackForward> outputTracks2; 
+  std::vector<SciFi::Track> outputTracks2; 
   if (!ok && SciFi::Tracking::secondLoop) { // If you found nothing begin the 2nd loop
     if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], veloUTTrack, outputTracks2, zRef_track, 
 				     xParams_seed, yParams_seed, state_at_endvelo, pars_second, 1);
@@ -149,12 +149,12 @@ void find_forward_tracks(
 //  save everything in track candidate folder
 //=========================================================================
 void selectFullCandidates(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
-  std::vector<SciFi::Constants::TrackForward>& outputTracks,
+  SciFi::HitsSoA* hits_layers,
+  std::vector<SciFi::Track>& outputTracks,
   const float xParams_seed[4],
   const float yParams_seed[4],
   FullState state_at_endvelo,
-  PrParameters& pars,
+  SciFi::Tracking::HitSearchCuts& pars,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
   const ReadMLP_Forward2ndLoop& MLPReader_2nd)
 {
@@ -162,9 +162,9 @@ void selectFullCandidates(
   std::vector<unsigned int> pc;
   std::vector<float> mlpInput(7, 0.); 
 
-  std::vector<SciFi::Constants::TrackForward> selectedTracks;
+  std::vector<SciFi::Track> selectedTracks;
 
-  for (std::vector<SciFi::Constants::TrackForward>::iterator cand = std::begin(outputTracks);
+  for (std::vector<SciFi::Track>::iterator cand = std::begin(outputTracks);
        cand != std::end(outputTracks); ++cand) {
     // DvB: this bool is not used anywhere...??
     bool isValid = false; // In c++ this is in track class, try to understand why later

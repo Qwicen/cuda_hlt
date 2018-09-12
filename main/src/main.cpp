@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
                scifi_events, scifi_event_offsets,
                start_event_offset );
 
-  SciFi::Constants::HitsSoAFwd *scifi_hits_events = new SciFi::Constants::HitsSoAFwd[number_of_events];
+  SciFi::HitsSoA *scifi_hits_events = new SciFi::HitsSoA[number_of_events];
   uint32_t scifi_n_hits_layers_events[number_of_events][SciFi::Constants::n_layers];
   read_scifi_events_into_arrays( scifi_hits_events, scifi_n_hits_layers_events,
                               scifi_events, scifi_event_offsets, number_of_events );

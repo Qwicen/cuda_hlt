@@ -66,7 +66,7 @@ float calcDxRef(float pt, FullState state_at_endvelo) {
   return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  pow(state_at_endvelo.ty,2) - 1000. * pow(state_at_endvelo.tx,2); // tune this window
 }
 
-float trackToHitDistance( std::vector<float> trackParameters, SciFi::Constants::HitsSoAFwd* hits_layers, int hit )
+float trackToHitDistance( std::vector<float> trackParameters, SciFi::HitsSoA* hits_layers, int hit )
 {
   const float parsX[4] = {trackParameters[0],
                           trackParameters[1],

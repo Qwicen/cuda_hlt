@@ -4,22 +4,22 @@
    Functions related to fitting a straight line
  */
 
-float getLineFitDistance(SciFi::Constants::LineFitterPars &parameters, SciFi::Constants::HitsSoAFwd* hits_layers, int it )
+float getLineFitDistance(SciFi::Tracking::LineFitterPars &parameters, SciFi::HitsSoA* hits_layers, int it )
 { 
   return hits_layers->m_coord[it] - (parameters.m_c0 + (hits_layers->m_z[it] - parameters.m_z0) * parameters.m_tc);
 }
 
-float getLineFitChi2(SciFi::Constants::LineFitterPars &parameters, SciFi::Constants::HitsSoAFwd* hits_layers, int it) {
+float getLineFitChi2(SciFi::Tracking::LineFitterPars &parameters, SciFi::HitsSoA* hits_layers, int it) {
   float d = getLineFitDistance( parameters, hits_layers, it ); 
   return d * d * hits_layers->m_coord[it]; 
 }
-void solveLineFit(SciFi::Constants::LineFitterPars &parameters)  {
+void solveLineFit(SciFi::Tracking::LineFitterPars &parameters)  {
   float den = (parameters.m_sz*parameters.m_sz-parameters.m_s0*parameters.m_sz2);
   parameters.m_c0  = (parameters.m_scz * parameters.m_sz - parameters.m_sc * parameters.m_sz2) / den;
   parameters.m_tc  = (parameters.m_sc *  parameters.m_sz - parameters.m_s0 * parameters.m_scz) / den;
 }
 
-void incrementLineFitParameters(SciFi::Constants::LineFitterPars &parameters, SciFi::Constants::HitsSoAFwd* hits_layers, int it)
+void incrementLineFitParameters(SciFi::Tracking::LineFitterPars &parameters, SciFi::HitsSoA* hits_layers, int it)
 {
     float c = hits_layers->m_coord[it];
     float w = hits_layers->m_w[it];
@@ -32,11 +32,11 @@ void incrementLineFitParameters(SciFi::Constants::LineFitterPars &parameters, Sc
 } 
 
 void fastLinearFit(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
+  SciFi::HitsSoA* hits_layers,
   std::vector<float> &trackParameters, 
   std::vector<unsigned int> &pc,
   int planelist[],
-  PrParameters& pars)
+  SciFi::Tracking::HitSearchCuts& pars)
 {
   bool fit = true;
   while (fit) {

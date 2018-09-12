@@ -32,28 +32,30 @@ namespace SciFi {
     static constexpr uint max_numhits_per_layer = 2000;
     static constexpr uint max_numhits_per_event = 16000;
     static constexpr uint max_hit_candidates_per_layer = 200;
-    
+
+  } // Constants
+  
   /* SoA for hit variables
      The hits for every layer are written behind each other, the offsets 
      are stored for access;
      one Hits structure exists per event
   */
-    struct HitsSoAFwd {
-      int layer_offset[n_layers] = {0};
+    struct HitsSoA {
+      int layer_offset[Constants::n_layers] = {0};
       
-      float m_x[max_numhits_per_event] = {0}; 
-      float m_z[max_numhits_per_event] = {0}; 
-      float m_w[max_numhits_per_event] = {0};
-      float m_dxdy[max_numhits_per_event] = {0};
-      float m_dzdy[max_numhits_per_event] = {0};
-      float m_yMin[max_numhits_per_event] = {0};
-      float m_yMax[max_numhits_per_event] = {0};
-      unsigned int m_LHCbID[max_numhits_per_event] = {0};
-      int m_planeCode[max_numhits_per_event] = {0};
-      int m_hitZone[max_numhits_per_event] = {0};
-      bool m_used[max_numhits_per_event] = {false};
+      float m_x[Constants::max_numhits_per_event] = {0}; 
+      float m_z[Constants::max_numhits_per_event] = {0}; 
+      float m_w[Constants::max_numhits_per_event] = {0};
+      float m_dxdy[Constants::max_numhits_per_event] = {0};
+      float m_dzdy[Constants::max_numhits_per_event] = {0};
+      float m_yMin[Constants::max_numhits_per_event] = {0};
+      float m_yMax[Constants::max_numhits_per_event] = {0};
+      unsigned int m_LHCbID[Constants::max_numhits_per_event] = {0};
+      int m_planeCode[Constants::max_numhits_per_event] = {0};
+      int m_hitZone[Constants::max_numhits_per_event] = {0};
+      bool m_used[Constants::max_numhits_per_event] = {false};
       // For Hough transform
-      float m_coord[max_numhits_per_event] = {0};
+      float m_coord[Constants::max_numhits_per_event] = {0};
       
       // check for used hit
       bool isValid( int value ) const {
@@ -62,19 +64,8 @@ namespace SciFi {
       
     };
     
-    struct LineFitterPars {
-      float   m_z0 = 0.; 
-      float   m_c0 = 0.; 
-      float   m_tc = 0.; 
-      
-      float m_s0 = 0.; 
-      float m_sz = 0.; 
-      float m_sz2 = 0.; 
-      float m_sc = 0.; 
-      float m_scz = 0.;   
-    };
-    
-    struct TrackForward {
+   
+    struct Track {
       
       std::vector< unsigned int > LHCbIDs;
       std::vector< unsigned int> hit_indices;
@@ -95,5 +86,4 @@ namespace SciFi {
       }
     };
 
-  } // Constants
 } // SciFi

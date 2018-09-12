@@ -5,10 +5,10 @@
 //  Collect all hits in the stereo planes compatible with the track
 //=========================================================================
 std::vector<int> collectStereoHits(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
-  SciFi::Constants::TrackForward& track,
+  SciFi::HitsSoA* hits_layers,
+  SciFi::Track& track,
   FullState state_at_endvelo,
-  PrParameters& pars)
+  SciFi::Tracking::HitSearchCuts& pars)
 {
   
   std::vector<int> stereoHits;
@@ -69,11 +69,11 @@ std::vector<int> collectStereoHits(
 //  Fit the stereo hits
 //=========================================================================
 bool selectStereoHits(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
-  SciFi::Constants::TrackForward& track, 
+  SciFi::HitsSoA* hits_layers,
+  SciFi::Track& track, 
   std::vector<int> stereoHits,
   FullState state_at_endvelo, 
-  PrParameters& pars)
+  SciFi::Tracking::HitSearchCuts& pars)
 {
   //why do we rely on xRef? --> coord is NOT xRef for stereo HITS!
   std::vector<int> bestStereoHits;
@@ -205,13 +205,13 @@ bool selectStereoHits(
 //  Add hits on empty stereo layers, and refit if something was added
 //=========================================================================
 bool addHitsOnEmptyStereoLayers(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
-  SciFi::Constants::TrackForward& track,
+  SciFi::HitsSoA* hits_layers,
+  SciFi::Track& track,
   std::vector<int>& stereoHits,
   std::vector<unsigned int> &pc,
   int planelist[],
   FullState state_at_endvelo,
-  PrParameters& pars)
+  SciFi::Tracking::HitSearchCuts& pars)
 {
   //at this point pc is counting only stereo HITS!
   if(nbDifferent(planelist)  > 5) return true;

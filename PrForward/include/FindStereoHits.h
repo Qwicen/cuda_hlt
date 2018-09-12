@@ -17,23 +17,23 @@
  */
 
 bool selectStereoHits(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
-  SciFi::Constants::TrackForward& track,
+  SciFi::HitsSoA* hits_layers,
+  SciFi::Track& track,
   std::vector<int> stereoHits,
   FullState state_at_endvelo,
-  PrParameters& pars_cur);
+  SciFi::Tracking::HitSearchCuts& pars_cur);
 
 bool addHitsOnEmptyStereoLayers(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
-  SciFi::Constants::TrackForward& track,
+  SciFi::HitsSoA* hits_layers,
+  SciFi::Track& track,
   std::vector<int>& stereoHits,
   std::vector<unsigned int> &pc,
   int planelist[],
   FullState state_at_endvelo,
-  PrParameters& pars_cur);
+  SciFi::Tracking::HitSearchCuts& pars_cur);
 
 std::vector<int> collectStereoHits(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
-  SciFi::Constants::TrackForward& track,
+  SciFi::HitsSoA* hits_layers,
+  SciFi::Track& track,
   FullState state_at_endvelo,
-  PrParameters& pars_cur);
+  SciFi::Tracking::HitSearchCuts& pars_cur);

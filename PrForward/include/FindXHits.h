@@ -20,7 +20,7 @@
  */
 
 void collectAllXHits(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
+  SciFi::HitsSoA* hits_layers,
   std::vector<int>& allXHits, 
   const float xParams_seed[4],
   const float yParams_seed[4],
@@ -28,24 +28,24 @@ void collectAllXHits(
   int side);
 
 void selectXCandidates(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
+  SciFi::HitsSoA* hits_layers,
   std::vector<int>& allXHits,
   const VeloUTTracking::TrackVeloUT& veloUTTrack,
-  std::vector<SciFi::Constants::TrackForward>& outputTracks,
+  std::vector<SciFi::Track>& outputTracks,
   const float zRef_track,
   const float xParams_seed[4],
   const float yParams_seed[4],
   FullState state_at_endvelo,
-  PrParameters& pars_cur,
+  SciFi::Tracking::HitSearchCuts& pars_cur,
   int side);
 
 bool addHitsOnEmptyXLayers(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
+  SciFi::HitsSoA* hits_layers,
   std::vector<float> &trackParameters,
   const float xParams_seed[4],
   const float yParams_seed[4],
   bool fullFit,
   std::vector<unsigned int> &pc,
   int planelist[],
-  PrParameters& pars_cur,
+  SciFi::Tracking::HitSearchCuts& pars_cur,
   int side);

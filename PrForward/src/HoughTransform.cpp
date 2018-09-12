@@ -3,7 +3,7 @@
 //calculate xref for this plane
 //in the c++ this is vectorized, undoing because no point before CUDA (but vectorization is obvious)
 void xAtRef_SamePlaneHits(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
+  SciFi::HitsSoA* hits_layers,
   std::vector<int>& allXHits,
   const float xParams_seed[4],
   FullState state_at_endvelo, 
@@ -30,11 +30,11 @@ void xAtRef_SamePlaneHits(
  
 
 bool fitXProjection(
-  SciFi::Constants::HitsSoAFwd *hits_layers,
+  SciFi::HitsSoA *hits_layers,
   std::vector<float> &trackParameters,
   std::vector<unsigned int> &pc,
   int planelist[],
-  PrParameters& pars)
+  SciFi::Tracking::HitSearchCuts& pars)
 {
 
   if (nbDifferent(planelist) < pars.minXHits) return false;
@@ -123,13 +123,13 @@ bool fitXProjection(
  
 
 bool fitYProjection(
-  SciFi::Constants::HitsSoAFwd* hits_layers,
-  SciFi::Constants::TrackForward& track,
+  SciFi::HitsSoA* hits_layers,
+  SciFi::Track& track,
   std::vector<int>& stereoHits,
   std::vector<unsigned int> &pc,
   int planelist[],
   FullState state_at_endvelo,
-  PrParameters& pars)
+  SciFi::Tracking::HitSearchCuts& pars)
 {
   
   debug_cout << "About to fit a Y projection with " << pc.size() << " hits on " << nbDifferent(planelist) << " different planes looking for " << pars.minStereoHits << std::endl;

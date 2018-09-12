@@ -36,13 +36,13 @@ void check_velopix_events(
   int n_events
 );
 
-void read_scifi_events_into_arrays(  SciFi::Constants::HitsSoAFwd *scifi_hits_events,
+void read_scifi_events_into_arrays(  SciFi::HitsSoA *scifi_hits_events,
                                   uint32_t n_hits_layers_events[][SciFi::Constants::n_layers],
                                   const std::vector<char> events,
                                   const std::vector<unsigned int> event_offsets,
                                   int n_events );
 
-void check_scifi_events( const SciFi::Constants::HitsSoAFwd *hits_layers_events,
+void check_scifi_events( const SciFi::HitsSoA *hits_layers_events,
                       const uint32_t n_hits_layers_events[][SciFi::Constants::n_layers],
                       const int n_events
                       );
@@ -108,7 +108,7 @@ trackChecker::Tracks prepareForwardTracksVeloUTOnly(
 ); 
 
 trackChecker::Tracks prepareForwardTracks(
-  std::vector< SciFi::Constants::TrackForward > forward_tracks
+  std::vector< SciFi::Track > forward_tracks
 );
 
 void call_pr_checker(

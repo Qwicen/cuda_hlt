@@ -86,7 +86,7 @@ namespace VeloUTTracking {
   struct TrackVeloUT {
     FullState state_endvelo;
     TrackUT track;
-    SciFi::Constants::TrackForward trackForward;
+    SciFi::Track trackForward;
   };
 
 
