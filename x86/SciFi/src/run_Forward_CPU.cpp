@@ -11,8 +11,8 @@ int run_forward_on_CPU (
   SciFi::HitsSoA * hits_layers_events,
   const VeloState * host_velo_states,
   const int * host_velo_accumulated_tracks,
-  const int * host_velo_number_of_tracks,
-  std::vector< std::vector< VeloUTTracking::TrackUT > > ut_tracks,
+  const VeloUTTracking::TrackUT * veloUT_tracks,
+  const int * n_veloUT_tracks_events,
   const int &number_of_events
 ) {
 
@@ -36,10 +36,10 @@ int run_forward_on_CPU (
     const VeloState* host_velo_states_event = host_velo_states + velo_accumulated_tracks;
     
     std::vector< SciFi::Track > forward_tracks = PrForward(
-      ut_tracks[i_event],
       &(hits_layers_events[i_event]),
       host_velo_states_event,
-      host_velo_number_of_tracks[i_event]);
+      veloUT_tracks + i_event * VeloUTTracking::max_num_tracks,
+      n_veloUT_tracks_events[i_event] );
 
 #ifdef WITH_ROOT
     // store qop in tree

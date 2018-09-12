@@ -23,7 +23,6 @@ void call_PrVeloUT (
   const PrUTMagnetTool *magnet_tool,
   const float* ut_dxDy,
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
-  std::vector<VeloUTTracking::TrackUT>& outputTracks,
   int &n_velo_tracks_in_UT,
   int &n_veloUT_tracks )
 {
@@ -88,7 +87,6 @@ void call_PrVeloUT (
         false);
     }
 
-    int n_tracks_prev = n_veloUT_tracks;
     if ( helper.n_hits > 0 ) {
       prepareOutputTrack(
         velo_track_hit_number,
@@ -104,11 +102,6 @@ void call_PrVeloUT (
         VeloUT_tracks,
         &n_veloUT_tracks,
         bdlTable);
-
-      // prepare output tracks needed for forward tracking
-      if ( n_veloUT_tracks > n_tracks_prev ) {
-        outputTracks.emplace_back( VeloUT_tracks[n_veloUT_tracks - 1] );
-      }
       
     }
   }

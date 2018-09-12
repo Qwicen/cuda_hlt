@@ -9,7 +9,6 @@
 
 int run_veloUT_on_CPU (
   std::vector< trackChecker::Tracks >& ut_tracks_events,
-  std::vector< std::vector< VeloUTTracking::TrackUT > >& ut_output_tracks,
   VeloUTTracking::HitsSoA* hits_layers_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const float host_ut_dxDy[VeloUTTracking::n_layers],

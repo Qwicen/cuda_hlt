@@ -14,24 +14,25 @@
 // Main execution
 //=============================================================================
 std::vector<SciFi::Track> PrForward(
-  const std::vector<VeloUTTracking::TrackUT>& inputTracks,
   SciFi::HitsSoA *hits_layers,
   const VeloState * velo_states,
-  const int velo_number_of_tracks)
+  const VeloUTTracking::TrackUT * veloUT_tracks,
+  const int n_veloUT_tracks )
 {
   std::vector<SciFi::Track> outputTracks;
-  outputTracks.reserve(inputTracks.size());
+  outputTracks.reserve( n_veloUT_tracks );
 
-  //  debug_cout << "About to run forward tracking for " << inputTracks.size() << " input tracks!" << std::endl;
   int numfound = 0;
 
   // initialize TMVA vars
   const std::vector<std::string> mlpInputVars {{"nPlanes"}, {"dSlope"}, {"dp"}, {"slope2"}, {"dby"}, {"dbx"}, {"day"}};
   ReadMLP_Forward1stLoop MLPReader_1st = ReadMLP_Forward1stLoop( mlpInputVars );
   ReadMLP_Forward2ndLoop MLPReader_2nd = ReadMLP_Forward2ndLoop( mlpInputVars );
-  
-  for(const VeloUTTracking::TrackUT& veloUTTr : inputTracks) {
 
+  // Loop over the veloUT input tracks
+  for ( int i_veloUT_track = 0; i_veloUT_track < n_veloUT_tracks; ++i_veloUT_track ) {
+    const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks[i_veloUT_track];
+    
     const VeloState& velo_state = velo_states[ veloUTTr.veloTrackIndex ];
     
     std::vector<SciFi::Track> oneOutput; 

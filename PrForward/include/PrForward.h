@@ -38,10 +38,10 @@
 
 
 std::vector<SciFi::Track> PrForward(
-  const std::vector<VeloUTTracking::TrackUT>& inputTracks,
-  SciFi::HitsSoA *hits_layers_events,
+   SciFi::HitsSoA *hits_layers_events,
   const VeloState * velo_states,
-  const int velo_number_of_tracks);
+  const VeloUTTracking::TrackUT * veloUT_tracks,
+  const int n_veloUT_tracks );
                                                       
 void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,  

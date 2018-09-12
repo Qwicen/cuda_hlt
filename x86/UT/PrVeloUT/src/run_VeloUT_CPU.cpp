@@ -8,7 +8,6 @@
 
 int run_veloUT_on_CPU (
   std::vector< trackChecker::Tracks >& ut_tracks_events,
-  std::vector< std::vector< VeloUTTracking::TrackUT > >& ut_output_tracks,
   VeloUTTracking::HitsSoA* hits_layers_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const float * host_ut_dxDy,
@@ -172,7 +171,7 @@ int run_veloUT_on_CPU (
 
     int n_veloUT_tracks_event = 0;
     VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks];
-    std::vector<VeloUTTracking::TrackUT> outputTracks;
+
     call_PrVeloUT(
       host_velo_track_hit_number,
       host_velo_track_hits,                                                      
@@ -183,13 +182,10 @@ int run_veloUT_on_CPU (
       host_ut_magnet_tool,
       host_ut_dxDy,
       veloUT_tracks,
-      outputTracks,
       n_velo_tracks_in_UT,
       n_veloUT_tracks_event
    );
     n_veloUT_tracks += n_veloUT_tracks_event;
-
-    ut_output_tracks.push_back( outputTracks );
 
 #ifdef WITH_ROOT
     // store qop in tree
