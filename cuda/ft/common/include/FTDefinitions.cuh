@@ -7,6 +7,7 @@
 /**
  * @brief FT geometry description typecast.
  */
+namespace FT {
 struct FTGeometry {
   size_t size;
   uint32_t number_of_stations;
@@ -83,6 +84,8 @@ namespace FTRawBankParams { //from FT/FTDAQ/src/FTRawBankParams.h
     NbBanks = 240,
     NbLinksPerBank = 24
   };
+
+  static constexpr uint16_t clusterMaxWidth = 4;
 }
 
 
@@ -119,3 +122,4 @@ struct FTLiteCluster {
   uint8_t fraction;
   uint8_t pseudoSize;
 };
+}

@@ -95,7 +95,7 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_ft_cluster_offsets, uint>,
   Argument<arg::dev_ft_cluster_num, uint>,
   Argument<arg::dev_ft_cluster_nums, uint>,
-  Argument<arg::dev_ft_clusters, FTLiteCluster>,
+  Argument<arg::dev_ft_clusters, FT::FTLiteCluster>,
   Argument<arg::dev_ft_events, char>
 >;
 

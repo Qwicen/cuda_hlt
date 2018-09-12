@@ -5,6 +5,7 @@
  */
 cudaError_t Stream::initialize(
   const std::vector<char>& velopix_geometry,
+  const std::vector<char>& ft_geometry,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const uint max_number_of_events,
   const bool param_transmit_device_to_host,
@@ -37,6 +38,10 @@ cudaError_t Stream::initialize(
   // Populate velo geometry
   cudaCheck(cudaMalloc((void**)&dev_velo_geometry, velopix_geometry.size()));
   cudaCheck(cudaMemcpyAsync(dev_velo_geometry, velopix_geometry.data(), velopix_geometry.size(), cudaMemcpyHostToDevice, stream));
+
+  // Populate ft geometry
+  cudaCheck(cudaMalloc((void**)&dev_ft_geometry, ft_geometry.size()));
+  cudaCheck(cudaMemcpyAsync(dev_ft_geometry, ft_geometry.data(), ft_geometry.size(), cudaMemcpyHostToDevice, stream));
 
   // Populate UT magnet tool values
   cudaCheck(cudaMalloc((void**)&dev_ut_magnet_tool, sizeof(PrUTMagnetTool)));

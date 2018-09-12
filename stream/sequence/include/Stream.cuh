@@ -64,6 +64,7 @@ struct Stream {
 
   // GPU pointers
   char* dev_velo_geometry;
+  char* dev_ft_geometry;
   char* dev_base_pointer;
   PrUTMagnetTool* dev_ut_magnet_tool;
 
@@ -73,6 +74,7 @@ struct Stream {
 
   cudaError_t initialize(
     const std::vector<char>& velopix_geometry,
+    const std::vector<char>& ft_geometry,
     const PrUTMagnetTool* host_ut_magnet_tool,
     const uint max_number_of_events,
     const bool param_transmit_device_to_host,

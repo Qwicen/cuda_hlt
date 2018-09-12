@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "assert.h"
 
+using namespace FT;
+
 __global__ void estimate_cluster_count(uint *ft_event_offsets, uint *dev_ft_cluster_offsets, uint *dev_ft_cluster_num, char *ft_events) {
   // TODO: Optimize parallelization.
   //printf("Preprocessing FT event %u, offset: %u...\n", blockIdx.x, ft_event_offsets[blockIdx.x]);

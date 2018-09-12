@@ -32,6 +32,7 @@ struct StreamWrapper {
   void initialize_streams(
     const uint n,
     const std::vector<char>& velopix_geometry,
+    const std::vector<char>& ft_geometry,
     const PrUTMagnetTool* host_ut_magnet_tool,
     const uint number_of_events,
     const bool transmit_device_to_host,

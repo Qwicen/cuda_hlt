@@ -374,11 +374,12 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_ft_cluster_offsets>(argument_offsets),
       argen.generate<arg::dev_ft_events>(argument_offsets),
       argen.generate<arg::dev_ft_clusters>(argument_offsets),
-      argen.generate<arg::dev_ft_cluster_nums>(argument_offsets)
+      argen.generate<arg::dev_ft_cluster_nums>(argument_offsets),
+      dev_ft_geometry
     );
 
     //only for testing, TODO: REMOVE
-    cudaCheck(cudaMemset(argen.generate<arg::dev_ft_clusters>(argument_offsets), 0, host_ft_cluster_num*sizeof(FTLiteCluster)));
+    cudaCheck(cudaMemset(argen.generate<arg::dev_ft_clusters>(argument_offsets), 0, host_ft_cluster_num*sizeof(FT::FTLiteCluster)));
     sequence.item<seq::raw_bank_decoder>().invoke();
 
     cudaEventRecord(cuda_generic_event, stream);
@@ -388,7 +389,7 @@ cudaError_t Stream::run_sequence(
 
     uint* host_ft_cluster_offsets = new uint[number_of_events];
     uint* host_ft_cluster_nums = new uint[number_of_events];
-    FTLiteCluster* host_ft_clusters = new FTLiteCluster[host_ft_cluster_num];
+    FT::FTLiteCluster* host_ft_clusters = new FT::FTLiteCluster[host_ft_cluster_num];
     //std::cout << "Copying " << host_ft_cluster_num << " clusters to host..." << std::endl;
 
     cudaCheck(cudaMemcpyAsync(host_ft_cluster_offsets, argen.generate<arg::dev_ft_cluster_offsets>(argument_offsets), argen.size<arg::dev_ft_cluster_offsets>(number_of_events), cudaMemcpyDeviceToHost, stream));
@@ -404,15 +405,15 @@ cudaError_t Stream::run_sequence(
       dumpfile << std::to_string(host_ft_clusters[j].channelID.channelID) << std::endl;
     }*/
 
-    /*for(size_t i = 0; i < number_of_events; i++) {
+    for(size_t i = 0; i < number_of_events; i++) {
       std::cout << "Event " << i << ": decoded " << host_ft_cluster_nums[i] << " clusters." << std::endl;
       for(size_t j = 0; j < host_ft_cluster_nums[i]; j++) {
         uint start = (i == 0? 0 : host_ft_cluster_offsets[i-1]);
         //std::cout << "host cluster " << start + j << ": chan ";
-        //std::cout << (host_ft_clusters[start + j].channelID.toString()) << std::endl;
-        dumpfile << std::to_string(host_ft_clusters[start+j].channelID.channelID) << std::endl;
+        std::cout << (host_ft_clusters[start + j].channelID.toString()) << std::endl;
+        //dumpfile << std::to_string(host_ft_clusters[start+j].channelID.channelID) << std::endl;
       }
-    }*/
+    }
 
 
     ///////////////////////

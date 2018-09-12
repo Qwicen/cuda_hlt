@@ -222,6 +222,10 @@ int main(int argc, char *argv[])
   std::vector<char> velopix_geometry;
   readGeometry(filename_geom, velopix_geometry);
 
+  folder_name_geometry + "ft_geometry.bin";
+  std::vector<char> ft_geometry;
+  readGeometry(filename_geom, ft_geometry);
+
   // Copy velopix raw data to pinned host memory
   const int number_of_events = velopix_event_offsets.size() - 1;
   char* host_velopix_events;
@@ -272,6 +276,7 @@ int main(int argc, char *argv[])
   stream_wrapper.initialize_streams(
     tbb_threads,
     velopix_geometry,
+    ft_geometry,
     host_ut_magnet_tool,
     number_of_events,
     transmit_device_to_host,

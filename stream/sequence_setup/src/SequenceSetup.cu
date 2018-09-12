@@ -19,6 +19,7 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::consolidate_tracks] = "Consolidate tracks";
   a[seq::veloUT] = "VeloUT tracking";
   a[seq::estimate_cluster_count] = "Estimate SciFi cluster count";
+  a[seq::raw_bank_decoder] = "Decode SciFi raw banks";
   return a;
 }
 

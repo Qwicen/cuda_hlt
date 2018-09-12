@@ -4,6 +4,7 @@
 void StreamWrapper::initialize_streams(
   const uint n,
   const std::vector<char>& velopix_geometry,
+  const std::vector<char>& ft_geometry,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const uint number_of_events,
   const bool transmit_device_to_host,
@@ -22,6 +23,7 @@ void StreamWrapper::initialize_streams(
   for (int i=0; i<streams.size(); ++i) {
     streams[i]->initialize(
       velopix_geometry,
+      ft_geometry,
       host_ut_magnet_tool,
       number_of_events,
       transmit_device_to_host,
