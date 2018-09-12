@@ -6,13 +6,13 @@ void xAtRef_SamePlaneHits(
   SciFi::HitsSoA* hits_layers,
   std::vector<int>& allXHits,
   const float xParams_seed[4],
-  FullState state_at_endvelo, 
+  VeloState velo_state, 
   int itH, int itEnd)
 {
   //this is quite computationally expensive mind, should take care when porting
   float zHit    = hits_layers->m_z[allXHits[itH]]; //all hits in same layer
   float xFromVelo_Hit = straightLineExtend(xParams_seed,zHit);
-  float zMagSlope = SciFi::Tracking::zMagnetParams[2] * pow(state_at_endvelo.tx,2) +  SciFi::Tracking::zMagnetParams[3] * pow(state_at_endvelo.ty,2);
+  float zMagSlope = SciFi::Tracking::zMagnetParams[2] * pow(velo_state.tx,2) +  SciFi::Tracking::zMagnetParams[3] * pow(velo_state.ty,2);
   float dSlopeDivPart = 1.f / ( zHit - SciFi::Tracking::zMagnetParams[0]);
   float dz      = 1.e-3f * ( zHit - SciFi::Tracking::zReference );
   
@@ -20,7 +20,7 @@ void xAtRef_SamePlaneHits(
     float xHit = hits_layers->m_x[allXHits[itH]];
     float dSlope  = ( xFromVelo_Hit - xHit ) * dSlopeDivPart;
     float zMag    = SciFi::Tracking::zMagnetParams[0] + SciFi::Tracking::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
-    float xMag    = xFromVelo_Hit + state_at_endvelo.tx * (zMag - zHit);
+    float xMag    = xFromVelo_Hit + velo_state.tx * (zMag - zHit);
     float dxCoef  = dz * dz * ( SciFi::Tracking::xParams[0] + dz * SciFi::Tracking::xParams[1] ) * dSlope;
     float ratio   = (  SciFi::Tracking::zReference - zMag ) / ( zHit - zMag );
     hits_layers->m_coord[allXHits[itH]] = xMag + ratio * (xHit + dxCoef  - xMag);
@@ -128,7 +128,7 @@ bool fitYProjection(
   std::vector<int>& stereoHits,
   std::vector<unsigned int> &pc,
   int planelist[],
-  FullState state_at_endvelo,
+  VeloState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   
@@ -138,7 +138,7 @@ bool fitYProjection(
   bool parabola = false; //first linear than parabola
   //== Fit a line
   const float txs  = track.trackParams[0]; // simplify overgeneral c++ calculation
-  const float tsxz = state_at_endvelo.x + (SciFi::Tracking::zReference - state_at_endvelo.z) * state_at_endvelo.tx; 
+  const float tsxz = velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx; 
   const float tolYMag = SciFi::Tracking::tolYMag + SciFi::Tracking::tolYMagSlope * fabs(txs-tsxz);
   const float wMag   = 1./(tolYMag * tolYMag );
 
@@ -146,9 +146,9 @@ bool fitYProjection(
   while ( doFit ) {
     //Use position in magnet as constrain in fit
     //although because wMag is quite small only little influence...
-    float zMag  = zMagnet(state_at_endvelo);
+    float zMag  = zMagnet(velo_state);
     const float tys = track.trackParams[4]+(zMag-SciFi::Tracking::zReference)*track.trackParams[5];
-    const float tsyz = state_at_endvelo.y + (zMag-state_at_endvelo.z)*state_at_endvelo.ty;
+    const float tsyz = velo_state.y + (zMag-velo_state.z)*velo_state.ty;
     const float dyMag = tys-tsyz;
     zMag -= SciFi::Tracking::zReference;
     float s0   = wMag;

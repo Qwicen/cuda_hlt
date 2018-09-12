@@ -337,6 +337,7 @@ __host__ __device__ void prepareOutputTrack(
     assert( track.hitsNum < VeloUTTracking::max_track_size);
   }
   track.set_qop( qop );
+  track.veloTrackIndex = i_Velo_track;
   
   // Adding overlap hits
   for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {

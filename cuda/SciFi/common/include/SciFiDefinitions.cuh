@@ -74,7 +74,7 @@ namespace SciFi {
       float quality;
       float chi2;
       std::vector<float> trackParams;
-      FullState state_endvelo;
+      VeloState state_endvelo;
       
       __host__  void addLHCbID( unsigned int id ) {
         LHCbIDs.push_back( id );

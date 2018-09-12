@@ -7,7 +7,7 @@
 std::vector<int> collectStereoHits(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track,
-  FullState state_at_endvelo,
+  VeloState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   
@@ -33,7 +33,7 @@ std::vector<int> collectStereoHits(
 
     //float dxDySign = 1.f - 2.f *(float)(zone.dxDy()<0); // same as ? zone.dxDy()<0 : -1 : +1 , but faster??!!
     const float dxDySign = SciFi::Tracking::uvZone_dxdy[zone] < 0 ? -1.f : 1.f;
-    const float seed_x_at_zZone = state_at_endvelo.x + (zZone - state_at_endvelo.z) * state_at_endvelo.tx;//Cached as we are upgrading one at a time, revisit
+    const float seed_x_at_zZone = velo_state.x + (zZone - velo_state.z) * velo_state.tx;//Cached as we are upgrading one at a time, revisit
     const float dxTol = SciFi::Tracking::tolY + SciFi::Tracking::tolYSlope * (std::fabs(xPred - seed_x_at_zZone) + std::fabs(yZone));
 
     // -- Use a binary search to find the lower bound of the range of x values
@@ -72,7 +72,7 @@ bool selectStereoHits(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track, 
   std::vector<int> stereoHits,
-  FullState state_at_endvelo, 
+  VeloState velo_state, 
   SciFi::Tracking::HitSearchCuts& pars)
 {
   //why do we rely on xRef? --> coord is NOT xRef for stereo HITS!
@@ -159,10 +159,10 @@ bool selectStereoHits(
                    [](const int& hit) { return hit; });
 
     //fit Y Projection of track using stereo hits
-    if(!fitYProjection(hits_layers, track, trackStereoHits, pc, planelist, state_at_endvelo, pars))continue;
+    if(!fitYProjection(hits_layers, track, trackStereoHits, pc, planelist, velo_state, pars))continue;
     debug_cout << "Passed the Y fit" << std::endl;
 
-    if(!addHitsOnEmptyStereoLayers(hits_layers, track, trackStereoHits, pc, planelist, state_at_endvelo, pars))continue;
+    if(!addHitsOnEmptyStereoLayers(hits_layers, track, trackStereoHits, pc, planelist, velo_state, pars))continue;
     //debug_cout << "Passed adding hits on empty stereo layers" << std::endl;
 
     //debug_cout << "Selecting on size have " << trackStereoHits.size() << " want " << bestStereoHits.size() << std::endl;
@@ -210,7 +210,7 @@ bool addHitsOnEmptyStereoLayers(
   std::vector<int>& stereoHits,
   std::vector<unsigned int> &pc,
   int planelist[],
-  FullState state_at_endvelo,
+  VeloState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   //at this point pc is counting only stereo HITS!
@@ -241,7 +241,7 @@ bool addHitsOnEmptyStereoLayers(
     if(!triangleSearch && (2.f*float((((SciFi::Tracking::uvZones[zone])%2)==0))-1.f) * yZone > 0.f) continue;
 
     //only version without triangle search!
-    const float dxTol = SciFi::Tracking::tolY + SciFi::Tracking::tolYSlope * ( fabs( xPred - state_at_endvelo.x + (zZone - state_at_endvelo.z) * state_at_endvelo.tx) + fabs(yZone) );
+    const float dxTol = SciFi::Tracking::tolY + SciFi::Tracking::tolYSlope * ( fabs( xPred - velo_state.x + (zZone - velo_state.z) * velo_state.tx) + fabs(yZone) );
     // -- Use a binary search to find the lower bound of the range of x values
     // -- This takes the y value into account
     const float lower_bound_at = -dxTol - yZone * SciFi::Tracking::uvZone_dxdy[zone] + xPred;
@@ -285,6 +285,6 @@ bool addHitsOnEmptyStereoLayers(
     }
   }
   if ( !added ) return true;
-  return fitYProjection( hits_layers, track, stereoHits, pc, planelist, state_at_endvelo, pars );
+  return fitYProjection( hits_layers, track, stereoHits, pc, planelist, velo_state, pars );
 }
  

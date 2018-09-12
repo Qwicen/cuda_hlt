@@ -19,25 +19,26 @@ void collectAllXHits(
   std::vector<int>& allXHits,
   const float xParams_seed[4], 
   const float yParams_seed[4],
-  FullState state_at_endvelo,  
+  const VeloState& velo_state,
+  const float qOverP,
   int side)
 {
   // A bunch of hardcoded numbers to set the search window
   // really this should all be made configurable
-  float dxRef = 0.9 * calcDxRef(SciFi::Tracking::minPt, state_at_endvelo);
-  float zMag = zMagnet(state_at_endvelo);
+  float dxRef = 0.9 * calcDxRef(SciFi::Tracking::minPt, velo_state);
+  float zMag = zMagnet(velo_state);
  
-  const float q = state_at_endvelo.qOverP > 0.f ? 1.f :-1.f;
+  const float q = qOverP > 0.f ? 1.f :-1.f;
   const float dir = q*SciFi::Tracking::magscalefactor*(-1.f);
 
   // Is PT at end VELO same as PT at beamline? Check output of VeloUT
-  float slope2 = pow(state_at_endvelo.tx,2) + pow(state_at_endvelo.ty,2); 
-  const float pt = std::sqrt( std::fabs(1./ (pow(state_at_endvelo.qOverP,2) ) ) * (slope2) / (1. + slope2) );
+  float slope2 = pow(velo_state.tx,2) + pow(velo_state.ty,2); 
+  const float pt = std::sqrt( std::fabs(1./ (pow(qOverP,2) ) ) * (slope2) / (1. + slope2) );
   const bool wSignTreatment = SciFi::Tracking::useWrongSignWindow && pt > SciFi::Tracking::wrongSignPT;
 
   float dxRefWS = 0.0; 
   if( wSignTreatment ){
-    dxRefWS = 0.9 * calcDxRef(SciFi::Tracking::wrongSignPT, state_at_endvelo); //make windows a bit too small - FIXME check effect of this, seems wrong
+    dxRefWS = 0.9 * calcDxRef(SciFi::Tracking::wrongSignPT, velo_state); //make windows a bit too small - FIXME check effect of this, seems wrong
   }
 
   std::array<int, 7> iZoneEnd; //6 x planes
@@ -171,7 +172,7 @@ void collectAllXHits(
     const int iEnd = allXHits.size();
     iZoneEnd[cptZone++] = iEnd;
     if( !(iStart == iEnd) ){
-      xAtRef_SamePlaneHits(hits_layers, allXHits, xParams_seed, state_at_endvelo, iStart, iEnd); //calc xRef for all hits on same layer
+      xAtRef_SamePlaneHits(hits_layers, allXHits, xParams_seed, velo_state, iStart, iEnd); //calc xRef for all hits on same layer
     } 
   }
   // Drop the more sophisticated sort in the C++ code for now, not sure if this
@@ -194,12 +195,12 @@ void collectAllXHits(
 void selectXCandidates(
   SciFi::HitsSoA* hits_layers,
   std::vector<int>& allXHits,
-  const VeloUTTracking::TrackVeloUT& veloUTTrack, 
+  const VeloUTTracking::TrackUT& veloUTTrack,
   std::vector<SciFi::Track>& outputTracks,
   const float zRef_track, 
   const float xParams_seed[4],
   const float yParams_seed[4],
-  FullState state_at_endvelo,
+  const VeloState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars,
   int side)
 {
@@ -438,7 +439,7 @@ void selectXCandidates(
       // In LHCb code this is a move operation replacing hits on the track candidate
       // Here I will work directly with the hits in coordToFit for now
       // DvB: can this go wrong?
-      trackParameters = getTrackParameters(xAtRef, state_at_endvelo); 
+      trackParameters = getTrackParameters(xAtRef, velo_state); 
       fastLinearFit( hits_layers, trackParameters, pc, pcplanelist,pars);
       addHitsOnEmptyXLayers(hits_layers, trackParameters, xParams_seed, yParams_seed,
                             false, pc, planelist, pars, side);
@@ -457,7 +458,7 @@ void selectXCandidates(
       // --> we need it for the second loop
       //debug_cout << "Pushed back an X candidate for stereo search!" << std::endl;
       SciFi::Track track;
-      track.state_endvelo = veloUTTrack.state_endvelo;
+      track.state_endvelo = velo_state;
       //track.LHCbIDs.clear();
       track.chi2 = trackParameters[7];
       for (int k=0;k<7;++k){

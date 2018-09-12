@@ -23,7 +23,7 @@ void call_PrVeloUT (
   const PrUTMagnetTool *magnet_tool,
   const float* ut_dxDy,
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
-  std::vector<VeloUTTracking::TrackVeloUT>& outputTracks,
+  std::vector<VeloUTTracking::TrackUT>& outputTracks,
   int &n_velo_tracks_in_UT,
   int &n_veloUT_tracks )
 {
@@ -107,22 +107,7 @@ void call_PrVeloUT (
 
       // prepare output tracks needed for forward tracking
       if ( n_veloUT_tracks > n_tracks_prev ) {
-        VeloUTTracking::TrackVeloUT outputtrack;
-        outputtrack.track = VeloUT_tracks[n_veloUT_tracks - 1];
-        outputtrack.state_endvelo.x = helper.state.x;
-        outputtrack.state_endvelo.y = helper.state.y;
-        outputtrack.state_endvelo.z = helper.state.z;
-        outputtrack.state_endvelo.tx = helper.state.tx;
-        outputtrack.state_endvelo.ty = helper.state.ty;
-        outputtrack.state_endvelo.chi2 = helper.state.chi2;
-        outputtrack.state_endvelo.c00 = helper.state.c00;
-        outputtrack.state_endvelo.c20 = helper.state.c20;
-        outputtrack.state_endvelo.c22 = helper.state.c22;
-        outputtrack.state_endvelo.c11 = helper.state.c11;
-        outputtrack.state_endvelo.c31 = helper.state.c31;
-        outputtrack.state_endvelo.c33 = helper.state.c33;
-        outputtrack.state_endvelo.qOverP = outputtrack.track.qop; 
-        outputTracks.emplace_back( outputtrack );
+        outputTracks.emplace_back( VeloUT_tracks[n_veloUT_tracks - 1] );
       }
       
     }

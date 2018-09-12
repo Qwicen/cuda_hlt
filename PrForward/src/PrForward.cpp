@@ -14,12 +14,11 @@
 // Main execution
 //=============================================================================
 std::vector<SciFi::Track> PrForward(
-  const std::vector<VeloUTTracking::TrackVeloUT>& inputTracks,
-  SciFi::HitsSoA *hits_layers)
+  const std::vector<VeloUTTracking::TrackUT>& inputTracks,
+  SciFi::HitsSoA *hits_layers,
+  const VeloState * velo_states,
+  const int velo_number_of_tracks)
 {
-
-  //m_hits_layers = *hits_layers; // dereference for local member
-
   std::vector<SciFi::Track> outputTracks;
   outputTracks.reserve(inputTracks.size());
 
@@ -31,10 +30,19 @@ std::vector<SciFi::Track> PrForward(
   ReadMLP_Forward1stLoop MLPReader_1st = ReadMLP_Forward1stLoop( mlpInputVars );
   ReadMLP_Forward2ndLoop MLPReader_2nd = ReadMLP_Forward2ndLoop( mlpInputVars );
   
-  for(const VeloUTTracking::TrackVeloUT& veloTr : inputTracks) {
+  for(const VeloUTTracking::TrackUT& veloUTTr : inputTracks) {
 
+    const VeloState& velo_state = velo_states[ veloUTTr.veloTrackIndex ];
+    
     std::vector<SciFi::Track> oneOutput; 
-    find_forward_tracks(hits_layers, veloTr, oneOutput, MLPReader_1st, MLPReader_2nd);
+    find_forward_tracks(
+      hits_layers,
+      veloUTTr,
+      oneOutput,
+      MLPReader_1st,
+      MLPReader_2nd,
+      velo_state);
+    
     numfound += oneOutput.size();
     for (auto track : oneOutput) {
       outputTracks.emplace_back(track);
@@ -55,15 +63,16 @@ std::vector<SciFi::Track> PrForward(
 //=============================================================================
 void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,
-  const VeloUTTracking::TrackVeloUT& veloUTTrack,
+  const VeloUTTracking::TrackUT& veloUTTrack,
   std::vector<SciFi::Track>& outputTracks,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
-  const ReadMLP_Forward2ndLoop& MLPReader_2nd
+  const ReadMLP_Forward2ndLoop& MLPReader_2nd,
+  const VeloState& velo_state
 ) {
 
   // Cache state information from state at the end of the VELO for
   // all subsequent processing
-  FullState state_at_endvelo = veloUTTrack.state_endvelo;
+  //VeloState velo_state = veloUTTrack.state_endvelo;
 
   // The LHCb framework code had a PT preselection for the VeloUT tracks
   // here, which I am removing because this should be done explicitly through
@@ -72,10 +81,10 @@ void find_forward_tracks(
   // Some values related to the forward track which were stored in a dedicated
   // forward track class, let's see if I can get rid of that here
   const float zRef_track    = SciFi::Tracking::zReference;
-  const float xAtRef = xFromVelo( zRef_track, state_at_endvelo );
-  const float xParams_seed[4] = {xAtRef, state_at_endvelo.tx, 0.f, 0.f};
-  const float yAtRef = yFromVelo( zRef_track, state_at_endvelo );
-  const float yParams_seed[4] = {yAtRef, state_at_endvelo.ty, 0.f, 0.f};
+  const float xAtRef = xFromVelo( zRef_track, velo_state );
+  const float xParams_seed[4] = {xAtRef, velo_state.tx, 0.f, 0.f};
+  const float yAtRef = yFromVelo( zRef_track, velo_state );
+  const float yParams_seed[4] = {yAtRef, velo_state.ty, 0.f, 0.f};
 
   // First loop Hough cluster search, set initial search windows
   SciFi::Tracking::HitSearchCuts pars_first{SciFi::Tracking::minXHits, SciFi::Tracking::maxXWindow, SciFi::Tracking::maxXWindowSlope, SciFi::Tracking::maxXGap, 4u};
@@ -83,19 +92,24 @@ void find_forward_tracks(
 
   std::vector<int> allXHits[2];
 
-  if(yAtRef>-5.f)collectAllXHits(hits_layers, allXHits[1], xParams_seed, yParams_seed, state_at_endvelo, 1); 
-  if(yAtRef< 5.f)collectAllXHits(hits_layers, allXHits[0], xParams_seed, yParams_seed, state_at_endvelo, -1);
+  if(yAtRef>-5.f)collectAllXHits(hits_layers, allXHits[1], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, 1); 
+  if(yAtRef< 5.f)collectAllXHits(hits_layers, allXHits[0], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, -1);
 
   std::vector<SciFi::Track> outputTracks1;
   
   if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], veloUTTrack, outputTracks1, zRef_track, 
-				   xParams_seed, yParams_seed, state_at_endvelo, pars_first,  1);
+				   xParams_seed, yParams_seed, velo_state, pars_first,  1);
   if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], veloUTTrack, outputTracks1, zRef_track, 
-				   xParams_seed, yParams_seed, state_at_endvelo, pars_first, -1); 
+				   xParams_seed, yParams_seed, velo_state, pars_first, -1); 
 
   //debug_cout << "Found " << outputTracks1.size() << " X candidates in first loop" << std::endl;
 
-  selectFullCandidates( hits_layers, outputTracks1,xParams_seed,yParams_seed, state_at_endvelo, pars_first, MLPReader_1st, MLPReader_2nd);
+  selectFullCandidates(
+    hits_layers,
+    outputTracks1,
+    xParams_seed, yParams_seed,
+    velo_state, veloUTTrack.qop,
+    pars_first, MLPReader_1st, MLPReader_2nd);
 
   //debug_cout << "Found " << outputTracks1.size() << " full candidates in first loop" << std::endl;
 
@@ -107,13 +121,18 @@ void find_forward_tracks(
   std::vector<SciFi::Track> outputTracks2; 
   if (!ok && SciFi::Tracking::secondLoop) { // If you found nothing begin the 2nd loop
     if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], veloUTTrack, outputTracks2, zRef_track, 
-				     xParams_seed, yParams_seed, state_at_endvelo, pars_second, 1);
+				     xParams_seed, yParams_seed, velo_state, pars_second, 1);
     if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], veloUTTrack, outputTracks2, zRef_track, 
-				     xParams_seed, yParams_seed, state_at_endvelo, pars_second, -1);  
+				     xParams_seed, yParams_seed, velo_state, pars_second, -1);  
 
     //debug_cout << "Found " << outputTracks1.size() << " X candidates in second loop" << std::endl;
 
-    selectFullCandidates( hits_layers, outputTracks2,xParams_seed,yParams_seed, state_at_endvelo, pars_second, MLPReader_1st, MLPReader_2nd);
+    selectFullCandidates(
+      hits_layers,
+      outputTracks2,
+      xParams_seed, yParams_seed,
+      velo_state, veloUTTrack.qop,
+      pars_second, MLPReader_1st, MLPReader_2nd);
 
     //debug_cout << "Found " << outputTracks1.size() << " full candidates in second loop" << std::endl;
     // Merge
@@ -132,8 +151,8 @@ void find_forward_tracks(
       if(track.quality + SciFi::Tracking::deltaQuality < minQuality) minQuality = track.quality + SciFi::Tracking::deltaQuality;
       if(!(track.quality > minQuality)) {
         // add LHCbIDs from Velo and UT part of the track
-        for ( int i_hit = 0; i_hit < veloUTTrack.track.hitsNum; ++i_hit ) {
-          track.addLHCbID( veloUTTrack.track.LHCbIDs[i_hit] );
+        for ( int i_hit = 0; i_hit < veloUTTrack.hitsNum; ++i_hit ) {
+          track.addLHCbID( veloUTTrack.LHCbIDs[i_hit] );
         }
         outputTracks.emplace_back(track);
         //debug_cout << "Found a forward track corresponding to a velo track!" << std::endl;
@@ -153,7 +172,8 @@ void selectFullCandidates(
   std::vector<SciFi::Track>& outputTracks,
   const float xParams_seed[4],
   const float yParams_seed[4],
-  FullState state_at_endvelo,
+  VeloState velo_state,
+  const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
   const ReadMLP_Forward2ndLoop& MLPReader_2nd)
@@ -174,7 +194,7 @@ void selectFullCandidates(
       pars.minStereoHits = SciFi::Tracking::minTotalHits - cand->hitsNum;
     }
     // search for hits in U/V layers
-    std::vector<int> stereoHits = collectStereoHits(hits_layers, *cand, state_at_endvelo, pars);
+    std::vector<int> stereoHits = collectStereoHits(hits_layers, *cand, velo_state, pars);
     debug_cout << "Collected " << stereoHits.size() << " valid stereo hits for full track search, with requirement of " << pars.minStereoHits << std::endl;
     if(stereoHits.size() < pars.minStereoHits) continue;
     // DIRTY HACK
@@ -187,7 +207,7 @@ void selectFullCandidates(
     debug_cout << "# of collected stereo hits = " << int(stereoHits.size()) << std::endl;
       
     // select best U/V hits
-    if ( !selectStereoHits(hits_layers, *cand, stereoHits, state_at_endvelo, pars) ) continue;
+    if ( !selectStereoHits(hits_layers, *cand, stereoHits, velo_state, pars) ) continue;
     debug_cout << "Passed the stereo hits selection!" << std::endl;
 
     pc.clear();
@@ -218,20 +238,20 @@ void selectFullCandidates(
     if(nbDifferent(planelist) >= SciFi::Tracking::minTotalHits){
       //debug_cout << "Computing final quality with NNs" << std::endl;
 
-      const float qOverP  = calcqOverP(cand->trackParams[1], state_at_endvelo);
+      const float qOverP  = calcqOverP(cand->trackParams[1], velo_state);
       //orig params before fitting , TODO faster if only calc once?? mem usage?
       const float xAtRef = cand->trackParams[0];
-      float dSlope  = ( state_at_endvelo.x + (SciFi::Tracking::zReference - state_at_endvelo.z) * state_at_endvelo.tx - xAtRef ) / ( SciFi::Tracking::zReference - SciFi::Tracking::zMagnetParams[0]);
-      const float zMagSlope = SciFi::Tracking::zMagnetParams[2] * pow(state_at_endvelo.tx,2) +  SciFi::Tracking::zMagnetParams[3] * pow(state_at_endvelo.ty,2);
+      float dSlope  = ( velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx - xAtRef ) / ( SciFi::Tracking::zReference - SciFi::Tracking::zMagnetParams[0]);
+      const float zMagSlope = SciFi::Tracking::zMagnetParams[2] * pow(velo_state.tx,2) +  SciFi::Tracking::zMagnetParams[3] * pow(velo_state.ty,2);
       const float zMag    = SciFi::Tracking::zMagnetParams[0] + SciFi::Tracking::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
-      const float xMag    = state_at_endvelo.x + (zMag- state_at_endvelo.z) * state_at_endvelo.tx;
+      const float xMag    = velo_state.x + (zMag- velo_state.z) * velo_state.tx;
       const float slopeT  = ( xAtRef - xMag ) / ( SciFi::Tracking::zReference - zMag );
-      dSlope        = slopeT - state_at_endvelo.tx;
-      const float dyCoef  = dSlope * dSlope * state_at_endvelo.ty;
+      dSlope        = slopeT - velo_state.tx;
+      const float dyCoef  = dSlope * dSlope * velo_state.ty;
 
       float bx = slopeT;
-      float ay = state_at_endvelo.y + (SciFi::Tracking::zReference - state_at_endvelo.z) * state_at_endvelo.ty;
-      float by = state_at_endvelo.ty + dyCoef * SciFi::Tracking::byParams;
+      float ay = velo_state.y + (SciFi::Tracking::zReference - velo_state.z) * velo_state.ty;
+      float by = velo_state.ty + dyCoef * SciFi::Tracking::byParams;
 
       //ay,by,bx params
       const float ay1  = cand->trackParams[4];
@@ -240,9 +260,9 @@ void selectFullCandidates(
 
       mlpInput[0] = nbDifferent(planelist);
       mlpInput[1] = qOverP;
-      mlpInput[2] = state_at_endvelo.qOverP - qOverP; //veloUT - scifi
-      if(std::fabs(state_at_endvelo.qOverP) < 1e-9f) mlpInput[2] = 0.f; //no momentum estiamte
-      mlpInput[3] = pow(state_at_endvelo.tx,2) + pow(state_at_endvelo.ty,2);
+      mlpInput[2] = VeloUT_qOverP - qOverP; //veloUT - scifi
+      if(std::fabs(VeloUT_qOverP) < 1e-9f) mlpInput[2] = 0.f; //no momentum estiamte
+      mlpInput[3] = pow(velo_state.tx,2) + pow(velo_state.ty,2);
       mlpInput[4] = by - by1;
       mlpInput[5] = bx - bx1;
       mlpInput[6] = ay - ay1;

@@ -18,7 +18,7 @@ void xAtRef_SamePlaneHits(
   SciFi::HitsSoA* hits_layers,
   std::vector<int>& allXHits,
   const float xParams_seed[4],
-  FullState state_at_endvelo, 
+  VeloState velo_state, 
   int itH, int itEnd);
 
 bool fitXProjection(
@@ -34,5 +34,5 @@ bool fitYProjection(
   std::vector<int>& stereoHits,
   std::vector<unsigned int> &pc,
   int planelist[],
-  FullState state_at_endvelo,
+  VeloState velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur); 

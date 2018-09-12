@@ -8,15 +8,15 @@
 
 int run_veloUT_on_CPU (
   std::vector< trackChecker::Tracks >& ut_tracks_events,
-  std::vector< std::vector< VeloUTTracking::TrackVeloUT > >& ut_output_tracks,
+  std::vector< std::vector< VeloUTTracking::TrackUT > >& ut_output_tracks,
   VeloUTTracking::HitsSoA* hits_layers_events,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const float * host_ut_dxDy,
   const VeloState* host_velo_states,
   const int* host_accumulated_tracks,
-  const uint* host_velo_track_hit_number_pinned,
-  const VeloTracking::Hit<mc_check_enabled>* host_velo_track_hits_pinned,   
-  const int* host_number_of_tracks_pinned,
+  const uint* host_velo_track_hit_number,
+  const VeloTracking::Hit<mc_check_enabled>* host_velo_track_hits,   
+  const int* host_number_of_tracks,
   const int &number_of_events
 ) {
 
@@ -125,12 +125,12 @@ int run_veloUT_on_CPU (
     // Prepare Velo tracks
     const int accumulated_tracks = host_accumulated_tracks[i_event];
     const VeloState* host_velo_states_event = host_velo_states + accumulated_tracks;
-    for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+    for ( uint i_track = 0; i_track < host_number_of_tracks[i_event]; i_track++ ) {
 
       n_velo_tracks++;
       
-      const uint starting_hit = host_velo_track_hit_number_pinned[accumulated_tracks + i_track];
-      const uint number_of_hits = host_velo_track_hit_number_pinned[accumulated_tracks + i_track + 1] - starting_hit;
+      const uint starting_hit = host_velo_track_hit_number[accumulated_tracks + i_track];
+      const uint number_of_hits = host_velo_track_hit_number[accumulated_tracks + i_track + 1] - starting_hit;
       backward = (int)(host_velo_states_event[i_track].backward);
       if ( !backward ) n_forward_velo_tracks++;
 
@@ -145,25 +145,25 @@ int run_veloUT_on_CPU (
       // study (sign of) (dr/dz) -> track moving away from beamline?
       // drop 1/sqrt(x^2+y^2) to avoid sqrt calculation, no effect on sign
       const uint last_hit = starting_hit + number_of_hits - 1;
-      float dx = host_velo_track_hits_pinned[last_hit].x - host_velo_track_hits_pinned[starting_hit].x;
-      float dy = host_velo_track_hits_pinned[last_hit].y - host_velo_track_hits_pinned[starting_hit].y;
-      float dz = host_velo_track_hits_pinned[last_hit].z - host_velo_track_hits_pinned[starting_hit].z;
-      drdz = host_velo_track_hits_pinned[starting_hit].x * dx/dz + host_velo_track_hits_pinned[starting_hit].y * dy/dz;
+      float dx = host_velo_track_hits[last_hit].x - host_velo_track_hits[starting_hit].x;
+      float dy = host_velo_track_hits[last_hit].y - host_velo_track_hits[starting_hit].y;
+      float dz = host_velo_track_hits[last_hit].z - host_velo_track_hits[starting_hit].z;
+      drdz = host_velo_track_hits[starting_hit].x * dx/dz + host_velo_track_hits[starting_hit].y * dy/dz;
       
-      first_x = host_velo_track_hits_pinned[starting_hit].x;
-      first_y = host_velo_track_hits_pinned[starting_hit].y;
-      first_z = host_velo_track_hits_pinned[starting_hit].z;
-      last_x = host_velo_track_hits_pinned[last_hit].x;
-      last_y = host_velo_track_hits_pinned[last_hit].y;
-      last_z = host_velo_track_hits_pinned[last_hit].z;
+      first_x = host_velo_track_hits[starting_hit].x;
+      first_y = host_velo_track_hits[starting_hit].y;
+      first_z = host_velo_track_hits[starting_hit].z;
+      last_x = host_velo_track_hits[last_hit].x;
+      last_y = host_velo_track_hits[last_hit].y;
+      last_z = host_velo_track_hits[last_hit].z;
       
       t_velo_states->Fill();
       
       /* Get hits on track */
       for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
-	x_hit = host_velo_track_hits_pinned[starting_hit + i_hit].x;
-	y_hit = host_velo_track_hits_pinned[starting_hit + i_hit].y;
-	z_hit = host_velo_track_hits_pinned[starting_hit + i_hit].z;
+	x_hit = host_velo_track_hits[starting_hit + i_hit].x;
+	y_hit = host_velo_track_hits[starting_hit + i_hit].y;
+	z_hit = host_velo_track_hits[starting_hit + i_hit].z;
 	
 	t_track_hits->Fill();
       }
@@ -172,11 +172,11 @@ int run_veloUT_on_CPU (
 
     int n_veloUT_tracks_event = 0;
     VeloUTTracking::TrackUT veloUT_tracks[VeloUTTracking::max_num_tracks];
-    std::vector<VeloUTTracking::TrackVeloUT> outputTracks;
+    std::vector<VeloUTTracking::TrackUT> outputTracks;
     call_PrVeloUT(
-      host_velo_track_hit_number_pinned,
-      host_velo_track_hits_pinned,                                                      
-      host_number_of_tracks_pinned[i_event],
+      host_velo_track_hit_number,
+      host_velo_track_hits,                                                      
+      host_number_of_tracks[i_event],
       host_accumulated_tracks[i_event],
       host_velo_states_event,
       &(hits_layers_sorted),

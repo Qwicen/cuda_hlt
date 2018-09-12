@@ -39,13 +39,13 @@ namespace SciFi {
 } // SciFi
 
 // extrapolate x position from given state to z
-inline float xFromVelo( const float z, FullState state_at_endvelo ) { 
-  return state_at_endvelo.x + (z-state_at_endvelo.z) * state_at_endvelo.tx; 
+inline float xFromVelo( const float z, VeloState velo_state ) { 
+  return velo_state.x + (z-velo_state.z) * velo_state.tx; 
 }
 
 // extrapolate y position from given state to z
-inline float yFromVelo( const float z, FullState state_at_endvelo ) { 
-  return state_at_endvelo.y + (z-state_at_endvelo.z) * state_at_endvelo.ty; 
+inline float yFromVelo( const float z, VeloState velo_state ) { 
+  return velo_state.y + (z-velo_state.z) * velo_state.ty; 
 }
 
 // params[0] = x/y, params[1] = tx/ty
@@ -54,15 +54,15 @@ inline float straightLineExtend(const float params[4], float z) {
   return params[0] + (params[1]+(params[2] + params[3]*dz)*dz)*dz;
 }
 
-std::vector<float> getTrackParameters ( float xAtRef, FullState state_at_endvelo);
+std::vector<float> getTrackParameters ( float xAtRef, VeloState velo_state);
 
-float calcqOverP ( float bx, FullState state_at_endvelo );
+float calcqOverP ( float bx, VeloState velo_state );
 
-float zMagnet(FullState state_at_endvelo);
+float zMagnet(VeloState velo_state);
 
 void covariance ( FullState& state, const float qOverP );
 
-float calcDxRef(float pt, FullState state_at_endvelo);
+float calcDxRef(float pt, VeloState velo_state);
 
 float trackToHitDistance( std::vector<float> trackParameters, SciFi::HitsSoA* hits_layers, int hit );
 

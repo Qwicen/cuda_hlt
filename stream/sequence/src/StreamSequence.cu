@@ -379,7 +379,7 @@ cudaError_t Stream::run_sequence(
         /* Run VeloUT on x86 architecture */
         if ( run_on_x86 ) {
           std::vector< trackChecker::Tracks > ut_checker_tracks_events;
-          std::vector< std::vector< VeloUTTracking::TrackVeloUT > > ut_output_tracks;
+          std::vector< std::vector< VeloUTTracking::TrackUT > > ut_output_tracks;
                     
           int rv = run_veloUT_on_CPU(
                      ut_checker_tracks_events,
@@ -413,9 +413,9 @@ cudaError_t Stream::run_sequence(
           rv = run_forward_on_CPU(
                              forward_tracks_events,
                              hits_layers_events_ft,
-                             // host_velo_states,
-                             //  host_accumulated_tracks,
-                             // host_number_of_tracks,
+                             host_velo_states,
+                             host_accumulated_tracks,
+                             host_number_of_tracks,
                              ut_output_tracks,
                              number_of_events );
 

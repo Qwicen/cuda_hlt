@@ -24,18 +24,19 @@ void collectAllXHits(
   std::vector<int>& allXHits, 
   const float xParams_seed[4],
   const float yParams_seed[4],
-  FullState state_at_endvelo,
+  const VeloState& velo_state,
+  const float qop,
   int side);
 
 void selectXCandidates(
   SciFi::HitsSoA* hits_layers,
   std::vector<int>& allXHits,
-  const VeloUTTracking::TrackVeloUT& veloUTTrack,
+  const VeloUTTracking::TrackUT& veloUTTrack,
   std::vector<SciFi::Track>& outputTracks,
   const float zRef_track,
   const float xParams_seed[4],
   const float yParams_seed[4],
-  FullState state_at_endvelo,
+  const VeloState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur,
   int side);
 

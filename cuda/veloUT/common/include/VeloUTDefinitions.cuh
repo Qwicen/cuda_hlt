@@ -72,7 +72,8 @@ namespace VeloUTTracking {
     unsigned int LHCbIDs[VeloUTTracking::max_track_size];
     float qop;
     unsigned short hitsNum = 0;
-  
+    unsigned short veloTrackIndex;
+    
     __host__ __device__ void addLHCbID( unsigned int id ) {
       LHCbIDs[hitsNum++] = id;
     }
@@ -81,14 +82,6 @@ namespace VeloUTTracking {
       qop = _qop;
     }
   };
-
-   
-  struct TrackVeloUT {
-    FullState state_endvelo;
-    TrackUT track;
-    SciFi::Track trackForward;
-  };
-
 
 }
 
