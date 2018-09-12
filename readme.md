@@ -73,8 +73,8 @@ A run of the program with no arguments will let you know the basic options:
 
     Usage: ./cu_hlt
     -f {folder containing .bin files with raw bank information}
+    -u {folder containing bin files with UT raw bank information}
     -d {folder containing .bin files with MC truth information}
-    -e {folder containing bin files with UT hit information}
     -g {folder containing geometry descriptions}
     -n {number of events to process}=0 (all)
     -o {offset of events from which to start}=0 (beginning)
@@ -92,23 +92,15 @@ A run of the program with no arguments will let you know the basic options:
 Here are some example run options:
 
     # Run all input files once with the tracking validation
-    ./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -d ../input/minbias/MC_info -g ../input/geometry/
+    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -d ../input/minbias/MC_info/ -c 1
 
-    # Note: For the examples below, cu_hlt must have been compiled with -DMC_CHECK=Off
-    # Run a total of 1000 events, round robin over the existing ones
-    ./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -g ../input/geometry/ -n 1000
+    # Run a total of 1000 events, round robin over the existing ones, without tracking validation
+    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -d ../input/minbias/MC_info/ -c 0 -n 1000
 
     # Run four streams, each with 4000 events, 20 repetitions
-    ./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -g ../input/geometry/ -t 4 -n 4000 -r 20
+    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -d ../input/minbias/MC_info/ -t 4 -n 4000 -r 20 -c 0
 
-    # Run twelve streams, each with 3500 events, 40 repetitions
-    ./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -g ../input/geometry/ -n 3500 -t 12 -r 40
-
-    # Run clustering and Velopix efficiency validations, no repetitions or multiple threads needed
-    # Note: cu_hlt must have been compiled with -DMC_CHECK=On
-    ./cu_hlt -f ../input/minbias/velopix_raw -d ../input/minbias/MC_info -e ../input/minbias/ut_hits -g ../input/geometry/ -n 10 -t 1 -r 1 -c 1
-    
     # Run one stream and print all memory allocations
-    ./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -g ../input/geometry/ -n 5000 -t 1 -r 1 -p
+    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -d ../input/minbias/MC_info/ -n 5000 -t 1 -r 1 -p
 
 [This readme](readme_cuda_developer.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define global memory variables for this sequence and pass on the dependencies.

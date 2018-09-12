@@ -13,9 +13,12 @@
 #include "Tools.h"
 #include "BaseDynamicScheduler.cuh"
 #include "SequenceSetup.cuh"
-#include "PrVeloUTMagnetToolDefinitions.cuh"
+#include "PrVeloUTMagnetToolDefinitions.h"
+#include "Constants.cuh"
 
 #include "run_VeloUT_CPU.h"
+
+#include "UTDefinitions.cuh"
 
 class Timer;
 
@@ -53,8 +56,13 @@ struct Stream {
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   VeloState* host_velo_states;
+  uint* host_accumulated_number_of_ut_hits;
+  uint* host_ut_hit_count;
   VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
+
+  /* UT DECODING */
+  UTHits * host_ut_hits_decoded;
 
   uint* host_ft_event_offsets_pinned;
   char* host_ft_events;
@@ -64,6 +72,8 @@ struct Stream {
 
   // GPU pointers
   char* dev_velo_geometry;
+  char* dev_ut_boards;
+  char* dev_ut_geometry;
   char* dev_ft_geometry;
   char* dev_base_pointer;
   PrUTMagnetTool* dev_ut_magnet_tool;
@@ -72,10 +82,15 @@ struct Stream {
   std::string folder_name_MC;
   uint start_event_offset;
 
+  // Constants
+  Constants constants;
+
   cudaError_t initialize(
     const std::vector<char>& velopix_geometry,
+    const std::vector<char>& ut_boards,
+    const std::vector<char>& ut_geometry,
+    const std::vector<char>& ut_magnet_tool,
     const std::vector<char>& ft_geometry,
-    const PrUTMagnetTool* host_ut_magnet_tool,
     const uint max_number_of_events,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
@@ -85,7 +100,8 @@ struct Stream {
     const std::string& param_folder_name_MC,
     const uint param_start_event_offset,
     const size_t param_reserve_mb,
-    const uint param_stream_number
+    const uint param_stream_number,
+    const Constants& param_constants
   );
 
   cudaError_t run_sequence(
@@ -94,12 +110,14 @@ struct Stream {
     const uint* host_velopix_event_offsets,
     const size_t host_velopix_events_size,
     const size_t host_velopix_event_offsets_size,
-    VeloUTTracking::HitsSoA *host_ut_hits_events,
-    const PrUTMagnetTool* host_ut_magnet_tool,
-    uint* host_ft_event_offsets_pinned,
-    char* host_ft_events_pinned,
-    const size_t ft_event_offsets_size,
+    const char* host_ut_events,
+    const uint* host_ut_event_offsets,
+    const size_t host_ut_events_size,
+    const size_t host_ut_event_offsets_size,
+    char* host_ft_events,
+    uint* host_ft_event_offsets,
     const size_t ft_events_size,
+    const size_t ft_event_offsets_size,
     const uint number_of_events,
     const uint number_of_repetitions
   );

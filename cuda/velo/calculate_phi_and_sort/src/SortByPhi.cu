@@ -1,26 +1,6 @@
 #include "VeloDefinitions.cuh"
 #include "math_constants.h"
-
-/**
- * @brief Apply permutation from prev container to new container
- */
-template<class T>
-__device__ void apply_permutation(
-  uint* permutation,
-  const uint event_hit_start,
-  const uint event_number_of_hits,
-  T* prev_container,
-  T* new_container
-) {
-  // Apply permutation across all hits in the module (coalesced)
-  for (uint i=0; i<(event_number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
-    const auto permutation_index = i*blockDim.x + threadIdx.x;
-    if (permutation_index < event_number_of_hits) {
-      const auto hit_index = permutation[event_hit_start + permutation_index];
-      new_container[event_hit_start + permutation_index] = prev_container[hit_index];
-    }
-  }
-}
+#include "Sorting.cuh"
 
 /**
  * @brief Calculates phi for each hit

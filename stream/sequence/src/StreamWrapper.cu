@@ -4,8 +4,10 @@
 void StreamWrapper::initialize_streams(
   const uint n,
   const std::vector<char>& velopix_geometry,
+  const std::vector<char>& ut_boards,
+  const std::vector<char>& ut_geometry,
+  const std::vector<char>& ut_magnet_tool,
   const std::vector<char>& ft_geometry,
-  const PrUTMagnetTool* host_ut_magnet_tool,
   const uint number_of_events,
   const bool transmit_device_to_host,
   const bool do_check,
@@ -14,7 +16,8 @@ void StreamWrapper::initialize_streams(
   const bool run_on_x86,
   const std::string& folder_name_MC,
   const uint start_event_offset,
-  const size_t reserve_mb
+  const size_t reserve_mb,
+  const Constants& constants
 ) {
   for (uint i=0; i<n; ++i) {
     streams.push_back(new Stream());
@@ -23,8 +26,10 @@ void StreamWrapper::initialize_streams(
   for (int i=0; i<streams.size(); ++i) {
     streams[i]->initialize(
       velopix_geometry,
+      ut_boards,
+      ut_geometry,
+      ut_magnet_tool,
       ft_geometry,
-      host_ut_magnet_tool,
       number_of_events,
       transmit_device_to_host,
       do_check,
@@ -34,7 +39,8 @@ void StreamWrapper::initialize_streams(
       folder_name_MC,
       start_event_offset,
       reserve_mb,
-      i
+      i,
+      constants
     );
 
     // Memory consumption
@@ -54,12 +60,14 @@ void StreamWrapper::run_stream(
   uint* host_velopix_event_offsets,
   const size_t velopix_events_size,
   const size_t velopix_event_offsets_size,
-  VeloUTTracking::HitsSoA *host_ut_hits_events,
-  const PrUTMagnetTool* host_ut_magnet_tool,
-  uint* host_ft_event_offsets_pinned,
-  char* host_ft_events_pinned,
-  const size_t ft_event_offsets_size,
+  char* host_ut_events,
+  uint* host_ut_event_offsets,
+  const size_t ut_events_size,
+  const size_t ut_event_offsets_size,
+  char* host_ft_events,
+  uint* host_ft_event_offsets,
   const size_t ft_events_size,
+  const size_t ft_event_offsets_size,
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -70,12 +78,14 @@ void StreamWrapper::run_stream(
     host_velopix_event_offsets,
     velopix_events_size,
     velopix_event_offsets_size,
-    host_ut_hits_events,
-    host_ut_magnet_tool,
-    host_ft_event_offsets_pinned,
-    host_ft_events_pinned,
-    ft_event_offsets_size,
+    host_ut_events,
+    host_ut_event_offsets,
+    ut_events_size,
+    ut_event_offsets_size,
+    host_ft_events,
+    host_ft_event_offsets,
     ft_events_size,
+    ft_event_offsets_size,
     number_of_events,
     number_of_repetitions
   );

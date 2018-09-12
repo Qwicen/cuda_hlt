@@ -13,10 +13,16 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::weak_tracks_adder] = "Weak tracks adder";
   a[seq::copy_and_prefix_sum_single_block] = "Copy and prefix sum single block";
   a[seq::copy_velo_track_hit_number] = "Copy Velo track hit number";
-  a[seq::prefix_sum_reduce_velo_track_hit_number] = "Prefix sum reduce (2)";
-  a[seq::prefix_sum_single_block_velo_track_hit_number] = "Prefix sum single block (2)";
-  a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2)";
+  a[seq::prefix_sum_reduce_velo_track_hit_number] = "Prefix sum reduce (2) Velo track hit number";
+  a[seq::prefix_sum_single_block_velo_track_hit_number] = "Prefix sum single block (2) Velo track hit number";
+  a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2) Velo track hit number";
   a[seq::consolidate_tracks] = "Consolidate tracks";
+  a[seq::ut_calculate_number_of_hits] = "UT calculate number of hits";
+  a[seq::prefix_sum_reduce_ut_hits] = "Prefix sum reduce (3) UT hits";
+  a[seq::prefix_sum_single_block_ut_hits] = "Prefix sum single block (3) UT hits";
+  a[seq::prefix_sum_scan_ut_hits] = "Prefix sum scan (3) UT hits";
+  a[seq::decode_raw_banks] = "UT decode_raw_banks";
+  a[seq::sort_by_x] = "Sort hits by X";
   a[seq::veloUT] = "VeloUT tracking";
   a[seq::estimate_cluster_count] = "Estimate SciFi cluster count";
   a[seq::raw_bank_decoder] = "Decode SciFi raw banks";
@@ -47,7 +53,11 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_prefix_sum_auxiliary_array_2] = "dev_prefix_sum_auxiliary_array_2";
   a[arg::dev_velo_track_hits] = "dev_velo_track_hits";
   a[arg::dev_velo_states] = "dev_velo_states";
+  a[arg::dev_ut_raw_input] = "dev_ut_raw_input";
+  a[arg::dev_ut_raw_input_offsets] = "dev_ut_raw_input_offsets";
+  a[arg::dev_ut_hit_count] = "dev_ut_hit_count";
   a[arg::dev_ut_hits] = "dev_ut_hits";
+  a[arg::dev_ut_hit_permutations] = "dev_ut_hit_permutations";
   a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
   a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
   a[arg::dev_ft_event_offsets] = "dev_ft_event_offsets";
@@ -157,8 +167,37 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_track_hits,
     arg::dev_velo_states
   };
+  sequence_dependencies[seq::ut_calculate_number_of_hits] = {
+    arg::dev_ut_raw_input,
+    arg::dev_ut_raw_input_offsets,
+    arg::dev_ut_hit_count
+  };
+  sequence_dependencies[seq::prefix_sum_reduce_ut_hits] = {
+    arg::dev_ut_hit_count,
+    arg::dev_prefix_sum_auxiliary_array_3
+  };
+  sequence_dependencies[seq::prefix_sum_single_block_ut_hits] = {
+    arg::dev_ut_hit_count,
+    arg::dev_prefix_sum_auxiliary_array_3
+  };
+  sequence_dependencies[seq::prefix_sum_scan_ut_hits] = {
+    arg::dev_ut_hit_count,
+    arg::dev_prefix_sum_auxiliary_array_3
+  };
+  sequence_dependencies[seq::decode_raw_banks] = {
+    arg::dev_ut_raw_input,
+    arg::dev_ut_raw_input_offsets,
+    arg::dev_ut_hits,
+    arg::dev_ut_hit_count
+  };
+  sequence_dependencies[seq::sort_by_x] = {
+    arg::dev_ut_hits,
+    arg::dev_ut_hit_count,
+    arg::dev_ut_hit_permutations
+  };
   sequence_dependencies[seq::veloUT] = {
     arg::dev_ut_hits,
+    arg::dev_ut_hit_count,
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,
@@ -187,6 +226,8 @@ std::vector<int> get_sequence_output_arguments() {
   return {
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number,
-    arg::dev_velo_track_hits
+    arg::dev_velo_track_hits,
+    arg::dev_atomics_veloUT,
+    arg::dev_veloUT_tracks
   };
 }

@@ -1,3 +1,3 @@
 add_subdirectory(velo)
-add_subdirectory(veloUT)
-add_subdirectory(ft)
+add_subdirectory(UT)
+add_subdirectory(FT)

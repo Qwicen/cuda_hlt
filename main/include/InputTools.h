@@ -1,7 +1,8 @@
 #pragma once
 
 #include <dirent.h>
-#include <math.h>
+#include <stdint.h>
+#include <cassert>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -11,8 +12,10 @@
 #include <algorithm>
 #include <map>
 #include <cmath>
-#include <stdint.h>
 #include "Logger.h"
+#include "Common.h"
+#include "PrVeloUTMagnetToolDefinitions.h"
+// #include "PrVeloUTDefinitions.cuh"
 
 bool exists_test(
   const std::string& name
@@ -37,11 +40,26 @@ void appendFileToVector(
 std::vector<std::string> list_folder(
   const std::string& foldername
 );
- 
+
+uint get_number_of_events_requested(
+  uint number_of_events_requested,
+  const std::string& foldername
+);
+
 void read_folder(
   const std::string& foldername,
-  unsigned int fileNumber,
+  uint number_of_events_requested,
   std::vector<char>& events,
   std::vector<unsigned int>& event_offsets,
   const uint start_event_offset
+);
+
+void read_geometry(
+  const std::string& foldername,
+  std::vector<char>& geometry
+);
+
+void read_UT_magnet_tool(
+  const std::string& folder_name,
+  std::vector<char>& ut_magnet_tool
 );
