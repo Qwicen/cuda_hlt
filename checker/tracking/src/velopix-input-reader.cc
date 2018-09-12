@@ -165,8 +165,8 @@ std::vector<VelopixEvent> read_mc_folder (
     event = VelopixEvent(inputContents, trackType, checkEvents);
 
     //debug_cout << "At VelopixEvent " << i << ": " << int(event.mcps.size()) << " MCPs" << std::endl;
-    //if ( i == 0 && checkEvents )
-       //   event.print();
+    // if ( i == 0 && checkEvents )
+    //      event.print();
        
     input.emplace_back(event);
 
