@@ -4,7 +4,6 @@
 #include "device_launch_parameters.h"
 #include "Common.h"
 #include "Logger.h"
-#include "VeloUTDefinitions.cuh"
 #include "VeloDefinitions.cuh"
 
 
@@ -62,6 +61,11 @@ namespace ForwardTracking {
     bool m_used[max_numhits_per_event] = {false};
     // For Hough transform
     float m_coord[max_numhits_per_event] = {0};
+
+    // check for used hit
+    bool isValid( int value ) const {
+      return !m_used[value];
+    }
 
   };
 
