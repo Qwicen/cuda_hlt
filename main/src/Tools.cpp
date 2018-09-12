@@ -52,7 +52,7 @@ bool check_velopix_events(
 //   const int n_events
 // ) {
 //   float average_number_of_hits_per_event = 0;
-
+  
 //   for ( int i_event = 0; i_event < n_events; ++i_event ) {
 //     float number_of_hits = 0;
 //     const VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
@@ -75,7 +75,7 @@ bool check_velopix_events(
 //         hits_layers.dxDy( layer_offset + i_hit ) );
 //       }
 //     }
-
+    
 //     average_number_of_hits_per_event += number_of_hits;
 //     debug_cout << "# of UT hits = " << number_of_hits << std::endl;
 //   }
@@ -118,9 +118,9 @@ std::map<std::string, float> calcResults(std::vector<float>& times){
  * Prints tracks
  * Track #n, length <length>:
  *  <ID> module <module>, x <x>, y <y>, z <z>
- *
- * @param tracks
- * @param trackNumber
+ * 
+ * @param tracks      
+ * @param trackNumber 
  */
 template <bool mc_check>
 void printTrack(
@@ -137,12 +137,12 @@ void printTrack(
     const float y = hit.y;
     const float z = hit.z;
     //const uint LHCbID = hit.LHCbID;
-
-    outstream
+  
+    outstream 
       << ", x " << std::setw(6) << x
       << ", y " << std::setw(6) << y
       << ", z " << std::setw(6) << z
-      //<< ", LHCbID " << LHCbID
+      //<< ", LHCbID " << LHCbID 
       << std::endl;
   }
 
@@ -154,7 +154,7 @@ void printTracks(
   VeloTracking::Track <mc_check> * tracks,
   int* n_tracks,
   int n_events,
-  std::ofstream& outstream
+  std::ofstream& outstream 
 ) {
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
     VeloTracking::Track <mc_check> * tracks_event = tracks + i_event * VeloTracking::max_tracks;
@@ -181,7 +181,7 @@ void check_roughly(
   int matched = 0;
   for ( auto track : tracks ) {
     std::vector< uint32_t > mcp_ids;
-
+    
     for ( LHCbID id : track.ids() ) {
       uint32_t id_int = uint32_t( id );
       // find associated IDs from mcps
@@ -193,9 +193,9 @@ void check_roughly(
         }
       }
     }
-
+    
     printf("# of hits on track = %u, # of MCP ids = %u \n", track.nIDs(), uint32_t( mcp_ids.size() ) );
-
+    
     for ( int i_id = 0; i_id < mcp_ids.size(); ++i_id ) {
       uint32_t mcp_id = mcp_ids[i_id];
       printf("\t mcp id = %u \n", mcp_id);
@@ -213,18 +213,18 @@ void check_roughly(
     if (part.isLong)
       long_tracks++;
   }
-
+  
   printf("efficiency = %f \n", float(matched) / long_tracks );
 }
 
 std::vector< trackChecker::Tracks > prepareTracks(
   uint* host_velo_track_hit_number_pinned,
-  VeloTracking::Hit<true>* host_velo_track_hits_pinned,
+  VeloTracking::Hit<true>* host_velo_track_hits_pinned,  
   int* host_accumulated_tracks,
   int* host_number_of_tracks_pinned,
   const int &number_of_events
 ) {
-
+  
   /* Tracks to be checked, save in format for checker */
   std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
   for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
@@ -234,15 +234,15 @@ std::vector< trackChecker::Tracks > prepareTracks(
       trackChecker::Track t;
       const uint starting_hit = host_velo_track_hit_number_pinned[accumulated_tracks + i_track];
       const uint number_of_hits = host_velo_track_hit_number_pinned[accumulated_tracks + i_track + 1] - starting_hit;
-
+      
       for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
         t.addId(host_velo_track_hits_pinned[starting_hit + i_hit].LHCbID);
-      }
+      } 
       tracks.push_back( t );
     } // tracks
     all_tracks.emplace_back( tracks );
   }
-
+  
   return all_tracks;
 }
 
@@ -306,3 +306,4 @@ void call_pr_checker(
     error_cout << "unknown track type: " << trackType << std::endl;
   }
 }
+
