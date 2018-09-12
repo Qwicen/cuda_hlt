@@ -63,8 +63,8 @@ add_subdirectory(cuda)
 add_subdirectory(stream)
 add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
-add_subdirectory(x86/veloUT/PrVeloUT)
-add_subdirectory(x86/forward)
+add_subdirectory(x86/UT/PrVeloUT)
+add_subdirectory(x86/SciFi)
 
 # Include directories
 include_directories(main/include)
