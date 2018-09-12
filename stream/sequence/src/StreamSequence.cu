@@ -403,33 +403,32 @@ cudaError_t Stream::run_sequence(
             folder_name_MC,
             start_event_offset,
             trackType); 
-          
-          
-          /* Run Forward on x86 architecture  */
-          std::vector< trackChecker::Tracks > forward_tracks_events;
-          
-          rv = run_forward_on_CPU(
-                             forward_tracks_events,
-                             hits_layers_events_ft,
-                             host_velo_states,
-                             host_accumulated_tracks,
-                             host_veloUT_tracks,
-                             host_atomics_veloUT,
-                             number_of_events );
 
-          if ( rv != 0 )
-            continue;
-         
-          std::cout << "CHECKING Forward TRACKS" << std::endl;
-          const std::string trackType = "Forward";
-          call_pr_checker (
-            forward_tracks_events,
-            folder_name_MC,
-            start_event_offset,
-            trackType);
-
-          
         } // run on x86
+        
+          /* Run Forward on x86 architecture  */
+        std::vector< trackChecker::Tracks > forward_tracks_events;
+        
+        int rv = run_forward_on_CPU(
+          forward_tracks_events,
+          hits_layers_events_ft,
+          host_velo_states,
+          host_accumulated_tracks,
+          host_veloUT_tracks,
+          host_atomics_veloUT,
+          number_of_events );
+        
+        if ( rv != 0 )
+          continue;
+        
+        std::cout << "CHECKING Forward TRACKS" << std::endl;
+        trackType = "Forward";
+        call_pr_checker (
+          forward_tracks_events,
+          folder_name_MC,
+          start_event_offset,
+          trackType);
+                
       } // only in first repitition
     } // mc_check_enabled     
   } // repititions
