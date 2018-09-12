@@ -15,13 +15,11 @@
 #include "SequenceSetup.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "Constants.cuh"
-
 #include "run_VeloUT_CPU.h"
-
+#include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
 
 class Timer;
-
 
 struct Stream {
   // Sequence and arguments
@@ -51,11 +49,11 @@ struct Stream {
   int* host_number_of_tracks;
   int* host_accumulated_tracks;
   uint* host_velo_track_hit_number;
-  VeloTracking::Hit<mc_check_enabled>* host_velo_track_hits;
+  Velo::Hit* host_velo_track_hits;
   uint* host_total_number_of_velo_clusters;
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
-  VeloState* host_velo_states;
+  Velo::State* host_velo_states;
   uint* host_accumulated_number_of_ut_hits;
   uint* host_ut_hit_count;
   VeloUTTracking::TrackUT* host_veloUT_tracks;

@@ -19,7 +19,7 @@ __host__ __device__ int masterIndex(const int index1, const int index2, const in
 //=============================================================================
 // Reject tracks outside of acceptance or pointing to the beam pipe
 //=============================================================================
-__host__ __device__ bool veloTrackInUTAcceptance( const VeloState& state )
+__host__ __device__ bool veloTrackInUTAcceptance( const Velo::State& state )
 {
 
   const float xMidUT =  state.x + state.tx*( PrVeloUTConst::zMidUT - state.z);
@@ -46,7 +46,7 @@ __host__ __device__ bool getHits(
   UTHits& ut_hits,
   UTHitCount& ut_hit_count,
   const float* fudgeFactors, 
-  const VeloState& trState,
+  const Velo::State& trState,
   const float* ut_dxDy)
 {
   // -- This is hardcoded, so faster
@@ -63,7 +63,7 @@ __host__ __device__ bool getHits(
 
   // -- this 500 seems a little odd...
   // to do: change back!
-  const float invTheta = std::min(500.,1.0/std::sqrt(trState.tx*trState.tx+trState.ty*trState.ty));
+  const float invTheta = std::min(500., 1.0/std::sqrt(trState.tx*trState.tx+trState.ty*trState.ty));
   //const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, PrVeloUTConst::minMomentum);
   const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, float(1.5)*Gaudi::Units::GeV);
   const float xTol     = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
@@ -244,7 +244,7 @@ __host__ __device__ bool formClusters(
 //=========================================================================
 __host__ __device__ void prepareOutputTrack(
   const uint* velo_track_hit_number,   
-  const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
+  const Velo::Hit* velo_track_hits,
   const int accumulated_tracks_event,
   const int i_Velo_track,
   const TrackHelper& helper,
@@ -314,7 +314,7 @@ __host__ __device__ void prepareOutputTrack(
   
   const float txUT = helper.bestParams[3];
 
-#ifdef MC_CHECK
+  // TODO: Maybe have a look and optimize this if possible
   VeloUTTracking::TrackUT track;
   track.hitsNum = 0;
   const uint starting_hit = velo_track_hit_number[accumulated_tracks_event + i_Velo_track];
@@ -357,7 +357,6 @@ __host__ __device__ void prepareOutputTrack(
   }
   assert( n_tracks < VeloUTTracking::max_num_tracks );
   VeloUT_tracks[n_tracks] = track;
-#endif // MC_CHECK
 
   /*
   outTr.x = helper.state.x;
@@ -446,7 +445,7 @@ __host__ __device__ void findHits(
   uint layer_offset,
   const int i_layer,
   const float* ut_dxDy,
-  const VeloState& myState, 
+  const Velo::State& myState, 
   const float xTolNormFact,
   const float invNormFact,
   int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],

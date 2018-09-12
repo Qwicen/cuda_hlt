@@ -14,10 +14,10 @@
 //=============================================================================
 void call_PrVeloUT (
   const uint* velo_track_hit_number,
-  const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
+  const Velo::Hit* velo_track_hits,
   const int number_of_tracks_event,
   const int accumulated_tracks_event,
-  const VeloState* velo_states_event,
+  const Velo::State* velo_states_event,
   UTHits& ut_hits,
   UTHitCount& ut_hit_count,
   const PrUTMagnetTool *magnet_tool,

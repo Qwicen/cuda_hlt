@@ -1,6 +1,7 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <cassert>
 #include "VeloDefinitions.cuh"
 
 __device__ void calculate_phi(

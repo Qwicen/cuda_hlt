@@ -44,8 +44,8 @@ __global__ void velo_fit(
   const uint32_t* dev_velo_cluster_container,
   const uint* dev_module_cluster_start,
   const int* dev_atomics_storage,
-  const VeloTracking::Track<mc_check_enabled>* dev_tracks,
-  VeloState* dev_velo_states
+  const Velo::Track* dev_tracks,
+  Velo::State* dev_velo_states
 ) {
   /* Data initialization */
   // Each event is treated with two blocks, one for each side.
@@ -56,21 +56,21 @@ __global__ void velo_fit(
   const uint number_of_tracks = dev_atomics_storage[event_number];
   const uint track_start = dev_atomics_storage[number_of_events + event_number];
   const uint total_number_of_tracks = dev_atomics_storage[2*number_of_events];
-  const VeloTracking::Track<mc_check_enabled>* tracks = dev_tracks + track_start;
-  VeloState* velo_states = dev_velo_states + track_start;
+  const Velo::Track* tracks = dev_tracks + track_start;
+  Velo::State* velo_states = dev_velo_states + track_start;
 
   // Iterate over the tracks and calculate fits
   for (uint i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
     const auto element = i * blockDim.x + threadIdx.x;
     if (element < number_of_tracks) {
       // Pointer to current element in velo states
-      VeloState* velo_state_base = velo_states + element;
+      Velo::State* velo_state_base = velo_states + element;
       const auto track = tracks[element];
 
       // Fetch means square fit 
       const auto stateAtBeamLine = *velo_state_base;
 
-      // Always calculate two simplified Kalman fits and store their results to VeloState:
+      // Always calculate two simplified Kalman fits and store their results to Velo::State:
       // Downstream and upstream
       //
       // Note:

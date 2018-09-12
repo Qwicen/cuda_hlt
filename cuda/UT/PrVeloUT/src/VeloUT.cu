@@ -5,8 +5,8 @@ __global__ void veloUT(
   uint* dev_ut_hit_count,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
-  VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
-  VeloState* dev_velo_states,
+  Velo::Hit* dev_velo_track_hits,
+  Velo::State* dev_velo_states,
   VeloUTTracking::TrackUT* dev_veloUT_tracks,
   int* dev_atomics_veloUT,
   PrUTMagnetTool* dev_ut_magnet_tool,
@@ -18,7 +18,7 @@ __global__ void veloUT(
   const int number_of_tracks_event = *(dev_atomics_storage + event_number);
   const int* accumulated_tracks_base_pointer = dev_atomics_storage + number_of_events;
   const int accumulated_tracks_event = accumulated_tracks_base_pointer[event_number];
-  VeloState* velo_states_event = dev_velo_states + accumulated_tracks_event;
+  Velo::State* velo_states_event = dev_velo_states + accumulated_tracks_event;
   const uint total_number_of_hits = dev_ut_hit_count[number_of_events * VeloUTTracking::n_layers];
 
   UTHitCount ut_hit_count;

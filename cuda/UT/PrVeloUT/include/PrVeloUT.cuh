@@ -5,20 +5,16 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
-
 #include <cassert>
-
-#include <thrust/count.h>
-#include <thrust/execution_policy.h>
-
 #include "Logger.h"
 #include "SystemOfUnits.h"
-
+#include "VeloEventModel.cuh"
 #include "VeloUTDefinitions.cuh"
 #include "PrVeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
-#include "VeloDefinitions.cuh"
 #include "UTDefinitions.cuh"
+// #include <thrust/count.h>
+// #include <thrust/execution_policy.h>
 
 /** PrVeloUT 
    *
@@ -30,16 +26,15 @@
    *  2018-05-05: Plácido Fernández (make standalone)
    *  2018-07:    Dorothea vom Bruch (convert to C and then CUDA code)
    */
-
 struct TrackHelper{
-  VeloState state;
+  Velo::State state;
   int bestHitIndices[VeloUTTracking::n_layers];
   int n_hits = 0;
   float bestParams[4];
   float wb, invKinkVeloDist, xMidField;
 
   __host__ __device__ TrackHelper(
-    const VeloState& miniState
+    const Velo::State& miniState
     ) : state(miniState) {
     bestParams[0] = bestParams[2] = bestParams[3] = 0.;
     bestParams[1] = PrVeloUTConst::maxPseudoChi2;
@@ -50,7 +45,7 @@ struct TrackHelper{
     }
   };
 
-__host__ __device__ bool veloTrackInUTAcceptance( const VeloState& state );
+__host__ __device__ bool veloTrackInUTAcceptance( const Velo::State& state );
 
 __host__ __device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
@@ -60,7 +55,7 @@ __host__ __device__ bool getHits(
   UTHits& ut_hits,
   UTHitCount& ut_hit_count,
   const float* fudgeFactors, 
-  const VeloState& trState,
+  const Velo::State& trState,
   const float* ut_dxDy); 
 
 __host__ __device__ bool formClusters(
@@ -76,7 +71,7 @@ __host__ __device__ bool formClusters(
 
 __host__ __device__ void prepareOutputTrack(
   const uint* velo_track_hit_number,
-  const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
+  const Velo::Hit* velo_track_hits,
   const int accumulated_tracks_event,
   const int i_track,
   const TrackHelper& helper,
@@ -113,7 +108,7 @@ __host__ __device__ void findHits(
   uint layer_offset,
   const int i_layer,
   const float* ut_dxDy,
-  const VeloState& myState, 
+  const Velo::State& myState, 
   const float xTolNormFact,
   const float invNormFact,
   int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],

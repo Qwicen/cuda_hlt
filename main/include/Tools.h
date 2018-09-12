@@ -1,9 +1,6 @@
 #pragma once
 
-#include <dirent.h>
-#include <math.h>
-#include <iostream>
-#include <iomanip>
+#include <cfloat>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -11,9 +8,9 @@
 #include <algorithm>
 #include <map>
 #include <cmath>
-#include <stdint.h>
+#include <cstdint>
 #include "Logger.h"
-#include "VeloDefinitions.cuh"
+#include "VeloEventModel.cuh"
 #include "ClusteringDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
 #include "Tracks.h"
@@ -39,24 +36,9 @@ std::map<std::string, float> calcResults(
   std::vector<float>& times
 );
 
-template <bool mc_check>
-void printTrack(
-  VeloTracking::Track<mc_check>* tracks,
-  const int trackNumber,
-  std::ofstream& outstream
-);
-
-template <bool mc_check>
-void printTracks(
-  VeloTracking::Track<mc_check>* tracks,
-  int* n_tracks,
-  int n_events,
-  std::ofstream& outstream
-);
-
 std::vector< trackChecker::Tracks > prepareTracks(
   uint* host_velo_track_hit_number_pinned,
-  VeloTracking::Hit<true>* host_velo_track_hits_pinned,                                       
+  Velo::Hit* host_velo_track_hits_pinned,
   int* host_accumulated_tracks,
   int* host_number_of_tracks_pinned,
   const int &number_of_events

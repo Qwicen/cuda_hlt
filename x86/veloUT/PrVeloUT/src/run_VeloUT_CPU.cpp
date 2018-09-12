@@ -12,14 +12,13 @@ int run_veloUT_on_CPU (
   uint* host_ut_hit_count,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const float * host_ut_dxDy,
-  const VeloState* host_velo_states,
+  const Velo::State* host_velo_states,
   const int* host_accumulated_tracks,
   const uint* host_velo_track_hit_number_pinned,
-  const VeloTracking::Hit<mc_check_enabled>* host_velo_track_hits_pinned,   
+  const Velo::Hit* host_velo_track_hits_pinned,   
   const int* host_number_of_tracks_pinned,
   const int &number_of_events
 ) {
-
   int backward;
 #ifdef WITH_ROOT
   // Histograms only for checking and debugging
@@ -36,7 +35,6 @@ int run_veloUT_on_CPU (
   float first_x, first_y, first_z;
   float last_x, last_y, last_z;
   float qop;
-  
   
   t_ut_hits->Branch("yBegin", &yBegin);
   t_ut_hits->Branch("yEnd", &yEnd);
@@ -125,7 +123,7 @@ int run_veloUT_on_CPU (
   
     // Prepare Velo tracks
     const int accumulated_tracks = host_accumulated_tracks[i_event];
-    const VeloState* host_velo_states_event = host_velo_states + accumulated_tracks;
+    const Velo::State* host_velo_states_event = host_velo_states + accumulated_tracks;
     for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
 
       n_velo_tracks++;

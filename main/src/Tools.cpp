@@ -114,65 +114,6 @@ std::map<std::string, float> calcResults(std::vector<float>& times){
     return results;
 }
 
-/**
- * Prints tracks
- * Track #n, length <length>:
- *  <ID> module <module>, x <x>, y <y>, z <z>
- * 
- * @param tracks      
- * @param trackNumber 
- */
-template <bool mc_check>
-void printTrack(
-  VeloTracking::Track <mc_check> * tracks,
-  const int trackNumber,
-  std::ofstream& outstream
-) {
-  const VeloTracking::Track<mc_check> t = tracks[trackNumber];
-  outstream << "Track #" << trackNumber << ", length " << (int) t.hitsNum << std::endl;
-
-  for(int i=0; i<t.hitsNum; ++i){
-    const VeloTracking::Hit <mc_check> hit = t.hits[i];
-    const float x = hit.x;
-    const float y = hit.y;
-    const float z = hit.z;
-    //const uint LHCbID = hit.LHCbID;
-  
-    outstream 
-      << ", x " << std::setw(6) << x
-      << ", y " << std::setw(6) << y
-      << ", z " << std::setw(6) << z
-      //<< ", LHCbID " << LHCbID 
-      << std::endl;
-  }
-
-  outstream << std::endl;
-}
-
-template <bool mc_check>
-void printTracks(
-  VeloTracking::Track <mc_check> * tracks,
-  int* n_tracks,
-  int n_events,
-  std::ofstream& outstream 
-) {
-  for ( int i_event = 0; i_event < n_events; ++i_event ) {
-    VeloTracking::Track <mc_check> * tracks_event = tracks + i_event * VeloTracking::max_tracks;
-    int n_tracks_event = n_tracks[ i_event ];
-    outstream << i_event << std::endl;
-    outstream << n_tracks_event << std::endl;
-
-    for ( int i_track = 0; i_track < n_tracks_event; ++i_track ) {
-      const VeloTracking::Track <mc_check> t = tracks_event[i_track];
-      outstream << t.hitsNum << std::endl;
-      for ( int i_hit = 0; i_hit < t.hitsNum; ++i_hit ) {
-        VeloTracking::Hit <mc_check> hit = t.hits[ i_hit ];
-        outstream << hit.LHCbID << std::endl;
-      }
-    }
-  }
-}
-
 void check_roughly(
   const trackChecker::Tracks& tracks,
   const std::vector<uint32_t> hit_IDs,
@@ -219,7 +160,7 @@ void check_roughly(
 
 std::vector< trackChecker::Tracks > prepareTracks(
   uint* host_velo_track_hit_number_pinned,
-  VeloTracking::Hit<true>* host_velo_track_hits_pinned,  
+  Velo::Hit* host_velo_track_hits_pinned,  
   int* host_accumulated_tracks,
   int* host_number_of_tracks_pinned,
   const int &number_of_events
