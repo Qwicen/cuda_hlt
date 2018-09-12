@@ -126,13 +126,86 @@ __host__ __device__ bool getHits(
   return nLayers > 2;
 }
 
+//=============================================================================
+// Find the hits
+//=============================================================================
+__host__ __device__ bool getHitsNoPosLayers(
+  int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
+  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  const UTHits& ut_hits,
+  const UTHitCount& ut_hit_count,
+  const float* fudgeFactors, 
+  const VeloState& trState,
+  const float* ut_dxDy)
+{
+  // -- This is hardcoded, so faster
+  // -- If you ever change the Table in the magnet tool, this will be wrong
+  const float absSlopeY = std::abs( trState.ty );
+  const int index = (int)(absSlopeY*100 + 0.5);
+  assert( 3 + 4*index < PrUTMagnetTool::N_dxLay_vals );
+  const std::array<float,4> normFact = { 
+    fudgeFactors[4*index], 
+    fudgeFactors[1 + 4*index], 
+    fudgeFactors[2 + 4*index], 
+    fudgeFactors[3 + 4*index] 
+  };
+
+  // -- this 500 seems a little odd...
+  //TODO: change back!
+  const float invTheta = std::min(500.,1.0/std::sqrt(trState.tx*trState.tx+trState.ty*trState.ty));
+  //const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, PrVeloUTConst::minMomentum);
+  const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, float(1.5)*Gaudi::Units::GeV);
+  const float xTol     = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
+  // const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
+
+  int nLayers = 0;
+
+  // float dxDyHelper[VeloUTTracking::n_layers] = {0., 1., -1., 0};
+  for(int iStation = 0; iStation < 2; ++iStation) {
+
+    if( iStation == 1 && nLayers == 0 ) return false;
+
+    for(int iLayer = 0; iLayer < 2; ++iLayer) {
+      if( iStation == 1 && iLayer == 1 && nLayers < 2 ) return false;
+
+      int layer = 2*iStation+iLayer;
+      int layer_offset = ut_hit_count.layer_offsets[layer];
+      
+      if( ut_hit_count.n_hits_layers[layer] == 0 ) continue;
+
+      // const float dxDy   = ut_dxDy[layer];
+      // const float zLayer = ut_hits.zAtYEq0[layer_offset + 0]; 
+
+      const float normFactNum = normFact[2*iStation + iLayer];
+      const float invNormFact = 1.0/normFactNum;
+
+      findHitsAllRange(
+        ut_hits, 
+        layer_offset, 
+        layer,
+        ut_dxDy,
+        trState, 
+        xTol*invNormFact, 
+        invNormFact,
+        hitCandidatesInLayers[layer], 
+        n_hitCandidatesInLayers[layer],
+        x_pos_layers[layer]);
+
+      nLayers += int( !( n_hitCandidatesInLayers[layer] == 0 ) );
+    }
+  }
+
+  return nLayers > 2;
+}
+
 //=========================================================================
 // Form clusters
 //=========================================================================
 __host__ __device__ bool formClusters(
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
-  const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int bestHitCandidateIndices[VeloUTTracking::n_layers],
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
@@ -482,6 +555,64 @@ __host__ __device__ void findHits(
         
     hitCandidatesInLayer[n_hitCandidatesInLayer] = i;
     x_pos_layers[i_layer][n_hitCandidatesInLayer] = xx2;
+    
+    n_hitCandidatesInLayer++;
+
+    if ( n_hitCandidatesInLayer >= VeloUTTracking::max_hit_candidates_per_layer )
+      printf("%u > %u !! \n", n_hitCandidatesInLayer, VeloUTTracking::max_hit_candidates_per_layer);
+    assert( n_hitCandidatesInLayer < VeloUTTracking::max_hit_candidates_per_layer );
+  }
+  for ( int i_hit = 0; i_hit < n_hitCandidatesInLayer; ++i_hit ) {
+    assert( hitCandidatesInLayer[i_hit] < VeloUTTracking::max_numhits_per_event );
+  }
+}
+
+// ==============================================================================
+// -- Finds the hits in a given layer
+// ==============================================================================
+__host__ __device__ void findHitsAllRange ( 
+  const UTHits& ut_hits,
+  const int layer_offset,
+  const int i_layer,
+  const float* ut_dxDy,
+  const VeloState& myState, 
+  const float xTolNormFact,
+  const float invNormFact,
+  int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
+  int &n_hitCandidatesInLayer,
+  float x_pos_layer[VeloUTTracking::max_hit_candidates_per_layer]) 
+{
+  const float zInit = ut_hits.zAtYEq0[layer_offset];
+  const float yApprox = myState.y + myState.ty * (zInit - myState.z);
+
+  size_t pos = layer_offset;
+  uint max_hits = layer_offset + VeloUTTracking::max_numhits_per_layer;
+
+  while ( 
+    pos <= max_hits && 
+    ut_hits.isNotYCompatible( layer_offset + pos, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(xTolNormFact) )
+  ) { ++pos; }
+
+  const float xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
+  const float yyProto =       myState.y - myState.ty*myState.z;
+  
+  for (int i=pos; i<max_hits; ++i) {
+    const float dxDy = ut_dxDy[i_layer];
+    const float xx = ut_hits.xAt( layer_offset + i, yApprox, dxDy ); 
+    const float dx = xx - xOnTrackProto;
+    
+    if( dx < -xTolNormFact ) continue;
+    if( dx >  xTolNormFact ) break; 
+    
+    // -- Now refine the tolerance in Y
+    if ( ut_hits.isNotYCompatible( layer_offset + i, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx*invNormFact)) ) continue;
+
+    const float zz = ut_hits.zAtYEq0[layer_offset + i];
+    const float yy = yyProto +  myState.ty*zz;
+    const float xx2 = ut_hits.xAt( layer_offset + i, yy, dxDy );
+        
+    hitCandidatesInLayer[n_hitCandidatesInLayer] = i;
+    x_pos_layer[n_hitCandidatesInLayer] = xx2;
     
     n_hitCandidatesInLayer++;
 

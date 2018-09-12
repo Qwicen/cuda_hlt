@@ -24,6 +24,27 @@ __global__ void veloUT(
   UTHitCount ut_hit_count;
   ut_hit_count.typecast_after_prefix_sum(dev_ut_hit_count, event_number, number_of_events);
 
+  // if (blockIdx.x == 0 && threadIdx.x == 0) {
+  //   printf("n_hits_layers[0]: %d\n", *(ut_hit_count.n_hits_layers));
+  //   printf("n_hits_layers[1]: %d\n", *(ut_hit_count.n_hits_layers + 1));
+  //   printf("n_hits_layers[2]: %d\n", *(ut_hit_count.n_hits_layers + 2));
+  //   printf("n_hits_layers[3]: %d\n", *(ut_hit_count.n_hits_layers + 3));
+  // }
+
+  // if (blockIdx.x == 0 && threadIdx.x == 0) {
+  //   printf(">>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+  //   printf("dev_ut_hits: %d\n", dev_ut_hits);
+  //   printf("dev_ut_hit_count: %d\n", dev_ut_hit_count);
+  //   printf("dev_atomics_storage: %d\n", dev_atomics_storage);
+  //   printf("dev_velo_track_hit_number: %d\n", dev_velo_track_hit_number);
+  //   printf("------------------\n");
+  //   printf("number_of_tracks_event: %d\n", number_of_tracks_event);
+  //   printf("accumulated_tracks_base_pointer: %d\n", accumulated_tracks_base_pointer);
+  //   printf("accumulated_tracks_event: %d\n", accumulated_tracks_event);
+  //   printf("total_number_of_hits: %d\n", total_number_of_hits);
+  //   printf("<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+  // }
+
   UTHits ut_hits;
   ut_hits.typecast_sorted(dev_ut_hits, total_number_of_hits);
   // VeloUTTracking::HitsSoA* hits_layers_event = dev_ut_hits + event_number;
@@ -43,16 +64,7 @@ __global__ void veloUT(
   }
   __syncthreads();
 
-  int posLayers[4][85];
-
-  // printf("first hit: cos = %f, yBegin = %f, yEnd = %f, zAtYEq0 = %f, xAtYEq0 = %f, weight = %f, highThreshold = %u \n",
-  //        hits_layers_event->cos(0),
-  //        hits_layers_event->yBegin(0),
-  //        hits_layers_event->yEnd(0),
-  //        hits_layers_event->zAtYEq0(0),
-  //        hits_layers_event->xAtYEq0(0),
-  //        hits_layers_event->weight(0),
-  //        hits_layers_event->highThreshold(0));
+  __shared__ int posLayers[4][85];
          
   fillIterators(ut_hits, ut_hit_count, posLayers);
 
@@ -79,6 +91,7 @@ __global__ void veloUT(
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
     }
+
     if( !getHits(
           hitCandidatesInLayers,
           n_hitCandidatesInLayers,
@@ -90,6 +103,17 @@ __global__ void veloUT(
           velo_states_event[i_track],
           dev_ut_dxDy )
         ) continue;
+
+    // if( !getHitsNoPosLayers(
+    //       hitCandidatesInLayers,
+    //       n_hitCandidatesInLayers,
+    //       x_pos_layers,
+    //       ut_hits,
+    //       ut_hit_count,
+    //       fudgeFactors,
+    //       velo_states_event[i_track],
+    //       dev_ut_dxDy )
+    //     ) continue;
 
     TrackHelper helper(velo_states_event[i_track]);
 
