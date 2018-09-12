@@ -7,8 +7,9 @@
 #endif
 
 int run_veloUT_on_CPU (
-  std::vector< trackChecker::Tracks >& ut_tracks_events,
-  VeloUTTracking::HitsSoA* hits_layers_events,
+  std::vector<trackChecker::Tracks>& ut_tracks_events,
+  uint* ut_hits,
+  uint* host_ut_hit_count,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const float * host_ut_dxDy,
   const VeloState* host_velo_states,
@@ -74,49 +75,50 @@ int run_veloUT_on_CPU (
   uint hit_permutations[ VeloUTTracking::n_layers * VeloUTTracking::max_numhits_per_event ];
   
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
+    UTHitCount ut_hit_count;
+    ut_hit_count.typecast_after_prefix_sum(host_ut_hit_count, i_event, number_of_events);
 
-    // Prepare hits
-    VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
-    VeloUTTracking::HitsSoA hits_layers_sorted;
-    
+    // Two UTHits objects are created: one typecasts the base_pointer assuming
+    // the data is unsorted, the other assuming the data is sorted.
+    // This makes sorting more readable
+    UTHits unsorted_ut_hits, sorted_ut_hits;
+    unsorted_ut_hits.typecast_unsorted(ut_hits, host_ut_hit_count[number_of_events * VeloUTTracking::n_layers]);
+    sorted_ut_hits.typecast_sorted(ut_hits, host_ut_hit_count[number_of_events * VeloUTTracking::n_layers]);
+
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      const uint layer_offset = hits_layers.layer_offset[i_layer];
-      const uint n_hits = hits_layers.n_hits_layers[i_layer];
-
-      hits_layers_sorted.n_hits_layers[i_layer] = n_hits;
-      hits_layers_sorted.layer_offset[i_layer] = layer_offset;
+      const uint layer_offset = ut_hit_count.layer_offsets[i_layer];
+      const uint n_hits_layer = ut_hit_count.n_hits_layers[i_layer];
       
       // sort according to xAtyEq0
       find_permutation<float>( 
-        hits_layers.xAtYEq0,
+        unsorted_ut_hits.xAtYEq0,
         layer_offset,
       	hit_permutations,
-      	n_hits
+      	n_hits_layer
       );
-          
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.weight, hits_layers_sorted.weight );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.xAtYEq0, hits_layers_sorted.xAtYEq0 );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.yBegin, hits_layers_sorted.yBegin );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.yEnd, hits_layers_sorted.yEnd );
-      apply_permutation<float>( hit_permutations, layer_offset, n_hits, hits_layers.zAtYEq0, hits_layers_sorted.zAtYEq0 );
-      apply_permutation<unsigned int>( hit_permutations, layer_offset, n_hits, hits_layers.LHCbID, hits_layers_sorted.LHCbID );
-      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.planeCode, hits_layers_sorted.planeCode );
-      apply_permutation<int>( hit_permutations, layer_offset, n_hits, hits_layers.highThreshold, hits_layers_sorted.highThreshold );
-       
+      
+      // Important note: Order matters, and should be kept as is
+      apply_permutation<uint>( hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.planeCode, sorted_ut_hits.planeCode );
+      apply_permutation<uint>( hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.LHCbID, sorted_ut_hits.LHCbID );
+      apply_permutation<uint>( hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.highThreshold, sorted_ut_hits.highThreshold );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.weight, sorted_ut_hits.weight );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.xAtYEq0, sorted_ut_hits.xAtYEq0 );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.zAtYEq0, sorted_ut_hits.zAtYEq0 );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.yEnd, sorted_ut_hits.yEnd );
+      apply_permutation<float>( hit_permutations, layer_offset, n_hits_layer, unsorted_ut_hits.yBegin, sorted_ut_hits.yBegin );
      
 #ifdef WITH_ROOT
-      for ( int i_hit = 0; i_hit < n_hits; ++i_hit ) {
-	weight = hits_layers.weight[layer_offset + i_hit];
-	xAtYEq0 = hits_layers.xAtYEq0[layer_offset + i_hit];
-	yBegin = hits_layers.yBegin[layer_offset + i_hit];
-	yEnd = hits_layers.yEnd[layer_offset + i_hit];
-	zAtYEq0 = hits_layers.zAtYEq0[layer_offset + i_hit];
-	LHCbID = hits_layers.LHCbID[layer_offset + i_hit];
-	layer = i_layer;
-	highThreshold = hits_layers.highThreshold[layer_offset + i_hit];
-        dxDy = host_ut_dxDy[layer]; 
-                
-	t_ut_hits->Fill();
+      for ( int i_hit = 0; i_hit < n_hits_layer; ++i_hit ) {
+        weight = sorted_ut_hits.weight[layer_offset + i_hit];
+        xAtYEq0 = sorted_ut_hits.xAtYEq0[layer_offset + i_hit];
+        yBegin = sorted_ut_hits.yBegin[layer_offset + i_hit];
+        yEnd = sorted_ut_hits.yEnd[layer_offset + i_hit];
+        zAtYEq0 = sorted_ut_hits.zAtYEq0[layer_offset + i_hit];
+        LHCbID = sorted_ut_hits.LHCbID[layer_offset + i_hit];
+        layer = i_layer;
+        highThreshold = sorted_ut_hits.highThreshold[layer_offset + i_hit];
+        
+        t_ut_hits->Fill();
       }
 #endif
     } // layers
@@ -178,7 +180,8 @@ int run_veloUT_on_CPU (
       host_number_of_tracks[i_event],
       host_accumulated_tracks[i_event],
       host_velo_states_event,
-      &(hits_layers_sorted),
+      sorted_ut_hits,
+      ut_hit_count,
       host_ut_magnet_tool,
       host_ut_dxDy,
       veloUT_tracks,

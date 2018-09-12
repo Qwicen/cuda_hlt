@@ -13,11 +13,13 @@
 #include "Tools.h"
 #include "BaseDynamicScheduler.cuh"
 #include "SequenceSetup.cuh"
-#include "PrVeloUTMagnetToolDefinitions.cuh"
+#include "PrVeloUTMagnetToolDefinitions.h"
 #include "Constants.cuh"
 
 #include "run_VeloUT_CPU.h"
 #include "run_Forward_CPU.h"
+
+#include "UTDefinitions.cuh"
 
 class Timer;
 
@@ -55,14 +57,21 @@ struct Stream {
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   VeloState* host_velo_states;
+  uint* host_accumulated_number_of_ut_hits;
+  uint* host_ut_hit_count;
   VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
+  
+  /* UT DECODING */
+  UTHits * host_ut_hits_decoded;
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;
 
   // GPU pointers
   char* dev_velo_geometry;
+  char* dev_ut_boards;
+  char* dev_ut_geometry;
   char* dev_base_pointer;
   PrUTMagnetTool* dev_ut_magnet_tool;
   
@@ -75,7 +84,9 @@ struct Stream {
 
   cudaError_t initialize(
     const std::vector<char>& velopix_geometry,
-    const PrUTMagnetTool* host_ut_magnet_tool,
+    const std::vector<char>& ut_boards,
+    const std::vector<char>& ut_geometry,
+    const std::vector<char>& ut_magnet_tool,
     const uint max_number_of_events,
     const bool param_transmit_device_to_host,
     const bool param_do_check,
@@ -95,9 +106,11 @@ struct Stream {
     const uint* host_event_offsets,
     const size_t host_events_size,
     const size_t host_event_offsets_size,
-    VeloUTTracking::HitsSoA *host_ut_hits_events,
-    const PrUTMagnetTool* host_ut_magnet_tool,
-     SciFi::HitsSoA *hits_layers_events_ft,
+    const char* host_ut_events,
+    const uint* host_ut_event_offsets,
+    const size_t host_ut_events_size,
+    const size_t host_ut_event_offsets_size,
+    SciFi::HitsSoA *hits_layers_events_ft,
     const uint32_t n_hits_layers_events_ft[][SciFi::Constants::n_layers],
     const uint number_of_events,
     const uint number_of_repetitions

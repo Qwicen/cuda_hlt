@@ -9,7 +9,6 @@
 // 2018-07:    Dorothea vom Bruch (convert to C code for GPU compatability)
 //-----------------------------------------------------------------------------
 
-
 //=============================================================================
 // Main execution
 //=============================================================================
@@ -19,16 +18,16 @@ void call_PrVeloUT (
   const int number_of_tracks_event,
   const int accumulated_tracks_event,
   const VeloState* velo_states_event,
-  VeloUTTracking::HitsSoA *hits_layers,
+  UTHits& ut_hits,
+  UTHitCount& ut_hit_count,
   const PrUTMagnetTool *magnet_tool,
   const float* ut_dxDy,
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
   int &n_velo_tracks_in_UT,
   int &n_veloUT_tracks )
 {
-  
   int posLayers[4][85];
-  fillIterators(hits_layers, posLayers);
+  fillIterators(ut_hits, ut_hit_count, posLayers);
 
   const float* fudgeFactors = &(magnet_tool->dxLayTable[0]);
   const float* bdlTable     = &(magnet_tool->bdlTable[0]);
@@ -54,7 +53,8 @@ void call_PrVeloUT (
           n_hitCandidatesInLayers,
           x_pos_layers,
           posLayers,
-          hits_layers,
+          ut_hits,
+          ut_hit_count,
           fudgeFactors,
           velo_states_event[i_track],
           ut_dxDy ) ) continue;
@@ -70,7 +70,8 @@ void call_PrVeloUT (
           n_hitCandidatesInLayers,
           x_pos_layers,
           hitCandidateIndices,
-          hits_layers,
+          ut_hits,
+          ut_hit_count,
           helper,
           ut_dxDy,
           true) ){
@@ -81,7 +82,8 @@ void call_PrVeloUT (
         n_hitCandidatesInLayers,
         x_pos_layers,
         hitCandidateIndices,
-        hits_layers,
+        ut_hits,
+        ut_hit_count,
         helper,
         ut_dxDy,
         false);
@@ -96,7 +98,8 @@ void call_PrVeloUT (
         helper,
         hitCandidatesInLayers,
         n_hitCandidatesInLayers,
-        hits_layers,
+        ut_hits,
+        ut_hit_count,
         x_pos_layers,
         hitCandidateIndices,
         VeloUT_tracks,
@@ -105,6 +108,4 @@ void call_PrVeloUT (
       
     }
   }
- 
 }
- 

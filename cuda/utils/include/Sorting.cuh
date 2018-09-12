@@ -33,8 +33,6 @@ __host__ __device__ void apply_permutation(
 #endif 
 }
 
-
-
 /**
  * @brief Sort by var stored in sorting_vars, store index in hit_permutations
  */

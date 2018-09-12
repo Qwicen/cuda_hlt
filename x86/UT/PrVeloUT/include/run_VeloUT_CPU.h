@@ -8,8 +8,9 @@
 #include "VeloUTDefinitions.cuh"
 
 int run_veloUT_on_CPU (
-  std::vector< trackChecker::Tracks >& ut_tracks_events,
-  VeloUTTracking::HitsSoA* hits_layers_events,
+  std::vector<trackChecker::Tracks>& ut_tracks_events,
+  uint* ut_hits,
+  uint* ut_hit_count,
   const PrUTMagnetTool* host_ut_magnet_tool,
   const float host_ut_dxDy[VeloUTTracking::n_layers],
   const VeloState * host_velo_states,
@@ -38,5 +39,4 @@ void applyXPermutation(
     const auto hit_index = permutation[permutation_index];
     container[hit_start + permutation_index] = interim_container[hit_index];
   }
-  
 }

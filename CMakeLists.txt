@@ -69,8 +69,8 @@ add_subdirectory(x86/SciFi)
 # Include directories
 include_directories(main/include)
 include_directories(x86/velo/clustering/include)
-include_directories(cuda/veloUT/common/include)
-include_directories(cuda/veloUT/PrVeloUT/include)
+include_directories(cuda/UT/common/include)
+include_directories(cuda/UT/PrVeloUT/include)
 include_directories(cuda/velo/common/include)
 include_directories(cuda/velo/calculate_phi_and_sort/include)
 include_directories(cuda/velo/consolidate_tracks/include)
@@ -92,7 +92,7 @@ if ( ROOT_FOUND )
   target_link_libraries(cu_hlt
     tbb
     Velo
-    VeloUT
+    UT
     x86Forward
     x86VeloUT
     Stream
@@ -104,7 +104,7 @@ else()
   target_link_libraries(cu_hlt
     tbb
     Velo
-    VeloUT
+    UT
     x86Forward
     x86VeloUT
     Stream

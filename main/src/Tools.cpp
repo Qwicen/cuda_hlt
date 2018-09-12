@@ -1,23 +1,11 @@
 #include "Tools.h"
 
-/**
- * @brief Reads the geometry from foldername.
- */
-void readGeometry(
-  const std::string& filename,
-  std::vector<char>& geometry
-) {
-  if (!exists_test(filename)) {
-    throw StrException("Geometry file could not be found: " + filename);
-  }
-  readFileIntoVector(filename, geometry);
-}
-
-void check_velopix_events(
+bool check_velopix_events(
   const std::vector<char> events,
-  const std::vector<unsigned int> event_offsets,
+  const std::vector<uint> event_offsets,
   int n_events
 ) {
+  int error_count = 0;
   int n_sps_all_events = 0;
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
     const char* raw_input = events.data() + event_offsets[i_event];
@@ -36,6 +24,7 @@ void check_velopix_events(
       n_sps_event += raw_bank.sp_count;
       if ( i_raw_bank != raw_bank.sensor_index ) {
         error_cout << "at raw bank " << i_raw_bank << ", but index = " << raw_bank.sensor_index << std::endl;
+        ++error_count;
       }
       if ( raw_bank.sp_count > 0 ) {
         uint32_t sp_word = raw_bank.sp_word[0];
@@ -46,73 +35,16 @@ void check_velopix_events(
         const uint32_t sp_col = (sp_addr >> 6);
         const uint32_t no_sp_neighbours = sp_word & 0x80000000U;
       }
-      
     }
     n_sps_all_events += n_sps_event;
   }
-}
 
-void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
-                                 const std::vector<char> events,
-				 const std::vector<unsigned int> event_offsets,
-				 const int n_events ) {
-
-  
-  for ( int i_event = 0; i_event < n_events; ++i_event ) {
-    const char* raw_input = events.data() + event_offsets[i_event];
-
-    VeloUTTracking::HitsSoA* hits_layers = hits_layers_events + i_event;
-    
-    /* In the binary input file, the ut hit variables are stored in arrays,
-       there are two stations with two layers each,
-       one layer is appended to the other
-    */
-    // first four words: how many hits are in each layer?
-    int n_hits_total = 0;
-    int accumulated_hits = 0;
-    int accumulated_hits_layers[4];
-    for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      hits_layers->n_hits_layers[i_layer] = *((uint32_t*)raw_input);
-      n_hits_total += hits_layers->n_hits_layers[i_layer];
-      raw_input += sizeof(uint32_t);
-      if ( n_hits_total >= VeloUTTracking::max_numhits_per_event )
-        printf(" n_hits_total UT: %u >= %u \n", n_hits_total, VeloUTTracking::max_numhits_per_event);
-      assert( n_hits_total < VeloUTTracking::max_numhits_per_event );
-      hits_layers->layer_offset[i_layer] = accumulated_hits;
-      accumulated_hits += hits_layers->n_hits_layers[i_layer];
-    }
-    // then the hit variables, sorted by layer
-    for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      int layer_offset = hits_layers->layer_offset[i_layer];
-      // to do: change tracker dumper to not dump cos
-      //std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &( hits_layers->cos[ layer_offset ]) );
-      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
-      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->yBegin[ layer_offset ]) );
-      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
-      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->yEnd[ layer_offset ]) );
-      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
-      // to do: change tracker dumper to not dump dxDy
-      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
-      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->zAtYEq0[ layer_offset ]) );
-      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
-      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->xAtYEq0[ layer_offset ]) );
-      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
-      std::copy_n((float*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->weight[ layer_offset ]) );
-      raw_input += sizeof(float) * hits_layers->n_hits_layers[i_layer];
-      std::copy_n((int*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->highThreshold[ layer_offset ]) );
-      raw_input += sizeof(int) * hits_layers->n_hits_layers[i_layer];
-      std::copy_n((unsigned int*) raw_input, hits_layers->n_hits_layers[i_layer], &(hits_layers->LHCbID[ layer_offset ]) );
-      raw_input += sizeof(unsigned int) * hits_layers->n_hits_layers[i_layer];
-
-      for ( int i_hit = 0; i_hit < hits_layers->n_hits_layers[i_layer]; ++i_hit ) {
-	hits_layers->planeCode[ layer_offset + i_hit ] = i_layer;
-      }
-    }
- 
-  
+  if (error_count>0) {
+    error_cout << error_count << " errors detected." << std::endl;
+    return false;
   }
+  return true;
 }
-
 void read_scifi_events_into_arrays( SciFi::HitsSoA *hits_layers_events,
                                  uint32_t n_hits_layers_events[][SciFi::Constants::n_layers],
                                  const std::vector<char> events,
@@ -161,48 +93,41 @@ void read_scifi_events_into_arrays( SciFi::HitsSoA *hits_layers_events,
         hits_layers_events[i_event].m_planeCode[ layer_offset + i_hit ] = i_layer;
       }
     }
-
-
   }
 }
 
-void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
-		      const int n_events ) {
-
-  float average_number_of_hits_per_event = 0;
+// void check_ut_events(
+//   const VeloUTTracking::HitsSoA *hits_layers_events,
+//   const int n_events
+// ) {
+//   float average_number_of_hits_per_event = 0;
   
-  for ( int i_event = 0; i_event < n_events; ++i_event ) {
-    float number_of_hits = 0;
-    const VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
+//   for ( int i_event = 0; i_event < n_events; ++i_event ) {
+//     float number_of_hits = 0;
+//     const VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
 
-    for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-      debug_cout << "checks on layer " << i_layer << ", with " << hits_layers.n_hits_layers[i_layer] << " hits" << std::endl;
-      number_of_hits += hits_layers.n_hits_layers[i_layer];
-      int layer_offset = hits_layers.layer_offset[i_layer];
-      for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
-	printf("\t at hit %u, yBegin = %f, yEnd = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight = %f, highThreshold = %u, LHCbID = %u \n",
-	       i_hit,
-	       hits_layers.yBegin[ layer_offset + i_hit ],
-	       hits_layers.yEnd[ layer_offset + i_hit ],
-	       hits_layers.zAtYEq0[ layer_offset + i_hit ],
-	       hits_layers.xAtYEq0[ layer_offset + i_hit ],
-	       hits_layers.weight[ layer_offset + i_hit ],
-	       hits_layers.highThreshold[ layer_offset + i_hit ],
-               hits_layers.LHCbID[ layer_offset + i_hit ]);
-      }
-    }
-
+//     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+//       debug_cout << "checks on layer " << i_layer << ", with " << hits_layers.n_hits_layers[i_layer] << " hits" << std::endl;
+//       number_of_hits += hits_layers.n_hits_layers[i_layer];
+//       int layer_offset = hits_layers.layer_offset[i_layer];
+//       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
+//         printf("\t at hit %u, cos = %f, yBegin = %f, yEnd = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight = %f, highThreshold = %u, LHCbID = %u, dxDy = %f \n",
+//         i_hit,
+//         hits_layers.m_cos[ layer_offset + i_hit ],
+//         hits_layers.m_yBegin[ layer_offset + i_hit ],
+//         hits_layers.m_yEnd[ layer_offset + i_hit ],
+//         hits_layers.m_zAtYEq0[ layer_offset + i_hit ],
+//         hits_layers.m_xAtYEq0[ layer_offset + i_hit ],
+//         hits_layers.m_weight[ layer_offset + i_hit ],
+//         hits_layers.m_highThreshold[ layer_offset + i_hit ],
+//         hits_layers.m_LHCbID[ layer_offset + i_hit ],
+//         hits_layers.dxDy( layer_offset + i_hit ) );
+//       }
+//     }
     
-    average_number_of_hits_per_event += number_of_hits;
-    debug_cout << "# of UT hits = " << number_of_hits << std::endl;
-    
-  }
-
-  average_number_of_hits_per_event = average_number_of_hits_per_event / n_events;
-  debug_cout << "average # of UT hits / event = " << average_number_of_hits_per_event << std::endl;
-    
-  
-}
+//     average_number_of_hits_per_event += number_of_hits;
+//     debug_cout << "# of UT hits = " << number_of_hits << std::endl;
+//   }
 
 void check_scifi_events( const SciFi::HitsSoA *hits_layers_events,
 		      const uint32_t n_hits_layers_events[][SciFi::Constants::n_layers],
@@ -247,42 +172,6 @@ void check_scifi_events( const SciFi::HitsSoA *hits_layers_events,
 }
 
 
-void read_UT_magnet_tool( PrUTMagnetTool* host_ut_magnet_tool ) {
-  
-  //load the deflection and Bdl values from a text file
-  std::ifstream deflectionfile;
-  std::string filename = "../integration_with_LHCb_framework/PrUTMagnetTool/deflection.txt";
-  if (!exists_test(filename)) {
-    throw StrException("Deflection table file could not be found: " + filename);
-  }
-  deflectionfile.open(filename);
-  if (deflectionfile.is_open()) {
-    int i = 0;
-    float deflection;
-    while (!deflectionfile.eof()) {
-      deflectionfile >> deflection;
-      assert( i < PrUTMagnetTool::N_dxLay_vals );
-      host_ut_magnet_tool->dxLayTable[i++] = deflection;
-    }
-  }
-  
-  std::ifstream bdlfile;
-  filename = "../integration_with_LHCb_framework/PrUTMagnetTool/bdl.txt";
-  if (!exists_test(filename)) {
-    throw StrException("Bdl table file could not be found: " + filename);
-  }
-  bdlfile.open(filename);
-  if (bdlfile.is_open()) {
-    int i = 0;
-    float bdl;
-    while (!bdlfile.eof()) {
-      bdlfile >> bdl;
-      assert( i < PrUTMagnetTool::N_bdl_vals );
-      host_ut_magnet_tool->bdlTable[i++] = bdl;
-    }
-  }
-  
-}
 
 /**
  * @brief Obtains results statistics.
@@ -312,26 +201,6 @@ std::map<std::string, float> calcResults(std::vector<float>& times){
     results["max"] = max;
 
     return results;
-}
-
-/**
- * @brief Writes a track in binary format
- * 
- * @details The binary format is per every track:
- *   hitsNum hit0 hit1 hit2 ... (#hitsNum times)
- */
-template <bool mc_check>
-void writeBinaryTrack(
-  const unsigned int* hit_IDs,
-  const VeloTracking::Track <mc_check> & track,
-  std::ofstream& outstream
-) {
-  uint32_t hitsNum = track.hitsNum;
-  outstream.write((char*) &hitsNum, sizeof(uint32_t));
-  for (int i=0; i<track.hitsNum; ++i) {
-    const VeloTracking::Hit <mc_check> hit = track.hits[i];
-    outstream.write((char*) &hit.LHCbID, sizeof(uint32_t));
-  }
 }
 
 /**

@@ -1,5 +1,6 @@
 gpupixel
 conditions.txt
+test.txt
 logs
 Debug
 .project
@@ -7,6 +8,7 @@ Debug
 mcdata/*.dat
 mcdata_old
 build
+build*
 *~
 #~
 .#*
