@@ -78,7 +78,7 @@ include_directories(cuda/velo/mask_clustering/include)
 include_directories(cuda/velo/prefix_sum/include)
 include_directories(cuda/velo/search_by_triplet/include)
 include_directories(cuda/velo/simplified_kalman_filter/include)
-include_directories(cuda/forward/common/include)
+include_directories(cuda/SciFi/common/include)
 include_directories(checker/tracking/include)
 include_directories(stream/sequence/include)
 

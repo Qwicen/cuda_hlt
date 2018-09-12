@@ -113,8 +113,8 @@ void read_ut_events_into_arrays( VeloUTTracking::HitsSoA *hits_layers_events,
   }
 }
 
-void read_scifi_events_into_arrays( ForwardTracking::HitsSoAFwd *hits_layers_events,
-                                 uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
+void read_scifi_events_into_arrays( SciFi::Constants::HitsSoAFwd *hits_layers_events,
+                                 uint32_t n_hits_layers_events[][SciFi::Constants::n_layers],
                                  const std::vector<char> events,
                                  const std::vector<unsigned int> event_offsets,
                                  const int n_events ) {
@@ -125,16 +125,16 @@ void read_scifi_events_into_arrays( ForwardTracking::HitsSoAFwd *hits_layers_eve
     int n_hits_total = 0;
     int accumulated_hits = 0;
     int accumulated_hits_layers[12];
-    for ( int i_layer = 0; i_layer < ForwardTracking::n_layers; ++i_layer ) {
+    for ( int i_layer = 0; i_layer < SciFi::Constants::n_layers; ++i_layer ) {
       n_hits_layers_events[i_event][i_layer] = *((uint32_t*)raw_input);
       n_hits_total += n_hits_layers_events[i_event][i_layer];
       raw_input += sizeof(uint32_t);
-      assert( n_hits_total < ForwardTracking::max_numhits_per_event );
+      assert( n_hits_total < SciFi::Constants::max_numhits_per_event );
       hits_layers_events[i_event].layer_offset[i_layer] = accumulated_hits;
       accumulated_hits += n_hits_layers_events[i_event][i_layer];
     }
 
-    for ( int i_layer = 0; i_layer < ForwardTracking::n_layers; ++i_layer ) {
+    for ( int i_layer = 0; i_layer < SciFi::Constants::n_layers; ++i_layer ) {
       int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
       std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &( hits_layers_events[i_event].m_x[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
@@ -204,8 +204,8 @@ void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
   
 }
 
-void check_scifi_events( const ForwardTracking::HitsSoAFwd *hits_layers_events,
-		      const uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
+void check_scifi_events( const SciFi::Constants::HitsSoAFwd *hits_layers_events,
+		      const uint32_t n_hits_layers_events[][SciFi::Constants::n_layers],
 		      const int n_events ) {
 
   float average_number_of_hits_per_event = 0;
@@ -214,7 +214,7 @@ void check_scifi_events( const ForwardTracking::HitsSoAFwd *hits_layers_events,
     // sanity checks
     float number_of_hits = 0;
 
-    for ( int i_layer = 0; i_layer < ForwardTracking::n_layers; ++i_layer ) {
+    for ( int i_layer = 0; i_layer < SciFi::Constants::n_layers; ++i_layer ) {
       debug_cout << "checks on layer " << i_layer << ", with " << n_hits_layers_events[i_event][i_layer] << " hits" << std::endl;
       number_of_hits += n_hits_layers_events[i_event][i_layer];
       int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
@@ -511,11 +511,11 @@ trackChecker::Tracks prepareForwardTracksVeloUTOnly(
 }
 
 trackChecker::Tracks prepareForwardTracks(
-  std::vector< ForwardTracking::TrackForward > forward_tracks
+  std::vector< SciFi::Constants::TrackForward > forward_tracks
 ) {
   trackChecker::Tracks checker_tracks;
   int i_track = 0;
-  for ( ForwardTracking::TrackForward forward_track : forward_tracks ) {
+  for ( SciFi::Constants::TrackForward forward_track : forward_tracks ) {
     trackChecker::Track checker_track;
     debug_cout << "at track " << std::dec << i_track << std::endl;
     for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {

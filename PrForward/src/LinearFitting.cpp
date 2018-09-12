@@ -4,22 +4,22 @@
    Functions related to fitting a straight line
  */
 
-float getLineFitDistance(ForwardTracking::LineFitterPars &parameters, ForwardTracking::HitsSoAFwd* hits_layers, int it )
+float getLineFitDistance(SciFi::Constants::LineFitterPars &parameters, SciFi::Constants::HitsSoAFwd* hits_layers, int it )
 { 
   return hits_layers->m_coord[it] - (parameters.m_c0 + (hits_layers->m_z[it] - parameters.m_z0) * parameters.m_tc);
 }
 
-float getLineFitChi2(ForwardTracking::LineFitterPars &parameters, ForwardTracking::HitsSoAFwd* hits_layers, int it) {
+float getLineFitChi2(SciFi::Constants::LineFitterPars &parameters, SciFi::Constants::HitsSoAFwd* hits_layers, int it) {
   float d = getLineFitDistance( parameters, hits_layers, it ); 
   return d * d * hits_layers->m_coord[it]; 
 }
-void solveLineFit(ForwardTracking::LineFitterPars &parameters)  {
+void solveLineFit(SciFi::Constants::LineFitterPars &parameters)  {
   float den = (parameters.m_sz*parameters.m_sz-parameters.m_s0*parameters.m_sz2);
   parameters.m_c0  = (parameters.m_scz * parameters.m_sz - parameters.m_sc * parameters.m_sz2) / den;
   parameters.m_tc  = (parameters.m_sc *  parameters.m_sz - parameters.m_s0 * parameters.m_scz) / den;
 }
 
-void incrementLineFitParameters(ForwardTracking::LineFitterPars &parameters, ForwardTracking::HitsSoAFwd* hits_layers, int it)
+void incrementLineFitParameters(SciFi::Constants::LineFitterPars &parameters, SciFi::Constants::HitsSoAFwd* hits_layers, int it)
 {
     float c = hits_layers->m_coord[it];
     float w = hits_layers->m_w[it];
@@ -32,7 +32,7 @@ void incrementLineFitParameters(ForwardTracking::LineFitterPars &parameters, For
 } 
 
 void fastLinearFit(
-  ForwardTracking::HitsSoAFwd* hits_layers,
+  SciFi::Constants::HitsSoAFwd* hits_layers,
   std::vector<float> &trackParameters, 
   std::vector<unsigned int> &pc,
   int planelist[],
@@ -56,7 +56,7 @@ void fastLinearFit(
       float track_x_at_zHit = straightLineExtend(parsX,zHit);
       const float d = hits_layers->m_x[hit] - track_x_at_zHit;
       const float w = hits_layers->m_w[hit];
-      const float z = zHit - Forward::zReference;
+      const float z = zHit - SciFi::Tracking::zReference;
       s0   += w;
       sz   += w * z; 
       sz2  += w * z * z; 
@@ -96,7 +96,7 @@ void fastLinearFit(
       }    
     }    
     //== Remove grossly out hit, or worst in multiple layers
-    if ( maxChi2 > Forward::maxChi2LinearFit || ( !notMultiple && maxChi2 > 4.f ) ) {
+    if ( maxChi2 > SciFi::Tracking::maxChi2LinearFit || ( !notMultiple && maxChi2 > 4.f ) ) {
       planelist[hits_layers->m_planeCode[worst]/2] -= 1;
       std::vector<unsigned int> pc_temp;
       pc_temp.clear();

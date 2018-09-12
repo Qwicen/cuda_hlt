@@ -4,7 +4,7 @@ include_directories(../../../cuda/velo/common/include)
 include_directories(../../../cuda/veloUT/common/include)
 include_directories(../../../cuda/utils/include)
 include_directories(../../../main/include)
-include_directories(../../../cuda/forward/common/include)
+include_directories(../../../cuda/SciFi/common/include)
 include_directories(../../../checker/tracking/include)
 
 file(GLOB x86VeloUT_cpp "src/*cpp")

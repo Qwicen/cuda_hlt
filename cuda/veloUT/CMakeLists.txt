@@ -7,7 +7,7 @@ include_directories(PrVeloUT/include)
 include_directories(../../main/include)
 include_directories(../velo/common/include)
 include_directories(../velo/consolidate_tracks/include)
-include_directories(../forward/common/include)
+include_directories(../SciFi/common/include)
 include_directories(sorting/include)
 include_directories(../utils/include)
 
@@ -16,9 +16,6 @@ cuda_add_library(VeloUT STATIC
   ${veloUT_sorting}
 )
 
-target_link_libraries( VeloUT
-  x86Forward
-  )
 
 if ( MC_CHECK )
   target_compile_definitions(VeloUT PUBLIC MC_CHECK)

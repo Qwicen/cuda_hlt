@@ -4,7 +4,7 @@
 #include "device_launch_parameters.h"
 #include "Common.h"
 #include "VeloDefinitions.cuh"
-#include "ForwardDefinitions.cuh"
+#include "SciFiDefinitions.cuh"
 
 #include "assert.h"
 
@@ -86,7 +86,7 @@ namespace VeloUTTracking {
   struct TrackVeloUT {
     FullState state_endvelo;
     TrackUT track;
-    ForwardTracking::TrackForward trackForward;
+    SciFi::Constants::TrackForward trackForward;
   };
 
 

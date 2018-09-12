@@ -1,10 +1,10 @@
 #pragma once
 
-#include "ForwardDefinitions.cuh"
+#include "SciFiDefinitions.cuh"
 #include "PrForwardConstants.h"
 
 /**
-   Helper functions related to track properties and track fitting
+   Helper functions related to track properties
  */
 
 struct PrParameters {
@@ -34,7 +34,7 @@ inline float yFromVelo( const float z, FullState state_at_endvelo ) {
 
 // params[0] = x/y, params[1] = tx/ty
 inline float straightLineExtend(const float params[4], float z) {
-  float dz = z - Forward::zReference;
+  float dz = z - SciFi::Tracking::zReference;
   return params[0] + (params[1]+(params[2] + params[3]*dz)*dz)*dz;
 }
 
@@ -48,8 +48,8 @@ void covariance ( FullState& state, const float qOverP );
 
 float calcDxRef(float pt, FullState state_at_endvelo);
 
-float trackToHitDistance( std::vector<float> trackParameters, ForwardTracking::HitsSoAFwd* hits_layers, int hit );
+float trackToHitDistance( std::vector<float> trackParameters, SciFi::Constants::HitsSoAFwd* hits_layers, int hit );
 
-static inline bool lowerByQuality(ForwardTracking::TrackForward t1, ForwardTracking::TrackForward t2) {
+static inline bool lowerByQuality(SciFi::Constants::TrackForward t1, SciFi::Constants::TrackForward t2) {
   return t1.quality < t2.quality;
 }

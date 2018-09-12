@@ -3,21 +3,21 @@
 std::vector<float> getTrackParameters ( float xAtRef, FullState state_at_endvelo)
 {
   
-  float dSlope  = ( xFromVelo(Forward::zReference,state_at_endvelo) - xAtRef ) / ( Forward::zReference - Forward::zMagnetParams[0]);
-  const float zMagSlope = Forward::zMagnetParams[2] * pow(state_at_endvelo.tx,2) +  Forward::zMagnetParams[3] * pow(state_at_endvelo.ty,2);
-  const float zMag    = Forward::zMagnetParams[0] + Forward::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
+  float dSlope  = ( xFromVelo(SciFi::Tracking::zReference,state_at_endvelo) - xAtRef ) / ( SciFi::Tracking::zReference - SciFi::Tracking::zMagnetParams[0]);
+  const float zMagSlope = SciFi::Tracking::zMagnetParams[2] * pow(state_at_endvelo.tx,2) +  SciFi::Tracking::zMagnetParams[3] * pow(state_at_endvelo.ty,2);
+  const float zMag    = SciFi::Tracking::zMagnetParams[0] + SciFi::Tracking::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
   const float xMag    = xFromVelo( zMag, state_at_endvelo );
-  const float slopeT  = ( xAtRef - xMag ) / ( Forward::zReference - zMag );
+  const float slopeT  = ( xAtRef - xMag ) / ( SciFi::Tracking::zReference - zMag );
   dSlope        = slopeT - state_at_endvelo.tx;
   const float dyCoef  = dSlope * dSlope * state_at_endvelo.ty;
   
  std::vector<float> toreturn =  {xAtRef,
                                  slopeT,
-                                 1.e-6f * Forward::xParams[0] * dSlope,
-                                 1.e-9f * Forward::xParams[1] * dSlope,
-                                 yFromVelo( Forward::zReference, state_at_endvelo ),
-                                 state_at_endvelo.ty + dyCoef * Forward::byParams,
-                                 dyCoef * Forward::cyParams,
+                                 1.e-6f * SciFi::Tracking::xParams[0] * dSlope,
+                                 1.e-9f * SciFi::Tracking::xParams[1] * dSlope,
+                                 yFromVelo( SciFi::Tracking::zReference, state_at_endvelo ),
+                                 state_at_endvelo.ty + dyCoef * SciFi::Tracking::byParams,
+                                 dyCoef * SciFi::Tracking::cyParams,
                                  0.0,
                                  0.0 }; // last elements are chi2 and ndof, as float 
  return toreturn;
@@ -28,15 +28,15 @@ float calcqOverP ( float bx, FullState state_at_endvelo )
   
   float qop(1.0f/Gaudi::Units::GeV) ;
   float bx2  = bx * bx;
-  float coef = ( Forward::momentumParams[0] +
-                 Forward::momentumParams[1] * bx2 +
-                 Forward::momentumParams[2] * bx2 * bx2 +
-                 Forward::momentumParams[3] * bx * state_at_endvelo.tx +
-                 Forward::momentumParams[4] * pow(state_at_endvelo.ty,2) +
-                 Forward::momentumParams[5] * pow(state_at_endvelo.ty,2) * pow(state_at_endvelo.ty,2) );
+  float coef = ( SciFi::Tracking::momentumParams[0] +
+                 SciFi::Tracking::momentumParams[1] * bx2 +
+                 SciFi::Tracking::momentumParams[2] * bx2 * bx2 +
+                 SciFi::Tracking::momentumParams[3] * bx * state_at_endvelo.tx +
+                 SciFi::Tracking::momentumParams[4] * pow(state_at_endvelo.ty,2) +
+                 SciFi::Tracking::momentumParams[5] * pow(state_at_endvelo.ty,2) * pow(state_at_endvelo.ty,2) );
   float m_slope2 = pow(state_at_endvelo.tx,2) + pow(state_at_endvelo.ty,2);
   float proj = sqrt( ( 1.f + m_slope2 ) / ( 1.f + pow(state_at_endvelo.tx,2) ) ); 
-  qop = ( state_at_endvelo.tx - bx ) / ( coef * Gaudi::Units::GeV * proj * Forward::magscalefactor) ;
+  qop = ( state_at_endvelo.tx - bx ) / ( coef * Gaudi::Units::GeV * proj * SciFi::Tracking::magscalefactor) ;
   return qop ;
   
 }
@@ -46,19 +46,19 @@ float calcqOverP ( float bx, FullState state_at_endvelo )
 float zMagnet(FullState state_at_endvelo)
 {
     
-  return ( Forward::zMagnetParams[0] +
-           Forward::zMagnetParams[2] * pow(state_at_endvelo.tx,2) +
-           Forward::zMagnetParams[3] * pow(state_at_endvelo.ty,2) );
+  return ( SciFi::Tracking::zMagnetParams[0] +
+           SciFi::Tracking::zMagnetParams[2] * pow(state_at_endvelo.tx,2) +
+           SciFi::Tracking::zMagnetParams[3] * pow(state_at_endvelo.ty,2) );
 }
 
 void covariance ( FullState& state, const float qOverP )
 {
      
-  state.c00 = Forward::covarianceValues[0];
-  state.c11 = Forward::covarianceValues[1];
-  state.c22 = Forward::covarianceValues[2];
-  state.c33 = Forward::covarianceValues[3];
-  state.c44 = Forward::covarianceValues[4] * qOverP * qOverP;
+  state.c00 = SciFi::Tracking::covarianceValues[0];
+  state.c11 = SciFi::Tracking::covarianceValues[1];
+  state.c22 = SciFi::Tracking::covarianceValues[2];
+  state.c33 = SciFi::Tracking::covarianceValues[3];
+  state.c44 = SciFi::Tracking::covarianceValues[4] * qOverP * qOverP;
 }
 
 float calcDxRef(float pt, FullState state_at_endvelo) {
@@ -66,7 +66,7 @@ float calcDxRef(float pt, FullState state_at_endvelo) {
   return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  pow(state_at_endvelo.ty,2) - 1000. * pow(state_at_endvelo.tx,2); // tune this window
 }
 
-float trackToHitDistance( std::vector<float> trackParameters, ForwardTracking::HitsSoAFwd* hits_layers, int hit )
+float trackToHitDistance( std::vector<float> trackParameters, SciFi::Constants::HitsSoAFwd* hits_layers, int hit )
 {
   const float parsX[4] = {trackParameters[0],
                           trackParameters[1],

@@ -4,7 +4,7 @@ include_directories(../../main/include)
 include_directories(../../PrForward/include)
 include_directories(../../cuda/veloUT/common/include)
 include_directories(../../cuda/veloUT/PrVeloUT/include)
-include_directories(../../cuda/forward/common/include)
+include_directories(../../cuda/SciFi/common/include)
 include_directories(../../cuda/velo/common/include)
 
 file(GLOB x86Forward_cpp "src/*cpp" "../../PrForward/src/*cpp")

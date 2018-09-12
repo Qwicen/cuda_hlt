@@ -15,7 +15,7 @@
 //=========================================================================
 //
 void collectAllXHits(
-  ForwardTracking::HitsSoAFwd* hits_layers,
+  SciFi::Constants::HitsSoAFwd* hits_layers,
   std::vector<int>& allXHits,
   const float xParams_seed[4], 
   const float yParams_seed[4],
@@ -24,33 +24,33 @@ void collectAllXHits(
 {
   // A bunch of hardcoded numbers to set the search window
   // really this should all be made configurable
-  float dxRef = 0.9 * calcDxRef(Forward::minPt, state_at_endvelo);
+  float dxRef = 0.9 * calcDxRef(SciFi::Tracking::minPt, state_at_endvelo);
   float zMag = zMagnet(state_at_endvelo);
  
   const float q = state_at_endvelo.qOverP > 0.f ? 1.f :-1.f;
-  const float dir = q*Forward::magscalefactor*(-1.f);
+  const float dir = q*SciFi::Tracking::magscalefactor*(-1.f);
 
   // Is PT at end VELO same as PT at beamline? Check output of VeloUT
   float slope2 = pow(state_at_endvelo.tx,2) + pow(state_at_endvelo.ty,2); 
   const float pt = std::sqrt( std::fabs(1./ (pow(state_at_endvelo.qOverP,2) ) ) * (slope2) / (1. + slope2) );
-  const bool wSignTreatment = Forward::useWrongSignWindow && pt > Forward::wrongSignPT;
+  const bool wSignTreatment = SciFi::Tracking::useWrongSignWindow && pt > SciFi::Tracking::wrongSignPT;
 
   float dxRefWS = 0.0; 
   if( wSignTreatment ){
-    dxRefWS = 0.9 * calcDxRef(Forward::wrongSignPT, state_at_endvelo); //make windows a bit too small - FIXME check effect of this, seems wrong
+    dxRefWS = 0.9 * calcDxRef(SciFi::Tracking::wrongSignPT, state_at_endvelo); //make windows a bit too small - FIXME check effect of this, seems wrong
   }
 
   std::array<int, 7> iZoneEnd; //6 x planes
   iZoneEnd[0] = 0; 
   int cptZone = 1; 
 
-  int iZoneStartingPoint = side > 0 ? Forward::zoneoffsetpar : 0;
+  int iZoneStartingPoint = side > 0 ? SciFi::Tracking::zoneoffsetpar : 0;
 
   //debug_cout << "About to collect X hits for candidate from " << iZoneStartingPoint << std::endl;
 
-  for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + Forward::zoneoffsetpar; iZone++) {
+  for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + SciFi::Tracking::zoneoffsetpar; iZone++) {
     //debug_cout  << "Processing zone" << iZone << std::endl;
-    const float zZone   = Forward::xZone_zPos[iZone-iZoneStartingPoint];
+    const float zZone   = SciFi::Tracking::xZone_zPos[iZone-iZoneStartingPoint];
     const float xInZone = straightLineExtend(xParams_seed,zZone);
     const float yInZone = straightLineExtend(yParams_seed,zZone);
     //debug_cout  << "Extrapolated track to " << xInZone << " " << yInZone << std::endl;
@@ -64,22 +64,22 @@ void collectAllXHits(
     // so we are hardly looking precisely if the track could have hit this plane
     //debug_cout << "Looking for hits compatible with x = " << xInZone << " and y = " << yInZone << " on side " << side << std::endl;
     if (side > 0) {
-      if (!isInside(xInZone,Forward::xLim_Min,Forward::xLim_Max)
-          || !isInside(yInZone,Forward::yLim_Min,Forward::yLim_Max)) continue;
+      if (!isInside(xInZone,SciFi::Tracking::xLim_Min,SciFi::Tracking::xLim_Max)
+          || !isInside(yInZone,SciFi::Tracking::yLim_Min,SciFi::Tracking::yLim_Max)) continue;
     } else {
-      if (!isInside(xInZone,Forward::xLim_Min,Forward::xLim_Max)
-          || !isInside(yInZone,side*Forward::yLim_Max,side*Forward::yLim_Min)) continue;
+      if (!isInside(xInZone,SciFi::Tracking::xLim_Min,SciFi::Tracking::xLim_Max)
+          || !isInside(yInZone,side*SciFi::Tracking::yLim_Max,side*SciFi::Tracking::yLim_Min)) continue;
     }
     //debug_cout << "Found hits inside zone limits for plane " << iZone << " at " << zZone << std::endl;
 
-    const float xTol  = ( zZone < Forward::zReference ) ? dxRef * zZone / Forward::zReference :  dxRef * (zZone - zMag) / ( Forward::zReference - zMag );
+    const float xTol  = ( zZone < SciFi::Tracking::zReference ) ? dxRef * zZone / SciFi::Tracking::zReference :  dxRef * (zZone - zMag) / ( SciFi::Tracking::zReference - zMag );
     float xMin        = xInZone - xTol;
     float xMax        = xInZone + xTol;
 
-    if( Forward::useMomentumEstimate ) { //For VeloUT tracks, suppress check if track actually has qOverP set, get the option right!
+    if( SciFi::Tracking::useMomentumEstimate ) { //For VeloUT tracks, suppress check if track actually has qOverP set, get the option right!
       float xTolWS = 0.0;
       if( wSignTreatment ){
-        xTolWS  = ( zZone < Forward::zReference ) ? dxRefWS * zZone / Forward::zReference :  dxRefWS * (zZone - zMag) / ( Forward::zReference - zMag );
+        xTolWS  = ( zZone < SciFi::Tracking::zReference ) ? dxRefWS * zZone / SciFi::Tracking::zReference :  dxRefWS * (zZone - zMag) / ( SciFi::Tracking::zReference - zMag );
       }
       if(dir > 0){
         xMin = xInZone - xTolWS;
@@ -93,8 +93,8 @@ void collectAllXHits(
     // Get the zone bounds 
     // For now we are getting these offsets "for free" from the data structure
     // Eventually we will need to do the raw bank to SoA transform ourselves of course
-    int x_zone_offset_begin = hits_layers->layer_offset[Forward::xZones[iZone]];
-    int x_zone_offset_end   = hits_layers->layer_offset[Forward::xZones[iZone]+1];
+    int x_zone_offset_begin = hits_layers->layer_offset[SciFi::Tracking::xZones[iZone]];
+    int x_zone_offset_end   = hits_layers->layer_offset[SciFi::Tracking::xZones[iZone]+1];
     int itH   = getLowerBound(hits_layers->m_x,xMin,x_zone_offset_begin,x_zone_offset_end); 
     int itEnd = getLowerBound(hits_layers->m_x,xMax,x_zone_offset_begin,x_zone_offset_end);
 
@@ -108,32 +108,32 @@ void collectAllXHits(
     if (!(itEnd > itH)) continue; 
  
     // Now match the stereo hits
-    const float this_uv_z   = Forward::uvZone_zPos[iZone-iZoneStartingPoint];
+    const float this_uv_z   = SciFi::Tracking::uvZone_zPos[iZone-iZoneStartingPoint];
     const float xInUv       = straightLineExtend(xParams_seed,this_uv_z);
     const float zRatio      = ( this_uv_z - zMag ) / ( zZone - zMag );
-    const float dx          = yInZone * Forward::uvZone_dxdy[iZone-iZoneStartingPoint];
+    const float dx          = yInZone * SciFi::Tracking::uvZone_dxdy[iZone-iZoneStartingPoint];
     const float xCentral    = xInZone + dx;
           float xPredUv     = xInUv + ( hits_layers->m_x[itH] - xInZone) * zRatio - dx;
-          float maxDx       = Forward::tolYCollectX + ( std::fabs( hits_layers->m_x[itH] - xCentral ) + std::fabs( yInZone ) ) * Forward::tolYSlopeCollectX;
+          float maxDx       = SciFi::Tracking::tolYCollectX + ( std::fabs( hits_layers->m_x[itH] - xCentral ) + std::fabs( yInZone ) ) * SciFi::Tracking::tolYSlopeCollectX;
           float xMinUV      = xPredUv - maxDx;
     
-    int uv_zone_offset_begin = hits_layers->layer_offset[Forward::uvZones[iZone]];
-    int uv_zone_offset_end   = hits_layers->layer_offset[Forward::uvZones[iZone]+1];  
+    int uv_zone_offset_begin = hits_layers->layer_offset[SciFi::Tracking::uvZones[iZone]];
+    int uv_zone_offset_end   = hits_layers->layer_offset[SciFi::Tracking::uvZones[iZone]+1];  
     int triangleOffset       = side > 0 ? -1 : 1;
-    //debug_cout<<iZone<<" " << Forward::uvZones[iZone] << " " << Forward::zoneoffsetpar << " " << triangleOffset << std::endl;
-    int triangle_zone_offset_begin = hits_layers->layer_offset[Forward::uvZones[iZone + Forward::zoneoffsetpar*triangleOffset]];
-    int triangle_zone_offset_end   = hits_layers->layer_offset[Forward::uvZones[iZone + Forward::zoneoffsetpar*triangleOffset]+1];
+    //debug_cout<<iZone<<" " << SciFi::Tracking::uvZones[iZone] << " " << SciFi::Tracking::zoneoffsetpar << " " << triangleOffset << std::endl;
+    int triangle_zone_offset_begin = hits_layers->layer_offset[SciFi::Tracking::uvZones[iZone + SciFi::Tracking::zoneoffsetpar*triangleOffset]];
+    int triangle_zone_offset_end   = hits_layers->layer_offset[SciFi::Tracking::uvZones[iZone + SciFi::Tracking::zoneoffsetpar*triangleOffset]+1];
     //debug_cout<<triangle_zone_offset_begin << " " << triangle_zone_offset_end << std::endl;
     int itUV1                = getLowerBound(hits_layers->m_x,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);    
     int itUV2                = getLowerBound(hits_layers->m_x,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
 
     const float xPredUVProto =  xInUv - xInZone * zRatio - dx;
-    const float maxDxProto   =  Forward::tolYCollectX + std::abs( yInZone ) * Forward::tolYSlopeCollectX;
+    const float maxDxProto   =  SciFi::Tracking::tolYCollectX + std::abs( yInZone ) * SciFi::Tracking::tolYSlopeCollectX;
 
-    bool dotriangle = (std::fabs(yInZone) > Forward::tolYTriangleSearch); //cuts very slightly into distribution, 100% save cut is ~50
+    bool dotriangle = (std::fabs(yInZone) > SciFi::Tracking::tolYTriangleSearch); //cuts very slightly into distribution, 100% save cut is ~50
     for (int xHit = itH; xHit < itEnd; ++xHit) { //loop over all xHits in a layer between xMin and xMax
       const float xPredUv = xPredUVProto + hits_layers->m_x[xHit]* zRatio;
-      const float maxDx   = maxDxProto   + std::fabs( hits_layers->m_x[xHit] -xCentral )* Forward::tolYSlopeCollectX;
+      const float maxDx   = maxDxProto   + std::fabs( hits_layers->m_x[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
       const float xMinUV  = xPredUv - maxDx;
       const float xMaxUV  = xPredUv + maxDx;
 
@@ -153,12 +153,12 @@ void collectAllXHits(
           if ( hits_layers->m_x[stereoHit] > xMinUV ) {
             // Triangle search condition depends on side
             if (side > 0) { // upper
-              if (hits_layers->m_yMax[stereoHit] > yInZone - Forward::yTolUVSearch) {
+              if (hits_layers->m_yMax[stereoHit] > yInZone - SciFi::Tracking::yTolUVSearch) {
                 allXHits.emplace_back(xHit);
                 break;
               } else break;
             } else { 
-              if (hits_layers->m_yMin[stereoHit] < yInZone + Forward::yTolUVSearch) {
+              if (hits_layers->m_yMin[stereoHit] < yInZone + SciFi::Tracking::yTolUVSearch) {
                 allXHits.emplace_back(xHit);
                 break;
               } else break;
@@ -192,10 +192,10 @@ void collectAllXHits(
 //  Select the zones in the allXHits array where we can have a track
 //=========================================================================
 void selectXCandidates(
-  ForwardTracking::HitsSoAFwd* hits_layers,
+  SciFi::Constants::HitsSoAFwd* hits_layers,
   std::vector<int>& allXHits,
   const VeloUTTracking::TrackVeloUT& veloUTTrack, 
-  std::vector<ForwardTracking::TrackForward>& outputTracks,
+  std::vector<SciFi::Constants::TrackForward>& outputTracks,
   const float zRef_track, 
   const float xParams_seed[4],
   const float yParams_seed[4],
@@ -209,7 +209,7 @@ void selectXCandidates(
   // }
   if ( allXHits.size() < pars.minXHits ) return;
   int itEnd = allXHits.size();//back();
-  const float xStraight = straightLineExtend(xParams_seed,Forward::zReference);
+  const float xStraight = straightLineExtend(xParams_seed,SciFi::Tracking::zReference);
   int it1 = 0;//allXHits.front();
   int it2 = it1; 
   pars.minStereoHits = 0;
@@ -306,11 +306,11 @@ void selectXCandidates(
     // and some light helper math functions operating on these.
     std::vector<int> lineFitter;
     lineFitter.clear(); 
-    ForwardTracking::LineFitterPars lineFitParameters;
-    lineFitParameters.m_z0 = Forward::zReference;
+    SciFi::Constants::LineFitterPars lineFitParameters;
+    lineFitParameters.m_z0 = SciFi::Tracking::zReference;
     float xAtRef = 0.;
 
-    if ( nbSingle(planelist) >= Forward::minSingleHits && nbSingle(planelist) != nbDifferent(planelist) ) {
+    if ( nbSingle(planelist) >= SciFi::Tracking::minSingleHits && nbSingle(planelist) != nbDifferent(planelist) ) {
       //1) we have enough single planes (thus two) to make a straight line fit
       for(int i=0; i < 12; i++) otherHits[i].clear();
       //seperate single and double hits
@@ -447,7 +447,7 @@ void selectXCandidates(
     }
     //== Fit and remove hits...
     if (ok) ok = fitXProjection(hits_layers, trackParameters, pc, pcplanelist, pars);
-    if (ok) ok = trackParameters[7]/trackParameters[8] < Forward::maxChi2PerDoF;
+    if (ok) ok = trackParameters[7]/trackParameters[8] < SciFi::Tracking::maxChi2PerDoF;
     if (ok) ok = addHitsOnEmptyXLayers(hits_layers, trackParameters, xParams_seed, yParams_seed,
                                        true, pc, planelist, pars, side);
     if (ok) {
@@ -456,7 +456,7 @@ void selectXCandidates(
       //Do we really need isUsed in Forward? We can otherwise speed up the search quite a lot!
       // --> we need it for the second loop
       //debug_cout << "Pushed back an X candidate for stereo search!" << std::endl;
-      ForwardTracking::TrackForward track;
+      SciFi::Constants::TrackForward track;
       track.state_endvelo = veloUTTrack.state_endvelo;
       //track.LHCbIDs.clear();
       track.chi2 = trackParameters[7];
@@ -479,7 +479,7 @@ void selectXCandidates(
 
 
 bool addHitsOnEmptyXLayers(
-  ForwardTracking::HitsSoAFwd* hits_layers,
+  SciFi::Constants::HitsSoAFwd* hits_layers,
   std::vector<float> &trackParameters,
   const float xParams_seed[4],
   const float yParams_seed[4],
@@ -493,20 +493,20 @@ bool addHitsOnEmptyXLayers(
   if (nbDifferent(planelist) > 11) return true;
   bool  added = false;
   const float x1 = trackParameters[0];
-  const float xStraight = straightLineExtend(xParams_seed,Forward::zReference);
+  const float xStraight = straightLineExtend(xParams_seed,SciFi::Tracking::zReference);
   const float xWindow = pars.maxXWindow + ( fabs( x1 ) + fabs( x1 - xStraight ) ) * pars.maxXWindowSlope;
 
-  int iZoneStartingPoint = side > 0 ? Forward::zoneoffsetpar : 0;
+  int iZoneStartingPoint = side > 0 ? SciFi::Tracking::zoneoffsetpar : 0;
 
-  for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + Forward::zoneoffsetpar; iZone++) {
-    if (planelist[Forward::xZones[iZone]/2] != 0) continue;
+  for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + SciFi::Tracking::zoneoffsetpar; iZone++) {
+    if (planelist[SciFi::Tracking::xZones[iZone]/2] != 0) continue;
 
     const float parsX[4] = {trackParameters[0],
                             trackParameters[1],
                             trackParameters[2],
                             trackParameters[3]};
 
-    const float zZone  = Forward::xZone_zPos[iZone-iZoneStartingPoint];
+    const float zZone  = SciFi::Tracking::xZone_zPos[iZone-iZoneStartingPoint];
     const float xPred  = straightLineExtend(parsX,zZone);
     const float minX = xPred - xWindow;
     const float maxX = xPred + xWindow;
@@ -514,8 +514,8 @@ bool addHitsOnEmptyXLayers(
     int best = -1;
 
     // -- Use a search to find the lower bound of the range of x values
-    int x_zone_offset_begin = hits_layers->layer_offset[Forward::xZones[iZone]];
-    int x_zone_offset_end   = hits_layers->layer_offset[Forward::xZones[iZone]+1];
+    int x_zone_offset_begin = hits_layers->layer_offset[SciFi::Tracking::xZones[iZone]];
+    int x_zone_offset_end   = hits_layers->layer_offset[SciFi::Tracking::xZones[iZone]+1];
     int itH   = getLowerBound(hits_layers->m_x,minX,x_zone_offset_begin,x_zone_offset_end);
     int itEnd = x_zone_offset_end;
     

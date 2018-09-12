@@ -3,7 +3,7 @@
 //calculate xref for this plane
 //in the c++ this is vectorized, undoing because no point before CUDA (but vectorization is obvious)
 void xAtRef_SamePlaneHits(
-  ForwardTracking::HitsSoAFwd* hits_layers,
+  SciFi::Constants::HitsSoAFwd* hits_layers,
   std::vector<int>& allXHits,
   const float xParams_seed[4],
   FullState state_at_endvelo, 
@@ -12,17 +12,17 @@ void xAtRef_SamePlaneHits(
   //this is quite computationally expensive mind, should take care when porting
   float zHit    = hits_layers->m_z[allXHits[itH]]; //all hits in same layer
   float xFromVelo_Hit = straightLineExtend(xParams_seed,zHit);
-  float zMagSlope = Forward::zMagnetParams[2] * pow(state_at_endvelo.tx,2) +  Forward::zMagnetParams[3] * pow(state_at_endvelo.ty,2);
-  float dSlopeDivPart = 1.f / ( zHit - Forward::zMagnetParams[0]);
-  float dz      = 1.e-3f * ( zHit - Forward::zReference );
+  float zMagSlope = SciFi::Tracking::zMagnetParams[2] * pow(state_at_endvelo.tx,2) +  SciFi::Tracking::zMagnetParams[3] * pow(state_at_endvelo.ty,2);
+  float dSlopeDivPart = 1.f / ( zHit - SciFi::Tracking::zMagnetParams[0]);
+  float dz      = 1.e-3f * ( zHit - SciFi::Tracking::zReference );
   
   while( itEnd>itH ){
     float xHit = hits_layers->m_x[allXHits[itH]];
     float dSlope  = ( xFromVelo_Hit - xHit ) * dSlopeDivPart;
-    float zMag    = Forward::zMagnetParams[0] + Forward::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
+    float zMag    = SciFi::Tracking::zMagnetParams[0] + SciFi::Tracking::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
     float xMag    = xFromVelo_Hit + state_at_endvelo.tx * (zMag - zHit);
-    float dxCoef  = dz * dz * ( Forward::xParams[0] + dz * Forward::xParams[1] ) * dSlope;
-    float ratio   = (  Forward::zReference - zMag ) / ( zHit - zMag );
+    float dxCoef  = dz * dz * ( SciFi::Tracking::xParams[0] + dz * SciFi::Tracking::xParams[1] ) * dSlope;
+    float ratio   = (  SciFi::Tracking::zReference - zMag ) / ( zHit - zMag );
     hits_layers->m_coord[allXHits[itH]] = xMag + ratio * (xHit + dxCoef  - xMag);
     itH++;
   }
@@ -30,7 +30,7 @@ void xAtRef_SamePlaneHits(
  
 
 bool fitXProjection(
-  ForwardTracking::HitsSoAFwd *hits_layers,
+  SciFi::Constants::HitsSoAFwd *hits_layers,
   std::vector<float> &trackParameters,
   std::vector<unsigned int> &pc,
   int planelist[],
@@ -53,7 +53,7 @@ bool fitXProjection(
     for (auto hit : pc ) {
       float d = trackToHitDistance(trackParameters, hits_layers, hit);
       float w = hits_layers->m_w[hit];
-      float z = .001f * ( hits_layers->m_z[hit] - Forward::zReference );
+      float z = .001f * ( hits_layers->m_z[hit] - SciFi::Tracking::zReference );
       s0   += w;
       sz   += w * z; 
       sz2  += w * z * z; 
@@ -104,8 +104,8 @@ bool fitXProjection(
       return true;
     }    
     doFit = false;
-    if ( totChi2/nDoF > Forward::maxChi2PerDoF  ||
-         maxChi2 > Forward::maxChi2XProjection ) {
+    if ( totChi2/nDoF > SciFi::Tracking::maxChi2PerDoF  ||
+         maxChi2 > SciFi::Tracking::maxChi2XProjection ) {
       // Should really make this bit of code into a function... 
       planelist[hits_layers->m_planeCode[worst]/2] -= 1;
       std::vector<unsigned int> pc_temp;
@@ -123,8 +123,8 @@ bool fitXProjection(
  
 
 bool fitYProjection(
-  ForwardTracking::HitsSoAFwd* hits_layers,
-  ForwardTracking::TrackForward& track,
+  SciFi::Constants::HitsSoAFwd* hits_layers,
+  SciFi::Constants::TrackForward& track,
   std::vector<int>& stereoHits,
   std::vector<unsigned int> &pc,
   int planelist[],
@@ -138,8 +138,8 @@ bool fitYProjection(
   bool parabola = false; //first linear than parabola
   //== Fit a line
   const float txs  = track.trackParams[0]; // simplify overgeneral c++ calculation
-  const float tsxz = state_at_endvelo.x + (Forward::zReference - state_at_endvelo.z) * state_at_endvelo.tx; 
-  const float tolYMag = Forward::tolYMag + Forward::tolYMagSlope * fabs(txs-tsxz);
+  const float tsxz = state_at_endvelo.x + (SciFi::Tracking::zReference - state_at_endvelo.z) * state_at_endvelo.tx; 
+  const float tolYMag = SciFi::Tracking::tolYMag + SciFi::Tracking::tolYMagSlope * fabs(txs-tsxz);
   const float wMag   = 1./(tolYMag * tolYMag );
 
   bool doFit = true;
@@ -147,10 +147,10 @@ bool fitYProjection(
     //Use position in magnet as constrain in fit
     //although because wMag is quite small only little influence...
     float zMag  = zMagnet(state_at_endvelo);
-    const float tys = track.trackParams[4]+(zMag-Forward::zReference)*track.trackParams[5];
+    const float tys = track.trackParams[4]+(zMag-SciFi::Tracking::zReference)*track.trackParams[5];
     const float tsyz = state_at_endvelo.y + (zMag-state_at_endvelo.z)*state_at_endvelo.ty;
     const float dyMag = tys-tsyz;
-    zMag -= Forward::zReference;
+    zMag -= SciFi::Tracking::zReference;
     float s0   = wMag;
     float sz   = wMag * zMag;
     float sz2  = wMag * zMag * zMag;
@@ -169,7 +169,7 @@ bool fitYProjection(
         const float d = - trackToHitDistance(track.trackParams, hits_layers, hit) / 
 			  hits_layers->m_dxdy[hit];//TODO multiplication much faster than division!
         const float w = hits_layers->m_w[hit];
-        const float z = hits_layers->m_z[hit] - Forward::zReference;
+        const float z = hits_layers->m_z[hit] - SciFi::Tracking::zReference;
         s0   += w;
         sz   += w * z; 
         sz2m += w * z * z; 
@@ -204,7 +204,7 @@ bool fitYProjection(
         const float d = - trackToHitDistance(track.trackParams, hits_layers, hit) / 
                           hits_layers->m_dxdy[hit];//TODO multiplication much faster than division!
         const float w = hits_layers->m_w[hit];
-        const float z = hits_layers->m_z[hit] - Forward::zReference;
+        const float z = hits_layers->m_z[hit] - SciFi::Tracking::zReference;
 	s0   += w;
         sz   += w * z; 
         sz2  += w * z * z;
@@ -233,15 +233,15 @@ bool fitYProjection(
       }
     }
 
-    if ( maxChi2 < Forward::maxChi2StereoLinear && !parabola ) {
+    if ( maxChi2 < SciFi::Tracking::maxChi2StereoLinear && !parabola ) {
       debug_cout << "Maximum chi2 from linear fit was relatively small " << maxChi2 << " do parabolic fit" << std::endl;
       parabola = true;
       maxChi2 = 1.e9f;
       continue;
     }
 
-    if ( maxChi2 > Forward::maxChi2Stereo ) {
-      debug_cout << "Removing hit " << *worst << " with chi2 " << maxChi2 << " allowable was " << Forward::maxChi2Stereo << std::endl;
+    if ( maxChi2 > SciFi::Tracking::maxChi2Stereo ) {
+      debug_cout << "Removing hit " << *worst << " with chi2 " << maxChi2 << " allowable was " << SciFi::Tracking::maxChi2Stereo << std::endl;
       planelist[hits_layers->m_planeCode[*worst]/2] -= 1;
       std::vector<unsigned int> pc_temp;
       pc_temp.clear();

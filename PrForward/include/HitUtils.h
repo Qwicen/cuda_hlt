@@ -31,3 +31,28 @@ inline int nbSingle(int planelist[]) {
   for (int i=0;i<12;++i){single += planelist[i] == 1 ? 1 : 0;}
   return single;
 }
+
+struct PlaneCounter{
+  int planeList[SciFi::Constants::n_physical_layers];
+  unsigned int nbDifferent;
+
+  inline void addHit( int plane ) {
+    nbDifferent += (int)( (planeList[plane] += 1 ) == 1) ;
+  }
+
+  inline void removeHit( int plane ) {
+    nbDifferent -= ((int)( (planeList[plane] -= 1 ) == 0)) ;
+  }
+
+  inline int nbInPlane( int plane ) {
+    return planeList[plane];
+  }
+  
+  inline void clear() {
+    nbDifferent = 0;
+    for ( int i = 0; i < SciFi::Constants::n_physical_layers; ++i ) {
+      planeList[i] = 0;
+    }
+  }
+  
+};

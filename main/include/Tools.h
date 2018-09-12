@@ -18,7 +18,7 @@
 #include "VeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.cuh"
 #include "PrVeloUTDefinitions.cuh"
-#include "ForwardDefinitions.cuh"
+#include "SciFiDefinitions.cuh"
 #include "Tracks.h"
 #include "InputTools.h"
 #include "velopix-input-reader.h"
@@ -36,14 +36,14 @@ void check_velopix_events(
   int n_events
 );
 
-void read_scifi_events_into_arrays(  ForwardTracking::HitsSoAFwd *scifi_hits_events,
-                                  uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
+void read_scifi_events_into_arrays(  SciFi::Constants::HitsSoAFwd *scifi_hits_events,
+                                  uint32_t n_hits_layers_events[][SciFi::Constants::n_layers],
                                   const std::vector<char> events,
                                   const std::vector<unsigned int> event_offsets,
                                   int n_events );
 
-void check_scifi_events( const ForwardTracking::HitsSoAFwd *hits_layers_events,
-                      const uint32_t n_hits_layers_events[][ForwardTracking::n_layers],
+void check_scifi_events( const SciFi::Constants::HitsSoAFwd *hits_layers_events,
+                      const uint32_t n_hits_layers_events[][SciFi::Constants::n_layers],
                       const int n_events
                       );
 
@@ -108,7 +108,7 @@ trackChecker::Tracks prepareForwardTracksVeloUTOnly(
 ); 
 
 trackChecker::Tracks prepareForwardTracks(
-  std::vector< ForwardTracking::TrackForward > forward_tracks
+  std::vector< SciFi::Constants::TrackForward > forward_tracks
 );
 
 void call_pr_checker(

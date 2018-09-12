@@ -9,23 +9,28 @@
 #include "TrackUtils.h"
 #include "HitUtils.h"
 
+/**
+   Functions related to doing a 1D Hough transform
+*/
+
+
 void xAtRef_SamePlaneHits(
-  ForwardTracking::HitsSoAFwd* hits_layers,
+  SciFi::Constants::HitsSoAFwd* hits_layers,
   std::vector<int>& allXHits,
   const float xParams_seed[4],
   FullState state_at_endvelo, 
   int itH, int itEnd);
 
 bool fitXProjection(
-  ForwardTracking::HitsSoAFwd *hits_layers,
+  SciFi::Constants::HitsSoAFwd *hits_layers,
   std::vector<float> &trackParameters,
   std::vector<unsigned int> &pc,
   int planelist[],
   PrParameters& pars_cur);
 
 bool fitYProjection(
-  ForwardTracking::HitsSoAFwd *hits_layers,  
-  ForwardTracking::TrackForward& track,
+  SciFi::Constants::HitsSoAFwd *hits_layers,  
+  SciFi::Constants::TrackForward& track,
   std::vector<int>& stereoHits,
   std::vector<unsigned int> &pc,
   int planelist[],

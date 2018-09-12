@@ -8,7 +8,7 @@
 
 int run_forward_on_CPU (
   std::vector< trackChecker::Tracks >& forward_tracks_events,
-  ForwardTracking::HitsSoAFwd * hits_layers_events,
+  SciFi::Constants::HitsSoAFwd * hits_layers_events,
   std::vector< std::vector< VeloUTTracking::TrackVeloUT > > ut_tracks,
   const int &number_of_events
 ) {
@@ -31,7 +31,7 @@ int run_forward_on_CPU (
 
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
 
-    std::vector< ForwardTracking::TrackForward > forward_tracks = forward(ut_tracks[i_event], &(hits_layers_events[i_event]));
+    std::vector< SciFi::Constants::TrackForward > forward_tracks = forward(ut_tracks[i_event], &(hits_layers_events[i_event]));
 
 #ifdef WITH_ROOT
     // store qop in tree

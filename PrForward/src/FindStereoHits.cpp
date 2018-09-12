@@ -5,8 +5,8 @@
 //  Collect all hits in the stereo planes compatible with the track
 //=========================================================================
 std::vector<int> collectStereoHits(
-  ForwardTracking::HitsSoAFwd* hits_layers,
-  ForwardTracking::TrackForward& track,
+  SciFi::Constants::HitsSoAFwd* hits_layers,
+  SciFi::Constants::TrackForward& track,
   FullState state_at_endvelo,
   PrParameters& pars)
 {
@@ -14,7 +14,7 @@ std::vector<int> collectStereoHits(
   std::vector<int> stereoHits;
   // Skip a reserve call for now, save that for CUDA
   for ( int zone = 0; zone < 12; ++zone ) {
-    float zZone = Forward::uvZone_zPos[zone];
+    float zZone = SciFi::Tracking::uvZone_zPos[zone];
     const float parsX[4] = {track.trackParams[0],
                             track.trackParams[1],
                             track.trackParams[2],
@@ -24,23 +24,23 @@ std::vector<int> collectStereoHits(
                             track.trackParams[6],
                             0.};
     const float yZone = straightLineExtend(parsY,zZone);
-    zZone += Forward::Zone_dzdy[Forward::uvZones[zone]]*yZone;  // Correct for dzDy
+    zZone += SciFi::Tracking::Zone_dzdy[SciFi::Tracking::uvZones[zone]]*yZone;  // Correct for dzDy
     const float xPred  = straightLineExtend(parsX,zZone);
 
-    const bool triangleSearch = std::fabs(yZone) < Forward::tolYTriangleSearch;
+    const bool triangleSearch = std::fabs(yZone) < SciFi::Tracking::tolYTriangleSearch;
     // Not 100% sure about logic of next line, check it!
-    if(!triangleSearch && (2.f*float(((Forward::uvZones[zone])%2)==0)-1.f) * yZone > 0.f) continue;
+    if(!triangleSearch && (2.f*float(((SciFi::Tracking::uvZones[zone])%2)==0)-1.f) * yZone > 0.f) continue;
 
     //float dxDySign = 1.f - 2.f *(float)(zone.dxDy()<0); // same as ? zone.dxDy()<0 : -1 : +1 , but faster??!!
-    const float dxDySign = Forward::uvZone_dxdy[zone] < 0 ? -1.f : 1.f;
+    const float dxDySign = SciFi::Tracking::uvZone_dxdy[zone] < 0 ? -1.f : 1.f;
     const float seed_x_at_zZone = state_at_endvelo.x + (zZone - state_at_endvelo.z) * state_at_endvelo.tx;//Cached as we are upgrading one at a time, revisit
-    const float dxTol = Forward::tolY + Forward::tolYSlope * (std::fabs(xPred - seed_x_at_zZone) + std::fabs(yZone));
+    const float dxTol = SciFi::Tracking::tolY + SciFi::Tracking::tolYSlope * (std::fabs(xPred - seed_x_at_zZone) + std::fabs(yZone));
 
     // -- Use a binary search to find the lower bound of the range of x values
     // -- This takes the y value into account
-    const float lower_bound_at = -dxTol - yZone * Forward::uvZone_dxdy[zone] + xPred;
-    int uv_zone_offset_begin = hits_layers->layer_offset[Forward::uvZones[zone]];
-    int uv_zone_offset_end   = hits_layers->layer_offset[Forward::uvZones[zone]+1];
+    const float lower_bound_at = -dxTol - yZone * SciFi::Tracking::uvZone_dxdy[zone] + xPred;
+    int uv_zone_offset_begin = hits_layers->layer_offset[SciFi::Tracking::uvZones[zone]];
+    int uv_zone_offset_end   = hits_layers->layer_offset[SciFi::Tracking::uvZones[zone]+1];
     int itH   = getLowerBound(hits_layers->m_x,lower_bound_at,uv_zone_offset_begin,uv_zone_offset_end);
     int itEnd = uv_zone_offset_end;
 
@@ -48,8 +48,8 @@ std::vector<int> collectStereoHits(
       for ( ; itEnd != itH; ++itH ) {
         const float dx = hits_layers->m_x[itH] + yZone * hits_layers->m_dxdy[itH] - xPred ;
         if ( dx >  dxTol ) break;
-        if( yZone > hits_layers->m_yMax[itH] + Forward::yTolUVSearch)continue;
-        if( yZone < hits_layers->m_yMin[itH] - Forward::yTolUVSearch)continue;
+        if( yZone > hits_layers->m_yMax[itH] + SciFi::Tracking::yTolUVSearch)continue;
+        if( yZone < hits_layers->m_yMin[itH] - SciFi::Tracking::yTolUVSearch)continue;
         hits_layers->m_coord[itH] = dx*dxDySign;
 	stereoHits.push_back(itH);
       }
@@ -69,8 +69,8 @@ std::vector<int> collectStereoHits(
 //  Fit the stereo hits
 //=========================================================================
 bool selectStereoHits(
-  ForwardTracking::HitsSoAFwd* hits_layers,
-  ForwardTracking::TrackForward& track, 
+  SciFi::Constants::HitsSoAFwd* hits_layers,
+  SciFi::Constants::TrackForward& track, 
   std::vector<int> stereoHits,
   FullState state_at_endvelo, 
   PrParameters& pars)
@@ -97,7 +97,7 @@ bool selectStereoHits(
     float sumCoord = 0.;
     // BAD CODE RELIES ON FIRST CONDITION ALWAYS BEING TRUE AT START NOT TO SEGFAULT
     while( nbDifferent(planelist) < pars.minStereoHits ||
-           hits_layers->m_coord[*endRange] < hits_layers->m_coord[*(endRange-1)] + Forward::minYGap ) {
+           hits_layers->m_coord[*endRange] < hits_layers->m_coord[*(endRange-1)] + SciFi::Tracking::minYGap ) {
       //debug_cout << "Pushing back a stereo hit " << *endRange << " on plane " << hits_layers->m_planeCode[*endRange] << std::endl;
       pc.push_back(*endRange);
       planelist[hits_layers->m_planeCode[*endRange]/2] += 1;
@@ -205,8 +205,8 @@ bool selectStereoHits(
 //  Add hits on empty stereo layers, and refit if something was added
 //=========================================================================
 bool addHitsOnEmptyStereoLayers(
-  ForwardTracking::HitsSoAFwd* hits_layers,
-  ForwardTracking::TrackForward& track,
+  SciFi::Constants::HitsSoAFwd* hits_layers,
+  SciFi::Constants::TrackForward& track,
   std::vector<int>& stereoHits,
   std::vector<unsigned int> &pc,
   int planelist[],
@@ -218,9 +218,9 @@ bool addHitsOnEmptyStereoLayers(
 
   bool added = false;
   for ( unsigned int zone = 0; zone < 12; zone += 1 ) {
-    if ( planelist[ Forward::uvZones[zone]/2 ] != 0 ) continue; //there is already one hit
+    if ( planelist[ SciFi::Tracking::uvZones[zone]/2 ] != 0 ) continue; //there is already one hit
 
-    float zZone = Forward::uvZone_zPos[zone];
+    float zZone = SciFi::Tracking::uvZone_zPos[zone];
 
     const float parsX[4] = {track.trackParams[0],
                             track.trackParams[1],
@@ -232,32 +232,32 @@ bool addHitsOnEmptyStereoLayers(
                             0.};
 
     float yZone = straightLineExtend(parsY,zZone);
-    zZone = Forward::Zone_dzdy[Forward::uvZones[zone]]*yZone;  // Correct for dzDy
+    zZone = SciFi::Tracking::Zone_dzdy[SciFi::Tracking::uvZones[zone]]*yZone;  // Correct for dzDy
     yZone = straightLineExtend(parsY,zZone);
     const float xPred  = straightLineExtend(parsX,zZone);
 
-    const bool triangleSearch = std::fabs(yZone) < Forward::tolYTriangleSearch;
+    const bool triangleSearch = std::fabs(yZone) < SciFi::Tracking::tolYTriangleSearch;
     // Not 100% sure about logic of next line, check it!
-    if(!triangleSearch && (2.f*float((((Forward::uvZones[zone])%2)==0))-1.f) * yZone > 0.f) continue;
+    if(!triangleSearch && (2.f*float((((SciFi::Tracking::uvZones[zone])%2)==0))-1.f) * yZone > 0.f) continue;
 
     //only version without triangle search!
-    const float dxTol = Forward::tolY + Forward::tolYSlope * ( fabs( xPred - state_at_endvelo.x + (zZone - state_at_endvelo.z) * state_at_endvelo.tx) + fabs(yZone) );
+    const float dxTol = SciFi::Tracking::tolY + SciFi::Tracking::tolYSlope * ( fabs( xPred - state_at_endvelo.x + (zZone - state_at_endvelo.z) * state_at_endvelo.tx) + fabs(yZone) );
     // -- Use a binary search to find the lower bound of the range of x values
     // -- This takes the y value into account
-    const float lower_bound_at = -dxTol - yZone * Forward::uvZone_dxdy[zone] + xPred;
-    int uv_zone_offset_begin = hits_layers->layer_offset[Forward::uvZones[zone]];
-    int uv_zone_offset_end   = hits_layers->layer_offset[Forward::uvZones[zone]+1];
+    const float lower_bound_at = -dxTol - yZone * SciFi::Tracking::uvZone_dxdy[zone] + xPred;
+    int uv_zone_offset_begin = hits_layers->layer_offset[SciFi::Tracking::uvZones[zone]];
+    int uv_zone_offset_end   = hits_layers->layer_offset[SciFi::Tracking::uvZones[zone]+1];
     int itH   = getLowerBound(hits_layers->m_x,lower_bound_at,uv_zone_offset_begin,uv_zone_offset_end);
     int itEnd = uv_zone_offset_end;
     
     int best = -1;
-    float bestChi2 = Forward::maxChi2Stereo;
+    float bestChi2 = SciFi::Tracking::maxChi2Stereo;
     if(triangleSearch){
       for ( ; itEnd != itH; ++itH ) {
         const float dx = hits_layers->m_x[itH] + yZone * hits_layers->m_dxdy[itH] - xPred ;
         if ( dx >  dxTol ) break;
-        if( yZone > hits_layers->m_yMax[itH] + Forward::yTolUVSearch)continue;
-        if( yZone < hits_layers->m_yMin[itH] - Forward::yTolUVSearch)continue;
+        if( yZone > hits_layers->m_yMax[itH] + SciFi::Tracking::yTolUVSearch)continue;
+        if( yZone < hits_layers->m_yMin[itH] - SciFi::Tracking::yTolUVSearch)continue;
         const float chi2 = dx*dx*hits_layers->m_w[itH];
         if ( chi2 < bestChi2 ) {
           bestChi2 = chi2;

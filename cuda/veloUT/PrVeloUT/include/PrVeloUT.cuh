@@ -18,7 +18,7 @@
 #include "VeloUTDefinitions.cuh"
 #include "PrVeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.cuh"
-#include "ForwardDefinitions.cuh"
+#include "SciFiDefinitions.cuh"
 
 /** PrVeloUT 
    *
