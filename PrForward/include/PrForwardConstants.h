@@ -5,6 +5,13 @@
    - cut values
    - geometry descriptions
    - parameterizations
+
+   12/09/2018: cut values are those defined in:
+   https://gitlab.cern.ch/lhcb/Rec/blob/master/Tf/TrackSys/python/TrackSys/Configuration.py
+   https://gitlab.cern.ch/lhcb/Rec/blob/master/Tf/TrackSys/python/TrackSys/RecoUpgradeTracking.py
+
+   for the RecoFastTrackingStage, using the default values of ConfigHLT1 (master branch of Rec)
+
  */
 
 namespace SciFi{
@@ -32,9 +39,9 @@ namespace SciFi{
     
     //first loop Hough Cluster search
     const unsigned int minXHits               =    5                     ;   
-    const float        maxXWindow             =  1.2 * Gaudi::Units::mm  ;
+    const float        maxXWindow             =   1. * Gaudi::Units::mm  ;   //1.2 * Gaudi::Units::mm  ;
     const float        maxXWindowSlope        =0.002 * Gaudi::Units::mm  ;
-    const float        maxXGap                =  1.2 * Gaudi::Units::mm  ;
+    const float        maxXGap                =  1. * Gaudi::Units::mm  ;    //1.2 * Gaudi::Units::mm  ;
     const unsigned int minSingleHits          =    2                     ; 
     
     //second loop Hough Cluster search
@@ -45,10 +52,10 @@ namespace SciFi{
     const float        maxXGap_2nd            =  0.5 * Gaudi::Units::mm  ;
     
     //collectX search
-    const float        minPt                  =  500 * Gaudi::Units::MeV ;
+    const float        minPt                  =  400 * Gaudi::Units::MeV ;    // 500 * Gaudi::Units::MeV ;
     //stereo hit matching
-    const float        tolYCollectX           =    4.1* Gaudi::Units::mm ;
-    const float        tolYSlopeCollectX      =0.0018 * Gaudi::Units::mm ;
+    const float        tolYCollectX           =   3.5 * Gaudi::Units::mm ;    //4.1* Gaudi::Units::mm ;
+    const float        tolYSlopeCollectX      = 0.001 * Gaudi::Units::mm ;    //0.0018 * Gaudi::Units::mm ;
     const float        tolYTriangleSearch     =    20.f                  ;   
     //veloUT momentum estimate
     const bool         useMomentumEstimate    = true                     ;   
