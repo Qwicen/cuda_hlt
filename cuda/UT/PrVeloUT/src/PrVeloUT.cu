@@ -43,8 +43,8 @@ __host__ __device__ bool getHits(
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int posLayers[4][85],
-  UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  const UTHits& ut_hits,
+  const UTHitCount& ut_hit_count,
   const float* fudgeFactors, 
   const VeloState& trState,
   const float* ut_dxDy)
@@ -134,8 +134,8 @@ __host__ __device__ bool formClusters(
   const int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int bestHitCandidateIndices[VeloUTTracking::n_layers],
-  UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  const UTHits& ut_hits,
+  const UTHitCount& ut_hit_count,
   TrackHelper& helper,
   const float* ut_dxDy,
   const bool forward)
@@ -442,8 +442,8 @@ __host__ __device__ void fillIterators(
 __host__ __device__ void findHits( 
   const size_t posBeg,
   const size_t posEnd,
-  UTHits& ut_hits,
-  uint layer_offset,
+  const UTHits& ut_hits,
+  const uint layer_offset,
   const int i_layer,
   const float* ut_dxDy,
   const VeloState& myState, 
@@ -453,8 +453,8 @@ __host__ __device__ void findHits(
   int &n_hitCandidatesInLayer,
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer])
 {
-  const auto zInit = ut_hits.zAtYEq0[layer_offset + posBeg];
-  const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
+  const float zInit = ut_hits.zAtYEq0[layer_offset + posBeg];
+  const float yApprox = myState.y + myState.ty * (zInit - myState.z);
   
   size_t pos = posBeg;
   while ( 
@@ -462,13 +462,13 @@ __host__ __device__ void findHits(
    ut_hits.isNotYCompatible( layer_offset + pos, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(xTolNormFact) )
    ) { ++pos; }
 
-  const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
-  const auto yyProto =       myState.y - myState.ty*myState.z;
+  const float xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
+  const float yyProto =       myState.y - myState.ty*myState.z;
   
   for (int i=pos; i<posEnd; ++i) {
     const float dxDy = ut_dxDy[i_layer];
-    const auto xx = ut_hits.xAt(layer_offset + i, yApprox, dxDy); 
-    const auto dx = xx - xOnTrackProto;
+    const float xx = ut_hits.xAt(layer_offset + i, yApprox, dxDy); 
+    const float dx = xx - xOnTrackProto;
     
     if( dx < -xTolNormFact ) continue;
     if( dx >  xTolNormFact ) break; 
@@ -476,9 +476,9 @@ __host__ __device__ void findHits(
     // -- Now refine the tolerance in Y
     if ( ut_hits.isNotYCompatible( layer_offset + i, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx*invNormFact)) ) continue;
     
-    const auto zz = ut_hits.zAtYEq0[layer_offset + i]; 
-    const auto yy = yyProto +  myState.ty*zz;
-    const auto xx2 = ut_hits.xAt(layer_offset + i, yy, dxDy);
+    const float zz = ut_hits.zAtYEq0[layer_offset + i]; 
+    const float yy = yyProto +  myState.ty*zz;
+    const float xx2 = ut_hits.xAt(layer_offset + i, yy, dxDy);
         
     hitCandidatesInLayer[n_hitCandidatesInLayer] = i;
     x_pos_layers[i_layer][n_hitCandidatesInLayer] = xx2;

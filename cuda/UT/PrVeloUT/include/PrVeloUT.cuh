@@ -57,8 +57,8 @@ __host__ __device__ bool getHits(
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int posLayers[4][85],
-  UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  const UTHits& ut_hits,
+  const UTHitCount& ut_hit_count,
   const float* fudgeFactors, 
   const VeloState& trState,
   const float* ut_dxDy); 
@@ -68,8 +68,8 @@ __host__ __device__ bool formClusters(
   const int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int hitCandidateIndices[VeloUTTracking::n_layers],
-  UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  const UTHits& ut_hits,
+  const UTHitCount& ut_hit_count,
   TrackHelper& helper,
   const float* ut_dxDy,
   const bool forward);
@@ -109,8 +109,8 @@ __host__ __device__ void fillIterators(
 __host__ __device__ void findHits( 
   const size_t posBeg,
   const size_t posEnd,
-  UTHits& ut_hits,
-  uint layer_offset,
+  const UTHits& ut_hits,
+  const uint layer_offset,
   const int i_layer,
   const float* ut_dxDy,
   const VeloState& myState, 
@@ -132,7 +132,7 @@ __host__ __device__ void addHits(
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int hitCandidateIndices[VeloUTTracking::n_layers],
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  UTHits& ut_hits,
+  const UTHits& ut_hits,
   const int hitIndices[N],
   const float* ut_dxDy
 ) {
@@ -163,7 +163,7 @@ __host__ __device__ void addChi2s(
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int hitCandidateIndices[VeloUTTracking::n_layers],
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  UTHits& ut_hits,
+  const UTHits& ut_hits,
   const int hitIndices[N] ) {
   
   for ( int i_hit = 0; i_hit < N; ++i_hit ) {
@@ -181,7 +181,7 @@ __host__ __device__ void addChi2s(
 template <int N>
 __host__ __device__ int countHitsWithHighThreshold(
   const int hitIndices[N],
-  UTHits& ut_hits ) {
+  const UTHits& ut_hits ) {
 
   int nHighThres = 0;
   for ( int i_hit = 0; i_hit < N; ++i_hit ) {
@@ -196,7 +196,7 @@ __host__ __device__ void simpleFit(
   const int hitCandidateIndices[VeloUTTracking::n_layers],
   int bestHitCandidateIndices[VeloUTTracking::n_layers],
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  UTHits& ut_hits,
+  const UTHits& ut_hits,
   const int hitIndices[N],
   TrackHelper& helper,
   const float* ut_dxDy) {
