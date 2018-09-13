@@ -38,9 +38,9 @@ __device__ __host__ FTGeometry::FTGeometry(
 
   number_of_stations           = *((uint32_t*)p); p += sizeof(uint32_t);
   number_of_layers_per_station = *((uint32_t*)p); p += sizeof(uint32_t);
+  number_of_layers             = *((uint32_t*)p); p += sizeof(uint32_t);
   number_of_quarters_per_layer = *((uint32_t*)p); p += sizeof(uint32_t);
-  number_of_layers             = number_of_stations * number_of_layers_per_station;
-  number_of_quarters           = number_of_quarters_per_layer * number_of_layers;
+  number_of_quarters           = *((uint32_t*)p); p += sizeof(uint32_t);
   number_of_modules            = (uint32_t*)p; p += number_of_quarters * sizeof(uint32_t);
   number_of_mats_per_module    = *((uint32_t*)p); p += sizeof(uint32_t);
   number_of_mats               = *((uint32_t*)p); p += sizeof(uint32_t);

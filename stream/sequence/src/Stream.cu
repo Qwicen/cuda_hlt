@@ -54,6 +54,10 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_ut_magnet_tool, ut_magnet_tool.size()));
   cudaCheck(cudaMemcpyAsync(dev_ut_magnet_tool, ut_magnet_tool.data(), ut_magnet_tool.size(), cudaMemcpyHostToDevice, stream));
 
+  // Populate FT geometry
+  cudaCheck(cudaMalloc((void**)&dev_ft_geometry, ft_geometry.size()));
+  cudaCheck(cudaMemcpyAsync(dev_ft_geometry, ft_geometry.data(), ft_geometry.size(), cudaMemcpyHostToDevice, stream));
+
   // Memory allocations for host memory (copy back)
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks, max_number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_tracks, max_number_of_events * sizeof(int)));

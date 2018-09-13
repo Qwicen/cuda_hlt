@@ -12,8 +12,8 @@ struct FTGeometry {
   size_t size;
   uint32_t number_of_stations;
   uint32_t number_of_layers_per_station;
-  uint32_t number_of_quarters_per_layer;
   uint32_t number_of_layers;
+  uint32_t number_of_quarters_per_layer;
   uint32_t number_of_quarters;
   uint32_t* number_of_modules; //for each quarter
   uint32_t number_of_mats_per_module;
