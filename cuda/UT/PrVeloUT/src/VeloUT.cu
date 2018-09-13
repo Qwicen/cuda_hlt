@@ -19,8 +19,8 @@ __global__ void veloUT(
   // Velo consolidated types
   const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
   const Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
-  const uint velo_total_number_of_hits = velo_tracks.total_number_of_hits;
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
+  const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
   UTHitCount ut_hit_count;
   ut_hit_count.typecast_after_prefix_sum(dev_ut_hit_count, event_number, number_of_events);
@@ -66,13 +66,16 @@ __global__ void veloUT(
   
   for ( int i = 0; i < (number_of_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
     const int i_track = i * blockDim.x + threadIdx.x;
-    if ( i_track >= number_of_tracks_event ) continue;
-
-    const Velo::State velo_state = velo_states.get(i_track);
-
-    if ( velo_state.backward ) continue;
     
-    if( !veloTrackInUTAcceptance( velo_state ) ) continue;
+    const uint velo_states_index = event_tracks_offset + i_track;
+    if (i_track >= number_of_tracks_event) continue;
+    if (velo_states.backward[velo_states_index]) continue;
+
+    // Mini State with only x, y, tx, ty and z
+    MiniState velo_state {velo_states, velo_states_index};
+
+    if(!veloTrackInUTAcceptance(velo_state)) continue;
+
     atomicAdd(n_velo_tracks_in_UT_event, 1);
 
      // for storing calculated x position of hits for this track
@@ -81,6 +84,7 @@ __global__ void veloUT(
     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
     }
+
     if( !getHits(
           hitCandidatesInLayers,
           n_hitCandidatesInLayers,
@@ -90,16 +94,16 @@ __global__ void veloUT(
           ut_hit_count,
           fudgeFactors,
           velo_state,
-          dev_ut_dxDy )
+          dev_ut_dxDy)
         ) continue;
 
-    TrackHelper helper(velo_state);
+    TrackHelper helper {velo_state};
 
     // indices within hitCandidatesInLayers for selected hits belonging to best track 
     int hitCandidateIndices[VeloUTTracking::n_layers];
     
     // go through UT layers in forward direction
-    if( !formClusters(
+    if(!formClusters(
           hitCandidatesInLayers,
           n_hitCandidatesInLayers,
           x_pos_layers,
@@ -107,8 +111,9 @@ __global__ void veloUT(
           ut_hits,
           ut_hit_count,
           helper,
+          velo_state,
           dev_ut_dxDy,
-          true )){
+          true)) {
       
       // go through UT layers in backward direction
       formClusters(
@@ -119,22 +124,20 @@ __global__ void veloUT(
         ut_hits,
         ut_hit_count,
         helper,
+        velo_state,
         dev_ut_dxDy,
         false);
     }
     
     if ( helper.n_hits > 0 ) {
       const uint velo_track_hit_number = velo_tracks.number_of_hits(i_track);
-      const Velo::Consolidated::Hits velo_track_hits {
-        dev_velo_track_hits,
-        velo_tracks.track_offset(i_track),
-        velo_total_number_of_hits
-      };
+      const Velo::Consolidated::Hits velo_track_hits = velo_tracks.get_hits(dev_velo_track_hits, i_track);
 
       prepareOutputTrack(
         velo_track_hits,
         velo_track_hit_number,
         helper,
+        velo_state,
         hitCandidatesInLayers,
         n_hitCandidatesInLayers,
         ut_hits,

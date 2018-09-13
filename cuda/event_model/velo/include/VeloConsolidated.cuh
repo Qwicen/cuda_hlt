@@ -13,6 +13,7 @@ struct Hits {
   float* y;
   float* z;
   uint* LHCbID;
+  uint number_of_hits;
 
   __device__ __host__ Hits(const Hits& hits) : x(hits.x), y(hits.y),
     z(hits.z), LHCbID(hits.LHCbID) {}
