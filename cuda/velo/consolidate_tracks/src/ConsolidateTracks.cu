@@ -3,8 +3,8 @@
 /**
  * @brief Calculates the parameters according to a root means square fit
  */
- __device__ Velo::State means_square_fit(
-  const Velo::Consolidated::Hits& consolidated_hits,
+ __device__ Velo::State means_square_fit_and_store(
+  Velo::Consolidated::Hits& consolidated_hits,
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
@@ -155,14 +155,10 @@ __global__ void consolidate_tracks(
   for (uint i=threadIdx.x; i<number_of_tracks_event; i+=blockDim.x) {
     const Velo::TrackHits track = event_tracks[i];
 
-    Velo::Consolidated::Hits consolidated_hits {
-      dev_velo_track_hits,
-      velo_tracks.track_offset(i),
-      velo_tracks.total_number_of_hits
-    };
+    Velo::Consolidated::Hits consolidated_hits = velo_tracks.get_hits(dev_velo_track_hits, i);
 
     // Calculate and store fit in consolidated container
-    Velo::State beam_state = means_square_fit(
+    Velo::State beam_state = means_square_fit_and_store(
       consolidated_hits,
       hit_Xs,
       hit_Ys,

@@ -44,8 +44,7 @@ struct Stream {
   bool run_on_x86;
 
   // Pinned host datatypes
-  int* host_number_of_tracks;
-  int* host_accumulated_tracks;
+  uint* host_velo_tracks_atomics;
   uint* host_velo_track_hit_number;
   char* host_velo_track_hits;
   uint* host_total_number_of_velo_clusters;

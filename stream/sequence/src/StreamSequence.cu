@@ -417,8 +417,7 @@ cudaError_t Stream::run_sequence(
 
     // Transmission device to host
     // Velo tracks
-    cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-    cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_velo_tracks_atomics, argen.generate<arg::dev_atomics_storage>(argument_offsets), (2 * number_of_events + 1) * sizeof(uint), cudaMemcpyDeviceToHost, stream));
     cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
     cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), host_accumulated_number_of_hits_in_velo_tracks[0] * sizeof(Velo::Hit), cudaMemcpyDeviceToHost, stream));
     cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), host_number_of_reconstructed_velo_tracks[0] * sizeof(Velo::State), cudaMemcpyDeviceToHost, stream)); 
@@ -439,10 +438,9 @@ cudaError_t Stream::run_sequence(
         std::cout << "Checking Velo tracks reconstructed on GPU" << std::endl; 
   
         const std::vector<trackChecker::Tracks> tracks_events = prepareTracks(
+          host_velo_tracks_atomics,
           host_velo_track_hit_number,
           host_velo_track_hits,
-          host_accumulated_tracks,
-          host_number_of_tracks,
           number_of_events);
       
         std::string trackType = "Velo";

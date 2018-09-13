@@ -159,10 +159,9 @@ void check_roughly(
 }
 
 std::vector<trackChecker::Tracks> prepareTracks(
+  uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number_pinned,
   char* host_velo_track_hits_pinned,
-  int* host_accumulated_tracks,
-  int* host_number_of_tracks_pinned,
   const uint number_of_events
 ) {
   /* Tracks to be checked, save in format for checker */
@@ -170,18 +169,14 @@ std::vector<trackChecker::Tracks> prepareTracks(
   for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
     trackChecker::Tracks tracks; // all tracks within one event
     
-    const Velo::Consolidated::Tracks velo_tracks {(uint*) host_number_of_tracks_pinned, host_velo_track_hit_number_pinned, i_event, number_of_events};
+    const Velo::Consolidated::Tracks velo_tracks {host_velo_tracks_atomics, host_velo_track_hit_number_pinned, i_event, number_of_events};
     const uint number_of_tracks_event = velo_tracks.number_of_tracks(i_event);
 
     for ( uint i_track = 0; i_track < number_of_tracks_event; i_track++ ) {
       trackChecker::Track t;
       
       const uint velo_track_number_of_hits = velo_tracks.number_of_hits(i_track);
-      const Velo::Consolidated::Hits velo_track_hits {
-        (uint*) host_velo_track_hits_pinned,
-        velo_tracks.track_offset(i_track),
-        velo_tracks.total_number_of_hits
-      };
+      Velo::Consolidated::Hits velo_track_hits = velo_tracks.get_hits((uint*) host_velo_track_hits_pinned, i_track);
 
       for ( int i_hit = 0; i_hit < velo_track_number_of_hits; ++i_hit ) {
         t.addId(velo_track_hits.LHCbID[i_hit]);

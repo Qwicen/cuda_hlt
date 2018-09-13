@@ -38,10 +38,9 @@ std::map<std::string, float> calcResults(
 );
 
 std::vector<trackChecker::Tracks> prepareTracks(
+  uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number_pinned,
   char* host_velo_track_hits_pinned,
-  int* host_accumulated_tracks,
-  int* host_number_of_tracks_pinned,
   const uint number_of_events
 );
 
