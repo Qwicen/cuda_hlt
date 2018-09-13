@@ -9,7 +9,6 @@ cudaError_t Stream::initialize(
   const std::vector<char>& ut_geometry,
   const std::vector<char>& ut_magnet_tool,
   const uint max_number_of_events,
-  const bool param_transmit_device_to_host,
   const bool param_do_check,
   const bool param_do_simplified_kalman_filter,
   const bool param_do_print_memory_manager,
@@ -28,7 +27,6 @@ cudaError_t Stream::initialize(
 
   // Set stream options
   stream_number = param_stream_number;
-  transmit_device_to_host = param_transmit_device_to_host;
   do_check = param_do_check;
   do_simplified_kalman_filter = param_do_simplified_kalman_filter;
   do_print_memory_manager = param_do_print_memory_manager;
@@ -57,7 +55,7 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks, max_number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_tracks, max_number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_velo_track_hit_number, max_number_of_events * VeloTracking::max_tracks * sizeof(uint)));
-  cudaCheck(cudaMallocHost((void**)&host_velo_track_hits, max_number_of_events * VeloTracking::max_tracks * 20 * sizeof(Velo::Hit)));
+  cudaCheck(cudaMallocHost((void**)&host_velo_track_hits, max_number_of_events * VeloTracking::max_tracks * VeloTracking::max_track_size * sizeof(Velo::Hit)));
   cudaCheck(cudaMallocHost((void**)&host_total_number_of_velo_clusters, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_number_of_reconstructed_velo_tracks, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_hits_in_velo_tracks, sizeof(uint)));

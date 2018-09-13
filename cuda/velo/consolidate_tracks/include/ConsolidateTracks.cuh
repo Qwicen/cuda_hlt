@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 __device__ Velo::State means_square_fit(
-  const Consolidated::Velo::Hits& consolidated_hits,
+  const Velo::Consolidated::Hits& consolidated_hits,
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
@@ -21,6 +21,6 @@ __global__ void consolidate_tracks(
   uint* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
-  Velo::Hit* dev_velo_track_hits,
-  Velo::State* dev_velo_states
+  uint* dev_velo_track_hits,
+  uint* dev_velo_states
 );

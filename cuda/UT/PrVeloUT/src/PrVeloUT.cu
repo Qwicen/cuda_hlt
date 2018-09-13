@@ -243,10 +243,8 @@ __host__ __device__ bool formClusters(
 // Create the Velo-UT tracks
 //=========================================================================
 __host__ __device__ void prepareOutputTrack(
-  const uint* velo_track_hit_number,   
-  const Velo::Hit* velo_track_hits,
-  const int accumulated_tracks_event,
-  const int i_Velo_track,
+  const Velo::Consolidated::Hits& velo_track_hits,
+  const uint velo_track_hit_number,
   const TrackHelper& helper,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
@@ -317,10 +315,8 @@ __host__ __device__ void prepareOutputTrack(
   // TODO: Maybe have a look and optimize this if possible
   VeloUTTracking::TrackUT track;
   track.hitsNum = 0;
-  const uint starting_hit = velo_track_hit_number[accumulated_tracks_event + i_Velo_track];
-  const uint number_of_hits = velo_track_hit_number[accumulated_tracks_event + i_Velo_track + 1]  - starting_hit;
-  for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
-    track.addLHCbID( velo_track_hits[starting_hit + i_hit].LHCbID );
+  for (int i=0; i<velo_track_hit_number; ++i) {
+    track.addLHCbID(velo_track_hits.LHCbID[i]);
     assert( track.hitsNum < VeloUTTracking::max_track_size);
   }
   track.set_qop( qop );

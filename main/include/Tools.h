@@ -18,6 +18,7 @@
 #include "velopix-input-reader.h"
 #include "TrackChecker.h"
 #include "MCParticle.h"
+#include "VeloConsolidated.cuh"
 
 bool check_velopix_events(
   const std::vector<char> events,
@@ -36,12 +37,12 @@ std::map<std::string, float> calcResults(
   std::vector<float>& times
 );
 
-std::vector< trackChecker::Tracks > prepareTracks(
+std::vector<trackChecker::Tracks> prepareTracks(
   uint* host_velo_track_hit_number_pinned,
-  Velo::Hit* host_velo_track_hits_pinned,
+  char* host_velo_track_hits_pinned,
   int* host_accumulated_tracks,
   int* host_number_of_tracks_pinned,
-  const int &number_of_events
+  const uint number_of_events
 );
 
 trackChecker::Tracks prepareVeloUTTracksEvent(

@@ -38,8 +38,6 @@ struct Stream {
   uint stream_number;
 
   // Launch options
-  bool transmit_host_to_device;
-  bool transmit_device_to_host;
   bool do_check;
   bool do_simplified_kalman_filter;
   bool do_print_memory_manager;
@@ -49,11 +47,11 @@ struct Stream {
   int* host_number_of_tracks;
   int* host_accumulated_tracks;
   uint* host_velo_track_hit_number;
-  Velo::Hit* host_velo_track_hits;
+  char* host_velo_track_hits;
   uint* host_total_number_of_velo_clusters;
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
-  Velo::State* host_velo_states;
+  char* host_velo_states;
   uint* host_accumulated_number_of_ut_hits;
   uint* host_ut_hit_count;
   VeloUTTracking::TrackUT* host_veloUT_tracks;
@@ -85,7 +83,6 @@ struct Stream {
     const std::vector<char>& ut_geometry,
     const std::vector<char>& ut_magnet_tool,
     const uint max_number_of_events,
-    const bool param_transmit_device_to_host,
     const bool param_do_check,
     const bool param_do_simplified_kalman_filter,
     const bool param_print_memory_usage,

@@ -1,4 +1,4 @@
-﻿#include "SearchByTriplet.cuh"
+#include "SearchByTriplet.cuh"
 #include "ClusteringDefinitions.cuh"
 
 /**
@@ -49,7 +49,7 @@ __global__ void search_by_triplet(
 
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * VeloTracking::ttf_modulo;
   Velo::TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::max_weak_tracks;
-  Velo:: TrackletHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
+  Velo::TrackletHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
   unsigned short* h1_rel_indices = dev_rel_indices + event_number * VeloTracking::max_numhits_in_module;
 
   // Initialize variables according to event number and module side

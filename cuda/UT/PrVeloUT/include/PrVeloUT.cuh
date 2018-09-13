@@ -13,8 +13,7 @@
 #include "PrVeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "UTDefinitions.cuh"
-// #include <thrust/count.h>
-// #include <thrust/execution_policy.h>
+#include "VeloConsolidated.cuh"
 
 /** PrVeloUT 
    *
@@ -70,10 +69,8 @@ __host__ __device__ bool formClusters(
   const bool forward);
 
 __host__ __device__ void prepareOutputTrack(
-  const uint* velo_track_hit_number,
-  const Velo::Hit* velo_track_hits,
-  const int accumulated_tracks_event,
-  const int i_track,
+  const Velo::Consolidated::Hits& velo_track_hits,
+  const uint velo_track_hit_number,
   const TrackHelper& helper,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],

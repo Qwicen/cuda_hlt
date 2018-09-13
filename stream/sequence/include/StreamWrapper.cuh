@@ -37,7 +37,6 @@ struct StreamWrapper {
     const std::vector<char>& ut_geometry,
     const std::vector<char>& ut_magnet_tool,
     const uint number_of_events,
-    const bool transmit_device_to_host,
     const bool do_check,
     const bool do_simplified_kalman_filter,
     const bool print_memory_usage,

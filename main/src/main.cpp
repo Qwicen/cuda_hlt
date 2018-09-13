@@ -40,7 +40,6 @@ void printUsage(char* argv[]){
     << std::endl << " -o {offset of events from which to start}=0 (beginning)"
     << std::endl << " -t {number of threads / streams}=1"
     << std::endl << " -r {number of repetitions per thread / stream}=1"
-    << std::endl << " -b {transmit device to host}=1"
     << std::endl << " -c {run checkers}=0"
     << std::endl << " -k {simplified kalman filter}=0"
     << std::endl << " -m {reserve Megabytes}=1024"
@@ -62,7 +61,6 @@ int main(int argc, char *argv[])
   uint number_of_repetitions = 1;
   uint verbosity = 3;
   bool print_memory_usage = false;
-  bool transmit_device_to_host = true;
   // By default, do_check will be true when mc_check is enabled 
   bool do_check = true;
   bool do_simplified_kalman_filter = false;
@@ -98,9 +96,6 @@ int main(int argc, char *argv[])
       break;
     case 'r':
       number_of_repetitions = atoi(optarg);
-      break;
-    case 'b':
-      transmit_device_to_host = atoi(optarg);
       break;
     case 'c':
       do_check = atoi(optarg);
@@ -159,7 +154,6 @@ int main(int argc, char *argv[])
     << " start event offset (-o): " << start_event_offset << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
-    << " transmit device to host (-b): " << transmit_device_to_host << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
     << " run algorithms on x86 architecture as well (-x): " << run_on_x86 << std::endl
@@ -201,7 +195,6 @@ int main(int argc, char *argv[])
     ut_geometry,
     ut_magnet_tool,
     number_of_events_requested,
-    transmit_device_to_host,
     do_check,
     do_simplified_kalman_filter,
     print_memory_usage,
