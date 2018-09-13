@@ -25,13 +25,6 @@
     const auto x = hit_Xs[hit_index];
     const auto y = hit_Ys[hit_index];
     const auto z = hit_Zs[hit_index];
-    const auto ID = hit_IDs[hit_index];
-
-    // Store X, Y, Z and ID in consolidated container
-    consolidated_hits.x[h] = x;
-    consolidated_hits.y[h] = y;
-    consolidated_hits.z[h] = z;
-    consolidated_hits.LHCbID[h] = ID;
     
     const auto wx = VeloTracking::param_w;
     const auto wx_t_x = wx * x;
@@ -153,9 +146,20 @@ __global__ void consolidate_tracks(
   const uint32_t* hit_IDs = (uint32_t*) (dev_velo_cluster_container + 2 * number_of_hits + hit_offset);
 
   for (uint i=threadIdx.x; i<number_of_tracks_event; i+=blockDim.x) {
+    Velo::Consolidated::Hits consolidated_hits = velo_tracks.get_hits(dev_velo_track_hits, i);
     const Velo::TrackHits track = event_tracks[i];
 
-    Velo::Consolidated::Hits consolidated_hits = velo_tracks.get_hits(dev_velo_track_hits, i);
+    auto populate = [&track] (uint32_t* __restrict__ a, uint32_t* __restrict__ b) {
+      for (int i=0; i<track.hitsNum; ++i) {
+        const auto hit_index = track.hits[i];
+        a[i] = b[hit_index];
+      }
+    };
+
+    populate((uint32_t*) consolidated_hits.x, (uint32_t*) hit_Xs);
+    populate((uint32_t*) consolidated_hits.y, (uint32_t*) hit_Ys);
+    populate((uint32_t*) consolidated_hits.z, (uint32_t*) hit_Zs);
+    populate((uint32_t*) consolidated_hits.LHCbID, (uint32_t*) hit_IDs);
 
     // Calculate and store fit in consolidated container
     Velo::State beam_state = means_square_fit_and_store(
