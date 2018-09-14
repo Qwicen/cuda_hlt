@@ -61,6 +61,8 @@ void covariance ( FullState& state, const float qOverP )
   state.c44 = SciFi::Tracking::covarianceValues[4] * qOverP * qOverP;
 }
 
+// calculate difference between straight line extrapolation and
+// where a track with wrongSignPT (2 GeV) would be on the reference plane (?)
 float calcDxRef(float pt, VeloState velo_state) {
   float m_slope2 = pow(velo_state.tx,2) + pow(velo_state.ty,2);
   return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  pow(velo_state.ty,2) - 1000. * pow(velo_state.tx,2); // tune this window

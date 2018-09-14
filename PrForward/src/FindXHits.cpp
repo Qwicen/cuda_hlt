@@ -41,6 +41,7 @@ void collectAllXHits(
 
   float dxRefWS = 0.0; 
   if( wSignTreatment ){
+    // DvB: what happens if we use the acual momentum from VeloUT here instead of a constant?
     dxRefWS = 0.9 * calcDxRef(SciFi::Tracking::wrongSignPT, velo_state); //make windows a bit too small - FIXME check effect of this, seems wrong
   }
 
@@ -95,16 +96,10 @@ void collectAllXHits(
     //debug_cout << "Collecting X hits from " << xMin << " to " << xMax << std::endl;
  
     // Get the zone bounds 
-    // For now we are getting these offsets "for free" from the data structure
-    // Eventually we will need to do the raw bank to SoA transform ourselves of course
     int x_zone_offset_begin = hits_layers->layer_offset[SciFi::Tracking::xZones[iZone]];
     int x_zone_offset_end   = hits_layers->layer_offset[SciFi::Tracking::xZones[iZone]+1];
     int itH   = getLowerBound(hits_layers->m_x,xMin,x_zone_offset_begin,x_zone_offset_end); 
     int itEnd = getLowerBound(hits_layers->m_x,xMax,x_zone_offset_begin,x_zone_offset_end);
-
-    //for (int petlja = itH; petlja < itEnd; ++petlja) {
-    //  debug_cout << hits_layers->m_LHCbID[petlja] << " " << hits_layers->m_x[petlja] << std::endl;
-    //}
 
     //debug_cout << itEnd << " " << itH << std::endl;
 
