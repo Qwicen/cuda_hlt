@@ -251,13 +251,11 @@ void selectXCandidates(
     // try to get rid of this helper class (as pretty much all helper classes)
     std::vector<unsigned int> pc;
     pc.clear();
-    //int planelist[12] = {0};
     planeCounter.clear();
     for (int itH = it1; itH != it2; ++itH) {
       if (hits_layers->isValid(allXHits[itH])) {
 	//debug_cout << "Pushing back valid hit " << itH << " on plane " << hits_layers->m_planeCode[allXHits[itH]] << std::endl;
         pc.push_back(allXHits[itH]);
-        //planelist[hits_layers->m_planeCode[allXHits[itH]]/2] += 1;
         const int plane = hits_layers->m_planeCode[allXHits[itH]]/2;
         planeCounter.addHit( plane );
       }
@@ -277,13 +275,11 @@ void selectXCandidates(
       if ( ( hits_layers->m_coord[allXHits[it2]] < hits_layers->m_coord[allXHits[itLast]] + pars.maxXGap )
            || 
            ( (hits_layers->m_coord[allXHits[it2]] - hits_layers->m_coord[allXHits[it1]] < xWindow) && 
-             //(planelist[hits_layers->m_planeCode[allXHits[it2]]/2] == 0)
              (planeCounter.nbInPlane( hits_layers->m_planeCode[allXHits[it2]]/2 )  == 0)
              ) 
          ) {
 	//debug_cout << "Adding valid hit " << it2 << " on plane " << hits_layers->m_planeCode[allXHits[it2]] << std::endl;
         pc.push_back(allXHits[it2]);
-        //planelist[hits_layers->m_planeCode[allXHits[it2]]/2] += 1;
         planeCounter.addHit( hits_layers->m_planeCode[allXHits[it2]]/2 );
         itLast = it2; 
         ++it2;
@@ -296,7 +292,6 @@ void selectXCandidates(
     std::vector<unsigned int> coordToFit;
     coordToFit.clear();// In framework came with a reserve 16 call
     //if not enough different planes, start again from the very beginning with next right hit
-    //if (nbDifferent(planelist) < pars.minXHits) {
     if (planeCounter.nbDifferent < pars.minXHits) {
       ++it1;
       //debug_cout<<"Not enough different planes " << nbDifferent(planelist) << " starting again" <<std::endl;
@@ -331,7 +326,6 @@ void selectXCandidates(
       for(auto itH = it1; it2 > itH; ++itH ){
         if( !hits_layers->isValid(allXHits[itH]) ) continue;
         int planeCode = hits_layers->m_planeCode[allXHits[itH]]/2;
-        //if( planelist[planeCode] == 1 ){
         if( planeCounter.nbInPlane(planeCode) == 1 ){
           lineFitter.emplace_back(allXHits[itH]);
 	  incrementLineFitParameters(lineFitParameters, hits_layers, allXHits[itH]);
@@ -377,17 +371,14 @@ void selectXCandidates(
 
       std::vector<unsigned int> lpc;
       lpc.clear();
-      //int lplanelist[12] = {0};
       PlaneCounter lplaneCounter;
       for (int itH = itWindowStart; itH != itWindowEnd; ++itH) {
         if (hits_layers->isValid(allXHits[itH])) {
           lpc.push_back(allXHits[itH]);
-          //lplanelist[hits_layers->m_planeCode[allXHits[itH]]/2] += 1;
           lplaneCounter.addHit( hits_layers->m_planeCode[allXHits[itH]]/2 );
 	}
       } 
       while ( itWindowEnd <= it2 ) {
-        //if ( nbDifferent(lplanelist) >= nPlanes ) {
         if ( lplaneCounter.nbDifferent >= nPlanes ) {
           //have nPlanes, check x distance
           const float dist = hits_layers->m_coord[allXHits[itWindowEnd-1]] - hits_layers->m_coord[allXHits[itWindowStart]];
@@ -402,7 +393,6 @@ void selectXCandidates(
           while( itWindowEnd<=it2  &&  !hits_layers->isValid(allXHits[itWindowEnd-1])) ++itWindowEnd;
           if( itWindowEnd > it2) break;
           lpc.push_back(allXHits[itWindowEnd-1]);
-          //lplanelist[hits_layers->m_planeCode[allXHits[itWindowEnd-1]]/2] += 1;
           lplaneCounter.addHit( hits_layers->m_planeCode[allXHits[itWindowEnd-1]]/2 );
           continue;
         } 
@@ -410,7 +400,6 @@ void selectXCandidates(
         // OK this is super annoying but the way I've set it up, sans pointers, I have to now go through this crap
         // and remove this hit. Very very irritating but hey no pointers or helper class shit!
         // DvB: why do we do this?
-        //lplanelist[hits_layers->m_planeCode[allXHits[itWindowStart]]/2] -= 1;
         lplaneCounter.removeHit( hits_layers->m_planeCode[allXHits[itWindowStart]]/2 );
         std::vector<unsigned int> lpc_temp;
         lpc_temp.clear();
@@ -446,11 +435,8 @@ void selectXCandidates(
     // but again, since this all needs porting to CUDA anyway, let the people doing that decide how to handle it.
     pc.clear();
     planeCounter.clear();
-    //int pcplanelist[12] = {0};
     for (int j=0;j<coordToFit.size();++j){
       planeCounter.addHit( hits_layers->m_planeCode[ coordToFit[j] ] / 2 );
-      //pc.push_back(allXHits[coordToFit[j]]);
-      //pcplanelist[hits_layers->m_planeCode[allXHits[coordToFit[j]]]/2] += 1;
     }
     // Only unused(!) hits in coordToFit now
     // The objective of what follows is to add the candidate to m_candidateOutputTracks if it passes some checks
@@ -466,7 +452,6 @@ void selectXCandidates(
       addHitsOnEmptyXLayers(hits_layers, trackParameters, xParams_seed, yParams_seed,
                             false, coordToFit, planeCounter, pars, side);
       
-      //ok = nbDifferent(pcplanelist) > 3;
       ok = planeCounter.nbDifferent > 3;
     }
     //== Fit and remove hits...
@@ -482,7 +467,6 @@ void selectXCandidates(
       //debug_cout << "Pushed back an X candidate for stereo search!" << std::endl;
       SciFi::Track track;
       track.state_endvelo = velo_state;
-      //track.LHCbIDs.clear();
       track.chi2 = trackParameters[7];
       for (int k=0;k<7;++k){
         track.trackParams.push_back(trackParameters[k]);
@@ -509,7 +493,6 @@ bool addHitsOnEmptyXLayers(
   const float yParams_seed[4],
   bool fullFit,
   std::vector<unsigned int> &coordToFit,
-  //int planelist[],
   PlaneCounter& planeCounter,
   SciFi::Tracking::HitSearchCuts& pars,
   int side)
@@ -555,7 +538,6 @@ bool addHitsOnEmptyXLayers(
     }    
     if ( best != -1 ) {
       coordToFit.push_back(best); // add the best hit here
-      //planelist[hits_layers->m_planeCode[best]/2] += 1;
       planeCounter.addHit( hits_layers->m_planeCode[best]/2 );
       added = true;
     }    

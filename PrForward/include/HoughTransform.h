@@ -32,8 +32,6 @@ bool fitYProjection(
   SciFi::HitsSoA *hits_layers,  
   SciFi::Track& track,
   std::vector<int>& stereoHits,
-  std::vector<unsigned int> &coordToFit,
-  //PlaneCounter& planeCounter,
-  int planelist[],
+  PlaneCounter& planeCounter,
   VeloState velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur); 

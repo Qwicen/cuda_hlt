@@ -50,6 +50,7 @@ std::vector<SciFi::Track> PrForward(
     }
     // Reset used hits etc.
     // these should not be part of the HitsSoA struct
+    // not thread safe!!
     for (int i =0; i< SciFi::Constants::max_numhits_per_event; i++){
       hits_layers->m_used[i] = false;
       hits_layers->m_coord[i] = 0.0;
@@ -180,7 +181,6 @@ void selectFullCandidates(
   const ReadMLP_Forward2ndLoop& MLPReader_2nd)
 {
 
-  //std::vector<unsigned int> pc;
   PlaneCounter planeCounter;
   std::vector<float> mlpInput(7, 0.); 
 
@@ -212,10 +212,7 @@ void selectFullCandidates(
     debug_cout << "Passed the stereo hits selection!" << std::endl;
 
     planeCounter.clear();
-    //int planelist[12] = {0};
     for (auto hit : cand->hit_indices) {
-      //pc.push_back(hit);
-      //planelist[hits_layers->m_planeCode[hit]/2] += 1;
       planeCounter.addHit( hits_layers->m_planeCode[hit]/2 );
     }
     

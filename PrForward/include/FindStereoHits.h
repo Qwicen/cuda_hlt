@@ -27,8 +27,7 @@ bool addHitsOnEmptyStereoLayers(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track,
   std::vector<int>& stereoHits,
-  std::vector<unsigned int> &pc,
-  int planelist[],
+  PlaneCounter& planeCounter,
   VeloState velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur);
 

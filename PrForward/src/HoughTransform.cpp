@@ -126,13 +126,12 @@ bool fitYProjection(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track,
   std::vector<int>& stereoHits,
-  std::vector<unsigned int> &pc,
-  int planelist[],
+  PlaneCounter& planeCounter,
   VeloState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   
-  debug_cout << "About to fit a Y projection with " << pc.size() << " hits on " << nbDifferent(planelist) << " different planes looking for " << pars.minStereoHits << std::endl;
+  debug_cout << "About to fit a Y projection with " << stereoHits.size() << " hits on " << planeCounter.nbDifferent << " different planes looking for " << pars.minStereoHits << std::endl;
   //if ( nbDifferent(planelist) < pars.minStereoHits ) return false;
   float maxChi2 = 1.e9f;
   bool parabola = false; //first linear than parabola
@@ -242,17 +241,9 @@ bool fitYProjection(
 
     if ( maxChi2 > SciFi::Tracking::maxChi2Stereo ) {
       debug_cout << "Removing hit " << *worst << " with chi2 " << maxChi2 << " allowable was " << SciFi::Tracking::maxChi2Stereo << std::endl;
-      planelist[hits_layers->m_planeCode[*worst]/2] -= 1;
-      std::vector<unsigned int> pc_temp;
-      pc_temp.clear();
-      for (auto hit : pc) {
-        if (hit != *worst){
-          pc_temp.push_back(hit);
-        }
-      }
-      pc = pc_temp;
-      if ( nbDifferent(planelist) < pars.minStereoHits ) {
-	debug_cout << "Failing because we have " << nbDifferent(planelist) << " different planes and we need " << pars.minStereoHits << std::endl;
+      planeCounter.removeHit( hits_layers->m_planeCode[*worst]/2 );
+      if ( planeCounter.nbDifferent < pars.minStereoHits ) {
+	debug_cout << "Failing because we have " << planeCounter.nbDifferent << " different planes and we need " << pars.minStereoHits << std::endl;
         return false;
       }
       stereoHits.erase( worst );

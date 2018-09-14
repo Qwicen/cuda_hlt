@@ -87,20 +87,17 @@ bool selectStereoHits(
   debug_cout << "About to select stereo hits from list of " << stereoHits.size() << " looking for " << pars.minStereoHits << std::endl;
   if(pars.minStereoHits > stereoHits.size()) return false; //otherwise crash if minHits is too large
   auto endLoop = std::end(stereoHits) - pars.minStereoHits;
-  std::vector<unsigned int> pc;
-  int planelist[12] = {0};
+  PlaneCounter planeCounter;
   while ( beginRange < endLoop ) {
     ++beginRange;
-    pc.clear(); // counting now stereo hits
-    for (int k=0;k<12;++k){planelist[k]=0;}
+    planeCounter.clear();
     auto endRange = beginRange;
     float sumCoord = 0.;
     // BAD CODE RELIES ON FIRST CONDITION ALWAYS BEING TRUE AT START NOT TO SEGFAULT
-    while( nbDifferent(planelist) < pars.minStereoHits ||
+    while( planeCounter.nbDifferent < pars.minStereoHits ||
            hits_layers->m_coord[*endRange] < hits_layers->m_coord[*(endRange-1)] + SciFi::Tracking::minYGap ) {
       //debug_cout << "Pushing back a stereo hit " << *endRange << " on plane " << hits_layers->m_planeCode[*endRange] << std::endl;
-      pc.push_back(*endRange);
-      planelist[hits_layers->m_planeCode[*endRange]/2] += 1;
+      planeCounter.addHit( hits_layers->m_planeCode[*endRange]/2 );
       sumCoord += hits_layers->m_coord[*endRange];
       ++endRange;
       if ( endRange == stereoHits.end() ) break;
@@ -111,19 +108,11 @@ bool selectStereoHits(
       const float averageCoord = sumCoord / float(endRange-beginRange);
 
       // remove first if not single and farthest from mean
-      if ( planelist[hits_layers->m_planeCode[*beginRange]/2] > 1 &&
+      if ( planeCounter.nbInPlane( hits_layers->m_planeCode[*beginRange]/2 ) > 1 &&
            ((averageCoord - hits_layers->m_coord[*beginRange]) > 1.0f * 
 	    (hits_layers->m_coord[*(endRange-1)] - averageCoord)) ) { //tune this value has only little effect?!
 	//debug_cout << "Removing stereo hit " << *beginRange << " on plane " << hits_layers->m_planeCode[*beginRange] << std::endl;
-        planelist[hits_layers->m_planeCode[*beginRange]/2] -= 1;
-	std::vector<unsigned int> pc_temp;
-        pc_temp.clear();
-        for (auto hit : pc) {
-          if (hit != *beginRange){
-            pc_temp.push_back(hit);
-          }
-        }
-        pc = pc_temp;
+        planeCounter.removeHit( hits_layers->m_planeCode[*beginRange]/2 );
         sumCoord -= hits_layers->m_coord[*beginRange++];
         continue;
       }
@@ -131,13 +120,12 @@ bool selectStereoHits(
       if(endRange == stereoHits.end()) break; //already at end, cluster cannot be expanded anymore
 
       //add next, if it decreases the range size and is empty
-      if ( (planelist[hits_layers->m_planeCode[*beginRange]/2] == 0) &&
+      if ( (planeCounter.nbInPlane( hits_layers->m_planeCode[*beginRange]/2 ) == 0) &&
            (averageCoord - hits_layers->m_coord[*beginRange] > 
 	    hits_layers->m_coord[*endRange] - averageCoord )
          ) {
         //debug_cout << "Pushing back a stereo hit " << *endRange << " on plane " << hits_layers->m_planeCode[*endRange] << std::endl;
-        pc.push_back(*endRange);
-	planelist[hits_layers->m_planeCode[*endRange]/2] += 1;
+        planeCounter.addHit( hits_layers->m_planeCode[*endRange]/2 );
         sumCoord += hits_layers->m_coord[*endRange++];
         continue;
       }
@@ -159,10 +147,10 @@ bool selectStereoHits(
                    [](const int& hit) { return hit; });
 
     //fit Y Projection of track using stereo hits
-    if(!fitYProjection(hits_layers, track, trackStereoHits, pc, planelist, velo_state, pars))continue;
+    if(!fitYProjection(hits_layers, track, trackStereoHits, planeCounter, velo_state, pars))continue;
     debug_cout << "Passed the Y fit" << std::endl;
 
-    if(!addHitsOnEmptyStereoLayers(hits_layers, track, trackStereoHits, pc, planelist, velo_state, pars))continue;
+    if(!addHitsOnEmptyStereoLayers(hits_layers, track, trackStereoHits, planeCounter, velo_state, pars))continue;
     //debug_cout << "Passed adding hits on empty stereo layers" << std::endl;
 
     //debug_cout << "Selecting on size have " << trackStereoHits.size() << " want " << bestStereoHits.size() << std::endl;
@@ -208,17 +196,16 @@ bool addHitsOnEmptyStereoLayers(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track,
   std::vector<int>& stereoHits,
-  std::vector<unsigned int> &pc,
-  int planelist[],
+  PlaneCounter& planeCounter,
   VeloState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   //at this point pc is counting only stereo HITS!
-  if(nbDifferent(planelist)  > 5) return true;
+  if(planeCounter.nbDifferent  > 5) return true;
 
   bool added = false;
   for ( unsigned int zone = 0; zone < 12; zone += 1 ) {
-    if ( planelist[ SciFi::Tracking::uvZones[zone]/2 ] != 0 ) continue; //there is already one hit
+    if ( planeCounter.nbInPlane( SciFi::Tracking::uvZones[zone]/2 ) != 0 ) continue; //there is already one hit
 
     float zZone = SciFi::Tracking::uvZone_zPos[zone];
 
@@ -279,12 +266,11 @@ bool addHitsOnEmptyStereoLayers(
 
     if ( -1 != best ) {
       stereoHits.push_back(best);
-      pc.push_back(best);
-      planelist[hits_layers->m_planeCode[best]/2] += 1;
+      planeCounter.addHit( hits_layers->m_planeCode[best]/2 );
       added = true;
     }
   }
   if ( !added ) return true;
-  return fitYProjection( hits_layers, track, stereoHits, pc, planelist, velo_state, pars );
+  return fitYProjection( hits_layers, track, stereoHits, planeCounter, velo_state, pars );
 }
  
