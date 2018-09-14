@@ -33,8 +33,8 @@ inline int nbSingle(int planelist[]) {
 }
 
 struct PlaneCounter{
-  int planeList[SciFi::Constants::n_physical_layers];
-  unsigned int nbDifferent;
+  int planeList[SciFi::Constants::n_physical_layers] = {0};
+  unsigned int nbDifferent = 0;
 
   inline void addHit( int plane ) {
     nbDifferent += (int)( (planeList[plane] += 1 ) == 1) ;
@@ -44,8 +44,16 @@ struct PlaneCounter{
     nbDifferent -= ((int)( (planeList[plane] -= 1 ) == 0)) ;
   }
 
-  inline int nbInPlane( int plane ) {
+  inline int nbInPlane( int plane ) const {
     return planeList[plane];
+  }
+
+  inline int nbSingle() const {
+    int single = 0;
+    for (int i=0; i < SciFi::Constants::n_physical_layers; ++i) {
+      single += planeList[i] == 1 ? 1 : 0;
+    }
+    return single;
   }
   
   inline void clear() {

@@ -32,6 +32,9 @@ void collectAllXHits(
   const float dir = q*SciFi::Tracking::magscalefactor*(-1.f);
 
   // Is PT at end VELO same as PT at beamline? Check output of VeloUT
+  // DvB: no, but there is only a slight difference,
+  // impact on efficiency is less than 1%,
+  // the main difference probably comes from the intermediate computation of one more propagation
   float slope2 = pow(velo_state.tx,2) + pow(velo_state.ty,2); 
   const float pt = std::sqrt( std::fabs(1./ (pow(qOverP,2) ) ) * (slope2) / (1. + slope2) );
   const bool wSignTreatment = SciFi::Tracking::useWrongSignWindow && pt > SciFi::Tracking::wrongSignPT;
