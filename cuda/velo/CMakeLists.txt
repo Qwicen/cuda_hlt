@@ -15,6 +15,7 @@ include_directories(simplified_kalman_filter/include)
 include_directories(consolidate_tracks/include)
 include_directories(../../main/include)
 include_directories(../event_model/velo/include)
+include_directories(../event_model/common/include)
 include_directories(../utils/sorting/include)
 include_directories(../utils/prefix_sum/include)
 
