@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <vector>
 #include <iostream>
-
 #include "VeloDefinitions.cuh"
 
 namespace VeloClustering {

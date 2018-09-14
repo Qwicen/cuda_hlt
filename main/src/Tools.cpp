@@ -114,65 +114,6 @@ std::map<std::string, float> calcResults(std::vector<float>& times){
     return results;
 }
 
-/**
- * Prints tracks
- * Track #n, length <length>:
- *  <ID> module <module>, x <x>, y <y>, z <z>
- * 
- * @param tracks      
- * @param trackNumber 
- */
-template <bool mc_check>
-void printTrack(
-  VeloTracking::Track <mc_check> * tracks,
-  const int trackNumber,
-  std::ofstream& outstream
-) {
-  const VeloTracking::Track<mc_check> t = tracks[trackNumber];
-  outstream << "Track #" << trackNumber << ", length " << (int) t.hitsNum << std::endl;
-
-  for(int i=0; i<t.hitsNum; ++i){
-    const VeloTracking::Hit <mc_check> hit = t.hits[i];
-    const float x = hit.x;
-    const float y = hit.y;
-    const float z = hit.z;
-    //const uint LHCbID = hit.LHCbID;
-  
-    outstream 
-      << ", x " << std::setw(6) << x
-      << ", y " << std::setw(6) << y
-      << ", z " << std::setw(6) << z
-      //<< ", LHCbID " << LHCbID 
-      << std::endl;
-  }
-
-  outstream << std::endl;
-}
-
-template <bool mc_check>
-void printTracks(
-  VeloTracking::Track <mc_check> * tracks,
-  int* n_tracks,
-  int n_events,
-  std::ofstream& outstream 
-) {
-  for ( int i_event = 0; i_event < n_events; ++i_event ) {
-    VeloTracking::Track <mc_check> * tracks_event = tracks + i_event * VeloTracking::max_tracks;
-    int n_tracks_event = n_tracks[ i_event ];
-    outstream << i_event << std::endl;
-    outstream << n_tracks_event << std::endl;
-
-    for ( int i_track = 0; i_track < n_tracks_event; ++i_track ) {
-      const VeloTracking::Track <mc_check> t = tracks_event[i_track];
-      outstream << t.hitsNum << std::endl;
-      for ( int i_hit = 0; i_hit < t.hitsNum; ++i_hit ) {
-        VeloTracking::Hit <mc_check> hit = t.hits[ i_hit ];
-        outstream << hit.LHCbID << std::endl;
-      }
-    }
-  }
-}
-
 void check_roughly(
   const trackChecker::Tracks& tracks,
   const std::vector<uint32_t> hit_IDs,
@@ -217,26 +158,28 @@ void check_roughly(
   printf("efficiency = %f \n", float(matched) / long_tracks );
 }
 
-std::vector< trackChecker::Tracks > prepareTracks(
+std::vector<trackChecker::Tracks> prepareTracks(
+  uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number_pinned,
-  VeloTracking::Hit<true>* host_velo_track_hits_pinned,  
-  int* host_accumulated_tracks,
-  int* host_number_of_tracks_pinned,
-  const int &number_of_events
+  char* host_velo_track_hits_pinned,
+  const uint number_of_events
 ) {
-  
   /* Tracks to be checked, save in format for checker */
   std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
   for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
     trackChecker::Tracks tracks; // all tracks within one event
-    const int accumulated_tracks = host_accumulated_tracks[i_event];
-    for ( uint i_track = 0; i_track < host_number_of_tracks_pinned[i_event]; i_track++ ) {
+    
+    const Velo::Consolidated::Tracks velo_tracks {host_velo_tracks_atomics, host_velo_track_hit_number_pinned, i_event, number_of_events};
+    const uint number_of_tracks_event = velo_tracks.number_of_tracks(i_event);
+
+    for ( uint i_track = 0; i_track < number_of_tracks_event; i_track++ ) {
       trackChecker::Track t;
-      const uint starting_hit = host_velo_track_hit_number_pinned[accumulated_tracks + i_track];
-      const uint number_of_hits = host_velo_track_hit_number_pinned[accumulated_tracks + i_track + 1] - starting_hit;
       
-      for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
-        t.addId(host_velo_track_hits_pinned[starting_hit + i_hit].LHCbID);
+      const uint velo_track_number_of_hits = velo_tracks.number_of_hits(i_track);
+      Velo::Consolidated::Hits velo_track_hits = velo_tracks.get_hits((uint*) host_velo_track_hits_pinned, i_track);
+
+      for ( int i_hit = 0; i_hit < velo_track_number_of_hits; ++i_hit ) {
+        t.addId(velo_track_hits.LHCbID[i_hit]);
       } 
       tracks.push_back( t );
     } // tracks

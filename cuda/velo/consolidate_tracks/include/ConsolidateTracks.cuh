@@ -1,21 +1,26 @@
 #pragma once
 
-#include "VeloDefinitions.cuh"
+#include "VeloEventModel.cuh"
+#include "VeloConsolidated.cuh"
 #include "Common.h"
 #include <stdint.h>
 
-__device__ VeloState means_square_fit(
-  const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
-  const VeloTracking::TrackHits& track
+__device__ Velo::State means_square_fit(
+  Velo::Consolidated::Hits& consolidated_hits,
+  const float* hit_Xs,
+  const float* hit_Ys,
+  const float* hit_Zs,
+  const uint* hit_IDs,
+  const Velo::TrackHits& track
 );
 
 __global__ void consolidate_tracks(
   int* dev_atomics_storage,
-  const VeloTracking::TrackHits* dev_tracks,
+  const Velo::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
-  VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
-  VeloState* dev_velo_states
+  uint* dev_velo_track_hits,
+  uint* dev_velo_states
 );
