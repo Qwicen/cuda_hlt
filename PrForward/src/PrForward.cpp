@@ -180,20 +180,20 @@ void selectFullCandidates(
   const ReadMLP_Forward2ndLoop& MLPReader_2nd)
 {
 
-  std::vector<unsigned int> pc;
+  //std::vector<unsigned int> pc;
+  PlaneCounter planeCounter;
   std::vector<float> mlpInput(7, 0.); 
 
   std::vector<SciFi::Track> selectedTracks;
 
   for (std::vector<SciFi::Track>::iterator cand = std::begin(outputTracks);
        cand != std::end(outputTracks); ++cand) {
-    // DvB: this bool is not used anywhere...??
-    bool isValid = false; // In c++ this is in track class, try to understand why later
     pars.minStereoHits = 4;
 
     if(cand->hitsNum + pars.minStereoHits < SciFi::Tracking::minTotalHits) {
       pars.minStereoHits = SciFi::Tracking::minTotalHits - cand->hitsNum;
     }
+    
     // search for hits in U/V layers
     std::vector<int> stereoHits = collectStereoHits(hits_layers, *cand, velo_state, pars);
     debug_cout << "Collected " << stereoHits.size() << " valid stereo hits for full track search, with requirement of " << pars.minStereoHits << std::endl;
@@ -211,32 +211,32 @@ void selectFullCandidates(
     if ( !selectStereoHits(hits_layers, *cand, stereoHits, velo_state, pars) ) continue;
     debug_cout << "Passed the stereo hits selection!" << std::endl;
 
-    pc.clear();
-    int planelist[12] = {0};
-    // Hijacks LHCbIDs to store the values of the hits in the SoA for now, to be changed
+    planeCounter.clear();
+    //int planelist[12] = {0};
     for (auto hit : cand->hit_indices) {
-      pc.push_back(hit);
-      planelist[hits_layers->m_planeCode[hit]/2] += 1;
+      //pc.push_back(hit);
+      //planelist[hits_layers->m_planeCode[hit]/2] += 1;
+      planeCounter.addHit( hits_layers->m_planeCode[hit]/2 );
     }
     
     //make a fit of ALL hits
-    if(!fitXProjection(hits_layers, cand->trackParams, pc, planelist, pars))continue;
+    if(!fitXProjection(hits_layers, cand->trackParams, cand->hit_indices, planeCounter, pars))continue;
     //debug_cout << "Passed the X projection fit" << std::endl;   
  
     //check in empty x layers for hits 
     auto checked_empty = (cand->trackParams[4]  < 0.f) ?
       addHitsOnEmptyXLayers(hits_layers, cand->trackParams, xParams_seed, yParams_seed,
-                              true, pc, planelist, pars, -1)
+                              true, cand->hit_indices, planeCounter, pars, -1)
         : 
       addHitsOnEmptyXLayers(hits_layers, cand->trackParams, xParams_seed, yParams_seed,
-                              true, pc, planelist, pars, 1);
+                              true, cand->hit_indices, planeCounter, pars, 1);
 
     if (not checked_empty) continue;
     //debug_cout << "Passed the empty check" << std::endl;
 
     //track has enough hits, calcualte quality and save if good enough
     //debug_cout << "Full track candidate has " << pc.size() << " hits on " << nbDifferent(planelist) << " different layers" << std::endl;    
-    if(nbDifferent(planelist) >= SciFi::Tracking::minTotalHits){
+    if(planeCounter.nbDifferent >= SciFi::Tracking::minTotalHits){
       //debug_cout << "Computing final quality with NNs" << std::endl;
 
       const float qOverP  = calcqOverP(cand->trackParams[1], velo_state);
@@ -259,7 +259,7 @@ void selectFullCandidates(
       const float by1  = cand->trackParams[5];
       const float bx1  = cand->trackParams[1];
 
-      mlpInput[0] = nbDifferent(planelist);
+      mlpInput[0] = planeCounter.nbDifferent;
       mlpInput[1] = qOverP;
       mlpInput[2] = VeloUT_qOverP - qOverP; //veloUT - scifi
       if(std::fabs(VeloUT_qOverP) < 1e-9f) mlpInput[2] = 0.f; //no momentum estiamte
@@ -278,9 +278,7 @@ void selectFullCandidates(
       //debug_cout << "Track candidate has NN quality " << quality << std::endl;
 
       if(quality < SciFi::Tracking::maxQuality){
-	cand->quality = quality;
-	cand->hitsNum = pc.size();
-        cand->hit_indices = pc;
+        cand->quality = quality;
         cand->set_qop( qOverP );
 	// Must be a neater way to do this...
 	selectedTracks.emplace_back(*cand);

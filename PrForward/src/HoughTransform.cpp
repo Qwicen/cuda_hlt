@@ -32,12 +32,12 @@ void xAtRef_SamePlaneHits(
 bool fitXProjection(
   SciFi::HitsSoA *hits_layers,
   std::vector<float> &trackParameters,
-  std::vector<unsigned int> &pc,
-  int planelist[],
+  std::vector<unsigned int> &coordToFit,
+  PlaneCounter& planeCounter,
   SciFi::Tracking::HitSearchCuts& pars)
 {
 
-  if (nbDifferent(planelist) < pars.minXHits) return false;
+  if (planeCounter.nbDifferent < pars.minXHits) return false;
   bool doFit = true;
   while ( doFit ) {
     //== Fit a cubic
@@ -50,7 +50,7 @@ bool fitXProjection(
     float sdz  = 0.f; 
     float sdz2 = 0.f; 
 
-    for (auto hit : pc ) {
+    for (auto hit : coordToFit ) {
       float d = trackToHitDistance(trackParameters, hits_layers, hit);
       float w = hits_layers->m_w[hit];
       float z = .001f * ( hits_layers->m_z[hit] - SciFi::Tracking::zReference );
@@ -82,16 +82,16 @@ bool fitXProjection(
     float totChi2 = 0.f;  
     //int   nDoF = -3; // fitted 3 parameters
     int  nDoF = -3;
-    const bool notMultiple = nbDifferent(planelist) == pc.size();
+    const bool notMultiple = planeCounter.nbDifferent == coordToFit.size();
 
-    const auto itEnd = pc.back();
+    const auto itEnd = coordToFit.back();
     auto worst = itEnd;
-    for ( auto itH : pc ) {
+    for ( auto itH : coordToFit ) {
       float d = trackToHitDistance(trackParameters, hits_layers, itH);
       float chi2 = d*d*hits_layers->m_w[itH];
       totChi2 += chi2;
       ++nDoF;
-      if ( chi2 > maxChi2 && ( notMultiple || planelist[hits_layers->m_planeCode[itH]/2] > 1 ) ) {
+      if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( hits_layers->m_planeCode[itH]/2 ) > 1 ) ) {
         maxChi2 = chi2;
         worst   = itH; 
       }    
@@ -107,14 +107,14 @@ bool fitXProjection(
     if ( totChi2/nDoF > SciFi::Tracking::maxChi2PerDoF  ||
          maxChi2 > SciFi::Tracking::maxChi2XProjection ) {
       // Should really make this bit of code into a function... 
-      planelist[hits_layers->m_planeCode[worst]/2] -= 1;
-      std::vector<unsigned int> pc_temp;
-      pc_temp.clear();
-      for (auto hit : pc) {
-        if (hit != worst) pc_temp.push_back(hit);
+      planeCounter.removeHit( hits_layers->m_planeCode[worst]/2 );
+      std::vector<unsigned int> coordToFit_temp;
+      coordToFit_temp.clear();
+      for (auto hit : coordToFit) {
+        if (hit != worst) coordToFit_temp.push_back(hit);
       }
-      pc = pc_temp;
-      if (nbDifferent(planelist) < pars.minXHits + pars.minStereoHits) return false;
+      coordToFit = coordToFit_temp;
+      if (planeCounter.nbDifferent < pars.minXHits + pars.minStereoHits) return false;
       doFit = true;
     }    
   }

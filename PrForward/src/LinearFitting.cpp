@@ -34,8 +34,9 @@ void incrementLineFitParameters(SciFi::Tracking::LineFitterPars &parameters, Sci
 void fastLinearFit(
   SciFi::HitsSoA* hits_layers,
   std::vector<float> &trackParameters, 
-  std::vector<unsigned int> &pc,
-  int planelist[],
+  std::vector<unsigned int> &coordToFit,
+  //int planelist[],
+  PlaneCounter planeCounter,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   bool fit = true;
@@ -47,7 +48,7 @@ void fastLinearFit(
     float sd   = 0.;
     float sdz  = 0.;
 
-    for (auto hit : pc ){
+    for (auto hit : coordToFit ){
       const float parsX[4] = {trackParameters[0],
                               trackParameters[1],
                               trackParameters[2],
@@ -71,15 +72,15 @@ void fastLinearFit(
     trackParameters[1] += db;
     fit = false;
 
-    if ( pc.size() < pars.minXHits ) return;
+    if ( coordToFit.size() < pars.minXHits ) return;
 
-    int worst = pc.back();
+    int worst = coordToFit.back();
     float maxChi2 = 0.f; 
-    const bool notMultiple = nbDifferent(planelist) == pc.size();
+    const bool notMultiple = planeCounter.nbDifferent == coordToFit.size();
     //TODO how many multiple hits do we normaly have?
     //how often do we do the right thing here?
     //delete two hits at same time?
-    for ( auto hit : pc) { 
+    for ( auto hit : coordToFit) { 
       // This could certainly be wrapped in some helper function with a lot
       // of passing around or copying etc... 
       const float parsX[4] = {trackParameters[0],
@@ -90,20 +91,22 @@ void fastLinearFit(
       float hitdist = hits_layers->m_x[hit] - track_x_at_zHit; 
       float chi2 = hitdist*hitdist*hits_layers->m_w[hit];
 
-      if ( chi2 > maxChi2 && ( notMultiple || planelist[hits_layers->m_planeCode[hit]/2] > 1 ) ) {
+      if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( hits_layers->m_planeCode[hit]/2 ) > 1 ) ) {
         maxChi2 = chi2;
         worst   = hit; 
       }    
     }    
     //== Remove grossly out hit, or worst in multiple layers
     if ( maxChi2 > SciFi::Tracking::maxChi2LinearFit || ( !notMultiple && maxChi2 > 4.f ) ) {
-      planelist[hits_layers->m_planeCode[worst]/2] -= 1;
-      std::vector<unsigned int> pc_temp;
-      pc_temp.clear();
-      for (auto hit : pc) {
-        if (hit != worst) pc_temp.push_back(hit);
+      //planelist[hits_layers->m_planeCode[worst]/2] -= 1;
+      planeCounter.removeHit( hits_layers->m_planeCode[worst]/2 );
+      std::vector<unsigned int> coordToFit_temp;
+      coordToFit_temp.clear();
+      for (auto hit : coordToFit) {
+        if (hit != worst) coordToFit_temp.push_back(hit);
       }
-      pc = pc_temp; 
+      coordToFit = coordToFit_temp;
+      fit = true;
     }
   }
 }

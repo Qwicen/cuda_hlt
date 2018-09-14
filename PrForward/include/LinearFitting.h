@@ -17,5 +17,6 @@ void fastLinearFit(
   SciFi::HitsSoA* hits_layers,
   std::vector<float> &trackParameters,
   std::vector<unsigned int> &pc,
-  int planelist[],
+  //int planelist[],
+  PlaneCounter planeCounter,
   SciFi::Tracking::HitSearchCuts& pars_cur);

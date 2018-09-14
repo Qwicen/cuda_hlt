@@ -55,7 +55,7 @@ struct PlaneCounter{
     }
     return single;
   }
-  
+ 
   inline void clear() {
     nbDifferent = 0;
     for ( int i = 0; i < SciFi::Constants::n_physical_layers; ++i ) {
