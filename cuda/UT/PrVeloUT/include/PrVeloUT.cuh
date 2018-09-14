@@ -5,20 +5,28 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
-
 #include <cassert>
-
-#include <thrust/count.h>
-#include <thrust/execution_policy.h>
-
 #include "Logger.h"
 #include "SystemOfUnits.h"
-
+#include "VeloEventModel.cuh"
 #include "VeloUTDefinitions.cuh"
 #include "PrVeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
-#include "VeloDefinitions.cuh"
 #include "UTDefinitions.cuh"
+#include "VeloConsolidated.cuh"
+
+struct MiniState {
+  float x, y, tx, ty, z;
+
+  __host__ __device__ MiniState(
+    const Velo::Consolidated::States& velo_states,
+    const uint index
+  ) : x(velo_states.x[index]),
+    y(velo_states.y[index]),
+    tx(velo_states.tx[index]),
+    ty(velo_states.ty[index]),
+    z(velo_states.z[index]) {}
+};
 
 /** PrVeloUT 
    *
@@ -30,17 +38,15 @@
    *  2018-05-05: Plácido Fernández (make standalone)
    *  2018-07:    Dorothea vom Bruch (convert to C and then CUDA code)
    */
-
 struct TrackHelper{
-  VeloState state;
   int bestHitIndices[VeloUTTracking::n_layers];
   int n_hits = 0;
   float bestParams[4];
   float wb, invKinkVeloDist, xMidField;
 
   __host__ __device__ TrackHelper(
-    const VeloState& miniState
-    ) : state(miniState) {
+    const MiniState& state
+  ) {
     bestParams[0] = bestParams[2] = bestParams[3] = 0.;
     bestParams[1] = PrVeloUTConst::maxPseudoChi2;
     xMidField = state.x + state.tx*(PrVeloUTConst::zKink-state.z);
@@ -50,7 +56,9 @@ struct TrackHelper{
     }
   };
 
-__host__ __device__ bool veloTrackInUTAcceptance( const VeloState& state );
+__host__ __device__ bool veloTrackInUTAcceptance(
+  const MiniState& state
+);
 
 __host__ __device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
@@ -60,7 +68,7 @@ __host__ __device__ bool getHits(
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
   const float* fudgeFactors, 
-  const VeloState& trState,
+  const MiniState& trState,
   const float* ut_dxDy); 
 
 __host__ __device__ bool getHitsNoPosLayers(
@@ -70,7 +78,7 @@ __host__ __device__ bool getHitsNoPosLayers(
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
   const float* fudgeFactors, 
-  const VeloState& trState,
+  const MiniState& trState,
   const float* ut_dxDy);
 
 __host__ __device__ bool formClusters(
@@ -81,15 +89,15 @@ __host__ __device__ bool formClusters(
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
   TrackHelper& helper,
+  MiniState& state,
   const float* ut_dxDy,
   const bool forward);
 
 __host__ __device__ void prepareOutputTrack(
-  const uint* velo_track_hit_number,
-  const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
-  const int accumulated_tracks_event,
-  const int i_track,
+  const Velo::Consolidated::Hits& velo_track_hits,
+  const uint velo_track_hit_number,
   const TrackHelper& helper,
+  const MiniState& state,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   UTHits& ut_hits,
@@ -123,7 +131,7 @@ __host__ __device__ void findHits(
   const uint layer_offset,
   const int i_layer,
   const float* ut_dxDy,
-  const VeloState& myState, 
+  const MiniState& myState, 
   const float xTolNormFact,
   const float invNormFact,
   int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
@@ -135,7 +143,7 @@ __host__ __device__ void findHitsAllRange (
   const int layer_offset,
   const int i_layer,
   const float* ut_dxDy,
-  const VeloState& myState, 
+  const MiniState& myState, 
   const float xTolNormFact,
   const float invNormFact,
   int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
@@ -220,6 +228,7 @@ __host__ __device__ void simpleFit(
   const UTHits& ut_hits,
   const int hitIndices[N],
   TrackHelper& helper,
+  MiniState& state,
   const float* ut_dxDy) {
   assert( N==3||N==4 );
  
@@ -250,8 +259,8 @@ __host__ __device__ void simpleFit(
   
   // new VELO slope x
   const float xb = xUTFit+xSlopeUTFit*(PrVeloUTConst::zKink-PrVeloUTConst::zMidUT);
-  const float xSlopeVeloFit = (xb-helper.state.x)*helper.invKinkVeloDist;
-  const float chi2VeloSlope = (helper.state.tx - xSlopeVeloFit)*PrVeloUTConst::invSigmaVeloSlope;
+  const float xSlopeVeloFit = (xb-state.x)*helper.invKinkVeloDist;
+  const float chi2VeloSlope = (state.tx - xSlopeVeloFit)*PrVeloUTConst::invSigmaVeloSlope;
   
   /* chi2 takes chi2 from velo fit + chi2 from UT fit */
   float chi2UT = chi2VeloSlope*chi2VeloSlope;

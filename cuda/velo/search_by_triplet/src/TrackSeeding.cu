@@ -1,4 +1,4 @@
-#include "../include/SearchByTriplet.cuh"
+#include "SearchByTriplet.cuh"
 
 /**
  * @brief Search for compatible triplets in
@@ -9,13 +9,13 @@ __device__ void track_seeding(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
-  const VeloTracking::Module* module_data,
+  const Velo::Module* module_data,
   const short* h0_candidates,
   const short* h2_candidates,
   bool* hit_used,
   uint* tracklets_insertPointer,
   uint* ttf_insertPointer,
- VeloTracking:: TrackletHits* tracklets,
+  Velo:: TrackletHits* tracklets,
   uint* tracks_to_follow,
   unsigned short* h1_indices,
   uint* local_number_of_hits
@@ -104,7 +104,7 @@ __device__ void track_seeding(
       // Fetch h1
       // const auto h1_rel_index = h1_indices[h1_rel_index];
       h1_index = h1_indices[h1_rel_index];
-      const VeloTracking::HitBase h1 {hit_Xs[h1_index], hit_Ys[h1_index], hit_Zs[h1_index]};
+      const Velo::HitBase h1 {hit_Xs[h1_index], hit_Ys[h1_index], hit_Zs[h1_index]};
 
       // Iterate over all h0, h2 combinations
       // Ignore used hits
@@ -121,7 +121,7 @@ __device__ void track_seeding(
           const auto h0_index = h0_first_candidate + h0_rel_candidate;
           if (!hit_used[h0_index]) {
             // Fetch h0
-            const VeloTracking::HitBase h0 {hit_Xs[h0_index], hit_Ys[h0_index], hit_Zs[h0_index]};
+            const Velo::HitBase h0 {hit_Xs[h0_index], hit_Ys[h0_index], hit_Zs[h0_index]};
 
             // Finally, iterate over all h2 indices
             for (auto h2_index=h2_first_candidate; h2_index<h2_last_candidate; ++h2_index) {
@@ -131,7 +131,7 @@ __device__ void track_seeding(
                 // Our triplet is h0_index, h1_index, h2_index
                 // Fit it and check if it's better than what this thread had
                 // for any triplet with h1
-                const VeloTracking::HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
+                const Velo::HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
 
                 const auto dmax = VeloTracking::max_slope * (h0.z - h1.z);
                 const auto scatterDenom2 = 1.f / ((h2.z - h1.z) * (h2.z - h1.z));
@@ -187,7 +187,7 @@ __device__ void track_seeding(
     if (threadIdx.x == winner_thread) {
       // Add the track to the bag of tracks
       const auto trackP = atomicAdd(tracklets_insertPointer, 1) % VeloTracking::ttf_modulo;
-      tracklets[trackP] = VeloTracking::TrackletHits {best_h0, h1_index, best_h2};
+      tracklets[trackP] = Velo::TrackletHits {best_h0, h1_index, best_h2};
 
       // Add the tracks to the bag of tracks to_follow
       // Note: The first bit flag marks this is a tracklet (hitsNum == 3),

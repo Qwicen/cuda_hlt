@@ -14,6 +14,7 @@
 #include "Sequence.cuh"
 #include "TupleIndicesChecker.cuh"
 #include "SequenceArgumentEnum.cuh"
+#include "VeloEventModel.cuh"
 
 /**
  * @brief Algorithm tuple definition. All algorithms in the sequence
@@ -74,20 +75,20 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_cluster_offset, uint>,
   Argument<arg::dev_cluster_candidates, uint>,
   Argument<arg::dev_velo_cluster_container, uint>,
-  Argument<arg::dev_tracks, VeloTracking::TrackHits>,
+  Argument<arg::dev_tracks, Velo::TrackHits>,
   Argument<arg::dev_tracks_to_follow, uint>,
   Argument<arg::dev_hit_used, bool>,
   Argument<arg::dev_atomics_storage, int>,
-  Argument<arg::dev_tracklets, VeloTracking::TrackletHits>,
-  Argument<arg::dev_weak_tracks, VeloTracking::TrackletHits>,
+  Argument<arg::dev_tracklets, Velo::TrackletHits>,
+  Argument<arg::dev_weak_tracks, Velo::TrackletHits>,
   Argument<arg::dev_h0_candidates, short>,
   Argument<arg::dev_h2_candidates, short>,
   Argument<arg::dev_rel_indices, unsigned short>,
   Argument<arg::dev_hit_permutation, uint>,
   Argument<arg::dev_velo_track_hit_number, uint>,
   Argument<arg::dev_prefix_sum_auxiliary_array_2, uint>,
-  Argument<arg::dev_velo_track_hits, VeloTracking::Hit<mc_check_enabled>>,
-  Argument<arg::dev_velo_states, VeloState>,
+  Argument<arg::dev_velo_track_hits, uint>,
+  Argument<arg::dev_velo_states, uint>,
 
   // TODO: check and try to use char instead of uint for dev_ut_raw_input variable
   // Changing uint to char cause a strange error:

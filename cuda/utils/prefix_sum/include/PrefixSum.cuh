@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VeloDefinitions.cuh"
+#include "VeloEventModel.cuh"
 
 __global__ void prefix_sum_reduce(
   uint* dev_main_array,
@@ -28,7 +28,7 @@ __global__ void prefix_sum_scan(
 );
 
 __global__ void copy_velo_track_hit_number(
-  const VeloTracking::TrackHits* dev_tracks,
+  const Velo::TrackHits* dev_tracks,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number
 );

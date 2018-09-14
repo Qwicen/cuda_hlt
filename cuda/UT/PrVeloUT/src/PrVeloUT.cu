@@ -19,11 +19,11 @@ __host__ __device__ int masterIndex(const int index1, const int index2, const in
 //=============================================================================
 // Reject tracks outside of acceptance or pointing to the beam pipe
 //=============================================================================
-__host__ __device__ bool veloTrackInUTAcceptance( const VeloState& state )
-{
-
-  const float xMidUT =  state.x + state.tx*( PrVeloUTConst::zMidUT - state.z);
-  const float yMidUT =  state.y + state.ty*( PrVeloUTConst::zMidUT - state.z);
+__host__ __device__ bool veloTrackInUTAcceptance(
+  const MiniState& state
+) {
+  const float xMidUT = state.x + state.tx*( PrVeloUTConst::zMidUT - state.z);
+  const float yMidUT = state.y + state.ty*( PrVeloUTConst::zMidUT - state.z);
 
   if( xMidUT*xMidUT+yMidUT*yMidUT  < PrVeloUTConst::centralHoleSize*PrVeloUTConst::centralHoleSize ) return false;
   if( (std::abs(state.tx) > PrVeloUTConst::maxXSlope) || (std::abs(state.ty) > PrVeloUTConst::maxYSlope) ) return false;
@@ -46,7 +46,7 @@ __host__ __device__ bool getHits(
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
   const float* fudgeFactors, 
-  const VeloState& trState,
+  const MiniState& trState,
   const float* ut_dxDy)
 {
   // -- This is hardcoded, so faster
@@ -63,7 +63,7 @@ __host__ __device__ bool getHits(
 
   // -- this 500 seems a little odd...
   // to do: change back!
-  const float invTheta = std::min(500.,1.0/std::sqrt(trState.tx*trState.tx+trState.ty*trState.ty));
+  const float invTheta = std::min(500., 1.0/std::sqrt(trState.tx*trState.tx+trState.ty*trState.ty));
   //const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, PrVeloUTConst::minMomentum);
   const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, float(1.5)*Gaudi::Units::GeV);
   const float xTol     = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
@@ -136,7 +136,7 @@ __host__ __device__ bool getHitsNoPosLayers(
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
   const float* fudgeFactors, 
-  const VeloState& trState,
+  const MiniState& trState,
   const float* ut_dxDy)
 {
   // -- This is hardcoded, so faster
@@ -210,10 +210,10 @@ __host__ __device__ bool formClusters(
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
   TrackHelper& helper,
+  MiniState& state,
   const float* ut_dxDy,
   const bool forward)
 {
-
   // handle forward / backward cluster search
   int layers[VeloUTTracking::n_layers];
   for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
@@ -244,7 +244,7 @@ __host__ __device__ bool formClusters(
       hitCandidateIndices[2] = i_hit2;
       
       const float tx = (xhitLayer2 - xhitLayer0)/(zhitLayer2 - zhitLayer0);
-      if( std::abs(tx-helper.state.tx) > PrVeloUTConst::deltaTx2 ) continue;
+      if( std::abs(tx-state.tx) > PrVeloUTConst::deltaTx2 ) continue;
             
       int IndexBestHit1 = -10;
       float hitTol = PrVeloUTConst::hitTol2;
@@ -285,7 +285,7 @@ __host__ __device__ bool formClusters(
       // -- All hits found
       if ( IndexBestHit1 > 0 && IndexBestHit3 > 0 ) {
         const int hitIndices[4] = {hit_index0, IndexBestHit1, hit_index2, IndexBestHit3};
-        simpleFit<4>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, ut_dxDy);
+        simpleFit<4>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, state, ut_dxDy);
         
         if(!fourLayerSolution && helper.n_hits > 0){
           fourLayerSolution = true;
@@ -296,14 +296,14 @@ __host__ __device__ bool formClusters(
       // -- Nothing found in layer 3
       if( !fourLayerSolution && IndexBestHit1 > 0 ){
         const int hitIndices[3] = {hit_index0, IndexBestHit1, hit_index2};
-        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, ut_dxDy);
+        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, state, ut_dxDy);
         continue;
       }
       // -- Nothing found in layer 1
       if( !fourLayerSolution && IndexBestHit3 > 0 ){
         hitCandidateIndices[1] = hitCandidateIndices[3];  // hit3 saved in second position of hits4fit
         const int hitIndices[3] = {hit_index0, IndexBestHit3, hit_index2};
-        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, ut_dxDy);
+        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, state, ut_dxDy);
         continue;
       }
       
@@ -316,11 +316,10 @@ __host__ __device__ bool formClusters(
 // Create the Velo-UT tracks
 //=========================================================================
 __host__ __device__ void prepareOutputTrack(
-  const uint* velo_track_hit_number,   
-  const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
-  const int accumulated_tracks_event,
-  const int i_Velo_track,
+  const Velo::Consolidated::Hits& velo_track_hits,
+  const uint velo_track_hit_number,
   const TrackHelper& helper,
+  const MiniState& state,
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   UTHits& ut_hits,
@@ -332,12 +331,12 @@ __host__ __device__ void prepareOutputTrack(
   const float* bdlTable) {
 
   //== Handle states. copy Velo one, add UT.
-  const float zOrigin = (std::fabs(helper.state.ty) > 0.001)
-    ? helper.state.z - helper.state.y / helper.state.ty
-    : helper.state.z - helper.state.x / helper.state.tx;
+  const float zOrigin = (std::fabs(state.ty) > 0.001)
+    ? state.z - state.y / state.ty
+    : state.z - state.x / state.tx;
 
   // -- These are calculations, copied and simplified from PrTableForFunction
-  const std::array<float,3> var = { helper.state.ty, zOrigin, helper.state.z };
+  const std::array<float,3> var = { state.ty, zOrigin, state.z };
 
   const int index1 = std::max(0, std::min( 30, int((var[0] + 0.3)/0.6*30) ));
   const int index2 = std::max(0, std::min( 10, int((var[1] + 250)/500*10) ));
@@ -367,13 +366,13 @@ __host__ __device__ void prepareOutputTrack(
   bdl += addBdlVal;
   // ----
 
-  const float qpxz2p =-1*std::sqrt(1.+helper.state.ty*helper.state.ty)/bdl*3.3356/Gaudi::Units::GeV;
+  const float qpxz2p =-1*std::sqrt(1.+state.ty*state.ty)/bdl*3.3356/Gaudi::Units::GeV;
   const float qop = (std::abs(bdl) < 1.e-8) ? 0.0 : helper.bestParams[0]*qpxz2p;
 
   // -- Don't make tracks that have grossly too low momentum
   // -- Beware of the momentum resolution!
   const float p  = 1.3*std::abs(1/qop);
-  const float pt = p*std::sqrt(helper.state.tx*helper.state.tx + helper.state.ty*helper.state.ty);
+  const float pt = p*std::sqrt(state.tx*state.tx + state.ty*state.ty);
 
   if( p < PrVeloUTConst::minMomentum || pt < PrVeloUTConst::minPT ) return;
 
@@ -387,13 +386,11 @@ __host__ __device__ void prepareOutputTrack(
   
   const float txUT = helper.bestParams[3];
 
-#ifdef MC_CHECK
+  // TODO: Maybe have a look and optimize this if possible
   VeloUTTracking::TrackUT track;
   track.hitsNum = 0;
-  const uint starting_hit = velo_track_hit_number[accumulated_tracks_event + i_Velo_track];
-  const uint number_of_hits = velo_track_hit_number[accumulated_tracks_event + i_Velo_track + 1]  - starting_hit;
-  for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
-    track.addLHCbID( velo_track_hits[starting_hit + i_hit].LHCbID );
+  for (int i=0; i<velo_track_hit_number; ++i) {
+    track.addLHCbID(velo_track_hits.LHCbID[i]);
     assert( track.hitsNum < VeloUTTracking::max_track_size);
   }
   track.set_qop( qop );
@@ -430,14 +427,13 @@ __host__ __device__ void prepareOutputTrack(
   }
   assert( n_tracks < VeloUTTracking::max_num_tracks );
   VeloUT_tracks[n_tracks] = track;
-#endif // MC_CHECK
 
   /*
-  outTr.x = helper.state.x;
-  outTr.y = helper.state.y;
-  outTr.z = helper.state.z;
-  outTr.tx = helper.state.tx;
-  outTr.ty = helper.state.ty;
+  outTr.x = state.x;
+  outTr.y = state.y;
+  outTr.z = state.z;
+  outTr.tx = state.tx;
+  outTr.ty = state.ty;
   */
 }
 
@@ -519,7 +515,7 @@ __host__ __device__ void findHits(
   const uint layer_offset,
   const int i_layer,
   const float* ut_dxDy,
-  const VeloState& myState, 
+  const MiniState& myState, 
   const float xTolNormFact,
   const float invNormFact,
   int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
@@ -575,7 +571,7 @@ __host__ __device__ void findHitsAllRange (
   const int layer_offset,
   const int i_layer,
   const float* ut_dxDy,
-  const VeloState& myState, 
+  const MiniState& myState, 
   const float xTolNormFact,
   const float invNormFact,
   int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],

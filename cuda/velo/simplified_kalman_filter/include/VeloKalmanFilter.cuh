@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "VeloDefinitions.cuh"
+#include "VeloEventModel.cuh"
 #include "Common.h"
 
 __device__ float velo_kalman_filter_step(
@@ -22,9 +22,9 @@ __device__ float velo_kalman_filter_step(
  */
 template<bool upstream>
 __device__ void simplified_fit(
-  const VeloTracking::Track<mc_check_enabled>& track,
-  const VeloState& stateAtBeamLine,
-  VeloState* velo_state
+  const Velo::Track& track,
+  const Velo::State& stateAtBeamLine,
+  Velo::State* velo_state
 ) {
   // backward = state.z > track.hits[0].z;
   const bool backward = stateAtBeamLine.z > track.hits[0].z;
@@ -45,7 +45,7 @@ __device__ void simplified_fit(
 
   // We filter x and y simultaneously but take them uncorrelated.
   // filter first the first hit.
-  VeloState state;
+  Velo::State state;
   state.x = track.hits[firsthit].x;
   state.y = track.hits[firsthit].y;
   state.z = track.hits[firsthit].z;
@@ -91,6 +91,6 @@ __global__ void velo_fit(
   const uint32_t* dev_velo_cluster_container,
   const uint* dev_module_cluster_start,
   const int* dev_atomics_storage,
-  const VeloTracking::Track<mc_check_enabled>* dev_tracks,
-  VeloState* dev_velo_states
+  const Velo::Track* dev_tracks,
+  Velo::State* dev_velo_states
 );
