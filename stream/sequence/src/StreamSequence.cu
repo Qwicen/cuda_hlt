@@ -430,6 +430,8 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
     cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
 
+
+
     //FT preprocessing
     //estimate_cluster_count
     argument_sizes[arg::dev_ft_raw_input] = argen.size<arg::dev_ft_raw_input>(host_ft_events_size);
@@ -493,40 +495,25 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_prefix_sum_auxiliary_array_4>(argument_offsets),
       total_number_of_zones
     );
-    //sequence.item<seq::prefix_sum_scan_ft_hits>().invoke();
+    sequence.item<seq::prefix_sum_scan_ft_hits>().invoke();
 
-    // Fetch total number of hits accumulated with all tracks
+    // Fetch total number of hits
     cudaCheck(cudaMemcpyAsync(host_accumulated_number_of_ft_hits,
       argen.generate<arg::dev_ft_hit_count>(argument_offsets) + total_number_of_zones,
       sizeof(uint), cudaMemcpyDeviceToHost, stream));
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    uint host_ft_hit_count[24];
-    cudaCheck(cudaMemcpyAsync(&host_ft_hit_count, argen.generate<arg::dev_ft_hit_count>(argument_offsets), 24*sizeof(uint), cudaMemcpyDeviceToHost, stream));
-    cudaEventRecord(cuda_generic_event, stream);
-    cudaEventSynchronize(cuda_generic_event);
-    std::cerr << "Estimated cluster count: ";
-    uint sum = 0;
-    for(uint i = 0; i < 24; i++) {
-      std::cerr << host_ft_hit_count[i] << " ";
-      sum += host_ft_hit_count[i];
-    }
-
-    std:: cerr << "total: " << *host_accumulated_number_of_ft_hits << std::endl;
+    std:: cerr << "Total FT cluster estimate: " << *host_accumulated_number_of_ft_hits << std::endl;
 
 
     //raw_bank_decoder
-
-
-    /*cudaCheck(cudaMemset(argen.generate<arg::dev_ft_cluster_num>(argument_offsets), 0, argen.size<arg::dev_ft_cluster_num>(1)));
-    argument_sizes[arg::dev_ft_clusters] = argen.size<arg::dev_ft_clusters>(host_ft_cluster_num);
-    argument_sizes[arg::dev_ft_cluster_nums] = argen.size<arg::dev_ft_cluster_nums>(number_of_events);
+    argument_sizes[arg::dev_ft_hits] = argen.size<arg::dev_ft_clusters>(host_accumulated_number_of_ft_hits);
 
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
 
     sequence.item<seq::raw_bank_decoder>().set_opts(dim3(number_of_events), dim3(1), stream);
-    sequence.item<seq::raw_bank_decoder>().set_arguments(
+    /*sequence.item<seq::raw_bank_decoder>().set_arguments(
       argen.generate<arg::dev_ft_event_offsets>(argument_offsets),
       argen.generate<arg::dev_ft_cluster_offsets>(argument_offsets),
       argen.generate<arg::dev_ft_events>(argument_offsets),
