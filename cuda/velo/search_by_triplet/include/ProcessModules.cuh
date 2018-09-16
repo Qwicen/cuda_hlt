@@ -1,9 +1,10 @@
 #pragma once
 
-#include "VeloDefinitions.cuh"
+#include "VeloEventModel.cuh"
+#include <cassert>
 
 __device__ void process_modules(
-  VeloTracking:: Module* module_data,
+  Velo:: Module* module_data,
   float* shared_best_fits,
   const uint starting_module,
   const uint stride,
@@ -21,9 +22,9 @@ __device__ void process_modules(
   uint* ttf_insert_pointer,
   uint* tracks_insert_pointer,
   uint* tracks_to_follow,
-  VeloTracking::TrackletHits* weak_tracks,
-  VeloTracking::TrackletHits* tracklets,
-  VeloTracking::TrackHits* tracks,
+  Velo::TrackletHits* weak_tracks,
+  Velo::TrackletHits* tracklets,
+  Velo::TrackHits* tracks,
   const uint number_of_hits,
   unsigned short* h1_rel_indices,
   uint* local_number_of_hits,

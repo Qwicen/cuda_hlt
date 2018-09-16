@@ -6,6 +6,10 @@ include_directories(scheduler/include)
 include_directories(sequence/include)
 include_directories(sequence_setup/include)
 include_directories(../main/include)
+include_directories(../cuda/utils/prefix_sum/include)
+include_directories(../cuda/utils/sorting/include)
+include_directories(../cuda/event_model/velo/include)
+include_directories(../cuda/event_model/common/include)
 include_directories(../cuda/UT/common/include)
 include_directories(../cuda/UT/PrVeloUT/include)
 include_directories(../cuda/UT/UTDecoding/include)
@@ -45,6 +49,7 @@ if ( ROOT_FOUND )
   target_compile_definitions(Stream PUBLIC WITH_ROOT)
   message("-- Found ROOT, setting WITH_ROOT to true")
   target_link_libraries(Stream
+  Utils
   Velo
   UT
   FT
@@ -52,6 +57,7 @@ if ( ROOT_FOUND )
   ${ROOT_LIBRARIES})
 else()
   target_link_libraries(Stream
+  Utils
   Velo
   UT
   FT

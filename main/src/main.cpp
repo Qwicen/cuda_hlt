@@ -36,13 +36,11 @@ void printUsage(char* argv[]){
     << std::endl << " -u {folder containing bin files with UT raw bank information}"
     << std::endl << " -i {folder containing .bin files with FT raw bank information}"
     << std::endl << " -g {folder containing detector configuration}"
-    << std::endl << (mc_check_enabled ? " " : " [") << "-d {folder containing .bin files with MC truth information}"
-    << (mc_check_enabled ? "" : "]")
+    << std::endl << " -d {folder containing .bin files with MC truth information}"
     << std::endl << " -n {number of events to process}=0 (all)"
     << std::endl << " -o {offset of events from which to start}=0 (beginning)"
     << std::endl << " -t {number of threads / streams}=1"
     << std::endl << " -r {number of repetitions per thread / stream}=1"
-    << std::endl << " -b {transmit device to host}=1"
     << std::endl << " -c {run checkers}=0"
     << std::endl << " -k {simplified kalman filter}=0"
     << std::endl << " -m {reserve Megabytes}=1024"
@@ -65,9 +63,8 @@ int main(int argc, char *argv[])
   uint number_of_repetitions = 1;
   uint verbosity = 3;
   bool print_memory_usage = false;
-  bool transmit_device_to_host = true;
   // By default, do_check will be true when mc_check is enabled
-  bool do_check = mc_check_enabled;
+  bool do_check = true;
   bool do_simplified_kalman_filter = false;
   bool run_on_x86 = false;
   size_t reserve_mb = 1024;
@@ -105,9 +102,6 @@ int main(int argc, char *argv[])
     case 'r':
       number_of_repetitions = atoi(optarg);
       break;
-    case 'b':
-      transmit_device_to_host = atoi(optarg);
-      break;
     case 'c':
       do_check = atoi(optarg);
       break;
@@ -133,14 +127,14 @@ int main(int argc, char *argv[])
 
   // Options sanity check
   if (folder_name_velopix_raw.empty() || folder_name_UT_raw.empty() || folder_name_FT_raw.empty() ||
-     folder_name_detector_configuration.empty() || (folder_name_MC.empty() && mc_check_enabled)) {
+    folder_name_detector_configuration.empty() || (folder_name_MC.empty() && do_check)) {
     std::string missing_folder = "";
 
     if (folder_name_velopix_raw.empty()) missing_folder = "velopix raw events";
     else if (folder_name_UT_raw.empty()) missing_folder = "UT raw events";
     else if (folder_name_FT_raw.empty()) missing_folder = "FT raw events";
     else if (folder_name_detector_configuration.empty()) missing_folder = "detector geometry";
-    else if (folder_name_MC.empty() && mc_check_enabled) missing_folder = "Monte Carlo";
+    else if (folder_name_MC.empty() && do_check) missing_folder = "Monte Carlo";
 
     error_cout << "No folder for " << missing_folder << " specified" << std::endl;
     printUsage(argv);
@@ -161,20 +155,18 @@ int main(int argc, char *argv[])
     << " folder with UT raw bank input (-u): " << folder_name_UT_raw << std::endl
     << " folder with FT input raw bank input (-i): " << folder_name_FT_raw << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
+    << " folder with MC truth input (-d): " << folder_name_MC << std::endl
+    << " run checkers (-c): " << do_check << std::endl
     << " number of files (-n): " << number_of_events_requested << std::endl
     << " start event offset (-o): " << start_event_offset << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
-    << " transmit device to host (-b): " << transmit_device_to_host << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
     << " run algorithms on x86 architecture as well (-x): " << run_on_x86 << std::endl
     << " print memory usage (-p): " << print_memory_usage << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
-    << " MC check (compile opt): " << (mc_check_enabled ? "On" : "Off") << std::endl
-    << " folder with MC truth input (-d): " << folder_name_MC << std::endl
-    << " run checkers (-c): " << do_check << std::endl
     << std::endl;
 
   // Read all inputs
@@ -214,7 +206,6 @@ int main(int argc, char *argv[])
     ut_magnet_tool,
     ft_geometry,
     number_of_events_requested,
-    transmit_device_to_host,
     do_check,
     do_simplified_kalman_filter,
     print_memory_usage,

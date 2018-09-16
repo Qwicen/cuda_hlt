@@ -8,8 +8,8 @@
  *          returns FLT_MAX.
  */
 __device__ float fit_hit_to_track(
-  const VeloTracking::HitBase& h0,
-  const VeloTracking::HitBase& h2,
+  const Velo::HitBase& h0,
+  const Velo::HitBase& h2,
   const float predx,
   const float predy,
   const float scatterDenom2
@@ -44,13 +44,13 @@ __device__ void track_forwarding(
   uint* tracks_insertPointer,
   uint* ttf_insertPointer,
   uint* weaktracks_insertPointer,
-  const VeloTracking::Module* module_data,
+  const Velo::Module* module_data,
   const uint diff_ttf,
   uint* tracks_to_follow,
-  VeloTracking::TrackletHits* weak_tracks,
+  Velo::TrackletHits* weak_tracks,
   const uint prev_ttf,
-  VeloTracking::TrackletHits* tracklets,
-  VeloTracking::TrackHits* tracks,
+  Velo::TrackletHits* tracklets,
+  Velo::TrackHits* tracks,
   const uint number_of_hits
 ) {
   // Assign a track to follow to each thread
@@ -63,7 +63,7 @@ __device__ void track_forwarding(
       auto trackno = fulltrackno & 0x0FFFFFFF;
       assert(track_flag ? trackno < VeloTracking::ttf_modulo : trackno < VeloTracking::max_tracks);
 
-      VeloTracking::TrackHits t = track_flag ? VeloTracking::TrackHits{tracklets[trackno]} : tracks[trackno];
+      Velo::TrackHits t = track_flag ? Velo::TrackHits{tracklets[trackno]} : tracks[trackno];
 
       // Load last two hits in h0, h1
       assert(t.hitsNum < VeloTracking::max_track_size);
@@ -71,10 +71,10 @@ __device__ void track_forwarding(
       const auto h1_num = t.hits[t.hitsNum - 1];
 
       assert(h0_num < number_of_hits);
-      const VeloTracking::HitBase h0 {hit_Xs[h0_num], hit_Ys[h0_num], hit_Zs[h0_num]};
+      const Velo::HitBase h0 {hit_Xs[h0_num], hit_Ys[h0_num], hit_Zs[h0_num]};
 
       assert(h1_num < number_of_hits);
-      const VeloTracking::HitBase h1 {hit_Xs[h1_num], hit_Ys[h1_num], hit_Zs[h1_num]};
+      const Velo::HitBase h1 {hit_Xs[h1_num], hit_Ys[h1_num], hit_Zs[h1_num]};
 
       // Track forwarding over t, for all hits in the next module
       // Line calculations
@@ -90,7 +90,7 @@ __device__ void track_forwarding(
 
       for (auto j=0; j<module_data[4].hitNums; ++j) {
         const auto h2_index = module_data[4].hitStart + j;
-        const VeloTracking::HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
+        const Velo::HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
 
         const auto dz = h2.z - h0.z;
         const auto predx = tx * dz;
@@ -113,7 +113,7 @@ __device__ void track_forwarding(
 
       for (auto j=0; j<module_data[5].hitNums; ++j) {
         const auto h2_index = module_data[5].hitStart + j;
-        const VeloTracking::HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
+        const Velo::HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
 
         const auto dz = h2.z - h0.z;
         const auto predx = tx * dz;
@@ -184,7 +184,7 @@ __device__ void track_forwarding(
       else if (t.hitsNum == 3) {
         const auto weakP = atomicAdd(weaktracks_insertPointer, 1) % VeloTracking::ttf_modulo;
         assert(weakP < VeloTracking::max_weak_tracks);
-        weak_tracks[weakP] = VeloTracking::TrackletHits{t.hits[0], t.hits[1], t.hits[2]};
+        weak_tracks[weakP] = Velo::TrackletHits{t.hits[0], t.hits[1], t.hits[2]};
       }
       // In the "else" case, we couldn't follow up the track,
       // so we won't be track following it anymore.

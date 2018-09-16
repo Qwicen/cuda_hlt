@@ -7,13 +7,6 @@
 
 #include "SystemOfUnits.h"
 
-// MC Check
-#if defined(MC_CHECK)
-constexpr bool mc_check_enabled = true;
-#else
-constexpr bool mc_check_enabled = false;
-#endif
-
 /**
  * Generic StrException launcher
  */
