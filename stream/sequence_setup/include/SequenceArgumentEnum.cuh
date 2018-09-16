@@ -29,6 +29,9 @@ enum seq_enum_t {
   sort_by_x,
   veloUT,
   estimate_cluster_count,
+  prefix_sum_reduce_ft_hits,
+  prefix_sum_single_block_ft_hits,
+  prefix_sum_scan_ft_hits,
   raw_bank_decoder
 };
 }
@@ -68,11 +71,10 @@ enum arg_enum_t {
   dev_ut_hit_permutations,
   dev_veloUT_tracks,
   dev_atomics_veloUT,
-  dev_ft_event_offsets,
-  dev_ft_cluster_offsets,
-  dev_ft_cluster_num,
-  dev_ft_cluster_nums,
-  dev_ft_clusters,
-  dev_ft_events
+  dev_ft_raw_input_offsets,
+  dev_ft_hit_count,
+  dev_prefix_sum_auxiliary_array_4,
+  dev_ft_hits,
+  dev_ft_raw_input
 };
 }

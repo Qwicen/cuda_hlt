@@ -59,8 +59,8 @@ struct Stream {
   /* UT DECODING */
   UTHits * host_ut_hits_decoded;
 
-  uint* host_ft_event_offsets_pinned;
-  char* host_ft_events;
+  // FT Decoding
+  uint* host_accumulated_number_of_ft_hits;
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;

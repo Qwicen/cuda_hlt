@@ -51,6 +51,9 @@ constexpr auto sequence_algorithms() {
     sort_by_x,
     veloUT,
     estimate_cluster_count,
+    prefix_sum_reduce,
+    prefix_sum_single_block,
+    prefix_sum_scan,
     raw_bank_decoder
   );
 }
@@ -108,12 +111,11 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_ut_hit_permutations, uint>,
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
   Argument<arg::dev_atomics_veloUT, int>,
-  Argument<arg::dev_ft_event_offsets, uint>,
-  Argument<arg::dev_ft_cluster_offsets, uint>,
-  Argument<arg::dev_ft_cluster_num, uint>,
-  Argument<arg::dev_ft_cluster_nums, uint>,
-  Argument<arg::dev_ft_clusters, FT::FTLiteCluster>,
-  Argument<arg::dev_ft_events, char>
+  Argument<arg::dev_ft_raw_input_offsets, uint>,
+  Argument<arg::dev_ft_hit_count, uint>,
+  Argument<arg::dev_prefix_sum_auxiliary_array_4, uint>,
+  Argument<arg::dev_ft_hits, char>,
+  Argument<arg::dev_ft_raw_input, char>
 >;
 
 /**

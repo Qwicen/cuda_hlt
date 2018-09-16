@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
   std::cout << "Requested options:" << std::endl
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
     << " folder with UT raw bank input (-u): " << folder_name_UT_raw << std::endl
-    << " folder with FT input raw bank input (-i): " << folder_name_FT_raw << std::endl
+    << " folder with FT raw bank input (-i): " << folder_name_FT_raw << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " run checkers (-c): " << do_check << std::endl

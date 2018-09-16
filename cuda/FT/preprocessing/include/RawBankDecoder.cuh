@@ -5,6 +5,7 @@ __global__ void raw_bank_decoder(
   uint *ft_event_offsets,
   uint *dev_ft_cluster_offsets,
   char *ft_events,
-  FT::FTLiteCluster *ft_clusters,
+  char *ft_clusters,
   uint* ft_cluster_nums,
+  uint* ft_cluster_num,
   char *ft_geometry);

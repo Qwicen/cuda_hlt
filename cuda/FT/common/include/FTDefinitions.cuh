@@ -8,6 +8,8 @@
  * @brief FT geometry description typecast.
  */
 namespace FT {
+constexpr uint32_t number_of_zones = 24;
+
 struct FTGeometry {
   size_t size;
   uint32_t number_of_stations;
@@ -20,12 +22,12 @@ struct FTGeometry {
   uint32_t number_of_mats;
   uint32_t number_of_tell40s;
   uint32_t* bank_first_channel;
-  float* mirrorPoint_x;
-  float* mirrorPoint_y;
-  float* mirrorPoint_z;
-  float* ddx_x;
-  float* ddx_y;
-  float* ddx_z;
+  float* mirrorPointX;
+  float* mirrorPointY;
+  float* mirrorPointZ;
+  float* ddxX;
+  float* ddxY;
+  float* ddxZ;
   float* uBegin;
   float* halfChannelPitch;
   float* dieGap;
@@ -50,7 +52,6 @@ struct FTGeometry {
 struct FTRawEvent {
   uint32_t number_of_raw_banks;
   uint32_t* raw_bank_offset;
-  uint32_t version;
   char* payload;
 
   __device__ __host__ FTRawEvent(
@@ -91,15 +92,22 @@ namespace FTRawBankParams { //from FT/FTDAQ/src/FTRawBankParams.h
 
 struct FTChannelID {
   uint32_t channelID;
-  __device__ __host__ uint8_t channel() const;
-  __device__ __host__ uint8_t sipm() const;
-  __device__ __host__ uint8_t mat() const;
-  __device__ __host__ uint8_t module() const;
-  __device__ __host__ uint8_t quarter() const;
-  __device__ __host__ uint8_t layer() const;
-  __device__ __host__ uint8_t station() const;
+  __device__ __host__ uint32_t channel() const;
+  __device__ __host__ uint32_t sipm() const;
+  __device__ __host__ uint32_t mat() const;
+  __device__ __host__ uint32_t uniqueMat() const;
+  __device__ __host__ uint32_t module() const;
+  __device__ __host__ uint32_t uniqueModule() const;
+  __device__ __host__ uint32_t quarter() const;
+  __device__ __host__ uint32_t uniqueQuarter() const;
+  __device__ __host__ uint32_t layer() const;
+  __device__ __host__ uint32_t uniqueLayer() const;
+  __device__ __host__ uint32_t station() const;
+  __device__ __host__ uint32_t die() const;
+  __device__ __host__ bool isBottom() const;
   __device__ __host__ FTChannelID operator+=(const uint32_t& other);
   __host__ std::string toString();
+  __device__ __host__ FTChannelID(const uint32_t channelID);
   //from FTChannelID.h (generated)
   enum channelIDMasks{channelMask       = 0x7fL,
                       sipmMask          = 0x180L,
@@ -107,7 +115,13 @@ struct FTChannelID {
                       moduleMask        = 0x3800L,
                       quarterMask       = 0xc000L,
                       layerMask         = 0x30000L,
-                      stationMask       = 0xc0000L};
+                      stationMask       = 0xc0000L,
+                      uniqueLayerMask   = layerMask + stationMask,
+                      uniqueQuarterMask = quarterMask + layerMask + stationMask,
+                      uniqueModuleMask  = moduleMask + quarterMask + layerMask + stationMask,
+                      uniqueMatMask     = matMask + moduleMask + quarterMask + layerMask + stationMask,
+                      uniqueSiPMMask    = sipmMask + matMask + moduleMask + quarterMask + layerMask + stationMask
+};
   enum channelIDBits{channelBits       = 0,
                      sipmBits          = 7,
                      matBits           = 9,
@@ -117,9 +131,37 @@ struct FTChannelID {
                      stationBits       = 18};
 };
 
-struct FTLiteCluster {
+/**
+* @brief Offset and number of hits of each layer.
+*/
+struct FTHitCount{
+  uint* layer_offsets;
+  uint* n_hits_layers;
+
+  __device__ __host__
+  void typecast_before_prefix_sum(
+    uint* base_pointer,
+    const uint event_number
+  );
+
+  __device__ __host__
+  void typecast_after_prefix_sum(
+    uint* base_pointer,
+    const uint event_number,
+    const uint number_of_events
+  );
+};
+
+struct FTHit {
   FTChannelID channelID;
-  uint8_t fraction;
-  uint8_t pseudoSize;
+  float x0;
+  float z0;
+  float dxdy;
+  float dzdy;
+  float yMin;
+  float yMax;
+  float werrX;
+  float w;
+  uint info;
 };
 }

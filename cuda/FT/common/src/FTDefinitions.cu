@@ -14,12 +14,12 @@
 | number_of_mats               | uint32_t | 1                  |
 | number_of_tell40s            | uint32_t | 1                  |
 | bank_first_channel           | uint32_t | number_of_tell40s  |
-| mirrorPoint_x                | float    | number_of_mats     |
-| mirrorPoint_y                | float    | number_of_mats     |
-| mirrorPoint_z                | float    | number_of_mats     |
-| ddx_x                        | float    | number_of_mats     |
-| ddx_y                        | float    | number_of_mats     |
-| ddx_z                        | float    | number_of_mats     |
+| mirrorPointX                 | float    | number_of_mats     |
+| mirrorPointY                 | float    | number_of_mats     |
+| mirrorPointZ                 | float    | number_of_mats     |
+| ddxX                         | float    | number_of_mats     |
+| ddxY                         | float    | number_of_mats     |
+| ddxZ                         | float    | number_of_mats     |
 | uBegin                       | float    | number_of_mats     |
 | halfChannelPitch             | float    | number_of_mats     |
 | dieGap                       | float    | number_of_mats     |
@@ -46,12 +46,12 @@ __device__ __host__ FTGeometry::FTGeometry(
   number_of_mats               = *((uint32_t*)p); p += sizeof(uint32_t);
   number_of_tell40s            = *((uint32_t*)p); p += sizeof(uint32_t);
   bank_first_channel           = (uint32_t*)p; p += number_of_tell40s * sizeof(uint32_t);
-  mirrorPoint_x                = (float*)p; p += sizeof(float) * number_of_mats;
-  mirrorPoint_y                = (float*)p; p += sizeof(float) * number_of_mats;
-  mirrorPoint_z                = (float*)p; p += sizeof(float) * number_of_mats;
-  ddx_x                        = (float*)p; p += sizeof(float) * number_of_mats;
-  ddx_y                        = (float*)p; p += sizeof(float) * number_of_mats;
-  ddx_z                        = (float*)p; p += sizeof(float) * number_of_mats;
+  mirrorPointX                 = (float*)p; p += sizeof(float) * number_of_mats;
+  mirrorPointY                 = (float*)p; p += sizeof(float) * number_of_mats;
+  mirrorPointZ                 = (float*)p; p += sizeof(float) * number_of_mats;
+  ddxX                         = (float*)p; p += sizeof(float) * number_of_mats;
+  ddxY                         = (float*)p; p += sizeof(float) * number_of_mats;
+  ddxZ                         = (float*)p; p += sizeof(float) * number_of_mats;
   uBegin                       = (float*)p; p += sizeof(float) * number_of_mats;
   halfChannelPitch             = (float*)p; p += sizeof(float) * number_of_mats;
   dieGap                       = (float*)p; p += sizeof(float) * number_of_mats;
@@ -70,8 +70,8 @@ __device__ __host__ FTRawEvent::FTRawEvent(
 ) {
   const char* p = event;
   number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
-  version = *((uint32_t*)p); p += sizeof(uint32_t);
-  raw_bank_offset = (uint32_t*) p; p += number_of_raw_banks * sizeof(uint32_t);
+  //version = *((uint32_t*)p); p += sizeof(uint32_t);
+  raw_bank_offset = (uint32_t*) p; p += (number_of_raw_banks + 1) * sizeof(uint32_t);
   payload = (char*) p;
 }
 
@@ -81,6 +81,8 @@ __device__ __host__ FTRawBank::FTRawBank(const char* raw_bank, const char* end) 
   data = (uint16_t*) p;
   last = (uint16_t*) end;
 }
+
+__device__ __host__ FTChannelID::FTChannelID(const uint32_t channelID) : channelID(channelID) {};
 
 __device__ __host__ FTChannelID FTChannelID::operator+=(const uint32_t& other){
   channelID += other;
@@ -102,31 +104,67 @@ __host__ std::string FTChannelID::toString()
   return s.str();
 }
 
-__device__ __host__ uint8_t FTChannelID::channel() const {
-  return (uint8_t)((channelID & channelMask) >> channelBits);
+__device__ __host__ uint32_t FTChannelID::channel() const {
+  return (uint32_t)((channelID & channelMask) >> channelBits);
 }
 
-__device__ __host__ uint8_t FTChannelID::sipm() const {
-  return (uint8_t)((channelID & sipmMask) >> sipmBits);
+__device__ __host__ uint32_t FTChannelID::sipm() const {
+  return ((channelID & sipmMask) >> sipmBits);
 }
 
-__device__ __host__ uint8_t FTChannelID::mat() const {
-  return (uint8_t)((channelID & matMask) >> matBits);
+__device__ __host__ uint32_t FTChannelID::mat() const {
+  return ((channelID & matMask) >> matBits);
 }
 
-__device__ __host__ uint8_t FTChannelID::module() const {
-  return (uint8_t)((channelID & moduleMask) >> moduleBits);
+__device__ __host__ uint32_t FTChannelID::module() const {
+  return ((channelID & moduleMask) >> moduleBits);
 }
 
-__device__ __host__ uint8_t FTChannelID::quarter() const {
-  return (uint8_t)((channelID & quarterMask) >> quarterBits);
+__device__ __host__ uint32_t FTChannelID::quarter() const {
+  return ((channelID & quarterMask) >> quarterBits);
 }
 
-__device__ __host__ uint8_t FTChannelID::layer() const {
-  return (uint8_t)((channelID & layerMask) >> layerBits);
+__device__ __host__ uint32_t FTChannelID::layer() const {
+  return ((channelID & layerMask) >> layerBits);
+}
+__device__ __host__ uint32_t FTChannelID::station() const {
+  return ((channelID & stationMask) >> stationBits);
+}
+__device__ __host__ uint32_t FTChannelID::uniqueLayer() const {
+  return ((channelID & uniqueLayerMask) >> layerBits);
+}
+__device__ __host__ uint32_t FTChannelID::uniqueMat() const {
+  return ((channelID & uniqueMatMask) >> matBits);
+}
+__device__ __host__ uint32_t FTChannelID::uniqueModule() const {
+  return ((channelID & uniqueModuleMask) >> moduleBits);
+}
+__device__ __host__ uint32_t FTChannelID::uniqueQuarter() const {
+  return ((channelID & uniqueQuarterMask) >> quarterBits);
+}
+__device__ __host__ uint32_t FTChannelID::die() const {
+  return ((channelID & 0x40) >> 6);
 }
 
-__device__ __host__ uint8_t FTChannelID::station() const{
-  return (uint8_t)((channelID & stationMask) >> stationBits);
+__device__ __host__ bool FTChannelID::isBottom() const {
+ return (quarter() == 0 || quarter() == 1);
 }
+
+void FTHitCount::typecast_before_prefix_sum(
+  uint* base_pointer,
+  const uint event_number
+) {
+  n_hits_layers = base_pointer + event_number * FT::number_of_zones;
+}
+
+void FTHitCount::typecast_after_prefix_sum(
+  uint* base_pointer,
+  const uint event_number,
+  const uint number_of_events
+) {
+  layer_offsets = base_pointer + event_number *  FT::number_of_zones;
+  n_hits_layers = base_pointer + number_of_events * FT::number_of_zones + 1 + event_number * FT::number_of_zones;
+}
+
+
 };
