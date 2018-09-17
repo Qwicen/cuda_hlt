@@ -67,14 +67,16 @@ __device__ __host__ FTGeometry::FTGeometry(
 
 FTGeometry::FTGeometry(const std::vector<char>& geometry) : FTGeometry::FTGeometry(geometry.data()) {}
 
-__device__ __host__ FTRawEvent::FTRawEvent(
-  const char* event
-) {
+__device__ __host__ FTRawEvent::FTRawEvent(const char* event) {
   const char* p = event;
   number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
-  //version = *((uint32_t*)p); p += sizeof(uint32_t);
   raw_bank_offset = (uint32_t*) p; p += (number_of_raw_banks + 1) * sizeof(uint32_t);
   payload = (char*) p;
+}
+
+__device__ __host__ FTRawBank FTRawEvent::getFTRawBank(const uint32_t index) const {
+  FTRawBank bank(payload + raw_bank_offset[index], payload + raw_bank_offset[index + 1]);
+  return bank;
 }
 
 __device__ __host__ FTRawBank::FTRawBank(const char* raw_bank, const char* end) {
@@ -85,11 +87,6 @@ __device__ __host__ FTRawBank::FTRawBank(const char* raw_bank, const char* end) 
 }
 
 __device__ __host__ FTChannelID::FTChannelID(const uint32_t channelID) : channelID(channelID) {};
-
-__device__ __host__ FTChannelID FTChannelID::operator+=(const uint32_t& other){
-  channelID += other;
-  return *this;
-}
 
 __host__ std::string FTChannelID::toString()
 {

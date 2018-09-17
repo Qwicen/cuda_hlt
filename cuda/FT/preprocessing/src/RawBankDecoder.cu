@@ -28,7 +28,7 @@ __global__ void raw_bank_decoder(
   char *ft_events,
   uint *ft_event_offsets,
   uint *ft_hit_count,
-  char* ft_hits,
+  char *ft_hits,
   char *ft_geometry
 ) {
   //TODO: maybe not hardcoded, or in another place
@@ -38,8 +38,7 @@ __global__ void raw_bank_decoder(
 
   FTGeometry geom(ft_geometry);
   const auto event = FTRawEvent(ft_events + ft_event_offsets[event_number]);
-  // NO version checking. Be careful, as v5 is assumed.
-  //assert(event.version == 5u);
+
   FTHits hits;
   hits.typecast_unsorted(ft_hits, ft_hit_count[number_of_events * FT::number_of_zones]);
   FTHitCount hit_count;
@@ -63,7 +62,6 @@ __global__ void raw_bank_decoder(
 
     //Offset to save space in geometry structure, see DumpFTGeometry.cpp
     const uint32_t mat = id.uniqueMat() - 512;
-    //printf("event: %u, channelID: %u, station: %u, layer: %u, quarter: %u, module: %u, mat: %u, uniqueMat: %u, uniqueQuarter: %u, uniqueLayer: %u\n", event_number, chan, id.station(), id.layer(), id.quarter(), id.module(), id.mat(), id.uniqueMat()-512, id.uniqueQuarter(), id.uniqueLayer());
     const uint32_t iQuarter = id.uniqueQuarter() - 16;
     const uint32_t planeCode = id.uniqueLayer() - 4;
     const uint32_t info = (iQuarter>>1) | (((iQuarter<<4)^(iQuarter<<5)^128u) & 128u);
@@ -79,10 +77,10 @@ __global__ void raw_bank_decoder(
     const float x0 = endPointX - dxdy * endPointY;
     const float z0 = endPointZ - dzdy * endPointY;
 
-    //TODO resolve this mess..
-    float yMin = id.isBottom()? endPointY + globaldy : endPointY;
-    float yMax = id.isBottom()? endPointY : endPointY + globaldy;
-    //if(id.isBottom()) std::swap(yMin, yMax);
+    //ORIGINAL: if(id.isBottom()) std::swap(yMin=endPointX, yMax=endPointY + globaldy);
+    float yMin = endPointY + id.isBottom() * globaldy;
+    float yMax = endPointY + !id.isBottom() * globaldy;
+
     assert( pseudoSize < 9 && "Pseudosize of cluster is > 8. Out of range.");
     float werrX = invClusRes[pseudoSize];
 
@@ -91,8 +89,6 @@ __global__ void raw_bank_decoder(
     uint32_t* hits_zone = hit_count.n_hits_layers + zone;
     uint32_t hitIndex = atomicAdd(hits_zone, 1);
     hitIndex += shared_layer_offsets[zone];
-
-    //printf("%u ", hitIndex);
 
     hits.x0[hitIndex] = x0;
     hits.z0[hitIndex] = z0;
@@ -134,9 +130,7 @@ __global__ void raw_bank_decoder(
 
   for(uint i = threadIdx.x; i < event.number_of_raw_banks; i += blockDim.x)
   {
-    // FIXME: implement FTRawEvent method to get nths rawbank instead of this line.
-    FTRawBank rawbank(event.payload + event.raw_bank_offset[i], event.payload + event.raw_bank_offset[i+1]);
-
+    auto rawbank = event.getFTRawBank(i);
     uint16_t* it = rawbank.data + 2;
     uint16_t* last = rawbank.last;
     if (*(last-1) == 0) --last;//Remove padding at the end

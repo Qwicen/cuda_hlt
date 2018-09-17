@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <vector>
-#include <iostream>
+#include <ostream>
 
 /**
  * @brief FT geometry description typecast.
@@ -50,22 +50,21 @@ struct FTGeometry {
   );
 };
 
-struct FTRawEvent {
-  uint32_t number_of_raw_banks;
-  uint32_t* raw_bank_offset;
-  char* payload;
-
-  __device__ __host__ FTRawEvent(
-    const char* event
-  );
-};
-
 struct FTRawBank {
   uint32_t sourceID;
   uint16_t* data;
   uint16_t* last;
 
   __device__ __host__ FTRawBank(const char* raw_bank, const char* end);
+};
+
+struct FTRawEvent {
+  uint32_t number_of_raw_banks;
+  uint32_t* raw_bank_offset;
+  char* payload;
+
+  __device__ __host__ FTRawEvent(const char* event);
+  __device__ __host__ FTRawBank getFTRawBank(const uint32_t index) const;
 };
 
 namespace FTRawBankParams { //from FT/FTDAQ/src/FTRawBankParams.h
@@ -223,7 +222,7 @@ struct FTHits {
   void typecast_sorted(char* base_pointer, uint32_t total_number_of_hits);
 
   /**
-   * @brief Gets a hit in the UTHit format from the global hit index.
+   * @brief Gets a hit in the FTHit format from the global hit index.
    */
   FTHit getHit(uint32_t index) const;
 
