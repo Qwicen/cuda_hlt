@@ -15,6 +15,17 @@
 #include "UTDefinitions.cuh"
 #include "VeloConsolidated.cuh"
 
+/** PrVeloUT 
+   *
+   *  @author Mariusz Witek
+   *  @date   2007-05-08
+   *  @update for A-Team framework 2007-08-20 SHM
+   *
+   *  2017-03-01: Christoph Hasse (adapt to future framework)
+   *  2018-05-05: Plácido Fernández (make standalone)
+   *  2018-07:    Dorothea vom Bruch (convert to C and then CUDA code)
+   */
+
 struct MiniState {
   float x, y, tx, ty, z;
 
@@ -27,17 +38,7 @@ struct MiniState {
     ty(velo_states.ty[index]),
     z(velo_states.z[index]) {}
 };
-
-/** PrVeloUT 
-   *
-   *  @author Mariusz Witek
-   *  @date   2007-05-08
-   *  @update for A-Team framework 2007-08-20 SHM
-   *
-   *  2017-03-01: Christoph Hasse (adapt to future framework)
-   *  2018-05-05: Plácido Fernández (make standalone)
-   *  2018-07:    Dorothea vom Bruch (convert to C and then CUDA code)
-   */
+   
 struct TrackHelper{
   int bestHitIndices[VeloUTTracking::n_layers];
   int n_hits = 0;
@@ -70,16 +71,6 @@ __host__ __device__ bool getHits(
   const float* fudgeFactors, 
   const MiniState& trState,
   const float* ut_dxDy); 
-
-__host__ __device__ bool getHitsNoPosLayers(
-  int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
-  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const UTHits& ut_hits,
-  const UTHitCount& ut_hit_count,
-  const float* fudgeFactors, 
-  const MiniState& trState,
-  const float* ut_dxDy);
 
 __host__ __device__ bool formClusters(
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
@@ -129,26 +120,13 @@ __host__ __device__ void findHits(
   const size_t posEnd,
   const UTHits& ut_hits,
   const uint layer_offset,
-  const int i_layer,
-  const float* ut_dxDy,
+  const float ut_dxDy,
   const MiniState& myState, 
   const float xTolNormFact,
   const float invNormFact,
   int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
   int &n_hitCandidatesInLayer,
-  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer]);
-
-__host__ __device__ void findHitsAllRange ( 
-  const UTHits& ut_hits,
-  const int layer_offset,
-  const int i_layer,
-  const float* ut_dxDy,
-  const MiniState& myState, 
-  const float xTolNormFact,
-  const float invNormFact,
-  int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
-  int &n_hitCandidatesInLayer,
-  float x_pos_layer[VeloUTTracking::max_hit_candidates_per_layer]);
+  float x_pos_layers[VeloUTTracking::max_hit_candidates_per_layer]);
 
 // =================================================
 // -- 2 helper functions for fit

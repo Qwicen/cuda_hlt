@@ -1,9 +1,9 @@
 #include "VeloUT.cuh"
 
 __global__ void veloUT(
-  uint* dev_ut_hits,
-  uint* dev_ut_hit_count,
-  int* dev_atomics_storage,
+  uint* dev_ut_hits, // actual hit content
+  uint* dev_ut_hit_count, // prefixsum, count per layer
+  int* dev_atomics_storage, // semi_prefixsum, offset to tracks
   uint* dev_velo_track_hit_number,
   uint* dev_velo_track_hits,
   uint* dev_velo_states,
