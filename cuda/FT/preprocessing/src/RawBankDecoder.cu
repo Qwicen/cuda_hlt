@@ -65,6 +65,8 @@ __global__ void raw_bank_decoder(
     const uint32_t iQuarter = id.uniqueQuarter() - 16;
     const uint32_t planeCode = id.uniqueLayer() - 4;
     const uint32_t info = (iQuarter>>1) | (((iQuarter<<4)^(iQuarter<<5)^128u) & 128u);
+    //See Kernel/LHCbID.h. Maybe no hardcoding?
+    const uint32_t lhcbid = (10u << 28) + chan;
     const float dxdy = geom.dxdy[mat];
     const float dzdy = geom.dzdy[mat];
     const float globaldy = geom.globaldy[mat];
@@ -85,10 +87,10 @@ __global__ void raw_bank_decoder(
     float werrX = invClusRes[pseudoSize];
 
     //Unsure why -16 is needed. Either something is wrong or the unique* methods are not designed to start at 0.
-    const uint32_t zone = ((id.uniqueQuarter() - 16) >> 1);
-    uint32_t* hits_zone = hit_count.n_hits_layers + zone;
+    const uint32_t uniqueZone = ((id.uniqueQuarter() - 16) >> 1);
+    uint32_t* hits_zone = hit_count.n_hits_layers + uniqueZone;
     uint32_t hitIndex = atomicAdd(hits_zone, 1);
-    hitIndex += shared_layer_offsets[zone];
+    hitIndex += shared_layer_offsets[uniqueZone];
 
     hits.x0[hitIndex] = x0;
     hits.z0[hitIndex] = z0;
@@ -99,9 +101,9 @@ __global__ void raw_bank_decoder(
     hits.yMax[hitIndex] = yMax;
     hits.werrX[hitIndex] = werrX;
     hits.coord[hitIndex] = 0;
-    hits.LHCbID[hitIndex] = chan;
+    hits.LHCbID[hitIndex] = lhcbid;
     hits.planeCode[hitIndex] = planeCode;
-    hits.hitZone[hitIndex] = zone;
+    hits.hitZone[hitIndex] = uniqueZone % 2;
     hits.info[hitIndex] = info;
     hits.used[hitIndex] = false;
   };

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 cudaError_t Stream::run_sequence(
   const uint i_stream,
@@ -542,13 +543,18 @@ cudaError_t Stream::run_sequence(
     host_ft_hits_struct.typecast_unsorted(host_ft_hits, host_ft_hit_count[number_of_events * FT::number_of_zones]);
 
     //Print only non-empty hits
+    std::ofstream outfile("dump.txt");
     uint sum = 0;
     FT::FTHitCount host_ft_hit_count_struct;
     for(size_t event = 0; event < number_of_events; event++) {
       host_ft_hit_count_struct.typecast_after_prefix_sum(host_ft_hit_count, event, number_of_events);
       for(size_t zone = 0; zone < FT::number_of_zones; zone++) {
         for(size_t hit = 0; hit < host_ft_hit_count_struct.n_hits_layers[zone]; hit++) {
-          info_cout << host_ft_hits_struct.getHit(host_ft_hit_count_struct.layer_offsets[zone] + hit) << std::endl;
+          //info_cout << host_ft_hits_struct.getHit(host_ft_hit_count_struct.layer_offsets[zone] + hit) << std::endl;
+          auto h = host_ft_hits_struct.getHit(host_ft_hit_count_struct.layer_offsets[zone] + hit);
+          outfile << std::setprecision(8) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " "
+            << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
+            << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
           sum++;
         }
       }
