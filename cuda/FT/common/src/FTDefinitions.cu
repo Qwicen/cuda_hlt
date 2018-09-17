@@ -14,19 +14,20 @@
 | number_of_mats               | uint32_t | 1                  |
 | number_of_tell40s            | uint32_t | 1                  |
 | bank_first_channel           | uint32_t | number_of_tell40s  |
-| mirrorPointX                 | float    | number_of_mats     |
-| mirrorPointY                 | float    | number_of_mats     |
-| mirrorPointZ                 | float    | number_of_mats     |
-| ddxX                         | float    | number_of_mats     |
-| ddxY                         | float    | number_of_mats     |
-| ddxZ                         | float    | number_of_mats     |
-| uBegin                       | float    | number_of_mats     |
-| halfChannelPitch             | float    | number_of_mats     |
-| dieGap                       | float    | number_of_mats     |
-| sipmPitch                    | float    | number_of_mats     |
-| dxdy                         | float    | number_of_mats     |
-| dzdy                         | float    | number_of_mats     |
-| globaldy                     | float    | number_of_mats     |
+| max_uniqueMat                | uint32_t | 1                  |
+| mirrorPointX                 | float    | max_uniqueMat      |
+| mirrorPointY                 | float    | max_uniqueMat      |
+| mirrorPointZ                 | float    | max_uniqueMat      |
+| ddxX                         | float    | max_uniqueMat      |
+| ddxY                         | float    | max_uniqueMat      |
+| ddxZ                         | float    | max_uniqueMat      |
+| uBegin                       | float    | max_uniqueMat      |
+| halfChannelPitch             | float    | max_uniqueMat      |
+| dieGap                       | float    | max_uniqueMat      |
+| sipmPitch                    | float    | max_uniqueMat      |
+| dxdy                         | float    | max_uniqueMat      |
+| dzdy                         | float    | max_uniqueMat      |
+| globaldy                     | float    | max_uniqueMat      |
 */
 
 namespace FT {
@@ -46,19 +47,20 @@ __device__ __host__ FTGeometry::FTGeometry(
   number_of_mats               = *((uint32_t*)p); p += sizeof(uint32_t);
   number_of_tell40s            = *((uint32_t*)p); p += sizeof(uint32_t);
   bank_first_channel           = (uint32_t*)p; p += number_of_tell40s * sizeof(uint32_t);
-  mirrorPointX                 = (float*)p; p += sizeof(float) * number_of_mats;
-  mirrorPointY                 = (float*)p; p += sizeof(float) * number_of_mats;
-  mirrorPointZ                 = (float*)p; p += sizeof(float) * number_of_mats;
-  ddxX                         = (float*)p; p += sizeof(float) * number_of_mats;
-  ddxY                         = (float*)p; p += sizeof(float) * number_of_mats;
-  ddxZ                         = (float*)p; p += sizeof(float) * number_of_mats;
-  uBegin                       = (float*)p; p += sizeof(float) * number_of_mats;
-  halfChannelPitch             = (float*)p; p += sizeof(float) * number_of_mats;
-  dieGap                       = (float*)p; p += sizeof(float) * number_of_mats;
-  sipmPitch                    = (float*)p; p += sizeof(float) * number_of_mats;
-  dxdy                         = (float*)p; p += sizeof(float) * number_of_mats;
-  dzdy                         = (float*)p; p += sizeof(float) * number_of_mats;
-  globaldy                     = (float*)p; p += sizeof(float) * number_of_mats;
+  max_uniqueMat            = *((uint32_t*)p); p += sizeof(uint32_t);
+  mirrorPointX                 = (float*)p; p += sizeof(float) * max_uniqueMat;
+  mirrorPointY                 = (float*)p; p += sizeof(float) * max_uniqueMat;
+  mirrorPointZ                 = (float*)p; p += sizeof(float) * max_uniqueMat;
+  ddxX                         = (float*)p; p += sizeof(float) * max_uniqueMat;
+  ddxY                         = (float*)p; p += sizeof(float) * max_uniqueMat;
+  ddxZ                         = (float*)p; p += sizeof(float) * max_uniqueMat;
+  uBegin                       = (float*)p; p += sizeof(float) * max_uniqueMat;
+  halfChannelPitch             = (float*)p; p += sizeof(float) * max_uniqueMat;
+  dieGap                       = (float*)p; p += sizeof(float) * max_uniqueMat;
+  sipmPitch                    = (float*)p; p += sizeof(float) * max_uniqueMat;
+  dxdy                         = (float*)p; p += sizeof(float) * max_uniqueMat;
+  dzdy                         = (float*)p; p += sizeof(float) * max_uniqueMat;
+  globaldy                     = (float*)p; p += sizeof(float) * max_uniqueMat;
 
   size = p - geometry;
 }
@@ -166,5 +168,46 @@ void FTHitCount::typecast_after_prefix_sum(
   n_hits_layers = base_pointer + number_of_events * FT::number_of_zones + 1 + event_number * FT::number_of_zones;
 }
 
+void FTHits::typecast_unsorted(char* base, uint32_t total_number_of_hits) {
+  x0    = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  z0    = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  w     = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  dxdy  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  dzdy  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  yMin  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  yMax  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  werrX = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  coord = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  LHCbID =    reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  planeCode = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  hitZone =   reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  info =      reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  used = reinterpret_cast<bool*>(base); base += sizeof(bool);
+  temp  = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+}
+
+void FTHits::typecast_sorted(char* base, uint32_t total_number_of_hits) {
+  temp  = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  x0    = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  z0    = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  w     = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  dxdy  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  dzdy  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  yMin  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  yMax  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  werrX = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  coord = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  LHCbID =    reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  planeCode = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  hitZone =   reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  info =      reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  used = reinterpret_cast<bool*>(base); base += sizeof(bool);
+}
+
+FTHit FTHits::getHit(uint32_t index) const {
+  return {x0[index], z0[index], w[index], dxdy[index], dzdy[index], yMin[index],
+          yMax[index], werrX[index], coord[index], LHCbID[index], planeCode[index],
+          hitZone[index], info[index], used[index]};
+}
 
 };

@@ -24,67 +24,90 @@ __device__ bool cSize(uint16_t c) {
   return (c >> FTRawBankParams::sizeShift     ) & FTRawBankParams::sizeMaximum;
 }
 
-
 __global__ void raw_bank_decoder(
-  uint *ft_event_offsets,
-  uint *ft_cluster_offsets,
   char *ft_events,
-  char *ft_clusters,
-  uint* ft_cluster_nums,
-  uint* ft_cluster_num,
-  char *geometry
-) {};/*
-  // TODO: Optimize parallelization (as in estimate_cluster_count).
-  const uint event_id = blockIdx.x;
-  //if first thread...
-  *(ft_cluster_nums + event_id) = 0;
-  __syncthreads();
+  uint *ft_event_offsets,
+  uint *ft_hit_count,
+  char* ft_hits,
+  char *ft_geometry
+) {
+  //TODO: maybe not hardcoded, or in another place
+  const float invClusRes[] = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
+  const uint32_t number_of_events = gridDim.x;
+  const uint32_t event_number = blockIdx.x;
 
-  FTGeometry geom(geometry);
-
-  const auto event = FTRawEvent(ft_events + ft_event_offsets[event_id]);
+  FTGeometry geom(ft_geometry);
+  const auto event = FTRawEvent(ft_events + ft_event_offsets[event_number]);
   // NO version checking. Be careful, as v5 is assumed.
   //assert(event.version == 5u);
+  FTHits hits;
+  hits.typecast_unsorted(ft_hits, ft_hit_count[number_of_events * FT::number_of_zones]);
+  FTHitCount hit_count;
+  hit_count.typecast_after_prefix_sum(ft_hit_count, event_number, number_of_events);
 
+  __shared__ uint32_t shared_layer_offsets[FT::number_of_zones];
+
+  for (uint i = threadIdx.x; i < FT::number_of_zones; i += blockDim.x) {
+    shared_layer_offsets[i] = hit_count.layer_offsets[i];
+  }
+
+  for (uint i = threadIdx.x; i < FT::number_of_zones; i += blockDim.x) {
+    hit_count.n_hits_layers[i] = 0;
+  }
+
+  __syncthreads();
 
   //Merge of PrStoreFTHit and RawBankDecoder.
   auto make_cluster = [&](uint32_t chan, uint8_t fraction, uint8_t pseudoSize) {
-    uint clusterIndex = atomicAdd(ft_cluster_nums + event_id, 1u) + (event_id == 0? 0 : ft_cluster_offsets[event_id-1]);
-    atomicAdd(ft_cluster_num, 1u);
-    ft_clusters[clusterIndex] = {chan, fraction, pseudoSize};
-    // const FT::FTChannelID id = {chan};
-    // const uint32_t mat = id.uniqueMat();
-    // //if(mat > 1024)
-    //   printf("event: %u, channelID: %u, uniqueMat: %u \n", event_id, chan, id.uniqueMat());
-    // const uint32_t iQuarter = id.uniqueQuarter();
-    // const uint32_t info = (iQuarter>>1) | (((iQuarter<<4)^(iQuarter<<5)^128u) & 128u);
-    // const float dxdy = geom.dxdy[mat];
-    // const float dzdy = geom.dzdy[mat];
-    // const float globaldy = geom.globaldy[mat];
-    // float uFromChannel = geom.uBegin[mat] + (2 * id.channel() + 1 +clus.fraction) * geom.halfChannelPitch[mat];
-    // if( id.die() ) uFromChannel += geom.dieGap[mat];
-    // uFromChannel += id.sipm() * geom.sipmPitch[mat];
-    // const float endPointX = geom.mirrorPointX[mat] + geom.ddxX[mat] * uFromChannel;
-    // const float endPointY = geom.mirrorPointY[mat] + geom.ddxY[mat] * uFromChannel;
-    // const float endPointZ = geom.mirrorPointZ[mat] + geom.ddxZ[mat] * uFromChannel;
-    // const float x0 = endPointX - dxdy * endPointY;
-    // const float z0 = endPointZ - dzdy * endPointY;
-    //
-    // //TODO resolve this mess..
-    // float yMin = id.isBottom()? endPointY + globaldy : endPointY;
-    // float yMax = id.isBottom()? endPointY : endPointY + globaldy;
-    // //if(id.isBottom()) std::swap(yMin, yMax);
-    // assert( clus.pseudoSize < 9 && "Pseudosize of cluster is > 8. Out of range.");
-    // float werrX = invClusRes[clus.pseudoSize];
-    //
-    // const uint32_t hitIndex = i + event_id == 0? 0 : ft_cluster_nums[event_id-1];
-    //ft_hits[hitIndex] = {id, x0, z0, dxdy, dzdy, yMin, yMax, werrX, werrX*werrX, info};
+    const FT::FTChannelID id(chan);
 
+    //Offset to save space in geometry structure, see DumpFTGeometry.cpp
+    const uint32_t mat = id.uniqueMat() - 512;
+    //printf("event: %u, channelID: %u, station: %u, layer: %u, quarter: %u, module: %u, mat: %u, uniqueMat: %u, uniqueQuarter: %u, uniqueLayer: %u\n", event_number, chan, id.station(), id.layer(), id.quarter(), id.module(), id.mat(), id.uniqueMat()-512, id.uniqueQuarter(), id.uniqueLayer());
+    const uint32_t iQuarter = id.uniqueQuarter() - 16;
+    const uint32_t planeCode = id.uniqueLayer() - 4;
+    const uint32_t info = (iQuarter>>1) | (((iQuarter<<4)^(iQuarter<<5)^128u) & 128u);
+    const float dxdy = geom.dxdy[mat];
+    const float dzdy = geom.dzdy[mat];
+    const float globaldy = geom.globaldy[mat];
+    float uFromChannel = geom.uBegin[mat] + (2 * id.channel() + 1 + fraction) * geom.halfChannelPitch[mat];
+    if( id.die() ) uFromChannel += geom.dieGap[mat];
+    uFromChannel += id.sipm() * geom.sipmPitch[mat];
+    const float endPointX = geom.mirrorPointX[mat] + geom.ddxX[mat] * uFromChannel;
+    const float endPointY = geom.mirrorPointY[mat] + geom.ddxY[mat] * uFromChannel;
+    const float endPointZ = geom.mirrorPointZ[mat] + geom.ddxZ[mat] * uFromChannel;
+    const float x0 = endPointX - dxdy * endPointY;
+    const float z0 = endPointZ - dzdy * endPointY;
 
+    //TODO resolve this mess..
+    float yMin = id.isBottom()? endPointY + globaldy : endPointY;
+    float yMax = id.isBottom()? endPointY : endPointY + globaldy;
+    //if(id.isBottom()) std::swap(yMin, yMax);
+    assert( pseudoSize < 9 && "Pseudosize of cluster is > 8. Out of range.");
+    float werrX = invClusRes[pseudoSize];
 
-    //printf("making cluster %u: chan %u \n", clusterIndex, ft_clusters[clusterIndex].channelID.channelID);
+    //Unsure why -16 is needed. Either something is wrong or the unique* methods are not designed to start at 0.
+    const uint32_t zone = ((id.uniqueQuarter() - 16) >> 1);
+    uint32_t* hits_zone = hit_count.n_hits_layers + zone;
+    uint32_t hitIndex = atomicAdd(hits_zone, 1);
+    hitIndex += shared_layer_offsets[zone];
 
+    //printf("%u ", hitIndex);
 
+    hits.x0[hitIndex] = x0;
+    hits.z0[hitIndex] = z0;
+    hits.w[hitIndex] = werrX * werrX;
+    hits.dxdy[hitIndex] = dxdy;
+    hits.dzdy[hitIndex] = dzdy;
+    hits.yMin[hitIndex] = yMin;
+    hits.yMax[hitIndex] = yMax;
+    hits.werrX[hitIndex] = werrX;
+    hits.coord[hitIndex] = 0;
+    hits.LHCbID[hitIndex] = chan;
+    hits.planeCode[hitIndex] = planeCode;
+    hits.hitZone[hitIndex] = zone;
+    hits.info[hitIndex] = info;
+    hits.used[hitIndex] = false;
   };
 
   //copied straight from FTRawBankDecoder.cpp
@@ -111,16 +134,15 @@ __global__ void raw_bank_decoder(
 
   for(uint i = threadIdx.x; i < event.number_of_raw_banks; i += blockDim.x)
   {
+    // FIXME: implement FTRawEvent method to get nths rawbank instead of this line.
     FTRawBank rawbank(event.payload + event.raw_bank_offset[i], event.payload + event.raw_bank_offset[i+1]);
 
     uint16_t* it = rawbank.data + 2;
     uint16_t* last = rawbank.last;
-    //printf("start: %u\n", start);
     if (*(last-1) == 0) --last;//Remove padding at the end
     for( ;  it < last; ++it ){ // loop over the clusters
       uint16_t c = *it;
       uint32_t ch = geom.bank_first_channel[rawbank.sourceID] + channelInBank(c);
-      //printf("byte %x, cib %u, ch %u, station %u, layer %u, quarter %u, module %u, mat %u, sipm %u, channel %u\n", c, channelInBank(c), ch.channelID, ch.station(), ch.layer(), ch.quarter(), ch.module(), ch.mat(), ch.sipm(), ch.channel());
 
       if( !cSize(c) || it+1 == last ) { //No size flag or last cluster
         make_cluster(ch, fraction(c), 4);
@@ -134,7 +156,5 @@ __global__ void raw_bank_decoder(
         }
       }
     }
-    //printf("global offset: %x \n", event.payload + start - ft_events);
-    //printf("sourceID: %u \n", rawbank.sourceID);
   }
-}*/
+}

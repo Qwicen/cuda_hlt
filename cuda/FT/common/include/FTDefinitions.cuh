@@ -22,6 +22,7 @@ struct FTGeometry {
   uint32_t number_of_mats;
   uint32_t number_of_tell40s;
   uint32_t* bank_first_channel;
+  uint32_t max_uniqueMat;
   float* mirrorPointX;
   float* mirrorPointY;
   float* mirrorPointZ;
@@ -153,15 +154,82 @@ struct FTHitCount{
 };
 
 struct FTHit {
-  FTChannelID channelID;
   float x0;
   float z0;
+  float w;
   float dxdy;
   float dzdy;
   float yMin;
   float yMax;
   float werrX;
-  float w;
-  uint info;
+  float coord;
+  uint32_t LHCbID;
+  uint32_t planeCode;
+  uint32_t hitZone;
+  uint32_t info;
+  bool used;
+
+  friend std::ostream& operator<<(std::ostream& stream, const FTHit& hit) {
+  stream << "FT hit {"
+    << hit.planeCode << ", "
+    << hit.hitZone << ", "
+    << hit.LHCbID << ", "
+    << hit.x0 << ", "
+    << hit.z0 << ", "
+    << hit.w<< ", "
+    << hit.dxdy << ", "
+    << hit.dzdy << ", "
+    << hit.yMin << ", "
+    << hit.yMax << ", "
+    << hit.werrX << "}";
+
+  return stream;
+}
+
+};
+
+struct FTHits {
+  float* x0;
+  float* z0;
+  float* w;
+  float* dxdy;
+  float* dzdy;
+  float* yMin;
+  float* yMax;
+  float* werrX;
+  float* coord;
+  uint32_t* LHCbID;
+  uint32_t* planeCode;
+  uint32_t* hitZone;
+  uint32_t* info;
+  bool* used;
+  uint32_t* temp;
+
+
+  FTHits() = default;
+
+  /**
+   * @brief Populates the FTHits object pointers from an unsorted array of data
+   *        pointed by base_pointer.
+   */
+  __host__ __device__
+  void typecast_unsorted(char* base_pointer, uint32_t total_number_of_hits);
+
+  /**
+   * @brief Populates the FTHits object pointers from a sorted array of data
+   *        pointed by base_pointer.
+   */
+  __host__ __device__
+  void typecast_sorted(char* base_pointer, uint32_t total_number_of_hits);
+
+  /**
+   * @brief Gets a hit in the UTHit format from the global hit index.
+   */
+  FTHit getHit(uint32_t index) const;
+
+  // check for used hit
+  __device__ __host__ bool isValid( uint32_t value ) const {
+    return !used[value];
+  }
 };
 }
