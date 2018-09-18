@@ -47,7 +47,7 @@ make
 
 Where to find input
 -------------
-Input from 10k events can be found here: /afs/cern.ch/work/d/dovombru/public/gpu_input/10kevents
+Input from 10k events can be found here: /afs/cern.ch/work/d/dovombru/public/gpu_input/10kevents_new_dumper
 
 How to run it
 -------------
