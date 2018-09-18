@@ -36,3 +36,9 @@ bool fitYProjection(
   PlaneCounter& planeCounter,
   MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur); 
+
+int fitParabola(
+  std::vector<unsigned int> coordToFit,
+  SciFi::HitsSoA* hits_layers,
+  std::vector<float>& trackParameters,
+  const bool xFit);

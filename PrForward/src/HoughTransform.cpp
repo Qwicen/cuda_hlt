@@ -27,7 +27,57 @@ void xAtRef_SamePlaneHits(
     itH++;
   }
 }
- 
+
+int fitParabola( std::vector<unsigned int> coordToFit, SciFi::HitsSoA* hits_layers, std::vector<float>& trackParameters, const bool xFit ) {
+
+  //== Fit a cubic
+  float s0   = 0.f; 
+  float sz   = 0.f; 
+  float sz2  = 0.f; 
+  float sz3  = 0.f; 
+  float sz4  = 0.f; 
+  float sd   = 0.f; 
+  float sdz  = 0.f; 
+  float sdz2 = 0.f; 
+  
+  for (auto hit : coordToFit ) {
+    float d = trackToHitDistance(trackParameters, hits_layers, hit);
+    if (!xFit)
+      d *= - 1. / hits_layers->m_dxdy[hit];//TODO multiplication much faster than division!
+    float w = hits_layers->m_w[hit];
+    float z = .001f * ( hits_layers->m_z[hit] - SciFi::Tracking::zReference );
+    s0   += w;
+    sz   += w * z; 
+    sz2  += w * z * z; 
+    sz3  += w * z * z * z; 
+    sz4  += w * z * z * z * z; 
+    sd   += w * d; 
+    sdz  += w * d * z; 
+    sdz2 += w * d * z * z; 
+  }    
+  const float b1 = sz  * sz  - s0  * sz2; 
+  const float c1 = sz2 * sz  - s0  * sz3; 
+  const float d1 = sd  * sz  - s0  * sdz; 
+  const float b2 = sz2 * sz2 - sz * sz3; 
+  const float c2 = sz3 * sz2 - sz * sz4; 
+  const float d2 = sdz * sz2 - sz * sdz2;
+  const float den = (b1 * c2 - b2 * c1 );
+  if(!(std::fabs(den) > 1e-5)) return false;
+  const float db  = (d1 * c2 - d2 * c1 ) / den; 
+  const float dc  = (d2 * b1 - d1 * b2 ) / den; 
+  const float da  = ( sd - db * sz - dc * sz2) / s0;
+  if (xFit) {
+    trackParameters[0] += da;
+    trackParameters[1] += db*1.e-3f;
+    trackParameters[2] += dc*1.e-6f;
+  } else {
+    trackParameters[4] += da;
+    trackParameters[5] += db*1.e-3f;
+    trackParameters[6] += dc*1.e-6f;
+  }
+
+  return true;
+}
 
 bool fitXProjection(
   SciFi::HitsSoA *hits_layers,
@@ -40,44 +90,9 @@ bool fitXProjection(
   if (planeCounter.nbDifferent < pars.minXHits) return false;
   bool doFit = true;
   while ( doFit ) {
-    //== Fit a cubic
-    float s0   = 0.f; 
-    float sz   = 0.f; 
-    float sz2  = 0.f; 
-    float sz3  = 0.f; 
-    float sz4  = 0.f; 
-    float sd   = 0.f; 
-    float sdz  = 0.f; 
-    float sdz2 = 0.f; 
 
-    for (auto hit : coordToFit ) {
-      float d = trackToHitDistance(trackParameters, hits_layers, hit);
-      float w = hits_layers->m_w[hit];
-      float z = .001f * ( hits_layers->m_z[hit] - SciFi::Tracking::zReference );
-      s0   += w;
-      sz   += w * z; 
-      sz2  += w * z * z; 
-      sz3  += w * z * z * z; 
-      sz4  += w * z * z * z * z; 
-      sd   += w * d; 
-      sdz  += w * d * z; 
-      sdz2 += w * d * z * z; 
-    }    
-    const float b1 = sz  * sz  - s0  * sz2; 
-    const float c1 = sz2 * sz  - s0  * sz3; 
-    const float d1 = sd  * sz  - s0  * sdz; 
-    const float b2 = sz2 * sz2 - sz * sz3; 
-    const float c2 = sz3 * sz2 - sz * sz4; 
-    const float d2 = sdz * sz2 - sz * sdz2;
-    const float den = (b1 * c2 - b2 * c1 );
-    if(!(std::fabs(den) > 1e-5)) return false;
-    const float db  = (d1 * c2 - d2 * c1 ) / den; 
-    const float dc  = (d2 * b1 - d1 * b2 ) / den; 
-    const float da  = ( sd - db * sz - dc * sz2) / s0;
-    trackParameters[0] += da;
-    trackParameters[1] += db*1.e-3f;
-    trackParameters[2] += dc*1.e-6f;    
-
+    fitParabola( coordToFit, hits_layers, trackParameters, true );
+    
     float maxChi2 = 0.f; 
     float totChi2 = 0.f;  
     //int   nDoF = -3; // fitted 3 parameters
@@ -148,48 +163,13 @@ bool fitYProjection(
     float sz2  = wMag * zMag * zMag;
     float sd   = wMag * dyMag;
     float sdz  = wMag * dyMag * zMag;
-
+   
     std::vector<unsigned int>::const_iterator itEnd = std::end(stereoHits);
 
     if ( parabola ) {
-      float sz2m = 0.;
-      float sz3  = 0.;
-      float sz4  = 0.;
-      float sdz2 = 0.;
 
-      for ( const auto hit : stereoHits ){
-        const float d = - trackToHitDistance(track.trackParams, hits_layers, hit) / 
-			  hits_layers->m_dxdy[hit];//TODO multiplication much faster than division!
-        const float w = hits_layers->m_w[hit];
-        const float z = hits_layers->m_z[hit] - SciFi::Tracking::zReference;
-        s0   += w;
-        sz   += w * z; 
-        sz2m += w * z * z; 
-        sz2  += w * z * z; 
-        sz3  += w * z * z * z; 
-        sz4  += w * z * z * z * z; 
-        sd   += w * d; 
-        sdz  += w * d * z; 
-        sdz2 += w * d * z * z; 
-      }    
-      const float b1 = sz  * sz   - s0  * sz2; 
-      const float c1 = sz2m* sz   - s0  * sz3; 
-      const float d1 = sd  * sz   - s0  * sdz; 
-      const float b2 = sz2 * sz2m - sz * sz3; 
-      const float c2 = sz3 * sz2m - sz * sz4; 
-      const float d2 = sdz * sz2m - sz * sdz2;
-      const float den = (b1 * c2 - b2 * c1 );
-      if(!(std::fabs(den) > 1e-5)) {
-        // debug_cout << "Failing Y projection parabola fit" << std::endl;
-	return false;
-      }
-
-      const float db  = (d1 * c2 - d2 * c1 ) / den; 
-      const float dc  = (d2 * b1 - d1 * b2 ) / den; 
-      const float da  = ( sd - db * sz - dc * sz2 ) / s0;
-      track.trackParams[4] += da;
-      track.trackParams[5] += db;
-      track.trackParams[6] += dc;
+      fitParabola( stereoHits, hits_layers, track.trackParams, false );
+      
     } else { // straight line fit
 
       for ( const auto hit : stereoHits ){
