@@ -15,7 +15,7 @@
 //=============================================================================
 std::vector<SciFi::Track> PrForward(
   SciFi::HitsSoA *hits_layers,
-  const VeloState * velo_states,
+  const Velo::Consolidated::States * velo_states,
   const VeloUTTracking::TrackUT * veloUT_tracks,
   const int n_veloUT_tracks )
 {
@@ -33,7 +33,7 @@ std::vector<SciFi::Track> PrForward(
   for ( int i_veloUT_track = 0; i_veloUT_track < n_veloUT_tracks; ++i_veloUT_track ) {
     const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks[i_veloUT_track];
     
-    const VeloState& velo_state = velo_states[ veloUTTr.veloTrackIndex ];
+    const MiniState velo_state {*velo_states, veloUTTr.veloTrackIndex};
     
     std::vector<SciFi::Track> oneOutput; 
     find_forward_tracks(
@@ -69,12 +69,8 @@ void find_forward_tracks(
   std::vector<SciFi::Track>& outputTracks,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
   const ReadMLP_Forward2ndLoop& MLPReader_2nd,
-  const VeloState& velo_state
+  const MiniState& velo_state
 ) {
-
-  // Cache state information from state at the end of the VELO for
-  // all subsequent processing
-  //VeloState velo_state = veloUTTrack.state_endvelo;
 
   // The LHCb framework code had a PT preselection for the VeloUT tracks
   // here, which I am removing because this should be done explicitly through
@@ -174,7 +170,7 @@ void selectFullCandidates(
   std::vector<SciFi::Track>& outputTracks,
   const float xParams_seed[4],
   const float yParams_seed[4],
-  VeloState velo_state,
+  MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars,
   const ReadMLP_Forward1stLoop& MLPReader_1st,

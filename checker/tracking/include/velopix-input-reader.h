@@ -85,29 +85,22 @@ void callPrChecker(
 
     trackChecker(all_tracks[evnum], mcassoc, mcps);
 
-    /* Check for double counting of hits */
+    // Check all tracks for duplicate LHCb IDs
     uint i_track = 0;
-    for ( auto ch_track : all_tracks[evnum] ) {
-      for ( uint i_a = 0; i_a < ch_track.nIDs(); ++i_a ) {
-        auto ida = ch_track.ids()[i_a];
-    	int counted_IDs = 0;
-        for ( uint i_b = i_a; i_b < ch_track.nIDs(); ++i_b ) {
-          auto idb = ch_track.ids()[i_b];
-    	  if ( uint32_t(ida) == uint32_t(idb) )
-    	    counted_IDs++;
-    	}
+    for (auto& track : all_tracks[evnum]) {
+      auto ids = track.ids();
+      std::sort(std::begin(ids), std::end(ids));
+      bool containsDuplicates = (std::unique(std::begin(ids), std::end(ids))) != std::end(ids);
 
-    	if ( counted_IDs > 1  ) {
-    	  warning_cout << "ATTENTION: counted " << counted_IDs << " same IDs on track # " << std::dec << i_track << std::endl;
-    	  for ( auto id : ch_track.ids() ) {
-    	    warning_cout << std::hex << "\t " << id << std::endl;
-    	  }
-    	}
-	
+      if (containsDuplicates) {
+        warning_cout << "WARNING: Track #" << i_track << " contains duplicate LHCb IDs" << std::endl;
+        for (auto id : ids) {
+          warning_cout << id << ", ";
+        }
+        warning_cout << std::endl << std::endl;
       }
-      ++i_track;
+      i_track++;
     }
-		
     
     ++evnum;
   }

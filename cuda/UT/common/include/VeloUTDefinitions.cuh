@@ -1,8 +1,8 @@
 #pragma once
 
-// #include "cuda_runtime.h"
-// #include "device_launch_parameters.h"
-// #include "Common.h"
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include "Common.h"
 #include "VeloDefinitions.cuh"
 
 #include "assert.h"

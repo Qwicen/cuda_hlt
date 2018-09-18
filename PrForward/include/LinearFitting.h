@@ -4,6 +4,7 @@
 #include "TrackUtils.h"
 #include "HitUtils.h"
 
+#include <cmath>
 
 void incrementLineFitParameters(SciFi::Tracking::LineFitterPars &parameters, SciFi::HitsSoA* hits_layers, int it);
 

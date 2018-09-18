@@ -16,6 +16,7 @@
 
 #include "VeloDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
+#include "PrVeloUT.cuh"
 #include "SciFiDefinitions.cuh"
 #include "PrForwardConstants.h"
 #include "TrackUtils.h"
@@ -24,6 +25,8 @@
 #include "HoughTransform.h"
 #include "FindXHits.h"
 #include "FindStereoHits.h"
+#include "VeloEventModel.cuh"
+#include "VeloConsolidated.cuh"
 
 /** @class PrForward PrForward.h
    *
@@ -38,8 +41,8 @@
 
 
 std::vector<SciFi::Track> PrForward(
-   SciFi::HitsSoA *hits_layers_events,
-  const VeloState * velo_states,
+  SciFi::HitsSoA *hits_layers_events,
+  const Velo::Consolidated::States * velo_states,
   const VeloUTTracking::TrackUT * veloUT_tracks,
   const int n_veloUT_tracks );
                                                       
@@ -49,7 +52,7 @@ void find_forward_tracks(
   std::vector<SciFi::Track>& outputTracks,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
   const ReadMLP_Forward2ndLoop& MLPReader_2nd,
-  const VeloState& velo_state);
+  const MiniState& velo_state);
 
 
 void selectFullCandidates(
@@ -57,7 +60,7 @@ void selectFullCandidates(
   std::vector<SciFi::Track>& outputTracks,
   const float xParams_seed[4],
   const float yParams_seed[4],
-  VeloState velo_state,
+  MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars_cur,
   const ReadMLP_Forward1stLoop& MLPReader_1st,

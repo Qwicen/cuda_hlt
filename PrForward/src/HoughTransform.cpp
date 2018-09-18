@@ -6,7 +6,7 @@ void xAtRef_SamePlaneHits(
   SciFi::HitsSoA* hits_layers,
   std::vector<int>& allXHits,
   const float xParams_seed[4],
-  VeloState velo_state, 
+  MiniState velo_state, 
   int itH, int itEnd)
 {
   //this is quite computationally expensive mind, should take care when porting
@@ -127,7 +127,7 @@ bool fitYProjection(
   SciFi::Track& track,
   std::vector<int>& stereoHits,
   PlaneCounter& planeCounter,
-  VeloState velo_state,
+  MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   

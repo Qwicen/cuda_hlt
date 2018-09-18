@@ -180,8 +180,8 @@ using argument_tuple_t = std::tuple<
   ...
   Argument<arg::dev_velo_track_hit_number, uint>,
   Argument<arg::dev_prefix_sum_auxiliary_array_2, uint>,
-  Argument<arg::dev_velo_track_hits, Hit<mc_check_enabled>>,
-  Argument<arg::dev_velo_states, VeloState>,
+  Argument<arg::dev_velo_track_hits, Hit>,
+  Argument<arg::dev_velo_states, Velo::State>,
   Argument<arg::dev_x, float>,
   Argument<arg::dev_y, float>
 >;
@@ -243,7 +243,7 @@ First go to `stream/sequence/include/Stream.cuh` and add the saxpy host memory p
   int* host_number_of_tracks;
   int* host_accumulated_tracks;
   uint* host_velo_track_hit_number;
-  Hit<mc_check_enabled>* host_velo_track_hits;
+  Hit* host_velo_track_hits;
   uint* host_total_number_of_velo_clusters;
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
@@ -264,7 +264,7 @@ Reserve that host memory in `stream/sequence/src/Stream.cu`:
   cudaCheck(cudaMallocHost((void**)&host_number_of_tracks, max_number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_tracks, max_number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_velo_track_hit_number, max_number_of_events * VeloTracking::max_tracks * sizeof(uint)));
-  cudaCheck(cudaMallocHost((void**)&host_velo_track_hits, max_number_of_events * VeloTracking::max_tracks * 20 * sizeof(Hit<mc_check_enabled>)));
+  cudaCheck(cudaMallocHost((void**)&host_velo_track_hits, max_number_of_events * VeloTracking::max_tracks * 20 * sizeof(Hit)));
   cudaCheck(cudaMallocHost((void**)&host_total_number_of_velo_clusters, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_number_of_reconstructed_velo_tracks, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_hits_in_velo_tracks, sizeof(uint)));

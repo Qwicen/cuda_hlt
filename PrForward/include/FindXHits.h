@@ -13,6 +13,7 @@
 #include "HitUtils.h"
 #include "LinearFitting.h"
 #include "HoughTransform.h"
+#include "PrVeloUT.cuh"
 
 /**
    Functions related to selecting hits on the x planes,
@@ -24,7 +25,7 @@ void collectAllXHits(
   std::vector<int>& allXHits, 
   const float xParams_seed[4],
   const float yParams_seed[4],
-  const VeloState& velo_state,
+  const MiniState& velo_state,
   const float qop,
   int side);
 
@@ -36,7 +37,7 @@ void selectXCandidates(
   const float zRef_track,
   const float xParams_seed[4],
   const float yParams_seed[4],
-  const VeloState& velo_state,
+  const MiniState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur,
   int side);
 

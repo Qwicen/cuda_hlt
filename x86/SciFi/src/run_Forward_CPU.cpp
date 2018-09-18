@@ -9,11 +9,12 @@
 int run_forward_on_CPU (
   std::vector< trackChecker::Tracks >& forward_tracks_events,
   SciFi::HitsSoA * hits_layers_events,
-  const VeloState * host_velo_states,
-  const int * host_velo_accumulated_tracks,
-  const VeloUTTracking::TrackUT * veloUT_tracks,
+  uint* host_velo_tracks_atomics,
+  uint* host_velo_track_hit_number,
+  uint* host_velo_states,
+  VeloUTTracking::TrackUT * veloUT_tracks,
   const int * n_veloUT_tracks_events,
-  const int &number_of_events
+  const uint &number_of_events
 ) {
 
 #ifdef WITH_ROOT
@@ -30,14 +31,15 @@ int run_forward_on_CPU (
   t_Forward_tracks->Branch("qop", &qop);
 #endif
 
-  for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
+  for ( uint i_event = 0; i_event < number_of_events; ++i_event ) {
 
-    const int velo_accumulated_tracks = host_velo_accumulated_tracks[i_event];
-    const VeloState* host_velo_states_event = host_velo_states + velo_accumulated_tracks;
-    
+    // Velo consolidated types
+    const Velo::Consolidated::Tracks velo_tracks {(uint*) host_velo_tracks_atomics, host_velo_track_hit_number, i_event, number_of_events};
+    const Velo::Consolidated::States host_velo_states_event {host_velo_states, velo_tracks.total_number_of_tracks};
+
     std::vector< SciFi::Track > forward_tracks = PrForward(
       &(hits_layers_events[i_event]),
-      host_velo_states_event,
+      &host_velo_states_event,
       veloUT_tracks + i_event * VeloUTTracking::max_num_tracks,
       n_veloUT_tracks_events[i_event] );
 

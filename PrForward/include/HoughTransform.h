@@ -8,6 +8,7 @@
 
 #include "TrackUtils.h"
 #include "HitUtils.h"
+#include "PrVeloUT.cuh"
 
 /**
    Functions related to doing a 1D Hough transform
@@ -18,7 +19,7 @@ void xAtRef_SamePlaneHits(
   SciFi::HitsSoA* hits_layers,
   std::vector<int>& allXHits,
   const float xParams_seed[4],
-  VeloState velo_state, 
+  MiniState velo_state, 
   int itH, int itEnd);
 
 bool fitXProjection(
@@ -33,5 +34,5 @@ bool fitYProjection(
   SciFi::Track& track,
   std::vector<int>& stereoHits,
   PlaneCounter& planeCounter,
-  VeloState velo_state,
+  MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur); 

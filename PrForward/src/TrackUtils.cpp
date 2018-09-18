@@ -1,6 +1,6 @@
 #include "TrackUtils.h"
 
-std::vector<float> getTrackParameters ( float xAtRef, VeloState velo_state)
+std::vector<float> getTrackParameters ( float xAtRef, MiniState velo_state)
 {
   
   float dSlope  = ( xFromVelo(SciFi::Tracking::zReference,velo_state) - xAtRef ) / ( SciFi::Tracking::zReference - SciFi::Tracking::zMagnetParams[0]);
@@ -23,7 +23,7 @@ std::vector<float> getTrackParameters ( float xAtRef, VeloState velo_state)
  return toreturn;
 }
 
-float calcqOverP ( float bx, VeloState velo_state )
+float calcqOverP ( float bx, MiniState velo_state )
 {
   
   float qop(1.0f/Gaudi::Units::GeV) ;
@@ -43,7 +43,7 @@ float calcqOverP ( float bx, VeloState velo_state )
 
 // DvB: what does this do?
 // -> get position within magnet (?)
-float zMagnet(VeloState velo_state)
+float zMagnet(MiniState velo_state)
 {
     
   return ( SciFi::Tracking::zMagnetParams[0] +
@@ -63,7 +63,7 @@ void covariance ( FullState& state, const float qOverP )
 
 // calculate difference between straight line extrapolation and
 // where a track with wrongSignPT (2 GeV) would be on the reference plane (?)
-float calcDxRef(float pt, VeloState velo_state) {
+float calcDxRef(float pt, MiniState velo_state) {
   float m_slope2 = pow(velo_state.tx,2) + pow(velo_state.ty,2);
   return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  pow(velo_state.ty,2) - 1000. * pow(velo_state.tx,2); // tune this window
 }

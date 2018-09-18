@@ -19,7 +19,7 @@ void collectAllXHits(
   std::vector<int>& allXHits,
   const float xParams_seed[4], 
   const float yParams_seed[4],
-  const VeloState& velo_state,
+  const MiniState& velo_state,
   const float qOverP,
   int side)
 {
@@ -198,7 +198,7 @@ void selectXCandidates(
   const float zRef_track, 
   const float xParams_seed[4],
   const float yParams_seed[4],
-  const VeloState& velo_state,
+  const MiniState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars,
   int side)
 {
@@ -461,7 +461,11 @@ void selectXCandidates(
       // --> we need it for the second loop
       //debug_cout << "Pushed back an X candidate for stereo search!" << std::endl;
       SciFi::Track track;
-      track.state_endvelo = velo_state;
+      track.state_endvelo.x = velo_state.x;
+      track.state_endvelo.y = velo_state.y;
+      track.state_endvelo.z = velo_state.z;
+      track.state_endvelo.tx = velo_state.tx;
+      track.state_endvelo.ty = velo_state.ty;
       track.chi2 = trackParameters[7];
       for (int k=0;k<7;++k){
         track.trackParams.push_back(trackParameters[k]);

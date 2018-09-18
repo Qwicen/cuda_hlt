@@ -1,7 +1,10 @@
 #pragma once
 
+#include <cmath>
+
 #include "SciFiDefinitions.cuh"
 #include "PrForwardConstants.h"
+#include "PrVeloUT.cuh" 
 
 /**
    Helper functions related to track properties
@@ -39,12 +42,12 @@ namespace SciFi {
 } // SciFi
 
 // extrapolate x position from given state to z
-inline float xFromVelo( const float z, VeloState velo_state ) { 
+inline float xFromVelo( const float z, MiniState velo_state ) { 
   return velo_state.x + (z-velo_state.z) * velo_state.tx; 
 }
 
 // extrapolate y position from given state to z
-inline float yFromVelo( const float z, VeloState velo_state ) { 
+inline float yFromVelo( const float z, MiniState velo_state ) { 
   return velo_state.y + (z-velo_state.z) * velo_state.ty; 
 }
 
@@ -54,15 +57,15 @@ inline float straightLineExtend(const float params[4], float z) {
   return params[0] + (params[1]+(params[2] + params[3]*dz)*dz)*dz;
 }
 
-std::vector<float> getTrackParameters ( float xAtRef, VeloState velo_state);
+std::vector<float> getTrackParameters ( float xAtRef, MiniState velo_state);
 
-float calcqOverP ( float bx, VeloState velo_state );
+float calcqOverP ( float bx, MiniState velo_state );
 
-float zMagnet(VeloState velo_state);
+float zMagnet(MiniState velo_state);
 
 void covariance ( FullState& state, const float qOverP );
 
-float calcDxRef(float pt, VeloState velo_state);
+float calcDxRef(float pt, MiniState velo_state);
 
 float trackToHitDistance( std::vector<float> trackParameters, SciFi::HitsSoA* hits_layers, int hit );
 

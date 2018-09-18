@@ -7,7 +7,7 @@
 std::vector<int> collectStereoHits(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track,
-  VeloState velo_state,
+  MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   
@@ -72,7 +72,7 @@ bool selectStereoHits(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track, 
   std::vector<int> stereoHits,
-  VeloState velo_state, 
+  MiniState velo_state, 
   SciFi::Tracking::HitSearchCuts& pars)
 {
   //why do we rely on xRef? --> coord is NOT xRef for stereo HITS!
@@ -197,7 +197,7 @@ bool addHitsOnEmptyStereoLayers(
   SciFi::Track& track,
   std::vector<int>& stereoHits,
   PlaneCounter& planeCounter,
-  VeloState velo_state,
+  MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   //at this point pc is counting only stereo HITS!

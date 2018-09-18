@@ -5,7 +5,7 @@
 #include "Common.h"
 #include "Logger.h"
 #include "VeloDefinitions.cuh"
-
+#include "VeloEventModel.cuh"
 
 #include "assert.h"
 
@@ -74,7 +74,7 @@ namespace SciFi {
       float quality;
       float chi2;
       std::vector<float> trackParams;
-      VeloState state_endvelo;
+      Velo::State state_endvelo;
       
       __host__  void addLHCbID( unsigned int id ) {
         LHCbIDs.push_back( id );

@@ -9,9 +9,9 @@
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
-  const VeloTracking::TrackletHits& track
+  const Velo::TrackletHits& track
 ) {
-  VeloState state;
+  Velo::State state;
 
   // Fit parameters
   float s0, sx, sz, sxz, sz2;
@@ -91,8 +91,8 @@
 __device__ void weak_tracks_adder_impl(
   uint* weaktracks_insert_pointer,
   uint* tracks_insert_pointer,
-  VeloTracking::TrackletHits* weak_tracks,
-  VeloTracking::TrackHits* tracks,
+  Velo::TrackletHits* weak_tracks,
+  Velo::TrackHits* tracks,
   bool* hit_used,
   const float* hit_Xs,
   const float* hit_Ys,
@@ -103,7 +103,7 @@ __device__ void weak_tracks_adder_impl(
   for (int i=0; i<(weaktracks_total + blockDim.x - 1) / blockDim.x; ++i) {
     const auto weaktrack_no = blockDim.x * i + threadIdx.x;
     if (weaktrack_no < weaktracks_total) {
-      const VeloTracking::TrackletHits& t = weak_tracks[weaktrack_no];
+      const Velo::TrackletHits& t = weak_tracks[weaktrack_no];
       const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
       const float chi2 = means_square_fit_chi2(
         hit_Xs,
@@ -116,7 +116,7 @@ __device__ void weak_tracks_adder_impl(
       if (!any_used && chi2 < VeloTracking::max_chi2) {
         const uint trackno = atomicAdd(tracks_insert_pointer, 1);
         assert(trackno < VeloTracking::max_tracks);
-        tracks[trackno] = VeloTracking::TrackHits{t};
+        tracks[trackno] = Velo::TrackHits{t};
       }
     }
   }
@@ -125,8 +125,8 @@ __device__ void weak_tracks_adder_impl(
 __global__ void weak_tracks_adder(
   uint32_t* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
-  VeloTracking::TrackHits* dev_tracks,
-  VeloTracking::TrackletHits* dev_weak_tracks,
+  Velo::TrackHits* dev_tracks,
+  Velo::TrackletHits* dev_weak_tracks,
   bool* dev_hit_used,
   int* dev_atomics_storage
 ) {
@@ -148,12 +148,12 @@ __global__ void weak_tracks_adder(
   const float* hit_Xs = (float*) (dev_velo_cluster_container + 5 * number_of_hits + hit_offset);
 
   // Per event datatypes
-  VeloTracking::TrackHits* tracks = dev_tracks + tracks_offset;
+  Velo::TrackHits* tracks = dev_tracks + tracks_offset;
   uint* tracks_insert_pointer = (uint*) dev_atomics_storage + event_number;
 
   // Per side datatypes
   bool* hit_used = dev_hit_used + hit_offset;
-  VeloTracking::TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::max_weak_tracks;
+  Velo::TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::max_weak_tracks;
 
   // Initialize variables according to event number and module side
   // Insert pointers (atomics)

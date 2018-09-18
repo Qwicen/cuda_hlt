@@ -4,8 +4,11 @@ include_directories(../../main/include)
 include_directories(../../PrForward/include)
 include_directories(../../cuda/UT/common/include)
 include_directories(../../cuda/UT/PrVeloUT/include)
+include_directories(../../cuda/UT/UTDecoding/include)
 include_directories(../../cuda/SciFi/common/include)
 include_directories(../../cuda/velo/common/include)
+include_directories(../../cuda/event_model/common/include)
+include_directories(../../cuda/event_model/velo/include)
 
 file(GLOB x86Forward_cpp "src/*cpp" "../../PrForward/src/*cpp")
 

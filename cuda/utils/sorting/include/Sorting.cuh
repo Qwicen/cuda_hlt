@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cassert>
+
 //--------------------------------------------------------
 // 2018-08 Daniel Campora, Dorothea vom Bruch
 //

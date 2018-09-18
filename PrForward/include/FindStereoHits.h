@@ -10,6 +10,7 @@
 #include "TrackUtils.h"
 #include "HitUtils.h"
 #include "HoughTransform.h"
+#include "PrVeloUT.cuh"
 
 /**
    Functions related to selecting hits on the uv planes,
@@ -20,7 +21,7 @@ bool selectStereoHits(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track,
   std::vector<int> stereoHits,
-  VeloState velo_state,
+  MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur);
 
 bool addHitsOnEmptyStereoLayers(
@@ -28,11 +29,11 @@ bool addHitsOnEmptyStereoLayers(
   SciFi::Track& track,
   std::vector<int>& stereoHits,
   PlaneCounter& planeCounter,
-  VeloState velo_state,
+  MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur);
 
 std::vector<int> collectStereoHits(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track,
-  VeloState velo_state,
+  MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur);
