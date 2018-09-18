@@ -32,18 +32,15 @@ __global__ void veloUT(
   // active track pointer
   int* active_tracks = dev_active_tracks + event_number;
 
-  /* dev_atomics_veloUT contains in an SoA:
-     1. # of veloUT tracks
-     2. # velo tracks in UT acceptance
-  */
+  // dev_atomics_veloUT contains in an SoA:
+  //   1. # of veloUT tracks
+  //   2. # velo tracks in UT acceptance
   int* n_veloUT_tracks_event = dev_atomics_veloUT + event_number;
   VeloUTTracking::TrackUT* veloUT_tracks_event = dev_veloUT_tracks + event_number * VeloUTTracking::max_num_tracks;
-  // int* n_velo_tracks_in_UT_event = dev_atomics_veloUT + number_of_events + event_number;
   
   // initialize atomic veloUT tracks counter && active track
   if ( threadIdx.x == 0 ) {
     *n_veloUT_tracks_event = 0;
-    // *n_velo_tracks_in_UT_event = 0;
     *active_tracks = 0;
   }
 
@@ -86,7 +83,7 @@ __global__ void veloUT(
       // for storing calculated x position of hits for this track
       float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
 
-      if (!process_track(
+      if (process_track(
         i_track,
         event_tracks_offset,
         velo_states,
@@ -98,23 +95,23 @@ __global__ void veloUT(
         ut_hit_count,
         fudgeFactors,
         dev_ut_dxDy)
-      ) continue;
-
-      process_track2(
-        i_track,
-        event_tracks_offset,
-        velo_states,
-        hitCandidatesInLayers,
-        n_hitCandidatesInLayers,
-        x_pos_layers,
-        ut_hits,
-        ut_hit_count,
-        dev_velo_track_hits,
-        velo_tracks,
-        n_veloUT_tracks_event,
-        veloUT_tracks_event,
-        bdlTable,
-        dev_ut_dxDy);
+      ) {
+          process_track2(
+          i_track,
+          event_tracks_offset,
+          velo_states,
+          hitCandidatesInLayers,
+          n_hitCandidatesInLayers,
+          x_pos_layers,
+          ut_hits,
+          ut_hit_count,
+          dev_velo_track_hits,
+          velo_tracks,
+          n_veloUT_tracks_event,
+          veloUT_tracks_event,
+          bdlTable,
+          dev_ut_dxDy);    
+      }
 
       __syncthreads();
 
@@ -132,7 +129,7 @@ __global__ void veloUT(
     } 
   }
 
-  // last tracks 
+  // remaining tracks 
   if (threadIdx.x < *active_tracks) {
 
     // for storing calculated x position of hits for this track
@@ -151,24 +148,22 @@ __global__ void veloUT(
       fudgeFactors,
       dev_ut_dxDy)
     ) {
-      process_track2(
-      threadIdx.x,
-      event_tracks_offset,
-      velo_states,
-      hitCandidatesInLayers,
-      n_hitCandidatesInLayers,
-      x_pos_layers,
-      ut_hits,
-      ut_hit_count,
-      dev_velo_track_hits,
-      velo_tracks,
-      n_veloUT_tracks_event,
-      veloUT_tracks_event,
-      bdlTable,
-      dev_ut_dxDy);    
+        process_track2(
+        threadIdx.x,
+        event_tracks_offset,
+        velo_states,
+        hitCandidatesInLayers,
+        n_hitCandidatesInLayers,
+        x_pos_layers,
+        ut_hits,
+        ut_hit_count,
+        dev_velo_track_hits,
+        velo_tracks,
+        n_veloUT_tracks_event,
+        veloUT_tracks_event,
+        bdlTable,
+        dev_ut_dxDy);    
     }
-
-    
   }
 }
 
