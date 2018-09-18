@@ -194,7 +194,7 @@ void selectFullCandidates(
     
     // search for hits in U/V layers
     std::vector<int> stereoHits = collectStereoHits(hits_layers, *cand, velo_state, pars);
-    debug_cout << "Collected " << stereoHits.size() << " valid stereo hits for full track search, with requirement of " << pars.minStereoHits << std::endl;
+    // debug_cout << "Collected " << stereoHits.size() << " valid stereo hits for full track search, with requirement of " << pars.minStereoHits << std::endl;
     if(stereoHits.size() < pars.minStereoHits) continue;
     // DIRTY HACK
     std::vector<std::pair<float,int> > tempforsort;
@@ -203,11 +203,11 @@ void selectFullCandidates(
     std::sort( tempforsort.begin(), tempforsort.end());
     stereoHits.clear();
     for (auto pair : tempforsort) {stereoHits.emplace_back(pair.second);}
-    debug_cout << "# of collected stereo hits = " << int(stereoHits.size()) << std::endl;
+    //debug_cout << "# of collected stereo hits = " << int(stereoHits.size()) << std::endl;
       
     // select best U/V hits
     if ( !selectStereoHits(hits_layers, *cand, stereoHits, velo_state, pars) ) continue;
-    debug_cout << "Passed the stereo hits selection!" << std::endl;
+    //debug_cout << "Passed the stereo hits selection!" << std::endl;
 
     planeCounter.clear();
     for (auto hit : cand->hit_indices) {

@@ -104,6 +104,7 @@ namespace SciFi{
     
     // TO BE READ FROM XML EVENTUALLY
     const float              magscalefactor         = -1;
+
     
   } // Tracking
 } // SciFi

@@ -129,43 +129,30 @@ void collectAllXHits(
     const float xPredUVProto =  xInUv - xInZone * zRatio - dx;
     const float maxDxProto   =  SciFi::Tracking::tolYCollectX + std::abs( yInZone ) * SciFi::Tracking::tolYSlopeCollectX;
 
-    bool dotriangle = (std::fabs(yInZone) > SciFi::Tracking::tolYTriangleSearch); //cuts very slightly into distribution, 100% save cut is ~50
-    for (int xHit = itH; xHit < itEnd; ++xHit) { //loop over all xHits in a layer between xMin and xMax
-      const float xPredUv = xPredUVProto + hits_layers->m_x[xHit]* zRatio;
-      const float maxDx   = maxDxProto   + std::fabs( hits_layers->m_x[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
-      const float xMinUV  = xPredUv - maxDx;
-      const float xMaxUV  = xPredUv + maxDx;
-
-      bool foundmatch = false;
-      // find matching stereo hit if possible
-      for (int stereoHit = itUV1; stereoHit != uv_zone_offset_end; ++stereoHit) {
-        if ( hits_layers->m_x[stereoHit] > xMinUV ) {
-          if (hits_layers->m_x[stereoHit] < xMaxUV ) {
-            allXHits.emplace_back(xHit);
-            foundmatch = true;
-            break;
-          } else break;
-        }
+    if ( std::fabs(yInZone) > SciFi::Tracking::tolYTriangleSearch ) { // no triangle search necessary!
+      
+      for (int xHit = itH; xHit < itEnd; ++xHit) { //loop over all xHits in a layer between xMin and xMax
+        const float xPredUv = xPredUVProto + hits_layers->m_x[xHit]* zRatio;
+        const float maxDx   = maxDxProto   + std::fabs( hits_layers->m_x[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
+        const float xMinUV  = xPredUv - maxDx;
+        const float xMaxUV  = xPredUv + maxDx;
+        
+        if ( matchStereoHit( itUV1, uv_zone_offset_end, hits_layers, xMinUV, xMaxUV) )
+          allXHits.emplace_back(xHit);
       }
-      if (!foundmatch && dotriangle) { //Only do triangle if we fail to find regular match
-        for (int stereoHit = itUV2; stereoHit != triangle_zone_offset_end; ++stereoHit) {
-          if ( hits_layers->m_x[stereoHit] > xMinUV ) {
-            // Triangle search condition depends on side
-            if (side > 0) { // upper
-              if (hits_layers->m_yMax[stereoHit] > yInZone - SciFi::Tracking::yTolUVSearch) {
-                allXHits.emplace_back(xHit);
-                break;
-              } else break;
-            } else { 
-              if (hits_layers->m_yMin[stereoHit] < yInZone + SciFi::Tracking::yTolUVSearch) {
-                allXHits.emplace_back(xHit);
-                break;
-              } else break;
-            }
-          }
+    }else { // triangle search
+      for (int xHit = itH; xHit < itEnd; ++xHit) {
+        const float xPredUv = xPredUVProto + hits_layers->m_x[xHit]* zRatio;
+        const float maxDx   = maxDxProto   + std::fabs( hits_layers->m_x[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
+        const float xMinUV  = xPredUv - maxDx;
+        const float xMaxUV  = xPredUv + maxDx;
+
+        if ( matchStereoHit( itUV1, uv_zone_offset_end, hits_layers, xMinUV, xMaxUV ) || matchStereoHitWithTriangle(itUV2, triangle_zone_offset_end, yInZone, hits_layers, xMinUV, xMaxUV, side ) ) {
+          allXHits.emplace_back(xHit);
         }
       }
     }
+    
     const int iStart = iZoneEnd[cptZone-1];
     const int iEnd = allXHits.size();
     iZoneEnd[cptZone++] = iEnd;
@@ -213,9 +200,7 @@ void selectXCandidates(
   int it2 = it1; 
   pars.minStereoHits = 0;
 
-  //Parameters for X-hit only fit, thus do not require stereo hits
   std::vector<int> otherHits[12];
-
   PlaneCounter planeCounter;
   
   while( true ) {
@@ -244,13 +229,9 @@ void selectXCandidates(
     // Cluster candidate found, now count planes
     // Skip this for now, it1 and it2 already encompass what we need at this point
     // try to get rid of this helper class (as pretty much all helper classes)
-    std::vector<unsigned int> pc;
-    pc.clear();
     planeCounter.clear();
     for (int itH = it1; itH != it2; ++itH) {
       if (hits_layers->isValid(allXHits[itH])) {
-	//debug_cout << "Pushing back valid hit " << itH << " on plane " << hits_layers->m_planeCode[allXHits[itH]] << std::endl;
-        pc.push_back(allXHits[itH]);
         const int plane = hits_layers->m_planeCode[allXHits[itH]]/2;
         planeCounter.addHit( plane );
       }
@@ -274,7 +255,6 @@ void selectXCandidates(
              ) 
          ) {
 	//debug_cout << "Adding valid hit " << it2 << " on plane " << hits_layers->m_planeCode[allXHits[it2]] << std::endl;
-        pc.push_back(allXHits[it2]);
         planeCounter.addHit( hits_layers->m_planeCode[allXHits[it2]]/2 );
         itLast = it2; 
         ++it2;
@@ -283,13 +263,11 @@ void selectXCandidates(
       //Found nothing to improve
       break;
     }
-
-    std::vector<unsigned int> coordToFit;
-    coordToFit.clear();// In framework came with a reserve 16 call
+    
     //if not enough different planes, start again from the very beginning with next right hit
     if (planeCounter.nbDifferent < pars.minXHits) {
       ++it1;
-      //debug_cout<<"Not enough different planes " << nbDifferent(planelist) << " starting again" <<std::endl;
+      //debug_cout<<"Not enough different planes " << planeCounter.nbDifferent << " starting again" <<std::endl;
       continue;
     }
 
@@ -312,7 +290,9 @@ void selectXCandidates(
     lineFitParameters.m_z0 = SciFi::Tracking::zReference;
     float xAtRef = 0.;
     const unsigned int nbSingle = planeCounter.nbSingle();
-
+    std::vector<unsigned int> coordToFit;
+    coordToFit.clear();
+    
     if ( nbSingle >= SciFi::Tracking::minSingleHits && nbSingle != planeCounter.nbDifferent ) {
       //1) we have enough single planes (thus two) to make a straight line fit
       for(int i=0; i < 12; i++) otherHits[i].clear();
@@ -337,6 +317,10 @@ void selectXCandidates(
         float bestChi2 = 1e9f;
       
         int best = 0;
+        if ( otherHits[i].size() > 0 )
+          best = otherHits[i][0];
+        else
+          best = 0;
         for( int hit = 0; hit < otherHits[i].size(); ++hit ){
           const float chi2 = getLineFitChi2(lineFitParameters, hits_layers, otherHits[i][hit] );
           if( chi2 < bestChi2 ){
@@ -364,12 +348,9 @@ void selectXCandidates(
       int best     = itWindowStart;
       int bestEnd  = itWindowEnd;
 
-      std::vector<unsigned int> lpc;
-      lpc.clear();
       PlaneCounter lplaneCounter;
       for (int itH = itWindowStart; itH != itWindowEnd; ++itH) {
         if (hits_layers->isValid(allXHits[itH])) {
-          lpc.push_back(allXHits[itH]);
           lplaneCounter.addHit( hits_layers->m_planeCode[allXHits[itH]]/2 );
 	}
       } 
@@ -387,23 +368,11 @@ void selectXCandidates(
           ++itWindowEnd;
           while( itWindowEnd<=it2  &&  !hits_layers->isValid(allXHits[itWindowEnd-1])) ++itWindowEnd;
           if( itWindowEnd > it2) break;
-          lpc.push_back(allXHits[itWindowEnd-1]);
           lplaneCounter.addHit( hits_layers->m_planeCode[allXHits[itWindowEnd-1]]/2 );
           continue;
         } 
         // move on to the right
-        // OK this is super annoying but the way I've set it up, sans pointers, I have to now go through this crap
-        // and remove this hit. Very very irritating but hey no pointers or helper class shit!
-        // DvB: why do we do this?
         lplaneCounter.removeHit( hits_layers->m_planeCode[allXHits[itWindowStart]]/2 );
-        std::vector<unsigned int> lpc_temp;
-        lpc_temp.clear();
-        for (auto hit : lpc) { 
-          if (hit != allXHits[itWindowStart]) {
-            lpc_temp.push_back(hit);
-          }
-        }
-        lpc = lpc_temp;
         ++itWindowStart;
         while( itWindowStart<itWindowEnd && !hits_layers->isValid(allXHits[itWindowStart]) ) ++itWindowStart;
         //last hit guaranteed to be not used. Therefore there is always at least one hit to go to. No additional if required.
@@ -428,14 +397,12 @@ void selectXCandidates(
     // The objective of what follows is to add the candidate to m_candidateOutputTracks if it passes some checks
     // A lot of this is duplicating code which is moved out into this planelist helper class in the framework
     // but again, since this all needs porting to CUDA anyway, let the people doing that decide how to handle it.
-    pc.clear();
     planeCounter.clear();
     for (int j=0;j<coordToFit.size();++j){
       planeCounter.addHit( hits_layers->m_planeCode[ coordToFit[j] ] / 2 );
     }
     // Only unused(!) hits in coordToFit now
     // The objective of what follows is to add the candidate to m_candidateOutputTracks if it passes some checks
-    //bool ok = nbDifferent(pcplanelist) > 3;
     bool ok = planeCounter.nbDifferent > 3;
     std::vector<float> trackParameters;
     if(ok){
@@ -445,14 +412,15 @@ void selectXCandidates(
       trackParameters = getTrackParameters(xAtRef, velo_state); 
       fastLinearFit( hits_layers, trackParameters, coordToFit, planeCounter,pars);
       addHitsOnEmptyXLayers(hits_layers, trackParameters, xParams_seed, yParams_seed,
-                            false, coordToFit, planeCounter, pars, side);
+                              false, coordToFit, planeCounter, pars, side);
       
       ok = planeCounter.nbDifferent > 3;
     }
     //== Fit and remove hits...
     if (ok) ok = fitXProjection(hits_layers, trackParameters, coordToFit, planeCounter, pars);
     if (ok) ok = trackParameters[7]/trackParameters[8] < SciFi::Tracking::maxChi2PerDoF;
-    if (ok) ok = addHitsOnEmptyXLayers(hits_layers, trackParameters, xParams_seed, yParams_seed,
+    if (ok )
+      ok = addHitsOnEmptyXLayers(hits_layers, trackParameters, xParams_seed, yParams_seed,
                                        true, coordToFit, planeCounter, pars, side);
     if (ok) {
       //set ModPrHits used , challenge in c++: we don't have the link any more!

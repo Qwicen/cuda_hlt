@@ -18,6 +18,37 @@ inline int getLowerBound(float range[],float value,int start, int end) {
   return i;
 }
 
+// match stereo hits
+inline bool matchStereoHit( const int itUV1, const int uv_zone_offset_end, SciFi::HitsSoA* hits_layers, const int xMinUV, const int xMaxUV ) {
+
+  for (int stereoHit = itUV1; stereoHit != uv_zone_offset_end; ++stereoHit) {
+    if ( hits_layers->m_x[stereoHit] > xMinUV ) {
+      return (hits_layers->m_x[stereoHit] < xMaxUV );
+    }
+  }
+  return false;
+}
+
+inline bool matchStereoHitWithTriangle( const int itUV2, const int triangle_zone_offset_end, const float yInZone, SciFi::HitsSoA* hits_layers, const int xMinUV, const int xMaxUV, const int side ) {
+  
+  for (int stereoHit = itUV2; stereoHit != triangle_zone_offset_end; ++stereoHit) {
+    if ( hits_layers->m_x[stereoHit] > xMinUV ) {
+      // Triangle search condition depends on side
+      if (side > 0) { // upper
+        if (hits_layers->m_yMax[stereoHit] > yInZone - SciFi::Tracking::yTolUVSearch) {
+          return true;
+        }
+      }
+      else { // lower
+        if (hits_layers->m_yMin[stereoHit] < yInZone + SciFi::Tracking::yTolUVSearch) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 // count number of planes with more than 0 hits
 inline int nbDifferent(int planelist[]) {
   int different = 0;

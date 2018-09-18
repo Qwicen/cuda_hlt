@@ -84,7 +84,7 @@ bool selectStereoHits(
   float bestMeanDy       = 1e9f;
 
   auto beginRange = std::begin(stereoHits)-1;
-  debug_cout << "About to select stereo hits from list of " << stereoHits.size() << " looking for " << pars.minStereoHits << std::endl;
+  //debug_cout << "About to select stereo hits from list of " << stereoHits.size() << " looking for " << pars.minStereoHits << std::endl;
   if(pars.minStereoHits > stereoHits.size()) return false; //otherwise crash if minHits is too large
   auto endLoop = std::end(stereoHits) - pars.minStereoHits;
   PlaneCounter planeCounter;
@@ -148,7 +148,7 @@ bool selectStereoHits(
 
     //fit Y Projection of track using stereo hits
     if(!fitYProjection(hits_layers, track, trackStereoHits, planeCounter, velo_state, pars))continue;
-    debug_cout << "Passed the Y fit" << std::endl;
+    // debug_cout << "Passed the Y fit" << std::endl;
 
     if(!addHitsOnEmptyStereoLayers(hits_layers, track, trackStereoHits, planeCounter, velo_state, pars))continue;
     //debug_cout << "Passed adding hits on empty stereo layers" << std::endl;

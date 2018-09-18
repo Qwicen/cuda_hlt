@@ -131,7 +131,7 @@ bool fitYProjection(
   SciFi::Tracking::HitSearchCuts& pars)
 {
   
-  debug_cout << "About to fit a Y projection with " << stereoHits.size() << " hits on " << planeCounter.nbDifferent << " different planes looking for " << pars.minStereoHits << std::endl;
+  //debug_cout << "About to fit a Y projection with " << stereoHits.size() << " hits on " << planeCounter.nbDifferent << " different planes looking for " << pars.minStereoHits << std::endl;
   //if ( nbDifferent(planelist) < pars.minStereoHits ) return false;
   float maxChi2 = 1.e9f;
   bool parabola = false; //first linear than parabola
@@ -187,7 +187,7 @@ bool fitYProjection(
       const float d2 = sdz * sz2m - sz * sdz2;
       const float den = (b1 * c2 - b2 * c1 );
       if(!(std::fabs(den) > 1e-5)) {
-        debug_cout << "Failing Y projection parabola fit" << std::endl;
+        // debug_cout << "Failing Y projection parabola fit" << std::endl;
 	return false;
       }
 
@@ -212,7 +212,7 @@ bool fitYProjection(
       }
       const float den = (s0 * sz2 - sz * sz );
       if(!(std::fabs(den) > 1e-5)) { 
-        debug_cout << "Failing Y projection straight line fit" << std::endl;
+        // debug_cout << "Failing Y projection straight line fit" << std::endl;
         return false;
       }
       const float da  = (sd * sz2 - sdz * sz ) / den;
@@ -233,17 +233,17 @@ bool fitYProjection(
     }
 
     if ( maxChi2 < SciFi::Tracking::maxChi2StereoLinear && !parabola ) {
-      debug_cout << "Maximum chi2 from linear fit was relatively small " << maxChi2 << " do parabolic fit" << std::endl;
+      // debug_cout << "Maximum chi2 from linear fit was relatively small " << maxChi2 << " do parabolic fit" << std::endl;
       parabola = true;
       maxChi2 = 1.e9f;
       continue;
     }
 
     if ( maxChi2 > SciFi::Tracking::maxChi2Stereo ) {
-      debug_cout << "Removing hit " << *worst << " with chi2 " << maxChi2 << " allowable was " << SciFi::Tracking::maxChi2Stereo << std::endl;
+      // debug_cout << "Removing hit " << *worst << " with chi2 " << maxChi2 << " allowable was " << SciFi::Tracking::maxChi2Stereo << std::endl;
       planeCounter.removeHit( hits_layers->m_planeCode[*worst]/2 );
       if ( planeCounter.nbDifferent < pars.minStereoHits ) {
-	debug_cout << "Failing because we have " << planeCounter.nbDifferent << " different planes and we need " << pars.minStereoHits << std::endl;
+	// debug_cout << "Failing because we have " << planeCounter.nbDifferent << " different planes and we need " << pars.minStereoHits << std::endl;
         return false;
       }
       stereoHits.erase( worst );
