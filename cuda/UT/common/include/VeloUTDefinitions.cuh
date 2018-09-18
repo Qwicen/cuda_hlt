@@ -5,7 +5,7 @@
 // #include "Common.h"
 #include "VeloDefinitions.cuh"
 
-#include "assert.h"
+#include <cassert>
 
 namespace VeloUTTracking {
 
@@ -16,6 +16,7 @@ static constexpr int num_atomics = 2;
 */
 static constexpr uint n_layers           = 4;
 static constexpr uint n_ut_hit_variables = 8;
+static constexpr uint n_iterations_pos   = 85;
 
 /* For now, the planeCode is an attribute of every hit,
    -> check which information
@@ -27,8 +28,10 @@ static constexpr int planeCode[n_layers] = {0, 1, 2, 3};
 static constexpr uint max_numhits_per_layer = 500;
 static constexpr uint max_numhits_per_event = 6000;
 static constexpr uint max_hit_candidates_per_layer = 100;
-static constexpr uint max_num_tracks = 400; // to do: what is the best / safest value here?
-static constexpr uint max_track_size = VeloTracking::max_track_size + 8; // to do: double check what the max # of hits added in UT really is
+static constexpr uint max_num_tracks = 400; // TODO: what is the best / safest value here?
+static constexpr uint max_track_size = VeloTracking::max_track_size + 8; // TODO: double check what the max # of hits added in UT really is
+
+static constexpr uint num_threads = 32;
 
 struct TrackUT {
   

@@ -399,8 +399,9 @@ cudaError_t Stream::run_sequence(
     // VeloUT tracking
     argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events * VeloUTTracking::max_num_tracks);
     argument_sizes[arg::dev_atomics_veloUT] = argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics * number_of_events);
+    argument_sizes[arg::dev_active_tracks] = argen.size<arg::dev_active_tracks>(number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(32), stream);
+    sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(VeloUTTracking::num_threads), stream);
     sequence.item<seq::veloUT>().set_arguments(
       argen.generate<arg::dev_ut_hits>(argument_offsets),
       argen.generate<arg::dev_ut_hit_count>(argument_offsets),
@@ -411,7 +412,8 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
       argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
       dev_ut_magnet_tool,
-      constants.dev_ut_dxDy
+      constants.dev_ut_dxDy,
+      argen.generate<arg::dev_active_tracks>(argument_offsets)
     );
     sequence.item<seq::veloUT>().invoke();
 

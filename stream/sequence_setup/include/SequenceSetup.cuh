@@ -100,7 +100,8 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_ut_hits, uint>,
   Argument<arg::dev_ut_hit_permutations, uint>,
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
-  Argument<arg::dev_atomics_veloUT, int>
+  Argument<arg::dev_atomics_veloUT, int>,
+  Argument<arg::dev_active_tracks, int>
 >;
 
 /**
