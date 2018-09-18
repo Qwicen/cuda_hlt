@@ -42,7 +42,8 @@
 
 std::vector<SciFi::Track> PrForward(
   SciFi::HitsSoA *hits_layers_events,
-  const Velo::Consolidated::States * velo_states,
+  const Velo::Consolidated::States& velo_states,
+  const uint event_tracks_offset,
   const VeloUTTracking::TrackUT * veloUT_tracks,
   const int n_veloUT_tracks );
                                                       

@@ -35,11 +35,13 @@ int run_forward_on_CPU (
 
     // Velo consolidated types
     const Velo::Consolidated::Tracks velo_tracks {(uint*) host_velo_tracks_atomics, host_velo_track_hit_number, i_event, number_of_events};
+    const uint event_tracks_offset = velo_tracks.tracks_offset(i_event);
     const Velo::Consolidated::States host_velo_states_event {host_velo_states, velo_tracks.total_number_of_tracks};
 
     std::vector< SciFi::Track > forward_tracks = PrForward(
       &(hits_layers_events[i_event]),
-      &host_velo_states_event,
+      host_velo_states_event,
+      event_tracks_offset,
       veloUT_tracks + i_event * VeloUTTracking::max_num_tracks,
       n_veloUT_tracks_events[i_event] );
 
