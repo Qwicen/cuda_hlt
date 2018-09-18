@@ -106,14 +106,7 @@ bool fitXProjection(
     doFit = false;
     if ( totChi2/nDoF > SciFi::Tracking::maxChi2PerDoF  ||
          maxChi2 > SciFi::Tracking::maxChi2XProjection ) {
-      // Should really make this bit of code into a function... 
-      planeCounter.removeHit( hits_layers->m_planeCode[worst]/2 );
-      std::vector<unsigned int> coordToFit_temp;
-      coordToFit_temp.clear();
-      for (auto hit : coordToFit) {
-        if (hit != worst) coordToFit_temp.push_back(hit);
-      }
-      coordToFit = coordToFit_temp;
+      removeOutlier( hits_layers, planeCounter, coordToFit, worst);
       if (planeCounter.nbDifferent < pars.minXHits + pars.minStereoHits) return false;
       doFit = true;
     }    
@@ -125,7 +118,7 @@ bool fitXProjection(
 bool fitYProjection(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track,
-  std::vector<int>& stereoHits,
+  std::vector<unsigned int>& stereoHits,
   PlaneCounter& planeCounter,
   MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
@@ -156,7 +149,7 @@ bool fitYProjection(
     float sd   = wMag * dyMag;
     float sdz  = wMag * dyMag * zMag;
 
-    std::vector<int>::const_iterator itEnd = std::end(stereoHits);
+    std::vector<unsigned int>::const_iterator itEnd = std::end(stereoHits);
 
     if ( parabola ) {
       float sz2m = 0.;
@@ -221,9 +214,9 @@ bool fitYProjection(
       track.trackParams[5] += db;
     }//fit end, now doing outlier removal
 
-    std::vector<int>::iterator worst = std::end(stereoHits);
+    std::vector<unsigned int>::iterator worst = std::end(stereoHits);
     maxChi2 = 0.;
-    for ( std::vector<int>::iterator itH = std::begin(stereoHits); itEnd != itH; ++itH) {
+    for ( std::vector<unsigned int>::iterator itH = std::begin(stereoHits); itEnd != itH; ++itH) {
       float d = trackToHitDistance(track.trackParams, hits_layers, *itH);
       float chi2 = d*d*hits_layers->m_w[*itH];
       if ( chi2 > maxChi2 ) {
@@ -241,12 +234,13 @@ bool fitYProjection(
 
     if ( maxChi2 > SciFi::Tracking::maxChi2Stereo ) {
       // debug_cout << "Removing hit " << *worst << " with chi2 " << maxChi2 << " allowable was " << SciFi::Tracking::maxChi2Stereo << std::endl;
-      planeCounter.removeHit( hits_layers->m_planeCode[*worst]/2 );
+      //planeCounter.removeHit( hits_layers->m_planeCode[*worst]/2 );
+      removeOutlier( hits_layers, planeCounter, stereoHits, *worst );
       if ( planeCounter.nbDifferent < pars.minStereoHits ) {
 	// debug_cout << "Failing because we have " << planeCounter.nbDifferent << " different planes and we need " << pars.minStereoHits << std::endl;
         return false;
       }
-      stereoHits.erase( worst );
+      //stereoHits.erase( worst );
       continue;
     }
     break;

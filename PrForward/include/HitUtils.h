@@ -4,6 +4,41 @@
    Helper functions related to properties of hits on planes
  */
 
+
+struct PlaneCounter{
+  int planeList[SciFi::Constants::n_physical_layers] = {0};
+  unsigned int nbDifferent = 0;
+
+  inline void addHit( int plane ) {
+    nbDifferent += (int)( (planeList[plane] += 1 ) == 1) ;
+  }
+
+  inline void removeHit( int plane ) {
+    nbDifferent -= ((int)( (planeList[plane] -= 1 ) == 0)) ;
+  }
+
+  inline int nbInPlane( int plane ) const {
+    return planeList[plane];
+  }
+
+  inline int nbSingle() const {
+    int single = 0;
+    for (int i=0; i < SciFi::Constants::n_physical_layers; ++i) {
+      single += planeList[i] == 1 ? 1 : 0;
+    }
+    return single;
+  }
+ 
+  inline void clear() {
+    nbDifferent = 0;
+    for ( int i = 0; i < SciFi::Constants::n_physical_layers; ++i ) {
+      planeList[i] = 0;
+    }
+  }
+  
+};
+
+
 // check that val is within [min, max]
 inline bool isInside(float val, const float min, const float max) {
   return (val > min) && (val < max) ;
@@ -49,49 +84,16 @@ inline bool matchStereoHitWithTriangle( const int itUV2, const int triangle_zone
   return false;
 }
 
-// count number of planes with more than 0 hits
-inline int nbDifferent(int planelist[]) {
-  int different = 0;
-  for (int i=0;i<12;++i){different += planelist[i] > 0 ? 1 : 0;}
-  return different;
+inline void removeOutlier(
+  SciFi::HitsSoA* hits_layers,
+  PlaneCounter& planeCounter,
+  std::vector<unsigned int>& coordToFit,
+  const int worst ) {
+  planeCounter.removeHit( hits_layers->m_planeCode[worst]/2 );
+  std::vector<unsigned int> coordToFit_temp;
+  coordToFit_temp.clear();
+  for (auto hit : coordToFit) {
+    if (hit != worst) coordToFit_temp.push_back(hit);
+  }
+  coordToFit = coordToFit_temp;
 }
-
-// count number of planes with a single hit
-inline int nbSingle(int planelist[]) {
-  int single = 0;
-  for (int i=0;i<12;++i){single += planelist[i] == 1 ? 1 : 0;}
-  return single;
-}
-
-struct PlaneCounter{
-  int planeList[SciFi::Constants::n_physical_layers] = {0};
-  unsigned int nbDifferent = 0;
-
-  inline void addHit( int plane ) {
-    nbDifferent += (int)( (planeList[plane] += 1 ) == 1) ;
-  }
-
-  inline void removeHit( int plane ) {
-    nbDifferent -= ((int)( (planeList[plane] -= 1 ) == 0)) ;
-  }
-
-  inline int nbInPlane( int plane ) const {
-    return planeList[plane];
-  }
-
-  inline int nbSingle() const {
-    int single = 0;
-    for (int i=0; i < SciFi::Constants::n_physical_layers; ++i) {
-      single += planeList[i] == 1 ? 1 : 0;
-    }
-    return single;
-  }
- 
-  inline void clear() {
-    nbDifferent = 0;
-    for ( int i = 0; i < SciFi::Constants::n_physical_layers; ++i ) {
-      planeList[i] = 0;
-    }
-  }
-  
-};

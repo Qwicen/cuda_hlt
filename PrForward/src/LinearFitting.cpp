@@ -87,25 +87,14 @@ void fastLinearFit(
                               trackParameters[1],
                               trackParameters[2],
                               trackParameters[3]};
-      float track_x_at_zHit = straightLineExtend(parsX,hits_layers->m_z[hit]);
-      float hitdist = hits_layers->m_x[hit] - track_x_at_zHit; 
-      float chi2 = hitdist*hitdist*hits_layers->m_w[hit];
-
+      const float chi2 = chi2XHit( parsX, hits_layers, hit );
       if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( hits_layers->m_planeCode[hit]/2 ) > 1 ) ) {
         maxChi2 = chi2;
         worst   = hit; 
       }    
     }    
-    //== Remove grossly out hit, or worst in multiple layers
     if ( maxChi2 > SciFi::Tracking::maxChi2LinearFit || ( !notMultiple && maxChi2 > 4.f ) ) {
-      //planelist[hits_layers->m_planeCode[worst]/2] -= 1;
-      planeCounter.removeHit( hits_layers->m_planeCode[worst]/2 );
-      std::vector<unsigned int> coordToFit_temp;
-      coordToFit_temp.clear();
-      for (auto hit : coordToFit) {
-        if (hit != worst) coordToFit_temp.push_back(hit);
-      }
-      coordToFit = coordToFit_temp;
+      removeOutlier( hits_layers, planeCounter, coordToFit, worst );
       fit = true;
     }
   }

@@ -125,7 +125,7 @@ void find_forward_tracks(
     if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], veloUTTrack, outputTracks2, zRef_track, 
 				     xParams_seed, yParams_seed, velo_state, pars_second, -1);  
 
-    //debug_cout << "Found " << outputTracks1.size() << " X candidates in second loop" << std::endl;
+    //debug_cout << "Found " << outputTracks2.size() << " X candidates in second loop" << std::endl;
 
     selectFullCandidates(
       hits_layers,
@@ -134,7 +134,7 @@ void find_forward_tracks(
       velo_state, veloUTTrack.qop,
       pars_second, MLPReader_1st, MLPReader_2nd);
 
-    //debug_cout << "Found " << outputTracks1.size() << " full candidates in second loop" << std::endl;
+    //debug_cout << "Found " << outputTracks2.size() << " full candidates in second loop" << std::endl;
     // Merge
     outputTracks1.insert(std::end(outputTracks1),
 		 	 std::begin(outputTracks2),
@@ -193,7 +193,7 @@ void selectFullCandidates(
     }
     
     // search for hits in U/V layers
-    std::vector<int> stereoHits = collectStereoHits(hits_layers, *cand, velo_state, pars);
+    std::vector<unsigned int> stereoHits = collectStereoHits(hits_layers, *cand, velo_state, pars);
     // debug_cout << "Collected " << stereoHits.size() << " valid stereo hits for full track search, with requirement of " << pars.minStereoHits << std::endl;
     if(stereoHits.size() < pars.minStereoHits) continue;
     // DIRTY HACK
@@ -270,7 +270,7 @@ void selectFullCandidates(
 
       quality = 1.f-quality; //backward compability
 
-      //debug_cout << "Track candidate has NN quality " << quality << std::endl;
+      //debug_cout << "Track candidate has " << pars.minXHits << " minXHits and NN quality " << quality << std::endl;
 
       if(quality < SciFi::Tracking::maxQuality){
         cand->quality = quality;

@@ -85,6 +85,10 @@ float trackToHitDistance( std::vector<float> trackParameters, SciFi::HitsSoA* hi
   return hits_layers->m_x[hit] + y_track*hits_layers->m_dxdy[hit] - x_track; 
 }
 
-
+float chi2XHit( const float parsX[4], SciFi::HitsSoA* hits_layers, const int hit ) {
+  float track_x_at_zHit = straightLineExtend(parsX,hits_layers->m_z[hit]);
+   float hitdist = hits_layers->m_x[hit] - track_x_at_zHit; 
+   return hitdist*hitdist*hits_layers->m_w[hit];
+}
 
 

@@ -4,17 +4,16 @@
 //=========================================================================
 //  Collect all hits in the stereo planes compatible with the track
 //=========================================================================
-std::vector<int> collectStereoHits(
+std::vector<unsigned int> collectStereoHits(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track,
   MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   
-  std::vector<int> stereoHits;
+  std::vector<unsigned int> stereoHits;
   // Skip a reserve call for now, save that for CUDA
   for ( int zone = 0; zone < 12; ++zone ) {
-    float zZone = SciFi::Tracking::uvZone_zPos[zone];
     const float parsX[4] = {track.trackParams[0],
                             track.trackParams[1],
                             track.trackParams[2],
@@ -23,12 +22,16 @@ std::vector<int> collectStereoHits(
                             track.trackParams[5],
                             track.trackParams[6],
                             0.};
+    float zZone = SciFi::Tracking::uvZone_zPos[zone];
     const float yZone = straightLineExtend(parsY,zZone);
     zZone += SciFi::Tracking::Zone_dzdy[SciFi::Tracking::uvZones[zone]]*yZone;  // Correct for dzDy
     const float xPred  = straightLineExtend(parsX,zZone);
 
     const bool triangleSearch = std::fabs(yZone) < SciFi::Tracking::tolYTriangleSearch;
-    // Not 100% sure about logic of next line, check it!
+    // even zone number: if ( yZone > 0 ) continue;
+    // odd zone number: if ( -yZone > 0 ) continue;
+    // -> check for upper / lower half
+    // -> only continue if yZone is in the correct half
     if(!triangleSearch && (2.f*float(((SciFi::Tracking::uvZones[zone])%2)==0)-1.f) * yZone > 0.f) continue;
 
     //float dxDySign = 1.f - 2.f *(float)(zone.dxDy()<0); // same as ? zone.dxDy()<0 : -1 : +1 , but faster??!!
@@ -71,12 +74,12 @@ std::vector<int> collectStereoHits(
 bool selectStereoHits(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track, 
-  std::vector<int> stereoHits,
+  std::vector<unsigned int> stereoHits,
   MiniState velo_state, 
   SciFi::Tracking::HitSearchCuts& pars)
 {
   //why do we rely on xRef? --> coord is NOT xRef for stereo HITS!
-  std::vector<int> bestStereoHits;
+  std::vector<unsigned int> bestStereoHits;
   float originalYParams[3] = {track.trackParams[4],
 			      track.trackParams[5],
                               track.trackParams[6]};
@@ -140,7 +143,7 @@ bool selectStereoHits(
     track.trackParams[4] = originalYParams[0];
     track.trackParams[5] = originalYParams[1];
     track.trackParams[6] = originalYParams[2];
-    std::vector<int> trackStereoHits;
+    std::vector<unsigned int> trackStereoHits;
     trackStereoHits.clear();
     // Skip a reserve from framework code 
     std::transform(beginRange, endRange, std::back_inserter(trackStereoHits),
@@ -195,7 +198,7 @@ bool selectStereoHits(
 bool addHitsOnEmptyStereoLayers(
   SciFi::HitsSoA* hits_layers,
   SciFi::Track& track,
-  std::vector<int>& stereoHits,
+  std::vector<unsigned int>& stereoHits,
   PlaneCounter& planeCounter,
   MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)

@@ -72,3 +72,5 @@ float trackToHitDistance( std::vector<float> trackParameters, SciFi::HitsSoA* hi
 static inline bool lowerByQuality(SciFi::Track t1, SciFi::Track t2) {
   return t1.quality < t2.quality;
 }
+
+float chi2XHit( const float parsX[4], SciFi::HitsSoA* hits_layers, const int hit );

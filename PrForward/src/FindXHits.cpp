@@ -227,8 +227,6 @@ void selectXCandidates(
     //debug_cout << "Found suitable window " << hits_layers->m_coord[allXHits[it2 - 1]] << " " << hits_layers->m_coord[allXHits[it1]] << " " << xWindow << std::endl;
  
     // Cluster candidate found, now count planes
-    // Skip this for now, it1 and it2 already encompass what we need at this point
-    // try to get rid of this helper class (as pretty much all helper classes)
     planeCounter.clear();
     for (int itH = it1; itH != it2; ++itH) {
       if (hits_layers->isValid(allXHits[itH])) {
@@ -393,22 +391,16 @@ void selectXCandidates(
     } // end of magical second part
     //debug_cout << "Found an X candidate" << std::endl;
     //=== We have a candidate :)
-    //
-    // The objective of what follows is to add the candidate to m_candidateOutputTracks if it passes some checks
-    // A lot of this is duplicating code which is moved out into this planelist helper class in the framework
-    // but again, since this all needs porting to CUDA anyway, let the people doing that decide how to handle it.
+    
     planeCounter.clear();
     for (int j=0;j<coordToFit.size();++j){
       planeCounter.addHit( hits_layers->m_planeCode[ coordToFit[j] ] / 2 );
     }
     // Only unused(!) hits in coordToFit now
-    // The objective of what follows is to add the candidate to m_candidateOutputTracks if it passes some checks
+ 
     bool ok = planeCounter.nbDifferent > 3;
     std::vector<float> trackParameters;
     if(ok){
-      // In LHCb code this is a move operation replacing hits on the track candidate
-      // Here I will work directly with the hits in coordToFit for now
-      // DvB: can this go wrong?
       trackParameters = getTrackParameters(xAtRef, velo_state); 
       fastLinearFit( hits_layers, trackParameters, coordToFit, planeCounter,pars);
       addHitsOnEmptyXLayers(hits_layers, trackParameters, xParams_seed, yParams_seed,
