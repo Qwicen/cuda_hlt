@@ -527,40 +527,45 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
+    // FT hit sorting by x
+    argument_sizes[arg::dev_ft_hit_permutations] = argen.size<arg::dev_ft_hit_permutations>(*host_accumulated_number_of_ft_hits);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::ft_sort_by_x>().set_opts(dim3(number_of_events), dim3(64), stream);
+    sequence.item<seq::ft_sort_by_x>().set_arguments(
+      argen.generate<arg::dev_ft_hits>(argument_offsets),
+      argen.generate<arg::dev_ft_hit_count>(argument_offsets),
+      argen.generate<arg::dev_ft_hit_permutations>(argument_offsets)
+    );
+    sequence.item<seq::ft_sort_by_x>().invoke();
+
     //DtoH is temporary here.
     const uint hit_count_uints = 2 * number_of_events * FT::number_of_zones + 1;
     uint host_ft_hit_count[hit_count_uints];
-    cudaCheck(cudaMemcpyAsync(&host_ft_hit_count, argen.generate<arg::dev_ft_hit_count>(argument_offsets), hit_count_uints*sizeof(uint), cudaMemcpyDeviceToHost, stream));
-    cudaEventRecord(cuda_generic_event, stream);
-    cudaEventSynchronize(cuda_generic_event);
-
     char* host_ft_hits = new char[hits_bytes];
+    uint* host_ft_hit_permutation = new uint[*host_accumulated_number_of_ft_hits];
+    cudaCheck(cudaMemcpyAsync(&host_ft_hit_count, argen.generate<arg::dev_ft_hit_count>(argument_offsets), hit_count_uints*sizeof(uint), cudaMemcpyDeviceToHost, stream));
     cudaCheck(cudaMemcpyAsync(host_ft_hits, argen.generate<arg::dev_ft_hits>(argument_offsets), argen.size<arg::dev_ft_hits>(hits_bytes), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_ft_hit_permutation, argen.generate<arg::dev_ft_hit_permutations>(argument_offsets), argen.size<arg::dev_ft_hit_permutations>(*host_accumulated_number_of_ft_hits), cudaMemcpyDeviceToHost, stream));
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
     FT::FTHits host_ft_hits_struct;
-    host_ft_hits_struct.typecast_unsorted(host_ft_hits, host_ft_hit_count[number_of_events * FT::number_of_zones]);
+    host_ft_hits_struct.typecast_sorted(host_ft_hits, host_ft_hit_count[number_of_events * FT::number_of_zones]);
 
     //Print only non-empty hits
     std::ofstream outfile("dump.txt");
-    uint sum = 0;
     FT::FTHitCount host_ft_hit_count_struct;
     for(size_t event = 0; event < number_of_events; event++) {
       host_ft_hit_count_struct.typecast_after_prefix_sum(host_ft_hit_count, event, number_of_events);
       for(size_t zone = 0; zone < FT::number_of_zones; zone++) {
         for(size_t hit = 0; hit < host_ft_hit_count_struct.n_hits_layers[zone]; hit++) {
-          //info_cout << host_ft_hits_struct.getHit(host_ft_hit_count_struct.layer_offsets[zone] + hit) << std::endl;
           auto h = host_ft_hits_struct.getHit(host_ft_hit_count_struct.layer_offsets[zone] + hit);
           outfile << std::setprecision(8) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " "
             << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
             << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
-          sum++;
         }
       }
     }
-
-    info_cout << "Successfully copied " << sum << " FT hits to host." << std::endl;
 
     ///////////////////////
     // Monte Carlo Check //

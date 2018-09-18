@@ -18,7 +18,7 @@ __global__ void estimate_cluster_count(
   // NO version checking. Be careful, as v5 is assumed.
   //assert(event.version == 5u);
 
-  for(uint rawbank = threadIdx.x; rawbank < event.number_of_raw_banks; rawbank += blockDim.x)
+  for(uint rawbank = threadIdx.x; rawbank < geom.number_of_tell40s; rawbank += blockDim.x)
   {
     FTChannelID ch = geom.bank_first_channel[rawbank];
     //Unsure why -16 is needed. Either something is wrong or the unique* methods are not designed to start at 0.

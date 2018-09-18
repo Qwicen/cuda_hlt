@@ -3,6 +3,7 @@ file(GLOB ft_preprocessing "preprocessing/src/*cu")
 
 include_directories(common/include)
 include_directories(preprocessing/include)
+include_directories(../utils/sorting/include)
 
 cuda_add_library(FT STATIC
   ${ft_common}

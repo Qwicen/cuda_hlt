@@ -79,7 +79,10 @@ __global__ void raw_bank_decoder(
     const float x0 = endPointX - dxdy * endPointY;
     const float z0 = endPointZ - dzdy * endPointY;
 
-    //ORIGINAL: if(id.isBottom()) std::swap(yMin=endPointX, yMax=endPointY + globaldy);
+    // ORIGINAL:
+    // float yMin = endPointY;
+    // float yMax = endPointY + globaldy;
+    // if(id.isBottom()) std::swap(yMin, yMax);
     float yMin = endPointY + id.isBottom() * globaldy;
     float yMax = endPointY + !id.isBottom() * globaldy;
 
@@ -130,6 +133,7 @@ __global__ void raw_bank_decoder(
     }//end if adjacent clusters
   };//End lambda make_clusters
 
+  // Main execution loop
   for(uint i = threadIdx.x; i < event.number_of_raw_banks; i += blockDim.x)
   {
     auto rawbank = event.getFTRawBank(i);

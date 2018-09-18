@@ -13,6 +13,7 @@
 
 #include "EstimateClusterCount.cuh"
 #include "RawBankDecoder.cuh"
+#include "FTSortByX.cuh"
 
 #include "Argument.cuh"
 #include "Sequence.cuh"
@@ -54,7 +55,8 @@ constexpr auto sequence_algorithms() {
     prefix_sum_reduce,
     prefix_sum_single_block,
     prefix_sum_scan,
-    raw_bank_decoder
+    raw_bank_decoder,
+    ft_sort_by_x
   );
 }
 
@@ -114,6 +116,7 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_ft_raw_input_offsets, uint>,
   Argument<arg::dev_ft_hit_count, uint>,
   Argument<arg::dev_prefix_sum_auxiliary_array_4, uint>,
+  Argument<arg::dev_ft_hit_permutations, uint>,
   Argument<arg::dev_ft_hits, char>,
   Argument<arg::dev_ft_raw_input, char>
 >;

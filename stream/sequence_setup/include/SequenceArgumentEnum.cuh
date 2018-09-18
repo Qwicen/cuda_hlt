@@ -32,7 +32,8 @@ enum seq_enum_t {
   prefix_sum_reduce_ft_hits,
   prefix_sum_single_block_ft_hits,
   prefix_sum_scan_ft_hits,
-  raw_bank_decoder
+  raw_bank_decoder,
+  ft_sort_by_x
 };
 }
 
@@ -74,6 +75,7 @@ enum arg_enum_t {
   dev_ft_raw_input_offsets,
   dev_ft_hit_count,
   dev_prefix_sum_auxiliary_array_4,
+  dev_ft_hit_permutations,
   dev_ft_hits,
   dev_ft_raw_input
 };
