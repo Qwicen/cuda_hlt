@@ -64,7 +64,8 @@ namespace SciFi {
       
     };
     
-   
+    const int max_tracks = 300;
+  
     struct Track {
       
       std::vector< unsigned int > LHCbIDs;

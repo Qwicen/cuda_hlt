@@ -323,11 +323,12 @@ trackChecker::Tracks prepareForwardTracksVeloUTOnly(
 }
 
 trackChecker::Tracks prepareForwardTracks(
-  std::vector< SciFi::Track > forward_tracks
+  SciFi::Track forward_tracks[SciFi::max_tracks],
+  const int n_forward_tracks
 ) {
   trackChecker::Tracks checker_tracks;
-  int i_track = 0;
-  for ( SciFi::Track forward_track : forward_tracks ) {
+  for ( int i_track = 0; i_track < n_forward_tracks; i_track++ ) {
+    const SciFi::Track& forward_track = forward_tracks[i_track];
     trackChecker::Track checker_track;
     // debug_cout << "at track " << std::dec << i_track << std::endl;
     for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
@@ -336,7 +337,6 @@ trackChecker::Tracks prepareForwardTracks(
       checker_track.addId( lhcb_id );
     }
     checker_tracks.push_back( checker_track );
-    ++i_track;
   }
   //debug_cout<<"end prepareForwardTracks"<<std::endl;
 

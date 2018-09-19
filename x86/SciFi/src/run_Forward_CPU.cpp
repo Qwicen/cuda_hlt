@@ -21,14 +21,17 @@ int run_forward_on_CPU (
   // Histograms only for checking and debugging
   TFile *f = new TFile("../output/Forward.root", "RECREATE");
   TTree *t_Forward_tracks = new TTree("Forward_tracks", "Forward_tracks");
+  TTree *t_statistics = new TTree("statistics", "statistics");
   float x,z,w,dxdy,yMin,yMax;
   unsigned int LHCbID;
   float x_hit, y_hit, z_hit;
   float first_x, first_y, first_z;
   float last_x, last_y, last_z;
   float qop;
+  int n_tracks;
     
   t_Forward_tracks->Branch("qop", &qop);
+  t_statistics->Branch("n_tracks", &n_tracks);
 #endif
 
   for ( uint i_event = 0; i_event < number_of_events; ++i_event ) {
@@ -38,23 +41,31 @@ int run_forward_on_CPU (
     const uint event_tracks_offset = velo_tracks.tracks_offset(i_event);
     const Velo::Consolidated::States host_velo_states_event {host_velo_states, velo_tracks.total_number_of_tracks};
 
-    std::vector< SciFi::Track > forward_tracks = PrForward(
+    int n_forward_tracks = 0;
+    SciFi::Track forward_tracks[SciFi::max_tracks];
+    PrForward(
       &(hits_layers_events[i_event]),
       host_velo_states_event,
       event_tracks_offset,
       veloUT_tracks + i_event * VeloUTTracking::max_num_tracks,
-      n_veloUT_tracks_events[i_event] );
+      n_veloUT_tracks_events[i_event],
+      forward_tracks,
+      n_forward_tracks);
 
+       
 #ifdef WITH_ROOT
     // store qop in tree
-    for ( auto track : forward_tracks ) {
-      qop = track.qop;
+    //for ( auto track : forward_tracks ) {
+    for ( int i_track = 0; i_track < n_forward_tracks; ++i_track ) {
+      qop = forward_tracks[i_track].qop;
       t_Forward_tracks->Fill();
     }
+    n_tracks = n_forward_tracks;
+    t_statistics->Fill();
 #endif
     
     // save in format for track checker
-    trackChecker::Tracks checker_tracks = prepareForwardTracks( forward_tracks );
+    trackChecker::Tracks checker_tracks = prepareForwardTracks( forward_tracks, n_forward_tracks );
     
     forward_tracks_events.emplace_back( checker_tracks );
 

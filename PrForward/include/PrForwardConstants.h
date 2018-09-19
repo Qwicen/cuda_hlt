@@ -17,7 +17,9 @@
 namespace SciFi{
   
   namespace Tracking {
-  
+
+    
+    
     // dump a bunch of options here
     const float        deltaQuality = 0.1; // Difference in quality btw two tracks which share hits when clone killing
     const float        cloneFraction = 0.4; // The fraction of shared SciFi hits btw two tracks to trigger the clone killing

@@ -185,7 +185,6 @@ bool fitYProjection(
       }
       const float den = (s0 * sz2 - sz * sz );
       if(!(std::fabs(den) > 1e-5)) { 
-        // debug_cout << "Failing Y projection straight line fit" << std::endl;
         return false;
       }
       const float da  = (sd * sz2 - sdz * sz ) / den;
@@ -206,21 +205,16 @@ bool fitYProjection(
     }
 
     if ( maxChi2 < SciFi::Tracking::maxChi2StereoLinear && !parabola ) {
-      // debug_cout << "Maximum chi2 from linear fit was relatively small " << maxChi2 << " do parabolic fit" << std::endl;
       parabola = true;
       maxChi2 = 1.e9f;
       continue;
     }
 
     if ( maxChi2 > SciFi::Tracking::maxChi2Stereo ) {
-      // debug_cout << "Removing hit " << *worst << " with chi2 " << maxChi2 << " allowable was " << SciFi::Tracking::maxChi2Stereo << std::endl;
-      //planeCounter.removeHit( hits_layers->m_planeCode[*worst]/2 );
       removeOutlier( hits_layers, planeCounter, stereoHits, *worst );
       if ( planeCounter.nbDifferent < pars.minStereoHits ) {
-	// debug_cout << "Failing because we have " << planeCounter.nbDifferent << " different planes and we need " << pars.minStereoHits << std::endl;
         return false;
       }
-      //stereoHits.erase( worst );
       continue;
     }
     break;

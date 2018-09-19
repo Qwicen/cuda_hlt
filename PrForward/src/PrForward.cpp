@@ -13,16 +13,16 @@
 //=============================================================================
 // Main execution
 //=============================================================================
-std::vector<SciFi::Track> PrForward(
+void PrForward(
   SciFi::HitsSoA *hits_layers,
   const Velo::Consolidated::States& velo_states,
   const uint event_tracks_offset,
   const VeloUTTracking::TrackUT * veloUT_tracks,
-  const int n_veloUT_tracks )
+  const int n_veloUT_tracks,
+  SciFi::Track outputTracks[SciFi::max_tracks],
+  int& n_forward_tracks)
 {
-  std::vector<SciFi::Track> outputTracks;
-  outputTracks.reserve( n_veloUT_tracks );
-
+  
   int numfound = 0;
 
   // initialize TMVA vars
@@ -48,8 +48,10 @@ std::vector<SciFi::Track> PrForward(
     
     numfound += oneOutput.size();
     for (auto track : oneOutput) {
-      outputTracks.emplace_back(track);
+      assert(n_forward_tracks < SciFi::max_tracks);
+      outputTracks[n_forward_tracks++] = track;
     }
+    
     // Reset used hits etc.
     // these should not be part of the HitsSoA struct
     // not thread safe!!
@@ -60,8 +62,7 @@ std::vector<SciFi::Track> PrForward(
   }
 
   //  debug_cout << "Found " << numfound << " forward tracks for this event!" << std::endl;
-  
-  return outputTracks;
+
 }
 
 //=============================================================================
