@@ -37,22 +37,15 @@ void PrForward(
     const uint velo_states_index = event_tracks_offset + veloUTTr.veloTrackIndex;
     const MiniState velo_state {velo_states, velo_states_index};
     
-    std::vector<SciFi::Track> oneOutput; 
     find_forward_tracks(
       hits_layers,
       veloUTTr,
-      oneOutput,
       outputTracks,
       n_forward_tracks,
       MLPReader_1st,
       MLPReader_2nd,
       velo_state);
     
-    // numfound += oneOutput.size();
-    // for (auto track : oneOutput) {
-    //   assert(n_forward_tracks < SciFi::max_tracks);
-    //   outputTracks[n_forward_tracks++] = track;
-    // }
     
     // Reset used hits etc.
     // these should not be part of the HitsSoA struct
@@ -63,7 +56,7 @@ void PrForward(
     }
   }
 
-  //  debug_cout << "Found " << numfound << " forward tracks for this event!" << std::endl;
+  //debug_cout << "Found " << n_forward_tracks << " forward tracks for this event!" << std::endl;
 
 }
 
@@ -71,8 +64,7 @@ void PrForward(
 void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,
   const VeloUTTracking::TrackUT& veloUTTrack,
-  std::vector<SciFi::Track>& outputTracks,
-  SciFi::Track outputTracks_[SciFi::max_tracks],
+  SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
   const ReadMLP_Forward2ndLoop& MLPReader_2nd,
@@ -100,75 +92,79 @@ void find_forward_tracks(
   if(yAtRef>-5.f)collectAllXHits(hits_layers, allXHits[1], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, 1); 
   if(yAtRef< 5.f)collectAllXHits(hits_layers, allXHits[0], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, -1);
 
-  std::vector<SciFi::Track> outputTracks1;
+  SciFi::Track candidate_tracks[SciFi::max_tracks];
+  int n_candidate_tracks = 0;
   
-  if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], veloUTTrack, outputTracks1, zRef_track, 
+  if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
 				   xParams_seed, yParams_seed, velo_state, pars_first,  1);
-  if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], veloUTTrack, outputTracks1, zRef_track, 
+  if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
 				   xParams_seed, yParams_seed, velo_state, pars_first, -1); 
 
-  //debug_cout << "Found " << outputTracks1.size() << " X candidates in first loop" << std::endl;
-
+  SciFi::Track selected_tracks[SciFi::max_tracks];
+  int n_selected_tracks = 0;
+    
   selectFullCandidates(
     hits_layers,
-    outputTracks1,
+    candidate_tracks,
+    n_candidate_tracks,
+    selected_tracks,
+    n_selected_tracks,
     xParams_seed, yParams_seed,
     velo_state, veloUTTrack.qop,
-    pars_first, MLPReader_1st, MLPReader_2nd);
+    pars_first, MLPReader_1st, MLPReader_2nd, false);
 
-  //debug_cout << "Found " << outputTracks1.size() << " full candidates in first loop" << std::endl;
+   bool ok = false;
+  for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
+    if ( selected_tracks[i_track].hitsNum > 10 )
+      ok = true;
+  }
 
-  bool ok = std::any_of(outputTracks1.begin(), outputTracks1.end(),
-                        [](const auto& track) {
-                           return track.hitsNum > 10;
-                        });
-
-  std::vector<SciFi::Track> outputTracks2; 
+  SciFi::Track candidate_tracks2[SciFi::Tracking::max_tracks_second_loop];
+  int n_candidate_tracks2 = 0;
+  
   if (!ok && SciFi::Tracking::secondLoop) { // If you found nothing begin the 2nd loop
-    if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], veloUTTrack, outputTracks2, zRef_track, 
+    if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
 				     xParams_seed, yParams_seed, velo_state, pars_second, 1);
-    if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], veloUTTrack, outputTracks2, zRef_track, 
+    if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
 				     xParams_seed, yParams_seed, velo_state, pars_second, -1);  
 
-    //debug_cout << "Found " << outputTracks2.size() << " X candidates in second loop" << std::endl;
-
+    SciFi::Track selected_tracks2[SciFi::Tracking::max_tracks_second_loop];
+    int n_selected_tracks2 = 0;
+    
     selectFullCandidates(
       hits_layers,
-      outputTracks2,
+      candidate_tracks2,
+      n_candidate_tracks2,
+      selected_tracks2,
+      n_selected_tracks2,
       xParams_seed, yParams_seed,
       velo_state, veloUTTrack.qop,
-      pars_second, MLPReader_1st, MLPReader_2nd);
+      pars_second, MLPReader_1st, MLPReader_2nd, true);
 
-    //debug_cout << "Found " << outputTracks2.size() << " full candidates in second loop" << std::endl;
-    // Merge
-    // outputTracks1.insert(std::end(outputTracks1),
-    //     	 	 std::begin(outputTracks2),
-    //      		 std::end(outputTracks2));
-    for ( auto track : outputTracks1 ) {
-      assert(n_forward_tracks < SciFi::max_tracks);
-      outputTracks_[n_forward_tracks++] = track;
+    for ( int i_track = 0; i_track < n_selected_tracks2; ++i_track ) {
+      assert( n_selected_tracks < SciFi::max_tracks);
+      selected_tracks[n_selected_tracks++] = selected_tracks2[i_track];
     }
-    for ( auto track : outputTracks2 ) {
-      assert(n_forward_tracks < SciFi::max_tracks);
-      outputTracks_[n_forward_tracks++] = track;
-    }
-    //ok = not outputTracks1.empty();
-    ok = (n_forward_tracks > 0);
+    
+    ok = (n_selected_tracks > 0);
   }
  
   //debug_cout << "About to do final arbitration of tracks " << ok << std::endl; 
   if(ok || !SciFi::Tracking::secondLoop){
-    std::sort(outputTracks1.begin(), outputTracks1.end(), lowerByQuality );
+    std::sort( selected_tracks, selected_tracks + n_selected_tracks, lowerByQuality);
     float minQuality = SciFi::Tracking::maxQuality;
-    for ( auto& track : outputTracks1 ){
+    for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
+      SciFi::Track& track = selected_tracks[i_track];
       //debug_cout << track.quality << " " << SciFi::Tracking::deltaQuality << " " << minQuality << std::endl;
-      if(track.quality + SciFi::Tracking::deltaQuality < minQuality) minQuality = track.quality + SciFi::Tracking::deltaQuality;
+      if(track.quality + SciFi::Tracking::deltaQuality < minQuality)
+        minQuality = track.quality + SciFi::Tracking::deltaQuality;
       if(!(track.quality > minQuality)) {
         // add LHCbIDs from Velo and UT part of the track
         for ( int i_hit = 0; i_hit < veloUTTrack.hitsNum; ++i_hit ) {
           track.addLHCbID( veloUTTrack.LHCbIDs[i_hit] );
         }
-        outputTracks.emplace_back(track);
+        assert(n_forward_tracks < SciFi::max_tracks);
+        outputTracks[n_forward_tracks++] = track;
         //debug_cout << "Found a forward track corresponding to a velo track!" << std::endl;
       }
     }
@@ -183,31 +179,34 @@ void find_forward_tracks(
 //=========================================================================
 void selectFullCandidates(
   SciFi::HitsSoA* hits_layers,
-  std::vector<SciFi::Track>& outputTracks,
+  SciFi::Track* candidate_tracks,
+  int& n_candidate_tracks,
+  SciFi::Track* selected_tracks,
+  int& n_selected_tracks,
   const float xParams_seed[4],
   const float yParams_seed[4],
   MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
-  const ReadMLP_Forward2ndLoop& MLPReader_2nd)
+  const ReadMLP_Forward2ndLoop& MLPReader_2nd,
+  bool secondLoop)
 {
 
   PlaneCounter planeCounter;
   std::vector<float> mlpInput(7, 0.); 
 
-  std::vector<SciFi::Track> selectedTracks;
-
-  for (std::vector<SciFi::Track>::iterator cand = std::begin(outputTracks);
-       cand != std::end(outputTracks); ++cand) {
+  for ( int i_track = 0; i_track < n_candidate_tracks; ++i_track ) {
+    SciFi::Track& cand = candidate_tracks[i_track];
+    
     pars.minStereoHits = 4;
 
-    if(cand->hitsNum + pars.minStereoHits < SciFi::Tracking::minTotalHits) {
-      pars.minStereoHits = SciFi::Tracking::minTotalHits - cand->hitsNum;
+    if(cand.hitsNum + pars.minStereoHits < SciFi::Tracking::minTotalHits) {
+      pars.minStereoHits = SciFi::Tracking::minTotalHits - cand.hitsNum;
     }
     
     // search for hits in U/V layers
-    std::vector<unsigned int> stereoHits = collectStereoHits(hits_layers, *cand, velo_state, pars);
+    std::vector<unsigned int> stereoHits = collectStereoHits(hits_layers, cand, velo_state, pars);
     // debug_cout << "Collected " << stereoHits.size() << " valid stereo hits for full track search, with requirement of " << pars.minStereoHits << std::endl;
     if(stereoHits.size() < pars.minStereoHits) continue;
     // DIRTY HACK
@@ -220,25 +219,25 @@ void selectFullCandidates(
     //debug_cout << "# of collected stereo hits = " << int(stereoHits.size()) << std::endl;
       
     // select best U/V hits
-    if ( !selectStereoHits(hits_layers, *cand, stereoHits, velo_state, pars) ) continue;
+    if ( !selectStereoHits(hits_layers, cand, stereoHits, velo_state, pars) ) continue;
     //debug_cout << "Passed the stereo hits selection!" << std::endl;
 
     planeCounter.clear();
-    for (auto hit : cand->hit_indices) {
+    for (auto hit : cand.hit_indices) {
       planeCounter.addHit( hits_layers->m_planeCode[hit]/2 );
     }
     
     //make a fit of ALL hits
-    if(!fitXProjection(hits_layers, cand->trackParams, cand->hit_indices, planeCounter, pars))continue;
+    if(!fitXProjection(hits_layers, cand.trackParams, cand.hit_indices, planeCounter, pars))continue;
     //debug_cout << "Passed the X projection fit" << std::endl;   
  
     //check in empty x layers for hits 
-    auto checked_empty = (cand->trackParams[4]  < 0.f) ?
-      addHitsOnEmptyXLayers(hits_layers, cand->trackParams, xParams_seed, yParams_seed,
-                              true, cand->hit_indices, planeCounter, pars, -1)
+    auto checked_empty = (cand.trackParams[4]  < 0.f) ?
+      addHitsOnEmptyXLayers(hits_layers, cand.trackParams, xParams_seed, yParams_seed,
+                              true, cand.hit_indices, planeCounter, pars, -1)
         : 
-      addHitsOnEmptyXLayers(hits_layers, cand->trackParams, xParams_seed, yParams_seed,
-                              true, cand->hit_indices, planeCounter, pars, 1);
+      addHitsOnEmptyXLayers(hits_layers, cand.trackParams, xParams_seed, yParams_seed,
+                              true, cand.hit_indices, planeCounter, pars, 1);
 
     if (not checked_empty) continue;
     //debug_cout << "Passed the empty check" << std::endl;
@@ -248,9 +247,9 @@ void selectFullCandidates(
     if(planeCounter.nbDifferent >= SciFi::Tracking::minTotalHits){
       //debug_cout << "Computing final quality with NNs" << std::endl;
 
-      const float qOverP  = calcqOverP(cand->trackParams[1], velo_state);
+      const float qOverP  = calcqOverP(cand.trackParams[1], velo_state);
       //orig params before fitting , TODO faster if only calc once?? mem usage?
-      const float xAtRef = cand->trackParams[0];
+      const float xAtRef = cand.trackParams[0];
       float dSlope  = ( velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx - xAtRef ) / ( SciFi::Tracking::zReference - SciFi::Tracking::zMagnetParams[0]);
       const float zMagSlope = SciFi::Tracking::zMagnetParams[2] * pow(velo_state.tx,2) +  SciFi::Tracking::zMagnetParams[3] * pow(velo_state.ty,2);
       const float zMag    = SciFi::Tracking::zMagnetParams[0] + SciFi::Tracking::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
@@ -264,9 +263,9 @@ void selectFullCandidates(
       float by = velo_state.ty + dyCoef * SciFi::Tracking::byParams;
 
       //ay,by,bx params
-      const float ay1  = cand->trackParams[4];
-      const float by1  = cand->trackParams[5];
-      const float bx1  = cand->trackParams[1];
+      const float ay1  = cand.trackParams[4];
+      const float by1  = cand.trackParams[5];
+      const float bx1  = cand.trackParams[1];
 
       mlpInput[0] = planeCounter.nbDifferent;
       mlpInput[1] = qOverP;
@@ -287,12 +286,14 @@ void selectFullCandidates(
       //debug_cout << "Track candidate has " << pars.minXHits << " minXHits and NN quality " << quality << std::endl;
 
       if(quality < SciFi::Tracking::maxQuality){
-        cand->quality = quality;
-        cand->set_qop( qOverP );
+        cand.quality = quality;
+        cand.set_qop( qOverP );
 	// Must be a neater way to do this...
-	selectedTracks.emplace_back(*cand);
+        if (!secondLoop) assert (n_selected_tracks < SciFi::max_tracks );
+        else if (secondLoop)assert (n_selected_tracks < SciFi::Tracking::max_tracks_second_loop );
+        selected_tracks[n_selected_tracks++] = cand;
       }
     }
   }
-  outputTracks = selectedTracks;
+  //outputTracks = selectedTracks;
 }

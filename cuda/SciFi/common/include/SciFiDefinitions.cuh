@@ -64,7 +64,7 @@ namespace SciFi {
       
     };
     
-    const int max_tracks = 300;
+    const int max_tracks = 150;
   
     struct Track {
       

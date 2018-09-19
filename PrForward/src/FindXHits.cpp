@@ -181,7 +181,8 @@ void selectXCandidates(
   SciFi::HitsSoA* hits_layers,
   std::vector<int>& allXHits,
   const VeloUTTracking::TrackUT& veloUTTrack,
-  std::vector<SciFi::Track>& outputTracks,
+  SciFi::Track candidate_tracks[SciFi::max_tracks],
+  int& n_candidate_tracks,
   const float zRef_track, 
   const float xParams_seed[4],
   const float yParams_seed[4],
@@ -438,7 +439,7 @@ void selectXCandidates(
         //debug_cout << "added LHCbID to forward track with " << track.hitsNum << " hits: " << std::endl; //std::hex << track.LHCbIDs[track.hitsNum - 1] << std::endl;
 	hits_layers->m_used[hit] = true; //set as used in the SoA!
       }
-      outputTracks.emplace_back(track);
+      candidate_tracks[n_candidate_tracks++] = track;
     } 
     ++it1;   
   }

@@ -52,8 +52,7 @@ void PrForward(
 void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,  
   const VeloUTTracking::TrackUT& veloUTTrack,
-  std::vector<SciFi::Track>& outputTracks,
-  SciFi::Track outputTracks_[SciFi::max_tracks],
+  SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
   const ReadMLP_Forward2ndLoop& MLPReader_2nd,
@@ -62,12 +61,16 @@ void find_forward_tracks(
 
 void selectFullCandidates(
   SciFi::HitsSoA* hits_layers,
-  std::vector<SciFi::Track>& outputTracks,
+  SciFi::Track* candidate_tracks,
+  int& n_candidate_tracks,
+  SciFi::Track* selected_tracks,
+  int& n_selected_tracks,
   const float xParams_seed[4],
   const float yParams_seed[4],
   MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars_cur,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
-  const ReadMLP_Forward2ndLoop& MLPReader_2nd);
+  const ReadMLP_Forward2ndLoop& MLPReader_2nd,
+  bool secondLoop);
 
