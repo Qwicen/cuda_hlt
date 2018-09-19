@@ -40,5 +40,102 @@ void Constants::initialize_constants() {
   host_ut_dxDy[2] = -0.0874886;
   host_ut_dxDy[3] = 0.;
 
-  cudaCheck(cudaMemcpy(dev_ut_dxDy, host_ut_dxDy, VeloUTTracking::n_layers * sizeof(float), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_ut_dxDy, host_ut_dxDy.data(), host_ut_dxDy.size() * sizeof(float), cudaMemcpyHostToDevice));
+}
+
+void Constants::initialize_ut_decoding_constants(
+  const std::vector<char>& ut_geometry
+) {
+  const UTGeometry geometry(ut_geometry);
+  const int number_of_station_layers = 4;
+
+  // Offset for each station / layer
+  const std::array<uint, 5> offsets {0, 248, 496, 772, 1048};
+
+  auto current_sector_offset = 0;
+
+  for (int i=0; i<number_of_station_layers; ++i) {
+    const auto offset = offsets[i];
+    const auto size = offsets[i+1] - offsets[i];
+
+    // Copy elements into xs vector
+    std::vector<float> xs;
+    std::copy_n(geometry.p0X + offset, size, std::back_inserter(xs));
+
+    // Create permutation
+    std::vector<int> permutation (xs.size());
+    std::iota(permutation.begin(), permutation.end(), 0);
+
+    // Sort permutation according to xs
+    std::stable_sort(permutation.begin(), permutation.end(),
+      [&xs] (const int& a, const int& b) {
+        return (xs[a] < xs[b]);
+      }
+    );
+
+    // Iterate the permutation, incrementing the counter when the element changes.
+    // Calculate unique elements
+    std::vector<int> permutation_repeated;
+    auto current_element = xs[permutation[0]];
+    int current_index = 0;
+    int number_of_unique_elements = 1;
+
+    for (auto p : permutation) {
+      if (current_element != xs[p]) {
+        current_element = xs[p];
+        current_index++;
+        number_of_unique_elements++;
+      }
+      permutation_repeated.emplace_back(current_index);
+    }
+
+    // Calculate final permutation into unique elements
+    std::vector<int> unique_permutation;
+    for (int i=0; i<size; ++i) {
+      auto it = std::find(permutation.begin(), permutation.end(), i);
+      auto position = it - permutation.begin();
+      unique_permutation.emplace_back(permutation_repeated[position]);
+    }
+
+    // Some printouts in case we want to debug
+    if (logger::ll.verbosityLevel >= logger::debug) {
+      for (int j=0; j<size; ++j) {
+        debug_cout << j << ", " << geometry.p0X[offset + j] << ", " << permutation[j] << ", "
+          << permutation_repeated[j] << ", " << unique_permutation[j] << std::endl;
+      }
+      std::vector<float> unique_elements (number_of_unique_elements);
+      for (int j=0; j<size; ++j) {
+        const int index = unique_permutation[j];
+        unique_elements[index] = xs[j];
+      }
+      debug_cout << "Unique elements: " << number_of_unique_elements << std::endl;
+      for (int j=0; j<number_of_unique_elements; ++j) {
+        debug_cout << unique_elements[j] << ", ";
+      }
+      debug_cout << std::endl;
+    }
+
+    // Fill in host_unique_x_sector_permutation
+    for (auto p : unique_permutation) {
+      host_unique_x_sector_permutation.emplace_back(current_sector_offset + p);
+    }
+
+    // Fill in host_unique_x_sectors
+    current_sector_offset += number_of_unique_elements;
+    host_unique_x_sectors = current_sector_offset;
+  }
+
+  // Some debug printouts
+  if (logger::ll.verbosityLevel >= logger::debug) {
+    debug_cout << "Unique X sectors:" << host_unique_x_sectors << std::endl;
+    debug_cout << "Unique X sector permutation:" << std::endl;
+    for (auto i : host_unique_x_sector_permutation) {
+      debug_cout << i << ", ";
+    }
+    debug_cout << std::endl;
+  }
+
+  // Populate device constant into global memory
+  cudaCheck(cudaMalloc((void**)&dev_unique_x_sectors_permutation, host_unique_x_sector_permutation.size() * sizeof(uint)));
+  cudaCheck(cudaMemcpy(dev_unique_x_sectors_permutation, host_unique_x_sector_permutation, host_unique_x_sector_permutation.size() * sizeof(uint), cudaMemcpyHostToDevice));
 }
