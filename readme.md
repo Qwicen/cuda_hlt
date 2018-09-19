@@ -62,8 +62,8 @@ The build process doesn't differ from standard cmake projects:
 There are some cmake options to configure the build process:
 
    * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
-   * The option to run the validation, on by default, can be turned off with `-DMC_CHECK=Off`. 
-   
+   * The option to run the validation, on by default, can be turned off with `-DMC_CHECK=Off`.
+
 
 The MC validation is a standalone version of the PrChecker, it was written by
 Manuel Schiller, Rainer Schwemmer and Daniel Cámpora.
@@ -72,15 +72,15 @@ Some binary input files are included with the project for testing.
 A run of the program with no arguments will let you know the basic options:
 
     Usage: ./cu_hlt
-    -f {folder containing .bin files with raw bank information}
+    -f {folder containing .bin files with VP raw bank information}
     -u {folder containing bin files with UT raw bank information}
+    -i {folder containing .bin files with FT raw bank information}
+    -g {folder containing detector configuration}
     -d {folder containing .bin files with MC truth information}
-    -g {folder containing geometry descriptions}
     -n {number of events to process}=0 (all)
     -o {offset of events from which to start}=0 (beginning)
     -t {number of threads / streams}=1
     -r {number of repetitions per thread / stream}=1
-    -b {transmit device to host}=1
     -c {run checkers}=0
     -k {simplified kalman filter}=0
     -m {reserve Megabytes}=1024
@@ -92,15 +92,15 @@ A run of the program with no arguments will let you know the basic options:
 Here are some example run options:
 
     # Run all input files once with the tracking validation
-    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -d ../input/minbias/MC_info/ -c 1
+    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -i ../input/minbias/ft_raw/ -d ../input/minbias/MC_info/ -c 1
 
     # Run a total of 1000 events, round robin over the existing ones, without tracking validation
-    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -d ../input/minbias/MC_info/ -c 0 -n 1000
+    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -i ../input/minbias/ft_raw/ -d ../input/minbias/MC_info/ -c 0 -n 1000
 
     # Run four streams, each with 4000 events, 20 repetitions
-    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -d ../input/minbias/MC_info/ -t 4 -n 4000 -r 20 -c 0
+    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -i ../input/minbias/ft_raw/ -d ../input/minbias/MC_info/ -t 4 -n 4000 -r 20 -c 0
 
     # Run one stream and print all memory allocations
-    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -d ../input/minbias/MC_info/ -n 5000 -t 1 -r 1 -p
+    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -i ../input/minbias/ft_raw/ -d ../input/minbias/MC_info/ -n 5000 -t 1 -r 1 -p
 
 [This readme](readme_cuda_developer.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define global memory variables for this sequence and pass on the dependencies.
