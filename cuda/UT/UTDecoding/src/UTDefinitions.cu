@@ -80,7 +80,7 @@ __device__ __host__ UTRawBank::UTRawBank (
 ) {
   uint32_t* p = (uint32_t*) ut_raw_bank;
   sourceID       = *p;               p+=1;
-  number_of_hits = *p & 0x0000FFFFU; p+=1; 
+  number_of_hits = *p & 0x0000FFFFU; p+=1;
   data           = (uint16_t*)p;
 }
 
@@ -89,7 +89,7 @@ __device__ __host__ UTRawEvent::UTRawEvent (
 ) {
   uint32_t* p = (uint32_t *) ut_raw_event;
   number_of_raw_banks = *p; p += 1;
-  raw_bank_offsets    =  p; p += number_of_raw_banks;
+  raw_bank_offsets    =  p; p += (number_of_raw_banks + 1);
   data                =  (char*) p;
 }
 
@@ -156,4 +156,3 @@ UTHit UTHits::getHit(uint32_t index) const {
    planeCode[index]
  };
 }
-

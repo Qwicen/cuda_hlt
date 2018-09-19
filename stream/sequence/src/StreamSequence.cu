@@ -433,8 +433,8 @@ cudaError_t Stream::run_sequence(
 
 
 
-    //FT preprocessing
-    //estimate_cluster_count
+    // FT preprocessing
+    // Estimate cluster count
     argument_sizes[arg::dev_ft_raw_input] = argen.size<arg::dev_ft_raw_input>(host_ft_events_size);
     argument_sizes[arg::dev_ft_raw_input_offsets] = argen.size<arg::dev_ft_raw_input_offsets>(host_ft_event_offsets_size);
     argument_sizes[arg::dev_ft_hit_count] = argen.size<arg::dev_ft_hit_count>(2 * number_of_events * FT::number_of_zones + 1);
@@ -504,10 +504,10 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    info_cout << "Total FT cluster estimate: " << *host_accumulated_number_of_ft_hits << std::endl;
+    // info_cout << "Total FT cluster estimate: " << *host_accumulated_number_of_ft_hits << std::endl;
 
 
-    //raw_bank_decoder
+    // Raw Bank Decoder
     const uint32_t hits_bytes = (14 * sizeof(float) + 1) * *host_accumulated_number_of_ft_hits;
     argument_sizes[arg::dev_ft_hits] = argen.size<arg::dev_ft_hits>(hits_bytes);
 
@@ -538,7 +538,8 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::ft_sort_by_x>().invoke();
 
-    //DtoH is temporary here.
+    /*
+    // FT Decoder Debugging
     const uint hit_count_uints = 2 * number_of_events * FT::number_of_zones + 1;
     uint host_ft_hit_count[hit_count_uints];
     char* host_ft_hits = new char[hits_bytes];
@@ -565,7 +566,7 @@ cudaError_t Stream::run_sequence(
             << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
         }
       }
-    }
+    }*/
 
     ///////////////////////
     // Monte Carlo Check //

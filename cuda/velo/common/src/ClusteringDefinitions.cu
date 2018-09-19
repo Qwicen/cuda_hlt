@@ -5,7 +5,7 @@ __device__ __host__ VeloRawEvent::VeloRawEvent(
 ) {
   const char* p = event;
   number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
-  raw_bank_offset = (uint32_t*) p; p += number_of_raw_banks * sizeof(uint32_t);
+  raw_bank_offset = (uint32_t*) p; p += (number_of_raw_banks + 1) * sizeof(uint32_t);
   payload = (char*) p;
 }
 
@@ -29,7 +29,7 @@ VeloGeometry::VeloGeometry(const std::vector<char>& geometry) {
   x_pitch          = (double*) p; p += sizeof(double) * number_of_sensor_columns;
   pixel_size       = *((float*)p); p += sizeof(float);
   ltg              = (float*) p; p += sizeof(float) * 16 * number_of_sensors;
-  
+
   size = p - geometry.data();
 
   if (size != geometry.size()) {
@@ -50,7 +50,7 @@ __device__ __host__ VeloGeometry::VeloGeometry(
   x_pitch          = (double*) p; p += sizeof(double) * number_of_sensor_columns;
   pixel_size       = *((float*)p); p += sizeof(float);
   ltg              = (float*) p; p += sizeof(float) * 16 * number_of_sensors;
-  
+
   size = p - geometry;
 }
 

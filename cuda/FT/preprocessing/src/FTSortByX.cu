@@ -33,7 +33,7 @@ __global__ void ft_sort_by_x(
     	n_hits_zone
     );
 
-    //Skip padding
+    // Skip padding
     for(uint i = zone_offset + n_hits_zone; i < zone_offsets[i_zone + 1]; i++) {
       dev_ft_hit_permutations[i] = i;
       total_number_of_hits++;

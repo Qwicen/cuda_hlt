@@ -31,7 +31,7 @@ __global__ void raw_bank_decoder(
   char *ft_hits,
   char *ft_geometry
 ) {
-  //TODO: maybe not hardcoded, or in another place
+  // maybe not hardcoded, or in another place
   const float invClusRes[] = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
   const uint32_t number_of_events = gridDim.x;
   const uint32_t event_number = blockIdx.x;
@@ -56,16 +56,16 @@ __global__ void raw_bank_decoder(
 
   __syncthreads();
 
-  //Merge of PrStoreFTHit and RawBankDecoder.
+  // Merge of PrStoreFTHit and RawBankDecoder.
   auto make_cluster = [&](uint32_t chan, uint8_t fraction, uint8_t pseudoSize) {
     const FT::FTChannelID id(chan);
 
-    //Offset to save space in geometry structure, see DumpFTGeometry.cpp
+    // Offset to save space in geometry structure, see DumpFTGeometry.cpp
     const uint32_t mat = id.uniqueMat() - 512;
     const uint32_t iQuarter = id.uniqueQuarter() - 16;
     const uint32_t planeCode = id.uniqueLayer() - 4;
     const uint32_t info = (iQuarter>>1) | (((iQuarter<<4)^(iQuarter<<5)^128u) & 128u);
-    //See Kernel/LHCbID.h. Maybe no hardcoding?
+    // See Kernel/LHCbID.h. Maybe no hardcoding?
     const uint32_t lhcbid = (10u << 28) + chan;
     const float dxdy = geom.dxdy[mat];
     const float dzdy = geom.dzdy[mat];
@@ -79,17 +79,14 @@ __global__ void raw_bank_decoder(
     const float x0 = endPointX - dxdy * endPointY;
     const float z0 = endPointZ - dzdy * endPointY;
 
-    // ORIGINAL:
-    // float yMin = endPointY;
-    // float yMax = endPointY + globaldy;
-    // if(id.isBottom()) std::swap(yMin, yMax);
+    // ORIGINAL: if(id.isBottom()) std::swap(yMin, yMax);
     float yMin = endPointY + id.isBottom() * globaldy;
     float yMax = endPointY + !id.isBottom() * globaldy;
 
     assert( pseudoSize < 9 && "Pseudosize of cluster is > 8. Out of range.");
     float werrX = invClusRes[pseudoSize];
 
-    //Unsure why -16 is needed. Either something is wrong or the unique* methods are not designed to start at 0.
+    // Apparently the unique* methods are not designed to start at 0, therefore -16
     const uint32_t uniqueZone = ((id.uniqueQuarter() - 16) >> 1);
     uint32_t* hits_zone = hit_count.n_hits_layers + uniqueZone;
     uint32_t hitIndex = atomicAdd(hits_zone, 1);
@@ -111,7 +108,7 @@ __global__ void raw_bank_decoder(
     hits.used[hitIndex] = false;
   };
 
-  //copied straight from FTRawBankDecoder.cpp
+  // copied straight from FTRawBankDecoder.cpp
   auto make_clusters = [&](uint32_t firstChannel, uint16_t c, uint16_t c2) {
     unsigned int delta = (cell(c2) - cell(c));
 
