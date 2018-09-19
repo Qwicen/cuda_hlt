@@ -20,6 +20,7 @@ namespace SciFi{
 
     const int max_tracks_second_loop = 30;
     const int max_x_hits = 500;
+    const int max_other_hits = 5;
     
     const int TMVA_Nvars = 7;
     const int TMVA_Nlayers = 5;

@@ -23,10 +23,10 @@ namespace SciFi {
     */
     static constexpr uint n_stations           = 3;
     static constexpr uint n_layers_per_station = 4;
-    static constexpr uint n_layers             = 24;
-    static constexpr uint n_physical_layers    = 12;
+    static constexpr uint n_zones              = 24;
+    static constexpr uint n_layers             = 12;
     
-    static constexpr int layerCode[n_layers] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ,17, 18 ,19, 20, 21, 22, 23};
+    static constexpr int layerCode[n_zones] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ,17, 18 ,19, 20, 21, 22, 23};
     
     /* Cut-offs */
     static constexpr uint max_numhits_per_layer = 2000;
@@ -41,7 +41,7 @@ namespace SciFi {
      one Hits structure exists per event
   */
     struct HitsSoA {
-      int layer_offset[Constants::n_layers] = {0};
+      int layer_offset[Constants::n_zones] = {0};
       
       float m_x[Constants::max_numhits_per_event] = {0}; 
       float m_z[Constants::max_numhits_per_event] = {0}; 

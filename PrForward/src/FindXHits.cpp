@@ -32,10 +32,6 @@ void collectAllXHits(
   const float q = qOverP > 0.f ? 1.f :-1.f;
   const float dir = q*SciFi::Tracking::magscalefactor*(-1.f);
 
-  // Is PT at end VELO same as PT at beamline? Check output of VeloUT
-  // DvB: no, but there is only a slight difference,
-  // impact on efficiency is less than 1%,
-  // the main difference probably comes from the intermediate computation of one more propagation
   float slope2 = pow(velo_state.tx,2) + pow(velo_state.ty,2); 
   const float pt = std::sqrt( std::fabs(1./ (pow(qOverP,2) ) ) * (slope2) / (1. + slope2) );
   const bool wSignTreatment = SciFi::Tracking::useWrongSignWindow && pt > SciFi::Tracking::wrongSignPT;
@@ -46,20 +42,17 @@ void collectAllXHits(
     dxRefWS = 0.9 * calcDxRef(SciFi::Tracking::wrongSignPT, velo_state); //make windows a bit too small - FIXME check effect of this, seems wrong
   }
 
-  std::array<int, 7> iZoneEnd; //6 x planes
+  int iZoneEnd[7]; //6 x planes
   iZoneEnd[0] = 0; 
   int cptZone = 1; 
 
   int iZoneStartingPoint = side > 0 ? SciFi::Tracking::zoneoffsetpar : 0;
 
-  //debug_cout << "About to collect X hits for candidate from " << iZoneStartingPoint << std::endl;
-
   for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + SciFi::Tracking::zoneoffsetpar; iZone++) {
-    //debug_cout  << "Processing zone" << iZone << std::endl;
     const float zZone   = SciFi::Tracking::xZone_zPos[iZone-iZoneStartingPoint];
     const float xInZone = straightLineExtend(xParams_seed,zZone);
     const float yInZone = straightLineExtend(yParams_seed,zZone);
-    //debug_cout  << "Extrapolated track to " << xInZone << " " << yInZone << std::endl;
+
     // Now the code checks if the x and y are in the zone limits. I am really not sure
     // why this is done here, surely could just check if within limits for the last zone
     // in T3 and go from there? Need to think more about this.
@@ -76,7 +69,6 @@ void collectAllXHits(
       if (!isInside(xInZone,SciFi::Tracking::xLim_Min,SciFi::Tracking::xLim_Max)
           || !isInside(yInZone,side*SciFi::Tracking::yLim_Max,side*SciFi::Tracking::yLim_Min)) continue;
     }
-    //debug_cout << "Found hits inside zone limits for plane " << iZone << " at " << zZone << std::endl;
 
     const float xTol  = ( zZone < SciFi::Tracking::zReference ) ? dxRef * zZone / SciFi::Tracking::zReference :  dxRef * (zZone - zMag) / ( SciFi::Tracking::zReference - zMag );
     float xMin        = xInZone - xTol;
@@ -93,16 +85,12 @@ void collectAllXHits(
         xMax = xInZone + xTolWS;
       }
     }
-  
-    //debug_cout << "Collecting X hits from " << xMin << " to " << xMax << std::endl;
- 
+
     // Get the zone bounds 
     int x_zone_offset_begin = hits_layers->layer_offset[SciFi::Tracking::xZones[iZone]];
     int x_zone_offset_end   = hits_layers->layer_offset[SciFi::Tracking::xZones[iZone]+1];
     int itH   = getLowerBound(hits_layers->m_x,xMin,x_zone_offset_begin,x_zone_offset_end); 
     int itEnd = getLowerBound(hits_layers->m_x,xMax,x_zone_offset_begin,x_zone_offset_end);
-
-    //debug_cout << itEnd << " " << itH << std::endl;
 
     // Skip making range but continue if the end is before or equal to the start
     if (!(itEnd > itH)) continue; 
@@ -120,15 +108,13 @@ void collectAllXHits(
     int uv_zone_offset_begin = hits_layers->layer_offset[SciFi::Tracking::uvZones[iZone]];
     int uv_zone_offset_end   = hits_layers->layer_offset[SciFi::Tracking::uvZones[iZone]+1];  
     int triangleOffset       = side > 0 ? -1 : 1;
-    //debug_cout<<iZone<<" " << SciFi::Tracking::uvZones[iZone] << " " << SciFi::Tracking::zoneoffsetpar << " " << triangleOffset << std::endl;
     int triangle_zone_offset_begin = hits_layers->layer_offset[SciFi::Tracking::uvZones[iZone + SciFi::Tracking::zoneoffsetpar*triangleOffset]];
     int triangle_zone_offset_end   = hits_layers->layer_offset[SciFi::Tracking::uvZones[iZone + SciFi::Tracking::zoneoffsetpar*triangleOffset]+1];
-    //debug_cout<<triangle_zone_offset_begin << " " << triangle_zone_offset_end << std::endl;
     int itUV1                = getLowerBound(hits_layers->m_x,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);    
     int itUV2                = getLowerBound(hits_layers->m_x,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
 
     const float xPredUVProto =  xInUv - xInZone * zRatio - dx;
-    const float maxDxProto   =  SciFi::Tracking::tolYCollectX + std::abs( yInZone ) * SciFi::Tracking::tolYSlopeCollectX;
+    const float maxDxProto   =  SciFi::Tracking::tolYCollectX + std::fabs( yInZone ) * SciFi::Tracking::tolYSlopeCollectX;
 
     if ( std::fabs(yInZone) > SciFi::Tracking::tolYTriangleSearch ) { // no triangle search necessary!
       
@@ -204,7 +190,6 @@ void selectXCandidates(
   int it2 = it1; 
   pars.minStereoHits = 0;
 
-  std::vector<int> otherHits[12];
   PlaneCounter planeCounter;
   
   while( true ) {
@@ -297,7 +282,8 @@ void selectXCandidates(
     
     if ( nbSingle >= SciFi::Tracking::minSingleHits && nbSingle != planeCounter.nbDifferent ) {
       //1) we have enough single planes (thus two) to make a straight line fit
-      for(int i=0; i < 12; i++) otherHits[i].clear();
+      int otherHits[SciFi::Constants::n_layers][SciFi::Tracking::max_other_hits] = {0};
+      int nOtherHits[SciFi::Constants::n_layers] = {0};
       
       //seperate single and double hits
       for(auto itH = it1; it2 > itH; ++itH ){
@@ -307,23 +293,20 @@ void selectXCandidates(
           lineFitter.emplace_back(allXHits[itH]);
 	  incrementLineFitParameters(lineFitParameters, hits_layers, allXHits[itH]);
         }else{
-          otherHits[planeCode].emplace_back(allXHits[itH]);
+          if ( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits ) 
+            otherHits[planeCode][ nOtherHits[planeCode]++ ] = allXHits[itH];
         }
       }
       solveLineFit(lineFitParameters);
-      
+
       //select best other hits (only best other hit is enough!)
-      for(int i = 0; i < 12; i++){  //12 layers
-        if(otherHits[i].empty()) continue;
+      for(int i = 0; i < SciFi::Constants::n_layers; i++){ 
+        if(nOtherHits[i] == 0) continue;
         
         float bestChi2 = 1e9f;
       
-        int best = 0;
-        if ( otherHits[i].size() > 0 )
-          best = otherHits[i][0];
-        else
-          best = 0;
-        for( int hit = 0; hit < otherHits[i].size(); ++hit ){
+        int best = otherHits[i][0];
+        for( int hit = 0; hit < nOtherHits[i]; ++hit ){
           const float chi2 = getLineFitChi2(lineFitParameters, hits_layers, otherHits[i][hit] );
           if( chi2 < bestChi2 ){
             bestChi2 = chi2;

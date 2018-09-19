@@ -140,8 +140,6 @@ bool fitYProjection(
   SciFi::Tracking::HitSearchCuts& pars)
 {
   
-  //debug_cout << "About to fit a Y projection with " << stereoHits.size() << " hits on " << planeCounter.nbDifferent << " different planes looking for " << pars.minStereoHits << std::endl;
-  //if ( nbDifferent(planelist) < pars.minStereoHits ) return false;
   float maxChi2 = 1.e9f;
   bool parabola = false; //first linear than parabola
   //== Fit a line

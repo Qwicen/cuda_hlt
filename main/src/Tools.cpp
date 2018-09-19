@@ -46,7 +46,7 @@ bool check_velopix_events(
   return true;
 }
 void read_scifi_events_into_arrays( SciFi::HitsSoA *hits_layers_events,
-                                 uint32_t n_hits_layers_events[][SciFi::Constants::n_layers],
+                                 uint32_t n_hits_layers_events[][SciFi::Constants::n_zones],
                                  const std::vector<char> events,
                                  const std::vector<unsigned int> event_offsets,
                                  const int n_events ) {
@@ -57,7 +57,7 @@ void read_scifi_events_into_arrays( SciFi::HitsSoA *hits_layers_events,
     int n_hits_total = 0;
     int accumulated_hits = 0;
     int accumulated_hits_layers[12];
-    for ( int i_layer = 0; i_layer < SciFi::Constants::n_layers; ++i_layer ) {
+    for ( int i_layer = 0; i_layer < SciFi::Constants::n_zones; ++i_layer ) {
       n_hits_layers_events[i_event][i_layer] = *((uint32_t*)raw_input);
       n_hits_total += n_hits_layers_events[i_event][i_layer];
       raw_input += sizeof(uint32_t);
@@ -66,7 +66,7 @@ void read_scifi_events_into_arrays( SciFi::HitsSoA *hits_layers_events,
       accumulated_hits += n_hits_layers_events[i_event][i_layer];
     }
 
-    for ( int i_layer = 0; i_layer < SciFi::Constants::n_layers; ++i_layer ) {
+    for ( int i_layer = 0; i_layer < SciFi::Constants::n_zones; ++i_layer ) {
       int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
       std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &( hits_layers_events[i_event].m_x[ layer_offset ]) );
       raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
@@ -130,7 +130,7 @@ void read_scifi_events_into_arrays( SciFi::HitsSoA *hits_layers_events,
 //   }
 
 void check_scifi_events( const SciFi::HitsSoA *hits_layers_events,
-		      const uint32_t n_hits_layers_events[][SciFi::Constants::n_layers],
+		      const uint32_t n_hits_layers_events[][SciFi::Constants::n_zones],
 		      const int n_events ) {
 
   float average_number_of_hits_per_event = 0;
@@ -139,7 +139,7 @@ void check_scifi_events( const SciFi::HitsSoA *hits_layers_events,
     // sanity checks
     float number_of_hits = 0;
 
-    for ( int i_layer = 0; i_layer < SciFi::Constants::n_layers; ++i_layer ) {
+    for ( int i_layer = 0; i_layer < SciFi::Constants::n_zones; ++i_layer ) {
       debug_cout << "checks on layer " << i_layer << ", with " << n_hits_layers_events[i_event][i_layer] << " hits" << std::endl;
       number_of_hits += n_hits_layers_events[i_event][i_layer];
       int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
