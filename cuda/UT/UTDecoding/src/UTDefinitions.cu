@@ -1,21 +1,5 @@
 #include "UTDefinitions.cuh"
 
-void UTHitCount::typecast_before_prefix_sum(
-  uint* base_pointer,
-  const uint event_number
-) {
-  n_hits_layers = base_pointer + event_number * VeloUTTracking::n_layers;
-}
-
-void UTHitCount::typecast_after_prefix_sum(
-  uint* base_pointer,
-  const uint event_number,
-  const uint number_of_events
-) {
-  layer_offsets = base_pointer + event_number * VeloUTTracking::n_layers;
-  n_hits_layers = base_pointer + number_of_events * VeloUTTracking::n_layers + 1 + event_number * VeloUTTracking::n_layers;
-}
-
 UTBoards::UTBoards(const std::vector<char> & ut_boards) {
   uint32_t * p = (uint32_t *) ut_boards.data();
   number_of_boards   = *p; p += 1;
@@ -121,7 +105,7 @@ UTHit::UTHit(float    ut_yBegin,
   planeCode     = ut_planeCode    ;
 }
 
-void UTHits::typecast_unsorted(uint32_t* base_pointer, uint32_t total_number_of_hits) {
+UTHits::UTHits(uint32_t* base_pointer, uint32_t total_number_of_hits) {
   yBegin = reinterpret_cast<float*>(base_pointer);
   yEnd = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
   zAtYEq0 = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
@@ -130,19 +114,6 @@ void UTHits::typecast_unsorted(uint32_t* base_pointer, uint32_t total_number_of_
   highThreshold = base_pointer + 5*total_number_of_hits;
   LHCbID = base_pointer + 6*total_number_of_hits;
   planeCode = base_pointer + 7*total_number_of_hits;
-  temp = base_pointer + 8*total_number_of_hits;
-}
-
-void UTHits::typecast_sorted(uint32_t* base_pointer, uint32_t total_number_of_hits) {
-  temp = base_pointer;
-  yBegin = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
-  yEnd = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
-  zAtYEq0 = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
-  xAtYEq0 = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
-  weight = reinterpret_cast<float*>(base_pointer + 5*total_number_of_hits);
-  highThreshold = base_pointer + 6*total_number_of_hits;
-  LHCbID = base_pointer + 7*total_number_of_hits;
-  planeCode = base_pointer + 8*total_number_of_hits;
 }
 
 UTHit UTHits::getHit(uint32_t index) const {

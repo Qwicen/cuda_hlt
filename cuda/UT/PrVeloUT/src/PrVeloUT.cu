@@ -44,7 +44,7 @@ __host__ __device__ bool getHits(
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int posLayers[4][85],
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   const float* fudgeFactors, 
   const MiniState& trState,
   const float* ut_dxDy)
@@ -80,9 +80,9 @@ __host__ __device__ bool getHits(
       if( iStation == 1 && iLayer == 1 && nLayers < 2 ) return false;
 
       int layer = 2*iStation+iLayer;
-      int layer_offset = ut_hit_count.layer_offsets[layer];
+      int layer_offset = ut_hit_offsets.layer_offset(layer);
       
-      if( ut_hit_count.n_hits_layers[layer] == 0 ) continue;
+      if( ut_hit_offsets.layer_number_of_hits(layer) == 0 ) continue;
       const float dxDy   = ut_dxDy[layer];
       const float zLayer = ut_hits.zAtYEq0[layer_offset + 0]; 
 
@@ -107,11 +107,11 @@ __host__ __device__ bool getHits(
       size_t posBeg = posLayers[layer][ indexLow ];
       size_t posEnd = posLayers[layer][ indexHi  ];
 
-      while ( (ut_hits.xAtYEq0[layer_offset + posBeg] < lowerBoundX) && (posBeg != ut_hit_count.n_hits_layers[layer] ) ) {
+      while ( (ut_hits.xAtYEq0[layer_offset + posBeg] < lowerBoundX) && (posBeg != ut_hit_offsets.layer_number_of_hits(layer) ) ) {
         ++posBeg;
       }
       
-      if (posBeg == ut_hit_count.n_hits_layers[layer]) continue;
+      if (posBeg == ut_hit_offsets.layer_number_of_hits(layer)) continue;
 
       findHits(posBeg, posEnd,
         ut_hits, layer_offset, layer, ut_dxDy,
@@ -135,7 +135,7 @@ __host__ __device__ bool formClusters(
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int bestHitCandidateIndices[VeloUTTracking::n_layers],
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   TrackHelper& helper,
   MiniState& state,
   const float* ut_dxDy,
@@ -150,13 +150,12 @@ __host__ __device__ bool formClusters(
         layers[i_layer] = VeloUTTracking::n_layers - 1 - i_layer;
   }
 
-
   // Go through the layers
   bool fourLayerSolution = false;
   int hitCandidateIndices[VeloUTTracking::n_layers];
   for ( int i_hit0 = 0; i_hit0 < n_hitCandidatesInLayers[ layers[0] ]; ++i_hit0 ) {
 
-    const int layer_offset0 = ut_hit_count.layer_offsets[ layers[0] ];
+    const int layer_offset0 = ut_hit_offsets.layer_offset(layers[0]);
     const int hit_index0    = layer_offset0 + hitCandidatesInLayers[ layers[0] ][i_hit0];
     const float xhitLayer0  = x_pos_layers[layers[0]][i_hit0];
     const float zhitLayer0  = ut_hits.zAtYEq0[hit_index0];
@@ -164,7 +163,7 @@ __host__ __device__ bool formClusters(
     
     for ( int i_hit2 = 0; i_hit2 < n_hitCandidatesInLayers[ layers[2] ]; ++i_hit2 ) {
 
-      const int layer_offset2 = ut_hit_count.layer_offsets[ layers[2] ];
+      const int layer_offset2 = ut_hit_offsets.layer_offset(layers[2]);
       const int hit_index2    = layer_offset2 + hitCandidatesInLayers[ layers[2] ][i_hit2];
       const float xhitLayer2  = x_pos_layers[layers[2]][i_hit2];
       const float zhitLayer2  = ut_hits.zAtYEq0[hit_index2];
@@ -177,7 +176,7 @@ __host__ __device__ bool formClusters(
       float hitTol = PrVeloUTConst::hitTol2;
       for ( int i_hit1 = 0; i_hit1 < n_hitCandidatesInLayers[ layers[1] ]; ++i_hit1 ) {
 
-        const int layer_offset1 = ut_hit_count.layer_offsets[ layers[1] ];
+        const int layer_offset1 = ut_hit_offsets.layer_offset(layers[1]);
         const int hit_index1    = layer_offset1 + hitCandidatesInLayers[ layers[1] ][i_hit1];
         const float xhitLayer1  = x_pos_layers[layers[1]][i_hit1];
         const float zhitLayer1  = ut_hits.zAtYEq0[hit_index1];
@@ -196,7 +195,7 @@ __host__ __device__ bool formClusters(
       hitTol = PrVeloUTConst::hitTol2;
       for ( int i_hit3 = 0; i_hit3 < n_hitCandidatesInLayers[ layers[3] ]; ++i_hit3 ) {
 
-        const int layer_offset3 = ut_hit_count.layer_offsets[ layers[3] ];
+        const int layer_offset3 = ut_hit_offsets.layer_offset(layers[3]);
         const int hit_index3    = layer_offset3 + hitCandidatesInLayers[ layers[3] ][i_hit3];
         const float xhitLayer3  = x_pos_layers[layers[3]][i_hit3];
         const float zhitLayer3  = ut_hits.zAtYEq0[hit_index3];
@@ -250,7 +249,7 @@ __host__ __device__ void prepareOutputTrack(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int hitCandidateIndices[VeloUTTracking::n_layers],
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
@@ -333,7 +332,7 @@ __host__ __device__ void prepareOutputTrack(
     const float xhit = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
     const float zhit = ut_hits.zAtYEq0[hit_index];
 
-    const int layer_offset = ut_hit_count.layer_offsets[ planeCode ];
+    const int layer_offset = ut_hit_offsets.layer_offset(planeCode);
     for ( int i_ohit = 0; i_ohit < n_hitCandidatesInLayers[planeCode]; ++i_ohit ) {
       const int ohit_index = hitCandidatesInLayers[planeCode][i_ohit];
       const float zohit  = ut_hits.zAtYEq0[layer_offset + ohit_index];
@@ -394,15 +393,14 @@ __host__ __device__ void fillArrayAt(
 // ==============================================================================
 __host__ __device__ void fillIterators(
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   int posLayers[4][85] )
 {
-    
   for(int iStation = 0; iStation < 2; ++iStation){
     for(int iLayer = 0; iLayer < 2; ++iLayer){
       int layer = 2*iStation + iLayer;
-      int layer_offset = ut_hit_count.layer_offsets[layer];
-      uint n_hits_layer = ut_hit_count.n_hits_layers[layer];
+      uint layer_offset = ut_hit_offsets.layer_offset(layer);
+      uint n_hits_layer = ut_hit_offsets.layer_number_of_hits(layer);
       
       size_t pos = 0;
       // to do: check whether there is an efficient thrust implementation for this

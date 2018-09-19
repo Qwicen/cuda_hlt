@@ -9,7 +9,6 @@
 #include "VeloKalmanFilter.cuh"
 #include "VeloUT.cuh"
 #include "UTDecoding.cuh"
-#include "SortByX.cuh"
 #include "Argument.cuh"
 #include "Sequence.cuh"
 #include "TupleIndicesChecker.cuh"
@@ -43,7 +42,6 @@ constexpr auto sequence_algorithms() {
     prefix_sum_single_block,
     prefix_sum_scan,
     decode_raw_banks,
-    sort_by_x,
     veloUT
   );
 }
@@ -95,6 +93,7 @@ using argument_tuple_t = std::tuple<
   // Error: Internal Compiler Error (codegen): "there was an error in verifying the lgenfe output!"
   Argument<arg::dev_ut_raw_input, uint>,
   Argument<arg::dev_ut_raw_input_offsets, uint>,
+  Argument<arg::dev_ut_hit_offsets, uint>,
   Argument<arg::dev_ut_hit_count, uint>,
   Argument<arg::dev_prefix_sum_auxiliary_array_3, uint>,
   Argument<arg::dev_ut_hits, uint>,

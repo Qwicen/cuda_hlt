@@ -24,8 +24,9 @@
  */
 struct Constants {
   std::array<float, VeloUTTracking::n_layers> host_ut_dxDy;
-  std::vector<uint> host_unique_x_sector_permutation;
-  uint host_unique_x_sectors;
+  std::array<uint, 5> host_unique_x_sector_layer_offsets;
+  std::vector<uint> host_unique_x_sector_offsets;
+  std::array<uint, 12> host_ut_region_offsets;
 
   float* dev_velo_module_zs;
   uint8_t* dev_velo_candidate_ks;
@@ -33,8 +34,9 @@ struct Constants {
   float* dev_velo_sp_fx;
   float* dev_velo_sp_fy;
   float* dev_ut_dxDy;
-  // uint* dev_unique_x_sectors;
-  uint* dev_unique_x_sectors_permutation;
+  uint* dev_unique_x_sector_layer_offsets;
+  uint* dev_unique_x_sector_offsets;
+  uint* dev_ut_region_offsets;
   
   void reserve_and_initialize() {
     reserve_constants();

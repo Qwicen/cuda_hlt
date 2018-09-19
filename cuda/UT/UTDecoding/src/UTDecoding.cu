@@ -13,22 +13,24 @@
  * @brief Calculates the number of hits to be decoded for the UT detector.
  */
 __global__ void ut_calculate_number_of_hits (
-  const uint32_t* __restrict__ dev_ut_raw_input,
-  const uint32_t* __restrict__ dev_ut_raw_input_offsets,
-  const char* __restrict__ ut_boards,
-  uint32_t* __restrict__ dev_ut_hit_count
+  const uint32_t* dev_ut_raw_input,
+  const uint32_t* dev_ut_raw_input_offsets,
+  const char* ut_boards,
+  const uint* dev_ut_region_offsets,
+  const uint* dev_unique_x_sector_layer_offsets,
+  const uint* dev_unique_x_sector_offsets,
+  uint32_t* dev_ut_hit_offsets
 ) {
   const uint32_t event_number = blockIdx.x;
 
   // Note: Once the lgenfe error is fixed in CUDA, we can switch to char* and drop the "/ sizeof(uint32_t);"
   const uint32_t event_offset = dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
-
-  UTHitCount hit_count;
-  hit_count.typecast_before_prefix_sum(dev_ut_hit_count, event_number);
+  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
+  uint32_t* hit_offsets = dev_ut_hit_offsets + event_number * number_of_unique_x_sectors;
 
   // Initialize hit layers to 0
-  for (int i=threadIdx.x; i<VeloUTTracking::n_layers; i+=blockDim.x) {
-    hit_count.n_hits_layers[i] = 0;
+  for (int i=threadIdx.x; i<number_of_unique_x_sectors; i+=blockDim.x) {
+    hit_offsets[i] = 0;
   }
 
   __syncthreads();
@@ -39,49 +41,55 @@ __global__ void ut_calculate_number_of_hits (
   for (uint32_t raw_bank_index = threadIdx.x; raw_bank_index < raw_event.number_of_raw_banks; raw_bank_index += blockDim.x) {
     const UTRawBank raw_bank = raw_event.getUTRawBank(raw_bank_index);
     const uint32_t m_nStripsPerHybrid = boards.stripsPerHybrids[raw_bank.sourceID];
-    const uint32_t channelID = (raw_bank.data[0] & chan_mask) >> chan_offset;
-    const uint32_t index = channelID / m_nStripsPerHybrid;
-    const uint32_t fullChanIndex = raw_bank.sourceID * ut_number_of_sectors_per_board + index;
-    const uint32_t station       = boards.stations   [fullChanIndex] - 1;
-    const uint32_t layer         = boards.layers     [fullChanIndex] - 1;
-    const uint32_t planeCode     = 2 * station + (layer & 1);
 
-    uint32_t* hits_layer = hit_count.n_hits_layers + planeCode;
-    atomicAdd(hits_layer, raw_bank.number_of_hits);
+    for (uint32_t i = threadIdx.y; i < raw_bank.number_of_hits; i+=blockDim.y) {
+      const uint32_t channelID = (raw_bank.data[i] & chan_mask) >> chan_offset;
+      const uint32_t index = channelID / m_nStripsPerHybrid;
+      const uint32_t fullChanIndex = raw_bank.sourceID * ut_number_of_sectors_per_board + index;
+      const uint32_t station       = boards.stations   [fullChanIndex] - 1;
+      const uint32_t layer         = boards.layers     [fullChanIndex] - 1;
+      const uint32_t detRegion     = boards.detRegions [fullChanIndex] - 1;
+      const uint32_t sector        = boards.sectors    [fullChanIndex] - 1;
+
+      // Calculate the index to get the geometry of the board
+      const uint32_t idx = station * ut_number_of_sectors_per_board + layer * 3 + detRegion;
+      const uint32_t idx_offset = dev_ut_region_offsets[idx] + sector;
+
+      uint* hits_sector_group = hit_offsets + dev_unique_x_sector_offsets[idx_offset];
+      atomicAdd(hits_sector_group, 1);
+    }
   }
 }
 
 __global__ void decode_raw_banks (
-  const uint32_t* __restrict__ dev_ut_raw_input,
-  const uint32_t* __restrict__ dev_ut_raw_input_offsets,
-  const char* __restrict__ ut_boards,
-  const char* __restrict__ ut_geometry,
-  uint32_t* __restrict__ dev_ut_hits,
-  uint32_t* __restrict__ dev_ut_hit_count
+  const uint32_t* dev_ut_raw_input,
+  const uint32_t* dev_ut_raw_input_offsets,
+  const char* ut_boards,
+  const char* ut_geometry,
+  const uint* dev_ut_region_offsets,
+  const uint* dev_unique_x_sector_layer_offsets,
+  const uint* dev_unique_x_sector_offsets,
+  const uint32_t* dev_ut_hit_offsets,
+  uint32_t* dev_ut_hits,
+  uint32_t* dev_ut_hit_count
 ) {
   const uint32_t number_of_events = gridDim.x;
   const uint32_t event_number = blockIdx.x;
   const uint32_t event_offset = dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
   
-  UTHits ut_hits;
-  ut_hits.typecast_unsorted(dev_ut_hits, dev_ut_hit_count[number_of_events * VeloUTTracking::n_layers]);
+  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
+  const uint32_t* hit_offsets = dev_ut_hit_offsets + event_number * number_of_unique_x_sectors;
+  uint32_t* hit_count = dev_ut_hit_count + event_number * number_of_unique_x_sectors;
 
-  UTHitCount hit_count;
-  hit_count.typecast_after_prefix_sum(dev_ut_hit_count, event_number, number_of_events);
+  UTHits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};
 
-  __shared__ uint32_t shared_layer_offsets[VeloUTTracking::n_layers];
-
-  for (int i=threadIdx.x; i<VeloUTTracking::n_layers; i+=blockDim.x) {
-    shared_layer_offsets[i] = hit_count.layer_offsets[i];
-  }
-
-  for (int i=threadIdx.x; i<VeloUTTracking::n_layers; i+=blockDim.x) {
-    hit_count.n_hits_layers[i] = 0;
+  if (threadIdx.y == 0) {
+    for (int i=threadIdx.x; i<number_of_unique_x_sectors; i+=blockDim.x) {
+      hit_count[i] = 0;
+    }
   }
 
   const UTRawEvent raw_event(dev_ut_raw_input + event_offset);
-
-  const uint32_t m_offset[12] = {0, 84, 164, 248, 332, 412, 496, 594, 674, 772, 870, 950};
   const UTBoards boards(ut_boards);
   const UTGeometry geometry(ut_geometry);
 
@@ -112,7 +120,7 @@ __global__ void decode_raw_banks (
 
       // Calculate the index to get the geometry of the board
       const uint32_t idx = station * ut_number_of_sectors_per_board + layer * 3 + detRegion;
-      const uint32_t idx_offset = m_offset[idx] + sector;
+      const uint32_t idx_offset = dev_ut_region_offsets[idx] + sector;
 
       const uint32_t m_firstStrip = geometry.firstStrip [idx_offset];
       const float    m_pitch      = geometry.pitch      [idx_offset];
@@ -136,18 +144,21 @@ __global__ void decode_raw_banks (
       const uint32_t LHCbID        = chanID + strip;
       const uint32_t planeCode     = 2 * station + (layer & 1);
 
-      uint32_t* hits_layer = hit_count.n_hits_layers + planeCode;
-      uint32_t hitIndex = atomicAdd(hits_layer, 1);
+      const uint base_sector_group_offset = dev_unique_x_sector_offsets[idx_offset];
+      uint* hits_count_sector_group = hit_count + base_sector_group_offset;
+      
+      const uint current_hit_count = atomicAdd(hits_count_sector_group, 1);
+      assert(current_hit_count < hit_offsets[base_sector_group_offset+1] - hit_offsets[base_sector_group_offset]);
 
-      hitIndex += shared_layer_offsets[planeCode];
-      ut_hits.yBegin[hitIndex]        = yBegin;
-      ut_hits.yEnd[hitIndex]          = yEnd;
-      ut_hits.zAtYEq0[hitIndex]       = zAtYEq0;
-      ut_hits.xAtYEq0[hitIndex]       = xAtYEq0;
-      ut_hits.weight[hitIndex]        = weight;
-      ut_hits.highThreshold[hitIndex] = highThreshold;
-      ut_hits.LHCbID[hitIndex]        = LHCbID;
-      ut_hits.planeCode[hitIndex]     = planeCode;
+      const uint hit_index = hit_offsets[base_sector_group_offset] + current_hit_count;
+      ut_hits.yBegin[hit_index]        = yBegin;
+      ut_hits.yEnd[hit_index]          = yEnd;
+      ut_hits.zAtYEq0[hit_index]       = zAtYEq0;
+      ut_hits.xAtYEq0[hit_index]       = xAtYEq0;
+      ut_hits.weight[hit_index]        = weight;
+      ut_hits.highThreshold[hit_index] = highThreshold;
+      ut_hits.LHCbID[hit_index]        = LHCbID;
+      ut_hits.planeCode[hit_index]     = planeCode;
     }
   }
 }

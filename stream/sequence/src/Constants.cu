@@ -7,6 +7,7 @@ void Constants::reserve_constants() {
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_fx, 512 * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_fy, 512 * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_ut_dxDy, VeloUTTracking::n_layers * sizeof(float)));
+  cudaCheck(cudaMalloc((void**)&dev_ut_region_offsets, 12 * sizeof(uint)));
 }
 
 void Constants::initialize_constants() {
@@ -41,6 +42,9 @@ void Constants::initialize_constants() {
   host_ut_dxDy[3] = 0.;
 
   cudaCheck(cudaMemcpy(dev_ut_dxDy, host_ut_dxDy.data(), host_ut_dxDy.size() * sizeof(float), cudaMemcpyHostToDevice));
+
+  host_ut_region_offsets = {0, 84, 164, 248, 332, 412, 496, 594, 674, 772, 870, 950};
+  cudaCheck(cudaMemcpy(dev_ut_region_offsets, host_ut_region_offsets.data(), host_ut_region_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice));
 }
 
 void Constants::initialize_ut_decoding_constants(
@@ -51,8 +55,8 @@ void Constants::initialize_ut_decoding_constants(
 
   // Offset for each station / layer
   const std::array<uint, 5> offsets {0, 248, 496, 772, 1048};
-
   auto current_sector_offset = 0;
+  host_unique_x_sector_offsets[current_sector_offset];
 
   for (int i=0; i<number_of_station_layers; ++i) {
     const auto offset = offsets[i];
@@ -91,8 +95,8 @@ void Constants::initialize_ut_decoding_constants(
 
     // Calculate final permutation into unique elements
     std::vector<int> unique_permutation;
-    for (int i=0; i<size; ++i) {
-      auto it = std::find(permutation.begin(), permutation.end(), i);
+    for (int j=0; j<size; ++j) {
+      auto it = std::find(permutation.begin(), permutation.end(), j);
       auto position = it - permutation.begin();
       unique_permutation.emplace_back(permutation_repeated[position]);
     }
@@ -115,27 +119,36 @@ void Constants::initialize_ut_decoding_constants(
       debug_cout << std::endl;
     }
 
-    // Fill in host_unique_x_sector_permutation
+    // Fill in host_unique_x_sector_offsets
     for (auto p : unique_permutation) {
-      host_unique_x_sector_permutation.emplace_back(current_sector_offset + p);
+      host_unique_x_sector_offsets.emplace_back(current_sector_offset + p);
     }
 
     // Fill in host_unique_x_sectors
     current_sector_offset += number_of_unique_elements;
-    host_unique_x_sectors = current_sector_offset;
+    host_unique_x_sector_layer_offsets[i+1] = current_sector_offset;
   }
 
   // Some debug printouts
   if (logger::ll.verbosityLevel >= logger::debug) {
-    debug_cout << "Unique X sectors:" << host_unique_x_sectors << std::endl;
-    debug_cout << "Unique X sector permutation:" << std::endl;
-    for (auto i : host_unique_x_sector_permutation) {
+    debug_cout << "Unique X sectors:";
+    for (auto i : host_unique_x_sector_layer_offsets) {
+      debug_cout << i << std::endl;
+    }
+    debug_cout << std::endl << "Unique X sector permutation:" << std::endl;
+    for (auto i : host_unique_x_sector_offsets) {
       debug_cout << i << ", ";
     }
     debug_cout << std::endl;
   }
 
   // Populate device constant into global memory
-  cudaCheck(cudaMalloc((void**)&dev_unique_x_sectors_permutation, host_unique_x_sector_permutation.size() * sizeof(uint)));
-  cudaCheck(cudaMemcpy(dev_unique_x_sectors_permutation, host_unique_x_sector_permutation, host_unique_x_sector_permutation.size() * sizeof(uint), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMalloc((void**)&dev_unique_x_sector_layer_offsets, host_unique_x_sector_layer_offsets.size() * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_unique_x_sector_offsets, host_unique_x_sector_offsets.size() * sizeof(uint)));
+  cudaCheck(cudaMemcpy(dev_unique_x_sector_layer_offsets, host_unique_x_sector_layer_offsets.data(), host_unique_x_sector_layer_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_unique_x_sector_offsets, host_unique_x_sector_offsets.data(), host_unique_x_sector_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice));
 }
+
+// /home/dcampora/projects/cuda_hlt/stream/sequence/src/Constants.cu(129): warning: reference is to variable "i"
+// (61): here -- under old for-init scoping rules it would have been variable "i"
+// (98): here

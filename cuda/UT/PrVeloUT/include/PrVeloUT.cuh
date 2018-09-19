@@ -66,7 +66,7 @@ __host__ __device__ bool getHits(
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int posLayers[4][85],
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   const float* fudgeFactors, 
   const MiniState& trState,
   const float* ut_dxDy); 
@@ -77,7 +77,7 @@ __host__ __device__ bool formClusters(
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int hitCandidateIndices[VeloUTTracking::n_layers],
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   TrackHelper& helper,
   MiniState& state,
   const float* ut_dxDy,
@@ -91,7 +91,7 @@ __host__ __device__ void prepareOutputTrack(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int hitCandidateIndices[VeloUTTracking::n_layers],
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
@@ -111,7 +111,7 @@ __host__ __device__ void fillArrayAt(
   
 __host__ __device__ void fillIterators(
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   int posLayers[4][85] );
 
 __host__ __device__ void findHits( 

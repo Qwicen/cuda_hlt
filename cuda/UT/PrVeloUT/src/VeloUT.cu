@@ -2,7 +2,7 @@
 
 __global__ void veloUT(
   uint* dev_ut_hits,
-  uint* dev_ut_hit_count,
+  uint* dev_ut_hit_offsets,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_track_hits,
@@ -10,11 +10,15 @@ __global__ void veloUT(
   VeloUTTracking::TrackUT* dev_veloUT_tracks,
   int* dev_atomics_veloUT,
   PrUTMagnetTool* dev_ut_magnet_tool,
-  float* dev_ut_dxDy
+  float* dev_ut_dxDy,
+  const uint* dev_unique_x_sector_layer_offsets,
+  const uint* dev_unique_x_sector_offsets
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
-  const uint total_number_of_hits = dev_ut_hit_count[number_of_events * VeloUTTracking::n_layers];
+
+  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
+  const uint total_number_of_hits = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
   
   // Velo consolidated types
   const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
@@ -22,11 +26,8 @@ __global__ void veloUT(
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  UTHitCount ut_hit_count;
-  ut_hit_count.typecast_after_prefix_sum(dev_ut_hit_count, event_number, number_of_events);
-
-  UTHits ut_hits;
-  ut_hits.typecast_sorted(dev_ut_hits, total_number_of_hits);
+  UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  UTHits ut_hits {dev_ut_hits, total_number_of_hits};
 
   /* dev_atomics_veloUT contains in an SoA:
      1. # of veloUT tracks
@@ -54,7 +55,7 @@ __global__ void veloUT(
   //        hits_layers_event->weight(0),
   //        hits_layers_event->highThreshold(0));
          
-  fillIterators(ut_hits, ut_hit_count, posLayers);
+  fillIterators(ut_hits, ut_hit_offsets, posLayers);
 
   const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdlTable     = &(dev_ut_magnet_tool->bdlTable[0]);
@@ -91,7 +92,7 @@ __global__ void veloUT(
           x_pos_layers,
           posLayers,
           ut_hits,
-          ut_hit_count,
+          ut_hit_offsets,
           fudgeFactors,
           velo_state,
           dev_ut_dxDy)
@@ -109,7 +110,7 @@ __global__ void veloUT(
           x_pos_layers,
           hitCandidateIndices,
           ut_hits,
-          ut_hit_count,
+          ut_hit_offsets,
           helper,
           velo_state,
           dev_ut_dxDy,
@@ -122,7 +123,7 @@ __global__ void veloUT(
         x_pos_layers,
         hitCandidateIndices,
         ut_hits,
-        ut_hit_count,
+        ut_hit_offsets,
         helper,
         velo_state,
         dev_ut_dxDy,
@@ -141,7 +142,7 @@ __global__ void veloUT(
         hitCandidatesInLayers,
         n_hitCandidatesInLayers,
         ut_hits,
-        ut_hit_count,
+        ut_hit_offsets,
         x_pos_layers,
         hitCandidateIndices,
         veloUT_tracks_event,
