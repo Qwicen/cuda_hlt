@@ -19,6 +19,8 @@ namespace SciFi{
   namespace Tracking {
 
     const int max_tracks_second_loop = 30;
+    const int TMVA_Nvars = 7;
+    const int TMVA_Nlayers = 5;
     
     // dump a bunch of options here
     const float        deltaQuality = 0.1; // Difference in quality btw two tracks which share hits when clone killing

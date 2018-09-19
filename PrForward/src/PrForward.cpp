@@ -26,9 +26,10 @@ void PrForward(
   int numfound = 0;
 
   // initialize TMVA vars
-  const std::vector<std::string> mlpInputVars {{"nPlanes"}, {"dSlope"}, {"dp"}, {"slope2"}, {"dby"}, {"dbx"}, {"day"}};
-  ReadMLP_Forward1stLoop MLPReader_1st = ReadMLP_Forward1stLoop( mlpInputVars );
-  ReadMLP_Forward2ndLoop MLPReader_2nd = ReadMLP_Forward2ndLoop( mlpInputVars );
+  // const std::vector<std::string> mlpInputVars {{"nPlanes"}, {"dSlope"}, {"dp"}, {"slope2"}, {"dby"}, {"dbx"}, {"day"}};
+  // ReadMLP_Forward2ndLoop MLPReader_2nd = ReadMLP_Forward2ndLoop( mlpInputVars );
+  SciFi::TMVA1 tmva1 = SciFi::TMVA1();
+  SciFi::TMVA2 tmva2 = SciFi::TMVA2();
 
   // Loop over the veloUT input tracks
   for ( int i_veloUT_track = 0; i_veloUT_track < n_veloUT_tracks; ++i_veloUT_track ) {
@@ -42,8 +43,8 @@ void PrForward(
       veloUTTr,
       outputTracks,
       n_forward_tracks,
-      MLPReader_1st,
-      MLPReader_2nd,
+      tmva1,
+      tmva2,
       velo_state);
     
     
@@ -66,8 +67,8 @@ void find_forward_tracks(
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks,
-  const ReadMLP_Forward1stLoop& MLPReader_1st,
-  const ReadMLP_Forward2ndLoop& MLPReader_2nd,
+  const SciFi::TMVA1& tmva1,
+  const SciFi::TMVA2& tmva2,
   const MiniState& velo_state
 ) {
 
@@ -111,7 +112,7 @@ void find_forward_tracks(
     n_selected_tracks,
     xParams_seed, yParams_seed,
     velo_state, veloUTTrack.qop,
-    pars_first, MLPReader_1st, MLPReader_2nd, false);
+    pars_first, tmva1, tmva2, false);
 
    bool ok = false;
   for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
@@ -139,7 +140,7 @@ void find_forward_tracks(
       n_selected_tracks2,
       xParams_seed, yParams_seed,
       velo_state, veloUTTrack.qop,
-      pars_second, MLPReader_1st, MLPReader_2nd, true);
+      pars_second, tmva1, tmva2, true);
 
     for ( int i_track = 0; i_track < n_selected_tracks2; ++i_track ) {
       assert( n_selected_tracks < SciFi::max_tracks);
@@ -188,14 +189,14 @@ void selectFullCandidates(
   MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars,
-  const ReadMLP_Forward1stLoop& MLPReader_1st,
-  const ReadMLP_Forward2ndLoop& MLPReader_2nd,
+  const SciFi::TMVA1& tmva1,
+  const SciFi::TMVA2& tmva2,
   bool secondLoop)
 {
 
   PlaneCounter planeCounter;
-  std::vector<float> mlpInput(7, 0.); 
-
+  float mlpInput[7] = {0};
+  
   for ( int i_track = 0; i_track < n_candidate_tracks; ++i_track ) {
     SciFi::Track& cand = candidate_tracks[i_track];
     
@@ -278,8 +279,8 @@ void selectFullCandidates(
 
       float quality = 0.f;
       /// WARNING: if the NN classes straight out of TMVA are used, put a mutex here!
-      if(pars.minXHits > 4) quality = MLPReader_1st.GetMvaValue(mlpInput); //1st loop NN
-      else                   quality = MLPReader_2nd.GetMvaValue(mlpInput); //2nd loop NN
+      if(pars.minXHits > 4) quality = tmva1.GetMvaValue(mlpInput); //1st loop NN
+      else                   quality = tmva2.GetMvaValue(mlpInput); //2nd loop NN
 
       quality = 1.f-quality; //backward compability
 

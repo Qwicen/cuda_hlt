@@ -10,10 +10,9 @@
 
 #include "Logger.h"
 
-#include "TMVA_MLP_Forward1stLoop.h"
-#include "TMVA_MLP_Forward2ndLoop.h"
 #include "SystemOfUnits.h"
-
+#include "TMVA_Forward_1.h"
+#include "TMVA_Forward_2.h"
 #include "SciFiDefinitions.cuh"
 #include "VeloDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
@@ -54,8 +53,8 @@ void find_forward_tracks(
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks,
-  const ReadMLP_Forward1stLoop& MLPReader_1st,
-  const ReadMLP_Forward2ndLoop& MLPReader_2nd,
+  const SciFi::TMVA1& tmva1,
+  const SciFi::TMVA2& tmva2,
   const MiniState& velo_state);
 
 
@@ -70,7 +69,7 @@ void selectFullCandidates(
   MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars_cur,
-  const ReadMLP_Forward1stLoop& MLPReader_1st,
-  const ReadMLP_Forward2ndLoop& MLPReader_2nd,
+  const SciFi::TMVA1& tmva1,
+  const SciFi::TMVA2& tmva2,
   bool secondLoop);
 
