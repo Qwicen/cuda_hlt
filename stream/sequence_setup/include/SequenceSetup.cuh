@@ -18,7 +18,6 @@
 #include "Argument.cuh"
 #include "Sequence.cuh"
 #include "TupleIndicesChecker.cuh"
-
 #include "SequenceArgumentEnum.cuh"
 #include "VeloEventModel.cuh"
 

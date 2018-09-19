@@ -47,7 +47,7 @@ __device__ __host__ FTGeometry::FTGeometry(
   number_of_mats               = *((uint32_t*)p); p += sizeof(uint32_t);
   number_of_tell40s            = *((uint32_t*)p); p += sizeof(uint32_t);
   bank_first_channel           = (uint32_t*)p; p += number_of_tell40s * sizeof(uint32_t);
-  max_uniqueMat            = *((uint32_t*)p); p += sizeof(uint32_t);
+  max_uniqueMat                = *((uint32_t*)p); p += sizeof(uint32_t);
   mirrorPointX                 = (float*)p; p += sizeof(float) * max_uniqueMat;
   mirrorPointY                 = (float*)p; p += sizeof(float) * max_uniqueMat;
   mirrorPointZ                 = (float*)p; p += sizeof(float) * max_uniqueMat;
@@ -166,39 +166,39 @@ void FTHitCount::typecast_after_prefix_sum(
 }
 
 void FTHits::typecast_unsorted(char* base, uint32_t total_number_of_hits) {
-  x0    = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  z0    = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  w     = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  dxdy  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  dzdy  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  yMin  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  yMax  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  werrX = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  coord = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  x0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  z0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  w     =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  dxdy  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  dzdy  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  yMin  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  yMax  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  werrX =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  coord =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   LHCbID =    reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   planeCode = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   hitZone =   reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   info =      reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  used = reinterpret_cast<bool*>(base); base += sizeof(bool);
-  temp  = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  used =      reinterpret_cast<bool*>(base); base += sizeof(bool) * total_number_of_hits;
+  temp  =     reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
 }
 
 void FTHits::typecast_sorted(char* base, uint32_t total_number_of_hits) {
-  temp  = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  x0    = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  z0    = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  w     = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  dxdy  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  dzdy  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  yMin  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  yMax  = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  werrX = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  coord = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  temp  =     reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  x0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  z0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  w     =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  dxdy  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  dzdy  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  yMin  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  yMax  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  werrX =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
+  coord =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   LHCbID =    reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   planeCode = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   hitZone =   reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   info =      reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  used = reinterpret_cast<bool*>(base); base += sizeof(bool);
+  used =      reinterpret_cast<bool*>(base); base += sizeof(bool) * total_number_of_hits;
 }
 
 FTHit FTHits::getHit(uint32_t index) const {
@@ -206,5 +206,4 @@ FTHit FTHits::getHit(uint32_t index) const {
           yMax[index], werrX[index], coord[index], LHCbID[index], planeCode[index],
           hitZone[index], info[index], used[index]};
 }
-
 };
