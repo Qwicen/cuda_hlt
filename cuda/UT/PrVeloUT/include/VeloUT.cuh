@@ -17,5 +17,6 @@ __global__ void veloUT(
   PrUTMagnetTool* dev_ut_magnet_tool,
   float* dev_ut_dxDy,
   const uint* dev_unique_x_sector_layer_offsets,
-  const uint* dev_unique_x_sector_offsets
+  const uint* dev_unique_x_sector_offsets,
+  const float* dev_unique_sector_xs
 );

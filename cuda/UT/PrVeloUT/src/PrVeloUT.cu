@@ -42,12 +42,13 @@ __host__ __device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const int posLayers[4][85],
   UTHits& ut_hits,
   UTHitOffsets& ut_hit_offsets,
   const float* fudgeFactors, 
   const MiniState& trState,
-  const float* ut_dxDy)
+  const float* ut_dxDy,
+  const float* dev_unique_sector_xs,
+  const uint* dev_unique_x_sector_layer_offsets)
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
@@ -98,23 +99,29 @@ __host__ __device__ bool getHits(
       const float upperBoundX =
         (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(trState.tx)*PrVeloUTConst::intraLayerDist;
 
-      const int indexLowProto = lowerBoundX > 0 ? std::sqrt( std::abs(lowerBoundX)*2.0 ) + 42 : 42 - std::sqrt( std::abs(lowerBoundX)*2.0 );
-      const int indexHiProto  = upperBoundX > 0 ? std::sqrt( std::abs(upperBoundX)*2.0 ) + 43 : 43 - std::sqrt( std::abs(upperBoundX)*2.0 );
+      // Find sector group for lowerBoundX and upperBoundX
+      const uint first_sector_group_in_layer = dev_unique_x_sector_layer_offsets[layer];
+      const uint last_sector_group_in_layer = dev_unique_x_sector_layer_offsets[layer+1];
 
-      const int indexLow  = std::max( indexLowProto, 0 );
-      const int indexHi   = std::min( indexHiProto, 84);
+      uint lowerBoundSectorGroup = first_sector_group_in_layer;
+      uint upperBoundSectorGroup = last_sector_group_in_layer;
 
-      size_t posBeg = posLayers[layer][ indexLow ];
-      size_t posEnd = posLayers[layer][ indexHi  ];
-
-      while ( (ut_hits.xAtYEq0[layer_offset + posBeg] < lowerBoundX) && (posBeg != ut_hit_offsets.layer_number_of_hits(layer) ) ) {
-        ++posBeg;
+      for (int i=first_sector_group_in_layer + 2; i<last_sector_group_in_layer; ++i) {
+        if (dev_unique_sector_xs[i] > lowerBoundX) {
+          lowerBoundSectorGroup = i-2;
+          break;
+        }
       }
-      
-      if (posBeg == ut_hit_offsets.layer_number_of_hits(layer)) continue;
 
-      findHits(posBeg, posEnd,
-        ut_hits, layer_offset, layer, ut_dxDy,
+      for (int i=last_sector_group_in_layer-3; i>=first_sector_group_in_layer; --i) {
+        if (dev_unique_sector_xs[i] < upperBoundX) {
+          upperBoundSectorGroup = i+2;
+          break;
+        }
+      }
+
+      findHits(lowerBoundSectorGroup, upperBoundSectorGroup,
+        ut_hits, ut_hit_offsets, layer_offset, layer, ut_dxDy,
         trState, xTol*invNormFact, invNormFact,
         hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer],
         x_pos_layers);
@@ -363,80 +370,14 @@ __host__ __device__ void prepareOutputTrack(
   */
 }
 
-__host__ __device__ void fillArray(
-  int * array,
-  const int size,
-  const size_t value ) {
-  for ( int i = 0; i < size; ++i ) {
-    array[i] = value;
-  }
-}
-
-__host__ __device__ void fillArrayAt(
-  int * array,
-  const int offset,
-  const int n_vals,
-  const size_t value ) {  
-    fillArray( array + offset, n_vals, value ); 
-}
-
-// ==============================================================================
-// -- Method to cache some starting points for the search
-// -- This is actually faster than binary searching the full array
-// -- Granularity hardcoded for the moment.
-// -- Idea is: UTb has dimensions in x (at y = 0) of about -860mm -> 860mm
-// -- The indices go from 0 -> 84, and shift by -42, leading to -42 -> 42
-// -- Taking the higher density of hits in the center into account, the positions of the iterators are
-// -- calculated as index*index/2, where index = [ -42, 42 ], leading to
-// -- -882mm -> 882mm
-// -- The last element is an "end" iterator, to make sure we never go out of bound
-// ==============================================================================
-__host__ __device__ void fillIterators(
-  UTHits& ut_hits,
-  UTHitOffsets& ut_hit_offsets,
-  int posLayers[4][85] )
-{
-  for(int iStation = 0; iStation < 2; ++iStation){
-    for(int iLayer = 0; iLayer < 2; ++iLayer){
-      int layer = 2*iStation + iLayer;
-      uint layer_offset = ut_hit_offsets.layer_offset(layer);
-      uint n_hits_layer = ut_hit_offsets.layer_number_of_hits(layer);
-      
-      size_t pos = 0;
-      // to do: check whether there is an efficient thrust implementation for this
-      fillArray( posLayers[layer], 85, pos );
-      
-      int bound = -42.0;
-      // to do : make copysignf
-      float val = std::copysign(float(bound*bound)/2.0, bound);
-      
-      // TODO add bounds checking
-      for ( ; pos != n_hits_layer; ++pos) {
-        while( ut_hits.xAtYEq0[layer_offset + pos] > val){
-          posLayers[layer][bound+42] = pos;
-          ++bound;
-          val = std::copysign(float(bound*bound)/2.0, bound);
-        }
-      }
-      
-      fillArrayAt(
-        posLayers[layer],
-        42 + bound,
-        85 - 42 - bound,
-        n_hits_layer
-      );
-    }
-  }
-}
-
-
 // ==============================================================================
 // -- Finds the hits in a given layer within a certain range
 // ==============================================================================
 __host__ __device__ void findHits( 
-  const size_t posBeg,
-  const size_t posEnd,
+  const uint lowerBoundSectorGroup,
+  const uint upperBoundSectorGroup,
   UTHits& ut_hits,
+  UTHitOffsets& ut_hit_offsets,
   uint layer_offset,
   const int i_layer,
   const float* ut_dxDy,
@@ -447,25 +388,22 @@ __host__ __device__ void findHits(
   int &n_hitCandidatesInLayer,
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer])
 {
+  const uint posBeg = ut_hit_offsets.sector_group_offset(lowerBoundSectorGroup) - layer_offset;
+  const uint posEnd = ut_hit_offsets.sector_group_offset(upperBoundSectorGroup)
+    + ut_hit_offsets.sector_group_number_of_hits(upperBoundSectorGroup) - layer_offset;
+
   const auto zInit = ut_hits.zAtYEq0[layer_offset + posBeg];
   const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
-  
-  size_t pos = posBeg;
-  while ( 
-   pos <= posEnd && 
-   ut_hits.isNotYCompatible( layer_offset + pos, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(xTolNormFact) )
-   ) { ++pos; }
-
   const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
   const auto yyProto =       myState.y - myState.ty*myState.z;
-  
-  for (int i=pos; i<posEnd; ++i) {
-    const float dxDy = ut_dxDy[i_layer];
+  const float dxDy = ut_dxDy[i_layer];
+
+  for (int i=posBeg; i<posEnd; ++i) {
     const auto xx = ut_hits.xAt(layer_offset + i, yApprox, dxDy); 
     const auto dx = xx - xOnTrackProto;
     
     if( dx < -xTolNormFact ) continue;
-    if( dx >  xTolNormFact ) break; 
+    if( dx >  xTolNormFact ) continue; 
     
     // -- Now refine the tolerance in Y
     if ( ut_hits.isNotYCompatible( layer_offset + i, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx*invNormFact)) ) continue;

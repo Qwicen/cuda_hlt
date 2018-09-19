@@ -411,7 +411,8 @@ cudaError_t Stream::run_sequence(
       dev_ut_magnet_tool,
       constants.dev_ut_dxDy,
       constants.dev_unique_x_sector_layer_offsets,
-      constants.dev_unique_x_sector_offsets
+      constants.dev_unique_x_sector_offsets,
+      constants.dev_unique_sector_xs
     );
     sequence.item<seq::veloUT>().invoke();
 

@@ -119,6 +119,16 @@ void Constants::initialize_ut_decoding_constants(
       debug_cout << std::endl;
     }
 
+    // Fill in host_unique_sector_xs
+    std::vector<float> temp_unique_elements (number_of_unique_elements);
+    for (int j=0; j<size; ++j) {
+      const int index = unique_permutation[j];
+      temp_unique_elements[index] = xs[j];
+    }
+    for (int j=0; j<number_of_unique_elements; ++j) {
+      host_unique_sector_xs.emplace_back(temp_unique_elements[j]);
+    }
+
     // Fill in host_unique_x_sector_offsets
     for (auto p : unique_permutation) {
       host_unique_x_sector_offsets.emplace_back(current_sector_offset + p);
@@ -145,8 +155,10 @@ void Constants::initialize_ut_decoding_constants(
   // Populate device constant into global memory
   cudaCheck(cudaMalloc((void**)&dev_unique_x_sector_layer_offsets, host_unique_x_sector_layer_offsets.size() * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_unique_x_sector_offsets, host_unique_x_sector_offsets.size() * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_unique_sector_xs, host_unique_sector_xs.size() * sizeof(float)));
   cudaCheck(cudaMemcpy(dev_unique_x_sector_layer_offsets, host_unique_x_sector_layer_offsets.data(), host_unique_x_sector_layer_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_unique_x_sector_offsets, host_unique_x_sector_offsets.data(), host_unique_x_sector_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_unique_sector_xs, host_unique_sector_xs.data(), host_unique_sector_xs.size() * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 // /home/dcampora/projects/cuda_hlt/stream/sequence/src/Constants.cu(129): warning: reference is to variable "i"

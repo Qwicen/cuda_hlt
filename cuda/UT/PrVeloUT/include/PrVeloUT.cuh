@@ -64,12 +64,13 @@ __host__ __device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const int posLayers[4][85],
   UTHits& ut_hits,
   UTHitOffsets& ut_hit_offsets,
   const float* fudgeFactors, 
   const MiniState& trState,
-  const float* ut_dxDy); 
+  const float* ut_dxDy,
+  const float* dev_unique_sector_xs,
+  const uint* dev_unique_x_sector_layer_offsets); 
 
 __host__ __device__ bool formClusters(
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
@@ -115,9 +116,10 @@ __host__ __device__ void fillIterators(
   int posLayers[4][85] );
 
 __host__ __device__ void findHits( 
-  const size_t posBeg,
-  const size_t posEnd,
+  const uint lowerBoundSectorGroup,
+  const uint upperBoundSectorGroup,
   UTHits& ut_hits,
+  UTHitOffsets& ut_hit_offsets,
   uint layer_offset,
   const int i_layer,
   const float* ut_dxDy,
