@@ -45,6 +45,8 @@ void PrForward(
   const uint event_tracks_offset,
   const VeloUTTracking::TrackUT * veloUT_tracks,
   const int n_veloUT_tracks,
+  const SciFi::TMVA1& tmva1,
+  const SciFi::TMVA2& tmva2,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks);
                                                       

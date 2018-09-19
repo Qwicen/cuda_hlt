@@ -16,7 +16,8 @@
 //
 void collectAllXHits(
   SciFi::HitsSoA* hits_layers,
-  std::vector<int>& allXHits,
+  int allXHits[SciFi::Tracking::max_x_hits],
+  int& n_x_hits,
   const float xParams_seed[4], 
   const float yParams_seed[4],
   const MiniState& velo_state,
@@ -137,8 +138,11 @@ void collectAllXHits(
         const float xMinUV  = xPredUv - maxDx;
         const float xMaxUV  = xPredUv + maxDx;
         
-        if ( matchStereoHit( itUV1, uv_zone_offset_end, hits_layers, xMinUV, xMaxUV) )
-          allXHits.emplace_back(xHit);
+        if ( matchStereoHit( itUV1, uv_zone_offset_end, hits_layers, xMinUV, xMaxUV) ) {
+          if ( n_x_hits >= SciFi::Tracking::max_x_hits )
+            break;
+          allXHits[n_x_hits++] = xHit;
+        }
       }
     }else { // triangle search
       for (int xHit = itH; xHit < itEnd; ++xHit) {
@@ -148,28 +152,30 @@ void collectAllXHits(
         const float xMaxUV  = xPredUv + maxDx;
 
         if ( matchStereoHit( itUV1, uv_zone_offset_end, hits_layers, xMinUV, xMaxUV ) || matchStereoHitWithTriangle(itUV2, triangle_zone_offset_end, yInZone, hits_layers, xMinUV, xMaxUV, side ) ) {
-          allXHits.emplace_back(xHit);
+          if ( n_x_hits >= SciFi::Tracking::max_x_hits )
+            break;
+          allXHits[n_x_hits++] = xHit;
         }
       }
     }
     
     const int iStart = iZoneEnd[cptZone-1];
-    const int iEnd = allXHits.size();
+    const int iEnd = n_x_hits;
     iZoneEnd[cptZone++] = iEnd;
     if( !(iStart == iEnd) ){
-      xAtRef_SamePlaneHits(hits_layers, allXHits, xParams_seed, velo_state, iStart, iEnd); //calc xRef for all hits on same layer
-    } 
+      xAtRef_SamePlaneHits(hits_layers, allXHits, n_x_hits, xParams_seed, velo_state, iStart, iEnd); //calc xRef for all hits on same layer
+    }
+    if ( n_x_hits >= SciFi::Tracking::max_x_hits )
+      break;
   }
-  // Drop the more sophisticated sort in the C++ code for now, not sure if this
-  // is actually more efficient in CUDA. See line 577 then 1539-1552 of
-  // /cvmfs/lhcb.cern.ch/lib/lhcb/REC/REC_v30r0/Pr/PrAlgorithms/src/PrForwardTool.cpp
-  // DIRTY HACK FOR NOW
-  std::vector<std::pair<float,int> > tempforsort; 
-  tempforsort.clear();
-  for (auto hit : allXHits) { tempforsort.emplace_back(std::pair<float,int>(hits_layers->m_coord[hit],hit));}
-  std::sort( tempforsort.begin(), tempforsort.end());
-  allXHits.clear();
-  for (auto pair : tempforsort) {allXHits.emplace_back(pair.second);}
+
+  // Sort hits by coord
+  int allXHits_coords[SciFi::Tracking::max_x_hits];
+  for ( int i_hit = 0; i_hit < n_x_hits; ++i_hit ) {
+    allXHits_coords[i_hit] = hits_layers->m_coord[ allXHits[i_hit] ];
+  }
+  thrust::sort_by_key(thrust::host, allXHits_coords, allXHits_coords + n_x_hits, allXHits);
+
 }
 
 
@@ -179,7 +185,8 @@ void collectAllXHits(
 //=========================================================================
 void selectXCandidates(
   SciFi::HitsSoA* hits_layers,
-  std::vector<int>& allXHits,
+  int allXHits[SciFi::Tracking::max_x_hits],
+  int& n_x_hits,
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Track candidate_tracks[SciFi::max_tracks],
   int& n_candidate_tracks,
@@ -190,12 +197,8 @@ void selectXCandidates(
   SciFi::Tracking::HitSearchCuts& pars,
   int side)
 {
-  // debug_cout << "Searching for X candidate based on " << allXHits.size() << " hits"<<std::endl;
-  // for (auto hit : allXHits) {
-  //   debug_cout << hits_layers->m_LHCbID[hit] << " " << hits_layers->m_planeCode[hit] << " " << hits_layers->m_x[hit] << " " << hits_layers->m_yMin[hit] << " " << hits_layers->m_yMax[hit] << std::endl;
-  // }
-  if ( allXHits.size() < pars.minXHits ) return;
-  int itEnd = allXHits.size();
+  if ( n_x_hits < pars.minXHits ) return;
+  int itEnd = n_x_hits;
   const float xStraight = straightLineExtend(xParams_seed,SciFi::Tracking::zReference);
   int it1 = 0;
   int it2 = it1; 

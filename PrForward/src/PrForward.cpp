@@ -19,18 +19,13 @@ void PrForward(
   const uint event_tracks_offset,
   const VeloUTTracking::TrackUT * veloUT_tracks,
   const int n_veloUT_tracks,
+  const SciFi::TMVA1& tmva1,
+  const SciFi::TMVA2& tmva2,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks)
 {
   
   int numfound = 0;
-
-  // initialize TMVA vars
-  // const std::vector<std::string> mlpInputVars {{"nPlanes"}, {"dSlope"}, {"dp"}, {"slope2"}, {"dby"}, {"dbx"}, {"day"}};
-  // ReadMLP_Forward2ndLoop MLPReader_2nd = ReadMLP_Forward2ndLoop( mlpInputVars );
-  SciFi::TMVA1 tmva1 = SciFi::TMVA1();
-  SciFi::TMVA2 tmva2 = SciFi::TMVA2();
-
   // Loop over the veloUT input tracks
   for ( int i_veloUT_track = 0; i_veloUT_track < n_veloUT_tracks; ++i_veloUT_track ) {
     const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks[i_veloUT_track];
@@ -56,8 +51,6 @@ void PrForward(
       hits_layers->m_coord[i] = 0.0;
     }
   }
-
-  //debug_cout << "Found " << n_forward_tracks << " forward tracks for this event!" << std::endl;
 
 }
 
@@ -88,17 +81,18 @@ void find_forward_tracks(
   SciFi::Tracking::HitSearchCuts pars_first{SciFi::Tracking::minXHits, SciFi::Tracking::maxXWindow, SciFi::Tracking::maxXWindowSlope, SciFi::Tracking::maxXGap, 4u};
   SciFi::Tracking::HitSearchCuts pars_second{SciFi::Tracking::minXHits_2nd, SciFi::Tracking::maxXWindow_2nd, SciFi::Tracking::maxXWindowSlope_2nd, SciFi::Tracking::maxXGap_2nd, 4u};
 
-  std::vector<int> allXHits[2];
-
-  if(yAtRef>-5.f)collectAllXHits(hits_layers, allXHits[1], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, 1); 
-  if(yAtRef< 5.f)collectAllXHits(hits_layers, allXHits[0], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, -1);
+  int allXHits[2][SciFi::Tracking::max_x_hits];
+  int n_x_hits[2] = {};
+  
+  if(yAtRef>-5.f)collectAllXHits(hits_layers, allXHits[1], n_x_hits[1], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, 1); 
+  if(yAtRef< 5.f)collectAllXHits(hits_layers, allXHits[0], n_x_hits[0], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, -1);
 
   SciFi::Track candidate_tracks[SciFi::max_tracks];
   int n_candidate_tracks = 0;
   
-  if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
+  if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
 				   xParams_seed, yParams_seed, velo_state, pars_first,  1);
-  if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
+  if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
 				   xParams_seed, yParams_seed, velo_state, pars_first, -1); 
 
   SciFi::Track selected_tracks[SciFi::max_tracks];
@@ -124,9 +118,9 @@ void find_forward_tracks(
   int n_candidate_tracks2 = 0;
   
   if (!ok && SciFi::Tracking::secondLoop) { // If you found nothing begin the 2nd loop
-    if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
+    if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
 				     xParams_seed, yParams_seed, velo_state, pars_second, 1);
-    if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
+    if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
 				     xParams_seed, yParams_seed, velo_state, pars_second, -1);  
 
     SciFi::Track selected_tracks2[SciFi::Tracking::max_tracks_second_loop];

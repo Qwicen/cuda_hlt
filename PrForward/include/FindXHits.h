@@ -6,6 +6,9 @@
 #include <algorithm>
 #include <fstream>
 
+#include <thrust/sort.h>
+#include <thrust/execution_policy.h>
+
 #include "SciFiDefinitions.cuh"
 #include "PrForwardConstants.h"
 #include "VeloUTDefinitions.cuh"
@@ -22,7 +25,8 @@
 
 void collectAllXHits(
   SciFi::HitsSoA* hits_layers,
-  std::vector<int>& allXHits, 
+  int allXHits[SciFi::Tracking::max_x_hits],
+  int& n_x_hits,
   const float xParams_seed[4],
   const float yParams_seed[4],
   const MiniState& velo_state,
@@ -31,7 +35,8 @@ void collectAllXHits(
 
 void selectXCandidates(
   SciFi::HitsSoA* hits_layers,
-  std::vector<int>& allXHits,
+  int allXHits[SciFi::Tracking::max_x_hits],
+  int& n_x_hits,
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Track candidate_tracks[SciFi::max_tracks],
   int& n_candidate_tracks,

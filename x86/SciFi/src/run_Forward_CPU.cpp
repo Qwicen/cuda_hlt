@@ -43,19 +43,25 @@ int run_forward_on_CPU (
 
     int n_forward_tracks = 0;
     SciFi::Track forward_tracks[SciFi::max_tracks];
+    
+    // initialize TMVA vars
+    SciFi::TMVA1 tmva1 = SciFi::TMVA1();
+    SciFi::TMVA2 tmva2 = SciFi::TMVA2();
+ 
     PrForward(
       &(hits_layers_events[i_event]),
       host_velo_states_event,
       event_tracks_offset,
       veloUT_tracks + i_event * VeloUTTracking::max_num_tracks,
       n_veloUT_tracks_events[i_event],
+      tmva1,
+      tmva2,
       forward_tracks,
       n_forward_tracks);
 
        
 #ifdef WITH_ROOT
     // store qop in tree
-    //for ( auto track : forward_tracks ) {
     for ( int i_track = 0; i_track < n_forward_tracks; ++i_track ) {
       qop = forward_tracks[i_track].qop;
       t_Forward_tracks->Fill();
@@ -69,8 +75,6 @@ int run_forward_on_CPU (
     
     forward_tracks_events.emplace_back( checker_tracks );
 
-    //debug_cout << "End event loop run_forward_CPU " <<std::endl; 
-    
   }
   
 #ifdef WITH_ROOT
