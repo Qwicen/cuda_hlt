@@ -62,9 +62,9 @@ void find_forward_tracks(
 
 void selectFullCandidates(
   SciFi::HitsSoA* hits_layers,
-  SciFi::Track* candidate_tracks,
+  SciFi::Tracking::Track* candidate_tracks,
   int& n_candidate_tracks,
-  SciFi::Track* selected_tracks,
+  SciFi::Tracking::Track* selected_tracks,
   int& n_selected_tracks,
   const float xParams_seed[4],
   const float yParams_seed[4],
@@ -75,3 +75,4 @@ void selectFullCandidates(
   const SciFi::TMVA2& tmva2,
   bool secondLoop);
 
+SciFi::Track makeTrack( SciFi::Tracking::Track track ); 

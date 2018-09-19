@@ -69,13 +69,9 @@ namespace SciFi {
     struct Track {
       
       std::vector< unsigned int > LHCbIDs;
-      std::vector< unsigned int> hit_indices;
       float qop;
       unsigned short hitsNum = 0;
-      float quality;
       float chi2;
-      std::vector<float> trackParams;
-      Velo::State state_endvelo;
       
       __host__  void addLHCbID( unsigned int id ) {
         LHCbIDs.push_back( id );

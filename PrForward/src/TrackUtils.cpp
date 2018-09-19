@@ -1,6 +1,6 @@
 #include "TrackUtils.h"
 
-std::vector<float> getTrackParameters ( float xAtRef, MiniState velo_state)
+void getTrackParameters ( float xAtRef, MiniState velo_state, float trackParams[SciFi::Tracking::nTrackParams])
 {
   
   float dSlope  = ( xFromVelo(SciFi::Tracking::zReference,velo_state) - xAtRef ) / ( SciFi::Tracking::zReference - SciFi::Tracking::zMagnetParams[0]);
@@ -11,16 +11,15 @@ std::vector<float> getTrackParameters ( float xAtRef, MiniState velo_state)
   dSlope        = slopeT - velo_state.tx;
   const float dyCoef  = dSlope * dSlope * velo_state.ty;
   
- std::vector<float> toreturn =  {xAtRef,
-                                 slopeT,
-                                 1.e-6f * SciFi::Tracking::xParams[0] * dSlope,
-                                 1.e-9f * SciFi::Tracking::xParams[1] * dSlope,
-                                 yFromVelo( SciFi::Tracking::zReference, velo_state ),
-                                 velo_state.ty + dyCoef * SciFi::Tracking::byParams,
-                                 dyCoef * SciFi::Tracking::cyParams,
-                                 0.0,
-                                 0.0 }; // last elements are chi2 and ndof, as float 
- return toreturn;
+  trackParams[0] = xAtRef;
+  trackParams[1] = slopeT;
+  trackParams[2] = 1.e-6f * SciFi::Tracking::xParams[0] * dSlope;
+  trackParams[3] = 1.e-9f * SciFi::Tracking::xParams[1] * dSlope;
+  trackParams[4] = yFromVelo( SciFi::Tracking::zReference, velo_state );
+  trackParams[5] = velo_state.ty + dyCoef * SciFi::Tracking::byParams;
+  trackParams[6] = dyCoef * SciFi::Tracking::cyParams;
+  trackParams[7] = 0.0;
+  trackParams[8] = 0.0; // last elements are chi2 and ndof, as float 
 }
 
 float calcqOverP ( float bx, MiniState velo_state )
@@ -68,7 +67,7 @@ float calcDxRef(float pt, MiniState velo_state) {
   return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  pow(velo_state.ty,2) - 1000. * pow(velo_state.tx,2); // tune this window
 }
 
-float trackToHitDistance( std::vector<float> trackParameters, SciFi::HitsSoA* hits_layers, int hit )
+float trackToHitDistance( float trackParameters[SciFi::Tracking::nTrackParams], SciFi::HitsSoA* hits_layers, int hit )
 {
   const float parsX[4] = {trackParameters[0],
                           trackParameters[1],

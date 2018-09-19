@@ -29,7 +29,7 @@ void xAtRef_SamePlaneHits(
   }
 }
 
-int fitParabola( std::vector<unsigned int> coordToFit, SciFi::HitsSoA* hits_layers, std::vector<float>& trackParameters, const bool xFit ) {
+int fitParabola( std::vector<unsigned int> coordToFit, SciFi::HitsSoA* hits_layers, float trackParameters[SciFi::Tracking::nTrackParams], const bool xFit ) {
 
   //== Fit a cubic
   float s0   = 0.f; 
@@ -82,7 +82,7 @@ int fitParabola( std::vector<unsigned int> coordToFit, SciFi::HitsSoA* hits_laye
 
 bool fitXProjection(
   SciFi::HitsSoA *hits_layers,
-  std::vector<float> &trackParameters,
+  float trackParameters[SciFi::Tracking::nTrackParams],
   std::vector<unsigned int> &coordToFit,
   PlaneCounter& planeCounter,
   SciFi::Tracking::HitSearchCuts& pars)
@@ -133,7 +133,7 @@ bool fitXProjection(
 
 bool fitYProjection(
   SciFi::HitsSoA* hits_layers,
-  SciFi::Track& track,
+  SciFi::Tracking::Track& track,
   std::vector<unsigned int>& stereoHits,
   PlaneCounter& planeCounter,
   MiniState velo_state,

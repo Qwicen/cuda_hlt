@@ -174,7 +174,7 @@ void selectXCandidates(
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   const VeloUTTracking::TrackUT& veloUTTrack,
-  SciFi::Track candidate_tracks[SciFi::max_tracks],
+  SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks],
   int& n_candidate_tracks,
   const float zRef_track, 
   const float xParams_seed[4],
@@ -197,7 +197,6 @@ void selectXCandidates(
     while (it1+pars.minXHits - 1 < itEnd && !hits_layers->isValid(allXHits[it1])) ++it1;
     it2 = it1 + pars.minXHits;
     while (it2 <= itEnd && !hits_layers->isValid(allXHits[it2-1])) ++it2;
-    //debug_cout << "Searching for X candidate with window " << it1 << " " << it2 << " " << itEnd << std::endl;
     if (it2 > itEnd) break;
 
     //define search window for Cluster
@@ -210,10 +209,8 @@ void selectXCandidates(
          hits_layers->m_coord[allXHits[it1]]) > xWindow
         ) {
       ++it1;
-      //debug_cout << "Window is too small " << hits_layers->m_coord[allXHits[it2 - 1]] << " " << hits_layers->m_coord[allXHits[it1]] << " " << xWindow << " moving one step right" << std::endl;
       continue;
     }
-    //debug_cout << "Found suitable window " << hits_layers->m_coord[allXHits[it2 - 1]] << " " << hits_layers->m_coord[allXHits[it1]] << " " << xWindow << std::endl;
  
     // Cluster candidate found, now count planes
     planeCounter.clear();
@@ -254,12 +251,8 @@ void selectXCandidates(
     //if not enough different planes, start again from the very beginning with next right hit
     if (planeCounter.nbDifferent < pars.minXHits) {
       ++it1;
-      //debug_cout<<"Not enough different planes " << planeCounter.nbDifferent << " starting again" <<std::endl;
       continue;
     }
-
-    //debug_cout << "Found a partial X candidate" << std::endl;
-
     //====================================================================
     //  Now we have a (rather) clean candidate, do best hit selection
     //  Two possibilities:
@@ -376,7 +369,6 @@ void selectXCandidates(
       }
       xAtRef /= ((float)coordToFit.size());
     } // end of magical second part
-    //debug_cout << "Found an X candidate" << std::endl;
     //=== We have a candidate :)
     
     planeCounter.clear();
@@ -386,9 +378,9 @@ void selectXCandidates(
     // Only unused(!) hits in coordToFit now
  
     bool ok = planeCounter.nbDifferent > 3;
-    std::vector<float> trackParameters;
+    float trackParameters[SciFi::Tracking::nTrackParams];
     if(ok){
-      trackParameters = getTrackParameters(xAtRef, velo_state); 
+      getTrackParameters(xAtRef, velo_state, trackParameters); 
       fastLinearFit( hits_layers, trackParameters, coordToFit, planeCounter,pars);
       addHitsOnEmptyXLayers(hits_layers, trackParameters, xParams_seed, yParams_seed,
                               false, coordToFit, planeCounter, pars, side);
@@ -406,8 +398,7 @@ void selectXCandidates(
       //here it is fairly trivial... :)
       //Do we really need isUsed in Forward? We can otherwise speed up the search quite a lot!
       // --> we need it for the second loop
-      //debug_cout << "Pushed back an X candidate for stereo search!" << std::endl;
-      SciFi::Track track;
+      SciFi::Tracking::Track track;
       track.state_endvelo.x = velo_state.x;
       track.state_endvelo.y = velo_state.y;
       track.state_endvelo.z = velo_state.z;
@@ -415,14 +406,10 @@ void selectXCandidates(
       track.state_endvelo.ty = velo_state.ty;
       track.chi2 = trackParameters[7];
       for (int k=0;k<7;++k){
-        track.trackParams.push_back(trackParameters[k]);
+        track.trackParams[k] = trackParameters[k];
       }
       for (auto hit : coordToFit){
-        //debug_cout << hits_layers->m_LHCbID[hit] << " " << hits_layers->m_planeCode[hit] << std::endl;
-        unsigned int LHCbID = hits_layers->m_LHCbID[hit];
-        track.addLHCbID(LHCbID);
-        track.hit_indices.push_back(hit);
-        //debug_cout << "added LHCbID to forward track with " << track.hitsNum << " hits: " << std::endl; //std::hex << track.LHCbIDs[track.hitsNum - 1] << std::endl;
+        track.addHit( hit );
 	hits_layers->m_used[hit] = true; //set as used in the SoA!
       }
       candidate_tracks[n_candidate_tracks++] = track;
@@ -434,7 +421,7 @@ void selectXCandidates(
 
 bool addHitsOnEmptyXLayers(
   SciFi::HitsSoA* hits_layers,
-  std::vector<float> &trackParameters,
+  float trackParameters[SciFi::Tracking::nTrackParams],
   const float xParams_seed[4],
   const float yParams_seed[4],
   bool fullFit,

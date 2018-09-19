@@ -57,7 +57,7 @@ inline float straightLineExtend(const float params[4], float z) {
   return params[0] + (params[1]+(params[2] + params[3]*dz)*dz)*dz;
 }
 
-std::vector<float> getTrackParameters ( float xAtRef, MiniState velo_state);
+void getTrackParameters ( float xAtRef, MiniState velo_state, float trackParams[SciFi::Tracking::nTrackParams]);
 
 float calcqOverP ( float bx, MiniState velo_state );
 
@@ -67,9 +67,9 @@ void covariance ( FullState& state, const float qOverP );
 
 float calcDxRef(float pt, MiniState velo_state);
 
-float trackToHitDistance( std::vector<float> trackParameters, SciFi::HitsSoA* hits_layers, int hit );
+float trackToHitDistance( float trackParameters[SciFi::Tracking::nTrackParams], SciFi::HitsSoA* hits_layers, int hit );
 
-static inline bool lowerByQuality(SciFi::Track t1, SciFi::Track t2) {
+static inline bool lowerByQuality(SciFi::Tracking::Track t1, SciFi::Tracking::Track t2) {
   return t1.quality < t2.quality;
 }
 

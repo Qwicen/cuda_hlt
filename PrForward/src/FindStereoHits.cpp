@@ -6,7 +6,7 @@
 //=========================================================================
 std::vector<unsigned int> collectStereoHits(
   SciFi::HitsSoA* hits_layers,
-  SciFi::Track& track,
+  SciFi::Tracking::Track& track,
   MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
 {
@@ -73,7 +73,7 @@ std::vector<unsigned int> collectStereoHits(
 //=========================================================================
 bool selectStereoHits(
   SciFi::HitsSoA* hits_layers,
-  SciFi::Track& track, 
+  SciFi::Tracking::Track& track, 
   std::vector<unsigned int> stereoHits,
   MiniState velo_state, 
   SciFi::Tracking::HitSearchCuts& pars)
@@ -182,9 +182,7 @@ bool selectStereoHits(
     track.trackParams[5] = bestYParams[1];
     track.trackParams[6] = bestYParams[2];
     for (auto hit : bestStereoHits) {
-      unsigned int LHCbID = hits_layers->m_LHCbID[hit]; 
-      track.addLHCbID(LHCbID);
-      track.hit_indices.push_back(hit);
+      track.addHit( hit );
     }
     return true;
   }
@@ -197,7 +195,7 @@ bool selectStereoHits(
 //=========================================================================
 bool addHitsOnEmptyStereoLayers(
   SciFi::HitsSoA* hits_layers,
-  SciFi::Track& track,
+  SciFi::Tracking::Track& track,
   std::vector<unsigned int>& stereoHits,
   PlaneCounter& planeCounter,
   MiniState velo_state,

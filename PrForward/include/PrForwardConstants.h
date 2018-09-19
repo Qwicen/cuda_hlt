@@ -14,6 +14,8 @@
 
  */
 
+#include "VeloEventModel.cuh"
+
 namespace SciFi{
   
   namespace Tracking {
@@ -21,6 +23,7 @@ namespace SciFi{
     const int max_tracks_second_loop = 30;
     const int max_x_hits = 500;
     const int max_other_hits = 5;
+    const int nTrackParams = 9;
     
     const int TMVA_Nvars = 7;
     const int TMVA_Nlayers = 5;
@@ -112,6 +115,26 @@ namespace SciFi{
     // TO BE READ FROM XML EVENTUALLY
     const float              magscalefactor         = -1;
 
+
+    struct Track {
+
+      std::vector< unsigned int> hit_indices;
+      float qop;
+      unsigned short hitsNum = 0;
+      float quality;
+      float chi2;
+      float trackParams[SciFi::Tracking::nTrackParams];
+      Velo::State state_endvelo;
+     
+      __host__  void addHit( unsigned int hit ) {
+        hit_indices.push_back( hit );
+        hitsNum = hit_indices.size();
+      }
+      
+      __host__ void set_qop( float _qop ) {
+        qop = _qop;
+      }
+    };
     
   } // Tracking
 } // SciFi

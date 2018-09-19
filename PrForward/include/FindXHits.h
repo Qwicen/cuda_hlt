@@ -38,7 +38,7 @@ void selectXCandidates(
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   const VeloUTTracking::TrackUT& veloUTTrack,
-  SciFi::Track candidate_tracks[SciFi::max_tracks],
+  SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks],
   int& n_candidate_tracks,
   const float zRef_track,
   const float xParams_seed[4],
@@ -49,7 +49,7 @@ void selectXCandidates(
 
 bool addHitsOnEmptyXLayers(
   SciFi::HitsSoA* hits_layers,
-  std::vector<float> &trackParameters,
+  float trackParameters[SciFi::Tracking::nTrackParams],
   const float xParams_seed[4],
   const float yParams_seed[4],
   bool fullFit,

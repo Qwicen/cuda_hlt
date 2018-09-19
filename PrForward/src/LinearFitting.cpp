@@ -33,9 +33,8 @@ void incrementLineFitParameters(SciFi::Tracking::LineFitterPars &parameters, Sci
 
 void fastLinearFit(
   SciFi::HitsSoA* hits_layers,
-  std::vector<float> &trackParameters, 
+  float trackParameters[SciFi::Tracking::nTrackParams], 
   std::vector<unsigned int> &coordToFit,
-  //int planelist[],
   PlaneCounter planeCounter,
   SciFi::Tracking::HitSearchCuts& pars)
 {

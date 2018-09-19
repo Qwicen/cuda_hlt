@@ -25,14 +25,14 @@ void xAtRef_SamePlaneHits(
 
 bool fitXProjection(
   SciFi::HitsSoA *hits_layers,
-  std::vector<float> &trackParameters,
+  float trackParameters[SciFi::Tracking::nTrackParams],
   std::vector<unsigned int> &coordToFit,
   PlaneCounter& planeCounter,
   SciFi::Tracking::HitSearchCuts& pars_cur);
 
 bool fitYProjection(
   SciFi::HitsSoA *hits_layers,  
-  SciFi::Track& track,
+  SciFi::Tracking::Track& track,
   std::vector<unsigned int>& stereoHits,
   PlaneCounter& planeCounter,
   MiniState velo_state,
