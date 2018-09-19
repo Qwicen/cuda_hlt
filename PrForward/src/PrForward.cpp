@@ -42,15 +42,17 @@ void PrForward(
       hits_layers,
       veloUTTr,
       oneOutput,
+      outputTracks,
+      n_forward_tracks,
       MLPReader_1st,
       MLPReader_2nd,
       velo_state);
     
-    numfound += oneOutput.size();
-    for (auto track : oneOutput) {
-      assert(n_forward_tracks < SciFi::max_tracks);
-      outputTracks[n_forward_tracks++] = track;
-    }
+    // numfound += oneOutput.size();
+    // for (auto track : oneOutput) {
+    //   assert(n_forward_tracks < SciFi::max_tracks);
+    //   outputTracks[n_forward_tracks++] = track;
+    // }
     
     // Reset used hits etc.
     // these should not be part of the HitsSoA struct
@@ -70,6 +72,8 @@ void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,
   const VeloUTTracking::TrackUT& veloUTTrack,
   std::vector<SciFi::Track>& outputTracks,
+  SciFi::Track outputTracks_[SciFi::max_tracks],
+  int& n_forward_tracks,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
   const ReadMLP_Forward2ndLoop& MLPReader_2nd,
   const MiniState& velo_state
@@ -137,10 +141,19 @@ void find_forward_tracks(
 
     //debug_cout << "Found " << outputTracks2.size() << " full candidates in second loop" << std::endl;
     // Merge
-    outputTracks1.insert(std::end(outputTracks1),
-		 	 std::begin(outputTracks2),
-	 		 std::end(outputTracks2));
-    ok = not outputTracks1.empty();
+    // outputTracks1.insert(std::end(outputTracks1),
+    //     	 	 std::begin(outputTracks2),
+    //      		 std::end(outputTracks2));
+    for ( auto track : outputTracks1 ) {
+      assert(n_forward_tracks < SciFi::max_tracks);
+      outputTracks_[n_forward_tracks++] = track;
+    }
+    for ( auto track : outputTracks2 ) {
+      assert(n_forward_tracks < SciFi::max_tracks);
+      outputTracks_[n_forward_tracks++] = track;
+    }
+    //ok = not outputTracks1.empty();
+    ok = (n_forward_tracks > 0);
   }
  
   //debug_cout << "About to do final arbitration of tracks " << ok << std::endl; 

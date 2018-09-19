@@ -53,6 +53,8 @@ void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,  
   const VeloUTTracking::TrackUT& veloUTTrack,
   std::vector<SciFi::Track>& outputTracks,
+  SciFi::Track outputTracks_[SciFi::max_tracks],
+  int& n_forward_tracks,
   const ReadMLP_Forward1stLoop& MLPReader_1st,
   const ReadMLP_Forward2ndLoop& MLPReader_2nd,
   const MiniState& velo_state);
