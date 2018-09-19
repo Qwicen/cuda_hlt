@@ -61,6 +61,19 @@ __host__ __device__ bool veloTrackInUTAcceptance(
   const MiniState& state
 );
 
+__host__ __device__ void getHitsInLayer(
+  const int layer,
+  const int posLayers[4][85],
+  const UTHits& ut_hits,
+  const UTHitCount& ut_hit_count,
+  const float* fudgeFactors, 
+  const MiniState& veloState,
+  const float* ut_dxDy,
+  int (&layer_has_hits)[VeloUTTracking::n_layers * VeloUTTracking::num_threads],
+  int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
+  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer]);
+
 __host__ __device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
@@ -80,7 +93,7 @@ __host__ __device__ bool formClusters(
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
   TrackHelper& helper,
-  MiniState& state,
+  const MiniState& state,
   const float* ut_dxDy,
   const bool forward);
 
@@ -206,7 +219,7 @@ __host__ __device__ void simpleFit(
   const UTHits& ut_hits,
   const int hitIndices[N],
   TrackHelper& helper,
-  MiniState& state,
+  const MiniState& state,
   const float* ut_dxDy) {
   assert( N==3||N==4 );
  

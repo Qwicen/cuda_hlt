@@ -36,7 +36,98 @@ __host__ __device__ bool veloTrackInUTAcceptance(
 }
 
 //=============================================================================
-// Find the hits
+// Find the hits in a given layer
+//=============================================================================
+__host__ __device__ void getHitsInLayer(
+  const int layer,
+  const int posLayers[4][85],
+  const UTHits& ut_hits,
+  const UTHitCount& ut_hit_count,
+  const float* fudgeFactors, 
+  const MiniState& veloState,
+  const float* ut_dxDy,
+  int (&layer_has_hits)[VeloUTTracking::n_layers * VeloUTTracking::num_threads],
+  int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
+  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer])
+{
+  // -- This is hardcoded, so faster
+  // -- If you ever change the Table in the magnet tool, this will be wrong
+  const float absSlopeY = std::abs( veloState.ty );
+  const int index = (int)(absSlopeY*100 + 0.5);
+  assert( 3 + 4*index < PrUTMagnetTool::N_dxLay_vals );
+  const std::array<float,4> normFact = { 
+    fudgeFactors[4*index], 
+    fudgeFactors[1 + 4*index], 
+    fudgeFactors[2 + 4*index], 
+    fudgeFactors[3 + 4*index] 
+  };
+
+  // -- this 500 seems a little odd...
+  // to do: change back!
+  const float invTheta = std::min(500., 1.0/std::sqrt(veloState.tx*veloState.tx+veloState.ty*veloState.ty));
+  const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, float(1.5)*Gaudi::Units::GeV);
+  const float xTol     = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
+  const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
+
+  int nLayers = 0;
+
+  const float dxDyHelper[VeloUTTracking::n_layers] = {0., 1., -1., 0};
+  
+  // for (int layer=0; layer<VeloUTTracking::n_layers; ++layer) {
+  if (ut_hit_count.n_hits_layers[layer] > 0) {
+    int layer_offset = ut_hit_count.layer_offsets[layer];
+
+    const float dxDy   = ut_dxDy[layer];
+    const float zLayer = ut_hits.zAtYEq0[layer_offset]; 
+
+    const float yAtZ   = veloState.y + veloState.ty*(zLayer - veloState.z);
+    const float xLayer = veloState.x + veloState.tx*(zLayer - veloState.z);
+    const float yLayer = yAtZ + yTol * dxDyHelper[layer];
+
+    const float normFactNum = normFact[layer];
+    const float invNormFact = 1.0/normFactNum;
+
+    const float lowerBoundX =
+      (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(veloState.tx)*PrVeloUTConst::intraLayerDist;
+    const float upperBoundX =
+      (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(veloState.tx)*PrVeloUTConst::intraLayerDist;
+
+    const int indexLowProto = 
+      lowerBoundX > 0 ? std::sqrt( std::abs(lowerBoundX)*2.0 ) + 42 : 42 - std::sqrt( std::abs(lowerBoundX)*2.0 );
+    const int indexHiProto  = 
+      upperBoundX > 0 ? std::sqrt( std::abs(upperBoundX)*2.0 ) + 43 : 43 - std::sqrt( std::abs(upperBoundX)*2.0 );
+
+    const int indexLow  = std::max( indexLowProto, 0 );
+    const int indexHi   = std::min( indexHiProto, 84);
+
+    size_t posBeg = posLayers[layer][ indexLow ];
+    size_t posEnd = posLayers[layer][ indexHi  ];
+
+    while ( (ut_hits.xAtYEq0[layer_offset + posBeg] < lowerBoundX) && (posBeg != ut_hit_count.n_hits_layers[layer] ) ) {
+      ++posBeg;
+    }
+
+    if (posBeg != ut_hit_count.n_hits_layers[layer]) {
+      findHits(posBeg, posEnd,
+        ut_hits, layer_offset, ut_dxDy[layer],
+        veloState, xTol*invNormFact, invNormFact,
+        hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer],
+        x_pos_layers[layer]);
+
+      // change this to write in the shared thing
+      nLayers += int( !( n_hitCandidatesInLayers[layer] == 0 ) );
+    } else {
+      // what to do if we went to the end
+      // write a 0 or something like that
+    }
+
+  }
+  
+}
+
+//=============================================================================
+// Find the hits in all layers
 //=============================================================================
 __host__ __device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
@@ -136,7 +227,7 @@ __host__ __device__ bool formClusters(
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
   TrackHelper& helper,
-  MiniState& state,
+  const MiniState& state,
   const float* ut_dxDy,
   const bool forward)
 {

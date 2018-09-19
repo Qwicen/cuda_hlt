@@ -11,7 +11,7 @@ __global__ void veloUT(
   int* dev_atomics_veloUT,
   PrUTMagnetTool* dev_ut_magnet_tool,
   float* dev_ut_dxDy,
-  int* dev_active_tracks)
+  int* dev_active_tracks) // size of number of events
 {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
@@ -35,6 +35,7 @@ __global__ void veloUT(
   // dev_atomics_veloUT contains in an SoA:
   //   1. # of veloUT tracks
   //   2. # velo tracks in UT acceptance
+  // This is to write the final track
   int* n_veloUT_tracks_event = dev_atomics_veloUT + event_number;
   VeloUTTracking::TrackUT* veloUT_tracks_event = dev_veloUT_tracks + event_number * VeloUTTracking::max_num_tracks;
   
@@ -62,17 +63,16 @@ __global__ void veloUT(
   
   for ( int i = threadIdx.x; i < number_of_tracks_event; i+=blockDim.x) {
 
-    __syncthreads();
+    // __syncthreads();
 
     const uint velo_states_index = event_tracks_offset + i;
-    if (velo_states.backward[velo_states_index]) continue;
-
-    // Using Mini State with only x, y, tx, ty and z
-    if(!veloTrackInUTAcceptance(MiniState{velo_states, velo_states_index})) continue;
-
-    int current_active_track = atomicAdd(active_tracks, 1);
-
-    shared_active_tracks[current_active_track] = i;
+    if (!velo_states.backward[velo_states_index]) {
+      // Using Mini State with only x, y, tx, ty and z
+      if(veloTrackInUTAcceptance(MiniState{velo_states, velo_states_index})) {
+        int current_active_track = atomicAdd(active_tracks, 1);
+        shared_active_tracks[current_active_track] = i;
+      }
+    }
 
     __syncthreads();
 
@@ -132,11 +132,13 @@ __global__ void veloUT(
   // remaining tracks 
   if (threadIdx.x < *active_tracks) {
 
+    const int i_track = shared_active_tracks[threadIdx.x];
+
     // for storing calculated x position of hits for this track
     float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
 
     if (process_track(
-      threadIdx.x,
+      i_track,
       event_tracks_offset,
       velo_states,
       hitCandidatesInLayers,
@@ -149,7 +151,7 @@ __global__ void veloUT(
       dev_ut_dxDy)
     ) {
         process_track2(
-        threadIdx.x,
+        i_track,
         event_tracks_offset,
         velo_states,
         hitCandidatesInLayers,
@@ -183,7 +185,7 @@ __device__ bool process_track(
 ) {
   // MiniState aux_velo_state {velo_states, velo_states_index};
   const uint velo_states_index = event_tracks_offset + i_track;
-  MiniState velo_state {velo_states, velo_states_index};
+  const MiniState velo_state {velo_states, velo_states_index};
 
   for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
     n_hitCandidatesInLayers[i_layer] = 0;
@@ -200,6 +202,12 @@ __device__ bool process_track(
         velo_state,
         dev_ut_dxDy)
       ) { return false; }
+
+  // if( (layer == 3 || layer == 4) && nLayers == 0) return false;
+  // if( layer == 4 && nLayers < 2 ) return false;
+
+  // // there are hits if at least nLayers was 2 (so 2 layers had hits)
+  // return nLayers > 2;
 
   return true;
 }
