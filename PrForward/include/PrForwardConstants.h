@@ -23,6 +23,9 @@ namespace SciFi{
     const int max_tracks_second_loop = 30;
     const int max_x_hits = 500;
     const int max_other_hits = 5;
+    const int max_stereo_hits = 25;
+    const int max_coordToFit = 500; // CHECK
+    const int max_hits = 500; // CHECK
     const int nTrackParams = 9;
     
     const int TMVA_Nvars = 7;
@@ -118,17 +121,17 @@ namespace SciFi{
 
     struct Track {
 
-      std::vector< unsigned int> hit_indices;
+      int hit_indices[max_hits];
       float qop;
-      unsigned short hitsNum = 0;
+      int hitsNum = 0;
       float quality;
       float chi2;
       float trackParams[SciFi::Tracking::nTrackParams];
       Velo::State state_endvelo;
      
       __host__  void addHit( unsigned int hit ) {
-        hit_indices.push_back( hit );
-        hitsNum = hit_indices.size();
+        assert( hitsNum < max_hits );
+        hit_indices[hitsNum++] = hit;
       }
       
       __host__ void set_qop( float _qop ) {

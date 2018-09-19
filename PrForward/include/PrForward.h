@@ -8,6 +8,9 @@
 
 #include <cassert>
 
+#include <thrust/sort.h>
+#include <thrust/execution_policy.h>
+
 #include "Logger.h"
 
 #include "SystemOfUnits.h"

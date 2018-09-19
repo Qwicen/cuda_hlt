@@ -17,6 +17,7 @@ void solveLineFit(SciFi::Tracking::LineFitterPars &parameters);
 void fastLinearFit(
   SciFi::HitsSoA* hits_layers,
   float trackParameters[SciFi::Tracking::nTrackParams],
-  std::vector<unsigned int> &coordToFit,
+  int coordToFit[SciFi::Tracking::max_coordToFit],
+  int& n_coordToFit,
   PlaneCounter planeCounter,
   SciFi::Tracking::HitSearchCuts& pars_cur);

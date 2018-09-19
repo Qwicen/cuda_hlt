@@ -53,7 +53,8 @@ bool addHitsOnEmptyXLayers(
   const float xParams_seed[4],
   const float yParams_seed[4],
   bool fullFit,
-  std::vector<unsigned int> &coordToFit,
+  int coordToFit[SciFi::Tracking::max_coordToFit],
+  int& n_coordToFit,
   PlaneCounter& planeCounter,
   SciFi::Tracking::HitSearchCuts& pars_cur,
   int side);

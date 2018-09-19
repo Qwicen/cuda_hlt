@@ -90,13 +90,20 @@ inline bool matchStereoHitWithTriangle( const int itUV2, const int triangle_zone
 inline void removeOutlier(
   SciFi::HitsSoA* hits_layers,
   PlaneCounter& planeCounter,
-  std::vector<unsigned int>& coordToFit,
+  int* coordToFit,
+  int& n_coordToFit,
   const int worst ) {
   planeCounter.removeHit( hits_layers->m_planeCode[worst]/2 );
-  std::vector<unsigned int> coordToFit_temp;
-  coordToFit_temp.clear();
-  for (auto hit : coordToFit) {
-    if (hit != worst) coordToFit_temp.push_back(hit);
+  int coordToFit_temp[SciFi::Tracking::max_coordToFit];
+  int i_hit_temp = 0;
+  for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
+    int hit = coordToFit[i_hit];
+    if (hit != worst) coordToFit_temp[i_hit_temp++] = hit;
+ 
   }
-  coordToFit = coordToFit_temp;
+  n_coordToFit = i_hit_temp;
+  for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
+    coordToFit[i_hit] = coordToFit_temp[i_hit];
+  }
+  
 }

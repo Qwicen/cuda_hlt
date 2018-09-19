@@ -270,8 +270,8 @@ void selectXCandidates(
     lineFitParameters.m_z0 = SciFi::Tracking::zReference;
     float xAtRef = 0.;
     const unsigned int nbSingle = planeCounter.nbSingle();
-    std::vector<unsigned int> coordToFit;
-    coordToFit.clear();
+    int coordToFit[SciFi::Tracking::max_coordToFit];
+    int n_coordToFit = 0;
     
     if ( nbSingle >= SciFi::Tracking::minSingleHits && nbSingle != planeCounter.nbDifferent ) {
       //1) we have enough single planes (thus two) to make a straight line fit
@@ -363,16 +363,17 @@ void selectXCandidates(
       //Fill coords and compute average x at reference
       for ( int itH = it1; it2 != itH; ++itH ) {
         if (hits_layers->isValid(allXHits[itH])) {
-          coordToFit.push_back( allXHits[itH] );
+          assert(n_coordToFit < SciFi::Tracking::max_coordToFit);
+          coordToFit[n_coordToFit++] = allXHits[itH];
           xAtRef += hits_layers->m_coord[ allXHits[itH] ];
         }
       }
-      xAtRef /= ((float)coordToFit.size());
+      xAtRef /= ((float)n_coordToFit);
     } // end of magical second part
     //=== We have a candidate :)
     
     planeCounter.clear();
-    for (int j=0;j<coordToFit.size();++j){
+    for ( int j = 0; j < n_coordToFit; ++j ) {
       planeCounter.addHit( hits_layers->m_planeCode[ coordToFit[j] ] / 2 );
     }
     // Only unused(!) hits in coordToFit now
@@ -381,18 +382,18 @@ void selectXCandidates(
     float trackParameters[SciFi::Tracking::nTrackParams];
     if(ok){
       getTrackParameters(xAtRef, velo_state, trackParameters); 
-      fastLinearFit( hits_layers, trackParameters, coordToFit, planeCounter,pars);
+      fastLinearFit( hits_layers, trackParameters, coordToFit, n_coordToFit, planeCounter,pars);
       addHitsOnEmptyXLayers(hits_layers, trackParameters, xParams_seed, yParams_seed,
-                              false, coordToFit, planeCounter, pars, side);
+                            false, coordToFit, n_coordToFit, planeCounter, pars, side);
       
       ok = planeCounter.nbDifferent > 3;
     }
     //== Fit and remove hits...
-    if (ok) ok = fitXProjection(hits_layers, trackParameters, coordToFit, planeCounter, pars);
+    if (ok) ok = fitXProjection(hits_layers, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
     if (ok) ok = trackParameters[7]/trackParameters[8] < SciFi::Tracking::maxChi2PerDoF;
     if (ok )
       ok = addHitsOnEmptyXLayers(hits_layers, trackParameters, xParams_seed, yParams_seed,
-                                       true, coordToFit, planeCounter, pars, side);
+                                 true, coordToFit, n_coordToFit, planeCounter, pars, side);
     if (ok) {
       //set ModPrHits used , challenge in c++: we don't have the link any more!
       //here it is fairly trivial... :)
@@ -408,14 +409,18 @@ void selectXCandidates(
       for (int k=0;k<7;++k){
         track.trackParams[k] = trackParameters[k];
       }
-      for (auto hit : coordToFit){
+      for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
+        int hit = coordToFit[i_hit];
         track.addHit( hit );
 	hits_layers->m_used[hit] = true; //set as used in the SoA!
       }
       candidate_tracks[n_candidate_tracks++] = track;
+    
     } 
     ++it1;   
   }
+
+  
 } 
 
 
@@ -425,7 +430,8 @@ bool addHitsOnEmptyXLayers(
   const float xParams_seed[4],
   const float yParams_seed[4],
   bool fullFit,
-  std::vector<unsigned int> &coordToFit,
+  int coordToFit[SciFi::Tracking::max_coordToFit],
+  int& n_coordToFit,
   PlaneCounter& planeCounter,
   SciFi::Tracking::HitSearchCuts& pars,
   int side)
@@ -470,16 +476,17 @@ bool addHitsOnEmptyXLayers(
       }    
     }    
     if ( best != -1 ) {
-      coordToFit.push_back(best); // add the best hit here
+      assert( n_coordToFit < SciFi::Tracking::max_coordToFit );
+      coordToFit[n_coordToFit++] = best; // add the best hit here
       planeCounter.addHit( hits_layers->m_planeCode[best]/2 );
       added = true;
     }    
   }
   if ( !added ) return true;
   if ( fullFit ) {
-    return fitXProjection(hits_layers, trackParameters, coordToFit, planeCounter, pars);
+    return fitXProjection(hits_layers, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
   }
-  fastLinearFit( hits_layers, trackParameters, coordToFit, planeCounter, pars);
+  fastLinearFit( hits_layers, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
   return true;
 }
 

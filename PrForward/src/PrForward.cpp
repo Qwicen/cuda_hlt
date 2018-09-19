@@ -95,6 +95,8 @@ void find_forward_tracks(
   if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
 				   xParams_seed, yParams_seed, velo_state, pars_first, -1); 
 
+
+  
   SciFi::Tracking::Track selected_tracks[SciFi::max_tracks];
   int n_selected_tracks = 0;
     
@@ -107,6 +109,13 @@ void find_forward_tracks(
     xParams_seed, yParams_seed,
     velo_state, veloUTTrack.qop,
     pars_first, tmva1, tmva2, false);
+
+
+  for ( int i=0; i < n_selected_tracks; ++i ) {
+      bool containsDuplicates = (std::unique(selected_tracks[i].hit_indices, selected_tracks[i].hit_indices + selected_tracks[i].hitsNum)) != selected_tracks[i].hit_indices + selected_tracks[i].hitsNum;
+      if ( containsDuplicates )
+        debug_cout << "track already contains duplicates" << std::endl;
+    }  
 
    bool ok = false;
   for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
@@ -123,6 +132,8 @@ void find_forward_tracks(
     if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
 				     xParams_seed, yParams_seed, velo_state, pars_second, -1);  
 
+  
+    
     SciFi::Tracking::Track selected_tracks2[SciFi::Tracking::max_tracks_second_loop];
     int n_selected_tracks2 = 0;
     
@@ -140,12 +151,14 @@ void find_forward_tracks(
       assert( n_selected_tracks < SciFi::max_tracks);
       selected_tracks[n_selected_tracks++] = selected_tracks2[i_track];
     }
+
+   
     
     ok = (n_selected_tracks > 0);
   }
  
   if(ok || !SciFi::Tracking::secondLoop){
-    std::sort( selected_tracks, selected_tracks + n_selected_tracks, lowerByQuality);
+    thrust::sort( thrust::host, selected_tracks, selected_tracks + n_selected_tracks, lowerByQuality);
     float minQuality = SciFi::Tracking::maxQuality;
     for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
       SciFi::Tracking::Track& track = selected_tracks[i_track];
@@ -203,62 +216,60 @@ void selectFullCandidates(
 {
 
   PlaneCounter planeCounter;
+  planeCounter.clear();
   float mlpInput[7] = {0};
   
   for ( int i_track = 0; i_track < n_candidate_tracks; ++i_track ) {
-    SciFi::Tracking::Track& cand = candidate_tracks[i_track];
+    SciFi::Tracking::Track* cand = candidate_tracks + i_track;
     
     pars.minStereoHits = 4;
 
-    if(cand.hitsNum + pars.minStereoHits < SciFi::Tracking::minTotalHits) {
-      pars.minStereoHits = SciFi::Tracking::minTotalHits - cand.hitsNum;
+    if(cand->hitsNum + pars.minStereoHits < SciFi::Tracking::minTotalHits) {
+      pars.minStereoHits = SciFi::Tracking::minTotalHits - cand->hitsNum;
     }
     
     // search for hits in U/V layers
-    std::vector<unsigned int> stereoHits = collectStereoHits(hits_layers, cand, velo_state, pars);
-    // debug_cout << "Collected " << stereoHits.size() << " valid stereo hits for full track search, with requirement of " << pars.minStereoHits << std::endl;
-    if(stereoHits.size() < pars.minStereoHits) continue;
-    // DIRTY HACK
-    std::vector<std::pair<float,int> > tempforsort;
-    tempforsort.clear();
-    for (auto hit : stereoHits) { tempforsort.emplace_back(std::pair<float,int>(hits_layers->m_coord[hit],hit));}
-    std::sort( tempforsort.begin(), tempforsort.end());
-    stereoHits.clear();
-    for (auto pair : tempforsort) {stereoHits.emplace_back(pair.second);}
-    //debug_cout << "# of collected stereo hits = " << int(stereoHits.size()) << std::endl;
-      
+    int stereoHits[SciFi::Tracking::max_stereo_hits];
+    int n_stereoHits = 0;
+    collectStereoHits(hits_layers, *cand, velo_state, pars, stereoHits, n_stereoHits);
+
+    if(n_stereoHits < pars.minStereoHits) continue;
+
+    // Sort hits by coord
+    int stereoHits_coords[SciFi::Tracking::max_stereo_hits];
+    for ( int i_hit = 0; i_hit < n_stereoHits; ++i_hit ) {
+      stereoHits_coords[i_hit] = hits_layers->m_coord[ stereoHits[i_hit] ];
+    }
+    thrust::sort_by_key(thrust::host, stereoHits_coords, stereoHits_coords + n_stereoHits, stereoHits);
+  
     // select best U/V hits
-    if ( !selectStereoHits(hits_layers, cand, stereoHits, velo_state, pars) ) continue;
-    //debug_cout << "Passed the stereo hits selection!" << std::endl;
+    if ( !selectStereoHits(hits_layers, *cand, stereoHits, n_stereoHits, velo_state, pars) ) continue;
 
     planeCounter.clear();
-    for (auto hit : cand.hit_indices) {
+    for ( int i_hit = 0; i_hit < cand->hitsNum; ++i_hit ) {
+      int hit = cand->hit_indices[i_hit];
       planeCounter.addHit( hits_layers->m_planeCode[hit]/2 );
     }
     
     //make a fit of ALL hits
-    if(!fitXProjection(hits_layers, cand.trackParams, cand.hit_indices, planeCounter, pars))continue;
-    //debug_cout << "Passed the X projection fit" << std::endl;   
+    if(!fitXProjection(hits_layers, cand->trackParams, cand->hit_indices, cand->hitsNum, planeCounter, pars))continue;
  
     //check in empty x layers for hits 
-    auto checked_empty = (cand.trackParams[4]  < 0.f) ?
-      addHitsOnEmptyXLayers(hits_layers, cand.trackParams, xParams_seed, yParams_seed,
-                              true, cand.hit_indices, planeCounter, pars, -1)
+    auto checked_empty = (cand->trackParams[4]  < 0.f) ?
+      addHitsOnEmptyXLayers(hits_layers, cand->trackParams, xParams_seed, yParams_seed,
+                            true, cand->hit_indices, cand->hitsNum, planeCounter, pars, -1)
         : 
-      addHitsOnEmptyXLayers(hits_layers, cand.trackParams, xParams_seed, yParams_seed,
-                              true, cand.hit_indices, planeCounter, pars, 1);
+      addHitsOnEmptyXLayers(hits_layers, cand->trackParams, xParams_seed, yParams_seed,
+                            true, cand->hit_indices, cand->hitsNum, planeCounter, pars, 1);
 
     if (not checked_empty) continue;
-    //debug_cout << "Passed the empty check" << std::endl;
 
     //track has enough hits, calcualte quality and save if good enough
-    //debug_cout << "Full track candidate has " << pc.size() << " hits on " << nbDifferent(planelist) << " different layers" << std::endl;    
     if(planeCounter.nbDifferent >= SciFi::Tracking::minTotalHits){
-      //debug_cout << "Computing final quality with NNs" << std::endl;
 
-      const float qOverP  = calcqOverP(cand.trackParams[1], velo_state);
+      const float qOverP  = calcqOverP(cand->trackParams[1], velo_state);
       //orig params before fitting , TODO faster if only calc once?? mem usage?
-      const float xAtRef = cand.trackParams[0];
+      const float xAtRef = cand->trackParams[0];
       float dSlope  = ( velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx - xAtRef ) / ( SciFi::Tracking::zReference - SciFi::Tracking::zMagnetParams[0]);
       const float zMagSlope = SciFi::Tracking::zMagnetParams[2] * pow(velo_state.tx,2) +  SciFi::Tracking::zMagnetParams[3] * pow(velo_state.ty,2);
       const float zMag    = SciFi::Tracking::zMagnetParams[0] + SciFi::Tracking::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
@@ -272,9 +283,9 @@ void selectFullCandidates(
       float by = velo_state.ty + dyCoef * SciFi::Tracking::byParams;
 
       //ay,by,bx params
-      const float ay1  = cand.trackParams[4];
-      const float by1  = cand.trackParams[5];
-      const float bx1  = cand.trackParams[1];
+      const float ay1  = cand->trackParams[4];
+      const float by1  = cand->trackParams[5];
+      const float bx1  = cand->trackParams[1];
 
       mlpInput[0] = planeCounter.nbDifferent;
       mlpInput[1] = qOverP;
@@ -292,17 +303,14 @@ void selectFullCandidates(
 
       quality = 1.f-quality; //backward compability
 
-      //debug_cout << "Track candidate has " << pars.minXHits << " minXHits and NN quality " << quality << std::endl;
-
       if(quality < SciFi::Tracking::maxQuality){
-        cand.quality = quality;
-        cand.set_qop( qOverP );
+        cand->quality = quality;
+        cand->set_qop( qOverP );
 	// Must be a neater way to do this...
         if (!secondLoop) assert (n_selected_tracks < SciFi::max_tracks );
         else if (secondLoop)assert (n_selected_tracks < SciFi::Tracking::max_tracks_second_loop );
-        selected_tracks[n_selected_tracks++] = cand;
+        selected_tracks[n_selected_tracks++] = *cand;
       }
     }
   }
-  //outputTracks = selectedTracks;
 }

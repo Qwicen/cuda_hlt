@@ -34,7 +34,8 @@ void incrementLineFitParameters(SciFi::Tracking::LineFitterPars &parameters, Sci
 void fastLinearFit(
   SciFi::HitsSoA* hits_layers,
   float trackParameters[SciFi::Tracking::nTrackParams], 
-  std::vector<unsigned int> &coordToFit,
+  int coordToFit[SciFi::Tracking::max_coordToFit],
+  int& n_coordToFit,
   PlaneCounter planeCounter,
   SciFi::Tracking::HitSearchCuts& pars)
 {
@@ -47,7 +48,8 @@ void fastLinearFit(
     float sd   = 0.;
     float sdz  = 0.;
 
-    for (auto hit : coordToFit ){
+    for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
+      int hit = coordToFit[i_hit];
       const float parsX[4] = {trackParameters[0],
                               trackParameters[1],
                               trackParameters[2],
@@ -71,15 +73,16 @@ void fastLinearFit(
     trackParameters[1] += db;
     fit = false;
 
-    if ( coordToFit.size() < pars.minXHits ) return;
+    if ( n_coordToFit < pars.minXHits ) return;
 
-    int worst = coordToFit.back();
+    int worst = n_coordToFit;
     float maxChi2 = 0.f; 
-    const bool notMultiple = planeCounter.nbDifferent == coordToFit.size();
+    const bool notMultiple = planeCounter.nbDifferent == n_coordToFit;
     //TODO how many multiple hits do we normaly have?
     //how often do we do the right thing here?
     //delete two hits at same time?
-    for ( auto hit : coordToFit) { 
+    for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
+      int hit = coordToFit[i_hit];
       // This could certainly be wrapped in some helper function with a lot
       // of passing around or copying etc... 
       const float parsX[4] = {trackParameters[0],
@@ -89,11 +92,11 @@ void fastLinearFit(
       const float chi2 = chi2XHit( parsX, hits_layers, hit );
       if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( hits_layers->m_planeCode[hit]/2 ) > 1 ) ) {
         maxChi2 = chi2;
-        worst   = hit; 
+        worst   = i_hit; 
       }    
     }    
     if ( maxChi2 > SciFi::Tracking::maxChi2LinearFit || ( !notMultiple && maxChi2 > 4.f ) ) {
-      removeOutlier( hits_layers, planeCounter, coordToFit, worst );
+      removeOutlier( hits_layers, planeCounter, coordToFit, n_coordToFit, coordToFit[worst] );
       fit = true;
     }
   }

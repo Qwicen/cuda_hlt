@@ -29,7 +29,12 @@ void xAtRef_SamePlaneHits(
   }
 }
 
-int fitParabola( std::vector<unsigned int> coordToFit, SciFi::HitsSoA* hits_layers, float trackParameters[SciFi::Tracking::nTrackParams], const bool xFit ) {
+int fitParabola(
+  int* coordToFit,
+  const int n_coordToFit,
+  SciFi::HitsSoA* hits_layers,
+  float trackParameters[SciFi::Tracking::nTrackParams],
+  const bool xFit ) {
 
   //== Fit a cubic
   float s0   = 0.f; 
@@ -41,7 +46,8 @@ int fitParabola( std::vector<unsigned int> coordToFit, SciFi::HitsSoA* hits_laye
   float sdz  = 0.f; 
   float sdz2 = 0.f; 
   
-  for (auto hit : coordToFit ) {
+  for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit) {
+    int hit = coordToFit[i_hit];
     float d = trackToHitDistance(trackParameters, hits_layers, hit);
     if (!xFit)
       d *= - 1. / hits_layers->m_dxdy[hit];//TODO multiplication much faster than division!
@@ -83,7 +89,8 @@ int fitParabola( std::vector<unsigned int> coordToFit, SciFi::HitsSoA* hits_laye
 bool fitXProjection(
   SciFi::HitsSoA *hits_layers,
   float trackParameters[SciFi::Tracking::nTrackParams],
-  std::vector<unsigned int> &coordToFit,
+  int coordToFit[SciFi::Tracking::max_coordToFit],
+  int& n_coordToFit,
   PlaneCounter& planeCounter,
   SciFi::Tracking::HitSearchCuts& pars)
 {
@@ -92,37 +99,37 @@ bool fitXProjection(
   bool doFit = true;
   while ( doFit ) {
 
-    fitParabola( coordToFit, hits_layers, trackParameters, true );
+    fitParabola( coordToFit, n_coordToFit, hits_layers, trackParameters, true );
     
     float maxChi2 = 0.f; 
     float totChi2 = 0.f;  
     //int   nDoF = -3; // fitted 3 parameters
     int  nDoF = -3;
-    const bool notMultiple = planeCounter.nbDifferent == coordToFit.size();
+    const bool notMultiple = planeCounter.nbDifferent == n_coordToFit;
 
-    const auto itEnd = coordToFit.back();
-    auto worst = itEnd;
-    for ( auto itH : coordToFit ) {
-      float d = trackToHitDistance(trackParameters, hits_layers, itH);
-      float chi2 = d*d*hits_layers->m_w[itH];
+    int worst = n_coordToFit;
+    for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
+      int hit = coordToFit[i_hit];
+      float d = trackToHitDistance(trackParameters, hits_layers, hit);
+      float chi2 = d*d*hits_layers->m_w[hit];
       totChi2 += chi2;
       ++nDoF;
-      if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( hits_layers->m_planeCode[itH]/2 ) > 1 ) ) {
+      if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( hits_layers->m_planeCode[hit]/2 ) > 1 ) ) {
         maxChi2 = chi2;
-        worst   = itH; 
+        worst   = i_hit; 
       }    
     }    
     if ( nDoF < 1 )return false;
     trackParameters[7] = totChi2;
     trackParameters[8] = (float) nDoF;
 
-    if ( worst == itEnd ) {
+    if ( worst == n_coordToFit ) {
       return true;
     }    
     doFit = false;
     if ( totChi2/nDoF > SciFi::Tracking::maxChi2PerDoF  ||
          maxChi2 > SciFi::Tracking::maxChi2XProjection ) {
-      removeOutlier( hits_layers, planeCounter, coordToFit, worst);
+      removeOutlier( hits_layers, planeCounter, coordToFit, n_coordToFit, coordToFit[worst]);
       if (planeCounter.nbDifferent < pars.minXHits + pars.minStereoHits) return false;
       doFit = true;
     }    
@@ -134,7 +141,8 @@ bool fitXProjection(
 bool fitYProjection(
   SciFi::HitsSoA* hits_layers,
   SciFi::Tracking::Track& track,
-  std::vector<unsigned int>& stereoHits,
+  int stereoHits[SciFi::Tracking::max_stereo_hits],
+  int& n_stereoHits,
   PlaneCounter& planeCounter,
   MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
@@ -163,15 +171,15 @@ bool fitYProjection(
     float sd   = wMag * dyMag;
     float sdz  = wMag * dyMag * zMag;
    
-    std::vector<unsigned int>::const_iterator itEnd = std::end(stereoHits);
-
     if ( parabola ) {
 
-      fitParabola( stereoHits, hits_layers, track.trackParams, false );
+      // position in magnet not used for parabola fit, hardly any influence on efficiency
+      fitParabola( stereoHits, n_stereoHits, hits_layers, track.trackParams, false );
       
     } else { // straight line fit
 
-      for ( const auto hit : stereoHits ){
+      for ( int i_hit = 0; i_hit < n_stereoHits; ++i_hit ) {
+        int hit = stereoHits[i_hit];
         const float d = - trackToHitDistance(track.trackParams, hits_layers, hit) / 
                           hits_layers->m_dxdy[hit];//TODO multiplication much faster than division!
         const float w = hits_layers->m_w[hit];
@@ -192,14 +200,15 @@ bool fitYProjection(
       track.trackParams[5] += db;
     }//fit end, now doing outlier removal
 
-    std::vector<unsigned int>::iterator worst = std::end(stereoHits);
+    int worst = n_stereoHits;
     maxChi2 = 0.;
-    for ( std::vector<unsigned int>::iterator itH = std::begin(stereoHits); itEnd != itH; ++itH) {
-      float d = trackToHitDistance(track.trackParams, hits_layers, *itH);
-      float chi2 = d*d*hits_layers->m_w[*itH];
+    for ( int i_hit = 0; i_hit < n_stereoHits; ++i_hit ) {
+      int hit = stereoHits[i_hit];
+      float d = trackToHitDistance(track.trackParams, hits_layers, hit);
+      float chi2 = d*d*hits_layers->m_w[hit];
       if ( chi2 > maxChi2 ) {
         maxChi2 = chi2;
-        worst   = itH;
+        worst   = i_hit;
       }
     }
 
@@ -210,7 +219,7 @@ bool fitYProjection(
     }
 
     if ( maxChi2 > SciFi::Tracking::maxChi2Stereo ) {
-      removeOutlier( hits_layers, planeCounter, stereoHits, *worst );
+      removeOutlier( hits_layers, planeCounter, stereoHits, n_stereoHits, stereoHits[worst] );
       if ( planeCounter.nbDifferent < pars.minStereoHits ) {
         return false;
       }
