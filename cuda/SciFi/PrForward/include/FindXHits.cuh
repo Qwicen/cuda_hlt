@@ -10,12 +10,12 @@
 #include <thrust/execution_policy.h>
 
 #include "SciFiDefinitions.cuh"
-#include "PrForwardConstants.h"
+#include "PrForwardConstants.cuh"
 #include "VeloUTDefinitions.cuh"
-#include "TrackUtils.h"
-#include "HitUtils.h"
-#include "LinearFitting.h"
-#include "HoughTransform.h"
+#include "TrackUtils.cuh"
+#include "HitUtils.cuh"
+#include "LinearFitting.cuh"
+#include "HoughTransform.cuh"
 #include "PrVeloUT.cuh"
 
 /**

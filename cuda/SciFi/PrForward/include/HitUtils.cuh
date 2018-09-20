@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SciFiDefinitions.cuh"
-#include "PrForwardConstants.h"
+#include "PrForwardConstants.cuh"
 
 /**
    Helper functions related to properties of hits on planes

@@ -1,4 +1,4 @@
-#include "TrackUtils.h"
+#include "TrackUtils.cuh"
 
 __host__ __device__ void getTrackParameters ( float xAtRef, MiniState velo_state, const SciFi::Tracking::Arrays& constArrays, float trackParams[SciFi::Tracking::nTrackParams])
 {

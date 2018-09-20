@@ -10,9 +10,9 @@
 #include <thrust/execution_policy.h>
 
 #include "SciFiDefinitions.cuh"
-#include "TrackUtils.h"
-#include "HitUtils.h"
-#include "HoughTransform.h"
+#include "TrackUtils.cuh"
+#include "HitUtils.cuh"
+#include "HoughTransform.cuh"
 #include "PrVeloUT.cuh"
 
 /**

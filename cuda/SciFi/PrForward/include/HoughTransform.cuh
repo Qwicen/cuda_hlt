@@ -6,8 +6,8 @@
 #include <algorithm>
 #include <fstream>
 
-#include "TrackUtils.h"
-#include "HitUtils.h"
+#include "TrackUtils.cuh"
+#include "HitUtils.cuh"
 #include "PrVeloUT.cuh"
 
 /**

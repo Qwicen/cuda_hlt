@@ -25,7 +25,8 @@ namespace SciFi{
     const int max_other_hits = 5;
     const int max_stereo_hits = 25;
     const int max_coordToFit = 15; 
-    const int max_hits = 12;
+    const int max_scifi_hits = 15; 
+    
     const int nTrackParams = 9;
     
     const int TMVA_Nvars = 7;
@@ -123,7 +124,7 @@ namespace SciFi{
    
     struct Track {
 
-      int hit_indices[max_hits];
+      int hit_indices[max_scifi_hits];
       float qop;
       int hitsNum = 0;
       float quality;
@@ -131,12 +132,12 @@ namespace SciFi{
       float trackParams[SciFi::Tracking::nTrackParams];
       Velo::State state_endvelo;
      
-      __host__  void addHit( unsigned int hit ) {
-        assert( hitsNum < max_hits );
+      __host__  __device__ void addHit( unsigned int hit ) {
+        assert( hitsNum < max_scifi_hits - 1 );
         hit_indices[hitsNum++] = hit;
       }
       
-      __host__ void set_qop( float _qop ) {
+      __host__ __device__ void set_qop( float _qop ) {
         qop = _qop;
       }
     };

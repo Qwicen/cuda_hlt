@@ -5,7 +5,7 @@
 #include <string>
 #include <iostream>
 
-#include "PrForwardConstants.h"
+#include "PrForwardConstants.cuh"
 
 
 namespace SciFi {

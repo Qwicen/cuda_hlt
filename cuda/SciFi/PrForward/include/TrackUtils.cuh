@@ -3,7 +3,7 @@
 #include <cmath>
 
 #include "SciFiDefinitions.cuh"
-#include "PrForwardConstants.h"
+#include "PrForwardConstants.cuh"
 #include "PrVeloUT.cuh" 
 
 /**

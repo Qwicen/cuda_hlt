@@ -1,4 +1,4 @@
-#include "HoughTransform.h"
+#include "HoughTransform.cuh"
 
 //calculate xref for this plane
 //in the c++ this is vectorized, undoing because no point before CUDA (but vectorization is obvious)

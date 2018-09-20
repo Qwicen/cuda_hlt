@@ -1,4 +1,4 @@
-#include "FindStereoHits.h"
+#include "FindStereoHits.cuh"
 
 
 //=========================================================================
@@ -77,7 +77,7 @@ __host__ __device__ void collectStereoHits(
   }
 
   // Sort hits by coord
-  thrust::sort_by_key(thrust::host, stereoCoords, stereoCoords + n_stereoHits, stereoHits);
+  thrust::sort_by_key(thrust::seq, stereoCoords, stereoCoords + n_stereoHits, stereoHits);
 
 }
  
@@ -94,12 +94,6 @@ __host__ __device__ bool selectStereoHits(
   MiniState velo_state, 
   SciFi::Tracking::HitSearchCuts& pars)
 {
-  std::vector<int> stereoHitsVec;
-  stereoHitsVec.clear();
-  for ( int i = 0; i < n_stereoHits; ++i ) {
-    stereoHitsVec.push_back( stereoHits[i] );
-  }
-  
   //why do we rely on xRef? --> coord is NOT xRef for stereo HITS!
   int bestStereoHits[SciFi::Tracking::max_stereo_hits];
   int n_bestStereoHits = 0;
@@ -223,7 +217,7 @@ __host__ __device__ bool selectStereoHits(
     track.trackParams[6] = bestYParams[2];
     for ( int i_hit = 0; i_hit < n_bestStereoHits; ++i_hit ) {
       int hit = bestStereoHits[i_hit];
-      if ( track.hitsNum >= SciFi::Tracking::max_hits ) break;
+      if ( track.hitsNum >= SciFi::Tracking::max_scifi_hits ) break;
       track.addHit( hit );
     }
     return true;

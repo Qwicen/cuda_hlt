@@ -1,4 +1,4 @@
-#include "FindXHits.h"
+#include "FindXHits.cuh"
 
 
 
@@ -161,7 +161,7 @@ __host__ __device__ void collectAllXHits(
   }
 
   // Sort hits by coord
-  thrust::sort_by_key(thrust::host, coordX, coordX + n_x_hits, allXHits);
+  thrust::sort_by_key(thrust::seq, coordX, coordX + n_x_hits, allXHits);
 
 }
 
@@ -273,7 +273,6 @@ __host__ __device__ void selectXCandidates(
     float xAtRef = 0.;
     const unsigned int nbSingle = planeCounter.nbSingle();
     int coordToFit[SciFi::Tracking::max_coordToFit];
-    int coordToFitIndex[SciFi::Tracking::max_coordToFit];
     int n_coordToFit = 0;
     
     if ( nbSingle >= SciFi::Tracking::minSingleHits && nbSingle != planeCounter.nbDifferent ) {
@@ -368,7 +367,6 @@ __host__ __device__ void selectXCandidates(
           if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
             break;
           assert(n_coordToFit < SciFi::Tracking::max_coordToFit);
-          coordToFitIndex[n_coordToFit] = itH;
           coordToFit[n_coordToFit++] = allXHits[itH];
           xAtRef += coordX[ itH ];
         }
@@ -422,7 +420,7 @@ __host__ __device__ void selectXCandidates(
       }
       for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
         int hit = coordToFit[i_hit];
-        if ( track.hitsNum >= SciFi::Tracking::max_hits ) break;
+        if ( track.hitsNum >= SciFi::Tracking::max_scifi_hits ) break;
         track.addHit( hit );
         usedHits[hit] = true;
       }

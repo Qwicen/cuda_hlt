@@ -6,6 +6,7 @@
 #include "Logger.h"
 #include "VeloDefinitions.cuh"
 #include "VeloEventModel.cuh"
+#include "VeloUTDefinitions.cuh"
 
 #include "assert.h"
 
@@ -56,23 +57,24 @@ namespace SciFi {
            
     };
     
-    const int max_tracks = 150;
+  const int max_tracks = 150;
+  const int max_track_size = 15 + VeloUTTracking::max_track_size;
   
-    struct Track {
-      
-      std::vector< unsigned int > LHCbIDs;
-      float qop;
-      unsigned short hitsNum = 0;
-      float chi2;
-      
-      __host__  __device__ void addLHCbID( unsigned int id ) {
-        LHCbIDs.push_back( id );
-        hitsNum = LHCbIDs.size();
-      }
-      
-      __host__ __device__ void set_qop( float _qop ) {
-        qop = _qop;
-      }
-    };
-
+  struct Track {
+    
+    unsigned int LHCbIDs[max_track_size];
+    float qop;
+    unsigned short hitsNum = 0;
+    float chi2;
+    
+    __host__  __device__ void addLHCbID( unsigned int id ) {
+      assert( hitsNum < max_track_size - 1 );
+      LHCbIDs[hitsNum++] =  id;
+  }
+    
+    __host__ __device__ void set_qop( float _qop ) {
+      qop = _qop;
+    }
+  };
+  
 } // SciFi

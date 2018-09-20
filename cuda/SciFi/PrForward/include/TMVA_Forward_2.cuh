@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TMVA_Forward.h"
+#include "TMVA_Forward.cuh"
 
 namespace SciFi {
   

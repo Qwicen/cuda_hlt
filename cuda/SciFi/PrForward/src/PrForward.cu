@@ -1,4 +1,4 @@
-#include "PrForward.h"
+#include "PrForward.cuh"
 //-----------------------------------------------------------------------------
 // Implementation file for class : PrForward
 //
@@ -26,7 +26,6 @@ void PrForward(
   int& n_forward_tracks)
 {
   
-  int numfound = 0;
   // Loop over the veloUT input tracks
   for ( int i_veloUT_track = 0; i_veloUT_track < n_veloUT_tracks; ++i_veloUT_track ) {
     const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks[i_veloUT_track];
@@ -121,14 +120,7 @@ __host__ __device__ void find_forward_tracks(
     velo_state, veloUTTrack.qop,
     pars_first, tmva1, tmva2, constArrays, false);
 
-
-  for ( int i=0; i < n_selected_tracks; ++i ) {
-      bool containsDuplicates = (std::unique(selected_tracks[i].hit_indices, selected_tracks[i].hit_indices + selected_tracks[i].hitsNum)) != selected_tracks[i].hit_indices + selected_tracks[i].hitsNum;
-      if ( containsDuplicates )
-        debug_cout << "track already contains duplicates" << std::endl;
-    }  
-
-   bool ok = false;
+  bool ok = false;
   for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
     if ( selected_tracks[i_track].hitsNum > 10 )
       ok = true;
@@ -177,7 +169,7 @@ __host__ __device__ void find_forward_tracks(
   }
  
   if(ok || !SciFi::Tracking::secondLoop){
-    thrust::sort( thrust::host, selected_tracks, selected_tracks + n_selected_tracks, lowerByQuality);
+    thrust::sort( thrust::seq, selected_tracks, selected_tracks + n_selected_tracks, lowerByQuality);
     float minQuality = SciFi::Tracking::maxQuality;
     for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
       SciFi::Tracking::Track& track = selected_tracks[i_track];

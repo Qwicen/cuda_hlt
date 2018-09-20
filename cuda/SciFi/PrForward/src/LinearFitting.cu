@@ -1,10 +1,10 @@
-#include "LinearFitting.h"
+#include "LinearFitting.cuh"
 
 /**
    Functions related to fitting a straight line
  */
 
-float getLineFitDistance(
+__host__ __device__ float getLineFitDistance(
   SciFi::Tracking::LineFitterPars &parameters,
   SciFi::HitsSoA* hits_layers,
   float coordX[SciFi::Tracking::max_x_hits],
@@ -14,7 +14,7 @@ float getLineFitDistance(
   return coordX[it] - (parameters.m_c0 + (hits_layers->m_z[ allXHits[it] ] - parameters.m_z0) * parameters.m_tc);
 }
 
-float getLineFitChi2(
+__host__ __device__ float getLineFitChi2(
   SciFi::Tracking::LineFitterPars &parameters,
   SciFi::HitsSoA* hits_layers,
   float coordX[SciFi::Tracking::max_x_hits],
@@ -23,13 +23,14 @@ float getLineFitChi2(
   float d = getLineFitDistance( parameters, hits_layers, coordX, allXHits, it ); 
   return d * d * coordX[it]; 
 }
-void solveLineFit(SciFi::Tracking::LineFitterPars &parameters)  {
+
+__host__ __device__ void solveLineFit(SciFi::Tracking::LineFitterPars &parameters)  {
   float den = (parameters.m_sz*parameters.m_sz-parameters.m_s0*parameters.m_sz2);
   parameters.m_c0  = (parameters.m_scz * parameters.m_sz - parameters.m_sc * parameters.m_sz2) / den;
   parameters.m_tc  = (parameters.m_sc *  parameters.m_sz - parameters.m_s0 * parameters.m_scz) / den;
 }
 
-void incrementLineFitParameters(
+__host__ __device__ void incrementLineFitParameters(
   SciFi::Tracking::LineFitterPars &parameters,
   SciFi::HitsSoA* hits_layers,
   float coordX[SciFi::Tracking::max_x_hits],
@@ -47,7 +48,7 @@ void incrementLineFitParameters(
     parameters.m_scz  += w * c * z;
 } 
 
-void fastLinearFit(
+__host__ __device__ void fastLinearFit(
   SciFi::HitsSoA* hits_layers,
   float trackParameters[SciFi::Tracking::nTrackParams], 
   int coordToFit[SciFi::Tracking::max_coordToFit],
