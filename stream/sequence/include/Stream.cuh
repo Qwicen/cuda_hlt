@@ -69,7 +69,6 @@ struct Stream {
   float** host_borders;
   float** host_features;
   double** host_leaf_values;
-  unsigned char* host_bin_features;
   const int* treeSplitsPtr_flat;
   const double* leafValuesPtr_flat;
   const NCatBoostFbs::TObliviousTrees* ObliviousTrees;

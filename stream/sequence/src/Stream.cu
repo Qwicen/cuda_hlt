@@ -76,7 +76,6 @@ cudaError_t Stream::initialize(
   for (const auto& ff : *ObliviousTrees->FloatFeatures()) {
     int border_num = ff->Borders()->size();
     host_border_nums[index] = border_num;
-    
 	  cudaCheck(cudaMalloc((void**)&host_borders[index], border_num*sizeof(float)));
     cudaCheck(cudaMemcpy(host_borders[index], ff->Borders()+1, border_num*sizeof(float),cudaMemcpyHostToDevice));
     index++;
@@ -89,11 +88,11 @@ cudaError_t Stream::initialize(
   for (int i = 0; i < tree_num; i++) {
     int depth = host_tree_sizes[i];
 
-    cudaMalloc((void**)&host_leaf_values[i], (1 << depth)*sizeof(double));
-    cudaMemcpy(host_leaf_values[i], leafValuesPtr_flat, (1 << depth)*sizeof(double), cudaMemcpyHostToDevice);
+    cudaCheck(cudaMalloc((void**)&host_leaf_values[i], (1 << depth)*sizeof(double)));
+    cudaCheck(cudaMemcpy(host_leaf_values[i], leafValuesPtr_flat, (1 << depth)*sizeof(double), cudaMemcpyHostToDevice));
 
-    cudaMalloc((void**)&host_tree_splits[i], depth*sizeof(int));
-    cudaMemcpy(host_tree_splits[i], treeSplitsPtr_flat, depth*sizeof(int), cudaMemcpyHostToDevice);
+    cudaCheck(cudaMalloc((void**)&host_tree_splits[i], depth*sizeof(int)));
+    cudaCheck(cudaMemcpy(host_tree_splits[i], treeSplitsPtr_flat, depth*sizeof(int), cudaMemcpyHostToDevice));
     
     leafValuesPtr_flat += (1 << depth);
     treeSplitsPtr_flat += depth;
