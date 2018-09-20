@@ -65,12 +65,12 @@ namespace SciFi {
       unsigned short hitsNum = 0;
       float chi2;
       
-      __host__  void addLHCbID( unsigned int id ) {
+      __host__  __device__ void addLHCbID( unsigned int id ) {
         LHCbIDs.push_back( id );
         hitsNum = LHCbIDs.size();
       }
       
-      __host__ void set_qop( float _qop ) {
+      __host__ __device__ void set_qop( float _qop ) {
         qop = _qop;
       }
     };

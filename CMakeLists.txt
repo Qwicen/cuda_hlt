@@ -76,7 +76,7 @@ include_directories(cuda/event_model/common/include)
 include_directories(checker/tracking/include)
 include_directories(stream/sequence/include)
 include_directories(x86/SciFi/include)
-include_directories(PrForward/include)
+include_directories(cuda/SciFi/PrForward/include)
 include_directories(cuda/UT/UTDecoding/include)
   
 # Files from source directories
@@ -91,7 +91,6 @@ if ( ROOT_FOUND )
     Utils
     Velo
     UT
-    #x86Forward
     x86VeloUT
     Stream
     x86Forward
@@ -105,7 +104,6 @@ else()
     Utils
     Velo
     UT
-    #x86Forward
     x86VeloUT
     Stream
     x86Forward

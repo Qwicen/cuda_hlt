@@ -14,7 +14,7 @@ namespace SciFi {
   namespace Tracking {
     // Formerly PrParameters
     struct HitSearchCuts {
-    HitSearchCuts(unsigned int minXHits_, float maxXWindow_,
+    __host__ __device__ HitSearchCuts(unsigned int minXHits_, float maxXWindow_,
                  float maxXWindowSlope_, float maxXGap_,
                  unsigned int minStereoHits_)
     : minXHits{minXHits_}, maxXWindow{maxXWindow_},
@@ -42,35 +42,35 @@ namespace SciFi {
 } // SciFi
 
 // extrapolate x position from given state to z
-inline float xFromVelo( const float z, MiniState velo_state ) { 
+__host__ __device__ inline float xFromVelo( const float z, MiniState velo_state ) { 
   return velo_state.x + (z-velo_state.z) * velo_state.tx; 
 }
 
 // extrapolate y position from given state to z
-inline float yFromVelo( const float z, MiniState velo_state ) { 
+__host__ __device__ inline float yFromVelo( const float z, MiniState velo_state ) { 
   return velo_state.y + (z-velo_state.z) * velo_state.ty; 
 }
 
 // params[0] = x/y, params[1] = tx/ty
-inline float straightLineExtend(const float params[4], float z) {
+__host__ __device__ inline float straightLineExtend(const float params[4], float z) {
   float dz = z - SciFi::Tracking::zReference;
   return params[0] + (params[1]+(params[2] + params[3]*dz)*dz)*dz;
 }
 
-void getTrackParameters ( float xAtRef, MiniState velo_state, float trackParams[SciFi::Tracking::nTrackParams]);
+__host__ __device__ void getTrackParameters ( float xAtRef, MiniState velo_state, float trackParams[SciFi::Tracking::nTrackParams]);
 
-float calcqOverP ( float bx, MiniState velo_state );
+__host__ __device__ float calcqOverP ( float bx, MiniState velo_state );
 
-float zMagnet(MiniState velo_state);
+__host__ __device__ float zMagnet(MiniState velo_state);
 
-void covariance ( FullState& state, const float qOverP );
+__host__ __device__ void covariance ( FullState& state, const float qOverP );
 
-float calcDxRef(float pt, MiniState velo_state);
+__host__ __device__ float calcDxRef(float pt, MiniState velo_state);
 
-float trackToHitDistance( float trackParameters[SciFi::Tracking::nTrackParams], SciFi::HitsSoA* hits_layers, int hit );
+__host__ __device__ float trackToHitDistance( float trackParameters[SciFi::Tracking::nTrackParams], SciFi::HitsSoA* hits_layers, int hit );
 
-static inline bool lowerByQuality(SciFi::Tracking::Track t1, SciFi::Tracking::Track t2) {
+__host__ __device__ static inline bool lowerByQuality(SciFi::Tracking::Track t1, SciFi::Tracking::Track t2) {
   return t1.quality < t2.quality;
 }
 
-float chi2XHit( const float parsX[4], SciFi::HitsSoA* hits_layers, const int hit );
+__host__ __device__ float chi2XHit( const float parsX[4], SciFi::HitsSoA* hits_layers, const int hit );

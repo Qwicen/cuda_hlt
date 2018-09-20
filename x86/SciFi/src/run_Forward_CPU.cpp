@@ -45,8 +45,10 @@ int run_forward_on_CPU (
     SciFi::Track forward_tracks[SciFi::max_tracks];
     
     // initialize TMVA vars
-    SciFi::TMVA1 tmva1 = SciFi::TMVA1();
-    SciFi::TMVA2 tmva2 = SciFi::TMVA2();
+    SciFi::Tracking::TMVA tmva1;
+    SciFi::Tracking::TMVA1_Init( tmva1 );
+    SciFi::Tracking::TMVA tmva2;
+    SciFi::Tracking::TMVA2_Init( tmva2 );
  
     PrForward(
       &(hits_layers_events[i_event]),

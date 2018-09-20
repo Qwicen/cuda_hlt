@@ -12,19 +12,19 @@ struct PlaneCounter{
   int planeList[SciFi::Constants::n_layers] = {0};
   unsigned int nbDifferent = 0;
 
-  inline void addHit( int plane ) {
+  __host__ __device__ inline void addHit( int plane ) {
     nbDifferent += (int)( (planeList[plane] += 1 ) == 1) ;
   }
 
-  inline void removeHit( int plane ) {
+  __host__ __device__ inline void removeHit( int plane ) {
     nbDifferent -= ((int)( (planeList[plane] -= 1 ) == 0)) ;
   }
 
-  inline int nbInPlane( int plane ) const {
+  __host__ __device__ inline int nbInPlane( int plane ) const {
     return planeList[plane];
   }
 
-  inline int nbSingle() const {
+  __host__ __device__ inline int nbSingle() const {
     int single = 0;
     for (int i=0; i < SciFi::Constants::n_layers; ++i) {
       single += planeList[i] == 1 ? 1 : 0;
@@ -32,7 +32,7 @@ struct PlaneCounter{
     return single;
   }
  
-  inline void clear() {
+  __host__ __device__ inline void clear() {
     nbDifferent = 0;
     for ( int i = 0; i < SciFi::Constants::n_layers; ++i ) {
       planeList[i] = 0;
@@ -43,12 +43,12 @@ struct PlaneCounter{
 
 
 // check that val is within [min, max]
-inline bool isInside(float val, const float min, const float max) {
+__host__ __device__ inline bool isInside(float val, const float min, const float max) {
   return (val > min) && (val < max) ;
 }
 
 // get lowest index where range[index] > value, within [start,end] of range 
-inline int getLowerBound(float range[],float value,int start, int end) {
+__host__ __device__ inline int getLowerBound(float range[],float value,int start, int end) {
   int i = start;
   for (; i<end; i++) {
     if (range[i] > value) break;
@@ -57,7 +57,7 @@ inline int getLowerBound(float range[],float value,int start, int end) {
 }
 
 // match stereo hits
-inline bool matchStereoHit( const int itUV1, const int uv_zone_offset_end, SciFi::HitsSoA* hits_layers, const int xMinUV, const int xMaxUV ) {
+__host__ __device__ inline bool matchStereoHit( const int itUV1, const int uv_zone_offset_end, SciFi::HitsSoA* hits_layers, const int xMinUV, const int xMaxUV ) {
 
   for (int stereoHit = itUV1; stereoHit != uv_zone_offset_end; ++stereoHit) {
     if ( hits_layers->m_x[stereoHit] > xMinUV ) {
@@ -67,7 +67,7 @@ inline bool matchStereoHit( const int itUV1, const int uv_zone_offset_end, SciFi
   return false;
 }
 
-inline bool matchStereoHitWithTriangle( const int itUV2, const int triangle_zone_offset_end, const float yInZone, SciFi::HitsSoA* hits_layers, const int xMinUV, const int xMaxUV, const int side ) {
+__host__ __device__ inline bool matchStereoHitWithTriangle( const int itUV2, const int triangle_zone_offset_end, const float yInZone, SciFi::HitsSoA* hits_layers, const int xMinUV, const int xMaxUV, const int side ) {
   
   for (int stereoHit = itUV2; stereoHit != triangle_zone_offset_end; ++stereoHit) {
     if ( hits_layers->m_x[stereoHit] > xMinUV ) {
@@ -87,15 +87,14 @@ inline bool matchStereoHitWithTriangle( const int itUV2, const int triangle_zone
   return false;
 }
 
-inline void removeOutlier(
+__host__ __device__ inline void removeOutlier(
   SciFi::HitsSoA* hits_layers,
   PlaneCounter& planeCounter,
   int* coordToFit,
   int& n_coordToFit,
   const int worst ) {
   planeCounter.removeHit( hits_layers->m_planeCode[worst]/2 );
-  const int n_hits = n_coordToFit;
-  int coordToFit_temp[n_hits];
+  int coordToFit_temp[SciFi::Tracking::max_stereo_hits];
   int i_hit_temp = 0;
   for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
     int hit = coordToFit[i_hit];

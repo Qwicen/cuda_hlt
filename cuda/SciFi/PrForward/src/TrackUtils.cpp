@@ -1,6 +1,6 @@
 #include "TrackUtils.h"
 
-void getTrackParameters ( float xAtRef, MiniState velo_state, float trackParams[SciFi::Tracking::nTrackParams])
+__host__ __device__ void getTrackParameters ( float xAtRef, MiniState velo_state, float trackParams[SciFi::Tracking::nTrackParams])
 {
   
   float dSlope  = ( xFromVelo(SciFi::Tracking::zReference,velo_state) - xAtRef ) / ( SciFi::Tracking::zReference - SciFi::Tracking::zMagnetParams[0]);
@@ -22,7 +22,7 @@ void getTrackParameters ( float xAtRef, MiniState velo_state, float trackParams[
   trackParams[8] = 0.0; // last elements are chi2 and ndof, as float 
 }
 
-float calcqOverP ( float bx, MiniState velo_state )
+__host__ __device__ float calcqOverP ( float bx, MiniState velo_state )
 {
   
   float qop(1.0f/Gaudi::Units::GeV) ;
@@ -42,7 +42,7 @@ float calcqOverP ( float bx, MiniState velo_state )
 
 // DvB: what does this do?
 // -> get position within magnet (?)
-float zMagnet(MiniState velo_state)
+__host__ __device__ float zMagnet(MiniState velo_state)
 {
     
   return ( SciFi::Tracking::zMagnetParams[0] +
@@ -50,7 +50,7 @@ float zMagnet(MiniState velo_state)
            SciFi::Tracking::zMagnetParams[3] * pow(velo_state.ty,2) );
 }
 
-void covariance ( FullState& state, const float qOverP )
+__host__ __device__ void covariance ( FullState& state, const float qOverP )
 {
      
   state.c00 = SciFi::Tracking::covarianceValues[0];
@@ -62,12 +62,12 @@ void covariance ( FullState& state, const float qOverP )
 
 // calculate difference between straight line extrapolation and
 // where a track with wrongSignPT (2 GeV) would be on the reference plane (?)
-float calcDxRef(float pt, MiniState velo_state) {
+__host__ __device__ float calcDxRef(float pt, MiniState velo_state) {
   float m_slope2 = pow(velo_state.tx,2) + pow(velo_state.ty,2);
   return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  pow(velo_state.ty,2) - 1000. * pow(velo_state.tx,2); // tune this window
 }
 
-float trackToHitDistance( float trackParameters[SciFi::Tracking::nTrackParams], SciFi::HitsSoA* hits_layers, int hit )
+__host__ __device__ float trackToHitDistance( float trackParameters[SciFi::Tracking::nTrackParams], SciFi::HitsSoA* hits_layers, int hit )
 {
   const float parsX[4] = {trackParameters[0],
                           trackParameters[1],
@@ -84,7 +84,7 @@ float trackToHitDistance( float trackParameters[SciFi::Tracking::nTrackParams], 
   return hits_layers->m_x[hit] + y_track*hits_layers->m_dxdy[hit] - x_track; 
 }
 
-float chi2XHit( const float parsX[4], SciFi::HitsSoA* hits_layers, const int hit ) {
+__host__ __device__ float chi2XHit( const float parsX[4], SciFi::HitsSoA* hits_layers, const int hit ) {
   float track_x_at_zHit = straightLineExtend(parsX,hits_layers->m_z[hit]);
    float hitdist = hits_layers->m_x[hit] - track_x_at_zHit; 
    return hitdist*hitdist*hits_layers->m_w[hit];

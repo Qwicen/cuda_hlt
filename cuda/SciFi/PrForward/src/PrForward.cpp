@@ -19,8 +19,8 @@ void PrForward(
   const uint event_tracks_offset,
   const VeloUTTracking::TrackUT * veloUT_tracks,
   const int n_veloUT_tracks,
-  const SciFi::TMVA1& tmva1,
-  const SciFi::TMVA2& tmva2,
+  const SciFi::Tracking::TMVA& tmva1,
+  const SciFi::Tracking::TMVA& tmva2,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks)
 {
@@ -52,8 +52,8 @@ void find_forward_tracks(
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks,
-  const SciFi::TMVA1& tmva1,
-  const SciFi::TMVA2& tmva2,
+  const SciFi::Tracking::TMVA& tmva1,
+  const SciFi::Tracking::TMVA& tmva2,
   const MiniState& velo_state
 ) {
 
@@ -205,8 +205,8 @@ void selectFullCandidates(
   MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars,
-  const SciFi::TMVA1& tmva1,
-  const SciFi::TMVA2& tmva2,
+  const SciFi::Tracking::TMVA& tmva1,
+  const SciFi::Tracking::TMVA& tmva2,
   bool secondLoop)
 {
 
@@ -277,8 +277,8 @@ void selectFullCandidates(
 
       float quality = 0.f;
       /// WARNING: if the NN classes straight out of TMVA are used, put a mutex here!
-      if(pars.minXHits > 4) quality = tmva1.GetMvaValue(mlpInput); //1st loop NN
-      else                   quality = tmva2.GetMvaValue(mlpInput); //2nd loop NN
+      if(pars.minXHits > 4) quality = GetMvaValue(mlpInput, tmva1); //1st loop NN
+      else                  quality = GetMvaValue(mlpInput, tmva2); //2nd loop NN
 
       quality = 1.f-quality; //backward compability
 

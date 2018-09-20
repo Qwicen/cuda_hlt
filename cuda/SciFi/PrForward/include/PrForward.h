@@ -48,8 +48,8 @@ void PrForward(
   const uint event_tracks_offset,
   const VeloUTTracking::TrackUT * veloUT_tracks,
   const int n_veloUT_tracks,
-  const SciFi::TMVA1& tmva1,
-  const SciFi::TMVA2& tmva2,
+  const SciFi::Tracking::TMVA& tmva1,
+  const SciFi::Tracking::TMVA& tmva2,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks);
                                                       
@@ -58,8 +58,8 @@ void find_forward_tracks(
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks,
-  const SciFi::TMVA1& tmva1,
-  const SciFi::TMVA2& tmva2,
+  const SciFi::Tracking::TMVA& tmva1,
+  const SciFi::Tracking::TMVA& tmva2,
   const MiniState& velo_state);
 
 
@@ -74,8 +74,8 @@ void selectFullCandidates(
   MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars_cur,
-  const SciFi::TMVA1& tmva1,
-  const SciFi::TMVA2& tmva2,
+  const SciFi::Tracking::TMVA& tmva1,
+  const SciFi::Tracking::TMVA& tmva2,
   bool secondLoop);
 
 SciFi::Track makeTrack( SciFi::Tracking::Track track ); 
