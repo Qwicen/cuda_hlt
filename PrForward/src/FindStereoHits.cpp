@@ -9,6 +9,7 @@ void collectStereoHits(
   SciFi::Tracking::Track& track,
   MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars,
+  float stereoCoords[SciFi::Tracking::max_stereo_hits],
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits)
 {
@@ -53,24 +54,29 @@ void collectStereoHits(
         if ( dx >  dxTol ) break;
         if( yZone > hits_layers->m_yMax[itH] + SciFi::Tracking::yTolUVSearch)continue;
         if( yZone < hits_layers->m_yMin[itH] - SciFi::Tracking::yTolUVSearch)continue;
-        hits_layers->m_coord[itH] = dx*dxDySign;
-        if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits )
+        if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits - 1 )
           break;
-        stereoHits[n_stereoHits++] = itH;
+        assert( n_stereoHits < SciFi::Tracking::max_stereo_hits - 1);
+        stereoHits[n_stereoHits] = itH;
+        stereoCoords[n_stereoHits++] = dx*dxDySign;
       }
     }else{ //no triangle search, thus no min max check
       for ( ; itEnd != itH; ++itH ) {
         const float dx = hits_layers->m_x[itH] + yZone * hits_layers->m_dxdy[itH] - xPred ;
         if ( dx >  dxTol ) break;
-        hits_layers->m_coord[itH] = dx*dxDySign;
-        if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits )
+        if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits - 1 )
           break;
-        stereoHits[n_stereoHits++] = itH;
+        assert( n_stereoHits < SciFi::Tracking::max_stereo_hits - 1);
+        stereoHits[n_stereoHits] = itH;
+        stereoCoords[n_stereoHits++] = dx*dxDySign;
       }
     }
     if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits )
       break;
   }
+
+  // Sort hits by coord
+  thrust::sort_by_key(thrust::host, stereoCoords, stereoCoords + n_stereoHits, stereoHits);
 
 }
  
@@ -79,7 +85,8 @@ void collectStereoHits(
 //=========================================================================
 bool selectStereoHits(
   SciFi::HitsSoA* hits_layers,
-  SciFi::Tracking::Track& track, 
+  SciFi::Tracking::Track& track,
+  float stereoCoords[SciFi::Tracking::max_stereo_hits],
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits,
   MiniState velo_state, 
@@ -117,15 +124,16 @@ bool selectStereoHits(
     if ( endRange == 0 )
       first_hit = 0;
     else
-      first_hit = stereoHits[endRange-1];
+      first_hit = endRange-1;
     
+    // while( planeCounter.nbDifferent < pars.minStereoHits ||
     while( planeCounter.nbDifferent < pars.minStereoHits ||
-           hits_layers->m_coord[ stereoHits[endRange] ] < hits_layers->m_coord[ first_hit] + SciFi::Tracking::minYGap ) {
+           stereoCoords[ endRange ] < stereoCoords[ first_hit] + SciFi::Tracking::minYGap ) {
       planeCounter.addHit( hits_layers->m_planeCode[ stereoHits[endRange] ] / 2 );
-      sumCoord += hits_layers->m_coord[ stereoHits[endRange] ];
+      sumCoord += stereoCoords[ endRange ];
       ++endRange;
       if ( endRange == n_stereoHits ) break;
-      first_hit = stereoHits[endRange-1];
+      first_hit = endRange-1;
     }
 
     //clean cluster
@@ -134,11 +142,11 @@ bool selectStereoHits(
       
       // remove first if not single and farthest from mean
       if ( planeCounter.nbInPlane( hits_layers->m_planeCode[ stereoHits[beginRange] ]/2 ) > 1 &&
-           ((averageCoord - hits_layers->m_coord[ stereoHits[beginRange] ]) > 1.0f * 
-            (hits_layers->m_coord[ stereoHits[endRange-1] ] - averageCoord)) ) {
+           ((averageCoord - stereoCoords[ beginRange ]) > 1.0f * 
+            (stereoCoords[ endRange-1 ] - averageCoord)) ) {
 
         planeCounter.removeHit( hits_layers->m_planeCode[ stereoHits[beginRange] ]/2 );
-        sumCoord -= hits_layers->m_coord[ stereoHits[beginRange] ];
+        sumCoord -= stereoCoords[ beginRange ];
         beginRange++;
         continue;
       }
@@ -146,11 +154,11 @@ bool selectStereoHits(
       if(endRange == n_stereoHits) break; //already at end, cluster cannot be expanded anymore
       //add next, if it decreases the range size and is empty
       if ( (planeCounter.nbInPlane( hits_layers->m_planeCode[ stereoHits[beginRange] ]/2 ) == 0) &&
-           (averageCoord - hits_layers->m_coord[ stereoHits[beginRange] ] > 
-            hits_layers->m_coord[ stereoHits[endRange] ] - averageCoord )
+           (averageCoord - stereoCoords[ beginRange ] > 
+            stereoCoords[ endRange ] - averageCoord )
          ) {
         planeCounter.addHit( hits_layers->m_planeCode[ stereoHits[endRange] ]/2 );
-        sumCoord += hits_layers->m_coord[ stereoHits[endRange]];
+        sumCoord += stereoCoords[ endRange];
         endRange++;
         continue;
       }

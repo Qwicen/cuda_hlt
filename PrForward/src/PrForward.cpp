@@ -48,7 +48,6 @@ void PrForward(
     // not thread safe!!
     for (int i =0; i< SciFi::Constants::max_numhits_per_event; i++){
       hits_layers->m_used[i] = false;
-      hits_layers->m_coord[i] = 0.0;
     }
   }
 
@@ -233,19 +232,13 @@ void selectFullCandidates(
     // search for hits in U/V layers
     int stereoHits[SciFi::Tracking::max_stereo_hits];
     int n_stereoHits = 0;
-    collectStereoHits(hits_layers, *cand, velo_state, pars, stereoHits, n_stereoHits);
+    float stereoCoords[SciFi::Tracking::max_stereo_hits];
+    collectStereoHits(hits_layers, *cand, velo_state, pars, stereoCoords, stereoHits, n_stereoHits);
 
     if(n_stereoHits < pars.minStereoHits) continue;
-
-    // Sort hits by coord
-    int stereoHits_coords[SciFi::Tracking::max_stereo_hits];
-    for ( int i_hit = 0; i_hit < n_stereoHits; ++i_hit ) {
-      stereoHits_coords[i_hit] = hits_layers->m_coord[ stereoHits[i_hit] ];
-    }
-    thrust::sort_by_key(thrust::host, stereoHits_coords, stereoHits_coords + n_stereoHits, stereoHits);
-  
+   
     // select best U/V hits
-    if ( !selectStereoHits(hits_layers, *cand, stereoHits, n_stereoHits, velo_state, pars) ) continue;
+    if ( !selectStereoHits(hits_layers, *cand, stereoCoords, stereoHits, n_stereoHits, velo_state, pars) ) continue;
 
     planeCounter.clear();
     for ( int i_hit = 0; i_hit < cand->hitsNum; ++i_hit ) {

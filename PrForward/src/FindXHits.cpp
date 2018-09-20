@@ -126,7 +126,7 @@ void collectAllXHits(
         const float xMaxUV  = xPredUv + maxDx;
         
         if ( matchStereoHit( itUV1, uv_zone_offset_end, hits_layers, xMinUV, xMaxUV) ) {
-          if ( n_x_hits >= SciFi::Tracking::max_x_hits )
+          if ( n_x_hits >= SciFi::Tracking::max_x_hits - 1)
             break;
           allXHits[n_x_hits++] = xHit;
         }
@@ -139,7 +139,7 @@ void collectAllXHits(
         const float xMaxUV  = xPredUv + maxDx;
 
         if ( matchStereoHit( itUV1, uv_zone_offset_end, hits_layers, xMinUV, xMaxUV ) || matchStereoHitWithTriangle(itUV2, triangle_zone_offset_end, yInZone, hits_layers, xMinUV, xMaxUV, side ) ) {
-          if ( n_x_hits >= SciFi::Tracking::max_x_hits )
+          if ( n_x_hits >= SciFi::Tracking::max_x_hits - 1)
             break;
           allXHits[n_x_hits++] = xHit;
         }
@@ -472,7 +472,7 @@ bool addHitsOnEmptyXLayers(
       }    
     }    
     if ( best != -1 ) {
-      if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
+      if ( n_coordToFit >= SciFi::Tracking::max_coordToFit - 1 )
         break;
       assert( n_coordToFit < SciFi::Tracking::max_coordToFit );
       coordToFit[n_coordToFit++] = best; // add the best hit here
