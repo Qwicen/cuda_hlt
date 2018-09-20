@@ -6,6 +6,7 @@ void xAtRef_SamePlaneHits(
   SciFi::HitsSoA* hits_layers,
   const int allXHits[SciFi::Tracking::max_x_hits],
   const int n_x_hits,
+  float coordX[SciFi::Tracking::max_x_hits],
   const float xParams_seed[4],
   MiniState velo_state, 
   int itH, int itEnd)
@@ -24,7 +25,7 @@ void xAtRef_SamePlaneHits(
     float xMag    = xFromVelo_Hit + velo_state.tx * (zMag - zHit);
     float dxCoef  = dz * dz * ( SciFi::Tracking::xParams[0] + dz * SciFi::Tracking::xParams[1] ) * dSlope;
     float ratio   = (  SciFi::Tracking::zReference - zMag ) / ( zHit - zMag );
-    hits_layers->m_coord[allXHits[itH]] = xMag + ratio * (xHit + dxCoef  - xMag);
+    coordX[itH] = xMag + ratio * (xHit + dxCoef  - xMag);
     itH++;
   }
 }

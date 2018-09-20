@@ -19,6 +19,7 @@ void xAtRef_SamePlaneHits(
   SciFi::HitsSoA* hits_layers,
   const int allXHits[SciFi::Tracking::max_x_hits],
   const int n_x_hits,
+  float coordX[SciFi::Tracking::max_x_hits],
   const float xParams_seed[4],
   MiniState velo_state, 
   int itH, int itEnd);

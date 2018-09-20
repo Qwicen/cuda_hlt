@@ -18,6 +18,7 @@ void collectAllXHits(
   SciFi::HitsSoA* hits_layers,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
+  float coordX[SciFi::Tracking::max_x_hits],
   const float xParams_seed[4], 
   const float yParams_seed[4],
   const MiniState& velo_state,
@@ -149,18 +150,14 @@ void collectAllXHits(
     const int iEnd = n_x_hits;
     iZoneEnd[cptZone++] = iEnd;
     if( !(iStart == iEnd) ){
-      xAtRef_SamePlaneHits(hits_layers, allXHits, n_x_hits, xParams_seed, velo_state, iStart, iEnd); //calc xRef for all hits on same layer
+      xAtRef_SamePlaneHits(hits_layers, allXHits, n_x_hits, coordX, xParams_seed, velo_state, iStart, iEnd); //calc xRef for all hits on same layer
     }
     if ( n_x_hits >= SciFi::Tracking::max_x_hits )
       break;
   }
 
   // Sort hits by coord
-  int allXHits_coords[SciFi::Tracking::max_x_hits];
-  for ( int i_hit = 0; i_hit < n_x_hits; ++i_hit ) {
-    allXHits_coords[i_hit] = hits_layers->m_coord[ allXHits[i_hit] ];
-  }
-  thrust::sort_by_key(thrust::host, allXHits_coords, allXHits_coords + n_x_hits, allXHits);
+  thrust::sort_by_key(thrust::host, coordX, coordX + n_x_hits, allXHits);
 
 }
 
@@ -173,6 +170,7 @@ void selectXCandidates(
   SciFi::HitsSoA* hits_layers,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
+  float coordX[SciFi::Tracking::max_x_hits],
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks],
   int& n_candidate_tracks,
@@ -201,13 +199,11 @@ void selectXCandidates(
 
     //define search window for Cluster
     //TODO better xWindow calculation?? how to tune this???
-    const float xWindow = pars.maxXWindow + (std::fabs(hits_layers->m_coord[allXHits[it1]]) + 
-                                             std::fabs(hits_layers->m_coord[allXHits[it1]] - xStraight)
+    const float xWindow = pars.maxXWindow + (std::fabs(coordX[it1]) + 
+                                             std::fabs(coordX[it1] - xStraight)
                                              ) * pars.maxXWindowSlope;
-    //If window is to small, go one step right
-    if ((hits_layers->m_coord[allXHits[it2 - 1]] - 
-         hits_layers->m_coord[allXHits[it1]]) > xWindow
-        ) {
+    
+    if ( (coordX[it2 - 1] - coordX[it1]) > xWindow ) {
       ++it1;
       continue;
     }
@@ -232,13 +228,12 @@ void selectXCandidates(
       //Add next hit,
       // if there is only a small gap between the hits
       //    or inside window and plane is still empty
-      if ( ( hits_layers->m_coord[allXHits[it2]] < hits_layers->m_coord[allXHits[itLast]] + pars.maxXGap )
+      if ( ( coordX[it2] < coordX[itLast] + pars.maxXGap )
            || 
-           ( (hits_layers->m_coord[allXHits[it2]] - hits_layers->m_coord[allXHits[it1]] < xWindow) && 
+           ( (coordX[it2] - coordX[it1] < xWindow) && 
              (planeCounter.nbInPlane( hits_layers->m_planeCode[allXHits[it2]]/2 )  == 0)
              ) 
          ) {
-	//debug_cout << "Adding valid hit " << it2 << " on plane " << hits_layers->m_planeCode[allXHits[it2]] << std::endl;
         planeCounter.addHit( hits_layers->m_planeCode[allXHits[it2]]/2 );
         itLast = it2; 
         ++it2;
@@ -332,7 +327,7 @@ void selectXCandidates(
       while ( itWindowEnd <= it2 ) {
         if ( lplaneCounter.nbDifferent >= nPlanes ) {
           //have nPlanes, check x distance
-          const float dist = hits_layers->m_coord[allXHits[itWindowEnd-1]] - hits_layers->m_coord[allXHits[itWindowStart]];
+          const float dist = coordX[itWindowEnd-1] - coordX[itWindowStart];
           if ( dist < minInterval ) {
             minInterval = dist;
             best    = itWindowStart;
@@ -364,7 +359,7 @@ void selectXCandidates(
             break;
           assert(n_coordToFit < SciFi::Tracking::max_coordToFit);
           coordToFit[n_coordToFit++] = allXHits[itH];
-          xAtRef += hits_layers->m_coord[ allXHits[itH] ];
+          xAtRef += coordX[ itH ];
         }
       }
       xAtRef /= ((float)n_coordToFit);

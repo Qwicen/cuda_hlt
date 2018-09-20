@@ -83,16 +83,17 @@ void find_forward_tracks(
 
   int allXHits[2][SciFi::Tracking::max_x_hits];
   int n_x_hits[2] = {};
+  float coordX[2][SciFi::Tracking::max_x_hits];
   
-  if(yAtRef>-5.f)collectAllXHits(hits_layers, allXHits[1], n_x_hits[1], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, 1); 
-  if(yAtRef< 5.f)collectAllXHits(hits_layers, allXHits[0], n_x_hits[0], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, -1);
+  if(yAtRef>-5.f)collectAllXHits(hits_layers, allXHits[1], n_x_hits[1], coordX[1], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, 1); 
+  if(yAtRef< 5.f)collectAllXHits(hits_layers, allXHits[0], n_x_hits[0], coordX[0], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, -1);
 
   SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks];
   int n_candidate_tracks = 0;
   
-  if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
+  if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], coordX[1], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
 				   xParams_seed, yParams_seed, velo_state, pars_first,  1);
-  if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
+  if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], coordX[0], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
 				   xParams_seed, yParams_seed, velo_state, pars_first, -1); 
 
 
@@ -127,9 +128,9 @@ void find_forward_tracks(
   int n_candidate_tracks2 = 0;
   
   if (!ok && SciFi::Tracking::secondLoop) { // If you found nothing begin the 2nd loop
-    if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
+    if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], coordX[1], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
 				     xParams_seed, yParams_seed, velo_state, pars_second, 1);
-    if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
+    if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], coordX[0], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
 				     xParams_seed, yParams_seed, velo_state, pars_second, -1);  
 
   
