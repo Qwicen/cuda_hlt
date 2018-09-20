@@ -55,6 +55,7 @@ if ( ROOT_FOUND )
   Utils
   Velo
   UT
+  SciFi
   x86VeloUT
   x86Forward
   ${ROOT_LIBRARIES})
@@ -63,6 +64,7 @@ else()
   Utils
   Velo
   UT
+  SciFi
   x86Forward
   x86VeloUT)
 endif()

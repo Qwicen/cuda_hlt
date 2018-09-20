@@ -417,6 +417,24 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::veloUT>().invoke();
 
+    // SciFi tracking
+    argument_sizes[arg::dev_scifi_hits] = argen.size<arg::dev_scifi_hits>(number_of_events);
+    argument_sizes[arg::dev_scifi_tracks] = argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks);
+    argument_sizes[arg::dev_n_scifi_tracks] = argen.size<arg::dev_n_scifi_tracks>(number_of_events);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::PrForward>().set_opts(dim3(number_of_events), dim3(1), stream);
+    sequence.item<seq::PrForward>().set_arguments(
+      argen.generate<arg::dev_scifi_hits>(argument_offsets),                       
+      argen.generate<arg::dev_atomics_storage>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
+      argen.generate<arg::dev_velo_states>(argument_offsets),
+      argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
+      argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
+      argen.generate<arg::dev_scifi_tracks>(argument_offsets),
+      argen.generate<arg::dev_n_scifi_tracks>(argument_offsets)
+    );
+    sequence.item<seq::PrForward>().invoke();                                               
+
     // Transmission device to host
     // Velo tracks
     cudaCheck(cudaMemcpyAsync(host_velo_tracks_atomics, argen.generate<arg::dev_atomics_storage>(argument_offsets), (2 * number_of_events + 1) * sizeof(uint), cudaMemcpyDeviceToHost, stream));

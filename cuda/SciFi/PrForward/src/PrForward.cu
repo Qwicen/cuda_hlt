@@ -11,6 +11,38 @@
 
 
 //=============================================================================
+
+
+__global__ void PrForward(
+  SciFi::HitsSoA* dev_scifi_hits,
+  int* dev_atomics_storage,
+  uint* dev_velo_track_hit_number,
+  uint* dev_velo_states,
+  VeloUTTracking::TrackUT * dev_veloUT_tracks,
+  const int * dev_atomics_veloUT,
+  SciFi::Track dev_scifi_tracks[SciFi::max_tracks],
+  uint* dev_n_scifi_tracks //,
+  // const SciFi::Tracking::TMVA& dev_tmva1,
+  // const SciFi::Tracking::TMVA& dev_tmva2,
+  // const SciFi::Tracking::Arrays& dev_constArrays  
+) {
+
+  const uint number_of_events = gridDim.x;
+  const uint event_number = blockIdx.x;
+  
+  // const Velo::Consolidated::States& velo_states,
+  // const uint event_tracks_offset,
+
+  // const int n_veloUT_tracks,
+  
+  
+
+  
+  
+  
+  
+}
+
 __host__ __device__ void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,
   const VeloUTTracking::TrackUT& veloUTTrack,

@@ -91,6 +91,7 @@ if ( ROOT_FOUND )
     Utils
     Velo
     UT
+    SciFi
     x86VeloUT
     Stream
     x86Forward
@@ -104,6 +105,7 @@ else()
     Utils
     Velo
     UT
+    SciFi
     x86VeloUT
     Stream
     x86Forward
