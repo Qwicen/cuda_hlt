@@ -264,8 +264,7 @@ void selectXCandidates(
     // The line fitter was a standalone helper class in our framework, here I've ripped
     // its functionality out, basically have a struct which contains all the parameters
     // and some light helper math functions operating on these.
-    std::vector<int> lineFitter;
-    lineFitter.clear(); 
+    
     SciFi::Tracking::LineFitterPars lineFitParameters;
     lineFitParameters.m_z0 = SciFi::Tracking::zReference;
     float xAtRef = 0.;
@@ -283,7 +282,6 @@ void selectXCandidates(
         if( !hits_layers->isValid(allXHits[itH]) ) continue;
         int planeCode = hits_layers->m_planeCode[allXHits[itH]]/2;
         if( planeCounter.nbInPlane(planeCode) == 1 ){
-          lineFitter.emplace_back(allXHits[itH]);
 	  incrementLineFitParameters(lineFitParameters, hits_layers, allXHits[itH]);
         }else{
           if ( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits ) 
@@ -306,7 +304,6 @@ void selectXCandidates(
             best = hit; 
           }
         }
-        lineFitter.emplace_back(otherHits[i][best]);
 	incrementLineFitParameters(lineFitParameters, hits_layers, otherHits[i][best]);
       }
       solveLineFit(lineFitParameters);
@@ -363,6 +360,8 @@ void selectXCandidates(
       //Fill coords and compute average x at reference
       for ( int itH = it1; it2 != itH; ++itH ) {
         if (hits_layers->isValid(allXHits[itH])) {
+          if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
+            break;
           assert(n_coordToFit < SciFi::Tracking::max_coordToFit);
           coordToFit[n_coordToFit++] = allXHits[itH];
           xAtRef += hits_layers->m_coord[ allXHits[itH] ];
@@ -411,6 +410,7 @@ void selectXCandidates(
       }
       for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
         int hit = coordToFit[i_hit];
+        if ( track.hitsNum >= SciFi::Tracking::max_hits ) break;
         track.addHit( hit );
 	hits_layers->m_used[hit] = true; //set as used in the SoA!
       }
@@ -476,6 +476,8 @@ bool addHitsOnEmptyXLayers(
       }    
     }    
     if ( best != -1 ) {
+      if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
+        break;
       assert( n_coordToFit < SciFi::Tracking::max_coordToFit );
       coordToFit[n_coordToFit++] = best; // add the best hit here
       planeCounter.addHit( hits_layers->m_planeCode[best]/2 );

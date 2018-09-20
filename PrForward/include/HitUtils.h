@@ -94,7 +94,8 @@ inline void removeOutlier(
   int& n_coordToFit,
   const int worst ) {
   planeCounter.removeHit( hits_layers->m_planeCode[worst]/2 );
-  int coordToFit_temp[SciFi::Tracking::max_coordToFit];
+  const int n_hits = n_coordToFit;
+  int coordToFit_temp[n_hits];
   int i_hit_temp = 0;
   for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
     int hit = coordToFit[i_hit];

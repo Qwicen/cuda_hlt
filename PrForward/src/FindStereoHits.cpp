@@ -210,6 +210,7 @@ bool selectStereoHits(
     track.trackParams[6] = bestYParams[2];
     for ( int i_hit = 0; i_hit < n_bestStereoHits; ++i_hit ) {
       int hit = bestStereoHits[i_hit];
+      if ( track.hitsNum >= SciFi::Tracking::max_hits ) break;
       track.addHit( hit );
     }
     return true;

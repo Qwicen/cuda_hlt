@@ -24,8 +24,8 @@ namespace SciFi{
     const int max_x_hits = 500;
     const int max_other_hits = 5;
     const int max_stereo_hits = 25;
-    const int max_coordToFit = 500; // CHECK
-    const int max_hits = 500; // CHECK
+    const int max_coordToFit = 15; 
+    const int max_hits = 12;
     const int nTrackParams = 9;
     
     const int TMVA_Nvars = 7;

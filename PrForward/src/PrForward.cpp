@@ -178,6 +178,7 @@ void find_forward_tracks(
         
         assert(n_forward_tracks < SciFi::max_tracks);
         outputTracks[n_forward_tracks++] = tr;
+        //debug_cout << "track hit number = " << tr.hitsNum << std::endl;
       }
     }
   }
