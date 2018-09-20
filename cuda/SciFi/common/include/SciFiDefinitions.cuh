@@ -53,13 +53,7 @@ namespace SciFi {
       unsigned int m_LHCbID[Constants::max_numhits_per_event] = {0};
       int m_planeCode[Constants::max_numhits_per_event] = {0};
       int m_hitZone[Constants::max_numhits_per_event] = {0};
-      bool m_used[Constants::max_numhits_per_event] = {false};
-      
-      // check for used hit
-      bool isValid( int value ) const {
-        return !m_used[value];
-      }
-      
+           
     };
     
     const int max_tracks = 150;

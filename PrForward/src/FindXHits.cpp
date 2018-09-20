@@ -170,6 +170,7 @@ void selectXCandidates(
   SciFi::HitsSoA* hits_layers,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
+  bool usedHits[SciFi::Constants::max_numhits_per_event],
   float coordX[SciFi::Tracking::max_x_hits],
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks],
@@ -190,11 +191,13 @@ void selectXCandidates(
 
   PlaneCounter planeCounter;
   
+  
   while( true ) {
     //find next unused Hits
-    while (it1+pars.minXHits - 1 < itEnd && !hits_layers->isValid(allXHits[it1])) ++it1;
+   
+    while ( it1+pars.minXHits - 1 < itEnd && usedHits[ allXHits[it1] ] ) ++it1;
     it2 = it1 + pars.minXHits;
-    while (it2 <= itEnd && !hits_layers->isValid(allXHits[it2-1])) ++it2;
+    while (it2 <= itEnd && usedHits[ allXHits[it2-1] ] ) ++it2;
     if (it2 > itEnd) break;
 
     //define search window for Cluster
@@ -211,7 +214,7 @@ void selectXCandidates(
     // Cluster candidate found, now count planes
     planeCounter.clear();
     for (int itH = it1; itH != it2; ++itH) {
-      if (hits_layers->isValid(allXHits[itH])) {
+      if (!usedHits[ allXHits[itH] ]) {
         const int plane = hits_layers->m_planeCode[allXHits[itH]]/2;
         planeCounter.addHit( plane );
       }
@@ -219,7 +222,7 @@ void selectXCandidates(
     // Improve cluster (at the moment only add hits to the right)
     int itLast = it2 - 1;
     while (it2 < itEnd) {
-      if (!hits_layers->isValid(allXHits[it2])) {
+      if (usedHits[ allXHits[it2] ]) {
         ++it2;
         continue;
       } 
@@ -265,6 +268,7 @@ void selectXCandidates(
     float xAtRef = 0.;
     const unsigned int nbSingle = planeCounter.nbSingle();
     int coordToFit[SciFi::Tracking::max_coordToFit];
+    int coordToFitIndex[SciFi::Tracking::max_coordToFit];
     int n_coordToFit = 0;
     
     if ( nbSingle >= SciFi::Tracking::minSingleHits && nbSingle != planeCounter.nbDifferent ) {
@@ -274,7 +278,7 @@ void selectXCandidates(
       
       //seperate single and double hits
       for(auto itH = it1; it2 > itH; ++itH ){
-        if( !hits_layers->isValid(allXHits[itH]) ) continue;
+        if( usedHits[ allXHits[itH] ] ) continue;
         int planeCode = hits_layers->m_planeCode[allXHits[itH]]/2;
         if( planeCounter.nbInPlane(planeCode) == 1 ){
 	  incrementLineFitParameters(lineFitParameters, hits_layers, coordX, allXHits, itH);
@@ -312,7 +316,7 @@ void selectXCandidates(
       int itWindowStart = it1; 
       int itWindowEnd   = it1 + nPlanes; //pointing at last+1
       //Hit is used, go to next unused one
-      while( itWindowEnd<=it2  &&  !hits_layers->isValid(allXHits[itWindowEnd-1])) ++itWindowEnd;
+      while( itWindowEnd<=it2  &&  usedHits[ allXHits[itWindowEnd-1] ]) ++itWindowEnd;
       if( itWindowEnd > it2) continue; //start from very beginning
     
       float minInterval = 1.e9f;
@@ -321,7 +325,7 @@ void selectXCandidates(
 
       PlaneCounter lplaneCounter;
       for (int itH = itWindowStart; itH != itWindowEnd; ++itH) {
-        if (hits_layers->isValid(allXHits[itH])) {
+        if (!usedHits[ allXHits[itH]]) {
           lplaneCounter.addHit( hits_layers->m_planeCode[allXHits[itH]]/2 );
 	}
       } 
@@ -337,7 +341,7 @@ void selectXCandidates(
         } else {
           //too few planes, add one hit
           ++itWindowEnd;
-          while( itWindowEnd<=it2  &&  !hits_layers->isValid(allXHits[itWindowEnd-1])) ++itWindowEnd;
+          while( itWindowEnd<=it2  &&  usedHits[ allXHits[itWindowEnd-1] ]) ++itWindowEnd;
           if( itWindowEnd > it2) break;
           lplaneCounter.addHit( hits_layers->m_planeCode[allXHits[itWindowEnd-1]]/2 );
           continue;
@@ -345,7 +349,7 @@ void selectXCandidates(
         // move on to the right
         lplaneCounter.removeHit( hits_layers->m_planeCode[allXHits[itWindowStart]]/2 );
         ++itWindowStart;
-        while( itWindowStart<itWindowEnd && !hits_layers->isValid(allXHits[itWindowStart]) ) ++itWindowStart;
+        while( itWindowStart<itWindowEnd && usedHits[ allXHits[itWindowStart] ] ) ++itWindowStart;
         //last hit guaranteed to be not used. Therefore there is always at least one hit to go to. No additional if required.
       }
       //TODO tune minInterval cut value
@@ -355,10 +359,11 @@ void selectXCandidates(
       }
       //Fill coords and compute average x at reference
       for ( int itH = it1; it2 != itH; ++itH ) {
-        if (hits_layers->isValid(allXHits[itH])) {
+        if (!usedHits[ allXHits[itH]]) {
           if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
             break;
           assert(n_coordToFit < SciFi::Tracking::max_coordToFit);
+          coordToFitIndex[n_coordToFit] = itH;
           coordToFit[n_coordToFit++] = allXHits[itH];
           xAtRef += coordX[ itH ];
         }
@@ -408,7 +413,7 @@ void selectXCandidates(
         int hit = coordToFit[i_hit];
         if ( track.hitsNum >= SciFi::Tracking::max_hits ) break;
         track.addHit( hit );
-	hits_layers->m_used[hit] = true; //set as used in the SoA!
+        usedHits[hit] = true;
       }
       candidate_tracks[n_candidate_tracks++] = track;
     
@@ -472,7 +477,7 @@ bool addHitsOnEmptyXLayers(
       }    
     }    
     if ( best != -1 ) {
-      if ( n_coordToFit >= SciFi::Tracking::max_coordToFit - 1 )
+      if ( n_coordToFit >= SciFi::Tracking::max_coordToFit - 1)
         break;
       assert( n_coordToFit < SciFi::Tracking::max_coordToFit );
       coordToFit[n_coordToFit++] = best; // add the best hit here

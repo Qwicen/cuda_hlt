@@ -42,13 +42,6 @@ void PrForward(
       tmva2,
       velo_state);
     
-    
-    // Reset used hits etc.
-    // these should not be part of the HitsSoA struct
-    // not thread safe!!
-    for (int i =0; i< SciFi::Constants::max_numhits_per_event; i++){
-      hits_layers->m_used[i] = false;
-    }
   }
 
 }
@@ -89,10 +82,11 @@ void find_forward_tracks(
 
   SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks];
   int n_candidate_tracks = 0;
+  bool usedHits[SciFi::Constants::max_numhits_per_event] = { false };
   
-  if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], coordX[1], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
+  if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], usedHits, coordX[1], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
 				   xParams_seed, yParams_seed, velo_state, pars_first,  1);
-  if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], coordX[0], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
+  if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], usedHits, coordX[0], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
 				   xParams_seed, yParams_seed, velo_state, pars_first, -1); 
 
 
@@ -127,9 +121,9 @@ void find_forward_tracks(
   int n_candidate_tracks2 = 0;
   
   if (!ok && SciFi::Tracking::secondLoop) { // If you found nothing begin the 2nd loop
-    if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], coordX[1], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
+    if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], usedHits, coordX[1], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
 				     xParams_seed, yParams_seed, velo_state, pars_second, 1);
-    if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], coordX[0], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
+    if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], usedHits, coordX[0], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
 				     xParams_seed, yParams_seed, velo_state, pars_second, -1);  
 
   
@@ -249,16 +243,6 @@ void selectFullCandidates(
     //make a fit of ALL hits
     if(!fitXProjection(hits_layers, cand->trackParams, cand->hit_indices, cand->hitsNum, planeCounter, pars))continue;
  
-    //check in empty x layers for hits 
-    auto checked_empty = (cand->trackParams[4]  < 0.f) ?
-      addHitsOnEmptyXLayers(hits_layers, cand->trackParams, xParams_seed, yParams_seed,
-                            true, cand->hit_indices, cand->hitsNum, planeCounter, pars, -1)
-        : 
-      addHitsOnEmptyXLayers(hits_layers, cand->trackParams, xParams_seed, yParams_seed,
-                            true, cand->hit_indices, cand->hitsNum, planeCounter, pars, 1);
-
-    if (not checked_empty) continue;
-
     //track has enough hits, calcualte quality and save if good enough
     if(planeCounter.nbDifferent >= SciFi::Tracking::minTotalHits){
 
