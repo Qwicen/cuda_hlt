@@ -85,6 +85,12 @@ bool selectStereoHits(
   MiniState velo_state, 
   SciFi::Tracking::HitSearchCuts& pars)
 {
+  std::vector<int> stereoHitsVec;
+  stereoHitsVec.clear();
+  for ( int i = 0; i < n_stereoHits; ++i ) {
+    stereoHitsVec.push_back( stereoHits[i] );
+  }
+  
   //why do we rely on xRef? --> coord is NOT xRef for stereo HITS!
   int bestStereoHits[SciFi::Tracking::max_stereo_hits];
   int n_bestStereoHits = 0;
@@ -94,34 +100,42 @@ bool selectStereoHits(
   float bestYParams[3];
   float bestMeanDy       = 1e9f;
 
-  int beginRange = 0;
+  int beginRange = -1; 
   
   if(pars.minStereoHits > n_stereoHits) return false; //otherwise crash if minHits is too large
-  auto endLoop = n_stereoHits - pars.minStereoHits;
+  int endLoop = n_stereoHits - pars.minStereoHits;
+  
   PlaneCounter planeCounter;
   while ( beginRange < endLoop ) {
     ++beginRange;
     planeCounter.clear();
-    auto endRange = beginRange;
+    int endRange = beginRange;
+
     float sumCoord = 0.;
-    // BAD CODE RELIES ON FIRST CONDITION ALWAYS BEING TRUE AT START NOT TO SEGFAULT
-    while( planeCounter.nbDifferent < pars.minStereoHits ||
-           hits_layers->m_coord[ stereoHits[endRange] ] < hits_layers->m_coord[ stereoHits[endRange-1]] + SciFi::Tracking::minYGap ) {
+    // bad hack to reproduce itereator behavior from before
+    int first_hit;
+    if ( endRange == 0 )
+      first_hit = 0;
+    else
+      first_hit = stereoHits[endRange-1];
     
+    while( planeCounter.nbDifferent < pars.minStereoHits ||
+           hits_layers->m_coord[ stereoHits[endRange] ] < hits_layers->m_coord[ first_hit] + SciFi::Tracking::minYGap ) {
       planeCounter.addHit( hits_layers->m_planeCode[ stereoHits[endRange] ] / 2 );
       sumCoord += hits_layers->m_coord[ stereoHits[endRange] ];
       ++endRange;
       if ( endRange == n_stereoHits ) break;
+      first_hit = stereoHits[endRange-1];
     }
 
     //clean cluster
     while( true ) {
       const float averageCoord = sumCoord / float(endRange-beginRange);
-
+      
       // remove first if not single and farthest from mean
       if ( planeCounter.nbInPlane( hits_layers->m_planeCode[ stereoHits[beginRange] ]/2 ) > 1 &&
            ((averageCoord - hits_layers->m_coord[ stereoHits[beginRange] ]) > 1.0f * 
-	    (hits_layers->m_coord[ stereoHits[endRange-1] ] - averageCoord)) ) { //tune this value has only little effect?!
+            (hits_layers->m_coord[ stereoHits[endRange-1] ] - averageCoord)) ) {
 
         planeCounter.removeHit( hits_layers->m_planeCode[ stereoHits[beginRange] ]/2 );
         sumCoord -= hits_layers->m_coord[ stereoHits[beginRange] ];
@@ -130,13 +144,11 @@ bool selectStereoHits(
       }
 
       if(endRange == n_stereoHits) break; //already at end, cluster cannot be expanded anymore
-
       //add next, if it decreases the range size and is empty
       if ( (planeCounter.nbInPlane( hits_layers->m_planeCode[ stereoHits[beginRange] ]/2 ) == 0) &&
            (averageCoord - hits_layers->m_coord[ stereoHits[beginRange] ] > 
-	    hits_layers->m_coord[ stereoHits[endRange] ] - averageCoord )
+            hits_layers->m_coord[ stereoHits[endRange] ] - averageCoord )
          ) {
-        //debug_cout << "Pushing back a stereo hit " << *endRange << " on plane " << hits_layers->m_planeCode[*endRange] << std::endl;
         planeCounter.addHit( hits_layers->m_planeCode[ stereoHits[endRange] ]/2 );
         sumCoord += hits_layers->m_coord[ stereoHits[endRange]];
         endRange++;
@@ -146,8 +158,6 @@ bool selectStereoHits(
       break;
     }
 
-    //debug_cout << "Found a stereo candidate, about to fit!" << std::endl;
-
     //Now we have a candidate, lets fit him
     // track = original; //only yparams are changed
     track.trackParams[4] = originalYParams[0];
@@ -156,11 +166,11 @@ bool selectStereoHits(
    
     int trackStereoHits[SciFi::Tracking::max_stereo_hits];
     int n_trackStereoHits = 0;
+    
     for ( int range = beginRange; range < endRange; ++range ) {
       trackStereoHits[n_trackStereoHits++] = stereoHits[range];
     }
     
-
     //fit Y Projection of track using stereo hits
     if(!fitYProjection(hits_layers, track, trackStereoHits, n_trackStereoHits, planeCounter, velo_state, pars))continue;
     // debug_cout << "Passed the Y fit" << std::endl;
