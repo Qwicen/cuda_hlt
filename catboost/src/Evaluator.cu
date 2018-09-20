@@ -16,7 +16,6 @@ __global__ void catboost_evaluator(
     return;
   int treeId = threadIdx.x;
   float sum = 0;
-  printf("%d, ", (int)dev_bin_features[treeId]);
   while(treeId < dev_tree_num) {
     size_t index{};
     for (size_t depth = 0; depth < dev_tree_sizes[treeId]; ++depth) {
