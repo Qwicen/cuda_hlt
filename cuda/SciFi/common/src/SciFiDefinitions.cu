@@ -1,4 +1,4 @@
-#include "FTDefinitions.cuh"
+#include "SciFiDefinitions.cuh"
 #include <sstream>
 
 /*                     ---Geometry format---
@@ -30,9 +30,9 @@
 | globaldy                     | float    | max_uniqueMat      |
 */
 
-namespace FT {
+namespace SciFi {
 
-__device__ __host__ FTGeometry::FTGeometry(
+__device__ __host__ SciFiGeometry::SciFiGeometry(
   const char* geometry
 ) {
   const char* p = geometry;
@@ -65,33 +65,33 @@ __device__ __host__ FTGeometry::FTGeometry(
   size = p - geometry;
 }
 
-FTGeometry::FTGeometry(const std::vector<char>& geometry) : FTGeometry::FTGeometry(geometry.data()) {}
+SciFiGeometry::SciFiGeometry(const std::vector<char>& geometry) : SciFiGeometry::SciFiGeometry(geometry.data()) {}
 
-__device__ __host__ FTRawEvent::FTRawEvent(const char* event) {
+__device__ __host__ SciFiRawEvent::SciFiRawEvent(const char* event) {
   const char* p = event;
   number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
   raw_bank_offset = (uint32_t*) p; p += (number_of_raw_banks + 1) * sizeof(uint32_t);
   payload = (char*) p;
 }
 
-__device__ __host__ FTRawBank FTRawEvent::getFTRawBank(const uint32_t index) const {
-  FTRawBank bank(payload + raw_bank_offset[index], payload + raw_bank_offset[index + 1]);
+__device__ __host__ SciFiRawBank SciFiRawEvent::getSciFiRawBank(const uint32_t index) const {
+  SciFiRawBank bank(payload + raw_bank_offset[index], payload + raw_bank_offset[index + 1]);
   return bank;
 }
 
-__device__ __host__ FTRawBank::FTRawBank(const char* raw_bank, const char* end) {
+__device__ __host__ SciFiRawBank::SciFiRawBank(const char* raw_bank, const char* end) {
   const char* p = raw_bank;
   sourceID = *((uint32_t*)p); p += sizeof(uint32_t);
   data = (uint16_t*) p;
   last = (uint16_t*) end;
 }
 
-__device__ __host__ FTChannelID::FTChannelID(const uint32_t channelID) : channelID(channelID) {};
+__device__ __host__ SciFiChannelID::SciFiChannelID(const uint32_t channelID) : channelID(channelID) {};
 
-__host__ std::string FTChannelID::toString()
+__host__ std::string SciFiChannelID::toString()
 {
   std::ostringstream s;
-  s << "{ FTChannelID : "
+  s << "{ SciFiChannelID : "
     << " channel =" << std::to_string(channel())
     << " sipm ="    << std::to_string(sipm())
     << " mat ="     << std::to_string(mat())
@@ -103,69 +103,69 @@ __host__ std::string FTChannelID::toString()
   return s.str();
 }
 
-__device__ __host__ uint32_t FTChannelID::channel() const {
+__device__ __host__ uint32_t SciFiChannelID::channel() const {
   return (uint32_t)((channelID & channelMask) >> channelBits);
 }
 
-__device__ __host__ uint32_t FTChannelID::sipm() const {
+__device__ __host__ uint32_t SciFiChannelID::sipm() const {
   return ((channelID & sipmMask) >> sipmBits);
 }
 
-__device__ __host__ uint32_t FTChannelID::mat() const {
+__device__ __host__ uint32_t SciFiChannelID::mat() const {
   return ((channelID & matMask) >> matBits);
 }
 
-__device__ __host__ uint32_t FTChannelID::module() const {
+__device__ __host__ uint32_t SciFiChannelID::module() const {
   return ((channelID & moduleMask) >> moduleBits);
 }
 
-__device__ __host__ uint32_t FTChannelID::quarter() const {
+__device__ __host__ uint32_t SciFiChannelID::quarter() const {
   return ((channelID & quarterMask) >> quarterBits);
 }
 
-__device__ __host__ uint32_t FTChannelID::layer() const {
+__device__ __host__ uint32_t SciFiChannelID::layer() const {
   return ((channelID & layerMask) >> layerBits);
 }
-__device__ __host__ uint32_t FTChannelID::station() const {
+__device__ __host__ uint32_t SciFiChannelID::station() const {
   return ((channelID & stationMask) >> stationBits);
 }
-__device__ __host__ uint32_t FTChannelID::uniqueLayer() const {
+__device__ __host__ uint32_t SciFiChannelID::uniqueLayer() const {
   return ((channelID & uniqueLayerMask) >> layerBits);
 }
-__device__ __host__ uint32_t FTChannelID::uniqueMat() const {
+__device__ __host__ uint32_t SciFiChannelID::uniqueMat() const {
   return ((channelID & uniqueMatMask) >> matBits);
 }
-__device__ __host__ uint32_t FTChannelID::uniqueModule() const {
+__device__ __host__ uint32_t SciFiChannelID::uniqueModule() const {
   return ((channelID & uniqueModuleMask) >> moduleBits);
 }
-__device__ __host__ uint32_t FTChannelID::uniqueQuarter() const {
+__device__ __host__ uint32_t SciFiChannelID::uniqueQuarter() const {
   return ((channelID & uniqueQuarterMask) >> quarterBits);
 }
-__device__ __host__ uint32_t FTChannelID::die() const {
+__device__ __host__ uint32_t SciFiChannelID::die() const {
   return ((channelID & 0x40) >> 6);
 }
 
-__device__ __host__ bool FTChannelID::isBottom() const {
+__device__ __host__ bool SciFiChannelID::isBottom() const {
  return (quarter() == 0 || quarter() == 1);
 }
 
-void FTHitCount::typecast_before_prefix_sum(
+void SciFiHitCount::typecast_before_prefix_sum(
   uint* base_pointer,
   const uint event_number
 ) {
-  n_hits_layers = base_pointer + event_number * FT::number_of_zones;
+  n_hits_layers = base_pointer + event_number * SciFi::number_of_zones;
 }
 
-void FTHitCount::typecast_after_prefix_sum(
+void SciFiHitCount::typecast_after_prefix_sum(
   uint* base_pointer,
   const uint event_number,
   const uint number_of_events
 ) {
-  layer_offsets = base_pointer + event_number *  FT::number_of_zones;
-  n_hits_layers = base_pointer + number_of_events * FT::number_of_zones + 1 + event_number * FT::number_of_zones;
+  layer_offsets = base_pointer + event_number *  SciFi::number_of_zones;
+  n_hits_layers = base_pointer + number_of_events * SciFi::number_of_zones + 1 + event_number * SciFi::number_of_zones;
 }
 
-void FTHits::typecast_unsorted(char* base, uint32_t total_number_of_hits) {
+void SciFiHits::typecast_unsorted(char* base, uint32_t total_number_of_hits) {
   x0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   z0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   w     =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
@@ -183,7 +183,7 @@ void FTHits::typecast_unsorted(char* base, uint32_t total_number_of_hits) {
   temp  =     reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
 }
 
-void FTHits::typecast_sorted(char* base, uint32_t total_number_of_hits) {
+void SciFiHits::typecast_sorted(char* base, uint32_t total_number_of_hits) {
   temp  =     reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   x0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   z0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
@@ -201,7 +201,7 @@ void FTHits::typecast_sorted(char* base, uint32_t total_number_of_hits) {
   used =      reinterpret_cast<bool*>(base); base += sizeof(bool) * total_number_of_hits;
 }
 
-FTHit FTHits::getHit(uint32_t index) const {
+SciFiHit SciFiHits::getHit(uint32_t index) const {
   return {x0[index], z0[index], w[index], dxdy[index], dzdy[index], yMin[index],
           yMax[index], werrX[index], coord[index], LHCbID[index], planeCode[index],
           hitZone[index], info[index], used[index]};

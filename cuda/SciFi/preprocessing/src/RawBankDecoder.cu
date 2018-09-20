@@ -1,56 +1,55 @@
 #include "RawBankDecoder.cuh"
-#include <stdio.h>
 #include "assert.h"
 
-using namespace FT;
+using namespace SciFi;
 
 __device__ uint32_t channelInBank(uint32_t c) {
-  return (c >> FTRawBankParams::cellShift);
+  return (c >> SciFiRawBankParams::cellShift);
 }
 
 __device__ uint16_t getLinkInBank(uint16_t c){
-  return (c >> FTRawBankParams::linkShift);
+  return (c >> SciFiRawBankParams::linkShift);
 }
 
 __device__ int cell(uint16_t c) {
-  return (c >> FTRawBankParams::cellShift     ) & FTRawBankParams::cellMaximum;
+  return (c >> SciFiRawBankParams::cellShift     ) & SciFiRawBankParams::cellMaximum;
 }
 
 __device__ int fraction(uint16_t c) {
-  return (c >> FTRawBankParams::fractionShift ) & FTRawBankParams::fractionMaximum;
+  return (c >> SciFiRawBankParams::fractionShift ) & SciFiRawBankParams::fractionMaximum;
 }
 
 __device__ bool cSize(uint16_t c) {
-  return (c >> FTRawBankParams::sizeShift     ) & FTRawBankParams::sizeMaximum;
+  return (c >> SciFiRawBankParams::sizeShift     ) & SciFiRawBankParams::sizeMaximum;
 }
 
 __global__ void raw_bank_decoder(
-  char *ft_events,
-  uint *ft_event_offsets,
-  uint *ft_hit_count,
-  char *ft_hits,
-  char *ft_geometry
+  char *scifi_events,
+  uint *scifi_event_offsets,
+  uint *scifi_hit_count,
+  char *scifi_hits,
+  char *scifi_geometry
 ) {
   // maybe not hardcoded, or in another place
   const float invClusRes[] = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
   const uint32_t number_of_events = gridDim.x;
   const uint32_t event_number = blockIdx.x;
 
-  FTGeometry geom(ft_geometry);
-  const auto event = FTRawEvent(ft_events + ft_event_offsets[event_number]);
+  SciFiGeometry geom(scifi_geometry);
+  const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
 
-  FTHits hits;
-  hits.typecast_unsorted(ft_hits, ft_hit_count[number_of_events * FT::number_of_zones]);
-  FTHitCount hit_count;
-  hit_count.typecast_after_prefix_sum(ft_hit_count, event_number, number_of_events);
+  SciFiHits hits;
+  hits.typecast_unsorted(scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_zones]);
+  SciFiHitCount hit_count;
+  hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
 
-  __shared__ uint32_t shared_layer_offsets[FT::number_of_zones];
+  __shared__ uint32_t shared_layer_offsets[SciFi::number_of_zones];
 
-  for (uint i = threadIdx.x; i < FT::number_of_zones; i += blockDim.x) {
+  for (uint i = threadIdx.x; i < SciFi::number_of_zones; i += blockDim.x) {
     shared_layer_offsets[i] = hit_count.layer_offsets[i];
   }
 
-  for (uint i = threadIdx.x; i < FT::number_of_zones; i += blockDim.x) {
+  for (uint i = threadIdx.x; i < SciFi::number_of_zones; i += blockDim.x) {
     hit_count.n_hits_layers[i] = 0;
   }
 
@@ -58,7 +57,7 @@ __global__ void raw_bank_decoder(
 
   // Merge of PrStoreFTHit and RawBankDecoder.
   auto make_cluster = [&](uint32_t chan, uint8_t fraction, uint8_t pseudoSize) {
-    const FT::FTChannelID id(chan);
+    const SciFi::SciFiChannelID id(chan);
 
     // Offset to save space in geometry structure, see DumpFTGeometry.cpp
     const uint32_t mat = id.uniqueMat() - 512;
@@ -114,9 +113,9 @@ __global__ void raw_bank_decoder(
 
     // fragmented clusters, size > 2*max size
     // only edges were saved, add middles now
-    if ( delta  > FTRawBankParams::clusterMaxWidth ) {
+    if ( delta  > SciFiRawBankParams::clusterMaxWidth ) {
       //add the first edge cluster, and then the middle clusters
-      for(unsigned int  i = FTRawBankParams::clusterMaxWidth; i < delta ; i+= FTRawBankParams::clusterMaxWidth){
+      for(unsigned int  i = SciFiRawBankParams::clusterMaxWidth; i < delta ; i+= SciFiRawBankParams::clusterMaxWidth){
         // all middle clusters will have same size as the first cluster,
         // so re-use the fraction
         make_cluster( firstChannel+i, fraction(c), 0 );
@@ -125,7 +124,7 @@ __global__ void raw_bank_decoder(
       make_cluster  ( firstChannel+delta, fraction(c2), 0 );
     } else { //big cluster size upto size 8
       unsigned int widthClus  =  2 * delta - 1 + fraction(c2);
-      make_cluster( firstChannel+(widthClus-1)/2 - int((FTRawBankParams::clusterMaxWidth - 1)/2),
+      make_cluster( firstChannel+(widthClus-1)/2 - int((SciFiRawBankParams::clusterMaxWidth - 1)/2),
                     (widthClus-1)%2, widthClus );
     }//end if adjacent clusters
   };//End lambda make_clusters
@@ -133,7 +132,7 @@ __global__ void raw_bank_decoder(
   // Main execution loop
   for(uint i = threadIdx.x; i < event.number_of_raw_banks; i += blockDim.x)
   {
-    auto rawbank = event.getFTRawBank(i);
+    auto rawbank = event.getSciFiRawBank(i);
     uint16_t* it = rawbank.data + 2;
     uint16_t* last = rawbank.last;
     if (*(last-1) == 0) --last;//Remove padding at the end

@@ -29,11 +29,11 @@ enum seq_enum_t {
   sort_by_x,
   veloUT,
   estimate_cluster_count,
-  prefix_sum_reduce_ft_hits,
-  prefix_sum_single_block_ft_hits,
-  prefix_sum_scan_ft_hits,
+  prefix_sum_reduce_scifi_hits,
+  prefix_sum_single_block_scifi_hits,
+  prefix_sum_scan_scifi_hits,
   raw_bank_decoder,
-  ft_sort_by_x
+  scifi_sort_by_x
 };
 }
 
@@ -72,11 +72,11 @@ enum arg_enum_t {
   dev_ut_hit_permutations,
   dev_veloUT_tracks,
   dev_atomics_veloUT,
-  dev_ft_raw_input_offsets,
-  dev_ft_hit_count,
+  dev_scifi_raw_input_offsets,
+  dev_scifi_hit_count,
   dev_prefix_sum_auxiliary_array_4,
-  dev_ft_hit_permutations,
-  dev_ft_hits,
-  dev_ft_raw_input
+  dev_scifi_hit_permutations,
+  dev_scifi_hits,
+  dev_scifi_raw_input
 };
 }

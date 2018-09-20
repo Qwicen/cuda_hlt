@@ -5,12 +5,12 @@
 #include <ostream>
 
 /**
- * @brief FT geometry description typecast.
+ * @brief SciFi geometry description typecast.
  */
-namespace FT {
+namespace SciFi {
 constexpr uint32_t number_of_zones = 24;
 
-struct FTGeometry {
+struct SciFiGeometry {
   size_t size;
   uint32_t number_of_stations;
   uint32_t number_of_layers_per_station;
@@ -40,34 +40,34 @@ struct FTGeometry {
   /**
    * @brief Typecast from std::vector.
    */
-  FTGeometry(const std::vector<char>& geometry);
+  SciFiGeometry(const std::vector<char>& geometry);
 
   /**
    * @brief Just typecast, no size check.
    */
-  __device__ __host__ FTGeometry(
+  __device__ __host__ SciFiGeometry(
     const char* geometry
   );
 };
 
-struct FTRawBank {
+struct SciFiRawBank {
   uint32_t sourceID;
   uint16_t* data;
   uint16_t* last;
 
-  __device__ __host__ FTRawBank(const char* raw_bank, const char* end);
+  __device__ __host__ SciFiRawBank(const char* raw_bank, const char* end);
 };
 
-struct FTRawEvent {
+struct SciFiRawEvent {
   uint32_t number_of_raw_banks;
   uint32_t* raw_bank_offset;
   char* payload;
 
-  __device__ __host__ FTRawEvent(const char* event);
-  __device__ __host__ FTRawBank getFTRawBank(const uint32_t index) const;
+  __device__ __host__ SciFiRawEvent(const char* event);
+  __device__ __host__ SciFiRawBank getSciFiRawBank(const uint32_t index) const;
 };
 
-namespace FTRawBankParams { //from FT/FTDAQ/src/FTRawBankParams.h
+namespace SciFiRawBankParams { //from SciFi/SciFiDAQ/src/SciFiRawBankParams.h
   enum shifts {
     linkShift     = 9,
     cellShift     = 2,
@@ -90,7 +90,7 @@ namespace FTRawBankParams { //from FT/FTDAQ/src/FTRawBankParams.h
 }
 
 
-struct FTChannelID {
+struct SciFiChannelID {
   uint32_t channelID;
   __device__ __host__ uint32_t channel() const;
   __device__ __host__ uint32_t sipm() const;
@@ -105,9 +105,9 @@ struct FTChannelID {
   __device__ __host__ uint32_t station() const;
   __device__ __host__ uint32_t die() const;
   __device__ __host__ bool isBottom() const;
-  __device__ __host__ FTChannelID operator+=(const uint32_t& other);
+  __device__ __host__ SciFiChannelID operator+=(const uint32_t& other);
   __host__ std::string toString();
-  __device__ __host__ FTChannelID(const uint32_t channelID);
+  __device__ __host__ SciFiChannelID(const uint32_t channelID);
   //from FTChannelID.h (generated)
   enum channelIDMasks{channelMask       = 0x7fL,
                       sipmMask          = 0x180L,
@@ -134,7 +134,7 @@ struct FTChannelID {
 /**
 * @brief Offset and number of hits of each layer.
 */
-struct FTHitCount{
+struct SciFiHitCount{
   uint* layer_offsets;
   uint* n_hits_layers;
 
@@ -152,7 +152,7 @@ struct FTHitCount{
   );
 };
 
-struct FTHit {
+struct SciFiHit {
   float x0;
   float z0;
   float w;
@@ -168,8 +168,8 @@ struct FTHit {
   uint32_t info;
   bool used;
 
-  friend std::ostream& operator<<(std::ostream& stream, const FTHit& hit) {
-  stream << "FT hit {"
+  friend std::ostream& operator<<(std::ostream& stream, const SciFiHit& hit) {
+  stream << "SciFi hit {"
     << hit.planeCode << ", "
     << hit.hitZone << ", "
     << hit.LHCbID << ", "
@@ -187,7 +187,7 @@ struct FTHit {
 
 };
 
-struct FTHits {
+struct SciFiHits {
   float* x0;
   float* z0;
   float* w;
@@ -205,26 +205,26 @@ struct FTHits {
   uint32_t* temp;
 
 
-  FTHits() = default;
+  SciFiHits() = default;
 
   /**
-   * @brief Populates the FTHits object pointers from an unsorted array of data
+   * @brief Populates the SciFiHits object pointers from an unsorted array of data
    *        pointed by base_pointer.
    */
   __host__ __device__
   void typecast_unsorted(char* base_pointer, uint32_t total_number_of_hits);
 
   /**
-   * @brief Populates the FTHits object pointers from a sorted array of data
+   * @brief Populates the SciFiHits object pointers from a sorted array of data
    *        pointed by base_pointer.
    */
   __host__ __device__
   void typecast_sorted(char* base_pointer, uint32_t total_number_of_hits);
 
   /**
-   * @brief Gets a hit in the FTHit format from the global hit index.
+   * @brief Gets a hit in the SciFiHit format from the global hit index.
    */
-  FTHit getHit(uint32_t index) const;
+  SciFiHit getHit(uint32_t index) const;
 
   // check for used hit
   __device__ __host__ bool isValid( uint32_t value ) const {

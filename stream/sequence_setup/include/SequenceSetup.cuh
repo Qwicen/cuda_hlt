@@ -13,7 +13,7 @@
 
 #include "EstimateClusterCount.cuh"
 #include "RawBankDecoder.cuh"
-#include "FTSortByX.cuh"
+#include "SciFiSortByX.cuh"
 
 #include "Argument.cuh"
 #include "Sequence.cuh"
@@ -55,7 +55,7 @@ constexpr auto sequence_algorithms() {
     prefix_sum_single_block,
     prefix_sum_scan,
     raw_bank_decoder,
-    ft_sort_by_x
+    scifi_sort_by_x
   );
 }
 
@@ -112,12 +112,12 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_ut_hit_permutations, uint>,
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
   Argument<arg::dev_atomics_veloUT, int>,
-  Argument<arg::dev_ft_raw_input_offsets, uint>,
-  Argument<arg::dev_ft_hit_count, uint>,
+  Argument<arg::dev_scifi_raw_input_offsets, uint>,
+  Argument<arg::dev_scifi_hit_count, uint>,
   Argument<arg::dev_prefix_sum_auxiliary_array_4, uint>,
-  Argument<arg::dev_ft_hit_permutations, uint>,
-  Argument<arg::dev_ft_hits, char>,
-  Argument<arg::dev_ft_raw_input, char>
+  Argument<arg::dev_scifi_hit_permutations, uint>,
+  Argument<arg::dev_scifi_hits, char>,
+  Argument<arg::dev_scifi_raw_input, char>
 >;
 
 /**

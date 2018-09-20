@@ -36,7 +36,7 @@ struct StreamWrapper {
     const std::vector<char>& ut_boards,
     const std::vector<char>& ut_geometry,
     const std::vector<char>& ut_magnet_tool,
-    const std::vector<char>& ft_geometry,
+    const std::vector<char>& scifi_geometry,
     const uint number_of_events,
     const bool do_check,
     const bool do_simplified_kalman_filter,
@@ -61,10 +61,10 @@ struct StreamWrapper {
     uint* host_ut_event_offsets,
     const size_t ut_events_size,
     const size_t ut_event_offsets_size,
-    char* host_ft_events,
-    uint* host_ft_event_offsets,
-    const size_t ft_events_size,
-    const size_t ft_event_offsets_size,
+    char* host_scifi_events,
+    uint* host_scifi_event_offsets,
+    const size_t scifi_events_size,
+    const size_t scifi_event_offsets_size,
     const uint number_of_events,
     const uint number_of_repetitions
   );

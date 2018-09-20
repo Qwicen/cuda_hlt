@@ -59,8 +59,8 @@ struct Stream {
   /* UT DECODING */
   UTHits * host_ut_hits_decoded;
 
-  // FT Decoding
-  uint* host_accumulated_number_of_ft_hits;
+  // SciFi Decoding
+  uint* host_accumulated_number_of_scifi_hits;
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;
@@ -69,7 +69,7 @@ struct Stream {
   char* dev_velo_geometry;
   char* dev_ut_boards;
   char* dev_ut_geometry;
-  char* dev_ft_geometry;
+  char* dev_scifi_geometry;
   char* dev_base_pointer;
   PrUTMagnetTool* dev_ut_magnet_tool;
 
@@ -85,7 +85,7 @@ struct Stream {
     const std::vector<char>& ut_boards,
     const std::vector<char>& ut_geometry,
     const std::vector<char>& ut_magnet_tool,
-    const std::vector<char>& ft_geometry,
+    const std::vector<char>& scifi_geometry,
     const uint max_number_of_events,
     const bool param_do_check,
     const bool param_do_simplified_kalman_filter,
@@ -108,10 +108,10 @@ struct Stream {
     const uint* host_ut_event_offsets,
     const size_t host_ut_events_size,
     const size_t host_ut_event_offsets_size,
-    char* host_ft_events,
-    uint* host_ft_event_offsets,
-    const size_t ft_events_size,
-    const size_t ft_event_offsets_size,
+    char* host_scifi_events,
+    uint* host_scifi_event_offsets,
+    const size_t scifi_events_size,
+    const size_t scifi_event_offsets_size,
     const uint number_of_events,
     const uint number_of_repetitions
   );
