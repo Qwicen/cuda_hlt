@@ -113,9 +113,9 @@ __device__ bool getHits(
         continue;
       }
 
-      for (int i=first_sector_group_in_layer + 1; i<last_sector_group_in_layer; ++i) {
+      for (int i=first_sector_group_in_layer + 2; i<last_sector_group_in_layer; ++i) {
         if (dev_unique_sector_xs[i] > lowerBoundX) {
-          lowerBoundSectorGroup = i-1;
+          lowerBoundSectorGroup = i-2;
           break;
         }
       }
@@ -123,7 +123,11 @@ __device__ bool getHits(
       for (int i=0; i<number_of_sector_groups; ++i) {
         const uint current_sector_group = first_sector_group_in_layer + i;
         if (dev_unique_sector_xs[current_sector_group] > upperBoundX) {
-          upperBoundSectorGroup = current_sector_group;
+          if (i == number_of_sector_groups - 1) {
+            upperBoundSectorGroup = current_sector_group;
+          } else {
+            upperBoundSectorGroup = current_sector_group + 1;
+          }
           break;
         }
       }
