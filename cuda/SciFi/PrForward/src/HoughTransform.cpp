@@ -2,35 +2,36 @@
 
 //calculate xref for this plane
 //in the c++ this is vectorized, undoing because no point before CUDA (but vectorization is obvious)
-void xAtRef_SamePlaneHits(
+__host__ __device__ void xAtRef_SamePlaneHits(
   SciFi::HitsSoA* hits_layers,
   const int allXHits[SciFi::Tracking::max_x_hits],
   const int n_x_hits,
   float coordX[SciFi::Tracking::max_x_hits],
   const float xParams_seed[4],
+  const SciFi::Tracking::Arrays& constArrays,
   MiniState velo_state, 
   int itH, int itEnd)
 {
   //this is quite computationally expensive mind, should take care when porting
   float zHit    = hits_layers->m_z[allXHits[itH]]; //all hits in same layer
   float xFromVelo_Hit = straightLineExtend(xParams_seed,zHit);
-  float zMagSlope = SciFi::Tracking::zMagnetParams[2] * pow(velo_state.tx,2) +  SciFi::Tracking::zMagnetParams[3] * pow(velo_state.ty,2);
-  float dSlopeDivPart = 1.f / ( zHit - SciFi::Tracking::zMagnetParams[0]);
+  float zMagSlope = constArrays.zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays.zMagnetParams[3] * pow(velo_state.ty,2);
+  float dSlopeDivPart = 1.f / ( zHit - constArrays.zMagnetParams[0]);
   float dz      = 1.e-3f * ( zHit - SciFi::Tracking::zReference );
   
   while( itEnd>itH ){
     float xHit = hits_layers->m_x[allXHits[itH]];
     float dSlope  = ( xFromVelo_Hit - xHit ) * dSlopeDivPart;
-    float zMag    = SciFi::Tracking::zMagnetParams[0] + SciFi::Tracking::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
+    float zMag    = constArrays.zMagnetParams[0] + constArrays.zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
     float xMag    = xFromVelo_Hit + velo_state.tx * (zMag - zHit);
-    float dxCoef  = dz * dz * ( SciFi::Tracking::xParams[0] + dz * SciFi::Tracking::xParams[1] ) * dSlope;
+    float dxCoef  = dz * dz * ( constArrays.xParams[0] + dz * constArrays.xParams[1] ) * dSlope;
     float ratio   = (  SciFi::Tracking::zReference - zMag ) / ( zHit - zMag );
     coordX[itH] = xMag + ratio * (xHit + dxCoef  - xMag);
     itH++;
   }
 }
 
-int fitParabola(
+__host__ __device__ int fitParabola(
   int* coordToFit,
   const int n_coordToFit,
   SciFi::HitsSoA* hits_layers,
@@ -87,7 +88,7 @@ int fitParabola(
   return true;
 }
 
-bool fitXProjection(
+__host__ __device__ bool fitXProjection(
   SciFi::HitsSoA *hits_layers,
   float trackParameters[SciFi::Tracking::nTrackParams],
   int coordToFit[SciFi::Tracking::max_coordToFit],
@@ -139,13 +140,14 @@ bool fitXProjection(
 }
  
 
-bool fitYProjection(
+__host__ __device__ bool fitYProjection(
   SciFi::HitsSoA* hits_layers,
   SciFi::Tracking::Track& track,
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits,
   PlaneCounter& planeCounter,
   MiniState velo_state,
+  const SciFi::Tracking::Arrays& constArrays,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   
@@ -161,7 +163,7 @@ bool fitYProjection(
   while ( doFit ) {
     //Use position in magnet as constrain in fit
     //although because wMag is quite small only little influence...
-    float zMag  = zMagnet(velo_state);
+    float zMag  = zMagnet(velo_state, constArrays);
     const float tys = track.trackParams[4]+(zMag-SciFi::Tracking::zReference)*track.trackParams[5];
     const float tsyz = velo_state.y + (zMag-velo_state.z)*velo_state.ty;
     const float dyMag = tys-tsyz;

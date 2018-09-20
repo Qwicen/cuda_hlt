@@ -57,13 +57,20 @@ __host__ __device__ inline float straightLineExtend(const float params[4], float
   return params[0] + (params[1]+(params[2] + params[3]*dz)*dz)*dz;
 }
 
-__host__ __device__ void getTrackParameters ( float xAtRef, MiniState velo_state, float trackParams[SciFi::Tracking::nTrackParams]);
+__host__ __device__ void getTrackParameters (
+  float xAtRef,
+  MiniState velo_state,
+  const SciFi::Tracking::Arrays& constArrays,
+  float trackParams[SciFi::Tracking::nTrackParams]);
 
-__host__ __device__ float calcqOverP ( float bx, MiniState velo_state );
+__host__ __device__ float calcqOverP (
+  float bx,
+  const SciFi::Tracking::Arrays& constArrays,
+  MiniState velo_state );
 
-__host__ __device__ float zMagnet(MiniState velo_state);
+__host__ __device__ float zMagnet(MiniState velo_state, const SciFi::Tracking::Arrays& constArrays);
 
-__host__ __device__ void covariance ( FullState& state, const float qOverP );
+__host__ __device__ void covariance ( FullState& state, const SciFi::Tracking::Arrays& constArrays, const float qOverP );
 
 __host__ __device__ float calcDxRef(float pt, MiniState velo_state);
 

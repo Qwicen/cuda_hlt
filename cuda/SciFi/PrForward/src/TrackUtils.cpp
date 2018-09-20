@@ -1,11 +1,11 @@
 #include "TrackUtils.h"
 
-__host__ __device__ void getTrackParameters ( float xAtRef, MiniState velo_state, float trackParams[SciFi::Tracking::nTrackParams])
+__host__ __device__ void getTrackParameters ( float xAtRef, MiniState velo_state, const SciFi::Tracking::Arrays& constArrays, float trackParams[SciFi::Tracking::nTrackParams])
 {
   
-  float dSlope  = ( xFromVelo(SciFi::Tracking::zReference,velo_state) - xAtRef ) / ( SciFi::Tracking::zReference - SciFi::Tracking::zMagnetParams[0]);
-  const float zMagSlope = SciFi::Tracking::zMagnetParams[2] * pow(velo_state.tx,2) +  SciFi::Tracking::zMagnetParams[3] * pow(velo_state.ty,2);
-  const float zMag    = SciFi::Tracking::zMagnetParams[0] + SciFi::Tracking::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
+  float dSlope  = ( xFromVelo(SciFi::Tracking::zReference,velo_state) - xAtRef ) / ( SciFi::Tracking::zReference - constArrays.zMagnetParams[0]);
+  const float zMagSlope = constArrays.zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays.zMagnetParams[3] * pow(velo_state.ty,2);
+  const float zMag    = constArrays.zMagnetParams[0] + constArrays.zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
   const float xMag    = xFromVelo( zMag, velo_state );
   const float slopeT  = ( xAtRef - xMag ) / ( SciFi::Tracking::zReference - zMag );
   dSlope        = slopeT - velo_state.tx;
@@ -13,8 +13,8 @@ __host__ __device__ void getTrackParameters ( float xAtRef, MiniState velo_state
   
   trackParams[0] = xAtRef;
   trackParams[1] = slopeT;
-  trackParams[2] = 1.e-6f * SciFi::Tracking::xParams[0] * dSlope;
-  trackParams[3] = 1.e-9f * SciFi::Tracking::xParams[1] * dSlope;
+  trackParams[2] = 1.e-6f * constArrays.xParams[0] * dSlope;
+  trackParams[3] = 1.e-9f * constArrays.xParams[1] * dSlope;
   trackParams[4] = yFromVelo( SciFi::Tracking::zReference, velo_state );
   trackParams[5] = velo_state.ty + dyCoef * SciFi::Tracking::byParams;
   trackParams[6] = dyCoef * SciFi::Tracking::cyParams;
@@ -22,17 +22,17 @@ __host__ __device__ void getTrackParameters ( float xAtRef, MiniState velo_state
   trackParams[8] = 0.0; // last elements are chi2 and ndof, as float 
 }
 
-__host__ __device__ float calcqOverP ( float bx, MiniState velo_state )
+__host__ __device__ float calcqOverP ( float bx, const SciFi::Tracking::Arrays& constArrays, MiniState velo_state )
 {
   
   float qop(1.0f/Gaudi::Units::GeV) ;
   float bx2  = bx * bx;
-  float coef = ( SciFi::Tracking::momentumParams[0] +
-                 SciFi::Tracking::momentumParams[1] * bx2 +
-                 SciFi::Tracking::momentumParams[2] * bx2 * bx2 +
-                 SciFi::Tracking::momentumParams[3] * bx * velo_state.tx +
-                 SciFi::Tracking::momentumParams[4] * pow(velo_state.ty,2) +
-                 SciFi::Tracking::momentumParams[5] * pow(velo_state.ty,2) * pow(velo_state.ty,2) );
+  float coef = ( constArrays.momentumParams[0] +
+                 constArrays.momentumParams[1] * bx2 +
+                 constArrays.momentumParams[2] * bx2 * bx2 +
+                 constArrays.momentumParams[3] * bx * velo_state.tx +
+                 constArrays.momentumParams[4] * pow(velo_state.ty,2) +
+                 constArrays.momentumParams[5] * pow(velo_state.ty,2) * pow(velo_state.ty,2) );
   float m_slope2 = pow(velo_state.tx,2) + pow(velo_state.ty,2);
   float proj = sqrt( ( 1.f + m_slope2 ) / ( 1.f + pow(velo_state.tx,2) ) ); 
   qop = ( velo_state.tx - bx ) / ( coef * Gaudi::Units::GeV * proj * SciFi::Tracking::magscalefactor) ;
@@ -42,22 +42,22 @@ __host__ __device__ float calcqOverP ( float bx, MiniState velo_state )
 
 // DvB: what does this do?
 // -> get position within magnet (?)
-__host__ __device__ float zMagnet(MiniState velo_state)
+__host__ __device__ float zMagnet(MiniState velo_state, const SciFi::Tracking::Arrays& constArrays)
 {
     
-  return ( SciFi::Tracking::zMagnetParams[0] +
-           SciFi::Tracking::zMagnetParams[2] * pow(velo_state.tx,2) +
-           SciFi::Tracking::zMagnetParams[3] * pow(velo_state.ty,2) );
+  return ( constArrays.zMagnetParams[0] +
+           constArrays.zMagnetParams[2] * pow(velo_state.tx,2) +
+           constArrays.zMagnetParams[3] * pow(velo_state.ty,2) );
 }
 
-__host__ __device__ void covariance ( FullState& state, const float qOverP )
+__host__ __device__ void covariance ( FullState& state, const SciFi::Tracking::Arrays& constArrays, const float qOverP )
 {
      
-  state.c00 = SciFi::Tracking::covarianceValues[0];
-  state.c11 = SciFi::Tracking::covarianceValues[1];
-  state.c22 = SciFi::Tracking::covarianceValues[2];
-  state.c33 = SciFi::Tracking::covarianceValues[3];
-  state.c44 = SciFi::Tracking::covarianceValues[4] * qOverP * qOverP;
+  state.c00 = constArrays.covarianceValues[0];
+  state.c11 = constArrays.covarianceValues[1];
+  state.c22 = constArrays.covarianceValues[2];
+  state.c33 = constArrays.covarianceValues[3];
+  state.c44 = constArrays.covarianceValues[4] * qOverP * qOverP;
 }
 
 // calculate difference between straight line extrapolation and

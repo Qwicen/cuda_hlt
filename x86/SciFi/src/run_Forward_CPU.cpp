@@ -49,6 +49,8 @@ int run_forward_on_CPU (
     SciFi::Tracking::TMVA1_Init( tmva1 );
     SciFi::Tracking::TMVA tmva2;
     SciFi::Tracking::TMVA2_Init( tmva2 );
+
+    SciFi::Tracking::Arrays constArrays;
  
     PrForward(
       &(hits_layers_events[i_event]),
@@ -58,6 +60,7 @@ int run_forward_on_CPU (
       n_veloUT_tracks_events[i_event],
       tmva1,
       tmva2,
+      constArrays,
       forward_tracks,
       n_forward_tracks);
 

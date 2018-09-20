@@ -21,6 +21,7 @@ void PrForward(
   const int n_veloUT_tracks,
   const SciFi::Tracking::TMVA& tmva1,
   const SciFi::Tracking::TMVA& tmva2,
+  const SciFi::Tracking::Arrays& constArrays,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks)
 {
@@ -40,6 +41,7 @@ void PrForward(
       n_forward_tracks,
       tmva1,
       tmva2,
+      constArrays,
       velo_state);
     
   }
@@ -47,13 +49,14 @@ void PrForward(
 }
 
 //=============================================================================
-void find_forward_tracks(
+__host__ __device__ void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks,
   const SciFi::Tracking::TMVA& tmva1,
   const SciFi::Tracking::TMVA& tmva2,
+  const SciFi::Tracking::Arrays& constArrays,
   const MiniState& velo_state
 ) {
 
@@ -77,20 +80,34 @@ void find_forward_tracks(
   int n_x_hits[2] = {};
   float coordX[2][SciFi::Tracking::max_x_hits];
   
-  if(yAtRef>-5.f)collectAllXHits(hits_layers, allXHits[1], n_x_hits[1], coordX[1], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, 1); 
-  if(yAtRef< 5.f)collectAllXHits(hits_layers, allXHits[0], n_x_hits[0], coordX[0], xParams_seed, yParams_seed, velo_state, veloUTTrack.qop, -1);
+  if(yAtRef>-5.f)
+    collectAllXHits(
+      hits_layers, allXHits[1], n_x_hits[1],
+      coordX[1], xParams_seed, yParams_seed, constArrays,
+      velo_state, veloUTTrack.qop, 1); 
+  if(yAtRef< 5.f)
+    collectAllXHits(
+      hits_layers, allXHits[0], n_x_hits[0],
+      coordX[0], xParams_seed, yParams_seed, constArrays,
+      velo_state, veloUTTrack.qop, -1);
 
   SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks];
   int n_candidate_tracks = 0;
   bool usedHits[SciFi::Constants::max_numhits_per_event] = { false };
   
-  if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], usedHits, coordX[1], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
-				   xParams_seed, yParams_seed, velo_state, pars_first,  1);
-  if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], usedHits, coordX[0], veloUTTrack, candidate_tracks, n_candidate_tracks, zRef_track, 
-				   xParams_seed, yParams_seed, velo_state, pars_first, -1); 
+  if(yAtRef>-5.f)selectXCandidates(
+    hits_layers, allXHits[1], n_x_hits[1],
+    usedHits, coordX[1], veloUTTrack,
+    candidate_tracks, n_candidate_tracks,
+    zRef_track, xParams_seed, yParams_seed,
+    velo_state, pars_first,  constArrays, 1);
+  if(yAtRef< 5.f)selectXCandidates(
+    hits_layers, allXHits[0], n_x_hits[0],
+    usedHits, coordX[0], veloUTTrack,
+    candidate_tracks, n_candidate_tracks,
+    zRef_track, xParams_seed, yParams_seed,
+    velo_state, pars_first, constArrays, -1); 
 
-
-  
   SciFi::Tracking::Track selected_tracks[SciFi::max_tracks];
   int n_selected_tracks = 0;
     
@@ -102,7 +119,7 @@ void find_forward_tracks(
     n_selected_tracks,
     xParams_seed, yParams_seed,
     velo_state, veloUTTrack.qop,
-    pars_first, tmva1, tmva2, false);
+    pars_first, tmva1, tmva2, constArrays, false);
 
 
   for ( int i=0; i < n_selected_tracks; ++i ) {
@@ -121,10 +138,18 @@ void find_forward_tracks(
   int n_candidate_tracks2 = 0;
   
   if (!ok && SciFi::Tracking::secondLoop) { // If you found nothing begin the 2nd loop
-    if(yAtRef>-5.f)selectXCandidates(hits_layers, allXHits[1], n_x_hits[1], usedHits, coordX[1], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
-				     xParams_seed, yParams_seed, velo_state, pars_second, 1);
-    if(yAtRef< 5.f)selectXCandidates(hits_layers, allXHits[0], n_x_hits[0], usedHits, coordX[0], veloUTTrack, candidate_tracks2, n_candidate_tracks2, zRef_track, 
-				     xParams_seed, yParams_seed, velo_state, pars_second, -1);  
+    if(yAtRef>-5.f)selectXCandidates(
+      hits_layers, allXHits[1], n_x_hits[1],
+      usedHits, coordX[1], veloUTTrack,
+      candidate_tracks2, n_candidate_tracks2,
+      zRef_track, xParams_seed, yParams_seed,
+      velo_state, pars_second, constArrays, 1);
+    if(yAtRef< 5.f)selectXCandidates(
+      hits_layers, allXHits[0], n_x_hits[0],
+      usedHits, coordX[0], veloUTTrack,
+      candidate_tracks2, n_candidate_tracks2,
+      zRef_track, xParams_seed, yParams_seed,
+      velo_state, pars_second, constArrays, -1);  
 
   
     
@@ -139,7 +164,7 @@ void find_forward_tracks(
       n_selected_tracks2,
       xParams_seed, yParams_seed,
       velo_state, veloUTTrack.qop,
-      pars_second, tmva1, tmva2, true);
+      pars_second, tmva1, tmva2, constArrays, true);
 
     for ( int i_track = 0; i_track < n_selected_tracks2; ++i_track ) {
       assert( n_selected_tracks < SciFi::max_tracks);
@@ -179,7 +204,7 @@ void find_forward_tracks(
 }
 
 // Turn SciFi::Tracking::Track into a SciFi::Track
-SciFi::Track makeTrack( SciFi::Tracking::Track track ) {
+__host__ __device__ SciFi::Track makeTrack( SciFi::Tracking::Track track ) {
   SciFi::Track tr;
   tr.hitsNum = track.hitsNum;
   tr.qop     = track.qop;
@@ -194,7 +219,7 @@ SciFi::Track makeTrack( SciFi::Tracking::Track track ) {
 //  Fit of all hits
 //  save everything in track candidate folder
 //=========================================================================
-void selectFullCandidates(
+__host__ __device__ void selectFullCandidates(
   SciFi::HitsSoA* hits_layers,
   SciFi::Tracking::Track* candidate_tracks,
   int& n_candidate_tracks,
@@ -207,6 +232,7 @@ void selectFullCandidates(
   SciFi::Tracking::HitSearchCuts& pars,
   const SciFi::Tracking::TMVA& tmva1,
   const SciFi::Tracking::TMVA& tmva2,
+  const SciFi::Tracking::Arrays& constArrays,
   bool secondLoop)
 {
 
@@ -227,12 +253,19 @@ void selectFullCandidates(
     int stereoHits[SciFi::Tracking::max_stereo_hits];
     int n_stereoHits = 0;
     float stereoCoords[SciFi::Tracking::max_stereo_hits];
-    collectStereoHits(hits_layers, *cand, velo_state, pars, stereoCoords, stereoHits, n_stereoHits);
+    collectStereoHits(
+      hits_layers,
+      *cand, velo_state,
+      pars, constArrays, stereoCoords, 
+      stereoHits, n_stereoHits);
 
     if(n_stereoHits < pars.minStereoHits) continue;
    
     // select best U/V hits
-    if ( !selectStereoHits(hits_layers, *cand, stereoCoords, stereoHits, n_stereoHits, velo_state, pars) ) continue;
+    if ( !selectStereoHits(
+      hits_layers, *cand, constArrays,
+      stereoCoords, stereoHits, n_stereoHits,
+      velo_state, pars) ) continue;
 
     planeCounter.clear();
     for ( int i_hit = 0; i_hit < cand->hitsNum; ++i_hit ) {
@@ -246,12 +279,12 @@ void selectFullCandidates(
     //track has enough hits, calcualte quality and save if good enough
     if(planeCounter.nbDifferent >= SciFi::Tracking::minTotalHits){
 
-      const float qOverP  = calcqOverP(cand->trackParams[1], velo_state);
+      const float qOverP  = calcqOverP(cand->trackParams[1], constArrays, velo_state);
       //orig params before fitting , TODO faster if only calc once?? mem usage?
       const float xAtRef = cand->trackParams[0];
-      float dSlope  = ( velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx - xAtRef ) / ( SciFi::Tracking::zReference - SciFi::Tracking::zMagnetParams[0]);
-      const float zMagSlope = SciFi::Tracking::zMagnetParams[2] * pow(velo_state.tx,2) +  SciFi::Tracking::zMagnetParams[3] * pow(velo_state.ty,2);
-      const float zMag    = SciFi::Tracking::zMagnetParams[0] + SciFi::Tracking::zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
+      float dSlope  = ( velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx - xAtRef ) / ( SciFi::Tracking::zReference - constArrays.zMagnetParams[0]);
+      const float zMagSlope = constArrays.zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays.zMagnetParams[3] * pow(velo_state.ty,2);
+      const float zMag    = constArrays.zMagnetParams[0] + constArrays.zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
       const float xMag    = velo_state.x + (zMag- velo_state.z) * velo_state.tx;
       const float slopeT  = ( xAtRef - xMag ) / ( SciFi::Tracking::zReference - zMag );
       dSlope        = slopeT - velo_state.tx;

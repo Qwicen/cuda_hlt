@@ -23,18 +23,19 @@
    which match to the VeloUT input track
  */
 
-void collectAllXHits(
+__host__ __device__ void collectAllXHits(
   SciFi::HitsSoA* hits_layers,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   float coordX[SciFi::Tracking::max_x_hits],
   const float xParams_seed[4],
   const float yParams_seed[4],
+  const SciFi::Tracking::Arrays& constArrays,
   const MiniState& velo_state,
   const float qop,
   int side);
 
-void selectXCandidates(
+__host__ __device__ void selectXCandidates(
   SciFi::HitsSoA* hits_layers,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
@@ -47,10 +48,11 @@ void selectXCandidates(
   const float xParams_seed[4],
   const float yParams_seed[4],
   const MiniState& velo_state,
-  SciFi::Tracking::HitSearchCuts& pars_cur,
+  SciFi::Tracking::HitSearchCuts& pars,
+  const SciFi::Tracking::Arrays& constArrays,
   int side);
 
-bool addHitsOnEmptyXLayers(
+__host__ __device__ bool addHitsOnEmptyXLayers(
   SciFi::HitsSoA* hits_layers,
   float trackParameters[SciFi::Tracking::nTrackParams],
   const float xParams_seed[4],
@@ -58,6 +60,7 @@ bool addHitsOnEmptyXLayers(
   bool fullFit,
   int coordToFit[SciFi::Tracking::max_coordToFit],
   int& n_coordToFit,
+  const SciFi::Tracking::Arrays& constArrays,
   PlaneCounter& planeCounter,
   SciFi::Tracking::HitSearchCuts& pars_cur,
   int side);

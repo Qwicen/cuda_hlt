@@ -50,20 +50,22 @@ void PrForward(
   const int n_veloUT_tracks,
   const SciFi::Tracking::TMVA& tmva1,
   const SciFi::Tracking::TMVA& tmva2,
+  const SciFi::Tracking::Arrays& constArrays,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks);
                                                       
-void find_forward_tracks(
+__host__ __device__ void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,  
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Track outputTracks[SciFi::max_tracks],
   int& n_forward_tracks,
   const SciFi::Tracking::TMVA& tmva1,
   const SciFi::Tracking::TMVA& tmva2,
+  const SciFi::Tracking::Arrays& constArrays,
   const MiniState& velo_state);
 
 
-void selectFullCandidates(
+__host__ __device__ void selectFullCandidates(
   SciFi::HitsSoA* hits_layers,
   SciFi::Tracking::Track* candidate_tracks,
   int& n_candidate_tracks,
@@ -76,6 +78,7 @@ void selectFullCandidates(
   SciFi::Tracking::HitSearchCuts& pars_cur,
   const SciFi::Tracking::TMVA& tmva1,
   const SciFi::Tracking::TMVA& tmva2,
+  const SciFi::Tracking::Arrays& constArrays,
   bool secondLoop);
 
-SciFi::Track makeTrack( SciFi::Tracking::Track track ); 
+__host__ __device__ SciFi::Track makeTrack( SciFi::Tracking::Track track ); 

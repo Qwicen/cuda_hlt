@@ -77,48 +77,50 @@ namespace SciFi{
     //Track Quality NN
     const float        maxQuality             =   0.9                    ;   
     const float        deltaQuality_NN        =   0.1                    ; 
-    
-    // the Magnet Parametrization
-    const float        zMagnetParams[4]       = {5212.38, 406.609, -1102.35, -498.039};
-    
-    // more Parametrizations
-    const float        xParams[2]             = {18.6195, -5.55793};
+
+    // parameterizations
     const float        byParams               = -0.667996;
     const float        cyParams               = -3.68424e-05;
-    
-    // momentum Parametrization
-    const float        momentumParams[6]      = {1.21014, 0.637339, -0.200292, 0.632298, 3.23793, -27.0259};
-    
-    // covariance values
-    const float        covarianceValues[5]    = {4.0, 400.0, 4.e-6, 1.e-4, 0.1};
-    
+
     // z Reference plane
     const float        zReference             = 8520.; // in T2
     
-    // definition of zones
-    // access upper with offset of 6
-    const int	     zoneoffsetpar	      = 6;
-    const int          xZones[12]             = {0 , 6 , 8 , 14 , 16 , 22, 1 , 7 , 9 , 15 , 17 , 23 };
-    const int          uvZones[12]            = {2 , 4 , 10, 12 , 18 , 20, 3 , 5 , 11, 13 , 19 , 21 };
-    
-    // ASSORTED GEOMETRY VALUES, eventually read this from some xml
-    const float        xZone_zPos[6]          = {7826., 8036., 8508., 8718., 9193., 9403.};
-    const float        uvZone_zPos[12]        = {7896., 7966., 8578., 8648., 9263., 9333., 7896., 7966., 8578., 8648., 9263., 9333.};
-    const float        uvZone_dxdy[12]        = {0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892};
-    const float        Zone_dzdy[24]          = {0.0036010};
-    // CHECK THESE VALUES USING FRAMEWORK
+    // TODO: CHECK THESE VALUES USING FRAMEWORK
     const float        xLim_Max               = 3300.;
     const float        yLim_Max               = 2500.;
     const float        xLim_Min               = -3300.;
     const float        yLim_Min               = -25.;
-    
-    // other variables which get initialized
-    const float              xHits[8]               = {0.,0.,0.,0.,0.,0.,0.,0.};
-    
-    // TO BE READ FROM XML EVENTUALLY
+
+     // TO BE READ FROM XML EVENTUALLY
     const float              magscalefactor         = -1;
 
-
+    
+    struct Arrays {
+      // the Magnet Parametrization
+      const float        zMagnetParams[4]       = {5212.38, 406.609, -1102.35, -498.039};
+      
+      // more Parametrizations
+      const float        xParams[2]             = {18.6195, -5.55793};
+      
+      // momentum Parametrization
+      const float        momentumParams[6]      = {1.21014, 0.637339, -0.200292, 0.632298, 3.23793, -27.0259};
+      
+      // covariance values
+      const float        covarianceValues[5]    = {4.0, 400.0, 4.e-6, 1.e-4, 0.1};
+      
+      // definition of zones
+      // access upper with offset of 6
+      const int	     zoneoffsetpar	      = 6;
+      const int        xZones[12]             = {0 , 6 , 8 , 14 , 16 , 22, 1 , 7 , 9 , 15 , 17 , 23 };
+      const int        uvZones[12]            = {2 , 4 , 10, 12 , 18 , 20, 3 , 5 , 11, 13 , 19 , 21 };
+      
+      // ASSORTED GEOMETRY VALUES, eventually read this from some xml
+      const float        xZone_zPos[6]          = {7826., 8036., 8508., 8718., 9193., 9403.};
+      const float        uvZone_zPos[12]        = {7896., 7966., 8578., 8648., 9263., 9333., 7896., 7966., 8578., 8648., 9263., 9333.};
+      const float        uvZone_dxdy[12]        = {0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892};
+      const float        Zone_dzdy[24]          = {0.0036010};
+    };
+   
     struct Track {
 
       int hit_indices[max_hits];
