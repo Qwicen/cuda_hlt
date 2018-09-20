@@ -173,13 +173,9 @@ void SciFiHits::typecast_unsorted(char* base, uint32_t total_number_of_hits) {
   dzdy  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   yMin  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   yMax  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  werrX =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  coord =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   LHCbID =    reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   planeCode = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   hitZone =   reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  info =      reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  used =      reinterpret_cast<bool*>(base); base += sizeof(bool) * total_number_of_hits;
   temp  =     reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
 }
 
@@ -192,18 +188,13 @@ void SciFiHits::typecast_sorted(char* base, uint32_t total_number_of_hits) {
   dzdy  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   yMin  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   yMax  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  werrX =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  coord =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   LHCbID =    reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   planeCode = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   hitZone =   reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  info =      reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  used =      reinterpret_cast<bool*>(base); base += sizeof(bool) * total_number_of_hits;
 }
 
 SciFiHit SciFiHits::getHit(uint32_t index) const {
   return {x0[index], z0[index], w[index], dxdy[index], dzdy[index], yMin[index],
-          yMax[index], werrX[index], coord[index], LHCbID[index], planeCode[index],
-          hitZone[index], info[index], used[index]};
+          yMax[index], LHCbID[index], planeCode[index], hitZone[index]};
 }
 };

@@ -63,7 +63,6 @@ __global__ void raw_bank_decoder(
     const uint32_t mat = id.uniqueMat() - 512;
     const uint32_t iQuarter = id.uniqueQuarter() - 16;
     const uint32_t planeCode = id.uniqueLayer() - 4;
-    const uint32_t info = (iQuarter>>1) | (((iQuarter<<4)^(iQuarter<<5)^128u) & 128u);
     // See Kernel/LHCbID.h. Maybe no hardcoding?
     const uint32_t lhcbid = (10u << 28) + chan;
     const float dxdy = geom.dxdy[mat];
@@ -98,13 +97,9 @@ __global__ void raw_bank_decoder(
     hits.dzdy[hitIndex] = dzdy;
     hits.yMin[hitIndex] = yMin;
     hits.yMax[hitIndex] = yMax;
-    hits.werrX[hitIndex] = werrX;
-    hits.coord[hitIndex] = 0;
     hits.LHCbID[hitIndex] = lhcbid;
     hits.planeCode[hitIndex] = planeCode;
     hits.hitZone[hitIndex] = uniqueZone % 2;
-    hits.info[hitIndex] = info;
-    hits.used[hitIndex] = false;
   };
 
   // copied straight from FTRawBankDecoder.cpp

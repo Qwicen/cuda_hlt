@@ -160,13 +160,9 @@ struct SciFiHit {
   float dzdy;
   float yMin;
   float yMax;
-  float werrX;
-  float coord;
   uint32_t LHCbID;
   uint32_t planeCode;
   uint32_t hitZone;
-  uint32_t info;
-  bool used;
 
   friend std::ostream& operator<<(std::ostream& stream, const SciFiHit& hit) {
   stream << "SciFi hit {"
@@ -179,8 +175,7 @@ struct SciFiHit {
     << hit.dxdy << ", "
     << hit.dzdy << ", "
     << hit.yMin << ", "
-    << hit.yMax << ", "
-    << hit.werrX << "}";
+    << hit.yMax << "}";
 
   return stream;
 }
@@ -195,13 +190,9 @@ struct SciFiHits {
   float* dzdy;
   float* yMin;
   float* yMax;
-  float* werrX;
-  float* coord;
   uint32_t* LHCbID;
   uint32_t* planeCode;
   uint32_t* hitZone;
-  uint32_t* info;
-  bool* used;
   uint32_t* temp;
 
 
@@ -225,10 +216,5 @@ struct SciFiHits {
    * @brief Gets a hit in the SciFiHit format from the global hit index.
    */
   SciFiHit getHit(uint32_t index) const;
-
-  // check for used hit
-  __device__ __host__ bool isValid( uint32_t value ) const {
-    return !used[value];
-  }
 };
 }

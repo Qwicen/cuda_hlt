@@ -45,19 +45,11 @@ __global__ void scifi_sort_by_x(
   __syncthreads();
 
   // Important note: Order matters, and should be kept as is
-  apply_permutation<bool>( scifi_hit_permutations, zone_offsets[0], total_number_of_hits, unsorted_scifi_hits.used, sorted_scifi_hits.used );
-  __syncthreads();
-  apply_permutation<uint>( scifi_hit_permutations, zone_offsets[0], total_number_of_hits, unsorted_scifi_hits.info, sorted_scifi_hits.info );
-  __syncthreads();
   apply_permutation<uint>( scifi_hit_permutations, zone_offsets[0], total_number_of_hits, unsorted_scifi_hits.hitZone, sorted_scifi_hits.hitZone );
   __syncthreads();
   apply_permutation<uint>( scifi_hit_permutations, zone_offsets[0], total_number_of_hits, unsorted_scifi_hits.planeCode, sorted_scifi_hits.planeCode );
   __syncthreads();
   apply_permutation<uint>( scifi_hit_permutations, zone_offsets[0], total_number_of_hits, unsorted_scifi_hits.LHCbID, sorted_scifi_hits.LHCbID );
-  __syncthreads();
-  apply_permutation<float>( scifi_hit_permutations, zone_offsets[0], total_number_of_hits, unsorted_scifi_hits.coord, sorted_scifi_hits.coord );
-  __syncthreads();
-  apply_permutation<float>( scifi_hit_permutations, zone_offsets[0], total_number_of_hits, unsorted_scifi_hits.werrX, sorted_scifi_hits.werrX );
   __syncthreads();
   apply_permutation<float>( scifi_hit_permutations, zone_offsets[0], total_number_of_hits, unsorted_scifi_hits.yMax, sorted_scifi_hits.yMax );
   __syncthreads();
