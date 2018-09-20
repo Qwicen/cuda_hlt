@@ -89,7 +89,9 @@ __device__ __host__ UTRawEvent::UTRawEvent (
 ) {
   uint32_t* p = (uint32_t *) ut_raw_event;
   number_of_raw_banks = *p; p += 1;
-  raw_bank_offsets    =  p; p += number_of_raw_banks;
+  //raw_bank_offsets    =  p; p += number_of_raw_banks;
+  // we had to add one offset to know the size of the SciFi raw bank
+  raw_bank_offsets    =  p; p += number_of_raw_banks + 1;
   data                =  (char*) p;
 }
 
