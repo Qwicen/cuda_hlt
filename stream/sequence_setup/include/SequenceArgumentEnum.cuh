@@ -26,6 +26,7 @@ enum seq_enum_t {
   prefix_sum_single_block_ut_hits,
   prefix_sum_scan_ut_hits,
   decode_raw_banks,
+  sort_by_y,
   veloUT
 };
 }

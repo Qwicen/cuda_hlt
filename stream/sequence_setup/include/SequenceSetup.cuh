@@ -8,6 +8,7 @@
 #include "SearchByTriplet.cuh"
 #include "VeloKalmanFilter.cuh"
 #include "VeloUT.cuh"
+#include "SortByY.cuh"
 #include "UTDecoding.cuh"
 #include "Argument.cuh"
 #include "Sequence.cuh"
@@ -42,6 +43,7 @@ constexpr auto sequence_algorithms() {
     prefix_sum_single_block,
     prefix_sum_scan,
     decode_raw_banks,
+    sort_by_y,
     veloUT
   );
 }

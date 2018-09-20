@@ -183,9 +183,21 @@ struct UTHits {
   uint32_t* highThreshold;
   uint32_t* LHCbID;
   uint32_t* planeCode;
+  uint32_t* temp;
 
-  __device__ __host__
-  UTHits(uint32_t* base_pointer, uint32_t total_number_of_hits);
+  /**
+   * @brief Populates the UTHits object pointers from an unsorted array of data
+   *        pointed by base_pointer.
+   */
+  __host__ __device__ 
+  void typecast_unsorted(uint32_t* base_pointer, uint32_t total_number_of_hits);
+
+  /**
+   * @brief Populates the UTHits object pointers from a sorted array of data
+   *        pointed by base_pointer.
+   */
+  __host__ __device__ 
+  void typecast_sorted(uint32_t* base_pointer, uint32_t total_number_of_hits);
 
   /**
    * @brief Gets a hit in the UTHit format from the global hit index.

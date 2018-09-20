@@ -132,16 +132,8 @@ __device__ bool getHits(
         }
       }
 
-      // if (upperBoundSectorGroup >= last_sector_group_in_layer) {
-      //   printf("upper %u, last %u\n", upperBoundSectorGroup, last_sector_group_in_layer);
-      // }
-
       assert(upperBoundSectorGroup < last_sector_group_in_layer);
       assert(lowerBoundSectorGroup >= first_sector_group_in_layer);
-
-      // if (lowerBoundSectorGroup >= upperBoundSectorGroup) {
-      //   printf("lower bound %u, upper bound %u, \n", lowerBoundSectorGroup, upperBoundSectorGroup);
-      // }
       assert(lowerBoundSectorGroup < upperBoundSectorGroup);
 
       findHits(lowerBoundSectorGroup, upperBoundSectorGroup,

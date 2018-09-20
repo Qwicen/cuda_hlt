@@ -81,7 +81,8 @@ __global__ void decode_raw_banks (
   const uint32_t* hit_offsets = dev_ut_hit_offsets + event_number * number_of_unique_x_sectors;
   uint32_t* hit_count = dev_ut_hit_count + event_number * number_of_unique_x_sectors;
 
-  UTHits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};
+  UTHits ut_hits;
+  ut_hits.typecast_unsorted(dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]);
 
   if (threadIdx.y == 0) {
     for (int i=threadIdx.x; i<number_of_unique_x_sectors; i+=blockDim.x) {

@@ -376,7 +376,7 @@ cudaError_t Stream::run_sequence(
     // info_cout << "Total number of UT hits: " << *host_accumulated_number_of_ut_hits << std::endl;
 
     // Decode UT raw banks
-    argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(8 * host_accumulated_number_of_ut_hits[0]);
+    argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(9 * host_accumulated_number_of_ut_hits[0]);
     argument_sizes[arg::dev_ut_hit_count] = argen.size<arg::dev_ut_hits>(number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::decode_raw_banks>().set_opts(dim3(number_of_events), dim3(64, 4), stream);
@@ -393,6 +393,20 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_ut_hit_count>(argument_offsets)
     );
     sequence.item<seq::decode_raw_banks>().invoke();
+    
+    // UT hit sorting by y
+    argument_sizes[arg::dev_ut_hit_permutations] = argen.size<arg::dev_ut_hit_permutations>(host_accumulated_number_of_ut_hits[0]);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::sort_by_y>().set_opts(dim3(number_of_events), dim3(64), stream);
+    sequence.item<seq::sort_by_y>().set_arguments(
+      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_offsets>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_permutations>(argument_offsets),
+      constants.dev_unique_x_sector_layer_offsets,
+      constants.dev_unique_x_sector_offsets,
+      constants.dev_unique_sector_xs
+    );
+    sequence.item<seq::sort_by_y>().invoke();
     
     // VeloUT tracking
     argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events * VeloUTTracking::max_num_tracks);

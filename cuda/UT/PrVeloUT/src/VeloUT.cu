@@ -28,7 +28,9 @@ __global__ void veloUT(
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
   UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
-  UTHits ut_hits {dev_ut_hits, total_number_of_hits};
+  
+  UTHits ut_hits;
+  ut_hits.typecast_sorted(dev_ut_hits, total_number_of_hits);
 
   /* dev_atomics_veloUT contains in an SoA:
      1. # of veloUT tracks
