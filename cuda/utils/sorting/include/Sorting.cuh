@@ -47,34 +47,31 @@ void find_permutation(
   const uint n_hits
 ){
 #ifdef __CUDA_ARCH__
-  for (unsigned int i = 0; i < (n_hits + blockDim.x - 1); ++i) {
-    const unsigned int hit_rel_index = i*blockDim.x + threadIdx.x;
-    if ( hit_rel_index < n_hits ) {
-      const int hit_index = hit_start + hit_rel_index;
-      const T& var = sorting_vars[hit_index];
-      
-      // Find out local position
-      unsigned int position = 0;
-      for (unsigned int j = 0; j < n_hits; ++j) {
-        const int other_hit_index = hit_start + j;
-        const T& other_var = sorting_vars[other_hit_index];
-        // Stable sorting
-        position += var > other_var || ( var == other_var && hit_rel_index > j );
-      }
-      assert(position < n_hits);
-      
-      // Store it in hit_permutations 
-      hit_permutations[hit_start + position] = hit_index; 
+  for (uint hit_rel_index=threadIdx.x; hit_rel_index<n_hits; hit_rel_index+=blockDim.x) {
+    const int hit_index = hit_start + hit_rel_index;
+    const T& var = sorting_vars[hit_index];
+    
+    // Find out local position
+    uint position = 0;
+    for (uint j = 0; j < n_hits; ++j) {
+      const int other_hit_index = hit_start + j;
+      const T& other_var = sorting_vars[other_hit_index];
+      // Stable sorting
+      position += var > other_var || ( var == other_var && hit_rel_index > j );
     }
+    assert(position < n_hits);
+    
+    // Store it in hit_permutations 
+    hit_permutations[hit_start + position] = hit_index; 
   }
 #else
-  for (unsigned int i = 0; i < n_hits; ++i) {
+  for (uint i = 0; i < n_hits; ++i) {
     const int hit_index = hit_start + i;
     const T& var = sorting_vars[hit_index];
     
     // Find out local position
-    unsigned int position = 0;
-    for (unsigned int j = 0; j < n_hits; ++j) {
+    uint position = 0;
+    for (uint j = 0; j < n_hits; ++j) {
       const int other_hit_index = hit_start + j;
       const T& other_var = sorting_vars[other_hit_index];
       // Stable sorting
