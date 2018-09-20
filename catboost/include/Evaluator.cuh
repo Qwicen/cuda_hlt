@@ -8,3 +8,8 @@ __global__ void catboost_evaluator(
   const int dev_object_num,
   const int dev_bin_feature_num
 );
+
+__device__ void warpReduce(
+  volatile float* sdata, 
+  int tid
+);

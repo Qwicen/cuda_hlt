@@ -26,17 +26,25 @@ __global__ void catboost_evaluator(
     sum += dev_leaf_values[treeId][index];
     treeId += blockSize;
   }
-  extern __shared__ float values[];
+  __shared__ float values[32];
  
   int tid = threadIdx.x; 
   values[tid] = sum;
 
   __syncthreads();
-  for(unsigned int s = blockSize; s > 0; s>>=1) {
-    if (tid < s) {
-      values[tid] += values[tid + s];
-    }
-    __syncthreads();
-  }
+  warpReduce(values, tid);
+
   dev_catboost_output[objectId] = values[0];
+}
+
+__device__ void warpReduce(
+  volatile float* sdata, 
+  int tid
+) {
+  sdata[tid] += sdata[tid + 32];
+  sdata[tid] += sdata[tid + 16];
+  sdata[tid] += sdata[tid + 8];
+  sdata[tid] += sdata[tid + 4];
+  sdata[tid] += sdata[tid + 2];
+  sdata[tid] += sdata[tid + 1];
 }

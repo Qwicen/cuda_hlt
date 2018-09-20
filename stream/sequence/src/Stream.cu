@@ -76,7 +76,7 @@ cudaError_t Stream::initialize(
   for (const auto& ff : *ObliviousTrees->FloatFeatures()) {
     int border_num = ff->Borders()->size();
     host_border_nums[index] = border_num;
-	  cudaCheck(cudaMalloc((void**)&host_borders[index], border_num*sizeof(float)));
+    cudaCheck(cudaMalloc((void**)&host_borders[index], border_num*sizeof(float)));
     cudaCheck(cudaMemcpy(host_borders[index], ff->Borders()+1, border_num*sizeof(float),cudaMemcpyHostToDevice));
     index++;
   }

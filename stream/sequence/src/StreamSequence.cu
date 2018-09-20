@@ -379,7 +379,7 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_leaf_values>(argument_offsets), host_leaf_values, tree_num * sizeof(double*), cudaMemcpyHostToDevice, stream));
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_tree_sizes>(argument_offsets), host_tree_sizes, tree_num * sizeof(int), cudaMemcpyHostToDevice, stream));
 
-    sequence.item<seq::catboost_evaluator>().set_opts(dim3(number_of_events), dim3(32), stream, 32*sizeof(float));
+    sequence.item<seq::catboost_evaluator>().set_opts(dim3(number_of_events), dim3(32), stream);
     sequence.item<seq::catboost_evaluator>().set_arguments(
       argen.generate<arg::dev_tree_splits>(argument_offsets),
       argen.generate<arg::dev_leaf_values>(argument_offsets),
