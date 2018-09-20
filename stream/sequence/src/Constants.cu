@@ -73,7 +73,7 @@ void Constants::initialize_ut_decoding_constants(
     // Sort permutation according to xs
     std::stable_sort(permutation.begin(), permutation.end(),
       [&xs] (const int& a, const int& b) {
-        return (xs[a] < xs[b]);
+        return xs[a] < xs[b];
       }
     );
 
@@ -85,7 +85,9 @@ void Constants::initialize_ut_decoding_constants(
     int number_of_unique_elements = 1;
 
     for (auto p : permutation) {
-      if (current_element != xs[p]) {
+      // Allow for a configurable window of error
+      constexpr float accepted_error_window = 2.f;
+      if (std::abs(current_element - xs[p]) > accepted_error_window) {
         current_element = xs[p];
         current_index++;
         number_of_unique_elements++;
@@ -160,7 +162,3 @@ void Constants::initialize_ut_decoding_constants(
   cudaCheck(cudaMemcpy(dev_unique_x_sector_offsets, host_unique_x_sector_offsets.data(), host_unique_x_sector_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_unique_sector_xs, host_unique_sector_xs.data(), host_unique_sector_xs.size() * sizeof(float), cudaMemcpyHostToDevice));
 }
-
-// /home/dcampora/projects/cuda_hlt/stream/sequence/src/Constants.cu(129): warning: reference is to variable "i"
-// (61): here -- under old for-init scoping rules it would have been variable "i"
-// (98): here
