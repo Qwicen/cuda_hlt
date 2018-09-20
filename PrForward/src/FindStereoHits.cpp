@@ -112,7 +112,7 @@ bool selectStereoHits(
     int endRange = beginRange;
 
     float sumCoord = 0.;
-    // bad hack to reproduce itereator behavior from before
+    // bad hack to reproduce itereator behavior from before: *(-1) = 0
     int first_hit;
     if ( endRange == 0 )
       first_hit = 0;
@@ -183,7 +183,7 @@ bool selectStereoHits(
     //== Calculate  dy chi2 /ndf
     float meanDy = 0.;
     for ( int i_hit = 0; i_hit < n_trackStereoHits; ++i_hit ) {
-      int hit = trackStereoHits[i_hit];
+      const int hit = trackStereoHits[i_hit];
       const float d = trackToHitDistance(track.trackParams, hits_layers, hit) / hits_layers->m_dxdy[hit];
       meanDy += d*d;
     }
@@ -254,7 +254,7 @@ bool addHitsOnEmptyStereoLayers(
     const float xPred  = straightLineExtend(parsX,zZone);
 
     const bool triangleSearch = std::fabs(yZone) < SciFi::Tracking::tolYTriangleSearch;
-    // Not 100% sure about logic of next line, check it!
+    // change sign of yZone depending on whether we are in the upper or lower half
     if(!triangleSearch && (2.f*float((((SciFi::Tracking::uvZones[zone])%2)==0))-1.f) * yZone > 0.f) continue;
 
     //only version without triangle search!
