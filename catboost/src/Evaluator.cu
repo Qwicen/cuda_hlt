@@ -19,7 +19,9 @@ __global__ void catboost_evaluator(
   while(treeId < dev_tree_num) {
     size_t index{};
     for (size_t depth = 0; depth < dev_tree_sizes[treeId]; ++depth) {
-      index |= (dev_bin_features[objectId*dev_bin_feature_num+dev_tree_splits[treeId][depth]] << depth);
+      const int obj_shift = objectId * dev_bin_feature_num;
+      const int split_num = dev_tree_splits[treeId][depth];
+      index |= (dev_bin_features[obj_shift + split_num] << depth);
     }
     sum += dev_leaf_values[treeId][index];
     treeId += blockSize;
