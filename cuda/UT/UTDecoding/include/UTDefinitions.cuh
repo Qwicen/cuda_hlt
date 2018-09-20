@@ -14,6 +14,7 @@ static constexpr uint32_t ut_number_of_geometry_sectors = 1048;
 struct UTHitOffsets {
   const uint* m_unique_x_sector_layer_offsets;
   const uint* m_ut_hit_offsets;
+  const uint m_number_of_unique_x_sectors;
 
   __device__ __host__
   UTHitOffsets(
@@ -22,15 +23,18 @@ struct UTHitOffsets {
     const uint number_of_unique_x_sectors,
     const uint* unique_x_sector_layer_offsets
   ) : m_unique_x_sector_layer_offsets(unique_x_sector_layer_offsets),
-    m_ut_hit_offsets(base_pointer + event_number * number_of_unique_x_sectors) {}
+    m_ut_hit_offsets(base_pointer + event_number * number_of_unique_x_sectors),
+    m_number_of_unique_x_sectors(number_of_unique_x_sectors) {}
 
   __device__ __host__
   uint sector_group_offset(const uint sector_group) const {
+    assert(sector_group <= m_number_of_unique_x_sectors);
     return m_ut_hit_offsets[sector_group];
   }
 
   __device__ __host__
   uint sector_group_number_of_hits(const uint sector_group) const {
+    assert(sector_group < m_number_of_unique_x_sectors);
     return m_ut_hit_offsets[sector_group+1] - m_ut_hit_offsets[sector_group];
   }
 

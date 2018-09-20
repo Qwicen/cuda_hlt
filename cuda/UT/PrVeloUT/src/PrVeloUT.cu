@@ -38,7 +38,7 @@ __host__ __device__ bool veloTrackInUTAcceptance(
 //=============================================================================
 // Find the hits
 //=============================================================================
-__host__ __device__ bool getHits(
+__device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
@@ -102,23 +102,43 @@ __host__ __device__ bool getHits(
       // Find sector group for lowerBoundX and upperBoundX
       const uint first_sector_group_in_layer = dev_unique_x_sector_layer_offsets[layer];
       const uint last_sector_group_in_layer = dev_unique_x_sector_layer_offsets[layer+1];
+      const uint number_of_sector_groups = last_sector_group_in_layer - first_sector_group_in_layer;
 
       uint lowerBoundSectorGroup = first_sector_group_in_layer;
-      uint upperBoundSectorGroup = last_sector_group_in_layer;
+      uint upperBoundSectorGroup = last_sector_group_in_layer - 1;
 
-      for (int i=first_sector_group_in_layer + 2; i<last_sector_group_in_layer; ++i) {
+      // The window of search is out of bounds
+      if (upperBoundX < dev_unique_sector_xs[first_sector_group_in_layer] ||
+          lowerBoundX > dev_unique_sector_xs[last_sector_group_in_layer - 1]) {
+        continue;
+      }
+
+      for (int i=first_sector_group_in_layer + 1; i<last_sector_group_in_layer; ++i) {
         if (dev_unique_sector_xs[i] > lowerBoundX) {
-          lowerBoundSectorGroup = i-2;
+          lowerBoundSectorGroup = i-1;
           break;
         }
       }
 
-      for (int i=last_sector_group_in_layer-3; i>=first_sector_group_in_layer; --i) {
-        if (dev_unique_sector_xs[i] < upperBoundX) {
-          upperBoundSectorGroup = i+2;
+      for (int i=0; i<number_of_sector_groups; ++i) {
+        const uint current_sector_group = first_sector_group_in_layer + i;
+        if (dev_unique_sector_xs[current_sector_group] > upperBoundX) {
+          upperBoundSectorGroup = current_sector_group;
           break;
         }
       }
+
+      // if (upperBoundSectorGroup >= last_sector_group_in_layer) {
+      //   printf("upper %u, last %u\n", upperBoundSectorGroup, last_sector_group_in_layer);
+      // }
+
+      assert(upperBoundSectorGroup < last_sector_group_in_layer);
+      assert(lowerBoundSectorGroup >= first_sector_group_in_layer);
+
+      // if (lowerBoundSectorGroup >= upperBoundSectorGroup) {
+      //   printf("lower bound %u, upper bound %u, \n", lowerBoundSectorGroup, upperBoundSectorGroup);
+      // }
+      assert(lowerBoundSectorGroup < upperBoundSectorGroup);
 
       findHits(lowerBoundSectorGroup, upperBoundSectorGroup,
         ut_hits, ut_hit_offsets, layer_offset, layer, ut_dxDy,

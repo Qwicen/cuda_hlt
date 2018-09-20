@@ -60,7 +60,7 @@ __host__ __device__ bool veloTrackInUTAcceptance(
   const MiniState& state
 );
 
-__host__ __device__ bool getHits(
+__device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],

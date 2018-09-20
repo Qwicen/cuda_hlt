@@ -50,7 +50,7 @@ __global__ void veloUT(
   //     printf("Layer %i hits:\n", i);
 
   //     for (int s=dev_unique_x_sector_layer_offsets[i]; s<dev_unique_x_sector_layer_offsets[i+1]; ++s) {
-  //       printf(" Sector group %i:\n", s);
+  //       printf(" Sector group %i, x %f:\n", s, dev_unique_sector_xs[s]);
   //       uint group_offset = ut_hit_offsets.sector_group_offset(s);
   //       uint n_hits_group = ut_hit_offsets.sector_group_number_of_hits(s);
 
