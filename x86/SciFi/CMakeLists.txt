@@ -10,7 +10,7 @@ include_directories(../../cuda/velo/common/include)
 include_directories(../../cuda/event_model/common/include)
 include_directories(../../cuda/event_model/velo/include)
 
-file(GLOB x86Forward "src/*cpp" "../../cuda/SciFi/PrForward/src/*cpp" "../../cuda/SciFi/PrForward/src/*cu")
+file(GLOB x86Forward "src/*cpp" "../../cuda/SciFi/PrForward/src/*cu")
 
 cuda_add_library(x86Forward STATIC
   ${x86Forward}

@@ -4,7 +4,7 @@
 
 #include "VeloDefinitions.cuh"
 #include "TrackChecker.h"
-#include "PrForward.cuh"
+#include "PrForwardWrapper.h"
 #include "Tools.h"
 #include "VeloEventModel.cuh"
 

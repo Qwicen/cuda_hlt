@@ -41,19 +41,6 @@
    *  2016-03-09 : Thomas Nikodem [complete restructuring]
    */
 
-
-void PrForward(
-  SciFi::HitsSoA *hits_layers_events,
-  const Velo::Consolidated::States& velo_states,
-  const uint event_tracks_offset,
-  const VeloUTTracking::TrackUT * veloUT_tracks,
-  const int n_veloUT_tracks,
-  const SciFi::Tracking::TMVA& tmva1,
-  const SciFi::Tracking::TMVA& tmva2,
-  const SciFi::Tracking::Arrays& constArrays,
-  SciFi::Track outputTracks[SciFi::max_tracks],
-  int& n_forward_tracks);
-                                                      
 __host__ __device__ void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,  
   const VeloUTTracking::TrackUT& veloUTTrack,

@@ -52,7 +52,7 @@ int run_forward_on_CPU (
 
     SciFi::Tracking::Arrays constArrays;
  
-    PrForward(
+    PrForwardWrapper(
       &(hits_layers_events[i_event]),
       host_velo_states_event,
       event_tracks_offset,
