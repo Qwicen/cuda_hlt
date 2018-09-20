@@ -153,12 +153,7 @@ bool selectStereoHits(
     track.trackParams[4] = originalYParams[0];
     track.trackParams[5] = originalYParams[1];
     track.trackParams[6] = originalYParams[2];
-    // std::vector<unsigned int> trackStereoHits;
-    // trackStereoHits.clear();
-    // // Skip a reserve from framework code 
-    // std::transform(beginRange, endRange, std::back_inserter(trackStereoHits),
-    //                [](const int& hit) { return hit; });
-
+   
     int trackStereoHits[SciFi::Tracking::max_stereo_hits];
     int n_trackStereoHits = 0;
     for ( int range = beginRange; range < endRange; ++range ) {
@@ -191,11 +186,11 @@ bool selectStereoHits(
       bestYParams[2] = track.trackParams[6];
       bestMeanDy     = meanDy;
 
+      n_bestStereoHits = 0;
       for ( int i_hit = 0; i_hit < n_trackStereoHits; ++i_hit ) {
         assert( n_bestStereoHits < SciFi::Tracking::max_stereo_hits );
         bestStereoHits[n_bestStereoHits++] = trackStereoHits[i_hit];
       }
-      //bestStereoHits = std::move(trackStereoHits);
     }
 
   }
