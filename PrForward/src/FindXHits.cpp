@@ -277,10 +277,11 @@ void selectXCandidates(
         if( !hits_layers->isValid(allXHits[itH]) ) continue;
         int planeCode = hits_layers->m_planeCode[allXHits[itH]]/2;
         if( planeCounter.nbInPlane(planeCode) == 1 ){
-	  incrementLineFitParameters(lineFitParameters, hits_layers, allXHits[itH]);
+	  incrementLineFitParameters(lineFitParameters, hits_layers, coordX, allXHits, itH);
         }else{
-          if ( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits ) 
-            otherHits[planeCode][ nOtherHits[planeCode]++ ] = allXHits[itH];
+          if ( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits ) {
+            otherHits[planeCode][ nOtherHits[planeCode]++ ] = itH;
+          }
         }
       }
       solveLineFit(lineFitParameters);
@@ -293,13 +294,13 @@ void selectXCandidates(
       
         int best = otherHits[i][0];
         for( int hit = 0; hit < nOtherHits[i]; ++hit ){
-          const float chi2 = getLineFitChi2(lineFitParameters, hits_layers, otherHits[i][hit] );
+          const float chi2 = getLineFitChi2(lineFitParameters, hits_layers, coordX, allXHits, otherHits[i][hit] );
           if( chi2 < bestChi2 ){
             bestChi2 = chi2;
-            best = hit; 
+            best = hit;
           }
         }
-	incrementLineFitParameters(lineFitParameters, hits_layers, otherHits[i][best]);
+	incrementLineFitParameters(lineFitParameters, hits_layers, coordX, allXHits,  otherHits[i][best]);
       }
       solveLineFit(lineFitParameters);
       

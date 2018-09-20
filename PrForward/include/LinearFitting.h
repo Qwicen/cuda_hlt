@@ -6,11 +6,26 @@
 
 #include <cmath>
 
-void incrementLineFitParameters(SciFi::Tracking::LineFitterPars &parameters, SciFi::HitsSoA* hits_layers, int it);
+void incrementLineFitParameters(
+  SciFi::Tracking::LineFitterPars &parameters,
+  SciFi::HitsSoA* hits_layers,
+  float coordX[SciFi::Tracking::max_x_hits],
+  int allXHits[SciFi::Tracking::max_x_hits],
+  int it);
 
-float getLineFitDistance(SciFi::Tracking::LineFitterPars &parameters, SciFi::HitsSoA* hits_layers, int it );
+float getLineFitDistance(
+  SciFi::Tracking::LineFitterPars &parameters,
+  SciFi::HitsSoA* hits_layers,
+  float coordX[SciFi::Tracking::max_x_hits],
+  int allXHits[SciFi::Tracking::max_x_hits],
+  int it );
 
-float getLineFitChi2(SciFi::Tracking::LineFitterPars &parameters, SciFi::HitsSoA* hits_layers, int it);
+float getLineFitChi2(
+  SciFi::Tracking::LineFitterPars &parameters,
+  SciFi::HitsSoA* hits_layers,
+  float coordX[SciFi::Tracking::max_x_hits],
+  int allXHits[SciFi::Tracking::max_x_hits],
+  int it);
 
 void solveLineFit(SciFi::Tracking::LineFitterPars &parameters);
 

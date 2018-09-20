@@ -4,14 +4,24 @@
    Functions related to fitting a straight line
  */
 
-float getLineFitDistance(SciFi::Tracking::LineFitterPars &parameters, SciFi::HitsSoA* hits_layers, int it )
+float getLineFitDistance(
+  SciFi::Tracking::LineFitterPars &parameters,
+  SciFi::HitsSoA* hits_layers,
+  float coordX[SciFi::Tracking::max_x_hits],
+  int allXHits[SciFi::Tracking::max_x_hits],
+  int it )
 { 
-  return hits_layers->m_coord[it] - (parameters.m_c0 + (hits_layers->m_z[it] - parameters.m_z0) * parameters.m_tc);
+  return coordX[it] - (parameters.m_c0 + (hits_layers->m_z[ allXHits[it] ] - parameters.m_z0) * parameters.m_tc);
 }
 
-float getLineFitChi2(SciFi::Tracking::LineFitterPars &parameters, SciFi::HitsSoA* hits_layers, int it) {
-  float d = getLineFitDistance( parameters, hits_layers, it ); 
-  return d * d * hits_layers->m_coord[it]; 
+float getLineFitChi2(
+  SciFi::Tracking::LineFitterPars &parameters,
+  SciFi::HitsSoA* hits_layers,
+  float coordX[SciFi::Tracking::max_x_hits],
+  int allXHits[SciFi::Tracking::max_x_hits],
+  int it) {
+  float d = getLineFitDistance( parameters, hits_layers, coordX, allXHits, it ); 
+  return d * d * coordX[it]; 
 }
 void solveLineFit(SciFi::Tracking::LineFitterPars &parameters)  {
   float den = (parameters.m_sz*parameters.m_sz-parameters.m_s0*parameters.m_sz2);
@@ -19,11 +29,17 @@ void solveLineFit(SciFi::Tracking::LineFitterPars &parameters)  {
   parameters.m_tc  = (parameters.m_sc *  parameters.m_sz - parameters.m_s0 * parameters.m_scz) / den;
 }
 
-void incrementLineFitParameters(SciFi::Tracking::LineFitterPars &parameters, SciFi::HitsSoA* hits_layers, int it)
+void incrementLineFitParameters(
+  SciFi::Tracking::LineFitterPars &parameters,
+  SciFi::HitsSoA* hits_layers,
+  float coordX[SciFi::Tracking::max_x_hits],
+  int allXHits[SciFi::Tracking::max_x_hits],
+  int it)
 {
-    float c = hits_layers->m_coord[it];
-    float w = hits_layers->m_w[it];
-    float z = hits_layers->m_z[it] - parameters.m_z0;
+    float c = coordX[it];
+    const int hit = allXHits[it];
+    float w = hits_layers->m_w[hit];
+    float z = hits_layers->m_z[hit] - parameters.m_z0;
     parameters.m_s0   += w;
     parameters.m_sz   += w * z;
     parameters.m_sz2  += w * z * z;
