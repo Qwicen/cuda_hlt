@@ -54,20 +54,22 @@ __global__ void PrForward(
   // Loop over the veloUT input tracks
   for ( int i = 0; i < (*n_veloUT_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
     const int i_veloUT_track = i * blockDim.x + threadIdx.x;
-    const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks_event[i_veloUT_track];
-
-    const uint velo_states_index = event_tracks_offset + veloUTTr.veloTrackIndex;
-    const MiniState velo_state {velo_states, velo_states_index};
-
-    find_forward_tracks(
-      hits_layers,
-      veloUTTr,
-      scifi_tracks_event,
-      n_scifi_tracks_event,
-      dev_tmva1,
-      dev_tmva2,
-      dev_constArrays,
-      velo_state);
+    if ( i_veloUT_track < *n_veloUT_tracks_event ) {
+      const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks_event[i_veloUT_track];
+      
+      const uint velo_states_index = event_tracks_offset + veloUTTr.veloTrackIndex;
+      const MiniState velo_state {velo_states, velo_states_index};
+      
+      find_forward_tracks(
+        hits_layers,
+        veloUTTr,
+        scifi_tracks_event,
+        n_scifi_tracks_event,
+        dev_tmva1,
+        dev_tmva2,
+        dev_constArrays,
+        velo_state);
+    }
   }
   
 }
