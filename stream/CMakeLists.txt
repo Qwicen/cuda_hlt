@@ -1,5 +1,5 @@
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
-set(flatbuffers_home "${CMAKE_SOURCE_DIR}/../flatbuffers") 
+set(flatbuffers_home "${CMAKE_SOURCE_DIR}/../flatbuffers")
 
 include_directories(gear/include)
 include_directories(handlers/include)
