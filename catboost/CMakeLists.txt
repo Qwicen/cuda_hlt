@@ -1,9 +1,13 @@
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}") 
 set(flatbuffers_home "${CMAKE_SOURCE_DIR}/../flatbuffers")
+set(catboost_home "${CMAKE_SOURCE_DIR}/../catboost")
+
 find_package(flatbuffers REQUIRED)
+find_package(catboost REQUIRED)
 
 include_directories(include)
 include_directories(${flatbuffers_INCLUDE_DIRS})
+include_directories(${catboost_INCLUDE_DIRS})
 
 function(compile_flatbuffers_schema_to_cpp SRC_FBS)
     string(REGEX REPLACE "\\.fbs$" "_generated.h" GEN_HEADER ${SRC_FBS})
@@ -12,8 +16,8 @@ function(compile_flatbuffers_schema_to_cpp SRC_FBS)
             COMMAND ${flatbuffers_FLATC} -c --gen-mutable
             -o "${CMAKE_CURRENT_SOURCE_DIR}/include"
             --reflect-names
-            -I "${CMAKE_CURRENT_SOURCE_DIR}/include/flatbuffers"
-            "${CMAKE_CURRENT_SOURCE_DIR}/include/flatbuffers/${SRC_FBS}")
+            -I "${catboost_home}"
+            "${catboost_FBS}/${SRC_FBS}")
 endfunction()
 
 compile_flatbuffers_schema_to_cpp(features.fbs)
