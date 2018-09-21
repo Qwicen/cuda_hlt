@@ -41,7 +41,7 @@ int run_forward_on_CPU (
     const uint event_tracks_offset = velo_tracks.tracks_offset(i_event);
     const Velo::Consolidated::States host_velo_states_event {host_velo_states, velo_tracks.total_number_of_tracks};
 
-    int n_forward_tracks = 0;
+    uint n_forward_tracks = 0;
     SciFi::Track forward_tracks[SciFi::max_tracks];
     
     // initialize TMVA vars
@@ -58,11 +58,11 @@ int run_forward_on_CPU (
       event_tracks_offset,
       veloUT_tracks + i_event * VeloUTTracking::max_num_tracks,
       n_veloUT_tracks_events[i_event],
-      tmva1,
-      tmva2,
-      constArrays,
+      &tmva1,
+      &tmva2,
+      &constArrays,
       forward_tracks,
-      n_forward_tracks);
+      &n_forward_tracks);
 
        
 #ifdef WITH_ROOT

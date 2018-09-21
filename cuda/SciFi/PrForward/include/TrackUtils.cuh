@@ -60,24 +60,37 @@ __host__ __device__ inline float straightLineExtend(const float params[4], float
 __host__ __device__ void getTrackParameters (
   float xAtRef,
   MiniState velo_state,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   float trackParams[SciFi::Tracking::nTrackParams]);
 
 __host__ __device__ float calcqOverP (
   float bx,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   MiniState velo_state );
 
-__host__ __device__ float zMagnet(MiniState velo_state, const SciFi::Tracking::Arrays& constArrays);
+__host__ __device__ float zMagnet(
+  MiniState velo_state,
+  SciFi::Tracking::Arrays* constArrays);
 
-__host__ __device__ void covariance ( FullState& state, const SciFi::Tracking::Arrays& constArrays, const float qOverP );
+__host__ __device__ void covariance (
+  FullState& state,
+  SciFi::Tracking::Arrays* constArrays,
+  const float qOverP );
 
 __host__ __device__ float calcDxRef(float pt, MiniState velo_state);
 
-__host__ __device__ float trackToHitDistance( float trackParameters[SciFi::Tracking::nTrackParams], SciFi::HitsSoA* hits_layers, int hit );
+__host__ __device__ float trackToHitDistance(
+  float trackParameters[SciFi::Tracking::nTrackParams],
+  SciFi::HitsSoA* hits_layers,
+  int hit );
 
-__host__ __device__ static inline bool lowerByQuality(SciFi::Tracking::Track t1, SciFi::Tracking::Track t2) {
+__host__ __device__ static inline bool lowerByQuality(
+  SciFi::Tracking::Track t1,
+  SciFi::Tracking::Track t2) {
   return t1.quality < t2.quality;
 }
 
-__host__ __device__ float chi2XHit( const float parsX[4], SciFi::HitsSoA* hits_layers, const int hit );
+__host__ __device__ float chi2XHit(
+  const float parsX[4],
+  SciFi::HitsSoA* hits_layers,
+  const int hit );

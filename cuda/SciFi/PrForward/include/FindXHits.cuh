@@ -30,7 +30,7 @@ __host__ __device__ void collectAllXHits(
   float coordX[SciFi::Tracking::max_x_hits],
   const float xParams_seed[4],
   const float yParams_seed[4],
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   const MiniState& velo_state,
   const float qop,
   int side);
@@ -49,7 +49,7 @@ __host__ __device__ void selectXCandidates(
   const float yParams_seed[4],
   const MiniState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   int side);
 
 __host__ __device__ bool addHitsOnEmptyXLayers(
@@ -60,7 +60,7 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
   bool fullFit,
   int coordToFit[SciFi::Tracking::max_coordToFit],
   int& n_coordToFit,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   PlaneCounter& planeCounter,
   SciFi::Tracking::HitSearchCuts& pars_cur,
   int side);

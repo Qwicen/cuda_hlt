@@ -431,7 +431,10 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
       argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
       argen.generate<arg::dev_scifi_tracks>(argument_offsets),
-      argen.generate<arg::dev_n_scifi_tracks>(argument_offsets)
+      argen.generate<arg::dev_n_scifi_tracks>(argument_offsets),
+      constants.dev_scifi_tmva1,
+      constants.dev_scifi_tmva2,
+      constants.dev_scifi_constArrays
     );
     sequence.item<seq::PrForward>().invoke();                                               
 

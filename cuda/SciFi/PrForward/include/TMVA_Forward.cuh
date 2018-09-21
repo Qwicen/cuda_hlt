@@ -23,14 +23,14 @@ struct TMVA {
 
 };
   
-__host__ __device__ inline void Transform_1( float iv[7], const TMVA& tmva ) 
+__host__ __device__ inline void Transform_1( float iv[7], TMVA* tmva ) 
  {
    const int cls = 2; //what are the other???
    const int nVar = 7;
    
    for (int ivar=0;ivar<nVar;ivar++) {
-     const float offset = tmva.fMin_1[cls][ivar];
-     const float scale  = 1.0/(tmva.fMax_1[cls][ivar]-tmva.fMin_1[cls][ivar]); //TODO speed this up. but then not easy to update :(
+     const float offset = tmva->fMin_1[cls][ivar];
+     const float scale  = 1.0/(tmva->fMax_1[cls][ivar]-tmva->fMin_1[cls][ivar]); //TODO speed this up. but then not easy to update :(
       iv[ivar] = (iv[ivar]-offset)*scale * 2. - 1.;
    }
  }
@@ -46,7 +46,7 @@ __host__ __device__ inline void Transform_1( float iv[7], const TMVA& tmva )
    return 1.0/(1.0+exp(-x));
  }
  
-__host__ __device__ inline float GetMvaValue__( const float inputValues[7], const TMVA& tmva )
+__host__ __device__ inline float GetMvaValue__( const float inputValues[7], TMVA* tmva )
  {
    //TODO check auto vectorization here: 'not vectorized: unsupported use in stmt' , 'Unsupported pattern'
    
@@ -69,7 +69,7 @@ __host__ __device__ inline float GetMvaValue__( const float inputValues[7], cons
    // layer 0 to 1
    for (int o=0; o<10; o++) {
      for (int i=0; i<8; i++) {
-       float inputVal = tmva.fWeightMatrix0to1[o][i] * fWeights0[i];
+       float inputVal = tmva->fWeightMatrix0to1[o][i] * fWeights0[i];
        fWeights1[o] += inputVal;
      }
      fWeights1[o] = ActivationFnc(fWeights1[o]);
@@ -77,7 +77,7 @@ __host__ __device__ inline float GetMvaValue__( const float inputValues[7], cons
    // layer 1 to 2
    for (int o=0; o<9; o++) {
      for (int i=0; i<11; i++) {
-       float inputVal = tmva.fWeightMatrix1to2[o][i] * fWeights1[i];
+       float inputVal = tmva->fWeightMatrix1to2[o][i] * fWeights1[i];
        fWeights2[o] += inputVal;
      }
      fWeights2[o] = ActivationFnc(fWeights2[o]);
@@ -85,14 +85,14 @@ __host__ __device__ inline float GetMvaValue__( const float inputValues[7], cons
    // layer 2 to 3
    for (int o=0; o<7; o++) {
      for (int i=0; i<10; i++) {
-       float inputVal = tmva.fWeightMatrix2to3[o][i] * fWeights2[i];
+       float inputVal = tmva->fWeightMatrix2to3[o][i] * fWeights2[i];
        fWeights3[o] += inputVal;
      }
      fWeights3[o] = ActivationFnc(fWeights3[o]);
    }
    // layer 3 to 4
    for (int i=0; i<8; i++) {
-     float inputVal = tmva.fWeightMatrix3to4[0][i] * fWeights3[i];
+     float inputVal = tmva->fWeightMatrix3to4[0][i] * fWeights3[i];
      fWeights4[0] += inputVal;
    }
    return OutputActivationFnc(fWeights4[0]);
@@ -103,7 +103,7 @@ __host__ __device__ inline float GetMvaValue__( const float inputValues[7], cons
  // "inputValues" is an array of input values in the same order as the
  // variables given to the constructor
  // WARNING: inputVariables will be modified
- __host__ __device__ inline float GetMvaValue( float iV[7], TMVA tmva )
+ __host__ __device__ inline float GetMvaValue( float iV[7], TMVA* tmva )
  {
    //Normalize input
    Transform_1( iV, tmva );

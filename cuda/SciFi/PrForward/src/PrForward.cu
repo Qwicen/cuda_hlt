@@ -20,24 +20,49 @@ __global__ void PrForward(
   uint* dev_velo_states,
   VeloUTTracking::TrackUT * dev_veloUT_tracks,
   const int * dev_atomics_veloUT,
-  SciFi::Track dev_scifi_tracks[SciFi::max_tracks],
-  uint* dev_n_scifi_tracks //,
-  // const SciFi::Tracking::TMVA& dev_tmva1,
-  // const SciFi::Tracking::TMVA& dev_tmva2,
-  // const SciFi::Tracking::Arrays& dev_constArrays  
+  SciFi::Track* dev_scifi_tracks,
+  uint* dev_n_scifi_tracks ,
+  SciFi::Tracking::TMVA* dev_tmva1,
+  SciFi::Tracking::TMVA* dev_tmva2,
+  SciFi::Tracking::Arrays* dev_constArrays  
 ) {
 
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
-  
-  // const Velo::Consolidated::States& velo_states,
-  // const uint event_tracks_offset,
 
-  // const int n_veloUT_tracks,
-  
-  
+  // Velo consolidated types
+  const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
+  const Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
+  const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
+  const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
+
+  // UT un-consolidated tracks (-> should be consolidated soon)
+  const int* n_veloUT_tracks_event = dev_atomics_veloUT + event_number;
+  VeloUTTracking::TrackUT* veloUT_tracks_event = dev_veloUT_tracks + event_number * VeloUTTracking::max_num_tracks;
+
+  // SciFi un-consolidated types
+  SciFi::Track* scifi_tracks_event = dev_scifi_tracks + event_number * SciFi::max_tracks;
+  uint* n_scifi_tracks_event = dev_n_scifi_tracks + event_number;
+  SciFi::HitsSoA* hits_layers = dev_scifi_hits + event_number;
 
   
+  // Loop over the veloUT input tracks
+  for ( int i_veloUT_track = 0; i_veloUT_track < *n_veloUT_tracks_event; ++i_veloUT_track ) {
+    const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks_event[i_veloUT_track];
+
+    const uint velo_states_index = event_tracks_offset + veloUTTr.veloTrackIndex;
+    const MiniState velo_state {velo_states, velo_states_index};
+
+    find_forward_tracks(
+      hits_layers,
+      veloUTTr,
+      scifi_tracks_event,
+      n_scifi_tracks_event,
+      dev_tmva1,
+      dev_tmva2,
+      dev_constArrays,
+      velo_state);
+  }
   
   
   
@@ -46,11 +71,11 @@ __global__ void PrForward(
 __host__ __device__ void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,
   const VeloUTTracking::TrackUT& veloUTTrack,
-  SciFi::Track outputTracks[SciFi::max_tracks],
-  int& n_forward_tracks,
-  const SciFi::Tracking::TMVA& tmva1,
-  const SciFi::Tracking::TMVA& tmva2,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Track* outputTracks,
+  uint* n_forward_tracks,
+  SciFi::Tracking::TMVA* tmva1,
+  SciFi::Tracking::TMVA* tmva2,
+  SciFi::Tracking::Arrays* constArrays,
   const MiniState& velo_state
 ) {
 
@@ -182,8 +207,12 @@ __host__ __device__ void find_forward_tracks(
           tr.addLHCbID( hits_layers->m_LHCbID[ track.hit_indices[i_hit] ] );
         }
         
-        assert(n_forward_tracks < SciFi::max_tracks);
-        outputTracks[n_forward_tracks++] = tr;
+        assert(*n_forward_tracks < SciFi::max_tracks);
+#ifndef __CUDA_ARCH__
+        outputTracks[(*n_forward_tracks)++] = tr;
+#else
+
+#endif
         //debug_cout << "track hit number = " << tr.hitsNum << std::endl;
       }
     }
@@ -217,9 +246,9 @@ __host__ __device__ void selectFullCandidates(
   MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars,
-  const SciFi::Tracking::TMVA& tmva1,
-  const SciFi::Tracking::TMVA& tmva2,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::TMVA* tmva1,
+  SciFi::Tracking::TMVA* tmva2,
+  SciFi::Tracking::Arrays* constArrays,
   bool secondLoop)
 {
 
@@ -269,9 +298,9 @@ __host__ __device__ void selectFullCandidates(
       const float qOverP  = calcqOverP(cand->trackParams[1], constArrays, velo_state);
       //orig params before fitting , TODO faster if only calc once?? mem usage?
       const float xAtRef = cand->trackParams[0];
-      float dSlope  = ( velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx - xAtRef ) / ( SciFi::Tracking::zReference - constArrays.zMagnetParams[0]);
-      const float zMagSlope = constArrays.zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays.zMagnetParams[3] * pow(velo_state.ty,2);
-      const float zMag    = constArrays.zMagnetParams[0] + constArrays.zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
+      float dSlope  = ( velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx - xAtRef ) / ( SciFi::Tracking::zReference - constArrays->zMagnetParams[0]);
+      const float zMagSlope = constArrays->zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays->zMagnetParams[3] * pow(velo_state.ty,2);
+      const float zMag    = constArrays->zMagnetParams[0] + constArrays->zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
       const float xMag    = velo_state.x + (zMag- velo_state.z) * velo_state.tx;
       const float slopeT  = ( xAtRef - xMag ) / ( SciFi::Tracking::zReference - zMag );
       dSlope        = slopeT - velo_state.tx;

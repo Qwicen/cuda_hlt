@@ -45,15 +45,6 @@ __global__ void veloUT(
 
   int posLayers[4][85];
 
-  // printf("first hit: cos = %f, yBegin = %f, yEnd = %f, zAtYEq0 = %f, xAtYEq0 = %f, weight = %f, highThreshold = %u \n",
-  //        hits_layers_event->cos(0),
-  //        hits_layers_event->yBegin(0),
-  //        hits_layers_event->yEnd(0),
-  //        hits_layers_event->zAtYEq0(0),
-  //        hits_layers_event->xAtYEq0(0),
-  //        hits_layers_event->weight(0),
-  //        hits_layers_event->highThreshold(0));
-         
   fillIterators(ut_hits, ut_hit_count, posLayers);
 
   const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);

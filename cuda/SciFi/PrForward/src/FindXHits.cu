@@ -21,7 +21,7 @@ __host__ __device__ void collectAllXHits(
   float coordX[SciFi::Tracking::max_x_hits],
   const float xParams_seed[4], 
   const float yParams_seed[4],
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   const MiniState& velo_state,
   const float qOverP,
   int side)
@@ -48,10 +48,10 @@ __host__ __device__ void collectAllXHits(
   iZoneEnd[0] = 0; 
   int cptZone = 1; 
 
-  int iZoneStartingPoint = side > 0 ? constArrays.zoneoffsetpar : 0;
+  int iZoneStartingPoint = side > 0 ? constArrays->zoneoffsetpar : 0;
 
-  for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + constArrays.zoneoffsetpar; iZone++) {
-    const float zZone   = constArrays.xZone_zPos[iZone-iZoneStartingPoint];
+  for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + constArrays->zoneoffsetpar; iZone++) {
+    const float zZone   = constArrays->xZone_zPos[iZone-iZoneStartingPoint];
     const float xInZone = straightLineExtend(xParams_seed,zZone);
     const float yInZone = straightLineExtend(yParams_seed,zZone);
 
@@ -89,8 +89,8 @@ __host__ __device__ void collectAllXHits(
     }
 
     // Get the zone bounds 
-    int x_zone_offset_begin = hits_layers->layer_offset[constArrays.xZones[iZone]];
-    int x_zone_offset_end   = hits_layers->layer_offset[constArrays.xZones[iZone]+1];
+    int x_zone_offset_begin = hits_layers->layer_offset[constArrays->xZones[iZone]];
+    int x_zone_offset_end   = hits_layers->layer_offset[constArrays->xZones[iZone]+1];
     int itH   = getLowerBound(hits_layers->m_x,xMin,x_zone_offset_begin,x_zone_offset_end); 
     int itEnd = getLowerBound(hits_layers->m_x,xMax,x_zone_offset_begin,x_zone_offset_end);
 
@@ -98,20 +98,20 @@ __host__ __device__ void collectAllXHits(
     if (!(itEnd > itH)) continue; 
  
     // Now match the stereo hits
-    const float this_uv_z   = constArrays.uvZone_zPos[iZone-iZoneStartingPoint];
+    const float this_uv_z   = constArrays->uvZone_zPos[iZone-iZoneStartingPoint];
     const float xInUv       = straightLineExtend(xParams_seed,this_uv_z);
     const float zRatio      = ( this_uv_z - zMag ) / ( zZone - zMag );
-    const float dx          = yInZone * constArrays.uvZone_dxdy[iZone-iZoneStartingPoint];
+    const float dx          = yInZone * constArrays->uvZone_dxdy[iZone-iZoneStartingPoint];
     const float xCentral    = xInZone + dx;
           float xPredUv     = xInUv + ( hits_layers->m_x[itH] - xInZone) * zRatio - dx;
           float maxDx       = SciFi::Tracking::tolYCollectX + ( std::fabs( hits_layers->m_x[itH] - xCentral ) + std::fabs( yInZone ) ) * SciFi::Tracking::tolYSlopeCollectX;
           float xMinUV      = xPredUv - maxDx;
     
-    int uv_zone_offset_begin = hits_layers->layer_offset[constArrays.uvZones[iZone]];
-    int uv_zone_offset_end   = hits_layers->layer_offset[constArrays.uvZones[iZone]+1];  
+    int uv_zone_offset_begin = hits_layers->layer_offset[constArrays->uvZones[iZone]];
+    int uv_zone_offset_end   = hits_layers->layer_offset[constArrays->uvZones[iZone]+1];  
     int triangleOffset       = side > 0 ? -1 : 1;
-    int triangle_zone_offset_begin = hits_layers->layer_offset[constArrays.uvZones[iZone + constArrays.zoneoffsetpar*triangleOffset]];
-    int triangle_zone_offset_end   = hits_layers->layer_offset[constArrays.uvZones[iZone + constArrays.zoneoffsetpar*triangleOffset]+1];
+    int triangle_zone_offset_begin = hits_layers->layer_offset[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]];
+    int triangle_zone_offset_end   = hits_layers->layer_offset[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]+1];
     int itUV1                = getLowerBound(hits_layers->m_x,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);    
     int itUV2                = getLowerBound(hits_layers->m_x,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
 
@@ -184,7 +184,7 @@ __host__ __device__ void selectXCandidates(
   const float yParams_seed[4],
   const MiniState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   int side)
 {
   if ( n_x_hits < pars.minXHits ) return;
@@ -442,7 +442,7 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
   bool fullFit,
   int coordToFit[SciFi::Tracking::max_coordToFit],
   int& n_coordToFit,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   PlaneCounter& planeCounter,
   SciFi::Tracking::HitSearchCuts& pars,
   int side)
@@ -454,17 +454,17 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
   const float xStraight = straightLineExtend(xParams_seed,SciFi::Tracking::zReference);
   const float xWindow = pars.maxXWindow + ( fabs( x1 ) + fabs( x1 - xStraight ) ) * pars.maxXWindowSlope;
 
-  int iZoneStartingPoint = side > 0 ? constArrays.zoneoffsetpar : 0;
+  int iZoneStartingPoint = side > 0 ? constArrays->zoneoffsetpar : 0;
 
-  for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + constArrays.zoneoffsetpar; iZone++) {
-    if (planeCounter.nbInPlane( constArrays.xZones[iZone]/2 ) != 0) continue;
+  for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + constArrays->zoneoffsetpar; iZone++) {
+    if (planeCounter.nbInPlane( constArrays->xZones[iZone]/2 ) != 0) continue;
 
     const float parsX[4] = {trackParameters[0],
                             trackParameters[1],
                             trackParameters[2],
                             trackParameters[3]};
 
-    const float zZone  = constArrays.xZone_zPos[iZone-iZoneStartingPoint];
+    const float zZone  = constArrays->xZone_zPos[iZone-iZoneStartingPoint];
     const float xPred  = straightLineExtend(parsX,zZone);
     const float minX = xPred - xWindow;
     const float maxX = xPred + xWindow;
@@ -472,8 +472,8 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
     int best = -1;
 
     // -- Use a search to find the lower bound of the range of x values
-    int x_zone_offset_begin = hits_layers->layer_offset[constArrays.xZones[iZone]];
-    int x_zone_offset_end   = hits_layers->layer_offset[constArrays.xZones[iZone]+1];
+    int x_zone_offset_begin = hits_layers->layer_offset[constArrays->xZones[iZone]];
+    int x_zone_offset_end   = hits_layers->layer_offset[constArrays->xZones[iZone]+1];
     int itH   = getLowerBound(hits_layers->m_x,minX,x_zone_offset_begin,x_zone_offset_end);
     int itEnd = x_zone_offset_end;
     

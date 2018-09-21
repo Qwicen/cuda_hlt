@@ -7,6 +7,9 @@
 #include "ClusteringDefinitions.cuh"
 #include "ClusteringCommon.h"
 #include "VeloUTDefinitions.cuh"
+#include "PrForwardConstants.cuh"
+#include "TMVA_Forward_1.cuh"
+#include "TMVA_Forward_2.cuh"
 
 /**
  * @brief Struct intended as a singleton with constants defined on GPU.
@@ -25,6 +28,9 @@ struct Constants {
   float* dev_velo_sp_fy;
   float* dev_ut_dxDy;
   float host_ut_dxDy[VeloUTTracking::n_layers];
+  SciFi::Tracking::TMVA* dev_scifi_tmva1;
+  SciFi::Tracking::TMVA* dev_scifi_tmva2;
+  SciFi::Tracking::Arrays* dev_scifi_constArrays;
   
   void reserve_and_initialize() {
     reserve_constants();

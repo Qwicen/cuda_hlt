@@ -21,7 +21,7 @@ __host__ __device__ void xAtRef_SamePlaneHits(
   const int n_x_hits,
   float coordX[SciFi::Tracking::max_x_hits],
   const float xParams_seed[4],
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   MiniState velo_state, 
   int itH, int itEnd);
 
@@ -40,7 +40,7 @@ __host__ __device__ bool fitYProjection(
   int& n_stereoHits,
   PlaneCounter& planeCounter,
   MiniState velo_state,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   SciFi::Tracking::HitSearchCuts& pars_cur); 
 
 __host__ __device__ int fitParabola(

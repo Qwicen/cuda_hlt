@@ -1,11 +1,15 @@
 #include "TrackUtils.cuh"
 
-__host__ __device__ void getTrackParameters ( float xAtRef, MiniState velo_state, const SciFi::Tracking::Arrays& constArrays, float trackParams[SciFi::Tracking::nTrackParams])
+__host__ __device__ void getTrackParameters (
+  float xAtRef,
+  MiniState velo_state,
+  SciFi::Tracking::Arrays* constArrays,
+  float trackParams[SciFi::Tracking::nTrackParams])
 {
   
-  float dSlope  = ( xFromVelo(SciFi::Tracking::zReference,velo_state) - xAtRef ) / ( SciFi::Tracking::zReference - constArrays.zMagnetParams[0]);
-  const float zMagSlope = constArrays.zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays.zMagnetParams[3] * pow(velo_state.ty,2);
-  const float zMag    = constArrays.zMagnetParams[0] + constArrays.zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
+  float dSlope  = ( xFromVelo(SciFi::Tracking::zReference,velo_state) - xAtRef ) / ( SciFi::Tracking::zReference - constArrays->zMagnetParams[0]);
+  const float zMagSlope = constArrays->zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays->zMagnetParams[3] * pow(velo_state.ty,2);
+  const float zMag    = constArrays->zMagnetParams[0] + constArrays->zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
   const float xMag    = xFromVelo( zMag, velo_state );
   const float slopeT  = ( xAtRef - xMag ) / ( SciFi::Tracking::zReference - zMag );
   dSlope        = slopeT - velo_state.tx;
@@ -13,8 +17,8 @@ __host__ __device__ void getTrackParameters ( float xAtRef, MiniState velo_state
   
   trackParams[0] = xAtRef;
   trackParams[1] = slopeT;
-  trackParams[2] = 1.e-6f * constArrays.xParams[0] * dSlope;
-  trackParams[3] = 1.e-9f * constArrays.xParams[1] * dSlope;
+  trackParams[2] = 1.e-6f * constArrays->xParams[0] * dSlope;
+  trackParams[3] = 1.e-9f * constArrays->xParams[1] * dSlope;
   trackParams[4] = yFromVelo( SciFi::Tracking::zReference, velo_state );
   trackParams[5] = velo_state.ty + dyCoef * SciFi::Tracking::byParams;
   trackParams[6] = dyCoef * SciFi::Tracking::cyParams;
@@ -22,17 +26,20 @@ __host__ __device__ void getTrackParameters ( float xAtRef, MiniState velo_state
   trackParams[8] = 0.0; // last elements are chi2 and ndof, as float 
 }
 
-__host__ __device__ float calcqOverP ( float bx, const SciFi::Tracking::Arrays& constArrays, MiniState velo_state )
+__host__ __device__ float calcqOverP (
+  float bx,
+  SciFi::Tracking::Arrays* constArrays,
+  MiniState velo_state )
 {
   
   float qop(1.0f/Gaudi::Units::GeV) ;
   float bx2  = bx * bx;
-  float coef = ( constArrays.momentumParams[0] +
-                 constArrays.momentumParams[1] * bx2 +
-                 constArrays.momentumParams[2] * bx2 * bx2 +
-                 constArrays.momentumParams[3] * bx * velo_state.tx +
-                 constArrays.momentumParams[4] * pow(velo_state.ty,2) +
-                 constArrays.momentumParams[5] * pow(velo_state.ty,2) * pow(velo_state.ty,2) );
+  float coef = ( constArrays->momentumParams[0] +
+                 constArrays->momentumParams[1] * bx2 +
+                 constArrays->momentumParams[2] * bx2 * bx2 +
+                 constArrays->momentumParams[3] * bx * velo_state.tx +
+                 constArrays->momentumParams[4] * pow(velo_state.ty,2) +
+                 constArrays->momentumParams[5] * pow(velo_state.ty,2) * pow(velo_state.ty,2) );
   float m_slope2 = pow(velo_state.tx,2) + pow(velo_state.ty,2);
   float proj = sqrt( ( 1.f + m_slope2 ) / ( 1.f + pow(velo_state.tx,2) ) ); 
   qop = ( velo_state.tx - bx ) / ( coef * Gaudi::Units::GeV * proj * SciFi::Tracking::magscalefactor) ;
@@ -42,22 +49,27 @@ __host__ __device__ float calcqOverP ( float bx, const SciFi::Tracking::Arrays& 
 
 // DvB: what does this do?
 // -> get position within magnet (?)
-__host__ __device__ float zMagnet(MiniState velo_state, const SciFi::Tracking::Arrays& constArrays)
+__host__ __device__ float zMagnet(
+  MiniState velo_state,
+  SciFi::Tracking::Arrays* constArrays)
 {
     
-  return ( constArrays.zMagnetParams[0] +
-           constArrays.zMagnetParams[2] * pow(velo_state.tx,2) +
-           constArrays.zMagnetParams[3] * pow(velo_state.ty,2) );
+  return ( constArrays->zMagnetParams[0] +
+           constArrays->zMagnetParams[2] * pow(velo_state.tx,2) +
+           constArrays->zMagnetParams[3] * pow(velo_state.ty,2) );
 }
 
-__host__ __device__ void covariance ( FullState& state, const SciFi::Tracking::Arrays& constArrays, const float qOverP )
+__host__ __device__ void covariance (
+  FullState& state,
+  SciFi::Tracking::Arrays* constArrays,
+  const float qOverP )
 {
      
-  state.c00 = constArrays.covarianceValues[0];
-  state.c11 = constArrays.covarianceValues[1];
-  state.c22 = constArrays.covarianceValues[2];
-  state.c33 = constArrays.covarianceValues[3];
-  state.c44 = constArrays.covarianceValues[4] * qOverP * qOverP;
+  state.c00 = constArrays->covarianceValues[0];
+  state.c11 = constArrays->covarianceValues[1];
+  state.c22 = constArrays->covarianceValues[2];
+  state.c33 = constArrays->covarianceValues[3];
+  state.c44 = constArrays->covarianceValues[4] * qOverP * qOverP;
 }
 
 // calculate difference between straight line extrapolation and
@@ -67,7 +79,10 @@ __host__ __device__ float calcDxRef(float pt, MiniState velo_state) {
   return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  pow(velo_state.ty,2) - 1000. * pow(velo_state.tx,2); // tune this window
 }
 
-__host__ __device__ float trackToHitDistance( float trackParameters[SciFi::Tracking::nTrackParams], SciFi::HitsSoA* hits_layers, int hit )
+__host__ __device__ float trackToHitDistance(
+  float trackParameters[SciFi::Tracking::nTrackParams],
+  SciFi::HitsSoA* hits_layers,
+  int hit )
 {
   const float parsX[4] = {trackParameters[0],
                           trackParameters[1],
@@ -84,7 +99,10 @@ __host__ __device__ float trackToHitDistance( float trackParameters[SciFi::Track
   return hits_layers->m_x[hit] + y_track*hits_layers->m_dxdy[hit] - x_track; 
 }
 
-__host__ __device__ float chi2XHit( const float parsX[4], SciFi::HitsSoA* hits_layers, const int hit ) {
+__host__ __device__ float chi2XHit(
+  const float parsX[4],
+  SciFi::HitsSoA* hits_layers,
+  const int hit ) {
   float track_x_at_zHit = straightLineExtend(parsX,hits_layers->m_z[hit]);
    float hitdist = hits_layers->m_x[hit] - track_x_at_zHit; 
    return hitdist*hitdist*hits_layers->m_w[hit];

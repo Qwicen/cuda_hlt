@@ -47,22 +47,21 @@ __global__ void PrForward(
   uint* dev_velo_track_hit_number,
   uint* dev_velo_states,
   VeloUTTracking::TrackUT * dev_veloUT_tracks,
-  const int * dev_atomics_veloUT,
-    SciFi::Track dev_scifi_tracks[SciFi::max_tracks],
-  uint* dev_n_scifi_tracks //,
-  // const SciFi::Tracking::TMVA& dev_tmva1,
-  // const SciFi::Tracking::TMVA& dev_tmva2,
-  // const SciFi::Tracking::Arrays& dev_constArrays
-                          );
+  const int* dev_atomics_veloUT,
+  SciFi::Track* dev_scifi_tracks,
+  uint* dev_n_scifi_tracks ,
+  SciFi::Tracking::TMVA* dev_tmva1,
+  SciFi::Tracking::TMVA* dev_tmva2,
+  SciFi::Tracking::Arrays* dev_constArrays);
 
 __host__ __device__ void find_forward_tracks(
   SciFi::HitsSoA* hits_layers,  
   const VeloUTTracking::TrackUT& veloUTTrack,
-  SciFi::Track outputTracks[SciFi::max_tracks],
-  int& n_forward_tracks,
-  const SciFi::Tracking::TMVA& tmva1,
-  const SciFi::Tracking::TMVA& tmva2,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Track* outputTracks,
+  uint* n_forward_tracks,
+  SciFi::Tracking::TMVA* tmva1,
+  SciFi::Tracking::TMVA* tmva2,
+  SciFi::Tracking::Arrays* constArrays,
   const MiniState& velo_state);
 
 
@@ -77,9 +76,9 @@ __host__ __device__ void selectFullCandidates(
   MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars_cur,
-  const SciFi::Tracking::TMVA& tmva1,
-  const SciFi::Tracking::TMVA& tmva2,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::TMVA* tmva1,
+  SciFi::Tracking::TMVA* tmva2,
+  SciFi::Tracking::Arrays* constArrays,
   bool secondLoop);
 
 __host__ __device__ SciFi::Track makeTrack( SciFi::Tracking::Track track ); 

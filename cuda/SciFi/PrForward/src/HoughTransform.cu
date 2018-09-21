@@ -8,23 +8,23 @@ __host__ __device__ void xAtRef_SamePlaneHits(
   const int n_x_hits,
   float coordX[SciFi::Tracking::max_x_hits],
   const float xParams_seed[4],
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   MiniState velo_state, 
   int itH, int itEnd)
 {
   //this is quite computationally expensive mind, should take care when porting
   float zHit    = hits_layers->m_z[allXHits[itH]]; //all hits in same layer
   float xFromVelo_Hit = straightLineExtend(xParams_seed,zHit);
-  float zMagSlope = constArrays.zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays.zMagnetParams[3] * pow(velo_state.ty,2);
-  float dSlopeDivPart = 1.f / ( zHit - constArrays.zMagnetParams[0]);
+  float zMagSlope = constArrays->zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays->zMagnetParams[3] * pow(velo_state.ty,2);
+  float dSlopeDivPart = 1.f / ( zHit - constArrays->zMagnetParams[0]);
   float dz      = 1.e-3f * ( zHit - SciFi::Tracking::zReference );
   
   while( itEnd>itH ){
     float xHit = hits_layers->m_x[allXHits[itH]];
     float dSlope  = ( xFromVelo_Hit - xHit ) * dSlopeDivPart;
-    float zMag    = constArrays.zMagnetParams[0] + constArrays.zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
+    float zMag    = constArrays->zMagnetParams[0] + constArrays->zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
     float xMag    = xFromVelo_Hit + velo_state.tx * (zMag - zHit);
-    float dxCoef  = dz * dz * ( constArrays.xParams[0] + dz * constArrays.xParams[1] ) * dSlope;
+    float dxCoef  = dz * dz * ( constArrays->xParams[0] + dz * constArrays->xParams[1] ) * dSlope;
     float ratio   = (  SciFi::Tracking::zReference - zMag ) / ( zHit - zMag );
     coordX[itH] = xMag + ratio * (xHit + dxCoef  - xMag);
     itH++;
@@ -147,7 +147,7 @@ __host__ __device__ bool fitYProjection(
   int& n_stereoHits,
   PlaneCounter& planeCounter,
   MiniState velo_state,
-  const SciFi::Tracking::Arrays& constArrays,
+  SciFi::Tracking::Arrays* constArrays,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   

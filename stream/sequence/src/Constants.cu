@@ -7,6 +7,9 @@ void Constants::reserve_constants() {
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_fx, 512 * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_fy, 512 * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_ut_dxDy, VeloUTTracking::n_layers * sizeof(float)));
+  cudaCheck(cudaMalloc((void**)&dev_scifi_tmva1, sizeof(SciFi::Tracking::TMVA)));
+  cudaCheck(cudaMalloc((void**)&dev_scifi_tmva2, sizeof(SciFi::Tracking::TMVA)));
+  cudaCheck(cudaMalloc((void**)&dev_scifi_constArrays, sizeof(SciFi::Tracking::Arrays)));
 }
 
 void Constants::initialize_constants() {
@@ -41,4 +44,16 @@ void Constants::initialize_constants() {
   host_ut_dxDy[3] = 0.;
 
   cudaCheck(cudaMemcpy(dev_ut_dxDy, host_ut_dxDy, VeloUTTracking::n_layers * sizeof(float), cudaMemcpyHostToDevice));
+
+  // SciFi constants
+  SciFi::Tracking::TMVA host_tmva1;
+  SciFi::Tracking::TMVA host_tmva2;
+  SciFi::Tracking::TMVA1_Init( host_tmva1 );
+  SciFi::Tracking::TMVA2_Init( host_tmva2 );
+  SciFi::Tracking::Arrays host_constArrays;
+  
+  cudaCheck(cudaMemcpy(dev_scifi_tmva1, &host_tmva1, sizeof(SciFi::Tracking::TMVA), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_scifi_tmva2, &host_tmva2, sizeof(SciFi::Tracking::TMVA), cudaMemcpyHostToDevice));
+   cudaCheck(cudaMemcpy(dev_scifi_constArrays, &host_constArrays, sizeof(SciFi::Tracking::Arrays), cudaMemcpyHostToDevice));
+  
 }
