@@ -27,7 +27,10 @@ include_directories(${catboost_INCLUDE_DIRS})
 set(SRCS
     src/Catboost.cpp
     src/TestCatboost.cpp
-    ${catboost_INCLUDE_DIRS}/evaluator.cpp)
+    ${catboost_INCLUDE_DIRS}/evaluator.cpp
+    features_generated.h
+    ctr_data_generated.h
+    model_generated.h)
 
 add_library(Catboost ${SRCS})
 
