@@ -133,8 +133,6 @@ __host__ __device__ void find_forward_tracks(
     candidate_tracks, n_candidate_tracks,
     zRef_track, xParams_seed, yParams_seed,
     velo_state, pars_first, constArrays, -1); 
-
-
  
   SciFi::Tracking::Track selected_tracks[SciFi::max_tracks];
   int n_selected_tracks = 0;
@@ -148,6 +146,7 @@ __host__ __device__ void find_forward_tracks(
     xParams_seed, yParams_seed,
     velo_state, veloUTTrack.qop,
     pars_first, tmva1, tmva2, constArrays, false);
+
 
   
   bool ok = false;
@@ -233,7 +232,6 @@ __host__ __device__ void find_forward_tracks(
 // Turn SciFi::Tracking::Track into a SciFi::Track
 __host__ __device__ SciFi::Track makeTrack( SciFi::Tracking::Track track ) {
   SciFi::Track tr;
-  tr.hitsNum = track.hitsNum;
   tr.qop     = track.qop;
   tr.chi2    = track.chi2;
 

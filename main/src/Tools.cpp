@@ -346,9 +346,9 @@ trackChecker::Tracks prepareForwardTracksEvent(
   for ( int i_track = 0; i_track < n_forward_tracks; i_track++ ) {
     const SciFi::Track& forward_track = forward_tracks[i_track];
     trackChecker::Track checker_track;
-    // debug_cout << "at track " << std::dec << i_track << std::endl;
+    //debug_cout << "at track " << std::dec << i_track << std::endl;
     for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
-      //debug_cout<<"\t LHCbIDsForward["<<i_hit<<"] = " << std::hex << forward_track.LHCbIDs[i_hit]<< std::endl;
+      //debug_cout<<"\t LHCbIDs Forward["<<i_hit<<"] = " << std::hex << forward_track.LHCbIDs[i_hit]<< std::endl;
       LHCbID lhcb_id( forward_track.LHCbIDs[i_hit] );
       checker_track.addId( lhcb_id );
     }
