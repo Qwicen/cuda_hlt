@@ -71,9 +71,15 @@ trackChecker::Tracks prepareForwardTracksVeloUTOnly(
   std::vector< VeloUTTracking::TrackUT > forward_tracks
 ); 
 
-trackChecker::Tracks prepareForwardTracks(
+trackChecker::Tracks prepareForwardTracksEvent(
   SciFi::Track forward_tracks[SciFi::max_tracks],
-  const int n_forward_tracks
+  const uint n_forward_tracks
+);
+
+std::vector< trackChecker::Tracks > prepareForwardTracks(
+  SciFi::Track* scifi_tracks,
+  uint* n_scifi_tracks,
+  const int number_of_events
 );
 
 void call_pr_checker(

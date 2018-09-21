@@ -60,8 +60,7 @@ void StreamWrapper::run_stream(
   uint* host_ut_event_offsets,
   const size_t ut_events_size,
   const size_t ut_event_offsets_size,
-  SciFi::HitsSoA *hits_layers_events_ft,
-  const uint32_t n_hits_layers_events_ft[][SciFi::Constants::n_zones],
+  SciFi::HitsSoA *hits_layers_events_scifi,
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -76,8 +75,7 @@ void StreamWrapper::run_stream(
     host_ut_event_offsets,
     ut_events_size,
     ut_event_offsets_size,
-    hits_layers_events_ft,
-    n_hits_layers_events_ft,
+    hits_layers_events_scifi,
     number_of_events,
     number_of_repetitions
   );

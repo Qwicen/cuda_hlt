@@ -246,7 +246,6 @@ int main(int argc, char *argv[])
         ut_reader.host_events_size,
         ut_reader.host_event_offsets_size,
         scifi_hits_events,
-        scifi_n_hits_layers_events,
         number_of_events_requested,
         number_of_repetitions
       );

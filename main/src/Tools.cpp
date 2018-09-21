@@ -322,9 +322,25 @@ trackChecker::Tracks prepareForwardTracksVeloUTOnly(
   return checker_tracks;
 }
 
-trackChecker::Tracks prepareForwardTracks(
+std::vector< trackChecker::Tracks > prepareForwardTracks(
+  SciFi::Track* scifi_tracks,
+  uint* n_scifi_tracks,
+  const int number_of_events
+) {
+  std::vector< trackChecker::Tracks > checker_tracks;
+  for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
+    //debug_cout << "found " << n_scifi_tracks[i_event] << " tracks on GPU " << std::endl;
+    trackChecker::Tracks ch_tracks = prepareForwardTracksEvent(
+      scifi_tracks + i_event * SciFi::max_tracks,
+      n_scifi_tracks[i_event]);
+    checker_tracks.push_back( ch_tracks );
+  }
+  return checker_tracks;
+}
+
+trackChecker::Tracks prepareForwardTracksEvent(
   SciFi::Track forward_tracks[SciFi::max_tracks],
-  const int n_forward_tracks
+  const uint n_forward_tracks
 ) {
   trackChecker::Tracks checker_tracks;
   for ( int i_track = 0; i_track < n_forward_tracks; i_track++ ) {

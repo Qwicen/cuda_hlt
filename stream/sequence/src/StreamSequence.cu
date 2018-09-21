@@ -13,8 +13,7 @@ cudaError_t Stream::run_sequence(
   const uint* host_ut_event_offsets,
   const size_t host_ut_events_size,
   const size_t host_ut_event_offsets_size,
-  SciFi::HitsSoA *hits_layers_events_ft,
-  const uint32_t n_hits_layers_events_ft[][SciFi::Constants::n_zones],
+  SciFi::HitsSoA *hits_layers_events_scifi,
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -422,7 +421,8 @@ cudaError_t Stream::run_sequence(
     argument_sizes[arg::dev_scifi_tracks] = argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks);
     argument_sizes[arg::dev_n_scifi_tracks] = argen.size<arg::dev_n_scifi_tracks>(number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::PrForward>().set_opts(dim3(number_of_events), dim3(1), stream);
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_scifi_hits>(argument_offsets), hits_layers_events_scifi, argen.size<arg::dev_scifi_hits>(number_of_events), cudaMemcpyHostToDevice, stream));
+    sequence.item<seq::PrForward>().set_opts(dim3(number_of_events), dim3(32), stream);
     sequence.item<seq::PrForward>().set_arguments(
       argen.generate<arg::dev_scifi_hits>(argument_offsets),                       
       argen.generate<arg::dev_atomics_storage>(argument_offsets),
@@ -436,7 +436,9 @@ cudaError_t Stream::run_sequence(
       constants.dev_scifi_tmva2,
       constants.dev_scifi_constArrays
     );
-    sequence.item<seq::PrForward>().invoke();                                               
+    sequence.item<seq::PrForward>().invoke();      
+    
+    
 
     // Transmission device to host
     // Velo tracks
@@ -449,6 +451,10 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
     cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
 
+    // SciFi tracks
+    cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, argen.generate<arg::dev_n_scifi_tracks>(argument_offsets), argen.size<arg::dev_n_scifi_tracks>(number_of_events), cudaMemcpyDeviceToHost, stream));
+     cudaCheck(cudaMemcpyAsync(host_scifi_tracks, argen.generate<arg::dev_scifi_tracks>(argument_offsets), argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks), cudaMemcpyDeviceToHost, stream));
+    
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
@@ -490,12 +496,28 @@ cudaError_t Stream::run_sequence(
           trackType
         ); 
 
+        /* CHECKING Scifi TRACKS */
+        const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
+          host_scifi_tracks,
+          host_n_scifi_tracks,
+          number_of_events
+        );
+        
+        std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
+        trackType = "Forward";
+        call_pr_checker (
+          scifi_tracks,
+          folder_name_MC,
+          start_event_offset,
+          trackType);
+        
+        
         /* Run Forward on x86 architecture  */
         std::vector< trackChecker::Tracks > forward_tracks_events;
         
         int rv = run_forward_on_CPU(
           forward_tracks_events,
-          hits_layers_events_ft,
+          hits_layers_events_scifi,
           host_velo_tracks_atomics,
           host_velo_track_hit_number,
           (uint*)host_velo_states,

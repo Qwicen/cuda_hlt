@@ -45,9 +45,15 @@ __global__ void PrForward(
   uint* n_scifi_tracks_event = dev_n_scifi_tracks + event_number;
   SciFi::HitsSoA* hits_layers = dev_scifi_hits + event_number;
 
+  // initialize atomic SciFi tracks counter
+  if ( threadIdx.x == 0 ) {
+    *n_scifi_tracks_event = 0;
+  }
+  __syncthreads();
   
   // Loop over the veloUT input tracks
-  for ( int i_veloUT_track = 0; i_veloUT_track < *n_veloUT_tracks_event; ++i_veloUT_track ) {
+  for ( int i = 0; i < (*n_veloUT_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
+    const int i_veloUT_track = i * blockDim.x + threadIdx.x;
     const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks_event[i_veloUT_track];
 
     const uint velo_states_index = event_tracks_offset + veloUTTr.veloTrackIndex;
@@ -63,8 +69,6 @@ __global__ void PrForward(
       dev_constArrays,
       velo_state);
   }
-  
-  
   
 }
 
@@ -110,6 +114,7 @@ __host__ __device__ void find_forward_tracks(
       coordX[0], xParams_seed, yParams_seed, constArrays,
       velo_state, veloUTTrack.qop, -1);
 
+
   SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks];
   int n_candidate_tracks = 0;
   bool usedHits[SciFi::Constants::max_numhits_per_event] = { false };
@@ -127,6 +132,8 @@ __host__ __device__ void find_forward_tracks(
     zRef_track, xParams_seed, yParams_seed,
     velo_state, pars_first, constArrays, -1); 
 
+
+ 
   SciFi::Tracking::Track selected_tracks[SciFi::max_tracks];
   int n_selected_tracks = 0;
     
@@ -140,6 +147,7 @@ __host__ __device__ void find_forward_tracks(
     velo_state, veloUTTrack.qop,
     pars_first, tmva1, tmva2, constArrays, false);
 
+  
   bool ok = false;
   for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
     if ( selected_tracks[i_track].hitsNum > 10 )
@@ -187,7 +195,7 @@ __host__ __device__ void find_forward_tracks(
     
     ok = (n_selected_tracks > 0);
   }
- 
+
   if(ok || !SciFi::Tracking::secondLoop){
     thrust::sort( thrust::seq, selected_tracks, selected_tracks + n_selected_tracks, lowerByQuality);
     float minQuality = SciFi::Tracking::maxQuality;
@@ -207,13 +215,14 @@ __host__ __device__ void find_forward_tracks(
           tr.addLHCbID( hits_layers->m_LHCbID[ track.hit_indices[i_hit] ] );
         }
         
-        assert(*n_forward_tracks < SciFi::max_tracks);
+        assert(*n_forward_tracks < SciFi::max_tracks - 1);
 #ifndef __CUDA_ARCH__
         outputTracks[(*n_forward_tracks)++] = tr;
 #else
-
+        uint n_tracks = atomicAdd(n_forward_tracks, 1);
+        assert( n_tracks < SciFi::max_tracks );
+        outputTracks[n_tracks] = tr;
 #endif
-        //debug_cout << "track hit number = " << tr.hitsNum << std::endl;
       }
     }
   }
