@@ -81,39 +81,62 @@ __global__ void veloUT(
       const int i_track = shared_active_tracks[threadIdx.x];
 
       // for storing calculated x position of hits for this track
-      float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
+      // float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
 
-      if (process_track(
-        i_track,
-        event_tracks_offset,
-        velo_states,
-        hitCandidatesInLayers,
-        n_hitCandidatesInLayers,
-        x_pos_layers,
-        posLayers,
-        ut_hits,
-        ut_hit_count,
-        fudgeFactors,
-        dev_ut_dxDy)
-      ) {
-          process_track2(
-          i_track,
-          event_tracks_offset,
-          velo_states,
-          hitCandidatesInLayers,
-          n_hitCandidatesInLayers,
-          x_pos_layers,
-          ut_hits,
-          ut_hit_count,
-          dev_velo_track_hits,
-          velo_tracks,
-          n_veloUT_tracks_event,
-          veloUT_tracks_event,
-          bdlTable,
-          dev_ut_dxDy);    
+      // store 2 positions for each layer, for each thrack
+      __shared__ int windows_layers[VeloUTTracking::num_threads * VeloUTTracking::n_layers * 2];
+      // __shared__ int windows_layers[VeloUTTracking::num_threads][VeloUTTracking::n_layers][2];
+
+      // MiniState aux_velo_state {velo_states, velo_states_index};
+      const uint velo_states_index = event_tracks_offset + i_track;
+      const MiniState velo_state {velo_states, velo_states_index};
+
+      for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+        n_hitCandidatesInLayers[i_layer] = 0;
       }
 
+      get_windows(
+        // i_track,
+        velo_state,
+        fudgeFactors,
+        ut_hits,
+        ut_hit_count,
+        dev_ut_dxDy,
+        windows_layers);
+
       __syncthreads();
+
+      // if (process_track(
+      //   i_track,
+      //   event_tracks_offset,
+      //   velo_states,
+      //   hitCandidatesInLayers,
+      //   n_hitCandidatesInLayers,
+      //   x_pos_layers,
+      //   posLayers,
+      //   ut_hits,
+      //   ut_hit_count,
+      //   fudgeFactors,
+      //   dev_ut_dxDy)
+      // ) {
+      //     process_track2(
+      //     i_track,
+      //     event_tracks_offset,
+      //     velo_states,
+      //     hitCandidatesInLayers,
+      //     n_hitCandidatesInLayers,
+      //     x_pos_layers,
+      //     ut_hits,
+      //     ut_hit_count,
+      //     dev_velo_track_hits,
+      //     velo_tracks,
+      //     n_veloUT_tracks_event,
+      //     veloUT_tracks_event,
+      //     bdlTable,
+      //     dev_ut_dxDy);    
+      // }
+
+      // __syncthreads();
 
       const int j = blockDim.x + threadIdx.x;
       if (j < *active_tracks) {

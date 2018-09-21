@@ -61,18 +61,37 @@ __host__ __device__ bool veloTrackInUTAcceptance(
   const MiniState& state
 );
 
-__host__ __device__ void getHitsInLayer(
+__device__ void find_range_hits(
+  const UTHits& ut_hits,
+  const int guess,
+  const float ut_dxDy,
+  const float xTolNormFact,
+  const float yApprox,
+  const float xOnTrackProto,
+  const int layer_offset,
+  int& high_hit_pos,
+  int& low_hit_pos);
+
+__device__ void binary_search_range(
   const int layer,
-  const int posLayers[4][85],
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
-  const float* fudgeFactors, 
+  const float ut_dxDy,
+  const float low_bound_x,
+  const float up_bound_x,
+  const float xTolNormFact,
+  const float yApprox,
+  const float xOnTrackProto,
+  const int layer_offset);
+
+__device__ void get_windows(
+  // const int layer,
   const MiniState& veloState,
+  const float* fudgeFactors,
+  const UTHits& ut_hits,
+  const UTHitCount& ut_hit_count,
   const float* ut_dxDy,
-  int (&layer_has_hits)[VeloUTTracking::n_layers * VeloUTTracking::num_threads],
-  int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
-  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer]);
+  int* windows_layers);
 
 __host__ __device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],

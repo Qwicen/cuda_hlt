@@ -36,27 +36,128 @@ __host__ __device__ bool veloTrackInUTAcceptance(
 }
 
 //=============================================================================
-// Find the hits in a given layer
+// Find highest and lowest hit for a range
 //=============================================================================
-__host__ __device__ void getHitsInLayer(
+__device__ void find_range_hits(
+  const UTHits& ut_hits,
+  const int guess,
+  const float ut_dxDy,
+  const float xTolNormFact,
+  const float yApprox,
+  const float xOnTrackProto,
+  const int layer_offset,
+  int& high_hit_pos,
+  int& low_hit_pos)
+{ 
+  int high_found_pos = guess - 1;
+  float xx_h = ut_hits.xAt(layer_offset + high_found_pos, yApprox, ut_dxDy);
+  float dx_h = xx_h - xOnTrackProto;
+  while (dx_h >= -xTolNormFact) {
+    xx_h = ut_hits.xAt(layer_offset + high_found_pos, yApprox, ut_dxDy);
+    dx_h = xx_h - xOnTrackProto;
+    --high_found_pos;
+  }
+  // the one is the previous found
+  high_hit_pos = high_found_pos + 1;  
+
+  // search in the other side
+  int low_found_pos = guess + 1;
+  float xx_l = ut_hits.xAt(layer_offset + low_found_pos, yApprox, ut_dxDy);
+  float dx_l = xx_l - xOnTrackProto;
+  while (dx_l >= xTolNormFact) {
+    xx_l = ut_hits.xAt(layer_offset + low_found_pos, yApprox, ut_dxDy);
+    dx_l = xx_l - xOnTrackProto;
+    ++high_hit_pos;
+  }
+  // the one is the previous found
+  low_hit_pos = low_found_pos - 1;
+}
+
+//=============================================================================
+// Binary search a hit in the range
+//=============================================================================
+__device__ void binary_search_range(
   const int layer,
-  const int posLayers[4][85],
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
-  const float* fudgeFactors, 
+  const float ut_dxDy,
+  const float low_bound_x,
+  const float up_bound_x,
+  const float xTolNormFact,
+  const float yApprox,
+  const float xOnTrackProto,
+  const int layer_offset)
+{
+  const int num_hits_layer = ut_hit_count.n_hits_layers[layer];
+
+  // float min = ut_hits.xAtYEq0[layer_offset]; // first hit of the layer
+  // float max = ut_hits.xAtYEq0[layer_offset + (num_hits_layer - 1)]; // last hit of the layer
+  int min = layer_offset; // first hit of the layer
+  int max = layer_offset + (num_hits_layer - 1); // last hit of the layer
+  int guess = 0;
+
+  const float xx = ut_hits.xAt(layer_offset + guess, yApprox, ut_dxDy);
+  const float dx = xx - xOnTrackProto;
+
+  int high_hit_pos = -1;
+  int low_hit_pos = -1;
+
+  // binary search for hit in range, then look for the highest and lowest in range
+  while (min <= max) {
+
+    guess = (max + min) / 2;
+
+    const float xx = ut_hits.xAt(layer_offset + guess, yApprox, ut_dxDy);
+    const float dx = xx - xOnTrackProto;
+
+    if ((dx >= -xTolNormFact) && (dx <= xTolNormFact)) {
+      // found hit in range
+      float guess_hit = ut_hits.xAtYEq0[layer_offset + guess];      
+      find_range_hits(
+        ut_hits,
+        guess,
+        ut_dxDy,
+        xTolNormFact,
+        yApprox,
+        xOnTrackProto,
+        layer_offset,
+        high_hit_pos,
+        low_hit_pos);
+
+      // float high_hit_x = ut_hits.xAtYEq0[layer_offset + high_hit_pos];
+      // float low_hit_x = ut_hits.xAtYEq0[layer_offset + low_hit_pos];
+
+      // printf("min: %d, max: %d, guess: %d, guess_hit: %f, dx: %f, xTolNormFact: %f, high_hit_pos: %d, high_hit_x: %f, low_hit_pos: %d, low_hit_x: %f\n", min, max, guess, guess_hit, dx, xTolNormFact, high_hit_pos, high_hit_x, low_hit_pos, low_hit_x);
+    }
+
+    if (dx < -xTolNormFact) {
+      min = guess + 1;
+    }
+
+    if (dx > xTolNormFact) {
+      max = guess - 1;
+    }
+  }
+}
+
+//=============================================================================
+// Get the windows
+//=============================================================================
+__device__ void get_windows(
+  // const int i_track,
   const MiniState& veloState,
+  const float* fudgeFactors,
+  const UTHits& ut_hits,
+  const UTHitCount& ut_hit_count,
   const float* ut_dxDy,
-  int (&layer_has_hits)[VeloUTTracking::n_layers * VeloUTTracking::num_threads],
-  int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
-  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer])
+  int* windows_layers) 
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
   const float absSlopeY = std::abs( veloState.ty );
   const int index = (int)(absSlopeY*100 + 0.5);
   assert( 3 + 4*index < PrUTMagnetTool::N_dxLay_vals );
-  const std::array<float,4> normFact = { 
+  const std::array<float,4> normFact = {
     fudgeFactors[4*index], 
     fudgeFactors[1 + 4*index], 
     fudgeFactors[2 + 4*index], 
@@ -70,12 +171,10 @@ __host__ __device__ void getHitsInLayer(
   const float xTol     = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
   const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
 
-  int nLayers = 0;
-
   const float dxDyHelper[VeloUTTracking::n_layers] = {0., 1., -1., 0};
-  
-  // for (int layer=0; layer<VeloUTTracking::n_layers; ++layer) {
-  if (ut_hit_count.n_hits_layers[layer] > 0) {
+
+  for (int layer=0; layer<VeloUTTracking::n_layers; ++layer) {
+
     int layer_offset = ut_hit_count.layer_offsets[layer];
 
     const float dxDy   = ut_dxDy[layer];
@@ -85,45 +184,31 @@ __host__ __device__ void getHitsInLayer(
     const float xLayer = veloState.x + veloState.tx*(zLayer - veloState.z);
     const float yLayer = yAtZ + yTol * dxDyHelper[layer];
 
-    const float normFactNum = normFact[layer];
-    const float invNormFact = 1.0/normFactNum;
+    // const float normFactNum = normFact[layer];
+    const float invNormFact = 1.0/normFact[layer];
 
     const float lowerBoundX =
       (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(veloState.tx)*PrVeloUTConst::intraLayerDist;
     const float upperBoundX =
       (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(veloState.tx)*PrVeloUTConst::intraLayerDist;
 
-    const int indexLowProto = 
-      lowerBoundX > 0 ? std::sqrt( std::abs(lowerBoundX)*2.0 ) + 42 : 42 - std::sqrt( std::abs(lowerBoundX)*2.0 );
-    const int indexHiProto  = 
-      upperBoundX > 0 ? std::sqrt( std::abs(upperBoundX)*2.0 ) + 43 : 43 - std::sqrt( std::abs(upperBoundX)*2.0 );
+    const float zInit = ut_hits.zAtYEq0[layer_offset];
+    const float xTolNormFact = xTol*invNormFact;
+    const float yApprox = veloState.y + veloState.ty * (zInit - veloState.z);
+    const float xOnTrackProto = veloState.x + veloState.tx*(zInit - veloState.z);
 
-    const int indexLow  = std::max( indexLowProto, 0 );
-    const int indexHi   = std::min( indexHiProto, 84);
-
-    size_t posBeg = posLayers[layer][ indexLow ];
-    size_t posEnd = posLayers[layer][ indexHi  ];
-
-    while ( (ut_hits.xAtYEq0[layer_offset + posBeg] < lowerBoundX) && (posBeg != ut_hit_count.n_hits_layers[layer] ) ) {
-      ++posBeg;
-    }
-
-    if (posBeg != ut_hit_count.n_hits_layers[layer]) {
-      findHits(posBeg, posEnd,
-        ut_hits, layer_offset, ut_dxDy[layer],
-        veloState, xTol*invNormFact, invNormFact,
-        hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer],
-        x_pos_layers[layer]);
-
-      // change this to write in the shared thing
-      nLayers += int( !( n_hitCandidatesInLayers[layer] == 0 ) );
-    } else {
-      // what to do if we went to the end
-      // write a 0 or something like that
-    }
-
+    binary_search_range(
+      layer,
+      ut_hits,
+      ut_hit_count,
+      ut_dxDy[layer],
+      lowerBoundX,
+      upperBoundX,
+      xTolNormFact,
+      yApprox,
+      xOnTrackProto,
+      layer_offset);
   }
-  
 }
 
 //=============================================================================
