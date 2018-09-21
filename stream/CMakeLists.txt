@@ -1,4 +1,5 @@
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}") 
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
+set(flatbuffers_home "${CMAKE_SOURCE_DIR}/../flatbuffers") 
 
 include_directories(gear/include)
 include_directories(handlers/include)
@@ -21,7 +22,7 @@ include_directories(../checker/tracking/include)
 include_directories(../x86/veloUT/PrVeloUT/include)
 include_directories(../catboost/include)
 
-find_package(flatbuffers)
+find_package(flatbuffers REQUIRED)
 include_directories(${flatbuffers_INCLUDE_DIRS})
 
 file(GLOB stream_gear "gear/src/*cu")
