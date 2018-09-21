@@ -55,9 +55,8 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_atomics_veloUT, VeloUTTracking::num_atomics * max_number_of_events * sizeof(int)));
 
   //Catboost initialization
-  NCatboostStandalone::TOwningEvaluator evaluator("../../data/MuID-Run2-MC-570-v1.cb");
+  CatboostEvaluator evaluator("../../data/MuID-Run2-MC-570-v1.cb");
   model_float_feature_num = (int)evaluator.GetFloatFeatureCount();
-  model_bin_feature_num = (int)evaluator.GetBinFeatureCount();
   ObliviousTrees = evaluator.GetObliviousTrees();
   tree_num = ObliviousTrees->TreeSizes()->size();
   treeSplitsPtr_flat = ObliviousTrees->TreeSplits()->data();
@@ -76,6 +75,7 @@ cudaError_t Stream::initialize(
   for (const auto& ff : *ObliviousTrees->FloatFeatures()) {
     int border_num = ff->Borders()->size();
     host_border_nums[index] = border_num;
+    model_bin_feature_num += border_num;
     cudaCheck(cudaMalloc((void**)&host_borders[index], border_num*sizeof(float)));
     cudaCheck(cudaMemcpy(host_borders[index], ff->Borders()+1, border_num*sizeof(float),cudaMemcpyHostToDevice));
     index++;
