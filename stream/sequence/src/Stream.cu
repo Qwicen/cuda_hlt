@@ -8,6 +8,7 @@ cudaError_t Stream::initialize(
   const std::vector<char>& ut_boards,
   const std::vector<char>& ut_geometry,
   const std::vector<char>& ut_magnet_tool,
+  const std::vector<char>& scifi_geometry,
   const uint max_number_of_events,
   const bool param_do_check,
   const bool param_do_simplified_kalman_filter,
@@ -50,7 +51,11 @@ cudaError_t Stream::initialize(
   // Populate UT magnet tool values
   cudaCheck(cudaMalloc((void**)&dev_ut_magnet_tool, ut_magnet_tool.size()));
   cudaCheck(cudaMemcpyAsync(dev_ut_magnet_tool, ut_magnet_tool.data(), ut_magnet_tool.size(), cudaMemcpyHostToDevice, stream));
-    
+
+  // Populate FT geometry
+  cudaCheck(cudaMalloc((void**)&dev_scifi_geometry, scifi_geometry.size()));
+  cudaCheck(cudaMemcpyAsync(dev_scifi_geometry, scifi_geometry.data(), scifi_geometry.size(), cudaMemcpyHostToDevice, stream));
+
   // Memory allocations for host memory (copy back)
   cudaCheck(cudaMallocHost((void**)&host_velo_tracks_atomics, (2 * max_number_of_events + 1) * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_velo_track_hit_number, max_number_of_events * VeloTracking::max_tracks * sizeof(uint)));
@@ -66,6 +71,8 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_scifi_tracks, max_number_of_events * SciFi::max_tracks * sizeof(SciFi::Track)));
   cudaCheck(cudaMallocHost((void**)&host_n_scifi_tracks, max_number_of_events * sizeof(uint)));
   
+  cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_scifi_hits, sizeof(uint)));
+
   // Define sequence of algorithms to execute
   sequence.set(sequence_algorithms());
 
@@ -81,6 +88,7 @@ cudaError_t Stream::initialize(
   sequence.item<seq::copy_and_prefix_sum_single_block>().set_opts(             dim3(1), dim3(1024), stream);
   sequence.item<seq::prefix_sum_single_block_velo_track_hit_number>().set_opts(dim3(1), dim3(1024), stream);
   sequence.item<seq::prefix_sum_single_block_ut_hits>().set_opts(              dim3(1), dim3(1024), stream);
+  sequence.item<seq::prefix_sum_single_block_scifi_hits>().set_opts(              dim3(1), dim3(1024), stream);
 
   // Get dependencies for each algorithm
   std::vector<std::vector<int>> sequence_dependencies = get_sequence_dependencies();

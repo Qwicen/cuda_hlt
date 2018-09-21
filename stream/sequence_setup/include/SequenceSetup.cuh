@@ -10,6 +10,11 @@
 #include "VeloUT.cuh"
 #include "UTDecoding.cuh"
 #include "SortByX.cuh"
+
+#include "EstimateClusterCount.cuh"
+#include "RawBankDecoder.cuh"
+#include "SciFiSortByX.cuh"
+
 #include "Argument.cuh"
 #include "Sequence.cuh"
 #include "TupleIndicesChecker.cuh"
@@ -46,6 +51,12 @@ constexpr auto sequence_algorithms() {
     decode_raw_banks,
     sort_by_x,
     veloUT,
+    estimate_cluster_count,
+    prefix_sum_reduce,
+    prefix_sum_single_block,
+    prefix_sum_scan,
+    raw_bank_decoder,
+    scifi_sort_by_x,
     PrForward
   );
 }
@@ -104,10 +115,15 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
   Argument<arg::dev_atomics_veloUT, int>,
 
-  Argument<arg::dev_scifi_hits, SciFi::HitsSoA>,
+  Argument<arg::dev_scifi_raw_input_offsets, uint>,
+  Argument<arg::dev_scifi_hit_count, uint>,
+  Argument<arg::dev_prefix_sum_auxiliary_array_4, uint>,
+  Argument<arg::dev_scifi_hit_permutations, uint>,
+  Argument<arg::dev_scifi_hits, char>,
+  Argument<arg::dev_scifi_raw_input, char>,
+  Argument<arg::dev_scifi_hits_SoA, SciFi::HitsSoA>,
   Argument<arg::dev_scifi_tracks, SciFi::Track>,
   Argument<arg::dev_n_scifi_tracks, uint>
-  
 >;
 
 /**
@@ -124,7 +140,7 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
  * @brief Retrieves the sequence dependencies.
  * @details The sequence dependencies specifies for each algorithm
  *          in the sequence the datatypes it depends on from the arguments.
- *          
+ *
  *          Note that this vector of arguments may vary from the actual
  *          arguments in the kernel invocation: ie. some cases:
  *          * if something is passed by value

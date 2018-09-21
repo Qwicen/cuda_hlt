@@ -91,7 +91,8 @@ if ( ROOT_FOUND )
     Utils
     Velo
     UT
-    SciFi
+    SciFiTracking
+    SciFiDecoding
     x86VeloUT
     Stream
     x86Forward
@@ -105,7 +106,8 @@ else()
     Utils
     Velo
     UT
-    SciFi
+    SciFiTracking
+    SciFiDecoding
     x86VeloUT
     Stream
     x86Forward

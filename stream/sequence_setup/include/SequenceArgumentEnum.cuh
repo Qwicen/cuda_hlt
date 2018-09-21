@@ -28,7 +28,14 @@ enum seq_enum_t {
   decode_raw_banks,
   sort_by_x,
   veloUT,
+  estimate_cluster_count,
+  prefix_sum_reduce_scifi_hits,
+  prefix_sum_single_block_scifi_hits,
+  prefix_sum_scan_scifi_hits,
+  raw_bank_decoder,
+  scifi_sort_by_x,
   PrForward
+
 };
 }
 
@@ -67,7 +74,13 @@ enum arg_enum_t {
   dev_ut_hit_permutations,
   dev_veloUT_tracks,
   dev_atomics_veloUT,
+  dev_scifi_raw_input_offsets,
+  dev_scifi_hit_count,
+  dev_prefix_sum_auxiliary_array_4,
+  dev_scifi_hit_permutations,
   dev_scifi_hits,
+  dev_scifi_raw_input,
+  dev_scifi_hits_SoA,
   dev_scifi_tracks,
   dev_n_scifi_tracks
 };

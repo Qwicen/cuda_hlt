@@ -21,6 +21,8 @@ include_directories(../cuda/velo/mask_clustering/include)
 include_directories(../cuda/velo/prefix_sum/include)
 include_directories(../cuda/velo/search_by_triplet/include)
 include_directories(../cuda/velo/simplified_kalman_filter/include)
+include_directories(../cuda/SciFi/preprocessing/include)
+include_directories(../cuda/SciFi/common/include)
 include_directories(../x86/velo/clustering/include)
 include_directories(../checker/tracking/include)
 include_directories(../x86/UT/PrVeloUT/include)
@@ -55,7 +57,8 @@ if ( ROOT_FOUND )
   Utils
   Velo
   UT
-  SciFi
+  SciFiTracking
+  SciFiDecoding
   x86VeloUT
   x86Forward
   ${ROOT_LIBRARIES})
@@ -64,7 +67,8 @@ else()
   Utils
   Velo
   UT
-  SciFi
+  SciFiTracking
+  SciFiDecoding
   x86Forward
   x86VeloUT)
 endif()
