@@ -1,4 +1,5 @@
 #include "Catboost.h"
+#include "evaluator.h"
 #include <iostream>
 #include <string>
 #include <vector>

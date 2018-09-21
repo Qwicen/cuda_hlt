@@ -4,7 +4,7 @@ void test_cpu_catboost_evaluator(
   const std::string& model_path,
   std::vector<std::vector<float>>& features
 ) {
-  NCatboostStandalone::TOwningEvaluator evaluator(model_path);
+  CatboostEvaluator evaluator(model_path);
   float result = 0;
   for( const std::vector<float> event : features ) {
     result += evaluator.Apply(event, NCatboostStandalone::EPredictionType::Probability);

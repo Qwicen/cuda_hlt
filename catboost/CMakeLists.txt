@@ -5,10 +5,6 @@ set(catboost_home "${CMAKE_SOURCE_DIR}/../catboost")
 find_package(flatbuffers REQUIRED)
 find_package(catboost REQUIRED)
 
-include_directories(include)
-include_directories(${flatbuffers_INCLUDE_DIRS})
-include_directories(${catboost_INCLUDE_DIRS})
-
 function(compile_flatbuffers_schema_to_cpp SRC_FBS)
     string(REGEX REPLACE "\\.fbs$" "_generated.h" GEN_HEADER ${SRC_FBS})
     add_custom_command(
@@ -24,13 +20,13 @@ compile_flatbuffers_schema_to_cpp(features.fbs)
 compile_flatbuffers_schema_to_cpp(ctr_data.fbs)
 compile_flatbuffers_schema_to_cpp(model.fbs)
 
+include_directories(include)
+include_directories(${flatbuffers_INCLUDE_DIRS})
+include_directories(${catboost_INCLUDE_DIRS})
+
 set(SRCS
     src/Catboost.cpp
     src/TestCatboost.cpp
-    features_generated.h
-    ctr_data_generated.h
-    model_generated.h)
+    ${catboost_INCLUDE_DIRS}/evaluator.cpp)
 
 add_library(Catboost ${SRCS})
-
-
