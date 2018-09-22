@@ -82,10 +82,12 @@ __device__ void binary_search_range(
   const float xTolNormFact,
   const float yApprox,
   const float xOnTrackProto,
-  const int layer_offset);
+  const int layer_offset,
+  int high_hit_pos,
+  int low_hit_pos);
 
 __device__ void get_windows(
-  // const int layer,
+  const int i_track,
   const MiniState& veloState,
   const float* fudgeFactors,
   const UTHits& ut_hits,

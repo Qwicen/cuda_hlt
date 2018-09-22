@@ -47,11 +47,11 @@ __global__ void veloUT(
 
   __shared__ int shared_active_tracks[2 * VeloUTTracking::num_threads - 1];
 
-  __shared__ int posLayers[VeloUTTracking::n_layers][VeloUTTracking::n_iterations_pos];
+  // __shared__ int posLayers[VeloUTTracking::n_layers][VeloUTTracking::n_iterations_pos];
 
   __syncthreads();
          
-  fillIterators(ut_hits, ut_hit_count, posLayers);
+  // fillIterators(ut_hits, ut_hit_count, posLayers);
 
   const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdlTable     = &(dev_ut_magnet_tool->bdlTable[0]);
@@ -83,7 +83,7 @@ __global__ void veloUT(
       // for storing calculated x position of hits for this track
       // float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
 
-      // store 2 positions for each layer, for each thrack
+      // store a window(2 positions) for each layer, for each thrack
       __shared__ int windows_layers[VeloUTTracking::num_threads * VeloUTTracking::n_layers * 2];
       // __shared__ int windows_layers[VeloUTTracking::num_threads][VeloUTTracking::n_layers][2];
 
@@ -96,7 +96,7 @@ __global__ void veloUT(
       }
 
       get_windows(
-        // i_track,
+        i_track,
         velo_state,
         fudgeFactors,
         ut_hits,
@@ -105,6 +105,17 @@ __global__ void veloUT(
         windows_layers);
 
       __syncthreads();
+
+      
+      // int this_layer = 0;
+      // int layer_offset = ut_hit_count.layer_offsets[this_layer];
+      // int pos_high = windows_layers[win_pos(i_track, this_layer)];
+      // int pow_low = windows_layers[win_pos(i_track, this_layer) + 1];
+
+      // float high = ut_hits.xAtYEq0[layer_offset + pos_high];
+      // float low = ut_hits.xAtYEq0[layer_offset + pow_low];
+      
+      // printf("track: %d, layer 0 high: %f, layer 0 low: %f\n", i_track, high, low);
 
       // if (process_track(
       //   i_track,
@@ -160,35 +171,35 @@ __global__ void veloUT(
     // for storing calculated x position of hits for this track
     float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
 
-    if (process_track(
-      i_track,
-      event_tracks_offset,
-      velo_states,
-      hitCandidatesInLayers,
-      n_hitCandidatesInLayers,
-      x_pos_layers,
-      posLayers,
-      ut_hits,
-      ut_hit_count,
-      fudgeFactors,
-      dev_ut_dxDy)
-    ) {
-        process_track2(
-        i_track,
-        event_tracks_offset,
-        velo_states,
-        hitCandidatesInLayers,
-        n_hitCandidatesInLayers,
-        x_pos_layers,
-        ut_hits,
-        ut_hit_count,
-        dev_velo_track_hits,
-        velo_tracks,
-        n_veloUT_tracks_event,
-        veloUT_tracks_event,
-        bdlTable,
-        dev_ut_dxDy);    
-    }
+    // if (process_track(
+    //   i_track,
+    //   event_tracks_offset,
+    //   velo_states,
+    //   hitCandidatesInLayers,
+    //   n_hitCandidatesInLayers,
+    //   x_pos_layers,
+    //   posLayers,
+    //   ut_hits,
+    //   ut_hit_count,
+    //   fudgeFactors,
+    //   dev_ut_dxDy)
+    // ) {
+    //     process_track2(
+    //     i_track,
+    //     event_tracks_offset,
+    //     velo_states,
+    //     hitCandidatesInLayers,
+    //     n_hitCandidatesInLayers,
+    //     x_pos_layers,
+    //     ut_hits,
+    //     ut_hit_count,
+    //     dev_velo_track_hits,
+    //     velo_tracks,
+    //     n_veloUT_tracks_event,
+    //     veloUT_tracks_event,
+    //     bdlTable,
+    //     dev_ut_dxDy);    
+    // }
   }
 }
 

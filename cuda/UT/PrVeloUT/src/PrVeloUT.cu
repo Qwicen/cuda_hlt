@@ -40,7 +40,7 @@ __host__ __device__ bool veloTrackInUTAcceptance(
 //=============================================================================
 __device__ void find_range_hits(
   const UTHits& ut_hits,
-  const int guess,
+  const int found_hit,
   const float ut_dxDy,
   const float xTolNormFact,
   const float yApprox,
@@ -49,28 +49,38 @@ __device__ void find_range_hits(
   int& high_hit_pos,
   int& low_hit_pos)
 { 
-  int high_found_pos = guess - 1;
+
+  int high_found_pos = found_hit + 1;
   float xx_h = ut_hits.xAt(layer_offset + high_found_pos, yApprox, ut_dxDy);
   float dx_h = xx_h - xOnTrackProto;
-  while (dx_h >= -xTolNormFact) {
+
+  while (dx_h <= xTolNormFact) {
     xx_h = ut_hits.xAt(layer_offset + high_found_pos, yApprox, ut_dxDy);
     dx_h = xx_h - xOnTrackProto;
-    --high_found_pos;
+    if (dx_h > xTolNormFact){
+      // the one is the previous found
+      high_hit_pos = high_found_pos - 1;
+      break;
+    }
+    ++high_found_pos;
   }
-  // the one is the previous found
-  high_hit_pos = high_found_pos + 1;  
-
+  
   // search in the other side
-  int low_found_pos = guess + 1;
+  int low_found_pos = found_hit - 1;
   float xx_l = ut_hits.xAt(layer_offset + low_found_pos, yApprox, ut_dxDy);
   float dx_l = xx_l - xOnTrackProto;
-  while (dx_l >= xTolNormFact) {
+  while (dx_l >= -xTolNormFact) {
     xx_l = ut_hits.xAt(layer_offset + low_found_pos, yApprox, ut_dxDy);
     dx_l = xx_l - xOnTrackProto;
-    ++high_hit_pos;
+    if (dx_h < -xTolNormFact){
+      // the one is the previous found
+      low_hit_pos = low_found_pos + 1;
+      break;
+    }
+    --low_found_pos;
   }
-  // the one is the previous found
-  low_hit_pos = low_found_pos - 1;
+
+  // printf("xOnTrackProto: %f, high_found_pos: %d, low_found_pos: %d\n", xOnTrackProto, high_found_pos, low_found_pos);
 }
 
 //=============================================================================
@@ -86,65 +96,66 @@ __device__ void binary_search_range(
   const float xTolNormFact,
   const float yApprox,
   const float xOnTrackProto,
-  const int layer_offset)
+  const int layer_offset,
+  int high_hit_pos,
+  int low_hit_pos)
 {
   const int num_hits_layer = ut_hit_count.n_hits_layers[layer];
 
-  // float min = ut_hits.xAtYEq0[layer_offset]; // first hit of the layer
-  // float max = ut_hits.xAtYEq0[layer_offset + (num_hits_layer - 1)]; // last hit of the layer
   int min = layer_offset; // first hit of the layer
   int max = layer_offset + (num_hits_layer - 1); // last hit of the layer
   int guess = 0;
 
-  const float xx = ut_hits.xAt(layer_offset + guess, yApprox, ut_dxDy);
-  const float dx = xx - xOnTrackProto;
+  // const float xx = ut_hits.xAt(layer_offset + guess, yApprox, ut_dxDy);
+  // const float dx = xx - xOnTrackProto;
 
-  int high_hit_pos = -1;
-  int low_hit_pos = -1;
+  high_hit_pos = -1;
+  low_hit_pos = -1;
 
-  // binary search for hit in range, then look for the highest and lowest in range
-  while (min <= max) {
-
-    guess = (max + min) / 2;
-
+  // look for the low limit
+  guess = (max + min) / 2;
+  while (max != min+1) {
     const float xx = ut_hits.xAt(layer_offset + guess, yApprox, ut_dxDy);
     const float dx = xx - xOnTrackProto;
-
-    if ((dx >= -xTolNormFact) && (dx <= xTolNormFact)) {
-      // found hit in range
-      float guess_hit = ut_hits.xAtYEq0[layer_offset + guess];      
-      find_range_hits(
-        ut_hits,
-        guess,
-        ut_dxDy,
-        xTolNormFact,
-        yApprox,
-        xOnTrackProto,
-        layer_offset,
-        high_hit_pos,
-        low_hit_pos);
-
-      // float high_hit_x = ut_hits.xAtYEq0[layer_offset + high_hit_pos];
-      // float low_hit_x = ut_hits.xAtYEq0[layer_offset + low_hit_pos];
-
-      // printf("min: %d, max: %d, guess: %d, guess_hit: %f, dx: %f, xTolNormFact: %f, high_hit_pos: %d, high_hit_x: %f, low_hit_pos: %d, low_hit_x: %f\n", min, max, guess, guess_hit, dx, xTolNormFact, high_hit_pos, high_hit_x, low_hit_pos, low_hit_x);
-    }
-
-    if (dx < -xTolNormFact) {
-      min = guess + 1;
-    }
-
-    if (dx > xTolNormFact) {
-      max = guess - 1;
-    }
+    if (dx == -xTolNormFact) {
+      break;
+    }  else if (dx < -xTolNormFact) {
+      min = guess;
+    } else {
+      max = guess;
+    }   
+    guess = (max + min) / 2;
   }
+  low_hit_pos = guess;
+
+  // look for the high limit
+  min = low_hit_pos;
+  max = layer_offset + (num_hits_layer - 1); // last hit of the layer
+  guess = (max + min) / 2;
+  while (max != min+1) {
+    const float xx = ut_hits.xAt(layer_offset + guess, yApprox, ut_dxDy);
+    const float dx = xx - xOnTrackProto;
+    if (dx == xTolNormFact) {
+      break;
+    }  else if (dx < xTolNormFact) {
+      max = guess;
+    } else {
+      min = guess;
+    }   
+    guess = (max + min) / 2;
+  }
+  high_hit_pos = guess;
+
+  // float lh = ut_hits.xAtYEq0[layer_offset + low_hit_pos]; 
+  // float hh = ut_hits.xAtYEq0[layer_offset + high_hit_pos];
+  // printf("low_hit_pos: %d, high_hit_pos: %d, lh: %f, hh: %f, xTolNormFact: %f\n", low_hit_pos, high_hit_pos, lh, hh, xTolNormFact);
 }
 
 //=============================================================================
 // Get the windows
 //=============================================================================
 __device__ void get_windows(
-  // const int i_track,
+  const int i_track,
   const MiniState& veloState,
   const float* fudgeFactors,
   const UTHits& ut_hits,
@@ -207,7 +218,9 @@ __device__ void get_windows(
       xTolNormFact,
       yApprox,
       xOnTrackProto,
-      layer_offset);
+      layer_offset,
+      windows_layers[(i_track * VeloUTTracking::n_layers * 2) + (layer * 2)],
+      windows_layers[(i_track * VeloUTTracking::n_layers * 2) + (layer * 2) + 1]);
   }
 }
 
