@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
       break;
     case 's':
       folder_name_scifi_hits = std::string(optarg);
+      break;
     case 'i':
       folder_name_SciFi_raw = std::string(optarg);
       break;
@@ -194,7 +195,6 @@ int main(int argc, char *argv[])
   read_scifi_events_into_arrays( scifi_hits_events, scifi_n_hits_layers_events,
                               scifi_events, scifi_event_offsets, number_of_events_requested );
   //check_scifi_events( scifi_hits_events, scifi_n_hits_layers_events, number_of_events );
-  
                                             
   auto geometry_reader = GeometryReader(folder_name_detector_configuration);
   auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
