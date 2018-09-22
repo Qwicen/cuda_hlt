@@ -55,9 +55,9 @@ constexpr auto sequence_algorithms() {
     prefix_sum_reduce,
     prefix_sum_single_block,
     prefix_sum_scan,
-    raw_bank_decoder,
-    scifi_sort_by_x,
-    PrForward
+    raw_bank_decoder
+    // scifi_sort_by_x,
+    //PrForward
   );
 }
 

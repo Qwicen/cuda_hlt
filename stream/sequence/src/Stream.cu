@@ -70,7 +70,6 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_scifi_hits, max_number_of_events * sizeof(SciFi::HitsSoA)));
   cudaCheck(cudaMallocHost((void**)&host_scifi_tracks, max_number_of_events * SciFi::max_tracks * sizeof(SciFi::Track)));
   cudaCheck(cudaMallocHost((void**)&host_n_scifi_tracks, max_number_of_events * sizeof(uint)));
-  
   cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_scifi_hits, sizeof(uint)));
 
   // Define sequence of algorithms to execute

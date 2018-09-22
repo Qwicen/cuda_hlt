@@ -33,8 +33,8 @@ enum seq_enum_t {
   prefix_sum_single_block_scifi_hits,
   prefix_sum_scan_scifi_hits,
   raw_bank_decoder,
-  scifi_sort_by_x,
-  PrForward
+  // scifi_sort_by_x,
+  //PrForward
 
 };
 }

@@ -67,6 +67,7 @@ struct Stream {
   SciFi::Track* host_scifi_tracks;
   uint* host_n_scifi_tracks;
   
+  
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;

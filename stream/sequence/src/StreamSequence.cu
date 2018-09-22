@@ -423,7 +423,7 @@ cudaError_t Stream::run_sequence(
 
    
     // SciFi preprocessing
-    // Estimate cluster count
+    //Estimate cluster count
     argument_sizes[arg::dev_scifi_raw_input] = argen.size<arg::dev_scifi_raw_input>(host_scifi_events_size);
     argument_sizes[arg::dev_scifi_raw_input_offsets] = argen.size<arg::dev_scifi_raw_input_offsets>(host_scifi_event_offsets_size);
     argument_sizes[arg::dev_scifi_hit_count] = argen.size<arg::dev_scifi_hit_count>(2 * number_of_events * SciFi::number_of_zones + 1);
@@ -443,15 +443,16 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
       dev_scifi_geometry
     );
-    sequence.item<seq::estimate_cluster_count>().invoke();
+    sequence.item<seq::estimate_cluster_count>().invoke(); 
 
+    // Is this needed?
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    // Prefix sum of hit count (becomes hit offset)
-    // 1. Reduce
-    // 2. Single block
-    // 3. Scan
+    // // Prefix sum of hit count (becomes hit offset)
+    // // 1. Reduce
+    // // 2. Single block
+    // // 3. Scan
 
     // Prefix sum: Reduce
     const uint total_number_of_zones = number_of_events * SciFi::number_of_zones;
@@ -493,59 +494,60 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
-    // info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
+    info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
 
 
     // Raw Bank Decoder
     const uint32_t hits_bytes = (14 * sizeof(float) + 1) * *host_accumulated_number_of_scifi_hits;
-    argument_sizes[arg::dev_scifi_hits] = argen.size<arg::dev_scifi_hits>(hits_bytes);
+    debug_cout << "requested bytes = " << hits_bytes << std::endl;
+    // argument_sizes[arg::dev_scifi_hits] = argen.size<arg::dev_scifi_hits>(hits_bytes);
 
-    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
 
-    sequence.item<seq::raw_bank_decoder>().set_opts(dim3(number_of_events), dim3(240), stream);
-    sequence.item<seq::raw_bank_decoder>().set_arguments(
-      argen.generate<arg::dev_scifi_raw_input>(argument_offsets),
-      argen.generate<arg::dev_scifi_raw_input_offsets>(argument_offsets),
-      argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-      argen.generate<arg::dev_scifi_hits>(argument_offsets),
-      dev_scifi_geometry
-    );
+    // sequence.item<seq::raw_bank_decoder>().set_opts(dim3(number_of_events), dim3(240), stream);
+    // sequence.item<seq::raw_bank_decoder>().set_arguments(
+    //   argen.generate<arg::dev_scifi_raw_input>(argument_offsets),
+    //   argen.generate<arg::dev_scifi_raw_input_offsets>(argument_offsets),
+    //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+    //   argen.generate<arg::dev_scifi_hits>(argument_offsets),
+    //   dev_scifi_geometry
+    // );
 
-    sequence.item<seq::raw_bank_decoder>().invoke();
+    // sequence.item<seq::raw_bank_decoder>().invoke();
 
    
-    // SciFi hit sorting by x
-    argument_sizes[arg::dev_scifi_hit_permutations] = argen.size<arg::dev_scifi_hit_permutations>(*host_accumulated_number_of_scifi_hits);
-    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::scifi_sort_by_x>().set_opts(dim3(number_of_events), dim3(64), stream);
-    sequence.item<seq::scifi_sort_by_x>().set_arguments(
-      argen.generate<arg::dev_scifi_hits>(argument_offsets),
-      argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-      argen.generate<arg::dev_scifi_hit_permutations>(argument_offsets)
-    );
-    sequence.item<seq::scifi_sort_by_x>().invoke();
-
+    // // SciFi hit sorting by x
+    // argument_sizes[arg::dev_scifi_hit_permutations] = argen.size<arg::dev_scifi_hit_permutations>(*host_accumulated_number_of_scifi_hits);
+    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    // sequence.item<seq::scifi_sort_by_x>().set_opts(dim3(number_of_events), dim3(64), stream);
+    // sequence.item<seq::scifi_sort_by_x>().set_arguments(
+    //   argen.generate<arg::dev_scifi_hits>(argument_offsets),
+    //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+    //   argen.generate<arg::dev_scifi_hit_permutations>(argument_offsets)
+    // );
+    // sequence.item<seq::scifi_sort_by_x>().invoke();
+ 
     // SciFi tracking
-    argument_sizes[arg::dev_scifi_hits_SoA] = argen.size<arg::dev_scifi_hits_SoA>(number_of_events);
-    argument_sizes[arg::dev_scifi_tracks] = argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks);
-    argument_sizes[arg::dev_n_scifi_tracks] = argen.size<arg::dev_n_scifi_tracks>(number_of_events);
-    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_scifi_hits_SoA>(argument_offsets), hits_layers_events_scifi, argen.size<arg::dev_scifi_hits_SoA>(number_of_events), cudaMemcpyHostToDevice, stream));
-    sequence.item<seq::PrForward>().set_opts(dim3(number_of_events), dim3(32), stream);
-    sequence.item<seq::PrForward>().set_arguments(
-      argen.generate<arg::dev_scifi_hits_SoA>(argument_offsets),                       
-      argen.generate<arg::dev_atomics_storage>(argument_offsets),
-      argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
-      argen.generate<arg::dev_velo_states>(argument_offsets),
-      argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
-      argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
-      argen.generate<arg::dev_scifi_tracks>(argument_offsets),
-      argen.generate<arg::dev_n_scifi_tracks>(argument_offsets),
-      constants.dev_scifi_tmva1,
-      constants.dev_scifi_tmva2,
-      constants.dev_scifi_constArrays
-    );
-    sequence.item<seq::PrForward>().invoke();      
+    // argument_sizes[arg::dev_scifi_hits_SoA] = argen.size<arg::dev_scifi_hits_SoA>(number_of_events);
+    // argument_sizes[arg::dev_scifi_tracks] = argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks);
+    // argument_sizes[arg::dev_n_scifi_tracks] = argen.size<arg::dev_n_scifi_tracks>(number_of_events);
+    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    // cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_scifi_hits_SoA>(argument_offsets), hits_layers_events_scifi, argen.size<arg::dev_scifi_hits_SoA>(number_of_events), cudaMemcpyHostToDevice, stream));
+    // sequence.item<seq::PrForward>().set_opts(dim3(number_of_events), dim3(32), stream);
+    // sequence.item<seq::PrForward>().set_arguments(
+    //   argen.generate<arg::dev_scifi_hits_SoA>(argument_offsets),                       
+    //   argen.generate<arg::dev_atomics_storage>(argument_offsets),
+    //   argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
+    //   argen.generate<arg::dev_velo_states>(argument_offsets),
+    //   argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
+    //   argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
+    //   argen.generate<arg::dev_scifi_tracks>(argument_offsets),
+    //   argen.generate<arg::dev_n_scifi_tracks>(argument_offsets),
+    //   constants.dev_scifi_tmva1,
+    //   constants.dev_scifi_tmva2,
+    //   constants.dev_scifi_constArrays
+    // );
+    // sequence.item<seq::PrForward>().invoke();      
     
 
     // Transmission device to host
@@ -560,8 +562,8 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
 
     // SciFi tracks
-    cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, argen.generate<arg::dev_n_scifi_tracks>(argument_offsets), argen.size<arg::dev_n_scifi_tracks>(number_of_events), cudaMemcpyDeviceToHost, stream));
-    cudaCheck(cudaMemcpyAsync(host_scifi_tracks, argen.generate<arg::dev_scifi_tracks>(argument_offsets), argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks), cudaMemcpyDeviceToHost, stream));
+    // cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, argen.generate<arg::dev_n_scifi_tracks>(argument_offsets), argen.size<arg::dev_n_scifi_tracks>(number_of_events), cudaMemcpyDeviceToHost, stream));
+    // cudaCheck(cudaMemcpyAsync(host_scifi_tracks, argen.generate<arg::dev_scifi_tracks>(argument_offsets), argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks), cudaMemcpyDeviceToHost, stream));
     
 
     cudaEventRecord(cuda_generic_event, stream);
@@ -636,19 +638,19 @@ cudaError_t Stream::run_sequence(
         ); 
 
         /* CHECKING Scifi TRACKS */
-        const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
-          host_scifi_tracks,
-          host_n_scifi_tracks,
-          number_of_events
-        );
+        //const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
+        //   host_scifi_tracks,
+        //   host_n_scifi_tracks,
+        //   number_of_events
+        // );
         
-        std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
-        trackType = "Forward";
-        call_pr_checker (
-          scifi_tracks,
-          folder_name_MC,
-          start_event_offset,
-          trackType);
+        // std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
+        // trackType = "Forward";
+        // call_pr_checker (
+        //   scifi_tracks,
+        //   folder_name_MC,
+        //   start_event_offset,
+        //   trackType);
         
         
         /* Run Forward on x86 architecture  */
