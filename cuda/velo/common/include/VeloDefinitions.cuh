@@ -17,7 +17,12 @@ static constexpr uint max_concurrent_h1_first_iteration = 8;
 // These parameters impact the found tracks
 // Maximum / minimum acceptable phi
 // This impacts enourmously the speed of track seeding
+// static constexpr float phi_extrapolation = 0.0436332f;
 static constexpr float phi_extrapolation = 0.062f;
+// static constexpr float phi_extrapolation = 0.0959931f;
+
+// Forward tolerance in phi
+constexpr float forward_phi_tolerance = 0.052f;
 
 // Tolerance angle for forming triplets
 static constexpr float max_slope = 0.4f;

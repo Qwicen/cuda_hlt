@@ -1,6 +1,9 @@
 #include "FillCandidates.cuh"
 #include "VeloEventModel.cuh"
+#include "VeloTools.cuh"
 #include <cassert>
+#include <cstdio>
+#include <tuple>
 
 __device__ void fill_candidates_impl(
   short* h0_candidates,
@@ -16,74 +19,69 @@ __device__ void fill_candidates_impl(
   // Assign a h1 to each threadIdx.x
   const auto module_index = blockIdx.y + 2; // 48 blocks y
   const auto m1_hitNums = module_hitNums[module_index];
-  for (auto i=0; i<(m1_hitNums + blockDim.x - 1) / blockDim.x; ++i) {
-    const auto h1_rel_index = i*blockDim.x + threadIdx.x;
+  for (auto h1_rel_index=threadIdx.x; h1_rel_index<m1_hitNums; h1_rel_index+=blockDim.x) {
+    // Find for module module_index, hit h1_rel_index the candidates
+    const auto m0_hitStarts = module_hitStarts[module_index+2] - hit_offset;
+    const auto m2_hitStarts = module_hitStarts[module_index-2] - hit_offset;
+    const auto m0_hitNums = module_hitNums[module_index+2];
+    const auto m2_hitNums = module_hitNums[module_index-2];
 
-    if (h1_rel_index < m1_hitNums) {
-      // Find for module module_index, hit h1_rel_index the candidates
-      const auto m0_hitStarts = module_hitStarts[module_index+2] - hit_offset;
-      const auto m2_hitStarts = module_hitStarts[module_index-2] - hit_offset;
-      const auto m0_hitNums = module_hitNums[module_index+2];
-      const auto m2_hitNums = module_hitNums[module_index-2];
-      const auto h1_index = module_hitStarts[module_index] + h1_rel_index - hit_offset;
+    const auto h1_index = module_hitStarts[module_index] + h1_rel_index - hit_offset;
 
-      // Calculate phi limits
-      const float h1_phi = hit_Phis[h1_index];
+    // Calculate phi limits
+    const float h1_phi = hit_Phis[h1_index];
 
-      // Find candidates
-      bool first_h0_found = false, last_h0_found = false;
-      bool first_h2_found = false, last_h2_found = false;
-      
-      // Add h0 candidates
-      for (auto h0_rel_index=0; h0_rel_index < m0_hitNums; ++h0_rel_index) {
-        const unsigned short h0_index = m0_hitStarts + h0_rel_index;
-        const auto h0_phi = hit_Phis[h0_index];
-        const bool tolerance_condition = fabs(h1_phi - h0_phi) < VeloTracking::phi_extrapolation;
+    int first_h0_bin = -1, last_h0_bin = -1;
+    if (m0_hitNums > 0) {
+      // Do a binary search for h0 candidates
+      first_h0_bin = binary_search_first_candidate(
+        hit_Phis + m0_hitStarts,
+        m0_hitNums,
+        h1_phi,
+        VeloTracking::phi_extrapolation
+      );
 
-        if (!first_h0_found && tolerance_condition) {
-          h0_candidates[2*h1_index] = h0_index;
-          first_h0_found = true;
-        }
-        else if (first_h0_found && !last_h0_found && !tolerance_condition) {
-          h0_candidates[2*h1_index + 1] = h0_index;
-          last_h0_found = true;
-          break;
-        }
-      }
-      if (first_h0_found && !last_h0_found) {
-        h0_candidates[2*h1_index + 1] = m0_hitStarts + m0_hitNums;
-      }
-      // In case of repeated execution, we need to populate
-      // the candidates with -1 if not found
-      else if (!first_h0_found) {
-        h0_candidates[2*h1_index] = -1;
-        h0_candidates[2*h1_index + 1] = -1;
-      }
-
-      // Add h2 candidates
-      for (int h2_rel_index=0; h2_rel_index < m2_hitNums; ++h2_rel_index) {
-        const unsigned short h2_index = m2_hitStarts + h2_rel_index;
-        const auto h2_phi = hit_Phis[h2_index];
-        const bool tolerance_condition = fabs(h1_phi - h2_phi) < VeloTracking::phi_extrapolation;
-
-        if (!first_h2_found && tolerance_condition) {
-          h2_candidates[2*h1_index] = h2_index;
-          first_h2_found = true;
-        }
-        else if (first_h2_found && !last_h2_found && !tolerance_condition) {
-          h2_candidates[2*h1_index + 1] = h2_index;
-          last_h2_found = true;
-          break;
-        }
-      }
-      if (first_h2_found && !last_h2_found) {
-        h2_candidates[2*h1_index + 1] = m2_hitStarts + m2_hitNums;
-      }
-      else if (!first_h2_found) {
-        h2_candidates[2*h1_index] = -1;
-        h2_candidates[2*h1_index + 1] = -1;
+      if (first_h0_bin != -1) {
+        // Find last h0 candidate
+        last_h0_bin = binary_search_second_candidate(
+          hit_Phis + m0_hitStarts + first_h0_bin,
+          m0_hitNums - first_h0_bin,
+          h1_phi,
+          VeloTracking::phi_extrapolation
+        );
+        first_h0_bin += m0_hitStarts;
+        last_h0_bin = last_h0_bin==0 ? first_h0_bin+1 : first_h0_bin+last_h0_bin;
       }
     }
+
+    h0_candidates[2*h1_index] = first_h0_bin;
+    h0_candidates[2*h1_index + 1] = last_h0_bin;
+
+    int first_h2_bin = -1, last_h2_bin = -1;
+    if (m2_hitNums > 0) {
+      // Do a binary search for h2 candidates
+      first_h2_bin = binary_search_first_candidate(
+        hit_Phis + m2_hitStarts,
+        m2_hitNums,
+        h1_phi,
+        VeloTracking::phi_extrapolation
+      );
+
+      if (first_h2_bin != -1) {
+        // Find last h0 candidate
+        last_h2_bin = binary_search_second_candidate(
+          hit_Phis + m2_hitStarts + first_h2_bin,
+          m2_hitNums - first_h2_bin,
+          h1_phi,
+          VeloTracking::phi_extrapolation
+        );
+        first_h2_bin += m2_hitStarts;
+        last_h2_bin = last_h2_bin==0 ? first_h2_bin+1 : first_h2_bin+last_h2_bin;
+      }
+    }
+
+    h2_candidates[2*h1_index] = first_h2_bin;
+    h2_candidates[2*h1_index + 1] = last_h2_bin;
   }
 }
 

@@ -21,5 +21,6 @@ __global__ void search_by_triplet(
   int* dev_atomics_storage,
   short* dev_h0_candidates,
   short* dev_h2_candidates,
-  unsigned short* dev_rel_indices
+  unsigned short* dev_rel_indices,
+  const float* dev_velo_module_zs
 );
