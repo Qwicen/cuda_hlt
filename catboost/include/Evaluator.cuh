@@ -1,6 +1,6 @@
 __global__ void catboost_evaluator(
-  int* dev_tree_splits[],
-  double* dev_leaf_values[],
+  const int* const* dev_tree_splits,
+  const double* const* dev_leaf_values,
   const int* dev_tree_sizes,
   float* dev_catboost_output,
   const unsigned char* dev_bin_features,

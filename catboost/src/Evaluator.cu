@@ -1,8 +1,8 @@
 #include "Evaluator.cuh"
 #include <stdio.h>
 __global__ void catboost_evaluator(
-  int* dev_tree_splits[],
-  double* dev_leaf_values[],
+  const int* const* dev_tree_splits,
+  const double* const* dev_leaf_values,
   const int* dev_tree_sizes,
   float* dev_catboost_output,
   const unsigned char* dev_bin_features,
@@ -17,8 +17,8 @@ __global__ void catboost_evaluator(
   int treeId = threadIdx.x;
   float sum = 0;
   while(treeId < dev_tree_num) {
-    size_t index{};
-    for (size_t depth = 0; depth < dev_tree_sizes[treeId]; ++depth) {
+    int index{};
+    for (int depth = 0; depth < dev_tree_sizes[treeId]; ++depth) {
       const int obj_shift = objectId * dev_bin_feature_num;
       const int split_num = dev_tree_splits[treeId][depth];
       index |= (dev_bin_features[obj_shift + split_num] << depth);
