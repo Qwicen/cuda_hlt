@@ -47,7 +47,9 @@ static constexpr uint num_atomics = 5;
 // Constants for requested storage on device
 static constexpr uint max_tracks = 1200;
 static constexpr uint max_track_size = 26;
-static constexpr uint max_numhits_in_module = 350;
+
+// Constant for maximum number of hits in a module
+static constexpr uint max_numhits_in_module = 400;
 
 // Maximum number of tracks to follow at a time
 static constexpr uint ttf_modulo = 2000;

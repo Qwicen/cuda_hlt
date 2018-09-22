@@ -1,4 +1,4 @@
-/** @file TrackChecker.cc
+/** @file TrackChecker.cpp
  *
  * @brief check tracks against MC truth
  *
