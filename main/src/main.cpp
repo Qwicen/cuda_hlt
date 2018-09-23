@@ -246,11 +246,6 @@ int main(int argc, char *argv[])
   std::cout << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
-  std::ofstream outfile;
-  outfile.open("../tests/test.txt", std::fstream::in | std::fstream::out | std::ios_base::app);
-  outfile << start_event_offset << "\t" << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << std::endl;
-  outfile.close();
-
   // Reset device
   cudaCheck(cudaDeviceReset());
 
