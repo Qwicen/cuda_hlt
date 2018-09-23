@@ -47,6 +47,7 @@ __device__ void warpReduce(
   volatile float* sdata, 
   int tid
 ) {
-  for (unsigned int s=32; s>0; s>>=1)
-    sdata[tid] += sdata[tid + s];
+  for (unsigned int s=16; s>0; s>>=1)
+    if( tid < s )
+      sdata[tid] += sdata[tid + s];
 }
