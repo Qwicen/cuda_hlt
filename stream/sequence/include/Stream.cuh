@@ -54,9 +54,12 @@ struct Stream {
   uint* host_accumulated_number_of_ut_hits;
   VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
-  
+
   /* UT DECODING */
   UTHits * host_ut_hits_decoded;
+
+  // SciFi Decoding
+  uint* host_accumulated_number_of_scifi_hits;
 
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;
@@ -65,9 +68,10 @@ struct Stream {
   char* dev_velo_geometry;
   char* dev_ut_boards;
   char* dev_ut_geometry;
+  char* dev_scifi_geometry;
   char* dev_base_pointer;
   PrUTMagnetTool* dev_ut_magnet_tool;
-  
+
   // Monte Carlo folder name
   std::string folder_name_MC;
   uint start_event_offset;
@@ -80,6 +84,7 @@ struct Stream {
     const std::vector<char>& ut_boards,
     const std::vector<char>& ut_geometry,
     const std::vector<char>& ut_magnet_tool,
+    const std::vector<char>& scifi_geometry,
     const uint max_number_of_events,
     const bool param_do_check,
     const bool param_do_simplified_kalman_filter,
@@ -91,17 +96,21 @@ struct Stream {
     const uint param_stream_number,
     const Constants& param_constants
   );
-  
+
   cudaError_t run_sequence(
     const uint i_stream,
-    const char* host_events,
-    const uint* host_event_offsets,
-    const size_t host_events_size,
-    const size_t host_event_offsets_size,
+    const char* host_velopix_events,
+    const uint* host_velopix_event_offsets,
+    const size_t host_velopix_events_size,
+    const size_t host_velopix_event_offsets_size,
     const char* host_ut_events,
     const uint* host_ut_event_offsets,
     const size_t host_ut_events_size,
     const size_t host_ut_event_offsets_size,
+    char* host_scifi_events,
+    uint* host_scifi_event_offsets,
+    const size_t scifi_events_size,
+    const size_t scifi_event_offsets_size,
     const uint number_of_events,
     const uint number_of_repetitions
   );

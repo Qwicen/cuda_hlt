@@ -1,6 +1,6 @@
 /**
  *      CUDA HLT1
- *      
+ *
  *      author  -  GPU working group
  *      e-mail  -  lhcb-parallelization@cern.ch
  *
@@ -32,8 +32,9 @@
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
-    << std::endl << " -f {folder containing .bin files with raw bank information}"
+    << std::endl << " -f {folder containing .bin files with VP raw bank information}"
     << std::endl << " -u {folder containing bin files with UT raw bank information}"
+    << std::endl << " -i {folder containing .bin files with SciFi raw bank information}"
     << std::endl << " -g {folder containing detector configuration}"
     << std::endl << " -d {folder containing .bin files with MC truth information}"
     << std::endl << " -n {number of events to process}=0 (all)"
@@ -54,6 +55,7 @@ int main(int argc, char *argv[])
   std::string folder_name_velopix_raw;
   std::string folder_name_UT_raw = "";
   std::string folder_name_MC = "";
+  std::string folder_name_SciFi_raw = "";
   std::string folder_name_detector_configuration = "";
   uint number_of_events_requested = 0;
   uint start_event_offset = 0;
@@ -61,14 +63,14 @@ int main(int argc, char *argv[])
   uint number_of_repetitions = 1;
   uint verbosity = 3;
   bool print_memory_usage = false;
-  // By default, do_check will be true when mc_check is enabled 
+  // By default, do_check will be true when mc_check is enabled
   bool do_check = true;
   bool do_simplified_kalman_filter = false;
   bool run_on_x86 = false;
   size_t reserve_mb = 1024;
-   
+
   signed char c;
-  while ((c = getopt(argc, argv, "f:d:u:n:o:t:r:pha:b:d:v:c:k:m:g:x:")) != -1) {
+  while ((c = getopt(argc, argv, "f:d:u:i:n:o:t:r:pha:b:d:v:c:k:m:g:x:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_velopix_raw = std::string(optarg);
@@ -78,6 +80,9 @@ int main(int argc, char *argv[])
       break;
     case 'u':
       folder_name_UT_raw = std::string(optarg);
+      break;
+    case 'i':
+      folder_name_SciFi_raw = std::string(optarg);
       break;
     case 'g':
       folder_name_detector_configuration = std::string(optarg);
@@ -121,12 +126,13 @@ int main(int argc, char *argv[])
   }
 
   // Options sanity check
-  if (folder_name_velopix_raw.empty() || folder_name_UT_raw.empty() ||
+  if (folder_name_velopix_raw.empty() || folder_name_UT_raw.empty() || folder_name_SciFi_raw.empty() ||
     folder_name_detector_configuration.empty() || (folder_name_MC.empty() && do_check)) {
     std::string missing_folder = "";
 
     if (folder_name_velopix_raw.empty()) missing_folder = "velopix raw events";
     else if (folder_name_UT_raw.empty()) missing_folder = "UT raw events";
+    else if (folder_name_SciFi_raw.empty()) missing_folder = "SciFi raw events";
     else if (folder_name_detector_configuration.empty()) missing_folder = "detector geometry";
     else if (folder_name_MC.empty() && do_check) missing_folder = "Monte Carlo";
 
@@ -142,11 +148,12 @@ int main(int argc, char *argv[])
   // Get device properties
   cudaDeviceProp device_properties;
   cudaCheck(cudaGetDeviceProperties(&device_properties, 0));
-  
+
   // Show call options
   std::cout << "Requested options:" << std::endl
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
     << " folder with UT raw bank input (-u): " << folder_name_UT_raw << std::endl
+    << " folder with SciFi raw bank input (-i): " << folder_name_SciFi_raw << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " run checkers (-c): " << do_check << std::endl
@@ -172,16 +179,19 @@ int main(int argc, char *argv[])
   auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
   auto velo_reader = VeloReader(folder_name_velopix_raw);
   auto ut_reader = EventReader(folder_name_UT_raw);
-  
+  auto scifi_reader = EventReader(folder_name_SciFi_raw);
+
   std::vector<char> velo_geometry = geometry_reader.read_geometry("velo_geometry.bin");
   std::vector<char> ut_boards = geometry_reader.read_geometry("ut_boards.bin");
   std::vector<char> ut_geometry = geometry_reader.read_geometry("ut_geometry.bin");
   std::vector<char> ut_magnet_tool = ut_magnet_tool_reader.read_UT_magnet_tool();
+  std::vector<char> scifi_geometry = geometry_reader.read_geometry("scifi_geometry.bin");
   velo_reader.read_events(number_of_events_requested, start_event_offset);
   ut_reader.read_events(number_of_events_requested, start_event_offset);
+  scifi_reader.read_events(number_of_events_requested, start_event_offset);
 
   info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
-  
+
   // Initialize detector constants on GPU
   Constants constants;
   constants.reserve_and_initialize();
@@ -195,17 +205,18 @@ int main(int argc, char *argv[])
     ut_boards,
     ut_geometry,
     ut_magnet_tool,
+    scifi_geometry,
     number_of_events_requested,
     do_check,
     do_simplified_kalman_filter,
     print_memory_usage,
-    run_on_x86, 
+    run_on_x86,
     folder_name_MC,
     start_event_offset,
     reserve_mb,
     constants
   );
-  
+
   // Attempt to execute all in one go
   Timer t;
   tbb::parallel_for(
@@ -222,6 +233,10 @@ int main(int argc, char *argv[])
         ut_reader.host_event_offsets,
         ut_reader.host_events_size,
         ut_reader.host_event_offsets_size,
+        scifi_reader.host_events,
+        scifi_reader.host_event_offsets,
+        scifi_reader.host_events_size,
+        scifi_reader.host_event_offsets_size,
         number_of_events_requested,
         number_of_repetitions
       );
@@ -236,7 +251,7 @@ int main(int argc, char *argv[])
   outfile.open("../tests/test.txt", std::fstream::in | std::fstream::out | std::ios_base::app);
   outfile << start_event_offset << "\t" << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << std::endl;
   outfile.close();
-  
+
   // Reset device
   cudaCheck(cudaDeviceReset());
 

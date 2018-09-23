@@ -90,6 +90,7 @@ if ( ROOT_FOUND )
     x86VeloUT
     Stream
     x86Clustering
+    SciFi
     TrackChecking
     CheckClustering
     ${ROOT_LIBRARIES})
@@ -102,6 +103,7 @@ else()
     x86VeloUT
     Stream
     x86Clustering
+    SciFi
     TrackChecking
     CheckClustering)
 endif()
