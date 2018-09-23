@@ -26,6 +26,8 @@
    *  2018-07:    Dorothea vom Bruch (convert to C and then CUDA code)
    */
 
+constexpr int N_LAYERS = 4;
+
 struct MiniState {
   float x, y, tx, ty, z;
 
@@ -46,33 +48,23 @@ struct TrackHelper{
   float wb, invKinkVeloDist, xMidField;
 
   __host__ __device__ TrackHelper(
-    const MiniState& state
-  ) {
+    const MiniState& state)
+  {
     bestParams[0] = bestParams[2] = bestParams[3] = 0.;
     bestParams[1] = PrVeloUTConst::maxPseudoChi2;
     xMidField = state.x + state.tx*(PrVeloUTConst::zKink-state.z);
     const float a = PrVeloUTConst::sigmaVeloSlope*(PrVeloUTConst::zKink - state.z);
     wb=1./(a*a);
     invKinkVeloDist = 1/(PrVeloUTConst::zKink-state.z);
-    }
-  };
+  }
+};
+
 
 __host__ __device__ bool veloTrackInUTAcceptance(
   const MiniState& state
 );
 
-__device__ void find_range_hits(
-  const UTHits& ut_hits,
-  const int guess,
-  const float ut_dxDy,
-  const float xTolNormFact,
-  const float yApprox,
-  const float xOnTrackProto,
-  const int layer_offset,
-  int& high_hit_pos,
-  int& low_hit_pos);
-
-__device__ void binary_search_range(
+__host__ __device__ void binary_search_range(
   const int layer,
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
@@ -83,10 +75,10 @@ __device__ void binary_search_range(
   const float yApprox,
   const float xOnTrackProto,
   const int layer_offset,
-  int high_hit_pos,
-  int low_hit_pos);
+  int& high_hit_pos,
+  int& low_hit_pos);
 
-__device__ void get_windows(
+__host__ __device__ void get_windows(
   const int i_track,
   const MiniState& veloState,
   const float* fudgeFactors,
@@ -106,32 +98,32 @@ __host__ __device__ bool getHits(
   const MiniState& trState,
   const float* ut_dxDy); 
 
-__host__ __device__ bool formClusters(
-  const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
-  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  int hitCandidateIndices[VeloUTTracking::n_layers],
+__host__ __device__ bool find_best_hits(
+  const int i_track,
+  const int* windows_layers,
   const UTHits& ut_hits,
   const UTHitCount& ut_hit_count,
-  TrackHelper& helper,
-  const MiniState& state,
+  const MiniState& velo_state,
   const float* ut_dxDy,
-  const bool forward);
+  const bool forward,
+  TrackHelper& helper,
+  float* x_hit_layer,
+  int* bestHitCandidateIndicesm);
 
 __host__ __device__ void prepareOutputTrack(
+  const int i_track,
   const Velo::Consolidated::Hits& velo_track_hits,
   const uint velo_track_hit_number,
   const TrackHelper& helper,
-  const MiniState& state,
-  int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
-  UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
-  const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const int hitCandidateIndices[VeloUTTracking::n_layers],
+  const MiniState& velo_state,
+  const int* windows_layers,
+  const UTHits& ut_hits,
+  const UTHitCount& ut_hit_count,
+  const float* x_hit_layer,
+  const int* hitCandidateIndices,
+  const float* bdlTable,
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
-  int* n_veloUT_tracks,
-  const float* bdlTable);
+  int* n_veloUT_tracks);
 
 __host__ __device__ void fillArray(
   int * array,
@@ -170,9 +162,7 @@ template <int N>
 __host__ __device__ void addHits(
   float* mat,
   float* rhs,
-  const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const int hitCandidateIndices[VeloUTTracking::n_layers],
-  const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  const float* x_hit_layer,
   const UTHits& ut_hits,
   const int hitIndices[N],
   const float* ut_dxDy
@@ -181,7 +171,7 @@ __host__ __device__ void addHits(
   for ( int i_hit = 0; i_hit < N; ++i_hit ) {
     const int hit_index = hitIndices[i_hit];
     const int planeCode = ut_hits.planeCode[hit_index];
-    const float ui = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
+    const float ui = x_hit_layer[planeCode];
     const float dxDy = ut_dxDy[planeCode];
     const float ci = ut_hits.cosT(hit_index, dxDy);
     const float z  = ut_hits.zAtYEq0[hit_index];
@@ -198,12 +188,10 @@ __host__ __device__ void addHits(
 
 template <int N>
 __host__ __device__ void addChi2s(
+  float& chi2,
   const float xUTFit,
   const float xSlopeUTFit,
-  float& chi2 ,
-  const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const int hitCandidateIndices[VeloUTTracking::n_layers],
-  const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  const float* x_hit_layer,
   const UTHits& ut_hits,
   const int hitIndices[N] ) {
   
@@ -212,7 +200,7 @@ __host__ __device__ void addChi2s(
     const int planeCode = ut_hits.planeCode[hit_index];
     const float zd = ut_hits.zAtYEq0[hit_index];
     const float xd = xUTFit + xSlopeUTFit*(zd-PrVeloUTConst::zMidUT);
-    const float x  = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
+    const float x  = x_hit_layer[ planeCode ];
     const float du = xd - x;
     chi2 += (du*du)*ut_hits.weight[hit_index];
   }
@@ -233,15 +221,15 @@ __host__ __device__ int countHitsWithHighThreshold(
 
 template <int N>
 __host__ __device__ void simpleFit(
-  const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const int hitCandidateIndices[VeloUTTracking::n_layers],
-  int bestHitCandidateIndices[VeloUTTracking::n_layers],
-  const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  const float* x_hit_layer,
+  const int hitCandidateIndices[N_LAYERS],
   const UTHits& ut_hits,
   const int hitIndices[N],
-  TrackHelper& helper,
-  const MiniState& state,
-  const float* ut_dxDy) {
+  const MiniState& velo_state,
+  const float* ut_dxDy,
+  int bestHitCandidateIndices[N_LAYERS],
+  TrackHelper& helper) 
+{
   assert( N==3||N==4 );
  
   const int nHighThres = countHitsWithHighThreshold<N>(hitIndices, ut_hits);
@@ -250,12 +238,12 @@ __host__ __device__ void simpleFit(
   // -- = likely spillover
   if( nHighThres < PrVeloUTConst::minHighThres ) return;
   
-  /* Straight line fit of UT hits,
-     including the hit at x_mid_field, z_mid_field,
-     use least squares method for fitting x(z) = a + bz,
-     the chi2 is minimized and expressed in terms of sums as described
-     in chapter 4 of http://cds.cern.ch/record/1635665/files/LHCb-PUB-2013-023.pdf
-    */
+  // Straight line fit of UT hits,
+  // including the hit at x_mid_field, z_mid_field,
+  // use least squares method for fitting x(z) = a + bz,
+  // the chi2 is minimized and expressed in terms of sums as described
+  // in chapter 4 of http://cds.cern.ch/record/1635665/files/LHCb-PUB-2013-023.pdf
+  
   // -- Scale the z-component, to not run into numerical problems with floats
   // -- first add to sum values from hit at xMidField, zMidField hit
   const float zDiff = 0.001*(PrVeloUTConst::zKink-PrVeloUTConst::zMidUT);
@@ -263,7 +251,13 @@ __host__ __device__ void simpleFit(
   float rhs[2] = { helper.wb* helper.xMidField, helper.wb*helper.xMidField*zDiff };
   
   // then add to sum values from hits on track
-  addHits<N>( mat, rhs, x_pos_layers, hitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, ut_dxDy );
+  addHits<N>( 
+    mat, 
+    rhs, 
+    x_hit_layer,
+    ut_hits, 
+    hitIndices, 
+    ut_dxDy );
   
   const float denom       = 1. / (mat[0]*mat[2] - mat[1]*mat[1]);
   const float xSlopeUTFit = 0.001*(mat[0]*rhs[1] - mat[1]*rhs[0]) * denom;
@@ -271,12 +265,18 @@ __host__ __device__ void simpleFit(
   
   // new VELO slope x
   const float xb = xUTFit+xSlopeUTFit*(PrVeloUTConst::zKink-PrVeloUTConst::zMidUT);
-  const float xSlopeVeloFit = (xb-state.x)*helper.invKinkVeloDist;
-  const float chi2VeloSlope = (state.tx - xSlopeVeloFit)*PrVeloUTConst::invSigmaVeloSlope;
+  const float xSlopeVeloFit = (xb-velo_state.x)*helper.invKinkVeloDist;
+  const float chi2VeloSlope = (velo_state.tx - xSlopeVeloFit)*PrVeloUTConst::invSigmaVeloSlope;
   
   /* chi2 takes chi2 from velo fit + chi2 from UT fit */
   float chi2UT = chi2VeloSlope*chi2VeloSlope;
-  addChi2s<N>( xUTFit, xSlopeUTFit, chi2UT, x_pos_layers, hitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices );
+  addChi2s<N>( 
+    chi2UT, 
+    xUTFit, 
+    xSlopeUTFit, 
+    x_hit_layer, 
+    ut_hits, 
+    hitIndices );
 
   chi2UT /= (N + 1 - 2);
 
@@ -291,6 +291,7 @@ __host__ __device__ void simpleFit(
     helper.bestParams[2] = xUTFit;
     helper.bestParams[3] = xSlopeUTFit;
     
+    // Copy the selected hits to the helper
     for ( int i_hit = 0; i_hit < N; ++i_hit ) {
       helper.bestHitIndices[i_hit] = hitIndices[i_hit];
       bestHitCandidateIndices[i_hit] = hitCandidateIndices[i_hit];
