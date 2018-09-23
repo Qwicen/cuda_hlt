@@ -98,7 +98,7 @@ __global__ void raw_bank_decoder(
     hits.yMin[hitIndex] = yMin;
     hits.yMax[hitIndex] = yMax;
     hits.LHCbID[hitIndex] = lhcbid;
-    hits.planeCode[hitIndex] = planeCode;
+    hits.planeCode[hitIndex] = 2 * planeCode + (uniqueZone % 2);
     hits.hitZone[hitIndex] = uniqueZone % 2;
   };
 

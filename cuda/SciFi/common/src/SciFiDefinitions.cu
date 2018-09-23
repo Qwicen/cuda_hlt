@@ -199,4 +199,9 @@ SciFiHit SciFiHits::getHit(uint32_t index) const {
   return {x0[index], z0[index], w[index], dxdy[index], dzdy[index], yMin[index],
           yMax[index], LHCbID[index], planeCode[index], hitZone[index]};
 }
+
+SciFiHit HitsSoA::getHit(uint32_t index) const {
+  return {m_x[index], m_z[index], m_w[index], m_dxdy[index], m_dzdy[index], m_yMin[index],
+          m_yMax[index], m_LHCbID[index], m_planeCode[index], m_hitZone[index]};
+}
 };

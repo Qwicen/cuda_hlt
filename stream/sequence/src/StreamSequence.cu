@@ -493,7 +493,7 @@ cudaError_t Stream::run_sequence(
       sizeof(uint), cudaMemcpyDeviceToHost, stream));
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
-    info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
+    // info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
 
     // Raw Bank Decoder
     const uint32_t hits_bytes = (14 * sizeof(float) + 1) * *host_accumulated_number_of_scifi_hits;
@@ -560,39 +560,72 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, argen.generate<arg::dev_n_scifi_tracks>(argument_offsets), argen.size<arg::dev_n_scifi_tracks>(number_of_events), cudaMemcpyDeviceToHost, stream));
     cudaCheck(cudaMemcpyAsync(host_scifi_tracks, argen.generate<arg::dev_scifi_tracks>(argument_offsets), argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks), cudaMemcpyDeviceToHost, stream));
     
-
+    // Synchronize
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
     
-    /*
-    // SciFi Decoder Debugging
-    const uint hit_count_uints = 2 * number_of_events * SciFi::number_of_zones + 1;
-    uint host_scifi_hit_count[hit_count_uints];
-    char* host_scifi_hits = new char[hits_bytes];
-    uint* host_scifi_hit_permutation = new uint[*host_accumulated_number_of_scifi_hits];
-    cudaCheck(cudaMemcpyAsync(&host_scifi_hit_count, argen.generate<arg::dev_scifi_hit_count>(argument_offsets), hit_count_uints*sizeof(uint), cudaMemcpyDeviceToHost, stream));
-    cudaCheck(cudaMemcpyAsync(host_scifi_hits, argen.generate<arg::dev_scifi_hits>(argument_offsets), argen.size<arg::dev_scifi_hits>(hits_bytes), cudaMemcpyDeviceToHost, stream));
-    cudaCheck(cudaMemcpyAsync(host_scifi_hit_permutation, argen.generate<arg::dev_scifi_hit_permutations>(argument_offsets), argen.size<arg::dev_scifi_hit_permutations>(*host_accumulated_number_of_scifi_hits), cudaMemcpyDeviceToHost, stream));
-    // cudaEventRecord(cuda_generic_event, stream);
-    // cudaEventSynchronize(cuda_generic_event);
+    // // SciFi Decoder Debugging
+    // {
+    //   std::vector<char> host_scifi_hits (hits_bytes);
+    //   std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
 
-    SciFi::SciFiHits host_scifi_hits_struct;
-    host_scifi_hits_struct.typecast_sorted(host_scifi_hits, host_scifi_hit_count[number_of_events * SciFi::number_of_zones]);
+    //   cudaCheck(cudaMemcpyAsync(
+    //     host_scifi_hits.data(),
+    //     argen.generate<arg::dev_scifi_hits>(argument_offsets),
+    //     hits_bytes,
+    //     cudaMemcpyDeviceToHost,
+    //     stream
+    //   ));
+    //   cudaCheck(cudaMemcpyAsync(
+    //     host_scifi_hit_count.data(),
+    //     argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+    //     host_scifi_hit_count.size() * sizeof(uint),
+    //     cudaMemcpyDeviceToHost,
+    //     stream
+    //   ));
 
-    //Print only non-empty hits
-    std::ofstream outfile("dump.txt");
-    SciFi::SciFiHitCount host_scifi_hit_count_struct;
-    for(size_t event = 0; event < number_of_events; event++) {
-      host_scifi_hit_count_struct.typecast_ascifier_prefix_sum(host_scifi_hit_count, event, number_of_events);
-      for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
-        for(size_t hit = 0; hit < host_scifi_hit_count_struct.n_hits_layers[zone]; hit++) {
-          auto h = host_scifi_hits_struct.getHit(host_scifi_hit_count_struct.layer_offsets[zone] + hit);
-          outfile << std::setprecision(8) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " "
-            << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
-            << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
-        }
-      }
-    }*/
+    //   std::ofstream outfile("dump.txt");
+    //   for (int event=0; event<number_of_events; ++event) {
+    //     SciFi::SciFiHitCount scifi_hit_count;
+    //     scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count.data(), event, number_of_events);
+        
+    //     SciFi::SciFiHits scifi_hits {scifi_hit_count};
+    //     scifi_hits.typecast_sorted((char*) host_scifi_hits.data(), scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+        
+    //     for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
+    //       const auto zone_offset = scifi_hits.hit_count.layer_offsets[zone];
+    //       for(size_t hit = 0; hit < scifi_hits.hit_count.n_hits_layers[zone]; hit++) {
+    //         auto h = scifi_hits.getHit(zone_offset + hit);
+
+    //         outfile << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " "
+    //           << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
+    //           << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
+    //       }
+    //     }
+    //   }
+    //   outfile.close();
+
+    //   std::ofstream outfile_2("dump_2.txt");
+    //   for (int event=0; event<number_of_events; ++event) {
+    //     SciFi::SciFiHitCount scifi_hit_count;
+    //     scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count.data(), event, number_of_events);
+    //     SciFi::SciFiHits scifi_hits {scifi_hit_count};
+    //     scifi_hits.typecast_sorted((char*) host_scifi_hits.data(), scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+        
+    //     for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
+    //       const auto zone_offset = hits_layers_events_scifi->layer_offset[zone];
+
+    //       for(size_t hit = 0; hit < scifi_hits.hit_count.n_hits_layers[zone]; hit++) {
+    //         auto h = hits_layers_events_scifi->getHit(zone_offset + hit);
+
+    //         outfile_2 << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " "
+    //           << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
+    //           << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
+    //       }
+    //     }
+    //   }
+    //   outfile_2.close();
+    // }
 
     ///////////////////////
     // Monte Carlo Check //

@@ -22,62 +22,94 @@
   };
 
 namespace SciFi {
-  namespace Constants {
-    /* Detector description
-       There are three stations with four layers each 
-    */
-    static constexpr uint n_stations           = 3;
-    static constexpr uint n_layers_per_station = 4;
-    static constexpr uint n_zones              = 24;
-    static constexpr uint n_layers             = 12;
-        
-    static constexpr int layerCode[n_zones] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ,17, 18 ,19, 20, 21, 22, 23};
-    
-    /* Cut-offs */
-    static constexpr uint max_numhits_per_event = 10000; 
-    static constexpr uint max_hit_candidates_per_layer = 200;
 
-  } // Constants
-  
-  /* SoA for hit variables
-     The hits for every layer are written behind each other, the offsets 
-     are stored for access;
-     one Hits structure exists per event
+struct SciFiHit {
+  float x0;
+  float z0;
+  float w;
+  float dxdy;
+  float dzdy;
+  float yMin;
+  float yMax;
+  uint32_t LHCbID;
+  uint32_t planeCode;
+  uint32_t hitZone;
+
+  friend std::ostream& operator<<(std::ostream& stream, const SciFiHit& hit) {
+  stream << "SciFi hit {"
+    << hit.planeCode << ", "
+    << hit.hitZone << ", "
+    << hit.LHCbID << ", "
+    << hit.x0 << ", "
+    << hit.z0 << ", "
+    << hit.w<< ", "
+    << hit.dxdy << ", "
+    << hit.dzdy << ", "
+    << hit.yMin << ", "
+    << hit.yMax << "}";
+
+  return stream;
+}
+};
+
+namespace Constants {
+  /* Detector description
+     There are three stations with four layers each 
   */
-  struct HitsSoA {
-    int layer_offset[Constants::n_zones] = {0};
-    
-    float m_x[Constants::max_numhits_per_event] = {0}; 
-    float m_z[Constants::max_numhits_per_event] = {0}; 
-    float m_w[Constants::max_numhits_per_event] = {0};
-    float m_dxdy[Constants::max_numhits_per_event] = {0};
-    float m_dzdy[Constants::max_numhits_per_event] = {0};
-    float m_yMin[Constants::max_numhits_per_event] = {0};
-    float m_yMax[Constants::max_numhits_per_event] = {0};
-    unsigned int m_LHCbID[Constants::max_numhits_per_event] = {0};
-    int m_planeCode[Constants::max_numhits_per_event] = {0};
-    int m_hitZone[Constants::max_numhits_per_event] = {0};
-  };
-    
-  const int max_tracks = 150;
-  const int max_track_size = 15 + VeloUTTracking::max_track_size;
+  static constexpr uint n_stations           = 3;
+  static constexpr uint n_layers_per_station = 4;
+  static constexpr uint n_zones              = 24;
+  static constexpr uint n_layers             = 12;
+      
+  static constexpr int layerCode[n_zones] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ,17, 18 ,19, 20, 21, 22, 23};
   
-  struct Track {
-    
-    unsigned int LHCbIDs[max_track_size];
-    float qop;
-    unsigned short hitsNum = 0;
-    float chi2;
-    
-    __host__  __device__ void addLHCbID( unsigned int id ) {
-      assert( hitsNum < max_track_size - 1 );
-      LHCbIDs[hitsNum++] =  id;
+  /* Cut-offs */
+  static constexpr uint max_numhits_per_event = 10000; 
+  static constexpr uint max_hit_candidates_per_layer = 200;
+
+} // Constants
+
+/* SoA for hit variables
+   The hits for every layer are written behind each other, the offsets 
+   are stored for access;
+   one Hits structure exists per event
+*/
+struct HitsSoA {
+  int layer_offset[Constants::n_zones] = {0};
+  
+  float m_x[Constants::max_numhits_per_event] = {0}; 
+  float m_z[Constants::max_numhits_per_event] = {0}; 
+  float m_w[Constants::max_numhits_per_event] = {0};
+  float m_dxdy[Constants::max_numhits_per_event] = {0};
+  float m_dzdy[Constants::max_numhits_per_event] = {0};
+  float m_yMin[Constants::max_numhits_per_event] = {0};
+  float m_yMax[Constants::max_numhits_per_event] = {0};
+  unsigned int m_LHCbID[Constants::max_numhits_per_event] = {0};
+  int m_planeCode[Constants::max_numhits_per_event] = {0};
+  int m_hitZone[Constants::max_numhits_per_event] = {0};
+
+  SciFiHit getHit(uint32_t index) const;
+};
+  
+const int max_tracks = 150;
+const int max_track_size = 15 + VeloUTTracking::max_track_size;
+
+struct Track {
+  
+  unsigned int LHCbIDs[max_track_size];
+  float qop;
+  unsigned short hitsNum = 0;
+  float chi2;
+  
+  __host__  __device__ void addLHCbID( unsigned int id ) {
+    assert( hitsNum < max_track_size - 1 );
+    LHCbIDs[hitsNum++] =  id;
+}
+  
+  __host__ __device__ void set_qop( float _qop ) {
+    qop = _qop;
   }
-    
-    __host__ __device__ void set_qop( float _qop ) {
-      qop = _qop;
-    }
-  };
+};
   
 /**
  * @brief SciFi geometry description typecast.
@@ -237,35 +269,6 @@ struct SciFiHitCount {
     assert(layer_number < SciFi::number_of_zones);
     return layer_offsets[layer_number+1] - layer_offsets[layer_number];
   }
-};
-
-struct SciFiHit {
-  float x0;
-  float z0;
-  float w;
-  float dxdy;
-  float dzdy;
-  float yMin;
-  float yMax;
-  uint32_t LHCbID;
-  uint32_t planeCode;
-  uint32_t hitZone;
-
-  friend std::ostream& operator<<(std::ostream& stream, const SciFiHit& hit) {
-  stream << "SciFi hit {"
-    << hit.planeCode << ", "
-    << hit.hitZone << ", "
-    << hit.LHCbID << ", "
-    << hit.x0 << ", "
-    << hit.z0 << ", "
-    << hit.w<< ", "
-    << hit.dxdy << ", "
-    << hit.dzdy << ", "
-    << hit.yMin << ", "
-    << hit.yMax << "}";
-
-  return stream;
-}
 };
 
 struct SciFiHits {
