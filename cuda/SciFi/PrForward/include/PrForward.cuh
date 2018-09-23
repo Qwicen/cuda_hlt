@@ -42,12 +42,13 @@
    */
 
 __global__ void PrForward(
-  SciFi::HitsSoA* dev_scifi_hits,
+  const uint* dev_scifi_hits,
+  const uint* dev_scifi_hit_count,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_states,
   VeloUTTracking::TrackUT * dev_veloUT_tracks,
-  const int* dev_atomics_veloUT,
+  const int * dev_atomics_veloUT,
   SciFi::Track* dev_scifi_tracks,
   uint* dev_n_scifi_tracks ,
   SciFi::Tracking::TMVA* dev_tmva1,
@@ -55,7 +56,7 @@ __global__ void PrForward(
   SciFi::Tracking::Arrays* dev_constArrays);
 
 __host__ __device__ void find_forward_tracks(
-  SciFi::HitsSoA* hits_layers,  
+  const SciFi::SciFiHits& scifi_hits,  
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Track* outputTracks,
   uint* n_forward_tracks,
@@ -64,9 +65,8 @@ __host__ __device__ void find_forward_tracks(
   SciFi::Tracking::Arrays* constArrays,
   const MiniState& velo_state);
 
-
 __host__ __device__ void selectFullCandidates(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   SciFi::Tracking::Track* candidate_tracks,
   int& n_candidate_tracks,
   SciFi::Tracking::Track* selected_tracks,

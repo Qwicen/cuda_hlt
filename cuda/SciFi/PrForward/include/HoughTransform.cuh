@@ -14,9 +14,8 @@
    Functions related to doing a 1D Hough transform
 */
 
-
 __host__ __device__ void xAtRef_SamePlaneHits(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   const int allXHits[SciFi::Tracking::max_x_hits],
   const int n_x_hits,
   float coordX[SciFi::Tracking::max_x_hits],
@@ -26,7 +25,7 @@ __host__ __device__ void xAtRef_SamePlaneHits(
   int itH, int itEnd);
 
 __host__ __device__ bool fitXProjection(
-  SciFi::HitsSoA *hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams],
   int coordToFit[SciFi::Tracking::max_coordToFit],
   int& n_coordToFit,
@@ -34,7 +33,7 @@ __host__ __device__ bool fitXProjection(
   SciFi::Tracking::HitSearchCuts& pars_cur);
 
 __host__ __device__ bool fitYProjection(
-  SciFi::HitsSoA *hits_layers,  
+  const SciFi::SciFiHits& scifi_hits,  
   SciFi::Tracking::Track& track,
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits,
@@ -46,6 +45,6 @@ __host__ __device__ bool fitYProjection(
 __host__ __device__ int fitParabola(
   int* coordToFit,
   const int n_coordToFit,
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams],
   const bool xFit);

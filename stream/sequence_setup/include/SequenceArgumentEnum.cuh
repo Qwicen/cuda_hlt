@@ -79,7 +79,6 @@ enum arg_enum_t {
   dev_scifi_hit_permutations,
   dev_scifi_hits,
   dev_scifi_raw_input,
-  dev_scifi_hits_SoA,
   dev_scifi_tracks,
   dev_n_scifi_tracks
 };

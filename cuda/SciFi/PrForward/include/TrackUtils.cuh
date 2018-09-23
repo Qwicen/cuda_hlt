@@ -4,7 +4,7 @@
 
 #include "SciFiDefinitions.cuh"
 #include "PrForwardConstants.cuh"
-#include "PrVeloUT.cuh" 
+#include "PrVeloUT.cuh"
 
 /**
    Helper functions related to track properties
@@ -81,7 +81,7 @@ __host__ __device__ float calcDxRef(float pt, MiniState velo_state);
 
 __host__ __device__ float trackToHitDistance(
   float trackParameters[SciFi::Tracking::nTrackParams],
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   int hit );
 
 __host__ __device__ static inline bool lowerByQuality(
@@ -92,5 +92,5 @@ __host__ __device__ static inline bool lowerByQuality(
 
 __host__ __device__ float chi2XHit(
   const float parsX[4],
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   const int hit );

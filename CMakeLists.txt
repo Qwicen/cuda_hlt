@@ -91,11 +91,10 @@ if ( ROOT_FOUND )
     Utils
     Velo
     UT
-    SciFiTracking
-    SciFiDecoding
+    SciFi
     x86VeloUT
-    Stream
     x86Forward
+    Stream
     x86Clustering
     TrackChecking
     CheckClustering
@@ -106,11 +105,10 @@ else()
     Utils
     Velo
     UT
-    SciFiTracking
-    SciFiDecoding
+    SciFi
     x86VeloUT
-    Stream
     x86Forward
+    Stream
     x86Clustering
     TrackChecking
     CheckClustering)

@@ -25,7 +25,7 @@ namespace SciFi{
     const int max_other_hits = 5;
     const int max_stereo_hits = 25;
     const int max_coordToFit = 15; 
-    const int max_scifi_hits = 15; 
+    const int max_scifi_hits = 20;
     
     const int nTrackParams = 9;
     
@@ -123,7 +123,6 @@ namespace SciFi{
     };
    
     struct Track {
-
       int hit_indices[max_scifi_hits];
       float qop;
       int hitsNum = 0;

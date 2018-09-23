@@ -1,7 +1,7 @@
 #include "PrForwardWrapper.h"
 
 void PrForwardWrapper(
-  SciFi::HitsSoA *hits_layers,
+  const SciFi::SciFiHits& hits_layers,
   const Velo::Consolidated::States& velo_states,
   const uint event_tracks_offset,
   const VeloUTTracking::TrackUT * veloUT_tracks,
@@ -20,6 +20,8 @@ void PrForwardWrapper(
     const uint velo_states_index = event_tracks_offset + veloUTTr.veloTrackIndex;
     const MiniState velo_state {velo_states, velo_states_index};
     
+    // TODO: hits_layers should point to the event
+
     find_forward_tracks(
       hits_layers,
       veloUTTr,

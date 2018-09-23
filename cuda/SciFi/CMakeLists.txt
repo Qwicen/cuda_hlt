@@ -15,11 +15,8 @@ include_directories(../event_model/velo/include)
 include_directories(preprocessing/include)
 include_directories(../utils/sorting/include)
 
-cuda_add_library(SciFiTracking STATIC
-  ${scifi_tracking}
-  )
-cuda_add_library(SciFiDecoding STATIC
+cuda_add_library(SciFi STATIC
   ${scifi_common}
   ${scifi_preprocessing}
+  ${scifi_tracking}
 )
- 

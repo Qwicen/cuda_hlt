@@ -21,7 +21,7 @@
  */
 
 __host__ __device__ bool selectStereoHits(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   SciFi::Tracking::Track& track,
   SciFi::Tracking::Arrays* constArrays,
   float stereoCoords[SciFi::Tracking::max_stereo_hits],
@@ -31,7 +31,7 @@ __host__ __device__ bool selectStereoHits(
   SciFi::Tracking::HitSearchCuts& pars_cur);
 
 __host__ __device__ bool addHitsOnEmptyStereoLayers(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   SciFi::Tracking::Track& track,
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits,
@@ -41,7 +41,7 @@ __host__ __device__ bool addHitsOnEmptyStereoLayers(
   SciFi::Tracking::HitSearchCuts& pars_cur);
 
 __host__ __device__ void collectStereoHits(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   SciFi::Tracking::Track& track,
   MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars,

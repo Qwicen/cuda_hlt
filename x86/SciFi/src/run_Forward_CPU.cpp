@@ -8,7 +8,8 @@
 
 int run_forward_on_CPU (
   std::vector< trackChecker::Tracks >& forward_tracks_events,
-  SciFi::HitsSoA* hits_layers_events,
+  uint* host_scifi_hits,
+  uint* host_scifi_hit_count,
   uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number,
   uint* host_velo_states,
@@ -43,6 +44,12 @@ int run_forward_on_CPU (
 
     uint n_forward_tracks = 0;
     SciFi::Track forward_tracks[SciFi::max_tracks];
+
+    SciFi::SciFiHitCount scifi_hit_count;
+    scifi_hit_count.typecast_after_prefix_sum(host_scifi_hit_count, i_event, number_of_events);
+    
+    SciFi::SciFiHits scifi_hits {scifi_hit_count};
+    scifi_hits.typecast_sorted((char*) host_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
     
     // initialize TMVA vars
     SciFi::Tracking::TMVA tmva1;
@@ -53,7 +60,7 @@ int run_forward_on_CPU (
     SciFi::Tracking::Arrays constArrays;
  
     PrForwardWrapper(
-      &(hits_layers_events[i_event]),
+      scifi_hits,
       host_velo_states_event,
       event_tracks_offset,
       veloUT_tracks + i_event * VeloUTTracking::max_num_tracks,

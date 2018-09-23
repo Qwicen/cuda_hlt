@@ -6,21 +6,21 @@
 
 __host__ __device__ float getLineFitDistance(
   SciFi::Tracking::LineFitterPars &parameters,
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float coordX[SciFi::Tracking::max_x_hits],
   int allXHits[SciFi::Tracking::max_x_hits],
   int it )
 { 
-  return coordX[it] - (parameters.m_c0 + (hits_layers->m_z[ allXHits[it] ] - parameters.m_z0) * parameters.m_tc);
+  return coordX[it] - (parameters.m_c0 + (scifi_hits.z0[ allXHits[it] ] - parameters.m_z0) * parameters.m_tc);
 }
 
 __host__ __device__ float getLineFitChi2(
   SciFi::Tracking::LineFitterPars &parameters,
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float coordX[SciFi::Tracking::max_x_hits],
   int allXHits[SciFi::Tracking::max_x_hits],
   int it) {
-  float d = getLineFitDistance( parameters, hits_layers, coordX, allXHits, it ); 
+  float d = getLineFitDistance( parameters, scifi_hits, coordX, allXHits, it ); 
   return d * d * coordX[it]; 
 }
 
@@ -32,15 +32,15 @@ __host__ __device__ void solveLineFit(SciFi::Tracking::LineFitterPars &parameter
 
 __host__ __device__ void incrementLineFitParameters(
   SciFi::Tracking::LineFitterPars &parameters,
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float coordX[SciFi::Tracking::max_x_hits],
   int allXHits[SciFi::Tracking::max_x_hits],
   int it)
 {
     float c = coordX[it];
     const int hit = allXHits[it];
-    float w = hits_layers->m_w[hit];
-    float z = hits_layers->m_z[hit] - parameters.m_z0;
+    float w = scifi_hits.w[hit];
+    float z = scifi_hits.z0[hit] - parameters.m_z0;
     parameters.m_s0   += w;
     parameters.m_sz   += w * z;
     parameters.m_sz2  += w * z * z;
@@ -49,7 +49,7 @@ __host__ __device__ void incrementLineFitParameters(
 } 
 
 __host__ __device__ void fastLinearFit(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams], 
   int coordToFit[SciFi::Tracking::max_coordToFit],
   int& n_coordToFit,
@@ -71,10 +71,10 @@ __host__ __device__ void fastLinearFit(
                               trackParameters[1],
                               trackParameters[2],
                               trackParameters[3]};
-      const float zHit = hits_layers->m_z[hit];
+      const float zHit = scifi_hits.z0[hit];
       float track_x_at_zHit = straightLineExtend(parsX,zHit);
-      const float d = hits_layers->m_x[hit] - track_x_at_zHit;
-      const float w = hits_layers->m_w[hit];
+      const float d = scifi_hits.x0[hit] - track_x_at_zHit;
+      const float w = scifi_hits.w[hit];
       const float z = zHit - SciFi::Tracking::zReference;
       s0   += w;
       sz   += w * z; 
@@ -106,14 +106,14 @@ __host__ __device__ void fastLinearFit(
                               trackParameters[1],
                               trackParameters[2],
                               trackParameters[3]};
-      const float chi2 = chi2XHit( parsX, hits_layers, hit );
-      if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( hits_layers->m_planeCode[hit]/2 ) > 1 ) ) {
+      const float chi2 = chi2XHit( parsX, scifi_hits, hit );
+      if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( scifi_hits.planeCode[hit]/2 ) > 1 ) ) {
         maxChi2 = chi2;
         worst   = i_hit; 
       }    
     }    
     if ( maxChi2 > SciFi::Tracking::maxChi2LinearFit || ( !notMultiple && maxChi2 > 4.f ) ) {
-      removeOutlier( hits_layers, planeCounter, coordToFit, n_coordToFit, coordToFit[worst] );
+      removeOutlier( scifi_hits, planeCounter, coordToFit, n_coordToFit, coordToFit[worst] );
       fit = true;
     }
   }

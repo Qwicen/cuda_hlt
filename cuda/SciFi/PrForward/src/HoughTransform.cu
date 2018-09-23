@@ -3,7 +3,7 @@
 //calculate xref for this plane
 //in the c++ this is vectorized, undoing because no point before CUDA (but vectorization is obvious)
 __host__ __device__ void xAtRef_SamePlaneHits(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   const int allXHits[SciFi::Tracking::max_x_hits],
   const int n_x_hits,
   float coordX[SciFi::Tracking::max_x_hits],
@@ -13,14 +13,14 @@ __host__ __device__ void xAtRef_SamePlaneHits(
   int itH, int itEnd)
 {
   //this is quite computationally expensive mind, should take care when porting
-  float zHit    = hits_layers->m_z[allXHits[itH]]; //all hits in same layer
+  float zHit    = scifi_hits.z0[allXHits[itH]]; //all hits in same layer
   float xFromVelo_Hit = straightLineExtend(xParams_seed,zHit);
   float zMagSlope = constArrays->zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays->zMagnetParams[3] * pow(velo_state.ty,2);
   float dSlopeDivPart = 1.f / ( zHit - constArrays->zMagnetParams[0]);
   float dz      = 1.e-3f * ( zHit - SciFi::Tracking::zReference );
   
   while( itEnd>itH ){
-    float xHit = hits_layers->m_x[allXHits[itH]];
+    float xHit = scifi_hits.x0[allXHits[itH]];
     float dSlope  = ( xFromVelo_Hit - xHit ) * dSlopeDivPart;
     float zMag    = constArrays->zMagnetParams[0] + constArrays->zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
     float xMag    = xFromVelo_Hit + velo_state.tx * (zMag - zHit);
@@ -34,7 +34,7 @@ __host__ __device__ void xAtRef_SamePlaneHits(
 __host__ __device__ int fitParabola(
   int* coordToFit,
   const int n_coordToFit,
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams],
   const bool xFit ) {
 
@@ -50,11 +50,11 @@ __host__ __device__ int fitParabola(
   
   for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit) {
     int hit = coordToFit[i_hit];
-    float d = trackToHitDistance(trackParameters, hits_layers, hit);
+    float d = trackToHitDistance(trackParameters, scifi_hits, hit);
     if (!xFit)
-      d *= - 1. / hits_layers->m_dxdy[hit];//TODO multiplication much faster than division!
-    float w = hits_layers->m_w[hit];
-    float z = .001f * ( hits_layers->m_z[hit] - SciFi::Tracking::zReference );
+      d *= - 1. / scifi_hits.dxdy[hit];//TODO multiplication much faster than division!
+    float w = scifi_hits.w[hit];
+    float z = .001f * ( scifi_hits.z0[hit] - SciFi::Tracking::zReference );
     s0   += w;
     sz   += w * z; 
     sz2  += w * z * z; 
@@ -89,7 +89,7 @@ __host__ __device__ int fitParabola(
 }
 
 __host__ __device__ bool fitXProjection(
-  SciFi::HitsSoA *hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams],
   int coordToFit[SciFi::Tracking::max_coordToFit],
   int& n_coordToFit,
@@ -101,7 +101,7 @@ __host__ __device__ bool fitXProjection(
   bool doFit = true;
   while ( doFit ) {
 
-    fitParabola( coordToFit, n_coordToFit, hits_layers, trackParameters, true );
+    fitParabola( coordToFit, n_coordToFit, scifi_hits, trackParameters, true );
     
     float maxChi2 = 0.f; 
     float totChi2 = 0.f;  
@@ -112,11 +112,11 @@ __host__ __device__ bool fitXProjection(
     int worst = n_coordToFit;
     for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
       int hit = coordToFit[i_hit];
-      float d = trackToHitDistance(trackParameters, hits_layers, hit);
-      float chi2 = d*d*hits_layers->m_w[hit];
+      float d = trackToHitDistance(trackParameters, scifi_hits, hit);
+      float chi2 = d*d*scifi_hits.w[hit];
       totChi2 += chi2;
       ++nDoF;
-      if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( hits_layers->m_planeCode[hit]/2 ) > 1 ) ) {
+      if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( scifi_hits.planeCode[hit]/2 ) > 1 ) ) {
         maxChi2 = chi2;
         worst   = i_hit; 
       }    
@@ -131,7 +131,7 @@ __host__ __device__ bool fitXProjection(
     doFit = false;
     if ( totChi2/nDoF > SciFi::Tracking::maxChi2PerDoF  ||
          maxChi2 > SciFi::Tracking::maxChi2XProjection ) {
-      removeOutlier( hits_layers, planeCounter, coordToFit, n_coordToFit, coordToFit[worst]);
+      removeOutlier( scifi_hits, planeCounter, coordToFit, n_coordToFit, coordToFit[worst]);
       if (planeCounter.nbDifferent < pars.minXHits + pars.minStereoHits) return false;
       doFit = true;
     }    
@@ -141,7 +141,7 @@ __host__ __device__ bool fitXProjection(
  
 
 __host__ __device__ bool fitYProjection(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   SciFi::Tracking::Track& track,
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits,
@@ -177,16 +177,16 @@ __host__ __device__ bool fitYProjection(
     if ( parabola ) {
 
       // position in magnet not used for parabola fit, hardly any influence on efficiency
-      fitParabola( stereoHits, n_stereoHits, hits_layers, track.trackParams, false );
+      fitParabola( stereoHits, n_stereoHits, scifi_hits, track.trackParams, false );
       
     } else { // straight line fit
 
       for ( int i_hit = 0; i_hit < n_stereoHits; ++i_hit ) {
         int hit = stereoHits[i_hit];
-        const float d = - trackToHitDistance(track.trackParams, hits_layers, hit) / 
-                          hits_layers->m_dxdy[hit];//TODO multiplication much faster than division!
-        const float w = hits_layers->m_w[hit];
-        const float z = hits_layers->m_z[hit] - SciFi::Tracking::zReference;
+        const float d = - trackToHitDistance(track.trackParams, scifi_hits, hit) / 
+                          scifi_hits.dxdy[hit];//TODO multiplication much faster than division!
+        const float w = scifi_hits.w[hit];
+        const float z = scifi_hits.z0[hit] - SciFi::Tracking::zReference;
 	s0   += w;
         sz   += w * z; 
         sz2  += w * z * z;
@@ -207,8 +207,8 @@ __host__ __device__ bool fitYProjection(
     maxChi2 = 0.;
     for ( int i_hit = 0; i_hit < n_stereoHits; ++i_hit ) {
       int hit = stereoHits[i_hit];
-      float d = trackToHitDistance(track.trackParams, hits_layers, hit);
-      float chi2 = d*d*hits_layers->m_w[hit];
+      float d = trackToHitDistance(track.trackParams, scifi_hits, hit);
+      float chi2 = d*d*scifi_hits.w[hit];
       if ( chi2 > maxChi2 ) {
         maxChi2 = chi2;
         worst   = i_hit;
@@ -222,7 +222,7 @@ __host__ __device__ bool fitYProjection(
     }
 
     if ( maxChi2 > SciFi::Tracking::maxChi2Stereo ) {
-      removeOutlier( hits_layers, planeCounter, stereoHits, n_stereoHits, stereoHits[worst] );
+      removeOutlier( scifi_hits, planeCounter, stereoHits, n_stereoHits, stereoHits[worst] );
       if ( planeCounter.nbDifferent < pars.minStereoHits ) {
         return false;
       }

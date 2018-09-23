@@ -57,18 +57,16 @@ if ( ROOT_FOUND )
   Utils
   Velo
   UT
-  SciFiTracking
-  SciFiDecoding
-  x86VeloUT
   x86Forward
+  SciFi
+  x86VeloUT
   ${ROOT_LIBRARIES})
 else()
   target_link_libraries(Stream
   Utils
   Velo
   UT
-  SciFiTracking
-  SciFiDecoding
   x86Forward
+  SciFi
   x86VeloUT)
 endif()

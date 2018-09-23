@@ -15,7 +15,7 @@
 //=========================================================================
 //
 __host__ __device__ void collectAllXHits(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   float coordX[SciFi::Tracking::max_x_hits],
@@ -89,10 +89,10 @@ __host__ __device__ void collectAllXHits(
     }
 
     // Get the zone bounds 
-    int x_zone_offset_begin = hits_layers->layer_offset[constArrays->xZones[iZone]];
-    int x_zone_offset_end   = hits_layers->layer_offset[constArrays->xZones[iZone]+1];
-    int itH   = getLowerBound(hits_layers->m_x,xMin,x_zone_offset_begin,x_zone_offset_end); 
-    int itEnd = getLowerBound(hits_layers->m_x,xMax,x_zone_offset_begin,x_zone_offset_end);
+    int x_zone_offset_begin = scifi_hits.hit_count.layer_offsets[constArrays->xZones[iZone]];
+    int x_zone_offset_end   = scifi_hits.hit_count.layer_offsets[constArrays->xZones[iZone]+1];
+    int itH   = getLowerBound(scifi_hits.x0,xMin,x_zone_offset_begin,x_zone_offset_end); 
+    int itEnd = getLowerBound(scifi_hits.x0,xMax,x_zone_offset_begin,x_zone_offset_end);
 
     // Skip making range but continue if the end is before or equal to the start
     if (!(itEnd > itH)) continue; 
@@ -103,17 +103,17 @@ __host__ __device__ void collectAllXHits(
     const float zRatio      = ( this_uv_z - zMag ) / ( zZone - zMag );
     const float dx          = yInZone * constArrays->uvZone_dxdy[iZone-iZoneStartingPoint];
     const float xCentral    = xInZone + dx;
-          float xPredUv     = xInUv + ( hits_layers->m_x[itH] - xInZone) * zRatio - dx;
-          float maxDx       = SciFi::Tracking::tolYCollectX + ( std::fabs( hits_layers->m_x[itH] - xCentral ) + std::fabs( yInZone ) ) * SciFi::Tracking::tolYSlopeCollectX;
+          float xPredUv     = xInUv + ( scifi_hits.x0[itH] - xInZone) * zRatio - dx;
+          float maxDx       = SciFi::Tracking::tolYCollectX + ( std::fabs( scifi_hits.x0[itH] - xCentral ) + std::fabs( yInZone ) ) * SciFi::Tracking::tolYSlopeCollectX;
           float xMinUV      = xPredUv - maxDx;
     
-    int uv_zone_offset_begin = hits_layers->layer_offset[constArrays->uvZones[iZone]];
-    int uv_zone_offset_end   = hits_layers->layer_offset[constArrays->uvZones[iZone]+1];  
+    int uv_zone_offset_begin = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[iZone]];
+    int uv_zone_offset_end   = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[iZone]+1];  
     int triangleOffset       = side > 0 ? -1 : 1;
-    int triangle_zone_offset_begin = hits_layers->layer_offset[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]];
-    int triangle_zone_offset_end   = hits_layers->layer_offset[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]+1];
-    int itUV1                = getLowerBound(hits_layers->m_x,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);    
-    int itUV2                = getLowerBound(hits_layers->m_x,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
+    int triangle_zone_offset_begin = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]];
+    int triangle_zone_offset_end   = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]+1];
+    int itUV1                = getLowerBound(scifi_hits.x0,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);    
+    int itUV2                = getLowerBound(scifi_hits.x0,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
 
     const float xPredUVProto =  xInUv - xInZone * zRatio - dx;
     const float maxDxProto   =  SciFi::Tracking::tolYCollectX + std::fabs( yInZone ) * SciFi::Tracking::tolYSlopeCollectX;
@@ -121,12 +121,12 @@ __host__ __device__ void collectAllXHits(
     if ( std::fabs(yInZone) > SciFi::Tracking::tolYTriangleSearch ) { // no triangle search necessary!
       
       for (int xHit = itH; xHit < itEnd; ++xHit) { //loop over all xHits in a layer between xMin and xMax
-        const float xPredUv = xPredUVProto + hits_layers->m_x[xHit]* zRatio;
-        const float maxDx   = maxDxProto   + std::fabs( hits_layers->m_x[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
+        const float xPredUv = xPredUVProto + scifi_hits.x0[xHit]* zRatio;
+        const float maxDx   = maxDxProto   + std::fabs( scifi_hits.x0[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
         const float xMinUV  = xPredUv - maxDx;
         const float xMaxUV  = xPredUv + maxDx;
         
-        if ( matchStereoHit( itUV1, uv_zone_offset_end, hits_layers, xMinUV, xMaxUV) ) {
+        if ( matchStereoHit( itUV1, uv_zone_offset_end, scifi_hits, xMinUV, xMaxUV) ) {
           if ( n_x_hits >= SciFi::Tracking::max_x_hits - 1)
             break;
           allXHits[n_x_hits++] = xHit;
@@ -134,12 +134,12 @@ __host__ __device__ void collectAllXHits(
       }
     }else { // triangle search
       for (int xHit = itH; xHit < itEnd; ++xHit) {
-        const float xPredUv = xPredUVProto + hits_layers->m_x[xHit]* zRatio;
-        const float maxDx   = maxDxProto   + std::fabs( hits_layers->m_x[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
+        const float xPredUv = xPredUVProto + scifi_hits.x0[xHit]* zRatio;
+        const float maxDx   = maxDxProto   + std::fabs( scifi_hits.x0[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
         const float xMinUV  = xPredUv - maxDx;
         const float xMaxUV  = xPredUv + maxDx;
 
-        if ( matchStereoHit( itUV1, uv_zone_offset_end, hits_layers, xMinUV, xMaxUV ) || matchStereoHitWithTriangle(itUV2, triangle_zone_offset_end, yInZone, hits_layers, xMinUV, xMaxUV, side ) ) {
+        if ( matchStereoHit( itUV1, uv_zone_offset_end, scifi_hits, xMinUV, xMaxUV ) || matchStereoHitWithTriangle(itUV2, triangle_zone_offset_end, yInZone, scifi_hits, xMinUV, xMaxUV, side ) ) {
           if ( n_x_hits >= SciFi::Tracking::max_x_hits - 1)
             break;
           allXHits[n_x_hits++] = xHit;
@@ -152,7 +152,7 @@ __host__ __device__ void collectAllXHits(
     iZoneEnd[cptZone++] = iEnd;
     if( !(iStart == iEnd) ){
       xAtRef_SamePlaneHits(
-        hits_layers, allXHits,
+        scifi_hits, allXHits,
         n_x_hits, coordX, xParams_seed, constArrays,
         velo_state, iStart, iEnd); //calc xRef for all hits on same layer
     }
@@ -171,7 +171,7 @@ __host__ __device__ void collectAllXHits(
 //  Select the zones in the allXHits array where we can have a track
 //=========================================================================
 __host__ __device__ void selectXCandidates(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   bool usedHits[SciFi::Constants::max_numhits_per_event],
@@ -220,7 +220,7 @@ __host__ __device__ void selectXCandidates(
     planeCounter.clear();
     for (int itH = it1; itH != it2; ++itH) {
       if (!usedHits[ allXHits[itH] ]) {
-        const int plane = hits_layers->m_planeCode[allXHits[itH]]/2;
+        const int plane = scifi_hits.planeCode[allXHits[itH]]/2;
         planeCounter.addHit( plane );
       }
     }   
@@ -239,10 +239,10 @@ __host__ __device__ void selectXCandidates(
       if ( ( coordX[it2] < coordX[itLast] + pars.maxXGap )
            || 
            ( (coordX[it2] - coordX[it1] < xWindow) && 
-             (planeCounter.nbInPlane( hits_layers->m_planeCode[allXHits[it2]]/2 )  == 0)
+             (planeCounter.nbInPlane( scifi_hits.planeCode[allXHits[it2]]/2 )  == 0)
              ) 
          ) {
-        planeCounter.addHit( hits_layers->m_planeCode[allXHits[it2]]/2 );
+        planeCounter.addHit( scifi_hits.planeCode[allXHits[it2]]/2 );
         itLast = it2; 
         ++it2;
         continue;
@@ -283,9 +283,9 @@ __host__ __device__ void selectXCandidates(
       //seperate single and double hits
       for(auto itH = it1; it2 > itH; ++itH ){
         if( usedHits[ allXHits[itH] ] ) continue;
-        int planeCode = hits_layers->m_planeCode[allXHits[itH]]/2;
+        int planeCode = scifi_hits.planeCode[allXHits[itH]]/2;
         if( planeCounter.nbInPlane(planeCode) == 1 ){
-	  incrementLineFitParameters(lineFitParameters, hits_layers, coordX, allXHits, itH);
+	  incrementLineFitParameters(lineFitParameters, scifi_hits, coordX, allXHits, itH);
         }else{
           if ( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits ) {
             otherHits[planeCode][ nOtherHits[planeCode]++ ] = itH;
@@ -302,13 +302,13 @@ __host__ __device__ void selectXCandidates(
       
         int best = otherHits[i][0];
         for( int hit = 0; hit < nOtherHits[i]; ++hit ){
-          const float chi2 = getLineFitChi2(lineFitParameters, hits_layers, coordX, allXHits, otherHits[i][hit] );
+          const float chi2 = getLineFitChi2(lineFitParameters, scifi_hits, coordX, allXHits, otherHits[i][hit] );
           if( chi2 < bestChi2 ){
             bestChi2 = chi2;
             best = hit;
           }
         }
-	incrementLineFitParameters(lineFitParameters, hits_layers, coordX, allXHits,  otherHits[i][best]);
+	incrementLineFitParameters(lineFitParameters, scifi_hits, coordX, allXHits,  otherHits[i][best]);
       }
       solveLineFit(lineFitParameters);
       
@@ -330,7 +330,7 @@ __host__ __device__ void selectXCandidates(
       PlaneCounter lplaneCounter;
       for (int itH = itWindowStart; itH != itWindowEnd; ++itH) {
         if (!usedHits[ allXHits[itH]]) {
-          lplaneCounter.addHit( hits_layers->m_planeCode[allXHits[itH]]/2 );
+          lplaneCounter.addHit( scifi_hits.planeCode[allXHits[itH]]/2 );
 	}
       } 
       while ( itWindowEnd <= it2 ) {
@@ -347,11 +347,11 @@ __host__ __device__ void selectXCandidates(
           ++itWindowEnd;
           while( itWindowEnd<=it2  &&  usedHits[ allXHits[itWindowEnd-1] ]) ++itWindowEnd;
           if( itWindowEnd > it2) break;
-          lplaneCounter.addHit( hits_layers->m_planeCode[allXHits[itWindowEnd-1]]/2 );
+          lplaneCounter.addHit( scifi_hits.planeCode[allXHits[itWindowEnd-1]]/2 );
           continue;
         } 
         // move on to the right
-        lplaneCounter.removeHit( hits_layers->m_planeCode[allXHits[itWindowStart]]/2 );
+        lplaneCounter.removeHit( scifi_hits.planeCode[allXHits[itWindowStart]]/2 );
         ++itWindowStart;
         while( itWindowStart<itWindowEnd && usedHits[ allXHits[itWindowStart] ] ) ++itWindowStart;
         //last hit guaranteed to be not used. Therefore there is always at least one hit to go to. No additional if required.
@@ -377,7 +377,7 @@ __host__ __device__ void selectXCandidates(
     
     planeCounter.clear();
     for ( int j = 0; j < n_coordToFit; ++j ) {
-      planeCounter.addHit( hits_layers->m_planeCode[ coordToFit[j] ] / 2 );
+      planeCounter.addHit( scifi_hits.planeCode[ coordToFit[j] ] / 2 );
     }
     // Only unused(!) hits in coordToFit now
  
@@ -385,9 +385,9 @@ __host__ __device__ void selectXCandidates(
     float trackParameters[SciFi::Tracking::nTrackParams];
     if(ok){
       getTrackParameters(xAtRef, velo_state, constArrays, trackParameters); 
-      fastLinearFit( hits_layers, trackParameters, coordToFit, n_coordToFit, planeCounter,pars);
+      fastLinearFit( scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter,pars);
       addHitsOnEmptyXLayers(
-        hits_layers, trackParameters,
+        scifi_hits, trackParameters,
         xParams_seed, yParams_seed,
         false, coordToFit,n_coordToFit,
         constArrays, planeCounter, pars, side);
@@ -395,11 +395,11 @@ __host__ __device__ void selectXCandidates(
       ok = planeCounter.nbDifferent > 3;
     }
     //== Fit and remove hits...
-    if (ok) ok = fitXProjection(hits_layers, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
+    if (ok) ok = fitXProjection(scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
     if (ok) ok = trackParameters[7]/trackParameters[8] < SciFi::Tracking::maxChi2PerDoF;
     if (ok )
       ok = addHitsOnEmptyXLayers(
-        hits_layers, trackParameters,
+        scifi_hits, trackParameters,
         xParams_seed, yParams_seed,
         true, coordToFit, n_coordToFit, 
         constArrays, planeCounter, pars, side);
@@ -435,7 +435,7 @@ __host__ __device__ void selectXCandidates(
 
 
 __host__ __device__ bool addHitsOnEmptyXLayers(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams],
   const float xParams_seed[4],
   const float yParams_seed[4],
@@ -472,15 +472,15 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
     int best = -1;
 
     // -- Use a search to find the lower bound of the range of x values
-    int x_zone_offset_begin = hits_layers->layer_offset[constArrays->xZones[iZone]];
-    int x_zone_offset_end   = hits_layers->layer_offset[constArrays->xZones[iZone]+1];
-    int itH   = getLowerBound(hits_layers->m_x,minX,x_zone_offset_begin,x_zone_offset_end);
+    int x_zone_offset_begin = scifi_hits.hit_count.layer_offsets[constArrays->xZones[iZone]];
+    int x_zone_offset_end   = scifi_hits.hit_count.layer_offsets[constArrays->xZones[iZone]+1];
+    int itH   = getLowerBound(scifi_hits.x0,minX,x_zone_offset_begin,x_zone_offset_end);
     int itEnd = x_zone_offset_end;
     
     for ( ; itEnd != itH; ++itH ) {
-      if( hits_layers->m_x[itH] > maxX ) break;
-      const float d = hits_layers->m_x[itH] - xPred; //fast distance good enough at this point (?!)
-      const float chi2 = d*d * hits_layers->m_w[itH];
+      if( scifi_hits.x0[itH] > maxX ) break;
+      const float d = scifi_hits.x0[itH] - xPred; //fast distance good enough at this point (?!)
+      const float chi2 = d*d * scifi_hits.w[itH];
       if ( chi2 < bestChi2 ) {
         bestChi2 = chi2;
         best = itH;
@@ -491,17 +491,14 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
         break;
       assert( n_coordToFit < SciFi::Tracking::max_coordToFit );
       coordToFit[n_coordToFit++] = best; // add the best hit here
-      planeCounter.addHit( hits_layers->m_planeCode[best]/2 );
+      planeCounter.addHit( scifi_hits.planeCode[best]/2 );
       added = true;
     }    
   }
   if ( !added ) return true;
   if ( fullFit ) {
-    return fitXProjection(hits_layers, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
+    return fitXProjection(scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
   }
-  fastLinearFit( hits_layers, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
+  fastLinearFit( scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
   return true;
 }
-
-
- 

@@ -240,7 +240,8 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_scifi_hit_permutations
   };
   sequence_dependencies[seq::PrForward] = {
-    arg::dev_scifi_hits_SoA,
+    arg::dev_scifi_hits,
+    arg::dev_scifi_hit_count,
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number,
     arg::dev_velo_states,
@@ -259,6 +260,8 @@ std::vector<int> get_sequence_output_arguments() {
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,
     arg::dev_atomics_veloUT,
-    arg::dev_veloUT_tracks
+    arg::dev_veloUT_tracks,
+    arg::dev_scifi_tracks,
+    arg::dev_n_scifi_tracks
   };
 }

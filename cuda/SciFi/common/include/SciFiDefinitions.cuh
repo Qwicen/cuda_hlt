@@ -44,21 +44,20 @@ namespace SciFi {
      are stored for access;
      one Hits structure exists per event
   */
-    struct HitsSoA {
-      int layer_offset[Constants::n_zones] = {0};
-      
-      float m_x[Constants::max_numhits_per_event] = {0}; 
-      float m_z[Constants::max_numhits_per_event] = {0}; 
-      float m_w[Constants::max_numhits_per_event] = {0};
-      float m_dxdy[Constants::max_numhits_per_event] = {0};
-      float m_dzdy[Constants::max_numhits_per_event] = {0};
-      float m_yMin[Constants::max_numhits_per_event] = {0};
-      float m_yMax[Constants::max_numhits_per_event] = {0};
-      unsigned int m_LHCbID[Constants::max_numhits_per_event] = {0};
-      int m_planeCode[Constants::max_numhits_per_event] = {0};
-      int m_hitZone[Constants::max_numhits_per_event] = {0};
-           
-    };
+  struct HitsSoA {
+    int layer_offset[Constants::n_zones] = {0};
+    
+    float m_x[Constants::max_numhits_per_event] = {0}; 
+    float m_z[Constants::max_numhits_per_event] = {0}; 
+    float m_w[Constants::max_numhits_per_event] = {0};
+    float m_dxdy[Constants::max_numhits_per_event] = {0};
+    float m_dzdy[Constants::max_numhits_per_event] = {0};
+    float m_yMin[Constants::max_numhits_per_event] = {0};
+    float m_yMax[Constants::max_numhits_per_event] = {0};
+    unsigned int m_LHCbID[Constants::max_numhits_per_event] = {0};
+    int m_planeCode[Constants::max_numhits_per_event] = {0};
+    int m_hitZone[Constants::max_numhits_per_event] = {0};
+  };
     
   const int max_tracks = 150;
   const int max_track_size = 15 + VeloUTTracking::max_track_size;
@@ -210,7 +209,7 @@ struct SciFiChannelID {
 /**
 * @brief Offset and number of hits of each layer.
 */
-struct SciFiHitCount{
+struct SciFiHitCount {
   uint* layer_offsets;
   uint* n_hits_layers;
 
@@ -226,6 +225,18 @@ struct SciFiHitCount{
     const uint event_number,
     const uint number_of_events
   );
+
+  __device__ __host__
+  uint layer_offset(const uint layer_number) const {
+    assert(layer_number < SciFi::number_of_zones);
+    return layer_offsets[layer_number];
+  }
+
+  __device__ __host__
+  uint layer_number_of_hits(const uint layer_number) const {
+    assert(layer_number < SciFi::number_of_zones);
+    return layer_offsets[layer_number+1] - layer_offsets[layer_number];
+  }
 };
 
 struct SciFiHit {
@@ -255,10 +266,12 @@ struct SciFiHit {
 
   return stream;
 }
-
 };
 
 struct SciFiHits {
+  // TODO: For now
+  SciFiHitCount hit_count;
+
   float* x0;
   float* z0;
   float* w;
@@ -271,8 +284,10 @@ struct SciFiHits {
   uint32_t* hitZone;
   uint32_t* temp;
 
-
   SciFiHits() = default;
+
+  __device__ __host__
+  SciFiHits(const SciFiHitCount& param_hit_count) : hit_count(param_hit_count) {}
 
   /**
    * @brief Populates the SciFiHits object pointers from an unsorted array of data

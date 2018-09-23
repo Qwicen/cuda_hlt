@@ -149,6 +149,7 @@ __device__ __host__ bool SciFiChannelID::isBottom() const {
  return (quarter() == 0 || quarter() == 1);
 }
 
+__device__ __host__
 void SciFiHitCount::typecast_before_prefix_sum(
   uint* base_pointer,
   const uint event_number
@@ -156,6 +157,7 @@ void SciFiHitCount::typecast_before_prefix_sum(
   n_hits_layers = base_pointer + event_number * SciFi::number_of_zones;
 }
 
+__device__ __host__
 void SciFiHitCount::typecast_after_prefix_sum(
   uint* base_pointer,
   const uint event_number,

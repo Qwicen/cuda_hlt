@@ -81,7 +81,7 @@ __host__ __device__ float calcDxRef(float pt, MiniState velo_state) {
 
 __host__ __device__ float trackToHitDistance(
   float trackParameters[SciFi::Tracking::nTrackParams],
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   int hit )
 {
   const float parsX[4] = {trackParameters[0],
@@ -92,20 +92,20 @@ __host__ __device__ float trackToHitDistance(
                           trackParameters[5],
                           trackParameters[6],
                           0.}; 
-  float z_Hit = hits_layers->m_z[hit] + 
-    hits_layers->m_dzdy[hit]*straightLineExtend(parsY, hits_layers->m_z[hit]);
+  float z_Hit = scifi_hits.z0[hit] + 
+    scifi_hits.dzdy[hit]*straightLineExtend(parsY, scifi_hits.z0[hit]);
   float x_track = straightLineExtend(parsX,z_Hit);
   float y_track = straightLineExtend(parsY,z_Hit);
-  return hits_layers->m_x[hit] + y_track*hits_layers->m_dxdy[hit] - x_track; 
+  return scifi_hits.x0[hit] + y_track*scifi_hits.dxdy[hit] - x_track; 
 }
 
 __host__ __device__ float chi2XHit(
   const float parsX[4],
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   const int hit ) {
-  float track_x_at_zHit = straightLineExtend(parsX,hits_layers->m_z[hit]);
-   float hitdist = hits_layers->m_x[hit] - track_x_at_zHit; 
-   return hitdist*hitdist*hits_layers->m_w[hit];
+  float track_x_at_zHit = straightLineExtend(parsX,scifi_hits.z0[hit]);
+   float hitdist = scifi_hits.x0[hit] - track_x_at_zHit; 
+   return hitdist*hitdist*scifi_hits.w[hit];
 }
 
 

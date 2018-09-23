@@ -8,21 +8,21 @@
 
 __host__ __device__ void incrementLineFitParameters(
   SciFi::Tracking::LineFitterPars &parameters,
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float coordX[SciFi::Tracking::max_x_hits],
   int allXHits[SciFi::Tracking::max_x_hits],
   int it);
 
 __host__ __device__ float getLineFitDistance(
   SciFi::Tracking::LineFitterPars &parameters,
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float coordX[SciFi::Tracking::max_x_hits],
   int allXHits[SciFi::Tracking::max_x_hits],
   int it );
 
 __host__ __device__ float getLineFitChi2(
   SciFi::Tracking::LineFitterPars &parameters,
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float coordX[SciFi::Tracking::max_x_hits],
   int allXHits[SciFi::Tracking::max_x_hits],
   int it);
@@ -30,7 +30,7 @@ __host__ __device__ float getLineFitChi2(
 __host__ __device__ void solveLineFit(SciFi::Tracking::LineFitterPars &parameters);
 
 __host__ __device__ void fastLinearFit(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams],
   int coordToFit[SciFi::Tracking::max_coordToFit],
   int& n_coordToFit,
