@@ -31,6 +31,9 @@ struct MCParticle {
   uint32_t numHits;
   std::vector<uint32_t> hits;
 
+  bool isElectron() const { return 11 == std::abs(pid); };
+  bool inEta2_5() const {return (eta < 5. && eta > 2.); };
+  
 };
 
 using MCParticles = std::vector<MCParticle>;

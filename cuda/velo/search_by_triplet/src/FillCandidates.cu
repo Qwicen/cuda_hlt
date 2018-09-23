@@ -1,4 +1,6 @@
 #include "FillCandidates.cuh"
+#include "VeloEventModel.cuh"
+#include <cassert>
 
 __device__ void fill_candidates_impl(
   short* h0_candidates,
@@ -86,7 +88,7 @@ __device__ void fill_candidates_impl(
 }
 
 __global__ void fill_candidates(
-  uint32_t* dev_velo_cluster_container,
+  uint* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
   short* dev_h0_candidates,
