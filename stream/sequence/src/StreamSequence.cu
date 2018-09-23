@@ -171,7 +171,8 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_atomics_storage>(argument_offsets),
       argen.generate<arg::dev_h0_candidates>(argument_offsets),
       argen.generate<arg::dev_h2_candidates>(argument_offsets),
-      argen.generate<arg::dev_rel_indices>(argument_offsets)
+      argen.generate<arg::dev_rel_indices>(argument_offsets),
+      constants.dev_velo_module_zs
     );
     sequence.item<seq::search_by_triplet>().invoke();
 

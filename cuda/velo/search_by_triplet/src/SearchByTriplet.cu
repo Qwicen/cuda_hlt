@@ -16,7 +16,8 @@ __global__ void search_by_triplet(
   int* dev_atomics_storage,
   short* dev_h0_candidates,
   short* dev_h2_candidates,
-  unsigned short* dev_rel_indices
+  unsigned short* dev_rel_indices,
+  const float* dev_velo_module_zs
 ) {
   /* Data initialization */
   // Each event is treated with two blocks, one for each side.
@@ -62,7 +63,7 @@ __global__ void search_by_triplet(
 
   // Shared memory
   extern __shared__ float shared_best_fits [];
-  __shared__ int module_data [12];
+  __shared__ int module_data [18];
 
   // Initialize hit_used
   const auto current_event_number_of_hits = module_hitStarts[VeloTracking::n_modules] - hit_offset;
@@ -93,6 +94,7 @@ __global__ void search_by_triplet(
     hit_Xs,
     hit_Ys,
     hit_Zs,
+    hit_Phis,
     weaktracks_insert_pointer,
     tracklets_insert_pointer,
     ttf_insert_pointer,
@@ -104,6 +106,7 @@ __global__ void search_by_triplet(
     number_of_hits,
     h1_rel_indices,
     local_number_of_hits,
-    hit_offset
+    hit_offset,
+    dev_velo_module_zs
   );
 }

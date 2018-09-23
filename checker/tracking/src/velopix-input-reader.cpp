@@ -1,4 +1,4 @@
-/** @file velopix-input-reader.cc
+/** @file velopix-input-reader.cpp
  *
  * @brief reader of velopix input files
  *
@@ -16,7 +16,6 @@
 #include <cassert>
 #include <cmath>
 #include <dirent.h>
-
 #include "velopix-input-reader.h"
 
 VelopixEvent::VelopixEvent(const std::vector<char>& event, const std::string& trackType, const bool checkEvent) {
@@ -128,7 +127,7 @@ MCParticles VelopixEvent::mcparticles() const
   return mcps;
 }
 
-std::vector<VelopixEvent> read_mc_folder (
+std::tuple<bool, std::vector<VelopixEvent>> read_mc_folder (
   const std::string& foldername,
   const std::string& trackType,
   uint number_of_files,
@@ -141,8 +140,11 @@ std::vector<VelopixEvent> read_mc_folder (
   verbose_cout << "Requested " << requestedFiles << " files" << std::endl;
 
   if ( requestedFiles > folderContents.size() ) {
-    error_cout << "ERROR: requested " << requestedFiles << " files, but only " << folderContents.size() << " files are present" << std::endl;
-    exit(-1);
+    error_cout << "Monte Carlo validation failed: Requested "
+      << requestedFiles << " events, but only " << folderContents.size() << " Monte Carlo files are present."
+      << std::endl << std::endl;
+
+    return {false, {}};
   }
   
   std::vector<VelopixEvent> input;
@@ -169,5 +171,5 @@ std::vector<VelopixEvent> read_mc_folder (
   }
 
   info_cout << std::endl << input.size() << " files read" << std::endl << std::endl;
-  return input;
+  return {true, input};
 }

@@ -1,4 +1,6 @@
 #include "SearchByTriplet.cuh"
+#include "VeloTools.cuh"
+#include <cstdio>
 
 /**
  * @brief Fits hits to tracks.
@@ -40,6 +42,7 @@ __device__ void track_forwarding(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
+  const float* hit_Phis,
   bool* hit_used,
   uint* tracks_insertPointer,
   uint* ttf_insertPointer,
@@ -83,13 +86,40 @@ __device__ void track_forwarding(
       const auto tyn = (h1.y - h0.y);
       const auto tx = txn * td;
       const auto ty = tyn * td;
-
+      
       // Find the best candidate
       float best_fit = FLT_MAX;
       unsigned short best_h2;
 
-      for (auto j=0; j<module_data[4].hitNums; ++j) {
-        const auto h2_index = module_data[4].hitStart + j;
+      // Get candidates by performing a binary search in expected phi
+      const auto odd_module_candidates = find_forward_candidates(
+        module_data[4],
+        tx,
+        ty,
+        hit_Phis,
+        h0,
+        [] (const float x, const float y) { return hit_phi_odd(x, y); }
+      );
+
+      const auto even_module_candidates = find_forward_candidates(
+        module_data[5],
+        tx,
+        ty,
+        hit_Phis,
+        h0,
+        [] (const float x, const float y) { return hit_phi_even(x, y); }
+      );
+      
+      // Search on both modules in the same for loop
+      const int total_odd_candidates = std::get<1>(odd_module_candidates) - std::get<0>(odd_module_candidates);
+      const int total_even_candidates = std::get<1>(even_module_candidates) - std::get<0>(even_module_candidates);
+      const int total_candidates = total_odd_candidates + total_even_candidates;
+
+      for (int j=0; j<total_candidates; ++j) {
+        const int h2_index = j < total_odd_candidates ?
+          std::get<0>(odd_module_candidates) + j :
+          std::get<0>(even_module_candidates) + j - total_odd_candidates;
+
         const Velo::HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
 
         const auto dz = h2.z - h0.z;
@@ -105,29 +135,7 @@ __device__ void track_forwarding(
           scatterDenom2
         );
         
-        if (fit < best_fit) {
-          best_fit = fit;
-          best_h2 = h2_index;
-        }
-      }
-
-      for (auto j=0; j<module_data[5].hitNums; ++j) {
-        const auto h2_index = module_data[5].hitStart + j;
-        const Velo::HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
-
-        const auto dz = h2.z - h0.z;
-        const auto predx = tx * dz;
-        const auto predy = ty * dz;
-        const auto scatterDenom2 = 1.f / ((h2.z - h1.z) * (h2.z - h1.z));
-
-        const auto fit = fit_hit_to_track(
-          h0,
-          h2,
-          predx,
-          predy,
-          scatterDenom2
-        );
-
+        // We keep the best one found
         if (fit < best_fit) {
           best_fit = fit;
           best_h2 = h2_index;
