@@ -1,6 +1,7 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <cassert>
 #include "ClusteringDefinitions.cuh"
 
 __global__ void estimate_input_size(
@@ -9,5 +10,6 @@ __global__ void estimate_input_size(
   uint* dev_estimated_input_size,
   uint* dev_module_cluster_num,
   uint* dev_module_candidate_num,
-  uint32_t* dev_cluster_candidates
+  uint32_t* dev_cluster_candidates,
+  uint8_t* dev_velo_candidate_ks
 );

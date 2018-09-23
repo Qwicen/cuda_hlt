@@ -3,7 +3,6 @@
 #include "cuda_runtime.h"
 #include <stdexcept>
 
-/// For sanity check of input
 /**
  * @brief Macro to check cuda calls.
  */

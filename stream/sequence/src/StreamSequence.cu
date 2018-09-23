@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #include <string>
 
 cudaError_t Stream::run_sequence(
@@ -10,8 +11,14 @@ cudaError_t Stream::run_sequence(
   const uint* host_velopix_event_offsets,
   const size_t host_velopix_events_size,
   const size_t host_velopix_event_offsets_size,
-  VeloUTTracking::HitsSoA *host_ut_hits_events,
-  const PrUTMagnetTool* host_ut_magnet_tool,
+  const char* host_ut_events,
+  const uint* host_ut_event_offsets,
+  const size_t host_ut_events_size,
+  const size_t host_ut_event_offsets_size,
+  char* host_scifi_events,
+  uint* host_scifi_event_offsets,
+  const size_t host_scifi_events_size,
+  const size_t host_scifi_event_offsets_size,
   const uint number_of_events,
   const uint number_of_repetitions
 ) {
@@ -45,7 +52,8 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_estimated_input_size>(argument_offsets),
       argen.generate<arg::dev_module_cluster_num>(argument_offsets),
       argen.generate<arg::dev_module_candidate_num>(argument_offsets),
-      argen.generate<arg::dev_cluster_candidates>(argument_offsets)
+      argen.generate<arg::dev_cluster_candidates>(argument_offsets),
+      constants.dev_velo_candidate_ks
     );
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input>(argument_offsets), host_velopix_events, host_velopix_events_size, cudaMemcpyHostToDevice, stream));
     cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_raw_input_offsets>(argument_offsets), host_velopix_event_offsets, host_velopix_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
@@ -107,7 +115,10 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_module_candidate_num>(argument_offsets),
       argen.generate<arg::dev_cluster_candidates>(argument_offsets),
       argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
-      dev_velo_geometry
+      dev_velo_geometry,
+      constants.dev_velo_sp_patterns,
+      constants.dev_velo_sp_fx,
+      constants.dev_velo_sp_fy
     );
     sequence.item<seq::masked_velo_clustering>().invoke();
 
@@ -178,7 +189,7 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_atomics_storage>(argument_offsets)
     );
     sequence.item<seq::weak_tracks_adder>().invoke();
-    
+
     // Calculate prefix sum of found tracks
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::copy_and_prefix_sum_single_block>().set_arguments(
@@ -253,8 +264,11 @@ cudaError_t Stream::run_sequence(
     cudaEventSynchronize(cuda_generic_event);
 
     // Consolidate tracks
-    argument_sizes[arg::dev_velo_track_hits] = argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]);
-    argument_sizes[arg::dev_velo_states] = argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]);
+    // TODO: The size specified (sizeof(Hits) / sizeof(uint)) is due to the
+    //       lgenfe error from the nvcc compiler, present in Cuda 9.2. Once it
+    //       is gone, we can switch all pointers to char*.
+    argument_sizes[arg::dev_velo_track_hits] = argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0] * sizeof(Velo::Hit) / sizeof(uint));
+    argument_sizes[arg::dev_velo_states] = argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0] * sizeof(Velo::State) / sizeof(uint));
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::consolidate_tracks>().set_opts(dim3(number_of_events), dim3(32), stream);
     sequence.item<seq::consolidate_tracks>().set_arguments(
@@ -269,71 +283,293 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::consolidate_tracks>().invoke();
 
-    ////////////////////////////////////////
-    // Optional: Simplified Kalman filter //
-    ////////////////////////////////////////
+    // Estimate number of UT hits
+    // Set arguments and reserve memory
+    argument_sizes[arg::dev_ut_raw_input] = argen.size<arg::dev_ut_raw_input>(host_ut_events_size);
+    argument_sizes[arg::dev_ut_raw_input_offsets] = argen.size<arg::dev_ut_raw_input_offsets>(host_ut_event_offsets_size);
+    argument_sizes[arg::dev_ut_hit_count] = argen.size<arg::dev_ut_hit_count>(2 * number_of_events * VeloUTTracking::n_layers + 1);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    // Setup opts and arguments for kernel call
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_raw_input>(argument_offsets), host_ut_events, host_ut_events_size, cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_raw_input_offsets>(argument_offsets), host_ut_event_offsets, host_ut_event_offsets_size * sizeof(uint32_t), cudaMemcpyHostToDevice, stream));
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+    sequence.item<seq::ut_calculate_number_of_hits>().set_opts(dim3(number_of_events), dim3(192), stream);
+    sequence.item<seq::ut_calculate_number_of_hits>().set_arguments(
+      argen.generate<arg::dev_ut_raw_input>(argument_offsets),
+      argen.generate<arg::dev_ut_raw_input_offsets>(argument_offsets),
+      dev_ut_boards,
+      argen.generate<arg::dev_ut_hit_count>(argument_offsets)
+    );
+    // Invoke kernel
+    sequence.item<seq::ut_calculate_number_of_hits>().invoke();
 
-    // if (do_simplified_kalman_filter) {
-    //   Helper::invoke(
-    //     simplifiedKalmanFilter,
-    //     "Simplified Kalman filter",
-    //     times,
-    //     cuda_event_start,
-    //     cuda_event_stop,
-    //     print_individual_rates
-    //   );
+    // // Print UT hit count per event per layer
+    // cudaCheck(cudaMemcpyAsync(host_ut_hit_count, argen.generate<arg::dev_ut_hit_count>(argument_offsets), argen.size<arg::dev_ut_hit_count>(2 * number_of_events * VeloUTTracking::n_layers + 1), cudaMemcpyDeviceToHost, stream));
+    // cudaEventRecord(cuda_generic_event, stream);
+    // cudaEventSynchronize(cuda_generic_event);
+    // for (int e=0; e<number_of_events; ++e) {
+    //   info_cout << "Event " << e << ", #hit per layer (0, 1, 2, 3): ";
+    //   uint32_t* count = host_ut_hit_count + e * VeloUTTracking::n_layers;
+    //   for (uint32_t i = 0; i < 4; ++i) {
+    //     info_cout << count[i] << ", ";
+    //   }
+    //   info_cout << std::endl;
     // }
 
-   
-    // Transmission device to host
-    if (transmit_device_to_host) {
-      cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
-    }
+    // Prefix sum of hit count (becomes hit offset)
+    // 1. Reduce
+    // 2. Single block
+    // 3. Scan
+
+    // Prefix sum: Reduce
+    const uint total_number_of_layers = number_of_events * VeloUTTracking::n_layers;
+    const size_t prefix_sum_auxiliary_array_3_size = (total_number_of_layers + 511) / 512;
+    argument_sizes[arg::dev_prefix_sum_auxiliary_array_3] = argen.size<arg::dev_prefix_sum_auxiliary_array_3>(prefix_sum_auxiliary_array_3_size);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::prefix_sum_reduce_ut_hits>().set_opts(dim3(prefix_sum_auxiliary_array_3_size), dim3(256), stream);
+    sequence.item<seq::prefix_sum_reduce_ut_hits>().set_arguments(
+      argen.generate<arg::dev_ut_hit_count>(argument_offsets),
+      argen.generate<arg::dev_prefix_sum_auxiliary_array_3>(argument_offsets),
+      total_number_of_layers
+    );
+    sequence.item<seq::prefix_sum_reduce_ut_hits>().invoke();
+
+    // Prefix sum: Single block
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::prefix_sum_single_block_ut_hits>().set_arguments(
+      argen.generate<arg::dev_ut_hit_count>(argument_offsets) + total_number_of_layers,
+      argen.generate<arg::dev_prefix_sum_auxiliary_array_3>(argument_offsets),
+      prefix_sum_auxiliary_array_3_size
+    );
+    sequence.item<seq::prefix_sum_single_block_ut_hits>().invoke();
+
+    // Prefix sum: Scan
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    const uint pss_ut_hits_blocks = prefix_sum_auxiliary_array_3_size==1 ? 1 : (prefix_sum_auxiliary_array_3_size-1);
+    sequence.item<seq::prefix_sum_scan_ut_hits>().set_opts(dim3(pss_ut_hits_blocks), dim3(512), stream);
+    sequence.item<seq::prefix_sum_scan_ut_hits>().set_arguments(
+      argen.generate<arg::dev_ut_hit_count>(argument_offsets),
+      argen.generate<arg::dev_prefix_sum_auxiliary_array_3>(argument_offsets),
+      total_number_of_layers
+    );
+    sequence.item<seq::prefix_sum_scan_ut_hits>().invoke();
+
+    // Fetch total number of hits accumulated with all tracks
+    cudaCheck(cudaMemcpyAsync(host_accumulated_number_of_ut_hits,
+      argen.generate<arg::dev_ut_hit_count>(argument_offsets) + total_number_of_layers,
+      sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    // // Now, we should have the offset instead, and the sum of all in host_accumulated_number_of_ut_hits
+    // // Check that
+    // cudaCheck(cudaMemcpyAsync(host_ut_hit_count, argen.generate<arg::dev_ut_hit_count>(argument_offsets), argen.size<arg::dev_ut_hit_count>(2 * number_of_events * VeloUTTracking::n_layers + 1), cudaMemcpyDeviceToHost, stream));
+    // cudaEventRecord(cuda_generic_event, stream);
+    // cudaEventSynchronize(cuda_generic_event);
+    // for (int e=0; e<number_of_events; ++e) {
+    //   info_cout << "Event " << e << ", offset per layer (0, 1, 2, 3): ";
+    //   uint32_t* offset = host_ut_hit_count + e * VeloUTTracking::n_layers;
+    //   for (uint32_t i = 0; i < 4; ++i) {
+    //     info_cout << offset[i] << ", ";
+    //   }
+    //   info_cout << std::endl;
+    // }
+    // info_cout << "Total number of UT hits: " << *host_accumulated_number_of_ut_hits << std::endl;
+
+    // Decode UT raw banks
+    argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(9 * host_accumulated_number_of_ut_hits[0]);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::decode_raw_banks>().set_opts(dim3(number_of_events), dim3(64, 4), stream);
+    sequence.item<seq::decode_raw_banks>().set_arguments(
+      argen.generate<arg::dev_ut_raw_input>(argument_offsets),
+      argen.generate<arg::dev_ut_raw_input_offsets>(argument_offsets),
+      dev_ut_boards,
+      dev_ut_geometry,
+      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_count>(argument_offsets)
+    );
+    sequence.item<seq::decode_raw_banks>().invoke();
+
+    // UT hit sorting by x
+    argument_sizes[arg::dev_ut_hit_permutations] = argen.size<arg::dev_ut_hit_permutations>(host_accumulated_number_of_ut_hits[0]);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::sort_by_x>().set_opts(dim3(number_of_events), dim3(64), stream);
+    sequence.item<seq::sort_by_x>().set_arguments(
+      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_count>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_permutations>(argument_offsets)
+    );
+    sequence.item<seq::sort_by_x>().invoke();
 
     // VeloUT tracking
-    argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(number_of_events);
-    argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks);
-    argument_sizes[arg::dev_atomics_veloUT] = argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events);
+    argument_sizes[arg::dev_veloUT_tracks] = argen.size<arg::dev_veloUT_tracks>(number_of_events * VeloUTTracking::max_num_tracks);
+    argument_sizes[arg::dev_atomics_veloUT] = argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics * number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_ut_hits>(argument_offsets), host_ut_hits_events, number_of_events * sizeof(VeloUTTracking::HitsSoA), cudaMemcpyHostToDevice, stream ));
     sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(32), stream);
     sequence.item<seq::veloUT>().set_arguments(
       argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_count>(argument_offsets),
       argen.generate<arg::dev_atomics_storage>(argument_offsets),
       argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
       argen.generate<arg::dev_velo_track_hits>(argument_offsets),
       argen.generate<arg::dev_velo_states>(argument_offsets),
       argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
       argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
-      dev_ut_magnet_tool );
+      dev_ut_magnet_tool,
+      constants.dev_ut_dxDy
+    );
     sequence.item<seq::veloUT>().invoke();
 
     // Transmission device to host
-    if ( transmit_device_to_host) {
-      cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
-    }
+    // Velo tracks
+    cudaCheck(cudaMemcpyAsync(host_velo_tracks_atomics, argen.generate<arg::dev_atomics_storage>(argument_offsets), (2 * number_of_events + 1) * sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), host_accumulated_number_of_hits_in_velo_tracks[0] * sizeof(Velo::Hit), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), host_number_of_reconstructed_velo_tracks[0] * sizeof(Velo::State), cudaMemcpyDeviceToHost, stream));
+
+    // VeloUT tracks
+    cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
+
+
+
+    // SciFi preprocessing
+    // Estimate cluster count
+    argument_sizes[arg::dev_scifi_raw_input] = argen.size<arg::dev_scifi_raw_input>(host_scifi_events_size);
+    argument_sizes[arg::dev_scifi_raw_input_offsets] = argen.size<arg::dev_scifi_raw_input_offsets>(host_scifi_event_offsets_size);
+    argument_sizes[arg::dev_scifi_hit_count] = argen.size<arg::dev_scifi_hit_count>(2 * number_of_events * SciFi::number_of_zones + 1);
+
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_scifi_raw_input>(argument_offsets), host_scifi_events, host_scifi_events_size, cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_scifi_raw_input_offsets>(argument_offsets), host_scifi_event_offsets, host_scifi_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
+    cudaCheck(cudaMemsetAsync(argen.generate<arg::dev_scifi_hit_count>(argument_offsets), 0, argen.size<arg::dev_scifi_hit_count>(2 * number_of_events * SciFi::number_of_zones + 1), stream));
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    sequence.item<seq::estimate_cluster_count>().set_opts(dim3(number_of_events), dim3(240), stream);
+    sequence.item<seq::estimate_cluster_count>().set_arguments(
+      argen.generate<arg::dev_scifi_raw_input>(argument_offsets),
+      argen.generate<arg::dev_scifi_raw_input_offsets>(argument_offsets),
+      argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+      dev_scifi_geometry
+    );
+    sequence.item<seq::estimate_cluster_count>().invoke();
 
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
-    
-    //Test Catboost Evaluator
-    const std::string model_path = "../../data/MuID-Run2-MC-570-v1.cb";
-    const std::string background_data_path = "../../data/background.csv";
-    const std::string signal_data_path = "../../data/signal.csv";
-    std::vector<std::vector<float>> features;
-    
-    features = read_csv_data_file(background_data_path);
-    test_cpu_catboost_evaluator(model_path, features);
 
-    features = read_csv_data_file(signal_data_path);
-    test_cpu_catboost_evaluator(model_path, features);
+    // Prefix sum of hit count (becomes hit offset)
+    // 1. Reduce
+    // 2. Single block
+    // 3. Scan
 
-	  for (int i = 0; i < number_of_events; ++i) {
+    // Prefix sum: Reduce
+    const uint total_number_of_zones = number_of_events * SciFi::number_of_zones;
+    const size_t prefix_sum_auxiliary_array_4_size = (total_number_of_zones + 511) / 512;
+    argument_sizes[arg::dev_prefix_sum_auxiliary_array_4] = argen.size<arg::dev_prefix_sum_auxiliary_array_4>(prefix_sum_auxiliary_array_4_size);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::prefix_sum_reduce_scifi_hits>().set_opts(dim3(prefix_sum_auxiliary_array_4_size), dim3(256), stream);
+    sequence.item<seq::prefix_sum_reduce_scifi_hits>().set_arguments(
+      argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+      argen.generate<arg::dev_prefix_sum_auxiliary_array_4>(argument_offsets),
+      total_number_of_zones
+    );
+    sequence.item<seq::prefix_sum_reduce_scifi_hits>().invoke();
+
+    // Prefix sum: Single block
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::prefix_sum_single_block_scifi_hits>().set_arguments(
+      argen.generate<arg::dev_scifi_hit_count>(argument_offsets) + total_number_of_zones,
+      argen.generate<arg::dev_prefix_sum_auxiliary_array_4>(argument_offsets),
+      prefix_sum_auxiliary_array_4_size
+    );
+    sequence.item<seq::prefix_sum_single_block_scifi_hits>().invoke();
+
+    // Prefix sum: Scan
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    const uint pss_scifi_hits_blocks = prefix_sum_auxiliary_array_4_size==1 ? 1 : (prefix_sum_auxiliary_array_4_size-1);
+    sequence.item<seq::prefix_sum_scan_scifi_hits>().set_opts(dim3(pss_scifi_hits_blocks), dim3(512), stream);
+    sequence.item<seq::prefix_sum_scan_scifi_hits>().set_arguments(
+      argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+      argen.generate<arg::dev_prefix_sum_auxiliary_array_4>(argument_offsets),
+      total_number_of_zones
+    );
+    sequence.item<seq::prefix_sum_scan_scifi_hits>().invoke();
+
+    // Fetch total number of hits
+    cudaCheck(cudaMemcpyAsync(host_accumulated_number_of_scifi_hits,
+      argen.generate<arg::dev_scifi_hit_count>(argument_offsets) + total_number_of_zones,
+      sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    // info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
+
+
+    // Raw Bank Decoder
+    const uint32_t hits_bytes = (14 * sizeof(float) + 1) * *host_accumulated_number_of_scifi_hits;
+    argument_sizes[arg::dev_scifi_hits] = argen.size<arg::dev_scifi_hits>(hits_bytes);
+
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+
+    sequence.item<seq::raw_bank_decoder>().set_opts(dim3(number_of_events), dim3(240), stream);
+    sequence.item<seq::raw_bank_decoder>().set_arguments(
+      argen.generate<arg::dev_scifi_raw_input>(argument_offsets),
+      argen.generate<arg::dev_scifi_raw_input_offsets>(argument_offsets),
+      argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+      argen.generate<arg::dev_scifi_hits>(argument_offsets),
+      dev_scifi_geometry
+    );
+
+    sequence.item<seq::raw_bank_decoder>().invoke();
+
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    // SciFi hit sorting by x
+    argument_sizes[arg::dev_scifi_hit_permutations] = argen.size<arg::dev_scifi_hit_permutations>(*host_accumulated_number_of_scifi_hits);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::scifi_sort_by_x>().set_opts(dim3(number_of_events), dim3(64), stream);
+    sequence.item<seq::scifi_sort_by_x>().set_arguments(
+      argen.generate<arg::dev_scifi_hits>(argument_offsets),
+      argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+      argen.generate<arg::dev_scifi_hit_permutations>(argument_offsets)
+    );
+    sequence.item<seq::scifi_sort_by_x>().invoke();
+
+    /*
+    // SciFi Decoder Debugging
+    const uint hit_count_uints = 2 * number_of_events * SciFi::number_of_zones + 1;
+    uint host_scifi_hit_count[hit_count_uints];
+    char* host_scifi_hits = new char[hits_bytes];
+    uint* host_scifi_hit_permutation = new uint[*host_accumulated_number_of_scifi_hits];
+    cudaCheck(cudaMemcpyAsync(&host_scifi_hit_count, argen.generate<arg::dev_scifi_hit_count>(argument_offsets), hit_count_uints*sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_scifi_hits, argen.generate<arg::dev_scifi_hits>(argument_offsets), argen.size<arg::dev_scifi_hits>(hits_bytes), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_scifi_hit_permutation, argen.generate<arg::dev_scifi_hit_permutations>(argument_offsets), argen.size<arg::dev_scifi_hit_permutations>(*host_accumulated_number_of_scifi_hits), cudaMemcpyDeviceToHost, stream));
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
+    SciFi::SciFiHits host_scifi_hits_struct;
+    host_scifi_hits_struct.typecast_sorted(host_scifi_hits, host_scifi_hit_count[number_of_events * SciFi::number_of_zones]);
+
+    //Print only non-empty hits
+    std::ofstream outfile("dump.txt");
+    SciFi::SciFiHitCount host_scifi_hit_count_struct;
+    for(size_t event = 0; event < number_of_events; event++) {
+      host_scifi_hit_count_struct.typecast_ascifier_prefix_sum(host_scifi_hit_count, event, number_of_events);
+      for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
+        for(size_t hit = 0; hit < host_scifi_hit_count_struct.n_hits_layers[zone]; hit++) {
+          auto h = host_scifi_hits_struct.getHit(host_scifi_hit_count_struct.layer_offsets[zone] + hit);
+          outfile << std::setprecision(8) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " "
+            << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
+            << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
+        }
+      }
+    }*/
+
+    for (int i = 0; i < number_of_events; ++i) {
       cudaCheck(cudaMalloc((void**)&host_features[i], model_float_feature_num*sizeof(float)));
       cudaCheck(cudaMemcpy(host_features[i], features[i].data(), model_float_feature_num*sizeof(float),cudaMemcpyHostToDevice));
     }
@@ -406,88 +642,43 @@ cudaError_t Stream::run_sequence(
     ///////////////////////
     // Monte Carlo Check //
     ///////////////////////
-    
+
     if (do_check && i_stream == 0) {
       if (repetition == 0) { // only check efficiencies once
+        std::cout << "Checking Velo tracks reconstructed on GPU" << std::endl;
 
-        /* CHECKING Velo TRACKS */
-        if ( !transmit_device_to_host ) { // Fetch data
-          cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-          cudaCheck(cudaMemcpyAsync(host_accumulated_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets) + number_of_events, number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));
-          cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
-          cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]), cudaMemcpyDeviceToHost, stream));
-          cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
-          cudaEventRecord(cuda_generic_event, stream);
-          cudaEventSynchronize(cuda_generic_event);
-        }
-
-	std::cout << "CHECKING VELO TRACKS " << std::endl; 
-	
-        const std::vector< trackChecker::Tracks > tracks_events = prepareTracks(
+        const std::vector<trackChecker::Tracks> tracks_events = prepareTracks(
+          host_velo_tracks_atomics,
           host_velo_track_hit_number,
-          reinterpret_cast<VeloTracking::Hit<true>*>(host_velo_track_hits),
-      	  host_accumulated_tracks,
-      	  host_number_of_tracks,
-      	  number_of_events);
-      
+          host_velo_track_hits,
+          number_of_events);
+
         std::string trackType = "Velo";
-      	call_pr_checker (
-	  tracks_events,
-      	  folder_name_MC,
+        call_pr_checker(
+          tracks_events,
+          folder_name_MC,
           start_event_offset,
-    	  trackType);
-      
+          trackType
+        );
+
         /* CHECKING VeloUT TRACKS */
-        if ( !transmit_device_to_host ) { // Fetch data
-          cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
-          cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
-        }
-      
         const std::vector< trackChecker::Tracks > veloUT_tracks = prepareVeloUTTracks(
           host_veloUT_tracks,
           host_atomics_veloUT,
           number_of_events
-        );  
-      
-        std::cout << "CHECKING VeloUT TRACKS from GPU" << std::endl;
+        );
+
+        std::cout << "Checking VeloUT tracks reconstructed on GPU" << std::endl;
         trackType = "VeloUT";
         call_pr_checker (
           veloUT_tracks,
           folder_name_MC,
           start_event_offset,
-          trackType);                                                                            
-      
-        /* Run VeloUT on x86 architecture */
-        if ( run_on_x86 ) {
-          std::vector< trackChecker::Tracks > *ut_tracks_events = new std::vector< trackChecker::Tracks >;
-        
-          int rv = run_veloUT_on_CPU(
-                     ut_tracks_events,
-                     host_ut_hits_events,
-                     host_ut_magnet_tool,
-                     host_velo_states,
-                     host_accumulated_tracks,
-                     host_velo_track_hit_number,
-                     host_velo_track_hits,
-                     host_number_of_tracks,
-                     number_of_events );
+          trackType
+        );
+      } // only in first repetition
+    } // do_check
+  } // repetitions
 
-          if ( rv != 0 )
-            continue;
-          
-          std::cout << "CHECKING VeloUT TRACKS from x86" << std::endl;
-          trackType = "VeloUT";
-          call_pr_checker (
-            *ut_tracks_events,
-            folder_name_MC,
-            start_event_offset,
-            trackType); 
-          
-          delete ut_tracks_events;
-        }
-      } // only in first repitition
-    } // mc_check_enabled     
-    
-  } // repititions
   return cudaSuccess;
 }
