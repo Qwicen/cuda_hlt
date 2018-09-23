@@ -19,14 +19,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 #include_directories("/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/include")
 #include_directories("/usr/local/root/include")
 
-# MC truth matching
-if("${MC_CHECK}" STREQUAL Off OR "${MC_CHECK}" STREQUAL OFF)
-  MESSAGE(STATUS "MC_CHECK: Off")
-else("${MC_CHECK}" STREQUAL Off OR "${MC_CHECK}" STREQUAL OFF)
-  MESSAGE(STATUS "MC_CHECK: On")
-  add_definitions( -DMC_CHECK )
-endif("${MC_CHECK}" STREQUAL Off OR "${MC_CHECK}" STREQUAL OFF)
-
 find_package(CUDA REQUIRED)
 #set(CUDA_HOST_COMPILER "g++")
 set(CUDA_SEPARABLE_COMPILATION ON)
@@ -37,9 +29,9 @@ if ( EXISTS $ENV{ROOTSYS} )
      list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
    else() # ROOT was compiled with configure/make
      list(APPEND CMAKE_MODULE_PATH $ENV{ROOTSYS}/etc/cmake)
-   endif() 
-   find_package( ROOT )	
-   if ( ROOT_FOUND )  
+   endif()
+   find_package( ROOT )
+   if ( ROOT_FOUND )
       message("-- Compiling with ROOT: ${ROOT_INCLUDE_DIRS}")
     else()
       message("-- Compiling without ROOT")
@@ -61,24 +53,27 @@ set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;
 
 add_subdirectory(cuda)
 add_subdirectory(stream)
-add_subdirectory(x86/velo/clustering)
 add_subdirectory(checker)
+add_subdirectory(x86/velo/clustering)
 add_subdirectory(x86/veloUT/PrVeloUT)
 add_subdirectory(catboost)
 
 # Include directories
 include_directories(main/include)
 include_directories(x86/velo/clustering/include)
-include_directories(cuda/veloUT/common/include)
-include_directories(cuda/veloUT/PrVeloUT/include)
+include_directories(cuda/UT/common/include)
+include_directories(cuda/UT/PrVeloUT/include)
 include_directories(cuda/velo/common/include)
 include_directories(cuda/velo/calculate_phi_and_sort/include)
 include_directories(cuda/velo/consolidate_tracks/include)
 include_directories(cuda/velo/mask_clustering/include)
-include_directories(cuda/velo/prefix_sum/include)
 include_directories(cuda/velo/search_by_triplet/include)
 include_directories(cuda/velo/simplified_kalman_filter/include)
+include_directories(cuda/utils/prefix_sum/include)
+include_directories(cuda/event_model/velo/include)
+include_directories(cuda/event_model/common/include)
 include_directories(checker/tracking/include)
+include_directories(stream/sequence/include)
 include_directories(catboost/include)
 
 # Files from source directories
@@ -86,15 +81,17 @@ file(GLOB main_sources "main/src/*")
 
 cuda_add_executable(cu_hlt ${main_sources})
 
-if ( ROOT_FOUND ) 
-  target_compile_definitions(cu_hlt PUBLIC WITH_ROOT)	
+if ( ROOT_FOUND )
+  target_compile_definitions(cu_hlt PUBLIC WITH_ROOT)
   target_link_libraries(cu_hlt
     tbb
+    Utils
     Velo
-    VeloUT
+    UT
     x86VeloUT
     Stream
     x86Clustering
+    SciFi
     TrackChecking
     CheckClustering
     Catboost
@@ -102,11 +99,13 @@ if ( ROOT_FOUND )
 else()
   target_link_libraries(cu_hlt
     tbb
+    Utils
     Velo
-    VeloUT
+    UT
     x86VeloUT
     Stream
     x86Clustering
+    SciFi
     TrackChecking
     CheckClustering
     Catboost)

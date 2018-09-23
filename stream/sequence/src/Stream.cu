@@ -5,9 +5,11 @@
  */
 cudaError_t Stream::initialize(
   const std::vector<char>& velopix_geometry,
-  const PrUTMagnetTool* host_ut_magnet_tool,
+  const std::vector<char>& ut_boards,
+  const std::vector<char>& ut_geometry,
+  const std::vector<char>& ut_magnet_tool,
+  const std::vector<char>& scifi_geometry,
   const uint max_number_of_events,
-  const bool param_transmit_device_to_host,
   const bool param_do_check,
   const bool param_do_simplified_kalman_filter,
   const bool param_do_print_memory_manager,
@@ -15,7 +17,8 @@ cudaError_t Stream::initialize(
   const std::string& param_folder_name_MC,
   const uint param_start_event_offset,
   const size_t reserve_mb,
-  const uint param_stream_number
+  const uint param_stream_number,
+  const Constants& param_constants
 ) {
   // Set stream and events
   cudaCheck(cudaStreamCreate(&stream));
@@ -25,34 +28,46 @@ cudaError_t Stream::initialize(
 
   // Set stream options
   stream_number = param_stream_number;
-  transmit_device_to_host = param_transmit_device_to_host;
   do_check = param_do_check;
   do_simplified_kalman_filter = param_do_simplified_kalman_filter;
   do_print_memory_manager = param_do_print_memory_manager;
   run_on_x86 = param_run_on_x86;
   folder_name_MC = param_folder_name_MC;
   start_event_offset = param_start_event_offset;
+  constants = param_constants;
 
   // Special case
   // Populate velo geometry
   cudaCheck(cudaMalloc((void**)&dev_velo_geometry, velopix_geometry.size()));
   cudaCheck(cudaMemcpyAsync(dev_velo_geometry, velopix_geometry.data(), velopix_geometry.size(), cudaMemcpyHostToDevice, stream));
 
+  // Populate UT boards and geometry
+  cudaCheck(cudaMalloc((void**)&dev_ut_boards, ut_boards.size()));
+  cudaCheck(cudaMemcpyAsync(dev_ut_boards, ut_boards.data(), ut_boards.size(), cudaMemcpyHostToDevice, stream));
+
+  cudaCheck(cudaMalloc((void**)&dev_ut_geometry, ut_geometry.size()));
+  cudaCheck(cudaMemcpyAsync(dev_ut_geometry, ut_geometry.data(), ut_geometry.size(), cudaMemcpyHostToDevice, stream));
+
   // Populate UT magnet tool values
-  cudaCheck(cudaMalloc((void**)&dev_ut_magnet_tool, sizeof(PrUTMagnetTool)));
-  cudaCheck(cudaMemcpyAsync(dev_ut_magnet_tool, host_ut_magnet_tool, sizeof(PrUTMagnetTool), cudaMemcpyHostToDevice, stream));
-    
+  cudaCheck(cudaMalloc((void**)&dev_ut_magnet_tool, ut_magnet_tool.size()));
+  cudaCheck(cudaMemcpyAsync(dev_ut_magnet_tool, ut_magnet_tool.data(), ut_magnet_tool.size(), cudaMemcpyHostToDevice, stream));
+
+  // Populate FT geometry
+  cudaCheck(cudaMalloc((void**)&dev_scifi_geometry, scifi_geometry.size()));
+  cudaCheck(cudaMemcpyAsync(dev_scifi_geometry, scifi_geometry.data(), scifi_geometry.size(), cudaMemcpyHostToDevice, stream));
+
   // Memory allocations for host memory (copy back)
-  cudaCheck(cudaMallocHost((void**)&host_number_of_tracks, max_number_of_events * sizeof(int)));
-  cudaCheck(cudaMallocHost((void**)&host_accumulated_tracks, max_number_of_events * sizeof(int)));
+  cudaCheck(cudaMallocHost((void**)&host_velo_tracks_atomics, (2 * max_number_of_events + 1) * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_velo_track_hit_number, max_number_of_events * VeloTracking::max_tracks * sizeof(uint)));
-  cudaCheck(cudaMallocHost((void**)&host_velo_track_hits, max_number_of_events * VeloTracking::max_tracks * 20 * sizeof(VeloTracking::Hit<mc_check_enabled>)));
+  cudaCheck(cudaMallocHost((void**)&host_velo_track_hits, max_number_of_events * VeloTracking::max_tracks * VeloTracking::max_track_size * sizeof(Velo::Hit)));
   cudaCheck(cudaMallocHost((void**)&host_total_number_of_velo_clusters, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_number_of_reconstructed_velo_tracks, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_hits_in_velo_tracks, sizeof(uint)));
-  cudaCheck(cudaMallocHost((void**)&host_velo_states, max_number_of_events * VeloTracking::max_tracks * sizeof(VeloState)));
+  cudaCheck(cudaMallocHost((void**)&host_velo_states, max_number_of_events * VeloTracking::max_tracks * sizeof(Velo::State)));
   cudaCheck(cudaMallocHost((void**)&host_veloUT_tracks, max_number_of_events * VeloUTTracking::max_num_tracks * sizeof(VeloUTTracking::TrackUT)));
   cudaCheck(cudaMallocHost((void**)&host_atomics_veloUT, VeloUTTracking::num_atomics * max_number_of_events * sizeof(int)));
+  cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_ut_hits, sizeof(uint)));
+  cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_scifi_hits, sizeof(uint)));
 
   // Define sequence of algorithms to execute
   sequence.set(sequence_algorithms());
@@ -68,6 +83,8 @@ cudaError_t Stream::initialize(
   sequence.item<seq::prefix_sum_single_block>().set_opts(                      dim3(1), dim3(1024), stream);
   sequence.item<seq::copy_and_prefix_sum_single_block>().set_opts(             dim3(1), dim3(1024), stream);
   sequence.item<seq::prefix_sum_single_block_velo_track_hit_number>().set_opts(dim3(1), dim3(1024), stream);
+  sequence.item<seq::prefix_sum_single_block_ut_hits>().set_opts(              dim3(1), dim3(1024), stream);
+  sequence.item<seq::prefix_sum_single_block_scifi_hits>().set_opts(              dim3(1), dim3(1024), stream);
 
   // Get dependencies for each algorithm
   std::vector<std::vector<int>> sequence_dependencies = get_sequence_dependencies();
