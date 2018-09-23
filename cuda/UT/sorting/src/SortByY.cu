@@ -49,11 +49,15 @@ __global__ void sort_by_y(
     const uint sector_group_number_of_hits = ut_hit_offsets.sector_group_number_of_hits(sector_group);
     total_number_of_hits += sector_group_number_of_hits;
 
-    find_permutation<float>(
-      unsorted_ut_hits.xAtYEq0,
+    find_permutation(
       sector_group_offset,
       dev_hit_permutations,
-      sector_group_number_of_hits
+      sector_group_number_of_hits,
+      [&unsorted_ut_hits] (const int a, const int b) {
+        if (unsorted_ut_hits.yMid(a) > unsorted_ut_hits.yMid(b)) { return 1; }
+        if (unsorted_ut_hits.yMid(a) == unsorted_ut_hits.yMid(b)) { return 0; }
+        return -1;
+      }
     );
   }
 
