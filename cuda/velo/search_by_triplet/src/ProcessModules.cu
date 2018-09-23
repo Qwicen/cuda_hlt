@@ -19,6 +19,7 @@ __device__ void process_modules(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
+  const float* hit_Phis,
   uint* weaktracks_insert_pointer,
   uint* tracklets_insert_pointer,
   uint* ttf_insert_pointer,
@@ -30,7 +31,8 @@ __device__ void process_modules(
   const uint number_of_hits,
   unsigned short* h1_rel_indices,
   uint* local_number_of_hits,
-  const uint hit_offset
+  const uint hit_offset,
+  const float* dev_velo_module_zs
 ) {
   auto first_module = starting_module;
 
@@ -40,6 +42,7 @@ __device__ void process_modules(
     const auto module_number = first_module - threadIdx.x;
     module_data[threadIdx.x].hitStart = module_hitStarts[module_number] - hit_offset;
     module_data[threadIdx.x].hitNums = module_hitNums[module_number];
+    module_data[threadIdx.x].z = dev_velo_module_zs[module_number];
   }
 
   // Due to shared module data loading
@@ -78,6 +81,7 @@ __device__ void process_modules(
       const auto module_number = first_module - threadIdx.x;
       module_data[threadIdx.x].hitStart = module_hitStarts[module_number] - hit_offset;
       module_data[threadIdx.x].hitNums = module_hitNums[module_number];
+      module_data[threadIdx.x].z = dev_velo_module_zs[module_number];
     }
 
     const auto prev_ttf = last_ttf;
@@ -95,6 +99,7 @@ __device__ void process_modules(
       hit_Xs,
       hit_Ys,
       hit_Zs,
+      hit_Phis,
       hit_used,
       tracks_insert_pointer,
       ttf_insert_pointer,
