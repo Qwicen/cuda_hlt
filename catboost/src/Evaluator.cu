@@ -32,7 +32,7 @@ __global__ void catboost_evaluator(
   values[tid] = sum;
 
   __syncthreads();
-  for (unsigned int s=blockSize/2; s>32; s>>=1) {
+  for (unsigned int s=blockSize/2; s>=32; s>>=1) {
     if (tid < s)
       values[tid] += values[tid + s];
     __syncthreads();
