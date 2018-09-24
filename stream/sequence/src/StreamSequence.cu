@@ -403,7 +403,7 @@ cudaError_t Stream::run_sequence(
     // UT hit sorting by y
     argument_sizes[arg::dev_ut_hit_permutations] = argen.size<arg::dev_ut_hit_permutations>(host_accumulated_number_of_ut_hits[0]);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::sort_by_y>().set_opts(dim3(number_of_events), dim3(64), stream);
+    sequence.item<seq::sort_by_y>().set_opts(dim3(number_of_events), dim3(256), stream);
     sequence.item<seq::sort_by_y>().set_arguments(
       argen.generate<arg::dev_ut_hits>(argument_offsets),
       argen.generate<arg::dev_ut_hit_offsets>(argument_offsets),

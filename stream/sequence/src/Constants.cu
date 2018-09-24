@@ -57,6 +57,7 @@ void Constants::initialize_ut_decoding_constants(
   const std::array<uint, 5> offsets {0, 248, 496, 772, 1048};
   auto current_sector_offset = 0;
   host_unique_x_sector_offsets[current_sector_offset];
+  host_unique_x_sector_layer_offsets[0] = 0;
 
   for (int i=0; i<number_of_station_layers; ++i) {
     const auto offset = offsets[i];
