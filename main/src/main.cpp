@@ -52,11 +52,11 @@ void printUsage(char* argv[]){
 
 int main(int argc, char *argv[])
 {
-  std::string folder_name_velopix_raw;
-  std::string folder_name_UT_raw = "";
-  std::string folder_name_MC = "";
-  std::string folder_name_SciFi_raw = "";
-  std::string folder_name_detector_configuration = "";
+  std::string folder_name_velopix_raw = "../input/minbias/velopix_raw/";
+  std::string folder_name_UT_raw = "../input/minbias/ut_raw/";
+  std::string folder_name_SciFi_raw = "../input/minbias/scifi_raw/";
+  std::string folder_name_MC = "../input/minbias/MC_info/";
+  std::string folder_name_detector_configuration = "../input/detector_configuration/";
   uint number_of_events_requested = 0;
   uint start_event_offset = 0;
   uint tbb_threads = 1;
