@@ -447,18 +447,6 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemsetAsync(argen.generate<arg::dev_scifi_hit_count>(argument_offsets), 0, argen.size<arg::dev_scifi_hit_count>(2 * number_of_events * SciFi::number_of_zones + 1), stream));
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
-    
-    //Test Catboost Evaluator
-    const std::string model_path = "../../data/MuID-Run2-MC-570-v1.cb";
-    const std::string background_data_path = "../../data/background.csv";
-    const std::string signal_data_path = "../../data/signal.csv";
-    std::vector<std::vector<float>> features;
-    
-    features = read_csv_data_file(background_data_path);
-    test_cpu_catboost_evaluator(model_path, features);
-
-    features = read_csv_data_file(signal_data_path);
-    test_cpu_catboost_evaluator(model_path, features);
 
     sequence.item<seq::estimate_cluster_count>().set_opts(dim3(number_of_events), dim3(240), stream);
     sequence.item<seq::estimate_cluster_count>().set_arguments(
@@ -580,6 +568,18 @@ cudaError_t Stream::run_sequence(
         }
       }
     }*/
+
+    //Test Catboost Evaluator
+    const std::string model_path = "../../data/MuID-Run2-MC-570-v1.cb";
+    const std::string background_data_path = "../../data/background.csv";
+    const std::string signal_data_path = "../../data/signal.csv";
+    std::vector<std::vector<float>> features;
+    
+    features = read_csv_data_file(background_data_path);
+    test_cpu_catboost_evaluator(model_path, features);
+
+    features = read_csv_data_file(signal_data_path);
+    test_cpu_catboost_evaluator(model_path, features);
 
     ///////////////////////
     // Monte Carlo Check //
