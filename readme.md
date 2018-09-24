@@ -47,11 +47,11 @@ make
 
 Where to find input
 -------------
-Input from 10k / 5k events can be found here: 
+Input from 1k events can be found here: 
 
-minimum bias (for performance checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/10kevents_minbias_scifi_v5_corrected_offsets
+minimum bias (for performance checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbias.tar.gz
 
-Bs->PhiPhi (for efficiency checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/5kevents_BsPhiPhi_scifi_v5_corrected_offsets
+Bs->PhiPhi (for efficiency checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi.tar.gz
 
 How to run it
 -------------

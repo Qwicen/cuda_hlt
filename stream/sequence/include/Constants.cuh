@@ -28,6 +28,7 @@ struct Constants {
   std::vector<uint> host_unique_x_sector_offsets;
   std::vector<float> host_unique_sector_xs;
   std::array<uint, 12> host_ut_region_offsets;
+  std::array<uint8_t, 9> host_candidate_ks;
 
   float* dev_velo_module_zs;
   uint8_t* dev_velo_candidate_ks;
