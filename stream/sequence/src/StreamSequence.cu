@@ -569,6 +569,18 @@ cudaError_t Stream::run_sequence(
       }
     }*/
 
+    //Test Catboost Evaluator
+    const std::string model_path = "../../data/MuID-Run2-MC-570-v1.cb";
+    const std::string background_data_path = "../../data/background.csv";
+    const std::string signal_data_path = "../../data/signal.csv";
+    std::vector<std::vector<float>> features;
+    
+    features = read_csv_data_file(background_data_path);
+    test_cpu_catboost_evaluator(model_path, features);
+
+    features = read_csv_data_file(signal_data_path);
+    test_cpu_catboost_evaluator(model_path, features);
+    
     for (int i = 0; i < number_of_events; ++i) {
       cudaCheck(cudaMalloc((void**)&host_features[i], model_float_feature_num*sizeof(float)));
       cudaCheck(cudaMemcpy(host_features[i], features[i].data(), model_float_feature_num*sizeof(float),cudaMemcpyHostToDevice));
@@ -638,7 +650,7 @@ cudaError_t Stream::run_sequence(
       info_cout << "CATBOOST KERNEL OUTPUT: " << host_catboost_output[i] << std::endl;
     }
     info_cout << "CATBOOST FINISHED" << std::endl << std::endl;
-
+    
     ///////////////////////
     // Monte Carlo Check //
     ///////////////////////
