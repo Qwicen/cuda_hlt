@@ -24,6 +24,8 @@ struct Constants {
   float* dev_velo_sp_fx;
   float* dev_velo_sp_fy;
   float* dev_ut_dxDy;
+  
+  std::array<uint8_t, 9> host_candidate_ks;
   float host_ut_dxDy[VeloUTTracking::n_layers];
   
   void reserve_and_initialize() {
