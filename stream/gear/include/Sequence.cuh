@@ -20,9 +20,42 @@ struct Sequence {
     algorithms = u;
   }
 
+  /**
+   * @brief Fetches an item of the sequence.
+   */
   template<unsigned long I>
   decltype(std::get<I>(algorithms)) item() noexcept {
     return std::get<I>(algorithms);
+  }
+
+  /**
+   * @brief Wraps set_arguments of the element in the sequence.
+   */
+  template<unsigned long I, typename... A>
+  void set_arguments(A... arguments) {
+    std::get<I>(algorithms).set_arguments(arguments...);
+  }
+
+  /**
+   * @brief Wraps set_opts of the element in the sequence.
+   */
+  template<unsigned long I>
+  void set_opts(
+    const dim3& param_num_blocks,
+    const dim3& param_num_threads,
+    cudaStream_t& param_stream,
+    const unsigned param_shared_memory_size = 0
+  ) {
+    std::get<I>(algorithms).set_opts(param_num_blocks, param_num_threads,
+      param_stream, param_shared_memory_size);
+  }
+
+  /**
+   * @brief Wraps invoke of the element in the sequence.
+   */
+  template<unsigned long I>
+  void invoke() {
+    std::get<I>(algorithms).invoke();
   }
 };
 

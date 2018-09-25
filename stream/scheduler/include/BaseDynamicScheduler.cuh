@@ -102,8 +102,7 @@ struct BaseDynamicScheduler {
    *        increments the sequence step.
    */
   void setup_next(
-    const std::array<size_t, std::tuple_size<argument_tuple_t>::value>& argument_sizes,
-    std::array<uint, std::tuple_size<argument_tuple_t>::value>& argument_offsets,
+    ArgumentManager<argument_tuple_t>& arguments,
     const int check_sequence_step = -1
   ) {
     assert(check_sequence_step==-1 || (current_sequence_step == check_sequence_step));
@@ -118,7 +117,8 @@ struct BaseDynamicScheduler {
     // Reserve space for all tags
     // that need to be initialized on this step
     for (auto tag : tags_to_initialize[current_sequence_step]) {
-      argument_offsets[tag] = memory_manager.reserve(tag, argument_sizes[tag]);
+      const auto requested_size = arguments.size(tag);
+      arguments.set_offset(tag, memory_manager.reserve(tag, requested_size));
     }
 
     // Print memory manager state
