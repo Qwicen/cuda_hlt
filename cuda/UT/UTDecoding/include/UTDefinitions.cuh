@@ -11,22 +11,45 @@ static constexpr uint32_t ut_number_of_geometry_sectors = 1048;
 /**
 * @brief Offset and number of hits of each layer.
 */
-struct UTHitCount {
-  uint* layer_offsets;
-  uint* n_hits_layers;
+struct UTHitOffsets {
+  const uint* m_unique_x_sector_layer_offsets;
+  const uint* m_ut_hit_offsets;
+  const uint m_number_of_unique_x_sectors;
 
   __device__ __host__
-  void typecast_before_prefix_sum(
-    uint* base_pointer,
-    const uint event_number
-  );
-
-  __device__ __host__
-  void typecast_after_prefix_sum(
-    uint* base_pointer,
+  UTHitOffsets(
+    const uint* base_pointer,
     const uint event_number,
-    const uint number_of_events
-  );
+    const uint number_of_unique_x_sectors,
+    const uint* unique_x_sector_layer_offsets
+  ) : m_unique_x_sector_layer_offsets(unique_x_sector_layer_offsets),
+    m_ut_hit_offsets(base_pointer + event_number * number_of_unique_x_sectors),
+    m_number_of_unique_x_sectors(number_of_unique_x_sectors) {}
+
+  __device__ __host__
+  uint sector_group_offset(const uint sector_group) const {
+    assert(sector_group <= m_number_of_unique_x_sectors);
+    return m_ut_hit_offsets[sector_group];
+  }
+
+  __device__ __host__
+  uint sector_group_number_of_hits(const uint sector_group) const {
+    assert(sector_group < m_number_of_unique_x_sectors);
+    return m_ut_hit_offsets[sector_group+1] - m_ut_hit_offsets[sector_group];
+  }
+
+  __device__ __host__
+  uint layer_offset(const uint layer_number) const {
+    assert(layer_number < 4);
+    return m_ut_hit_offsets[m_unique_x_sector_layer_offsets[layer_number]];
+  }
+
+  __device__ __host__
+  uint layer_number_of_hits(const uint layer_number) const {
+    assert(layer_number < 4);
+    return m_ut_hit_offsets[m_unique_x_sector_layer_offsets[layer_number+1]]
+      - m_ut_hit_offsets[m_unique_x_sector_layer_offsets[layer_number]];
+  }
 };
 
 struct UTBoards {
@@ -161,8 +184,6 @@ struct UTHits {
   uint32_t* LHCbID;
   uint32_t* planeCode;
   uint32_t* temp;
-
-  UTHits() = default;
 
   /**
    * @brief Populates the UTHits object pointers from an unsorted array of data

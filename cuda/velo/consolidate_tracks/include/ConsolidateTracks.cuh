@@ -5,7 +5,7 @@
 #include "Common.h"
 #include <stdint.h>
 
-__device__ Velo::State means_square_fit_and_store(
+__device__ Velo::State means_square_fit(
   Velo::Consolidated::Hits& consolidated_hits,
   const float* hit_Xs,
   const float* hit_Ys,

@@ -63,6 +63,7 @@ include_directories(x86/velo/clustering/include)
 include_directories(cuda/UT/common/include)
 include_directories(cuda/UT/PrVeloUT/include)
 include_directories(cuda/UT/compassUT/include)
+include_directories(cuda/UT/UTDecoding/include)
 include_directories(cuda/velo/common/include)
 include_directories(cuda/velo/calculate_phi_and_sort/include)
 include_directories(cuda/velo/consolidate_tracks/include)
@@ -71,6 +72,7 @@ include_directories(cuda/velo/search_by_triplet/include)
 include_directories(cuda/velo/simplified_kalman_filter/include)
 include_directories(cuda/utils/prefix_sum/include)
 include_directories(cuda/event_model/velo/include)
+include_directories(cuda/event_model/common/include)
 include_directories(checker/tracking/include)
 include_directories(stream/sequence/include)
 
@@ -89,6 +91,7 @@ if ( ROOT_FOUND )
     x86VeloUT
     Stream
     x86Clustering
+    SciFi
     TrackChecking
     CheckClustering
     ${ROOT_LIBRARIES})
@@ -101,6 +104,7 @@ else()
     x86VeloUT
     Stream
     x86Clustering
+    SciFi
     TrackChecking
     CheckClustering)
 endif()

@@ -3,7 +3,7 @@
 /**
  * @brief Calculates the parameters according to a root means square fit
  */
- __device__ Velo::State means_square_fit_and_store(
+ __device__ Velo::State means_square_fit(
   Velo::Consolidated::Hits& consolidated_hits,
   const float* hit_Xs,
   const float* hit_Ys,
@@ -162,7 +162,7 @@ __global__ void consolidate_tracks(
     populate((uint32_t*) consolidated_hits.LHCbID, (uint32_t*) hit_IDs);
 
     // Calculate and store fit in consolidated container
-    Velo::State beam_state = means_square_fit_and_store(
+    Velo::State beam_state = means_square_fit(
       consolidated_hits,
       hit_Xs,
       hit_Ys,

@@ -9,6 +9,13 @@
 // 2018-07:    Dorothea vom Bruch (convert to C and then CUDA code)
 //-----------------------------------------------------------------------------
 
+// -- These things are all hardcopied from the PrTableForFunction
+// -- and PrUTMagnetTool
+// -- If the granularity or whatever changes, this will give wrong results
+__host__ __device__ int masterIndex(const int index1, const int index2, const int index3){
+  return (index3*11 + index2)*31 + index1;
+}
+
 //=============================================================================
 // Reject tracks outside of acceptance or pointing to the beam pipe
 //=============================================================================
@@ -28,173 +35,20 @@ __host__ __device__ bool veloTrackInUTAcceptance(
   return true;
 }
 
-// get the low pos for a window
-__host__ __device__ int win_lpos(
-  const int i_track,
-  const int layer) 
-{
-  return (i_track * VeloUTTracking::n_layers * 2) + (layer * 2);
-};
-
-// get the high pos for a window
-__host__ __device__ int win_hpos(
-  const int i_track,
-  const int layer) 
-{
-  // return (i_track * VeloUTTracking::n_layers * 2) + (layer * 2) + 1;
-  return win_lpos(i_track, layer) + 1;
-};
-
 //=============================================================================
-// Binary search a hit in the range
+// Find the hits
 //=============================================================================
-__host__ __device__ void binary_search_range(
-  const int layer,
-  const UTHits& ut_hits,
-  const UTHitCount& ut_hit_count,
-  const float ut_dxDy,
-  const float low_bound_x,
-  const float up_bound_x,
-  const float xTolNormFact,
-  const float yApprox,
-  const float xOnTrackProto,
-  const int layer_offset,
-  int& high_hit_pos,
-  int& low_hit_pos)
-{
-  const int num_hits_layer = ut_hit_count.n_hits_layers[layer];
-
-  int min = layer_offset; // first hit of the layer
-  int max = layer_offset + (num_hits_layer - 1); // last hit of the layer
-  int guess = 0;
-
-  // const float xx = ut_hits.xAt(layer_offset + guess, yApprox, ut_dxDy);
-  // const float dx = xx - xOnTrackProto;
-
-  high_hit_pos = -1;
-  low_hit_pos = -1;
-
-  // look for the low limit
-  guess = (max + min) / 2;
-  while (max != min+1) {
-    const float xx = ut_hits.xAt(layer_offset + guess, yApprox, ut_dxDy);
-    const float dx = xx - xOnTrackProto;
-    if (dx < -xTolNormFact) {
-      min = guess;
-    } else {
-      max = guess;
-    }   
-    guess = (max + min) / 2;
-  }
-  low_hit_pos = guess;
-
-  // look for the high limit
-  min = low_hit_pos;
-  max = layer_offset + (num_hits_layer - 1); // last hit of the layer
-  guess = (max + min) / 2;
-  while (max != min+1) {
-    const float xx = ut_hits.xAt(layer_offset + guess, yApprox, ut_dxDy);
-    const float dx = xx - xOnTrackProto;
-    if (dx < xTolNormFact) {
-      max = guess;
-    } else {
-      min = guess;
-    }   
-    guess = (max + min) / 2;
-  }
-  high_hit_pos = guess;
-
-  // float lh = ut_hits.xAtYEq0[layer_offset + low_hit_pos]; 
-  // float hh = ut_hits.xAtYEq0[layer_offset + high_hit_pos];
-  // printf("low_hit_pos: %d, high_hit_pos: %d, lh: %f, hh: %f, xTolNormFact: %f\n", low_hit_pos, high_hit_pos, lh, hh, xTolNormFact);
-}
-
-//=============================================================================
-// Get the windows
-//=============================================================================
-__host__ __device__ void get_windows(
-  const int i_track,
-  const MiniState& veloState,
-  const float* fudgeFactors,
-  const UTHits& ut_hits,
-  const UTHitCount& ut_hit_count,
-  const float* ut_dxDy,
-  int* windows_layers) 
-{
-  // -- This is hardcoded, so faster
-  // -- If you ever change the Table in the magnet tool, this will be wrong
-  const float absSlopeY = std::abs( veloState.ty );
-  const int index = (int)(absSlopeY*100 + 0.5);
-  assert( 3 + 4*index < PrUTMagnetTool::N_dxLay_vals );
-  const std::array<float,4> normFact = {
-    fudgeFactors[4*index], 
-    fudgeFactors[1 + 4*index], 
-    fudgeFactors[2 + 4*index], 
-    fudgeFactors[3 + 4*index] 
-  };
-
-  // -- this 500 seems a little odd...
-  // to do: change back!
-  const float invTheta = std::min(500., 1.0/std::sqrt(veloState.tx*veloState.tx+veloState.ty*veloState.ty));
-  const float minMom   = std::max(PrVeloUTConst::minPT*invTheta, float(1.5)*Gaudi::Units::GeV);
-  const float xTol     = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
-  const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
-
-  const float dxDyHelper[N_LAYERS] = {0., 1., -1., 0};
-
-  for (int layer=0; layer<N_LAYERS; ++layer) {
-
-    int layer_offset = ut_hit_count.layer_offsets[layer];
-
-    const float dxDy   = ut_dxDy[layer];
-    const float zLayer = ut_hits.zAtYEq0[layer_offset]; 
-
-    const float yAtZ   = veloState.y + veloState.ty*(zLayer - veloState.z);
-    const float xLayer = veloState.x + veloState.tx*(zLayer - veloState.z);
-    const float yLayer = yAtZ + yTol * dxDyHelper[layer];
-
-    // const float normFactNum = normFact[layer];
-    const float invNormFact = 1.0/normFact[layer];
-
-    const float lowerBoundX =
-      (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(veloState.tx)*PrVeloUTConst::intraLayerDist;
-    const float upperBoundX =
-      (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(veloState.tx)*PrVeloUTConst::intraLayerDist;
-
-    const float zInit = ut_hits.zAtYEq0[layer_offset];
-    const float xTolNormFact = xTol*invNormFact;
-    const float yApprox = veloState.y + veloState.ty * (zInit - veloState.z);
-    const float xOnTrackProto = veloState.x + veloState.tx*(zInit - veloState.z);
-
-    binary_search_range(
-      layer,
-      ut_hits,
-      ut_hit_count,
-      ut_dxDy[layer],
-      lowerBoundX,
-      upperBoundX,
-      xTolNormFact,
-      yApprox,
-      xOnTrackProto,
-      layer_offset,
-      windows_layers[win_lpos(i_track, layer)],
-      windows_layers[win_hpos(i_track, layer)]);
-  }
-}
-
-//=============================================================================
-// Find the hits in all layers
-//=============================================================================
-__host__ __device__ bool getHits(
+__device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const int posLayers[4][85],
-  const UTHits& ut_hits,
-  const UTHitCount& ut_hit_count,
+  UTHits& ut_hits,
+  UTHitOffsets& ut_hit_offsets,
   const float* fudgeFactors, 
   const MiniState& trState,
-  const float* ut_dxDy)
+  const float* ut_dxDy,
+  const float* dev_unique_sector_xs,
+  const uint* dev_unique_x_sector_layer_offsets)
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
@@ -218,173 +72,169 @@ __host__ __device__ bool getHits(
 
   int nLayers = 0;
 
-  const float dxDyHelper[VeloUTTracking::n_layers] = {0., 1., -1., 0};
-  
-  for (int layer=0; layer<VeloUTTracking::n_layers; ++layer) {
+  float dxDyHelper[VeloUTTracking::n_layers] = {0., 1., -1., 0};
+  for(int iStation = 0; iStation < 2; ++iStation) {
 
-    if( (layer == 3 || layer == 4) && nLayers == 0) return false;
-    if( layer == 4 && nLayers < 2 ) return false;
-    if( ut_hit_count.n_hits_layers[layer] == 0 ) continue;
+    if( iStation == 1 && nLayers == 0 ) return false;
 
-    int layer_offset = ut_hit_count.layer_offsets[layer];
+    for(int iLayer = 0; iLayer < 2; ++iLayer) {
+      if( iStation == 1 && iLayer == 1 && nLayers < 2 ) return false;
 
-    const float dxDy   = ut_dxDy[layer];
-    const float zLayer = ut_hits.zAtYEq0[layer_offset + 0]; 
-
-    const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
-    const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
-    const float yLayer = yAtZ + yTol * dxDyHelper[layer];
-
-    const float normFactNum = normFact[layer];
-    const float invNormFact = 1.0/normFactNum;
-
-    const float lowerBoundX =
-      (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(trState.tx)*PrVeloUTConst::intraLayerDist;
-    const float upperBoundX =
-      (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(trState.tx)*PrVeloUTConst::intraLayerDist;
-
-    const int indexLowProto = 
-      lowerBoundX > 0 ? std::sqrt( std::abs(lowerBoundX)*2.0 ) + 42 : 42 - std::sqrt( std::abs(lowerBoundX)*2.0 );
-    const int indexHiProto  = 
-      upperBoundX > 0 ? std::sqrt( std::abs(upperBoundX)*2.0 ) + 43 : 43 - std::sqrt( std::abs(upperBoundX)*2.0 );
-
-    const int indexLow  = std::max( indexLowProto, 0 );
-    const int indexHi   = std::min( indexHiProto, 84);
-
-    size_t posBeg = posLayers[layer][ indexLow ];
-    size_t posEnd = posLayers[layer][ indexHi  ];
-
-    while ( (ut_hits.xAtYEq0[layer_offset + posBeg] < lowerBoundX) && (posBeg != ut_hit_count.n_hits_layers[layer] ) ) {
-      ++posBeg;
-    }
+      int layer = 2*iStation+iLayer;
+      int layer_offset = ut_hit_offsets.layer_offset(layer);
       
-    if (posBeg == ut_hit_count.n_hits_layers[layer]) continue;
+      if( ut_hit_offsets.layer_number_of_hits(layer) == 0 ) continue;
+      const float dxDy   = ut_dxDy[layer];
+      const float zLayer = ut_hits.zAtYEq0[layer_offset + 0]; 
 
-    findHits(posBeg, posEnd,
-      ut_hits, layer_offset, ut_dxDy[layer],
-      trState, xTol*invNormFact, invNormFact,
-      hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer],
-      x_pos_layers[layer]);
+      const float yAtZ   = trState.y + trState.ty*(zLayer - trState.z);
+      const float xLayer = trState.x + trState.tx*(zLayer - trState.z);
+      const float yLayer = yAtZ + yTol * dxDyHelper[layer];
 
-    nLayers += int( !( n_hitCandidatesInLayers[layer] == 0 ) );    
+      const float normFactNum = normFact[2*iStation + iLayer];
+      const float invNormFact = 1.0/normFactNum;
+
+      const float lowerBoundX =
+        (xLayer - dxDy*yLayer) - xTol*invNormFact - std::abs(trState.tx)*PrVeloUTConst::intraLayerDist;
+      const float upperBoundX =
+        (xLayer - dxDy*yLayer) + xTol*invNormFact + std::abs(trState.tx)*PrVeloUTConst::intraLayerDist;
+
+      // Find sector group for lowerBoundX and upperBoundX
+      const uint first_sector_group_in_layer = dev_unique_x_sector_layer_offsets[layer];
+      const uint last_sector_group_in_layer = dev_unique_x_sector_layer_offsets[layer+1];
+      const uint number_of_sector_groups = last_sector_group_in_layer - first_sector_group_in_layer;
+
+      uint lowerBoundSectorGroup = first_sector_group_in_layer;
+      uint upperBoundSectorGroup = last_sector_group_in_layer - 1;
+
+      // The window of search is out of bounds
+      if (upperBoundX < dev_unique_sector_xs[first_sector_group_in_layer] ||
+          lowerBoundX > dev_unique_sector_xs[last_sector_group_in_layer - 1]) {
+        continue;
+      }
+
+      for (int i=first_sector_group_in_layer + 2; i<last_sector_group_in_layer; ++i) {
+        if (dev_unique_sector_xs[i] > lowerBoundX) {
+          lowerBoundSectorGroup = i-2;
+          break;
+        }
+      }
+
+      for (int i=0; i<number_of_sector_groups; ++i) {
+        const uint current_sector_group = first_sector_group_in_layer + i;
+        if (dev_unique_sector_xs[current_sector_group] > upperBoundX) {
+          if (i == number_of_sector_groups - 1) {
+            upperBoundSectorGroup = current_sector_group;
+          } else {
+            upperBoundSectorGroup = current_sector_group + 1;
+          }
+          break;
+        }
+      }
+
+      assert(upperBoundSectorGroup < last_sector_group_in_layer);
+      assert(lowerBoundSectorGroup >= first_sector_group_in_layer);
+      assert(lowerBoundSectorGroup < upperBoundSectorGroup);
+
+      findHits(lowerBoundSectorGroup, upperBoundSectorGroup,
+        ut_hits, ut_hit_offsets, layer_offset, layer, ut_dxDy,
+        trState, xTol*invNormFact, invNormFact,
+        hitCandidatesInLayers[layer], n_hitCandidatesInLayers[layer],
+        x_pos_layers);
+
+      nLayers += int( !( n_hitCandidatesInLayers[layer] == 0 ) );
+    }
   }
 
   return nLayers > 2;
 }
 
 //=========================================================================
-// hits_to_track
+// Form clusters
 //=========================================================================
-__host__ __device__ bool find_best_hits(
-  const int i_track,
-  const int* windows_layers,
-  const UTHits& ut_hits,
-  const UTHitCount& ut_hit_count,
-  const MiniState& velo_state,
-  const float* ut_dxDy,
-  const bool forward,
+__host__ __device__ bool formClusters(
+  const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  const int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
+  const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  int bestHitCandidateIndices[VeloUTTracking::n_layers],
+  UTHits& ut_hits,
+  UTHitOffsets& ut_hit_offsets,
   TrackHelper& helper,
-  float* x_hit_layer,
-  int* bestHitCandidateIndices)
+  MiniState& state,
+  const float* ut_dxDy,
+  const bool forward)
 {
   // handle forward / backward cluster search
-  int layers[N_LAYERS];
-  for ( int i_layer = 0; i_layer < N_LAYERS; ++i_layer ) {
-      if ( forward ) layers[i_layer] = i_layer;
-      else layers[i_layer] = N_LAYERS - 1 - i_layer;
+  int layers[VeloUTTracking::n_layers];
+  for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+      if ( forward )
+        layers[i_layer] = i_layer;
+      else
+        layers[i_layer] = VeloUTTracking::n_layers - 1 - i_layer;
   }
 
   // Go through the layers
   bool fourLayerSolution = false;
-  int hitCandidateIndices[N_LAYERS];
+  int hitCandidateIndices[VeloUTTracking::n_layers];
+  for ( int i_hit0 = 0; i_hit0 < n_hitCandidatesInLayers[ layers[0] ]; ++i_hit0 ) {
 
-  // Get the needed stuff
-  const float yyProto = velo_state.y - velo_state.ty*velo_state.z;
-
-  // Get windows of layers
-  const int from0 = windows_layers[win_lpos(i_track, layers[0])];
-  const int to0 =   windows_layers[win_hpos(i_track, layers[0])];
-  const int from2 = windows_layers[win_lpos(i_track, layers[2])];
-  const int to2 =   windows_layers[win_hpos(i_track, layers[2])];
-  const int from1 = windows_layers[win_lpos(i_track, layers[1])];
-  const int to1 =   windows_layers[win_hpos(i_track, layers[1])];
-  const int from3 = windows_layers[win_lpos(i_track, layers[3])];
-  const int to3 =   windows_layers[win_hpos(i_track, layers[3])];
-
-  for ( int i_hit0 = from0; i_hit0 < to0; ++i_hit0 ) {
-
-    // x_pos_layers calc
-    // TODO put the .isNotYCompatible check
-    // TODO do that for all the layers
-    const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
-    x_hit_layer[0] = ut_hits.xAt(i_hit0, yy0, ut_dxDy[layers[0]]);
-    // ---------------------------------------
-
-    const float zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
+    const int layer_offset0 = ut_hit_offsets.layer_offset(layers[0]);
+    const int hit_index0    = layer_offset0 + hitCandidatesInLayers[ layers[0] ][i_hit0];
+    const float xhitLayer0  = x_pos_layers[layers[0]][i_hit0];
+    const float zhitLayer0  = ut_hits.zAtYEq0[hit_index0];
     hitCandidateIndices[0] = i_hit0;
+    
+    for ( int i_hit2 = 0; i_hit2 < n_hitCandidatesInLayers[ layers[2] ]; ++i_hit2 ) {
 
-    for ( int i_hit2 = from2; i_hit2 < to2; ++i_hit2 ) {
-      // x_pos_layers calc
-      const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
-      x_hit_layer[2] = ut_hits.xAt(i_hit2, yy2, ut_dxDy[layers[2]]);
-      // ---------------------------------------
-
-      const float zhitLayer2  = ut_hits.zAtYEq0[i_hit2];
+      const int layer_offset2 = ut_hit_offsets.layer_offset(layers[2]);
+      const int hit_index2    = layer_offset2 + hitCandidatesInLayers[ layers[2] ][i_hit2];
+      const float xhitLayer2  = x_pos_layers[layers[2]][i_hit2];
+      const float zhitLayer2  = ut_hits.zAtYEq0[hit_index2];
       hitCandidateIndices[2] = i_hit2;
       
-      const float tx = (x_hit_layer[2] - x_hit_layer[0])/(zhitLayer2 - zhitLayer0);
-      if( std::abs(tx-velo_state.tx) > PrVeloUTConst::deltaTx2 ) continue;
+      const float tx = (xhitLayer2 - xhitLayer0)/(zhitLayer2 - zhitLayer0);
+      if( std::abs(tx-state.tx) > PrVeloUTConst::deltaTx2 ) continue;
             
+      int IndexBestHit1 = -10;
       float hitTol = PrVeloUTConst::hitTol2;
-      int index_best_hit_1 = -1;
+      for ( int i_hit1 = 0; i_hit1 < n_hitCandidatesInLayers[ layers[1] ]; ++i_hit1 ) {
 
-      for ( int i_hit1 = from1; i_hit1 < to1; ++i_hit1 ) {
-        // x_pos_layers calc
-        const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
-        x_hit_layer[1] = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[1]]);
-        // ---------------------------------------        
-        const float zhitLayer1  = ut_hits.zAtYEq0[i_hit1];
+        const int layer_offset1 = ut_hit_offsets.layer_offset(layers[1]);
+        const int hit_index1    = layer_offset1 + hitCandidatesInLayers[ layers[1] ][i_hit1];
+        const float xhitLayer1  = x_pos_layers[layers[1]][i_hit1];
+        const float zhitLayer1  = ut_hits.zAtYEq0[hit_index1];
        
-        const float xextrapLayer1 = x_hit_layer[0] + tx*(zhitLayer1-zhitLayer0);
-        if(std::abs(x_hit_layer[1] - xextrapLayer1) < hitTol){
-          hitTol = std::abs(x_hit_layer[1] - xextrapLayer1);
-          index_best_hit_1 = i_hit1;
+        const float xextrapLayer1 = xhitLayer0 + tx*(zhitLayer1-zhitLayer0);
+        if(std::abs(xhitLayer1 - xextrapLayer1) < hitTol){
+          hitTol = std::abs(xhitLayer1 - xextrapLayer1);
+          IndexBestHit1 = hit_index1;
           hitCandidateIndices[1] = i_hit1;
         }
       } // loop over layer 1
       
-      if( fourLayerSolution && index_best_hit_1 < 0 ) continue;
+      if( fourLayerSolution && IndexBestHit1 < 0 ) continue;
 
-      int index_best_hit_3 = -1;
+      int IndexBestHit3 = -10;
       hitTol = PrVeloUTConst::hitTol2;
+      for ( int i_hit3 = 0; i_hit3 < n_hitCandidatesInLayers[ layers[3] ]; ++i_hit3 ) {
 
-      for ( int i_hit3 = from3; i_hit3 < to3; ++i_hit3 ) {
-        // x_pos_layers calc
-        const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
-        x_hit_layer[3] = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[3]]);
-        // ---------------------------------------      
-        const float zhitLayer3  = ut_hits.zAtYEq0[i_hit3];
+        const int layer_offset3 = ut_hit_offsets.layer_offset(layers[3]);
+        const int hit_index3    = layer_offset3 + hitCandidatesInLayers[ layers[3] ][i_hit3];
+        const float xhitLayer3  = x_pos_layers[layers[3]][i_hit3];
+        const float zhitLayer3  = ut_hits.zAtYEq0[hit_index3];
         
-        const float xextrapLayer3 = x_hit_layer[2] + tx*(zhitLayer3-zhitLayer2);
-        if(std::abs(x_hit_layer[3] - xextrapLayer3) < hitTol){
-          hitTol = std::abs(x_hit_layer[3] - xextrapLayer3);
-          index_best_hit_3 = i_hit3;
+        const float xextrapLayer3 = xhitLayer2 + tx*(zhitLayer3-zhitLayer2);
+        if(std::abs(xhitLayer3 - xextrapLayer3) < hitTol){
+          hitTol = std::abs(xhitLayer3 - xextrapLayer3);
+          IndexBestHit3 = hit_index3;
           hitCandidateIndices[3] = i_hit3;
         }
-      }
+      } // loop over layer 3
      
       // -- All hits found
-      if ( index_best_hit_1 > 0 && index_best_hit_3 > 0 ) {
-        const int hitIndices[4] = {i_hit0, index_best_hit_1, i_hit2, index_best_hit_3};
-        simpleFit<4>(
-          x_hit_layer,
-          hitCandidateIndices,
-          ut_hits, 
-          hitIndices, 
-          velo_state, 
-          ut_dxDy,
-          bestHitCandidateIndices,
-          helper);
+      if ( IndexBestHit1 > 0 && IndexBestHit3 > 0 ) {
+        const int hitIndices[4] = {hit_index0, IndexBestHit1, hit_index2, IndexBestHit3};
+        simpleFit<4>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, state, ut_dxDy);
         
         if(!fourLayerSolution && helper.n_hits > 0){
           fourLayerSolution = true;
@@ -393,74 +243,49 @@ __host__ __device__ bool find_best_hits(
       }
 
       // -- Nothing found in layer 3
-      if( !fourLayerSolution && index_best_hit_1 > 0 ){
-        const int hitIndices[3] = {i_hit0, index_best_hit_1, i_hit2};
-        simpleFit<3>(
-          x_hit_layer,
-          hitCandidateIndices, 
-          ut_hits, 
-          hitIndices, 
-          velo_state, 
-          ut_dxDy,
-          bestHitCandidateIndices,
-          helper);
+      if( !fourLayerSolution && IndexBestHit1 > 0 ){
+        const int hitIndices[3] = {hit_index0, IndexBestHit1, hit_index2};
+        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, state, ut_dxDy);
         continue;
       }
       // -- Nothing found in layer 1
-      if( !fourLayerSolution && x_hit_layer[3] > 0 ){
+      if( !fourLayerSolution && IndexBestHit3 > 0 ){
         hitCandidateIndices[1] = hitCandidateIndices[3];  // hit3 saved in second position of hits4fit
-        const int hitIndices[3] = {i_hit0, index_best_hit_3, i_hit2};
-        simpleFit<3>(
-          x_hit_layer,
-          hitCandidateIndices,  
-          ut_hits, 
-          hitIndices, 
-          velo_state, 
-          ut_dxDy,
-          bestHitCandidateIndices,
-          helper);
+        const int hitIndices[3] = {hit_index0, IndexBestHit3, hit_index2};
+        simpleFit<3>(x_pos_layers, hitCandidateIndices, bestHitCandidateIndices, hitCandidatesInLayers, ut_hits, hitIndices, helper, state, ut_dxDy);
         continue;
       }
+      
     }
   }
 
   return fourLayerSolution;
 }
-
-// -- These things are all hardcopied from the PrTableForFunction
-// -- and PrUTMagnetTool
-// -- If the granularity or whatever changes, this will give wrong results
-// TODO put this as a lambda
-__host__ __device__ int masterIndex(const int index1, const int index2, const int index3){
-  return (index3*11 + index2)*31 + index1;
-}
-
 //=========================================================================
 // Create the Velo-UT tracks
 //=========================================================================
-// TODO put all the "magic" numbers to meaningful constants
 __host__ __device__ void prepareOutputTrack(
-  const int i_track,
   const Velo::Consolidated::Hits& velo_track_hits,
   const uint velo_track_hit_number,
   const TrackHelper& helper,
-  const MiniState& velo_state,
-  const int* windows_layers,
-  const UTHits& ut_hits,
-  const UTHitCount& ut_hit_count,
-  const float* x_hit_layer,
-  const int* hitCandidateIndices,
-  const float* bdlTable,
+  const MiniState& state,
+  int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
+  UTHits& ut_hits,
+  UTHitOffsets& ut_hit_offsets,
+  const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  const int hitCandidateIndices[VeloUTTracking::n_layers],
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
-  int* n_veloUT_tracks) 
-{
+  int* n_veloUT_tracks,
+  const float* bdlTable) {
+
   //== Handle states. copy Velo one, add UT.
-  const float zOrigin = (std::fabs(velo_state.ty) > 0.001)
-    ? velo_state.z - velo_state.y / velo_state.ty
-    : velo_state.z - velo_state.x / velo_state.tx;
+  const float zOrigin = (std::fabs(state.ty) > 0.001)
+    ? state.z - state.y / state.ty
+    : state.z - state.x / state.tx;
 
   // -- These are calculations, copied and simplified from PrTableForFunction
-  const std::array<float,3> var = { velo_state.ty, zOrigin, velo_state.z };
+  const std::array<float,3> var = { state.ty, zOrigin, state.z };
 
   const int index1 = std::max(0, std::min( 30, int((var[0] + 0.3)/0.6*30) ));
   const int index2 = std::max(0, std::min( 10, int((var[1] + 250)/500*10) ));
@@ -490,13 +315,13 @@ __host__ __device__ void prepareOutputTrack(
   bdl += addBdlVal;
   // ----
 
-  const float qpxz2p =-1*std::sqrt(1.+velo_state.ty*velo_state.ty)/bdl*3.3356/Gaudi::Units::GeV;
+  const float qpxz2p =-1*std::sqrt(1.+state.ty*state.ty)/bdl*3.3356/Gaudi::Units::GeV;
   const float qop = (std::abs(bdl) < 1.e-8) ? 0.0 : helper.bestParams[0]*qpxz2p;
 
   // -- Don't make tracks that have grossly too low momentum
   // -- Beware of the momentum resolution!
   const float p  = 1.3*std::abs(1/qop);
-  const float pt = p*std::sqrt(velo_state.tx*velo_state.tx + velo_state.ty*velo_state.ty);
+  const float pt = p*std::sqrt(state.tx*state.tx + state.ty*state.ty);
 
   if( p < PrVeloUTConst::minMomentum || pt < PrVeloUTConst::minPT ) return;
 
@@ -507,6 +332,7 @@ __host__ __device__ void prepareOutputTrack(
   uint n_tracks = *n_veloUT_tracks - 1;
 #endif
 
+  
   const float txUT = helper.bestParams[3];
 
   // TODO: Maybe have a look and optimize this if possible
@@ -526,176 +352,84 @@ __host__ __device__ void prepareOutputTrack(
     assert( track.hitsNum < VeloUTTracking::max_track_size);
     
     const int planeCode = ut_hits.planeCode[hit_index];
-    const float xhit = x_hit_layer[ planeCode ];
-    // const float xhit = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
+    const float xhit = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
     const float zhit = ut_hits.zAtYEq0[hit_index];
 
-    const int layer_offset = ut_hit_count.layer_offsets[ planeCode ];
-    // Search in the window
-
-    // Get windows of layers
-    const int from = windows_layers[win_lpos(i_track, planeCode)];
-    const int to =   windows_layers[win_hpos(i_track, planeCode)];
-    for ( int i_hit = from; i_hit < to; ++i_hit ) {
-      const float zohit  = ut_hits.zAtYEq0[i_hit];
+    const int layer_offset = ut_hit_offsets.layer_offset(planeCode);
+    for ( int i_ohit = 0; i_ohit < n_hitCandidatesInLayers[planeCode]; ++i_ohit ) {
+      const int ohit_index = hitCandidatesInLayers[planeCode][i_ohit];
+      const float zohit  = ut_hits.zAtYEq0[layer_offset + ohit_index];
+      
       if(zohit==zhit) continue;
-
-      const float xohit = x_hit_layer[ planeCode ];
-      // const float xohit = x_pos_layers[ planeCode ][ i_ohit];
+      
+      const float xohit = x_pos_layers[ planeCode ][ i_ohit];
       const float xextrap = xhit + txUT*(zhit-zohit);
       if( xohit-xextrap < -PrVeloUTConst::overlapTol) continue;
       if( xohit-xextrap > PrVeloUTConst::overlapTol) break;
       
-      track.addLHCbID(ut_hits.LHCbID[i_hit]);
+      track.addLHCbID(ut_hits.LHCbID[layer_offset + ohit_index]);
       assert( track.hitsNum < VeloUTTracking::max_track_size);
       
       // -- only one overlap hit
       break;
     }
-
-    // for ( int i_ohit = 0; i_ohit < n_hitCandidatesInLayers[planeCode]; ++i_ohit ) {
-    //   const int ohit_index = hitCandidatesInLayers[planeCode][i_ohit];
-    //   const float zohit  = ut_hits.zAtYEq0[layer_offset + ohit_index];
-      
-    //   if(zohit==zhit) continue;
-      
-    //   const float xohit = x_hit_layers[ planeCode ];
-    //   // const float xohit = x_pos_layers[ planeCode ][ i_ohit];
-    //   const float xextrap = xhit + txUT*(zhit-zohit);
-    //   if( xohit-xextrap < -PrVeloUTConst::overlapTol) continue;
-    //   if( xohit-xextrap > PrVeloUTConst::overlapTol) break;
-      
-    //   track.addLHCbID(ut_hits.LHCbID[layer_offset + ohit_index]);
-    //   assert( track.hitsNum < VeloUTTracking::max_track_size);
-      
-    //   // -- only one overlap hit
-    //   break;
-    // }
   }
   assert( n_tracks < VeloUTTracking::max_num_tracks );
   VeloUT_tracks[n_tracks] = track;
 
   /*
-  outTr.x = velo_state.x;
-  outTr.y = velo_state.y;
-  outTr.z = velo_state.z;
-  outTr.tx = velo_state.tx;
-  outTr.ty = velo_state.ty;
+  outTr.x = state.x;
+  outTr.y = state.y;
+  outTr.z = state.z;
+  outTr.tx = state.tx;
+  outTr.ty = state.ty;
   */
 }
 
-__host__ __device__ void fillArray(
-  int * array,
-  const int size,
-  const size_t value ) {
-  for ( int i = 0; i < size; ++i ) {
-    array[i] = value;
-  }
-}
-
-__host__ __device__ void fillArrayAt(
-  int * array,
-  const int offset,
-  const int n_vals,
-  const size_t value ) {  
-    fillArray( array + offset, n_vals, value ); 
-}
-
-//==============================================================================
-// -- Method to cache some starting points for the search
-// -- This is actually faster than binary searching the full array
-// -- Granularity hardcoded for the moment.
-// -- Idea is: UTb has dimensions in x (at y = 0) of about -860mm -> 860mm
-// -- The indices go from 0 -> 84, and shift by -42, leading to -42 -> 42
-// -- Taking the higher density of hits in the center into account, the positions of the iterators are
-// -- calculated as index*index/2, where index = [ -42, 42 ], leading to
-// -- -882mm -> 882mm
-// -- The last element is an "end" iterator, to make sure we never go out of bound
-//==============================================================================
-__host__ __device__ void fillIterators(
-  UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
-  int posLayers[4][85] )
-{
-    
-  for(int iStation = 0; iStation < 2; ++iStation){
-    for(int iLayer = 0; iLayer < 2; ++iLayer){
-      int layer = 2*iStation + iLayer;
-      int layer_offset = ut_hit_count.layer_offsets[layer];
-      uint n_hits_layer = ut_hit_count.n_hits_layers[layer];
-      
-      size_t pos = 0;
-      // to do: check whether there is an efficient thrust implementation for this
-      fillArray( posLayers[layer], 85, pos );
-      
-      int bound = -42.0;
-      // to do : make copysignf
-      float val = std::copysign(float(bound*bound)/2.0, bound);
-      
-      // TODO add bounds checking
-      for ( ; pos != n_hits_layer; ++pos) {
-        while( ut_hits.xAtYEq0[layer_offset + pos] > val){
-          posLayers[layer][bound+42] = pos;
-          ++bound;
-          val = std::copysign(float(bound*bound)/2.0, bound);
-        }
-      }
-      
-      fillArrayAt(
-        posLayers[layer],
-        42 + bound,
-        85 - 42 - bound,
-        n_hits_layer
-      );
-    }
-  }
-}
-
-
-//==============================================================================
-// Finds the hits in a given layer within a certain range
-//==============================================================================
+// ==============================================================================
+// -- Finds the hits in a given layer within a certain range
+// ==============================================================================
 __host__ __device__ void findHits( 
-  const size_t posBeg,
-  const size_t posEnd,
-  const UTHits& ut_hits,
-  const uint layer_offset,
-  const float ut_dxDy,
+  const uint lowerBoundSectorGroup,
+  const uint upperBoundSectorGroup,
+  UTHits& ut_hits,
+  UTHitOffsets& ut_hit_offsets,
+  uint layer_offset,
+  const int i_layer,
+  const float* ut_dxDy,
   const MiniState& myState, 
   const float xTolNormFact,
   const float invNormFact,
   int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
   int &n_hitCandidatesInLayer,
-  float x_pos_layers[VeloUTTracking::max_hit_candidates_per_layer])
+  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer])
 {
-  const float zInit = ut_hits.zAtYEq0[layer_offset + posBeg];
-  const float yApprox = myState.y + myState.ty * (zInit - myState.z);
-  
-  size_t pos = posBeg;
-  while ( 
-   pos <= posEnd && 
-   ut_hits.isNotYCompatible( layer_offset + pos, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(xTolNormFact) )
-   ) { ++pos; }
+  const uint posBeg = ut_hit_offsets.sector_group_offset(lowerBoundSectorGroup) - layer_offset;
+  const uint posEnd = ut_hit_offsets.sector_group_offset(upperBoundSectorGroup)
+    + ut_hit_offsets.sector_group_number_of_hits(upperBoundSectorGroup) - layer_offset;
 
-  const float xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
-  const float yyProto =       myState.y - myState.ty*myState.z;
-  
-  for (int i=pos; i<posEnd; ++i) {
-    const float xx = ut_hits.xAt(layer_offset + i, yApprox, ut_dxDy); 
-    const float dx = xx - xOnTrackProto;
+  const auto zInit = ut_hits.zAtYEq0[layer_offset + posBeg];
+  const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
+  const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
+  const auto yyProto =       myState.y - myState.ty*myState.z;
+  const float dxDy = ut_dxDy[i_layer];
+
+  for (int i=posBeg; i<posEnd; ++i) {
+    const auto xx = ut_hits.xAt(layer_offset + i, yApprox, dxDy); 
+    const auto dx = xx - xOnTrackProto;
     
     if( dx < -xTolNormFact ) continue;
-    if( dx >  xTolNormFact ) break; 
+    if( dx >  xTolNormFact ) continue; 
     
     // -- Now refine the tolerance in Y
     if ( ut_hits.isNotYCompatible( layer_offset + i, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx*invNormFact)) ) continue;
     
-    const float zz = ut_hits.zAtYEq0[layer_offset + i]; 
-    const float yy = yyProto +  myState.ty*zz;
-    const float xx2 = ut_hits.xAt(layer_offset + i, yy, ut_dxDy);
+    const auto zz = ut_hits.zAtYEq0[layer_offset + i]; 
+    const auto yy = yyProto +  myState.ty*zz;
+    const auto xx2 = ut_hits.xAt(layer_offset + i, yy, dxDy);
         
     hitCandidatesInLayer[n_hitCandidatesInLayer] = i;
-    x_pos_layers[n_hitCandidatesInLayer] = xx2;
+    x_pos_layers[i_layer][n_hitCandidatesInLayer] = xx2;
     
     n_hitCandidatesInLayer++;
 
@@ -707,3 +441,5 @@ __host__ __device__ void findHits(
     assert( hitCandidatesInLayer[i_hit] < VeloUTTracking::max_numhits_per_event );
   }
 }
+
+

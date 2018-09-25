@@ -9,6 +9,7 @@ include_directories(../main/include)
 include_directories(../cuda/utils/prefix_sum/include)
 include_directories(../cuda/utils/sorting/include)
 include_directories(../cuda/event_model/velo/include)
+include_directories(../cuda/event_model/common/include)
 include_directories(../cuda/UT/common/include)
 include_directories(../cuda/UT/UTDecoding/include)
 include_directories(../cuda/UT/sorting/include)
@@ -21,6 +22,8 @@ include_directories(../cuda/velo/mask_clustering/include)
 include_directories(../cuda/velo/prefix_sum/include)
 include_directories(../cuda/velo/search_by_triplet/include)
 include_directories(../cuda/velo/simplified_kalman_filter/include)
+include_directories(../cuda/SciFi/preprocessing/include)
+include_directories(../cuda/SciFi/common/include)
 include_directories(../x86/velo/clustering/include)
 include_directories(../x86/veloUT/PrVeloUT/include)
 include_directories(../checker/tracking/include)
@@ -51,6 +54,7 @@ if ( ROOT_FOUND )
   Utils
   Velo
   UT
+  SciFi
   x86VeloUT
   ${ROOT_LIBRARIES})
 else()
@@ -58,5 +62,6 @@ else()
   Utils
   Velo
   UT
+  SciFi
   x86VeloUT)
 endif()

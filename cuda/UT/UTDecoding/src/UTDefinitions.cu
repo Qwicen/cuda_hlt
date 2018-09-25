@@ -1,21 +1,5 @@
 #include "UTDefinitions.cuh"
 
-void UTHitCount::typecast_before_prefix_sum(
-  uint* base_pointer,
-  const uint event_number
-) {
-  n_hits_layers = base_pointer + event_number * VeloUTTracking::n_layers;
-}
-
-void UTHitCount::typecast_after_prefix_sum(
-  uint* base_pointer,
-  const uint event_number,
-  const uint number_of_events
-) {
-  layer_offsets = base_pointer + event_number * VeloUTTracking::n_layers;
-  n_hits_layers = base_pointer + number_of_events * VeloUTTracking::n_layers + 1 + event_number * VeloUTTracking::n_layers;
-}
-
 UTBoards::UTBoards(const std::vector<char> & ut_boards) {
   uint32_t * p = (uint32_t *) ut_boards.data();
   number_of_boards   = *p; p += 1;
@@ -80,7 +64,7 @@ __device__ __host__ UTRawBank::UTRawBank (
 ) {
   uint32_t* p = (uint32_t*) ut_raw_bank;
   sourceID       = *p;               p+=1;
-  number_of_hits = *p & 0x0000FFFFU; p+=1; 
+  number_of_hits = *p & 0x0000FFFFU; p+=1;
   data           = (uint16_t*)p;
 }
 
@@ -89,7 +73,7 @@ __device__ __host__ UTRawEvent::UTRawEvent (
 ) {
   uint32_t* p = (uint32_t *) ut_raw_event;
   number_of_raw_banks = *p; p += 1;
-  raw_bank_offsets    =  p; p += number_of_raw_banks;
+  raw_bank_offsets    =  p; p += (number_of_raw_banks + 1);
   data                =  (char*) p;
 }
 
@@ -156,4 +140,3 @@ UTHit UTHits::getHit(uint32_t index) const {
    planeCode[index]
  };
 }
-

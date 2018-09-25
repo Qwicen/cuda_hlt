@@ -1,4 +1,4 @@
-#include "SequenceSetup.cuh" 
+#include "SequenceSetup.cuh"
 
 std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_names() {
   std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> a;
@@ -22,9 +22,15 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_single_block_ut_hits] = "Prefix sum single block (3) UT hits";
   a[seq::prefix_sum_scan_ut_hits] = "Prefix sum scan (3) UT hits";
   a[seq::decode_raw_banks] = "UT decode_raw_banks";
-  a[seq::sort_by_x] = "Sort hits by X";
+  a[seq::sort_by_y] = "Sort by Y";
   a[seq::veloUT] = "VeloUT tracking";
   a[seq::compassUT] = "compassUT tracking";
+  a[seq::estimate_cluster_count] = "Estimate SciFi cluster count";
+  a[seq::prefix_sum_reduce_ut_hits] = "Prefix sum reduce (4) SciFi hits";
+  a[seq::prefix_sum_single_block_ut_hits] = "Prefix sum single block (4) SciFi hits";
+  a[seq::prefix_sum_scan_ut_hits] = "Prefix sum scan (4) SciFi hits";
+  a[seq::raw_bank_decoder] = "Decode SciFi raw banks";
+  a[seq::scifi_sort_by_x] = "Sort SciFi hits by X";
   return a;
 }
 
@@ -54,6 +60,7 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_velo_states] = "dev_velo_states";
   a[arg::dev_ut_raw_input] = "dev_ut_raw_input";
   a[arg::dev_ut_raw_input_offsets] = "dev_ut_raw_input_offsets";
+  a[arg::dev_ut_hit_offsets] = "dev_ut_hit_offsets";
   a[arg::dev_ut_hit_count] = "dev_ut_hit_count";
   a[arg::dev_ut_hits] = "dev_ut_hits";
   a[arg::dev_ut_hit_permutations] = "dev_ut_hit_permutations";
@@ -62,6 +69,12 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_compassUT_tracks] = "dev_compassUT_tracks";
   a[arg::dev_atomics_compassUT] = "dev_atomics_compassUT";
   a[arg::dev_active_tracks] = "dev_active_tracks";
+  a[arg::dev_scifi_raw_input] = "dev_scifi_raw_input";
+  a[arg::dev_scifi_raw_input_offsets] = "dev_scifi_raw_input_offsets";
+  a[arg::dev_scifi_hit_count] = "dev_scifi_hit_count";
+  a[arg::dev_scifi_hit_permutations] = "dev_scifi_hit_permutations";
+  a[arg::dev_prefix_sum_auxiliary_array_4] = "dev_prefix_sum_auxiliary_array_4";
+  a[arg::dev_scifi_hits] = "dev_scifi_hits";
   return a;
 }
 
@@ -168,34 +181,35 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
   sequence_dependencies[seq::ut_calculate_number_of_hits] = {
     arg::dev_ut_raw_input,
     arg::dev_ut_raw_input_offsets,
-    arg::dev_ut_hit_count
+    arg::dev_ut_hit_offsets
   };
   sequence_dependencies[seq::prefix_sum_reduce_ut_hits] = {
-    arg::dev_ut_hit_count,
+    arg::dev_ut_hit_offsets,
     arg::dev_prefix_sum_auxiliary_array_3
   };
   sequence_dependencies[seq::prefix_sum_single_block_ut_hits] = {
-    arg::dev_ut_hit_count,
+    arg::dev_ut_hit_offsets,
     arg::dev_prefix_sum_auxiliary_array_3
   };
   sequence_dependencies[seq::prefix_sum_scan_ut_hits] = {
-    arg::dev_ut_hit_count,
+    arg::dev_ut_hit_offsets,
     arg::dev_prefix_sum_auxiliary_array_3
   };
   sequence_dependencies[seq::decode_raw_banks] = {
     arg::dev_ut_raw_input,
     arg::dev_ut_raw_input_offsets,
     arg::dev_ut_hits,
+    arg::dev_ut_hit_offsets,
     arg::dev_ut_hit_count
   };
-  sequence_dependencies[seq::sort_by_x] = {
+  sequence_dependencies[seq::sort_by_y] = {
     arg::dev_ut_hits,
-    arg::dev_ut_hit_count,
+    arg::dev_ut_hit_offsets,
     arg::dev_ut_hit_permutations
   };
   sequence_dependencies[seq::veloUT] = {
     arg::dev_ut_hits,
-    arg::dev_ut_hit_count,
+    arg::dev_ut_hit_offsets,
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,
@@ -214,6 +228,34 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_compassUT_tracks,
     arg::dev_atomics_compassUT,
     arg::dev_active_tracks
+  };
+  sequence_dependencies[seq::estimate_cluster_count] = {
+    arg::dev_scifi_raw_input,
+    arg::dev_scifi_raw_input_offsets,
+    arg::dev_scifi_hit_count
+  };
+  sequence_dependencies[seq::prefix_sum_reduce_scifi_hits] = {
+    arg::dev_scifi_hit_count,
+    arg::dev_prefix_sum_auxiliary_array_4
+  };
+  sequence_dependencies[seq::prefix_sum_single_block_scifi_hits] = {
+    arg::dev_scifi_hit_count,
+    arg::dev_prefix_sum_auxiliary_array_4
+  };
+  sequence_dependencies[seq::prefix_sum_scan_scifi_hits] = {
+    arg::dev_scifi_hit_count,
+    arg::dev_prefix_sum_auxiliary_array_4
+  };
+  sequence_dependencies[seq::raw_bank_decoder] = {
+    arg::dev_scifi_raw_input,
+    arg::dev_scifi_raw_input_offsets,
+    arg::dev_scifi_hit_count,
+    arg::dev_scifi_hits
+  };
+  sequence_dependencies[seq::scifi_sort_by_x] = {
+    arg::dev_scifi_hits,
+    arg::dev_scifi_hit_count,
+    arg::dev_scifi_hit_permutations
   };
 
   return sequence_dependencies;

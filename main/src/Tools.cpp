@@ -1,8 +1,8 @@
 #include "Tools.h"
 
 bool check_velopix_events(
-  const std::vector<char> events,
-  const std::vector<uint> event_offsets,
+  const std::vector<char>& events,
+  const std::vector<uint>& event_offsets,
   int n_events
 ) {
   int error_count = 0;
@@ -47,43 +47,6 @@ bool check_velopix_events(
   return true;
 }
 
-// void check_ut_events(
-//   const VeloUTTracking::HitsSoA *hits_layers_events,
-//   const int n_events
-// ) {
-//   float average_number_of_hits_per_event = 0;
-  
-//   for ( int i_event = 0; i_event < n_events; ++i_event ) {
-//     float number_of_hits = 0;
-//     const VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
-
-//     for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
-//       debug_cout << "checks on layer " << i_layer << ", with " << hits_layers.n_hits_layers[i_layer] << " hits" << std::endl;
-//       number_of_hits += hits_layers.n_hits_layers[i_layer];
-//       int layer_offset = hits_layers.layer_offset[i_layer];
-//       for ( int i_hit = 0; i_hit < 3; ++i_hit ) {
-//         printf("\t at hit %u, cos = %f, yBegin = %f, yEnd = %f, zAtyEq0 = %f, xAtyEq0 = %f, weight = %f, highThreshold = %u, LHCbID = %u, dxDy = %f \n",
-//         i_hit,
-//         hits_layers.m_cos[ layer_offset + i_hit ],
-//         hits_layers.m_yBegin[ layer_offset + i_hit ],
-//         hits_layers.m_yEnd[ layer_offset + i_hit ],
-//         hits_layers.m_zAtYEq0[ layer_offset + i_hit ],
-//         hits_layers.m_xAtYEq0[ layer_offset + i_hit ],
-//         hits_layers.m_weight[ layer_offset + i_hit ],
-//         hits_layers.m_highThreshold[ layer_offset + i_hit ],
-//         hits_layers.m_LHCbID[ layer_offset + i_hit ],
-//         hits_layers.dxDy( layer_offset + i_hit ) );
-//       }
-//     }
-    
-//     average_number_of_hits_per_event += number_of_hits;
-//     debug_cout << "# of UT hits = " << number_of_hits << std::endl;
-//   }
-
-//   average_number_of_hits_per_event = average_number_of_hits_per_event / n_events;
-//   debug_cout << "average # of UT hits / event = " << average_number_of_hits_per_event << std::endl;
-// }
-
 /**
  * @brief Obtains results statistics.
  */
@@ -112,50 +75,6 @@ std::map<std::string, float> calcResults(std::vector<float>& times){
     results["max"] = max;
 
     return results;
-}
-
-void check_roughly(
-  const trackChecker::Tracks& tracks,
-  const std::vector<uint32_t> hit_IDs,
-  const MCParticles mcps
-) {
-  int matched = 0;
-  for ( auto track : tracks ) {
-    std::vector< uint32_t > mcp_ids;
-    
-    for ( LHCbID id : track.ids() ) {
-      uint32_t id_int = uint32_t( id );
-      // find associated IDs from mcps
-      for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
-        MCParticle part = mcps[i_mcp];
-        auto it = std::find( part.hits.begin(), part.hits.end(), id_int );
-        if ( it != part.hits.end() ) {
-          mcp_ids.push_back( i_mcp );
-        }
-      }
-    }
-    
-    printf("# of hits on track = %u, # of MCP ids = %u \n", track.nIDs(), uint32_t( mcp_ids.size() ) );
-    
-    for ( int i_id = 0; i_id < mcp_ids.size(); ++i_id ) {
-      uint32_t mcp_id = mcp_ids[i_id];
-      printf("\t mcp id = %u \n", mcp_id);
-      // how many same mcp IDs are there?
-      int n_same = count( mcp_ids.begin(), mcp_ids.end(), mcp_id );
-      if ( float(n_same) / track.nIDs() >= 0.7 ) {
-          matched++;
-          break;
-      }
-    }
-  }
-
-  int long_tracks = 0;
-  for (auto& part : mcps) {
-    if (part.isLong)
-      long_tracks++;
-  }
-  
-  printf("efficiency = %f \n", float(matched) / long_tracks );
 }
 
 std::vector<trackChecker::Tracks> prepareTracks(
@@ -188,7 +107,6 @@ std::vector<trackChecker::Tracks> prepareTracks(
   
   return all_tracks;
 }
-
 
 trackChecker::Tracks prepareVeloUTTracksEvent(
   const VeloUTTracking::TrackUT* veloUT_tracks,
@@ -232,21 +150,21 @@ void call_pr_checker(
   const std::string& trackType
 ) {
   if ( trackType == "Velo" ) {
-    callPrChecker< TrackCheckerVelo> (
+    call_pr_checker_impl<TrackCheckerVelo> (
       all_tracks,
       folder_name_MC,
       start_event_offset,
       trackType);
   }
   else if ( trackType == "VeloUT" ) {
-    callPrChecker< TrackCheckerVeloUT> (
+    call_pr_checker_impl<TrackCheckerVeloUT> (
       all_tracks,
       folder_name_MC,
       start_event_offset,
       trackType);
   }
   else {
-    error_cout << "unknown track type: " << trackType << std::endl;
+    error_cout << "Unknown track type: " << trackType << std::endl;
   }
 }
 

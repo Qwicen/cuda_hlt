@@ -1,4 +1,4 @@
-/** @file MCAssociator.cc
+/** @file MCAssociator.cpp
  *
  * @brief a simple MC associator
  *

@@ -17,6 +17,7 @@ __device__ void process_modules(
   const float* hit_Xs,
   const float* hit_Ys,
   const float* hit_Zs,
+  const float* hit_Phis,
   uint* weaktracks_insert_pointer,
   uint* tracklets_insert_pointer,
   uint* ttf_insert_pointer,
@@ -28,5 +29,6 @@ __device__ void process_modules(
   const uint number_of_hits,
   unsigned short* h1_rel_indices,
   uint* local_number_of_hits,
-  const uint hit_offset
+  const uint hit_offset,
+  const float* dev_velo_module_zs
 );

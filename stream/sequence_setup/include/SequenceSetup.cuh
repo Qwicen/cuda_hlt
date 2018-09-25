@@ -7,10 +7,13 @@
 #include "PrefixSum.cuh"
 #include "SearchByTriplet.cuh"
 #include "VeloKalmanFilter.cuh"
-#include "UTDecoding.cuh"
 #include "VeloUT.cuh"
 #include "compassUT.cuh"
-#include "SortByX.cuh"
+#include "SortByY.cuh"
+#include "UTDecoding.cuh"
+#include "EstimateClusterCount.cuh"
+#include "RawBankDecoder.cuh"
+#include "SciFiSortByX.cuh"
 #include "Argument.cuh"
 #include "Sequence.cuh"
 #include "TupleIndicesChecker.cuh"
@@ -44,9 +47,15 @@ constexpr auto sequence_algorithms() {
     prefix_sum_single_block,
     prefix_sum_scan,
     decode_raw_banks,
-    sort_by_x,
+    sort_by_y,
     veloUT,
-    compassUT
+    compassUT,
+    estimate_cluster_count,
+    prefix_sum_reduce,
+    prefix_sum_single_block,
+    prefix_sum_scan,
+    raw_bank_decoder,
+    scifi_sort_by_x
   );
 }
 
@@ -97,6 +106,7 @@ using argument_tuple_t = std::tuple<
   // Error: Internal Compiler Error (codegen): "there was an error in verifying the lgenfe output!"
   Argument<arg::dev_ut_raw_input, uint>,
   Argument<arg::dev_ut_raw_input_offsets, uint>,
+  Argument<arg::dev_ut_hit_offsets, uint>,
   Argument<arg::dev_ut_hit_count, uint>,
   Argument<arg::dev_prefix_sum_auxiliary_array_3, uint>,
   Argument<arg::dev_ut_hits, uint>,
@@ -105,7 +115,13 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_atomics_veloUT, int>,
   Argument<arg::dev_compassUT_tracks, VeloUTTracking::TrackUT>,
   Argument<arg::dev_atomics_compassUT, int>,
-  Argument<arg::dev_active_tracks, int>
+  Argument<arg::dev_active_tracks, int>,
+  Argument<arg::dev_scifi_raw_input_offsets, uint>,
+  Argument<arg::dev_scifi_hit_count, uint>,
+  Argument<arg::dev_prefix_sum_auxiliary_array_4, uint>,
+  Argument<arg::dev_scifi_hit_permutations, uint>,
+  Argument<arg::dev_scifi_hits, char>,
+  Argument<arg::dev_scifi_raw_input, char>
 >;
 
 /**
@@ -122,7 +138,7 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
  * @brief Retrieves the sequence dependencies.
  * @details The sequence dependencies specifies for each algorithm
  *          in the sequence the datatypes it depends on from the arguments.
- *          
+ *
  *          Note that this vector of arguments may vary from the actual
  *          arguments in the kernel invocation: ie. some cases:
  *          * if something is passed by value
