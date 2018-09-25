@@ -27,7 +27,8 @@ enum seq_enum_t {
   prefix_sum_scan_ut_hits,
   decode_raw_banks,
   sort_by_x,
-  veloUT
+  veloUT,
+  compassUT
 };
 }
 
@@ -66,6 +67,8 @@ enum arg_enum_t {
   dev_ut_hit_permutations,
   dev_veloUT_tracks,
   dev_atomics_veloUT,
+  dev_compassUT_tracks,
+  dev_atomics_compassUT,
   dev_active_tracks
 };
 }

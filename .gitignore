@@ -9,6 +9,8 @@ mcdata/*.dat
 mcdata_old
 build
 build*
+debug
+debug*
 *~
 #~
 .#*

@@ -417,6 +417,27 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::veloUT>().invoke();
 
+    // compassUT tracking
+    argument_sizes[arg::dev_compassUT_tracks] = argen.size<arg::dev_compassUT_tracks>(number_of_events * VeloUTTracking::max_num_tracks);
+    argument_sizes[arg::dev_atomics_compassUT] = argen.size<arg::dev_atomics_compassUT>(VeloUTTracking::num_atomics * number_of_events);
+    argument_sizes[arg::dev_active_tracks] = argen.size<arg::dev_active_tracks>(number_of_events);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::compassUT>().set_opts(dim3(number_of_events), dim3(VeloUTTracking::num_threads), stream);
+    sequence.item<seq::compassUT>().set_arguments(
+      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_count>(argument_offsets),
+      argen.generate<arg::dev_atomics_storage>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hits>(argument_offsets),
+      argen.generate<arg::dev_velo_states>(argument_offsets),
+      dev_ut_magnet_tool,
+      constants.dev_ut_dxDy,
+      argen.generate<arg::dev_active_tracks>(argument_offsets),
+      argen.generate<arg::dev_compassUT_tracks>(argument_offsets),
+      argen.generate<arg::dev_atomics_compassUT>(argument_offsets)
+    );
+    sequence.item<seq::compassUT>().invoke();
+
     // Transmission device to host
     // Velo tracks
     cudaCheck(cudaMemcpyAsync(host_velo_tracks_atomics, argen.generate<arg::dev_atomics_storage>(argument_offsets), (2 * number_of_events + 1) * sizeof(uint), cudaMemcpyDeviceToHost, stream));

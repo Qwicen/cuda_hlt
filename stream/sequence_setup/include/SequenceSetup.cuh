@@ -7,8 +7,9 @@
 #include "PrefixSum.cuh"
 #include "SearchByTriplet.cuh"
 #include "VeloKalmanFilter.cuh"
-#include "VeloUT.cuh"
 #include "UTDecoding.cuh"
+#include "VeloUT.cuh"
+#include "compassUT.cuh"
 #include "SortByX.cuh"
 #include "Argument.cuh"
 #include "Sequence.cuh"
@@ -44,7 +45,8 @@ constexpr auto sequence_algorithms() {
     prefix_sum_scan,
     decode_raw_banks,
     sort_by_x,
-    veloUT
+    veloUT,
+    compassUT
   );
 }
 
@@ -101,6 +103,8 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_ut_hit_permutations, uint>,
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
   Argument<arg::dev_atomics_veloUT, int>,
+  Argument<arg::dev_compassUT_tracks, VeloUTTracking::TrackUT>,
+  Argument<arg::dev_atomics_compassUT, int>,
   Argument<arg::dev_active_tracks, int>
 >;
 

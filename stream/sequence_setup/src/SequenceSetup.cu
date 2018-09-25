@@ -24,6 +24,7 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::decode_raw_banks] = "UT decode_raw_banks";
   a[seq::sort_by_x] = "Sort hits by X";
   a[seq::veloUT] = "VeloUT tracking";
+  a[seq::compassUT] = "compassUT tracking";
   return a;
 }
 
@@ -58,6 +59,8 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_ut_hit_permutations] = "dev_ut_hit_permutations";
   a[arg::dev_veloUT_tracks] = "dev_veloUT_tracks";
   a[arg::dev_atomics_veloUT] = "dev_atomics_veloUT";
+  a[arg::dev_compassUT_tracks] = "dev_compassUT_tracks";
+  a[arg::dev_atomics_compassUT] = "dev_atomics_compassUT";
   a[arg::dev_active_tracks] = "dev_active_tracks";
   return a;
 }
@@ -201,6 +204,17 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_atomics_veloUT,
     arg::dev_active_tracks
   };
+  sequence_dependencies[seq::compassUT] = {
+    arg::dev_ut_hits,
+    arg::dev_ut_hit_count,
+    arg::dev_atomics_storage,
+    arg::dev_velo_track_hit_number,
+    arg::dev_velo_track_hits,
+    arg::dev_velo_states,
+    arg::dev_compassUT_tracks,
+    arg::dev_atomics_compassUT,
+    arg::dev_active_tracks
+  };
 
   return sequence_dependencies;
 }
@@ -211,6 +225,8 @@ std::vector<int> get_sequence_output_arguments() {
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,
     arg::dev_atomics_veloUT,
-    arg::dev_veloUT_tracks
+    arg::dev_veloUT_tracks,
+    arg::dev_atomics_compassUT,
+    arg::dev_compassUT_tracks
   };
 }
