@@ -30,20 +30,7 @@ You can check your compiler standard compatibility by scrolling to the `C++14 fe
 
 Optional: you can compile the project with ROOT. Then, trees will be filled with variables to check when running the VeloUT algorithm on x86 architecture.
 
-<details><summary>Building and running inside Docker: (click to expand)</summary><p>
-
-The following lines will build the code base from any computer with NVidia-Docker, assuming you are in the directory with the code checkout and want to build in `build`:
-
-```bash
-docker run --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 --rm -v $(pwd):/cuda_hlt -it nvidia/cuda:9.2-devel-ubuntu18.04 bash
-
-apt update && apt install -y cmake libtbb-dev
-mkdir build
-cmake ..
-make
-```
-
-</p></details>
+[Building and running inside Docker](readme_docker.md)
 
 Where to find input
 -------------
@@ -76,11 +63,11 @@ Some binary input files are included with the project for testing.
 A run of the program with no arguments will let you know the basic options:
 
     Usage: ./cu_hlt
-    -f {folder containing .bin files with VP raw bank information}
+    -f {folder containing bin files with VP raw bank information}
     -u {folder containing bin files with UT raw bank information}
-    -i {folder containing .bin files with SciFi raw bank information}
+    -i {folder containing bin files with SciFi raw bank information}
     -g {folder containing detector configuration}
-    -d {folder containing .bin files with MC truth information}
+    -d {folder containing bin files with MC truth information}
     -n {number of events to process}=0 (all)
     -o {offset of events from which to start}=0 (beginning)
     -t {number of threads / streams}=1
@@ -96,15 +83,15 @@ A run of the program with no arguments will let you know the basic options:
 Here are some example run options:
 
     # Run all input files once with the tracking validation
-    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -i ../input/minbias/scifi_raw/ -d ../input/minbias/MC_info/ -c 1
+    ./cu_hlt
 
     # Run a total of 1000 events, round robin over the existing ones, without tracking validation
-    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -i ../input/minbias/scifi_raw/ -d ../input/minbias/MC_info/ -c 0 -n 1000
+    ./cu_hlt -c 0 -n 1000
 
     # Run four streams, each with 4000 events, 20 repetitions
-    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -i ../input/minbias/scifi_raw/ -d ../input/minbias/MC_info/ -t 4 -n 4000 -r 20 -c 0
+    ./cu_hlt -t 4 -n 4000 -r 20 -c 0
 
     # Run one stream and print all memory allocations
-    ./cu_hlt -f ../input/minbias/velopix_raw/ -u ../input/minbias/ut_raw/ -g ../input/detector_configuration/ -i ../input/minbias/scifi_raw/ -d ../input/minbias/MC_info/ -n 5000 -t 1 -r 1 -p
+    ./cu_hlt -n 5000 -p
 
 [This readme](readme_cuda_developer.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define global memory variables for this sequence and pass on the dependencies.
