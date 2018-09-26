@@ -4,6 +4,7 @@
 // #include "device_launch_parameters.h"
 // #include "Common.h"
 #include "VeloDefinitions.cuh"
+#include "VeloConsolidated.cuh"
 
 #include <cassert>
 
@@ -31,6 +32,7 @@ static constexpr uint max_hit_candidates_per_layer = 100;
 static constexpr uint max_num_tracks = 400; // TODO: what is the best / safest value here?
 static constexpr uint max_track_size = VeloTracking::max_track_size + 8; // TODO: double check what the max # of hits added in UT really is
 
+static constexpr uint window_search_num_threads = 512;
 static constexpr uint num_threads = 32;
 
 struct TrackUT {
@@ -67,3 +69,15 @@ struct TrackHits {
   
 }
 
+struct MiniState {
+  float x, y, tx, ty, z;
+
+  __host__ __device__ MiniState(
+    const Velo::Consolidated::States& velo_states,
+    const uint index
+  ) : x(velo_states.x[index]),
+    y(velo_states.y[index]),
+    tx(velo_states.tx[index]),
+    ty(velo_states.ty[index]),
+    z(velo_states.z[index]) {}
+};

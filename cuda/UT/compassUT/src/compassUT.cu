@@ -14,7 +14,8 @@ __global__ void compassUT(
   const uint* dev_unique_x_sector_offsets, // TODO remove this, only needed for decoding
   const float* dev_unique_sector_xs, // list of xs that define the groups
   VeloUTTracking::TrackUT* dev_compassUT_tracks,
-  int* dev_atomics_compassUT) // size of number of events
+  int* dev_atomics_compassUT, // size of number of events
+  int* dev_windows_layers)
 {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
@@ -63,86 +64,86 @@ __global__ void compassUT(
   
   for ( int i = threadIdx.x; i < number_of_tracks_event; i+=blockDim.x) {
 
+    // // __syncthreads();
+
+    // const uint velo_states_index = event_tracks_offset + i;
+    // if (!velo_states.backward[velo_states_index]) {
+    //   // Using Mini State with only x, y, tx, ty and z
+    //   if(velo_track_in_UTA_acceptance(MiniState{velo_states, velo_states_index})) {
+    //     int current_active_track = atomicAdd(active_tracks, 1);
+    //     shared_active_tracks[current_active_track] = i;
+    //   }
+    // }
+
+    // // TODO the non active tracks should be -1 
+
     // __syncthreads();
 
-    const uint velo_states_index = event_tracks_offset + i;
-    if (!velo_states.backward[velo_states_index]) {
-      // Using Mini State with only x, y, tx, ty and z
-      if(velo_track_in_UTA_acceptance(BasicState{velo_states, velo_states_index})) {
-        int current_active_track = atomicAdd(active_tracks, 1);
-        shared_active_tracks[current_active_track] = i;
-      }
-    }
+    // if (*active_tracks >= VeloUTTracking::num_threads) {
 
-    // TODO the non active tracks should be -1 
+    //   const int i_track = shared_active_tracks[threadIdx.x];
 
-    __syncthreads();
+    //   // for storing calculated x position of hits for this track
+    //   // float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
 
-    if (*active_tracks >= VeloUTTracking::num_threads) {
+    //   // store a window(2 positions) for each layer, for each thrack
+    //   int windows_layers[VeloUTTracking::num_threads * VeloUTTracking::n_layers * 2];
+    //   // TODO change to num_tracks
+    //   // TODO move to global
 
-      const int i_track = shared_active_tracks[threadIdx.x];
+    //   // MiniState aux_velo_state {velo_states, velo_states_index};
+    //   const uint velo_states_index = event_tracks_offset + i_track;
+    //   const MiniState velo_state {velo_states, velo_states_index};
 
-      // for storing calculated x position of hits for this track
-      // float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
+    //   get_windows(
+    //     i_track,
+    //     velo_state,
+    //     fudgeFactors,
+    //     ut_hits,
+    //     ut_hit_offsets,
+    //     dev_ut_dxDy,
+    //     dev_unique_sector_xs,
+    //     // dev_unique_x_sector_offsets,
+    //     dev_unique_x_sector_layer_offsets,
+    //     velo_tracks,
+    //     (int*) &windows_layers[0]);
 
-      // store a window(2 positions) for each layer, for each thrack
-      int windows_layers[VeloUTTracking::num_threads * N_LAYERS * 2];
-      // TODO change to num_tracks
-      // TODO move to global
+    //   __syncthreads();
 
-      // MiniState aux_velo_state {velo_states, velo_states_index};
-      const uint velo_states_index = event_tracks_offset + i_track;
-      const BasicState velo_state {velo_states, velo_states_index};
+    //   // float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
 
-      get_windows(
-        i_track,
-        velo_state,
-        fudgeFactors,
-        ut_hits,
-        ut_hit_offsets,
-        dev_ut_dxDy,
-        dev_unique_sector_xs,
-        // dev_unique_x_sector_offsets,
-        dev_unique_x_sector_layer_offsets,
-        velo_tracks,
-        (int*) &windows_layers[0]);
+    //   TrackHelper helper {velo_state};
 
-  //     __syncthreads();
+    //   // indices within hitCandidatesInLayers for selected hits belonging to best track 
+    //   float x_hit_layer[VeloUTTracking::n_layers];
+    //   int hitCandidateIndices[VeloUTTracking::n_layers];
 
-  //     // float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
-
-  //     TrackHelper helper {velo_state};
-
-  //     // indices within hitCandidatesInLayers for selected hits belonging to best track 
-  //     float x_hit_layer[N_LAYERS];
-  //     int hitCandidateIndices[N_LAYERS];
-
-  //     // go through UT layers in forward direction
-  //     if(!find_best_hits(
-  //           i_track,
-  //           (int*) &windows_layers[0],
-  //           ut_hits,
-  //           ut_hit_count,
-  //           velo_state,
-  //           dev_ut_dxDy,
-  //           true,
-  //           helper,
-  //           x_hit_layer,
-  //           hitCandidateIndices)) {
+    //   // go through UT layers in forward direction
+    //   if(!find_best_hits(
+    //         i_track,
+    //         (int*) &windows_layers[0],
+    //         ut_hits,
+    //         ut_hit_count,
+    //         velo_state,
+    //         dev_ut_dxDy,
+    //         true,
+    //         helper,
+    //         x_hit_layer,
+    //         hitCandidateIndices)) {
         
-  //       // go through UT layers in backward direction
-  //       find_best_hits(
-  //           i_track,
-  //           (int*) &windows_layers[0],
-  //           ut_hits,
-  //           ut_hit_count,
-  //           velo_state,
-  //           dev_ut_dxDy,
-  //           false,
-  //           helper,
-  //           x_hit_layer,
-  //           hitCandidateIndices);
-      }
+    //     // go through UT layers in backward direction
+    //     find_best_hits(
+    //         i_track,
+    //         (int*) &windows_layers[0],
+    //         ut_hits,
+    //         ut_hit_count,
+    //         velo_state,
+    //         dev_ut_dxDy,
+    //         false,
+    //         helper,
+    //         x_hit_layer,
+    //         hitCandidateIndices);
+    //   }
 
   //     if ( helper.n_hits > 0 ) {
   //       const uint velo_track_hit_number = velo_tracks.number_of_hits(i_track);
@@ -182,7 +183,7 @@ __global__ void compassUT(
   // if (threadIdx.x < *active_tracks) {
 
   //   // store a window(2 positions) for each layer, for each thrack
-  //   __shared__ int windows_layers[VeloUTTracking::num_threads * N_LAYERS * 2];
+  //   __shared__ int windows_layers[VeloUTTracking::num_threads * VeloUTTracking::n_layers * 2];
 
   //   const int i_track = shared_active_tracks[threadIdx.x];
 

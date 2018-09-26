@@ -1,10 +1,9 @@
 #pragma once
 
-// #include "VeloDefinitions.cuh"
-// #include "VeloUTDefinitions.cuh"
+#include "VeloDefinitions.cuh"
+#include "VeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
-// #include "PrVeloUT.cuh"
-#include "SearchWindow.cuh"
+#include "PrVeloUT.cuh"
 
 __global__ void compassUT(
   uint* dev_ut_hits, // actual hit content
@@ -20,4 +19,5 @@ __global__ void compassUT(
   const uint* dev_unique_x_sector_offsets,
   const float* dev_unique_sector_xs,
   VeloUTTracking::TrackUT* dev_compassUT_tracks,
-  int* dev_atomics_compassUT); // size of number of events
+  int* dev_atomics_compassUT, // size of number of events
+  int* dev_windows_layers);

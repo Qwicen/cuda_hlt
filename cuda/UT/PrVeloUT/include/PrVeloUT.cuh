@@ -15,19 +15,6 @@
 #include "UTDefinitions.cuh"
 #include "VeloConsolidated.cuh"
 
-struct MiniState {
-  float x, y, tx, ty, z;
-
-  __host__ __device__ MiniState(
-    const Velo::Consolidated::States& velo_states,
-    const uint index
-  ) : x(velo_states.x[index]),
-    y(velo_states.y[index]),
-    tx(velo_states.tx[index]),
-    ty(velo_states.ty[index]),
-    z(velo_states.z[index]) {}
-};
-
 /** PrVeloUT 
    *
    *  @author Mariusz Witek

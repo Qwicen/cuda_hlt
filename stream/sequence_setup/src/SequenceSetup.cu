@@ -23,6 +23,7 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_scan_ut_hits] = "Prefix sum scan (3) UT hits";
   a[seq::decode_raw_banks] = "UT decode_raw_banks";
   a[seq::sort_by_y] = "Sort by Y";
+  a[seq::ut_search_windows] = "UT search windows";
   a[seq::veloUT] = "VeloUT tracking";
   a[seq::compassUT] = "compassUT tracking";
   a[seq::estimate_cluster_count] = "Estimate SciFi cluster count";
@@ -218,6 +219,15 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_atomics_veloUT,
     arg::dev_active_tracks
   };
+  sequence_dependencies[seq::ut_search_windows] = {
+    arg::dev_ut_hits,
+    arg::dev_ut_hit_offsets,
+    arg::dev_atomics_storage,
+    arg::dev_velo_track_hit_number,
+    arg::dev_velo_track_hits,
+    arg::dev_velo_states,
+    arg::dev_windows_layers
+  };
   sequence_dependencies[seq::compassUT] = {
     arg::dev_ut_hits,
     arg::dev_ut_hit_count,
@@ -227,7 +237,8 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_states,
     arg::dev_compassUT_tracks,
     arg::dev_atomics_compassUT,
-    arg::dev_active_tracks
+    arg::dev_active_tracks,
+    arg::dev_windows_layers
   };
   sequence_dependencies[seq::estimate_cluster_count] = {
     arg::dev_scifi_raw_input,

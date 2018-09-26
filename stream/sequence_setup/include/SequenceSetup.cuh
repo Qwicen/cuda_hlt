@@ -19,6 +19,7 @@
 #include "TupleIndicesChecker.cuh"
 #include "SequenceArgumentEnum.cuh"
 #include "VeloEventModel.cuh"
+#include "SearchWindows.cuh"
 
 /**
  * @brief Algorithm tuple definition. All algorithms in the sequence
@@ -49,6 +50,7 @@ constexpr auto sequence_algorithms() {
     decode_raw_banks,
     sort_by_y,
     veloUT,
+    ut_search_windows,
     compassUT,
     estimate_cluster_count,
     prefix_sum_reduce,
@@ -112,6 +114,7 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_ut_hits, uint>,
   Argument<arg::dev_ut_hit_permutations, uint>,
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
+  Argument<arg::dev_windows_layers, int>,
   Argument<arg::dev_atomics_veloUT, int>,
   Argument<arg::dev_compassUT_tracks, VeloUTTracking::TrackUT>,
   Argument<arg::dev_atomics_compassUT, int>,
