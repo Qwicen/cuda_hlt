@@ -30,8 +30,8 @@ __device__ bool velo_track_in_UTA_acceptance(const MiniState& state)
 __device__ std::tuple<int, int> calculate_windows(
   const int i_track,
   const int layer,
-  const MiniState& veloState,
-  const float* fudgeFactors,
+  const MiniState& velo_state,
+  const float* fudge_factors,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_offsets,
   const float* ut_dxDy,
@@ -41,15 +41,15 @@ __device__ std::tuple<int, int> calculate_windows(
 {
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
-  const float absSlopeY = std::abs(veloState.ty);
+  const float absSlopeY = std::abs(velo_state.ty);
   const int index       = (int) (absSlopeY * 100 + 0.5);
   assert(3 + 4 * index < PrUTMagnetTool::N_dxLay_vals);
   const float normFact[4]{
-    fudgeFactors[4 * index], fudgeFactors[1 + 4 * index], fudgeFactors[2 + 4 * index], fudgeFactors[3 + 4 * index]};
+    fudge_factors[4 * index], fudge_factors[1 + 4 * index], fudge_factors[2 + 4 * index], fudge_factors[3 + 4 * index]};
 
   // -- this 500 seems a little odd...
   // to do: change back!
-  const float invTheta = std::min(500., 1.0 / std::sqrt(veloState.tx * veloState.tx + veloState.ty * veloState.ty));
+  const float invTheta = std::min(500., 1.0 / std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty));
   const float minMom   = std::max(PrVeloUTConst::minPT * invTheta, float(1.5) * Gaudi::Units::GeV);
   const float xTol     = std::abs(1. / (PrVeloUTConst::distToMomentum * minMom));
   const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
@@ -58,8 +58,8 @@ __device__ std::tuple<int, int> calculate_windows(
 
   const float dx_dy      = ut_dxDy[layer];
   const float z_at_layer = ut_hits.zAtYEq0[layer_offset];
-  const float y_track     = veloState.y + veloState.ty * (z_at_layer - veloState.z);
-  const float x_track     = veloState.x + veloState.tx * (z_at_layer - veloState.z);
+  const float y_track     = velo_state.y + velo_state.ty * (z_at_layer - velo_state.z);
+  const float x_track     = velo_state.x + velo_state.tx * (z_at_layer - velo_state.z);
   const float invNormFact = 1.0 / normFact[layer];
 
   // Find sector group for lowerBoundX and upperBoundX
@@ -67,8 +67,9 @@ __device__ std::tuple<int, int> calculate_windows(
   const uint last_sector_group_in_layer  = dev_unique_x_sector_layer_offsets[layer + 1];
   const uint sector_group_size           = last_sector_group_in_layer - first_sector_group_in_layer;
 
-  const uint sector_group =
+  const uint local_sector_group =
     binary_search_leftmost(dev_unique_sector_xs + first_sector_group_in_layer, sector_group_size, x_track);
+  const uint sector_group = first_sector_group_in_layer + local_sector_group;
 
   int first_candidate = -1, last_candidate = -1;
   if (sector_group != 0) {

@@ -1,5 +1,5 @@
-#include "SearchWindows.cuh"
 #include "CalculateWindows.cuh"
+#include "SearchWindows.cuh"
 #include <tuple>
 
 __global__ void ut_search_windows(
@@ -17,6 +17,7 @@ __global__ void ut_search_windows(
 {
   const uint number_of_events           = gridDim.x;
   const uint event_number               = blockIdx.x;
+  const int layer                       = threadIdx.y;
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
   const uint total_number_of_hits       = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
 
@@ -33,23 +34,21 @@ __global__ void ut_search_windows(
   UTHits ut_hits;
   ut_hits.typecast_sorted(dev_ut_hits, total_number_of_hits);
 
-  const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
-  // const float* bdlTable     = &(dev_ut_magnet_tool->bdlTable[0]);
+  const float* fudge_factors = &(dev_ut_magnet_tool->dxLayTable[0]);
 
-  const int layer = threadIdx.y;
   for (int i = threadIdx.x; i < number_of_tracks_event; i += blockDim.x) {
-    const uint velo_states_index = event_tracks_offset + i;
+    const uint current_track_offset = event_tracks_offset + i;
     int first_candidate = -1, last_candidate = -1;
-    
-    if (!velo_states.backward[velo_states_index]) {
+
+    if (!velo_states.backward[current_track_offset]) {
       // Using Mini State with only x, y, tx, ty and z
-      const auto velo_state = MiniState{velo_states, velo_states_index};
+      const auto velo_state = MiniState{velo_states, current_track_offset};
       if (velo_track_in_UTA_acceptance(velo_state)) {
         const auto candidates = calculate_windows(
           i,
           layer,
           velo_state,
-          fudgeFactors,
+          fudge_factors,
           ut_hits,
           ut_hit_offsets,
           dev_ut_dxDy,
@@ -58,12 +57,12 @@ __global__ void ut_search_windows(
           velo_tracks);
 
         first_candidate = std::get<0>(candidates);
-        last_candidate = std::get<1>(candidates);
+        last_candidate  = std::get<1>(candidates);
       }
     }
 
     // Save first and last candidates in the correct position of dev_windows_layers
-    dev_windows_layers[2 * VeloUTTracking::n_layers * velo_tracks.track_offset(i) + 2 * layer]     = first_candidate;
-    dev_windows_layers[2 * VeloUTTracking::n_layers * velo_tracks.track_offset(i) + 2 * layer + 1] = last_candidate;
+    dev_windows_layers[2 * VeloUTTracking::n_layers * current_track_offset + 2 * layer]     = first_candidate;
+    dev_windows_layers[2 * VeloUTTracking::n_layers * current_track_offset + 2 * layer + 1] = last_candidate;
   }
 }

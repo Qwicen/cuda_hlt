@@ -14,7 +14,6 @@ static constexpr uint32_t ut_number_of_geometry_sectors = 1048;
 */
 struct UTHitOffsets {
   const uint* m_unique_x_sector_layer_offsets;
-  const uint* m_unique_x_sector_offsets;
   const uint* m_ut_hit_offsets;
   const uint m_number_of_unique_x_sectors;
 
