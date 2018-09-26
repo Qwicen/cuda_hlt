@@ -382,7 +382,7 @@ cudaError_t Stream::run_sequence(
     // info_cout << "Total number of UT hits: " << *host_accumulated_number_of_ut_hits << std::endl;
 
     // Decode UT raw banks
-    argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(9 * host_accumulated_number_of_ut_hits[0]);
+    argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(UTHits::number_of_arrays * host_accumulated_number_of_ut_hits[0]);
     argument_sizes[arg::dev_ut_hit_count] = argen.size<arg::dev_ut_hits>(number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::decode_raw_banks>().set_opts(dim3(number_of_events), dim3(64, 4), stream);
