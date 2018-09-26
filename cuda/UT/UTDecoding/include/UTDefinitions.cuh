@@ -4,6 +4,7 @@
 #include <vector>
 #include <ostream>
 #include "VeloUTDefinitions.cuh"
+#include "PrVeloUTDefinitions.cuh"
 
 static constexpr uint32_t ut_number_of_sectors_per_board = 6;
 static constexpr uint32_t ut_number_of_geometry_sectors = 1048;
@@ -13,6 +14,7 @@ static constexpr uint32_t ut_number_of_geometry_sectors = 1048;
 */
 struct UTHitOffsets {
   const uint* m_unique_x_sector_layer_offsets;
+  const uint* m_unique_x_sector_offsets;
   const uint* m_ut_hit_offsets;
   const uint m_number_of_unique_x_sectors;
 
@@ -21,8 +23,8 @@ struct UTHitOffsets {
     const uint* base_pointer,
     const uint event_number,
     const uint number_of_unique_x_sectors,
-    const uint* unique_x_sector_layer_offsets
-  ) : m_unique_x_sector_layer_offsets(unique_x_sector_layer_offsets),
+    const uint* unique_x_sector_layer_offsets) 
+  : m_unique_x_sector_layer_offsets(unique_x_sector_layer_offsets),
     m_ut_hit_offsets(base_pointer + event_number * number_of_unique_x_sectors),
     m_number_of_unique_x_sectors(number_of_unique_x_sectors) {}
 
