@@ -89,7 +89,7 @@ cudaError_t Stream::initialize(
   std::vector<int> sequence_output_arguments = get_sequence_output_arguments();
 
   // Prepare dynamic scheduler
-  scheduler = BaseDynamicScheduler{get_sequence_names(), get_argument_names(),
+  scheduler = {get_sequence_names(), get_argument_names(),
     sequence_dependencies, sequence_output_arguments,
     reserve_mb * 1024 * 1024, do_print_memory_manager};
 

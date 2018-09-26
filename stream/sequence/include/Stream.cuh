@@ -11,7 +11,7 @@
 #include "Logger.h"
 #include "Timer.h"
 #include "Tools.h"
-#include "BaseDynamicScheduler.cuh"
+#include "DynamicScheduler.cuh"
 #include "SequenceSetup.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "Constants.cuh"
@@ -58,7 +58,7 @@ struct Stream {
   uint* host_accumulated_number_of_scifi_hits;
 
   // Dynamic scheduler
-  BaseDynamicScheduler scheduler;
+  DynamicScheduler<algorithm_tuple_t, argument_tuple_t> scheduler;
 
   // GPU pointers
   char* dev_velo_geometry;
