@@ -440,7 +440,7 @@ cudaError_t Stream::run_sequence(
     // ut search windows
     argument_sizes[arg::dev_windows_layers] = argen.size<arg::dev_windows_layers>(2 * VeloUTTracking::n_layers * host_number_of_reconstructed_velo_tracks[0]);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::ut_search_windows>().set_opts(dim3(number_of_events), dim3(VeloUTTracking::n_layers), stream);
+    sequence.item<seq::ut_search_windows>().set_opts(dim3(number_of_events), dim3(256, VeloUTTracking::n_layers), stream);
     sequence.item<seq::ut_search_windows>().set_arguments(
       argen.generate<arg::dev_ut_hits>(argument_offsets),
       argen.generate<arg::dev_ut_hit_count>(argument_offsets),
