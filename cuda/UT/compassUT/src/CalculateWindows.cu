@@ -75,7 +75,8 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
   uint sector_group = first_sector_group_in_layer + local_sector_group;
 
   int first_candidate = -1, last_candidate = -1;
-  int second_group_first_candidate = -1, second_group_last_candidate = -1;
+  int left_group_first_candidate = -1, left_group_last_candidate = -1;
+  int right_group_first_candidate = -1, right_group_last_candidate = -1;
   if (sector_group != 0) {
     // The sector we are interested on is sector_group - 1
     sector_group -= 1;
