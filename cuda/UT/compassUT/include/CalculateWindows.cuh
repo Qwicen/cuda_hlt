@@ -27,4 +27,4 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
   const float y_track,
   const float dx_dy,
   const float invNormFact,
-  const uint sector_group);
+  const int sector_group);
