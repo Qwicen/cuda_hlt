@@ -105,7 +105,7 @@ __host__ __device__ void fillIterators(
   int posLayers[4][85] );
 
 __host__ __device__ void findHits(
-  const std::tuple<int, int, int, int>& candidates,
+  const std::tuple<int, int, int, int, int, int>& candidates,
   UTHits& ut_hits,
   UTHitOffsets& ut_hit_offsets,
   uint first_sector_group_in_layer,
