@@ -195,7 +195,6 @@ struct SciFiHits {
   uint32_t* hitZone;
   uint32_t* temp;
 
-
   SciFiHits() = default;
 
   /**
