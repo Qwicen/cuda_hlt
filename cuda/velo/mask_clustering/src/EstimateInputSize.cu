@@ -171,10 +171,12 @@ __global__ void estimate_input_size(
               | (sp_inside_pixel << 7);
 
             const uint32_t working_cluster = mask & (~pixels);
-            const uint32_t candidates = (working_cluster >> 1)
+            const uint32_t candidates_temp = (working_cluster >> 1)
               & (working_cluster >> 5)
               & (working_cluster >> 6)
               & (working_cluster >> 7);
+
+            const uint32_t candidates = candidates_temp & pixels;
 
             const uint8_t candidates_uint8 = (candidates & 0x03) | ((candidates & 0xC0) >> 4)
               | ((candidates & 0x0C) << 2) | ((candidates & 0x0300) >> 2);
@@ -201,6 +203,8 @@ __global__ void estimate_input_size(
               //                                (candidates & 0x20) > 0, (candidates & 0x0800) > 0
               //     );
               //   };
+              //   printf("pixels:\n");
+              //   print_candidates(pixels);
               //   printf("sp_inside_pixel:\n");
               //   print_candidates(sp_inside_pixel);
               //   printf("mask:\n");
