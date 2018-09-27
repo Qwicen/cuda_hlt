@@ -412,7 +412,7 @@ __host__ __device__ void prepareOutputTrack(
 // -- Finds the hits in a given layer within a certain range
 // ==============================================================================
 __host__ __device__ void findHits( 
-  const std::tuple<int, int, int, int>& candidates,
+  const std::tuple<int, int, int, int, int, int>& candidates,
   UTHits& ut_hits,
   UTHitOffsets& ut_hit_offsets,
   uint first_sector_group_in_layer,
@@ -428,9 +428,11 @@ __host__ __device__ void findHits(
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const float* dev_unique_sector_xs)
 {  
-  printf("Layer %i sector %i (x: %f), ranges (%i, %i), (%i, %i)\n",
+  printf("Layer %i sector %i (x: %f), ranges: (%i, %i), left: (%i, %i), right: (%i, %i)\n",
     i_layer, sector_group, dev_unique_sector_xs[sector_group],
-    std::get<0>(candidates), std::get<1>(candidates), std::get<2>(candidates), std::get<3>(candidates));
+    std::get<0>(candidates), std::get<1>(candidates),
+    std::get<2>(candidates), std::get<3>(candidates),
+    std::get<4>(candidates), std::get<5>(candidates));
 
   for (int i=0; i<number_of_sector_groups_in_layer; ++i) {
     const auto current_sector_group = first_sector_group_in_layer + i;
@@ -455,8 +457,9 @@ __host__ __device__ void findHits(
       {}
       else {
         if ((hit_index < std::get<0>(candidates) || hit_index >= std::get<1>(candidates)) &&
-          (hit_index < std::get<2>(candidates) || hit_index >= std::get<3>(candidates)) ||
-          (std::get<0>(candidates) == -1 && std::get<2>(candidates) == -1))
+          (hit_index < std::get<2>(candidates) || hit_index >= std::get<3>(candidates)) &&
+          (hit_index < std::get<4>(candidates) || hit_index >= std::get<5>(candidates)) ||
+          (std::get<0>(candidates) == -1 && std::get<2>(candidates) == -1 && std::get<4>(candidates) == -1))
         {
           printf("x Hit index %i, sector %i (x: %f) NOT found in range\n", hit_index, current_sector_group, dev_unique_sector_xs[current_sector_group]);
         } else {
@@ -472,15 +475,18 @@ __host__ __device__ void findHits(
 
   const auto s0_number_of_candidates = std::get<1>(candidates) - std::get<0>(candidates);
   const auto s1_number_of_candidates = std::get<3>(candidates) - std::get<2>(candidates);
+  const auto s2_number_of_candidates = std::get<5>(candidates) - std::get<4>(candidates);
 
-  assert(s0_number_of_candidates < 100);
-  assert(s1_number_of_candidates < 100);
-
-  if (s0_number_of_candidates > 0 || s1_number_of_candidates > 0) {
-    for (int i=0; i<s0_number_of_candidates + s1_number_of_candidates; ++i) {
-      const auto hit_index = i < s0_number_of_candidates ?
-        std::get<0>(candidates) + i :
-        std::get<2>(candidates) + i - s0_number_of_candidates;
+  if (s0_number_of_candidates > 0 || s1_number_of_candidates > 0 || s2_number_of_candidates > 0) {
+    for (int i=0; i<s0_number_of_candidates + s1_number_of_candidates + s2_number_of_candidates; ++i) {
+      int hit_index = 0;
+      if (i < s0_number_of_candidates) {
+        hit_index = std::get<0>(candidates) + i;
+      } else if (i < s0_number_of_candidates + s1_number_of_candidates) {
+        hit_index = std::get<2>(candidates) + i - s0_number_of_candidates;
+      } else {
+        hit_index = std::get<4>(candidates) + i - s0_number_of_candidates - s1_number_of_candidates;
+      }
 
       const auto zInit = ut_hits.zAtYEq0[hit_index];
       const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
