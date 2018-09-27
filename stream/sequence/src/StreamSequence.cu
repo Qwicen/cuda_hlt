@@ -385,7 +385,7 @@ cudaError_t Stream::run_sequence(
     argument_sizes[arg::dev_ut_hits] = argen.size<arg::dev_ut_hits>(UTHits::number_of_arrays * host_accumulated_number_of_ut_hits[0]);
     argument_sizes[arg::dev_ut_hit_count] = argen.size<arg::dev_ut_hits>(number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::decode_raw_banks>().set_opts(dim3(number_of_events), dim3(64, 4), stream);
+    sequence.item<seq::decode_raw_banks>().set_opts(dim3(number_of_events), dim3(128, 4), stream);
     sequence.item<seq::decode_raw_banks>().set_arguments(
       argen.generate<arg::dev_ut_raw_input>(argument_offsets),
       argen.generate<arg::dev_ut_raw_input_offsets>(argument_offsets),
@@ -437,24 +437,24 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::veloUT>().invoke();
 
-    // // ut search windows
-    // argument_sizes[arg::dev_windows_layers] = argen.size<arg::dev_windows_layers>(2 * VeloUTTracking::n_layers * host_number_of_reconstructed_velo_tracks[0]);
-    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    // sequence.item<seq::ut_search_windows>().set_opts(dim3(number_of_events), dim3(64, VeloUTTracking::n_layers), stream);
-    // sequence.item<seq::ut_search_windows>().set_arguments(
-    //   argen.generate<arg::dev_ut_hits>(argument_offsets),
-    //   argen.generate<arg::dev_ut_hit_offsets>(argument_offsets),
-    //   argen.generate<arg::dev_atomics_storage>(argument_offsets),
-    //   argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
-    //   argen.generate<arg::dev_velo_track_hits>(argument_offsets),
-    //   argen.generate<arg::dev_velo_states>(argument_offsets),
-    //   dev_ut_magnet_tool,
-    //   constants.dev_ut_dxDy,
-    //   constants.dev_unique_x_sector_layer_offsets,
-    //   constants.dev_unique_sector_xs,
-    //   argen.generate<arg::dev_windows_layers>(argument_offsets)
-    // );
-    // sequence.item<seq::ut_search_windows>().invoke();
+    // ut search windows
+    argument_sizes[arg::dev_windows_layers] = argen.size<arg::dev_windows_layers>(6 * VeloUTTracking::n_layers * host_number_of_reconstructed_velo_tracks[0]);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::ut_search_windows>().set_opts(dim3(number_of_events), dim3(64, VeloUTTracking::n_layers), stream);
+    sequence.item<seq::ut_search_windows>().set_arguments(
+      argen.generate<arg::dev_ut_hits>(argument_offsets),
+      argen.generate<arg::dev_ut_hit_offsets>(argument_offsets),
+      argen.generate<arg::dev_atomics_storage>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hits>(argument_offsets),
+      argen.generate<arg::dev_velo_states>(argument_offsets),
+      dev_ut_magnet_tool,
+      constants.dev_ut_dxDy,
+      constants.dev_unique_x_sector_layer_offsets,
+      constants.dev_unique_sector_xs,
+      argen.generate<arg::dev_windows_layers>(argument_offsets)
+    );
+    sequence.item<seq::ut_search_windows>().invoke();
 
     // std::vector<int> candidates (2 * VeloUTTracking::n_layers * host_number_of_reconstructed_velo_tracks[0]);
     // cudaCheck(cudaMemcpyAsync(
@@ -466,7 +466,6 @@ cudaError_t Stream::run_sequence(
     // ));
     // cudaEventRecord(cuda_generic_event, stream);
     // cudaEventSynchronize(cuda_generic_event);
-
     // for (int i=0; i<host_number_of_reconstructed_velo_tracks[0]; ++i) {
     //   info_cout << "Track " << i << " windows: ";
     //   for (int j=0; j<VeloUTTracking::n_layers; ++j) {
