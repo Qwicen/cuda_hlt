@@ -428,46 +428,46 @@ __host__ __device__ void findHits(
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const float* dev_unique_sector_xs)
 {  
-  printf("Layer %i sector %i (x: %f), ranges: (%i, %i), left: (%i, %i), right: (%i, %i)\n",
-    i_layer, sector_group, dev_unique_sector_xs[sector_group],
-    std::get<0>(candidates), std::get<1>(candidates),
-    std::get<2>(candidates), std::get<3>(candidates),
-    std::get<4>(candidates), std::get<5>(candidates));
+  // printf("Layer %i sector %i (x: %f), ranges: (%i, %i), left: (%i, %i), right: (%i, %i)\n",
+  //   i_layer, sector_group, dev_unique_sector_xs[sector_group],
+  //   std::get<0>(candidates), std::get<1>(candidates),
+  //   std::get<2>(candidates), std::get<3>(candidates),
+  //   std::get<4>(candidates), std::get<5>(candidates));
 
-  for (int i=0; i<number_of_sector_groups_in_layer; ++i) {
-    const auto current_sector_group = first_sector_group_in_layer + i;
+  // for (int i=0; i<number_of_sector_groups_in_layer; ++i) {
+  //   const auto current_sector_group = first_sector_group_in_layer + i;
 
-    const auto current_sector_offset = ut_hit_offsets.sector_group_offset(current_sector_group);
-    const auto number_of_hits = ut_hit_offsets.sector_group_number_of_hits(current_sector_group);
+  //   const auto current_sector_offset = ut_hit_offsets.sector_group_offset(current_sector_group);
+  //   const auto number_of_hits = ut_hit_offsets.sector_group_number_of_hits(current_sector_group);
 
-    for (int j=0; j<number_of_hits; ++j) {
-      const auto hit_index = current_sector_offset + j;
+  //   for (int j=0; j<number_of_hits; ++j) {
+  //     const auto hit_index = current_sector_offset + j;
       
-      const auto zInit = ut_hits.zAtYEq0[hit_index];
-      const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
-      const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
-      const auto yyProto =       myState.y - myState.ty*myState.z;
-      const float dxDy = ut_dxDy[i_layer];
+  //     const auto zInit = ut_hits.zAtYEq0[hit_index];
+  //     const auto yApprox = myState.y + myState.ty * (zInit - myState.z);
+  //     const auto xOnTrackProto = myState.x + myState.tx*(zInit - myState.z);
+  //     const auto yyProto =       myState.y - myState.ty*myState.z;
+  //     const float dxDy = ut_dxDy[i_layer];
 
-      const auto xx = ut_hits.xAt(hit_index, yApprox, dxDy); 
-      const auto dx = xx - xOnTrackProto;
+  //     const auto xx = ut_hits.xAt(hit_index, yApprox, dxDy); 
+  //     const auto dx = xx - xOnTrackProto;
       
-      if( dx < -xTolNormFact || dx >  xTolNormFact || 
-        ut_hits.isNotYCompatible( hit_index, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx*invNormFact)) )
-      {}
-      else {
-        if ((hit_index < std::get<0>(candidates) || hit_index >= std::get<1>(candidates)) &&
-          (hit_index < std::get<2>(candidates) || hit_index >= std::get<3>(candidates)) &&
-          (hit_index < std::get<4>(candidates) || hit_index >= std::get<5>(candidates)) ||
-          (std::get<0>(candidates) == -1 && std::get<2>(candidates) == -1 && std::get<4>(candidates) == -1))
-        {
-          printf("x Hit index %i, sector %i (x: %f) NOT found in range\n", hit_index, current_sector_group, dev_unique_sector_xs[current_sector_group]);
-        } else {
-          printf("- Hit index %i, sector %i (x: %f) found in range\n", hit_index, current_sector_group, dev_unique_sector_xs[current_sector_group]);
-        }
-      }
-    }
-  }
+  //     if( dx < -xTolNormFact || dx >  xTolNormFact || 
+  //       ut_hits.isNotYCompatible( hit_index, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx*invNormFact)) )
+  //     {}
+  //     else {
+  //       if ((hit_index < std::get<0>(candidates) || hit_index >= std::get<1>(candidates)) &&
+  //         (hit_index < std::get<2>(candidates) || hit_index >= std::get<3>(candidates)) &&
+  //         (hit_index < std::get<4>(candidates) || hit_index >= std::get<5>(candidates)) ||
+  //         (std::get<0>(candidates) == -1 && std::get<2>(candidates) == -1 && std::get<4>(candidates) == -1))
+  //       {
+  //         printf("x Hit index %i, sector %i (x: %f) NOT found in range\n", hit_index, current_sector_group, dev_unique_sector_xs[current_sector_group]);
+  //       } else {
+  //         printf("- Hit index %i, sector %i (x: %f) found in range\n", hit_index, current_sector_group, dev_unique_sector_xs[current_sector_group]);
+  //       }
+  //     }
+  //   }
+  // }
 
   // if (posEnd - posBeg > 100) {
   //   printf("Range (%i, %i) too large\n", posBeg, posEnd);

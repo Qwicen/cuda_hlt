@@ -437,24 +437,24 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::veloUT>().invoke();
 
-    // ut search windows
-    argument_sizes[arg::dev_windows_layers] = argen.size<arg::dev_windows_layers>(2 * VeloUTTracking::n_layers * host_number_of_reconstructed_velo_tracks[0]);
-    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::ut_search_windows>().set_opts(dim3(number_of_events), dim3(64, VeloUTTracking::n_layers), stream);
-    sequence.item<seq::ut_search_windows>().set_arguments(
-      argen.generate<arg::dev_ut_hits>(argument_offsets),
-      argen.generate<arg::dev_ut_hit_offsets>(argument_offsets),
-      argen.generate<arg::dev_atomics_storage>(argument_offsets),
-      argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
-      argen.generate<arg::dev_velo_track_hits>(argument_offsets),
-      argen.generate<arg::dev_velo_states>(argument_offsets),
-      dev_ut_magnet_tool,
-      constants.dev_ut_dxDy,
-      constants.dev_unique_x_sector_layer_offsets,
-      constants.dev_unique_sector_xs,
-      argen.generate<arg::dev_windows_layers>(argument_offsets)
-    );
-    sequence.item<seq::ut_search_windows>().invoke();
+    // // ut search windows
+    // argument_sizes[arg::dev_windows_layers] = argen.size<arg::dev_windows_layers>(2 * VeloUTTracking::n_layers * host_number_of_reconstructed_velo_tracks[0]);
+    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    // sequence.item<seq::ut_search_windows>().set_opts(dim3(number_of_events), dim3(64, VeloUTTracking::n_layers), stream);
+    // sequence.item<seq::ut_search_windows>().set_arguments(
+    //   argen.generate<arg::dev_ut_hits>(argument_offsets),
+    //   argen.generate<arg::dev_ut_hit_offsets>(argument_offsets),
+    //   argen.generate<arg::dev_atomics_storage>(argument_offsets),
+    //   argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
+    //   argen.generate<arg::dev_velo_track_hits>(argument_offsets),
+    //   argen.generate<arg::dev_velo_states>(argument_offsets),
+    //   dev_ut_magnet_tool,
+    //   constants.dev_ut_dxDy,
+    //   constants.dev_unique_x_sector_layer_offsets,
+    //   constants.dev_unique_sector_xs,
+    //   argen.generate<arg::dev_windows_layers>(argument_offsets)
+    // );
+    // sequence.item<seq::ut_search_windows>().invoke();
 
     // std::vector<int> candidates (2 * VeloUTTracking::n_layers * host_number_of_reconstructed_velo_tracks[0]);
     // cudaCheck(cudaMemcpyAsync(
@@ -476,30 +476,30 @@ cudaError_t Stream::run_sequence(
     //   info_cout << std::endl;
     // }
 
-    // compassUT tracking
-    argument_sizes[arg::dev_compassUT_tracks] = argen.size<arg::dev_compassUT_tracks>(number_of_events * VeloUTTracking::max_num_tracks);
-    argument_sizes[arg::dev_atomics_compassUT] = argen.size<arg::dev_atomics_compassUT>(VeloUTTracking::num_atomics * number_of_events);
-    argument_sizes[arg::dev_active_tracks] = argen.size<arg::dev_active_tracks>(number_of_events);
-    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::compassUT>().set_opts(dim3(number_of_events), dim3(VeloUTTracking::num_threads), stream);
-    sequence.item<seq::compassUT>().set_arguments(
-      argen.generate<arg::dev_ut_hits>(argument_offsets),
-      argen.generate<arg::dev_ut_hit_offsets>(argument_offsets),
-      argen.generate<arg::dev_atomics_storage>(argument_offsets),
-      argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
-      argen.generate<arg::dev_velo_track_hits>(argument_offsets),
-      argen.generate<arg::dev_velo_states>(argument_offsets),
-      dev_ut_magnet_tool,
-      constants.dev_ut_dxDy,
-      argen.generate<arg::dev_active_tracks>(argument_offsets),
-      constants.dev_unique_x_sector_layer_offsets,
-      constants.dev_unique_x_sector_offsets,
-      constants.dev_unique_sector_xs,
-      argen.generate<arg::dev_compassUT_tracks>(argument_offsets),
-      argen.generate<arg::dev_atomics_compassUT>(argument_offsets),
-      argen.generate<arg::dev_windows_layers>(argument_offsets)
-    );
-    sequence.item<seq::compassUT>().invoke();
+    // // compassUT tracking
+    // argument_sizes[arg::dev_compassUT_tracks] = argen.size<arg::dev_compassUT_tracks>(number_of_events * VeloUTTracking::max_num_tracks);
+    // argument_sizes[arg::dev_atomics_compassUT] = argen.size<arg::dev_atomics_compassUT>(VeloUTTracking::num_atomics * number_of_events);
+    // argument_sizes[arg::dev_active_tracks] = argen.size<arg::dev_active_tracks>(number_of_events);
+    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    // sequence.item<seq::compassUT>().set_opts(dim3(number_of_events), dim3(VeloUTTracking::num_threads), stream);
+    // sequence.item<seq::compassUT>().set_arguments(
+    //   argen.generate<arg::dev_ut_hits>(argument_offsets),
+    //   argen.generate<arg::dev_ut_hit_offsets>(argument_offsets),
+    //   argen.generate<arg::dev_atomics_storage>(argument_offsets),
+    //   argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
+    //   argen.generate<arg::dev_velo_track_hits>(argument_offsets),
+    //   argen.generate<arg::dev_velo_states>(argument_offsets),
+    //   dev_ut_magnet_tool,
+    //   constants.dev_ut_dxDy,
+    //   argen.generate<arg::dev_active_tracks>(argument_offsets),
+    //   constants.dev_unique_x_sector_layer_offsets,
+    //   constants.dev_unique_x_sector_offsets,
+    //   constants.dev_unique_sector_xs,
+    //   argen.generate<arg::dev_compassUT_tracks>(argument_offsets),
+    //   argen.generate<arg::dev_atomics_compassUT>(argument_offsets),
+    //   argen.generate<arg::dev_windows_layers>(argument_offsets)
+    // );
+    // sequence.item<seq::compassUT>().invoke();
 
     // Transmission device to host
     // Velo tracks

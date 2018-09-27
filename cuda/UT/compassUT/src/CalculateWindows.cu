@@ -66,13 +66,13 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
   const float tolerance_in_x = xTol * invNormFact;
 
   // Find sector group for lowerBoundX and upperBoundX
-  const uint first_sector_group_in_layer = dev_unique_x_sector_layer_offsets[layer];
-  const uint last_sector_group_in_layer  = dev_unique_x_sector_layer_offsets[layer + 1];
-  const uint sector_group_size           = last_sector_group_in_layer - first_sector_group_in_layer;
+  const int first_sector_group_in_layer = dev_unique_x_sector_layer_offsets[layer];
+  const int last_sector_group_in_layer  = dev_unique_x_sector_layer_offsets[layer + 1];
+  const int sector_group_size           = last_sector_group_in_layer - first_sector_group_in_layer;
 
-  const uint local_sector_group =
+  const int local_sector_group =
     binary_search_leftmost(dev_unique_sector_xs + first_sector_group_in_layer, sector_group_size, x_track);
-  uint sector_group = first_sector_group_in_layer + local_sector_group;
+  int sector_group = first_sector_group_in_layer + local_sector_group;
 
   int first_candidate = -1, last_candidate = -1;
   int left_group_first_candidate = -1, left_group_last_candidate = -1;
@@ -149,7 +149,7 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
   const float y_track,
   const float dx_dy,
   const float invNormFact,
-  const uint sector_group)
+  const int sector_group)
 {
   const float x_at_left_sector  = dev_unique_sector_xs[sector_group];
   const float x_at_right_sector = dev_unique_sector_xs[sector_group + 1];
