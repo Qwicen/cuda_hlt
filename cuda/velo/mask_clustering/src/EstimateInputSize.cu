@@ -176,11 +176,11 @@ __global__ void estimate_input_size(
               & (working_cluster >> 6)
               & (working_cluster >> 7);
 
-            const uint8_t candidates_uint8 = 
-              ((candidates & 0x40) >> 6) | ((candidates & 0x01) << 1) | ((candidates & 0x80) >> 5) | ((candidates & 0x02) << 2) |
-              ((candidates & 0x0100) >> 4) | ((candidates & 0x04) << 3) | ((candidates & 0x0200) >> 3) | ((candidates & 0x08) << 4);
+            const uint8_t candidates_uint8 = (candidates & 0x03) | ((candidates & 0xC0) >> 4)
+              | ((candidates & 0x0C) << 2) | ((candidates & 0x0300) >> 2);
 
-            // Add candidates 0-3
+            // Add candidates 0, 1, 4, 5
+            // Only one of those candidates can be flagged at a time
             if (candidates_uint8 & 0xF) {
               // if ((candidates_uint8 & 0xF) >= 9) {
               //   auto print_candidates8 = [] (const uint8_t& candidates) {
@@ -227,10 +227,11 @@ __global__ void estimate_input_size(
               ++found_cluster_candidates;
             }
 
-            // Add candidates 4-7
+            // Add candidates 2, 3, 6, 7
+            // Only one of those candidates can be flagged at a time
             if (candidates_uint8 & 0xF0) {
               assert(((candidates_uint8 >> 4) & 0xF) < 9);
-              const uint8_t k = dev_velo_candidate_ks[(candidates_uint8 >> 4)] + 4;
+              const uint8_t k = dev_velo_candidate_ks[(candidates_uint8 >> 4)] + 2;
               auto current_cluster_candidate = atomicAdd(event_candidate_num, 1);
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)
