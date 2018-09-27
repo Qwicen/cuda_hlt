@@ -27,7 +27,7 @@ __device__ bool velo_track_in_UTA_acceptance(const MiniState& state)
 //=============================================================================
 // Get the windows
 //=============================================================================
-__device__ std::tuple<int, int> calculate_windows(
+__device__ std::tuple<int, int, int, int, int, int> calculate_windows(
   const int i_track,
   const int layer,
   const MiniState& velo_state,
@@ -52,7 +52,7 @@ __device__ std::tuple<int, int> calculate_windows(
   const float invTheta = std::min(500., 1.0 / std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty));
   const float minMom   = std::max(PrVeloUTConst::minPT * invTheta, float(1.5) * Gaudi::Units::GeV);
   const float xTol     = std::abs(1. / (PrVeloUTConst::distToMomentum * minMom));
-  const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
+  // const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
 
   int layer_offset = ut_hit_offsets.layer_offset(layer);
 
@@ -62,6 +62,9 @@ __device__ std::tuple<int, int> calculate_windows(
   const float x_track     = velo_state.x + velo_state.tx * (z_at_layer - velo_state.z);
   const float invNormFact = 1.0 / normFact[layer];
 
+  // Second sector group search
+  const float tolerance_in_x = xTol * invNormFact;
+
   // Find sector group for lowerBoundX and upperBoundX
   const uint first_sector_group_in_layer = dev_unique_x_sector_layer_offsets[layer];
   const uint last_sector_group_in_layer  = dev_unique_x_sector_layer_offsets[layer + 1];
@@ -69,39 +72,110 @@ __device__ std::tuple<int, int> calculate_windows(
 
   const uint local_sector_group =
     binary_search_leftmost(dev_unique_sector_xs + first_sector_group_in_layer, sector_group_size, x_track);
-  const uint sector_group = first_sector_group_in_layer + local_sector_group;
+  uint sector_group = first_sector_group_in_layer + local_sector_group;
 
   int first_candidate = -1, last_candidate = -1;
+  int second_group_first_candidate = -1, second_group_last_candidate = -1;
   if (sector_group != 0) {
-    const float x_at_left_sector  = dev_unique_sector_xs[sector_group];
-    const float x_at_right_sector = dev_unique_sector_xs[sector_group + 1];
-
-    const float xx_at_left_sector  = x_at_left_sector + y_track * dx_dy;
-    const float xx_at_right_sector = x_at_right_sector + y_track * dx_dy;
-
-    const float dx_max = std::max(xx_at_left_sector - x_track, xx_at_right_sector - x_track);
-
-    const float tol = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx_max * invNormFact);
-
-    const uint sector_group_offset = ut_hit_offsets.sector_group_offset(sector_group);
-
-    first_candidate = binary_search_first_candidate(
-      ut_hits.yEnd + sector_group_offset,
-      ut_hit_offsets.sector_group_number_of_hits(sector_group),
+    // The sector we are interested on is sector_group - 1
+    sector_group -= 1;
+    const auto sector_candidates = find_candidates_in_sector_group(
+      ut_hits,
+      ut_hit_offsets,
+      dev_unique_sector_xs,
+      x_track,
       y_track,
-      tol,
-      [&] (const auto value, const auto array_element, const int index, const float margin) {
-        return (value + margin > ut_hits.yBegin[sector_group_offset + index] && value - margin < array_element);
-      });
-    if (first_candidate != -1) {
-      last_candidate = binary_search_second_candidate(
-        ut_hits.yBegin + sector_group_offset + first_candidate,
-        ut_hit_offsets.sector_group_number_of_hits(sector_group) - first_candidate,
+      dx_dy,
+      invNormFact,
+      sector_group
+    );
+
+    first_candidate = std::get<0>(sector_candidates);
+    last_candidate = std::get<1>(sector_candidates);
+
+    // Left group
+    const int left_group = sector_group - 1;
+    if (left_group >= first_sector_group_in_layer) {
+      // We found a sector group with potentially compatible hits
+      // Look for them
+      const auto left_group_candidates = find_candidates_in_sector_group(
+        ut_hits,
+        ut_hit_offsets,
+        dev_unique_sector_xs,
+        x_track,
         y_track,
-        tol);
-      first_candidate += sector_group_offset;
-      last_candidate = last_candidate == 0 ? first_candidate + 1 : first_candidate + last_candidate;
+        dx_dy,
+        invNormFact,
+        left_group
+      );
+
+      left_group_first_candidate = std::get<0>(left_group_candidates);
+      left_group_last_candidate = std::get<1>(left_group_candidates);
     }
+
+    // Right group
+    const int right_group = sector_group + 1;
+    if (right_group < last_sector_group_in_layer) {
+      // We found a sector group with potentially compatible hits
+      // Look for them
+      const auto right_group_candidates = find_candidates_in_sector_group(
+        ut_hits,
+        ut_hit_offsets,
+        dev_unique_sector_xs,
+        x_track,
+        y_track,
+        dx_dy,
+        invNormFact,
+        right_group
+      );
+
+      right_group_first_candidate = std::get<0>(right_group_candidates);
+      right_group_last_candidate = std::get<1>(right_group_candidates);
+    }
+  }
+
+  return {first_candidate, last_candidate,
+    left_group_first_candidate, left_group_last_candidate,
+    right_group_first_candidate, right_group_last_candidate
+  };
+}
+
+__device__ std::tuple<int, int> find_candidates_in_sector_group(
+  const UTHits& ut_hits,
+  const UTHitOffsets& ut_hit_offsets,
+  const float* dev_unique_sector_xs,
+  const float x_track,
+  const float y_track,
+  const float dx_dy,
+  const float invNormFact,
+  const uint sector_group)
+{
+  const float x_at_left_sector  = dev_unique_sector_xs[sector_group];
+  const float x_at_right_sector = dev_unique_sector_xs[sector_group + 1];
+  const float xx_at_left_sector  = x_at_left_sector + y_track * dx_dy;
+  const float xx_at_right_sector = x_at_right_sector + y_track * dx_dy;
+  const float dx_max = std::max(xx_at_left_sector - x_track, xx_at_right_sector - x_track);
+
+  const float tol = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx_max * invNormFact);
+  const uint sector_group_offset = ut_hit_offsets.sector_group_offset(sector_group);
+
+  int first_candidate = -1, last_candidate = -1;
+  first_candidate = binary_search_first_candidate(
+    ut_hits.yEnd + sector_group_offset,
+    ut_hit_offsets.sector_group_number_of_hits(sector_group),
+    y_track,
+    tol,
+    [&] (const auto value, const auto array_element, const int index, const float margin) {
+      return (value + margin > ut_hits.yBegin[sector_group_offset + index] && value - margin < array_element);
+    });
+  if (first_candidate != -1) {
+    last_candidate = binary_search_second_candidate(
+      ut_hits.yBegin + sector_group_offset + first_candidate,
+      ut_hit_offsets.sector_group_number_of_hits(sector_group) - first_candidate,
+      y_track,
+      tol);
+    first_candidate += sector_group_offset;
+    last_candidate = last_candidate == 0 ? first_candidate + 1 : first_candidate + last_candidate;
   }
 
   return {first_candidate, last_candidate};

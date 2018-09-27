@@ -39,6 +39,7 @@ __global__ void ut_search_windows(
   for (int i = threadIdx.x; i < number_of_tracks_event; i += blockDim.x) {
     const uint current_track_offset = event_tracks_offset + i;
     int first_candidate = -1, last_candidate = -1;
+    int second_sector_group_first_candidate = -1, second_sector_group_last_candidate = -1;
 
     if (!velo_states.backward[current_track_offset]) {
       // Using Mini State with only x, y, tx, ty and z
@@ -58,11 +59,15 @@ __global__ void ut_search_windows(
 
         first_candidate = std::get<0>(candidates);
         last_candidate  = std::get<1>(candidates);
+        second_sector_group_first_candidate = std::get<2>(candidates);
+        second_sector_group_last_candidate = std::get<3>(candidates);
       }
     }
 
     // Save first and last candidates in the correct position of dev_windows_layers
-    dev_windows_layers[2 * VeloUTTracking::n_layers * current_track_offset + 2 * layer]     = first_candidate;
-    dev_windows_layers[2 * VeloUTTracking::n_layers * current_track_offset + 2 * layer + 1] = last_candidate;
+    dev_windows_layers[4 * VeloUTTracking::n_layers * current_track_offset + 4 * layer]     = first_candidate;
+    dev_windows_layers[4 * VeloUTTracking::n_layers * current_track_offset + 4 * layer + 1] = last_candidate;
+    dev_windows_layers[4 * VeloUTTracking::n_layers * current_track_offset + 4 * layer + 2] = second_sector_group_first_candidate;
+    dev_windows_layers[4 * VeloUTTracking::n_layers * current_track_offset + 4 * layer + 3] = second_sector_group_last_candidate;
   }
 }

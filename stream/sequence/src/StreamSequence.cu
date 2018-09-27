@@ -419,7 +419,7 @@ cudaError_t Stream::run_sequence(
     argument_sizes[arg::dev_atomics_veloUT] = argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics * number_of_events);
     argument_sizes[arg::dev_active_tracks] = argen.size<arg::dev_active_tracks>(number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(VeloUTTracking::num_threads), stream);
+    sequence.item<seq::veloUT>().set_opts(dim3(number_of_events), dim3(1), stream);
     sequence.item<seq::veloUT>().set_arguments(
       argen.generate<arg::dev_ut_hits>(argument_offsets),
       argen.generate<arg::dev_ut_hit_offsets>(argument_offsets),
@@ -669,21 +669,21 @@ cudaError_t Stream::run_sequence(
           trackType
         );
 
-        // /* CHECKING VeloUT TRACKS */
-        // const std::vector< trackChecker::Tracks > veloUT_tracks = prepareVeloUTTracks(
-        //   host_veloUT_tracks,
-        //   host_atomics_veloUT,
-        //   number_of_events
-        // );
+        /* CHECKING VeloUT TRACKS */
+        const std::vector< trackChecker::Tracks > veloUT_tracks = prepareVeloUTTracks(
+          host_veloUT_tracks,
+          host_atomics_veloUT,
+          number_of_events
+        );
 
-        // std::cout << "Checking VeloUT tracks reconstructed on GPU" << std::endl;
-        // trackType = "VeloUT";
-        // call_pr_checker (
-        //   veloUT_tracks,
-        //   folder_name_MC,
-        //   start_event_offset,
-        //   trackType
-        // );
+        std::cout << "Checking VeloUT tracks reconstructed on GPU" << std::endl;
+        trackType = "VeloUT";
+        call_pr_checker (
+          veloUT_tracks,
+          folder_name_MC,
+          start_event_offset,
+          trackType
+        );
       } // only in first repetition
     } // do_check
   } // repetitions
