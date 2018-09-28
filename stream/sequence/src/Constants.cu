@@ -19,7 +19,7 @@ void Constants::initialize_constants() {
   cudaCheck(cudaMemcpy(dev_velo_module_zs, velo_module_zs.data(), velo_module_zs.size() * sizeof(float), cudaMemcpyHostToDevice));
 
   // Velo clustering candidate ks
-  host_candidate_ks = {0, 0, 1, 2, 2, 3, 3, 3, 3};
+  host_candidate_ks = {0, 0, 1, 4, 4, 5, 5, 5, 5};
   cudaCheck(cudaMemcpy(dev_velo_candidate_ks, host_candidate_ks.data(), host_candidate_ks.size() * sizeof(uint8_t), cudaMemcpyHostToDevice));
 
   // Velo clustering patterns
