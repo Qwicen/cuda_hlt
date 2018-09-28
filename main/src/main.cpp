@@ -195,6 +195,7 @@ int main(int argc, char *argv[])
   // Initialize detector constants on GPU
   Constants constants;
   constants.reserve_and_initialize();
+  constants.initialize_ut_decoding_constants(ut_geometry);
 
   // Create streams
   StreamWrapper stream_wrapper;

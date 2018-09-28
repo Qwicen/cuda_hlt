@@ -49,7 +49,7 @@ static constexpr uint max_tracks = 1200;
 static constexpr uint max_track_size = 26;
 
 // Constant for maximum number of hits in a module
-static constexpr uint max_numhits_in_module = 400;
+static constexpr uint max_numhits_in_module = 500;
 
 // Maximum number of tracks to follow at a time
 static constexpr uint ttf_modulo = 2000;

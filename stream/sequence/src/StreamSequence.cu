@@ -280,35 +280,39 @@ cudaError_t Stream::run_sequence(
     );
     sequence.invoke<seq::consolidate_tracks>();
 
-    // Estimate number of UT hits
+    // Calculate number of UT hits
     // Set arguments and reserve memory
     arguments.set_size<arg::dev_ut_raw_input>(host_ut_events_size);
     arguments.set_size<arg::dev_ut_raw_input_offsets>(host_ut_event_offsets_size);
-    arguments.set_size<arg::dev_ut_hit_count>(2 * number_of_events * VeloUTTracking::n_layers + 1);
+    arguments.set_size<arg::dev_ut_hit_offsets>(number_of_events * constants.host_unique_x_sector_layer_offsets[4] + 1);
     scheduler.setup_next(arguments, sequence_step++);
     // Setup opts and arguments for kernel call
     cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_ut_raw_input>(), host_ut_events, host_ut_events_size, cudaMemcpyHostToDevice, stream));
     cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_ut_raw_input_offsets>(), host_ut_event_offsets, host_ut_event_offsets_size * sizeof(uint32_t), cudaMemcpyHostToDevice, stream));
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
-    sequence.set_opts<seq::ut_calculate_number_of_hits>(dim3(number_of_events), dim3(192), stream);
+    sequence.set_opts<seq::ut_calculate_number_of_hits>(dim3(number_of_events), dim3(192, 2), stream);
     sequence.set_arguments<seq::ut_calculate_number_of_hits>(
       arguments.offset<arg::dev_ut_raw_input>(),
       arguments.offset<arg::dev_ut_raw_input_offsets>(),
       dev_ut_boards,
-      arguments.offset<arg::dev_ut_hit_count>()
+      constants.dev_ut_region_offsets,
+      constants.dev_unique_x_sector_layer_offsets,
+      constants.dev_unique_x_sector_offsets,
+      arguments.offset<arg::dev_ut_hit_offsets>()
     );
     // Invoke kernel
     sequence.invoke<seq::ut_calculate_number_of_hits>();
 
     // // Print UT hit count per event per layer
-    // cudaCheck(cudaMemcpyAsync(host_ut_hit_count, arguments.offset<arg::dev_ut_hit_count>(), arguments.offset<arg::dev_ut_hit_count>(), cudaMemcpyDeviceToHost, stream));
+    // std::vector<uint> host_ut_hit_count (number_of_events * constants.host_unique_x_sector_layer_offsets[4] + 1);
+    // cudaCheck(cudaMemcpyAsync(host_ut_hit_count.data(), arguments.offset<arg::dev_ut_hit_offsets>(), argen.size<arg::dev_ut_hit_offsets>(number_of_events * constants.host_unique_x_sector_layer_offsets[4] + 1), cudaMemcpyDeviceToHost, stream));
     // cudaEventRecord(cuda_generic_event, stream);
     // cudaEventSynchronize(cuda_generic_event);
     // for (int e=0; e<number_of_events; ++e) {
-    //   info_cout << "Event " << e << ", #hit per layer (0, 1, 2, 3): ";
-    //   uint32_t* count = host_ut_hit_count + e * VeloUTTracking::n_layers;
-    //   for (uint32_t i = 0; i < 4; ++i) {
+    //   info_cout << "Event " << e << ", #hits per layer: ";
+    //   uint32_t* count = host_ut_hit_count.data() + e * constants.host_unique_x_sector_layer_offsets[4];
+    //   for (uint32_t i = 0; i < constants.host_unique_x_sector_layer_offsets[4]; ++i) {
     //     info_cout << count[i] << ", ";
     //   }
     //   info_cout << std::endl;
@@ -320,22 +324,22 @@ cudaError_t Stream::run_sequence(
     // 3. Scan
 
     // Prefix sum: Reduce
-    const uint total_number_of_layers = number_of_events * VeloUTTracking::n_layers;
-    const size_t prefix_sum_auxiliary_array_3_size = (total_number_of_layers + 511) / 512;
+    const uint total_number_of_sectors = number_of_events * constants.host_unique_x_sector_layer_offsets[4];
+    const size_t prefix_sum_auxiliary_array_3_size = (total_number_of_sectors + 511) / 512;
     arguments.set_size<arg::dev_prefix_sum_auxiliary_array_3>(prefix_sum_auxiliary_array_3_size);
     scheduler.setup_next(arguments, sequence_step++);
     sequence.set_opts<seq::prefix_sum_reduce_ut_hits>(dim3(prefix_sum_auxiliary_array_3_size), dim3(256), stream);
     sequence.set_arguments<seq::prefix_sum_reduce_ut_hits>(
-      arguments.offset<arg::dev_ut_hit_count>(),
+      arguments.offset<arg::dev_ut_hit_offsets>(),
       arguments.offset<arg::dev_prefix_sum_auxiliary_array_3>(),
-      total_number_of_layers
+      total_number_of_sectors
     );
     sequence.invoke<seq::prefix_sum_reduce_ut_hits>();
 
     // Prefix sum: Single block
     scheduler.setup_next(arguments, sequence_step++);
     sequence.set_arguments<seq::prefix_sum_single_block_ut_hits>(
-      arguments.offset<arg::dev_ut_hit_count>() + total_number_of_layers,
+      arguments.offset<arg::dev_ut_hit_offsets>() + total_number_of_sectors,
       arguments.offset<arg::dev_prefix_sum_auxiliary_array_3>(),
       prefix_sum_auxiliary_array_3_size
     );
@@ -346,28 +350,28 @@ cudaError_t Stream::run_sequence(
     const uint pss_ut_hits_blocks = prefix_sum_auxiliary_array_3_size==1 ? 1 : (prefix_sum_auxiliary_array_3_size-1);
     sequence.set_opts<seq::prefix_sum_scan_ut_hits>(dim3(pss_ut_hits_blocks), dim3(512), stream);
     sequence.set_arguments<seq::prefix_sum_scan_ut_hits>(
-      arguments.offset<arg::dev_ut_hit_count>(),
+      arguments.offset<arg::dev_ut_hit_offsets>(),
       arguments.offset<arg::dev_prefix_sum_auxiliary_array_3>(),
-      total_number_of_layers
+      total_number_of_sectors
     );
     sequence.invoke<seq::prefix_sum_scan_ut_hits>();
 
     // Fetch total number of hits accumulated with all tracks
     cudaCheck(cudaMemcpyAsync(host_accumulated_number_of_ut_hits,
-      arguments.offset<arg::dev_ut_hit_count>() + total_number_of_layers,
+      arguments.offset<arg::dev_ut_hit_offsets>() + total_number_of_sectors,
       sizeof(uint), cudaMemcpyDeviceToHost, stream));
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
     // // Now, we should have the offset instead, and the sum of all in host_accumulated_number_of_ut_hits
     // // Check that
-    // cudaCheck(cudaMemcpyAsync(host_ut_hit_count, arguments.offset<arg::dev_ut_hit_count>(), arguments.offset<arg::dev_ut_hit_count>(), cudaMemcpyDeviceToHost, stream));
+    // cudaCheck(cudaMemcpyAsync(host_ut_hit_count.data(), arguments.offset<arg::dev_ut_hit_offsets>(), arguments.size<arg::dev_ut_hit_offsets>(), cudaMemcpyDeviceToHost, stream));
     // cudaEventRecord(cuda_generic_event, stream);
     // cudaEventSynchronize(cuda_generic_event);
     // for (int e=0; e<number_of_events; ++e) {
-    //   info_cout << "Event " << e << ", offset per layer (0, 1, 2, 3): ";
-    //   uint32_t* offset = host_ut_hit_count + e * VeloUTTracking::n_layers;
-    //   for (uint32_t i = 0; i < 4; ++i) {
+    //   info_cout << "Event " << e << ", offset per sector group: ";
+    //   uint32_t* offset = host_ut_hit_count.data() + e * constants.host_unique_x_sector_layer_offsets[4];
+    //   for (uint32_t i = 0; i < constants.host_unique_x_sector_layer_offsets[4]; ++i) {
     //     info_cout << offset[i] << ", ";
     //   }
     //   info_cout << std::endl;
@@ -375,7 +379,8 @@ cudaError_t Stream::run_sequence(
     // info_cout << "Total number of UT hits: " << *host_accumulated_number_of_ut_hits << std::endl;
 
     // Decode UT raw banks
-    arguments.set_size<arg::dev_ut_hits>(9 * host_accumulated_number_of_ut_hits[0]);
+    arguments.set_size<arg::dev_ut_hits>(UTHits::number_of_arrays * host_accumulated_number_of_ut_hits[0]);
+    arguments.set_size<arg::dev_ut_hit_count>(number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
     scheduler.setup_next(arguments, sequence_step++);
     sequence.set_opts<seq::decode_raw_banks>(dim3(number_of_events), dim3(64, 4), stream);
     sequence.set_arguments<seq::decode_raw_banks>(
@@ -383,22 +388,29 @@ cudaError_t Stream::run_sequence(
       arguments.offset<arg::dev_ut_raw_input_offsets>(),
       dev_ut_boards,
       dev_ut_geometry,
+      constants.dev_ut_region_offsets,
+      constants.dev_unique_x_sector_layer_offsets,
+      constants.dev_unique_x_sector_offsets,
+      arguments.offset<arg::dev_ut_hit_offsets>(),
       arguments.offset<arg::dev_ut_hits>(),
       arguments.offset<arg::dev_ut_hit_count>()
     );
     sequence.invoke<seq::decode_raw_banks>();
-
-    // UT hit sorting by x
+    
+    // UT hit sorting by y
     arguments.set_size<arg::dev_ut_hit_permutations>(host_accumulated_number_of_ut_hits[0]);
     scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::sort_by_x>(dim3(number_of_events), dim3(64), stream);
-    sequence.set_arguments<seq::sort_by_x>(
+    sequence.set_opts<seq::sort_by_y>(dim3(number_of_events), dim3(256), stream);
+    sequence.set_arguments<seq::sort_by_y>(
       arguments.offset<arg::dev_ut_hits>(),
-      arguments.offset<arg::dev_ut_hit_count>(),
-      arguments.offset<arg::dev_ut_hit_permutations>()
+      arguments.offset<arg::dev_ut_hit_offsets>(),
+      arguments.offset<arg::dev_ut_hit_permutations>(),
+      constants.dev_unique_x_sector_layer_offsets,
+      constants.dev_unique_x_sector_offsets,
+      constants.dev_unique_sector_xs
     );
-    sequence.invoke<seq::sort_by_x>();
-
+    sequence.invoke<seq::sort_by_y>();
+    
     // VeloUT tracking
     arguments.set_size<arg::dev_veloUT_tracks>(number_of_events * VeloUTTracking::max_num_tracks);
     arguments.set_size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics * number_of_events);
@@ -406,7 +418,7 @@ cudaError_t Stream::run_sequence(
     sequence.set_opts<seq::veloUT>(dim3(number_of_events), dim3(32), stream);
     sequence.set_arguments<seq::veloUT>(
       arguments.offset<arg::dev_ut_hits>(),
-      arguments.offset<arg::dev_ut_hit_count>(),
+      arguments.offset<arg::dev_ut_hit_offsets>(),
       arguments.offset<arg::dev_atomics_storage>(),
       arguments.offset<arg::dev_velo_track_hit_number>(),
       arguments.offset<arg::dev_velo_track_hits>(),
@@ -414,7 +426,10 @@ cudaError_t Stream::run_sequence(
       arguments.offset<arg::dev_veloUT_tracks>(),
       arguments.offset<arg::dev_atomics_veloUT>(),
       dev_ut_magnet_tool,
-      constants.dev_ut_dxDy
+      constants.dev_ut_dxDy,
+      constants.dev_unique_x_sector_layer_offsets,
+      constants.dev_unique_x_sector_offsets,
+      constants.dev_unique_sector_xs
     );
     sequence.invoke<seq::veloUT>();
 

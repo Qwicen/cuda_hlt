@@ -26,11 +26,15 @@ __global__ void scifi_sort_by_x(
     const uint n_hits_zone = n_hits_zones[i_zone];
     total_number_of_hits += n_hits_zone;
 
-    find_permutation<float>(
-      unsorted_scifi_hits.x0,
+    find_permutation(
       zone_offset,
     	scifi_hit_permutations,
-    	n_hits_zone
+    	n_hits_zone,
+      [&unsorted_scifi_hits] (const int a, const int b) {
+        if (unsorted_scifi_hits.x0[a] > unsorted_scifi_hits.x0[b]) { return 1; }
+        if (unsorted_scifi_hits.x0[a] == unsorted_scifi_hits.x0[b]) { return 0; }
+        return -1;
+      }
     );
 
     // Skip padding

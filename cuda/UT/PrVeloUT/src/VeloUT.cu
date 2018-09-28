@@ -2,7 +2,7 @@
 
 __global__ void veloUT(
   uint* dev_ut_hits,
-  uint* dev_ut_hit_count,
+  uint* dev_ut_hit_offsets,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_track_hits,
@@ -10,11 +10,16 @@ __global__ void veloUT(
   VeloUTTracking::TrackUT* dev_veloUT_tracks,
   int* dev_atomics_veloUT,
   PrUTMagnetTool* dev_ut_magnet_tool,
-  float* dev_ut_dxDy
+  float* dev_ut_dxDy,
+  const uint* dev_unique_x_sector_layer_offsets,
+  const uint* dev_unique_x_sector_offsets,
+  const float* dev_unique_sector_xs
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
-  const uint total_number_of_hits = dev_ut_hit_count[number_of_events * VeloUTTracking::n_layers];
+
+  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
+  const uint total_number_of_hits = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
   
   // Velo consolidated types
   const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
@@ -22,9 +27,8 @@ __global__ void veloUT(
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  UTHitCount ut_hit_count;
-  ut_hit_count.typecast_after_prefix_sum(dev_ut_hit_count, event_number, number_of_events);
-
+  UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  
   UTHits ut_hits;
   ut_hits.typecast_sorted(dev_ut_hits, total_number_of_hits);
 
@@ -43,18 +47,29 @@ __global__ void veloUT(
   }
   __syncthreads();
 
-  int posLayers[4][85];
+  // if (threadIdx.x == 0) {
+  //   for (int i=0; i<4; ++i) {
+  //     printf("Layer %i hits:\n", i);
 
-  // printf("first hit: cos = %f, yBegin = %f, yEnd = %f, zAtYEq0 = %f, xAtYEq0 = %f, weight = %f, highThreshold = %u \n",
-  //        hits_layers_event->cos(0),
-  //        hits_layers_event->yBegin(0),
-  //        hits_layers_event->yEnd(0),
-  //        hits_layers_event->zAtYEq0(0),
-  //        hits_layers_event->xAtYEq0(0),
-  //        hits_layers_event->weight(0),
-  //        hits_layers_event->highThreshold(0));
-         
-  fillIterators(ut_hits, ut_hit_count, posLayers);
+  //     for (int s=dev_unique_x_sector_layer_offsets[i]; s<dev_unique_x_sector_layer_offsets[i+1]; ++s) {
+  //       printf(" Sector group %i, x %f:\n", s, dev_unique_sector_xs[s]);
+  //       uint group_offset = ut_hit_offsets.sector_group_offset(s);
+  //       uint n_hits_group = ut_hit_offsets.sector_group_number_of_hits(s);
+
+  //       for (int j=0; j<n_hits_group; ++j) {
+  //         const auto hit_index = group_offset + j;
+
+  //         printf("  yBegin = %f, yEnd = %f, zAtYEq0 = %f, xAtYEq0 = %f, weight = %f, highThreshold = %u \n",
+  //          ut_hits.yBegin[hit_index],
+  //          ut_hits.yEnd[hit_index],
+  //          ut_hits.zAtYEq0[hit_index],
+  //          ut_hits.xAtYEq0[hit_index],
+  //          ut_hits.weight[hit_index],
+  //          ut_hits.highThreshold[hit_index]);
+  //       }
+  //     }
+  //   }
+  // }
 
   const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdlTable     = &(dev_ut_magnet_tool->bdlTable[0]);
@@ -89,12 +104,13 @@ __global__ void veloUT(
           hitCandidatesInLayers,
           n_hitCandidatesInLayers,
           x_pos_layers,
-          posLayers,
           ut_hits,
-          ut_hit_count,
+          ut_hit_offsets,
           fudgeFactors,
           velo_state,
-          dev_ut_dxDy)
+          dev_ut_dxDy,
+          dev_unique_sector_xs,
+          dev_unique_x_sector_layer_offsets)
         ) continue;
 
     TrackHelper helper {velo_state};
@@ -109,7 +125,7 @@ __global__ void veloUT(
           x_pos_layers,
           hitCandidateIndices,
           ut_hits,
-          ut_hit_count,
+          ut_hit_offsets,
           helper,
           velo_state,
           dev_ut_dxDy,
@@ -122,7 +138,7 @@ __global__ void veloUT(
         x_pos_layers,
         hitCandidateIndices,
         ut_hits,
-        ut_hit_count,
+        ut_hit_offsets,
         helper,
         velo_state,
         dev_ut_dxDy,
@@ -141,7 +157,7 @@ __global__ void veloUT(
         hitCandidatesInLayers,
         n_hitCandidatesInLayers,
         ut_hits,
-        ut_hit_count,
+        ut_hit_offsets,
         x_pos_layers,
         hitCandidateIndices,
         veloUT_tracks_event,
