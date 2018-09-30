@@ -179,7 +179,7 @@ cudaError_t Stream::run_sequence(
     // Weak tracks adder
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     // Setup opts and arguments
-    sequence.item<seq::weak_tracks_adder>().set_opts(dim3(number_of_events), dim3(32), stream);
+    sequence.item<seq::weak_tracks_adder>().set_opts(dim3(number_of_events), dim3(256), stream);
     sequence.item<seq::weak_tracks_adder>().set_arguments(
       argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
       argen.generate<arg::dev_estimated_input_size>(argument_offsets),
