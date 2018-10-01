@@ -118,6 +118,11 @@ __device__ void prefix_sum_single_block_implementation(
     if ((elem_index+1) < array_size) {
       dev_array[elem_index + 1] = data_block[2*threadIdx.x + 1] + prev_last_elem;
     }
+  } else {
+    // Special case where number of elements is binary
+    if (threadIdx.x==0) {
+      dev_total_sum[0] = prev_last_elem;
+    }
   }
 }
 

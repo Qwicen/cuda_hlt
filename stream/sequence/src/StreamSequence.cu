@@ -176,7 +176,7 @@ cudaError_t Stream::run_sequence(
     // Weak tracks adder
     scheduler.setup_next(arguments, sequence_step++);
     // Setup opts and arguments
-    sequence.set_opts<seq::weak_tracks_adder>(dim3(number_of_events), dim3(32), stream);
+    sequence.set_opts<seq::weak_tracks_adder>(dim3(number_of_events), dim3(256), stream);
     sequence.set_arguments<seq::weak_tracks_adder>(
       arguments.offset<arg::dev_velo_cluster_container>(),
       arguments.offset<arg::dev_estimated_input_size>(),
@@ -267,7 +267,7 @@ cudaError_t Stream::run_sequence(
     arguments.set_size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0] * sizeof(Velo::Hit) / sizeof(uint));
     arguments.set_size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0] * sizeof(Velo::State) / sizeof(uint));
     scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::consolidate_tracks>(dim3(number_of_events), dim3(32), stream);
+    sequence.set_opts<seq::consolidate_tracks>(dim3(number_of_events), dim3(256), stream);
     sequence.set_arguments<seq::consolidate_tracks>(
       arguments.offset<arg::dev_atomics_storage>(),
       arguments.offset<arg::dev_tracks>(),
