@@ -119,7 +119,7 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_scifi_hit_count, uint>,
   Argument<arg::dev_prefix_sum_auxiliary_array_4, uint>,
   Argument<arg::dev_scifi_hit_permutations, uint>,
-  Argument<arg::dev_scifi_hits, char>,
+  Argument<arg::dev_scifi_hits, uint>,
   Argument<arg::dev_scifi_raw_input, char>,
   Argument<arg::dev_scifi_tracks, SciFi::Track>,
   Argument<arg::dev_n_scifi_tracks, uint>

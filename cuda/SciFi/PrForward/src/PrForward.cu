@@ -46,7 +46,7 @@ __global__ void PrForward(
   scifi_hit_count.typecast_after_prefix_sum((uint*) dev_scifi_hit_count, event_number, number_of_events);
   
   SciFi::SciFiHits scifi_hits;
-  scifi_hits.typecast_sorted((char*) dev_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+  scifi_hits.typecast_sorted((uint*) dev_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
 
   // initialize atomic SciFi tracks counter
   if ( threadIdx.x == 0 ) {

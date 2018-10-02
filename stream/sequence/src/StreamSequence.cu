@@ -497,9 +497,10 @@ cudaError_t Stream::run_sequence(
 
     // Raw Bank Decoder
     //const uint32_t hits_bytes = (14 * sizeof(float) + 1) * *host_accumulated_number_of_scifi_hits;
-    const uint32_t hits_bytes = (11 * sizeof(float) ) * *host_accumulated_number_of_scifi_hits;
-    debug_cout << "requested bytes = " << hits_bytes << std::endl;
-    argument_sizes[arg::dev_scifi_hits] = argen.size<arg::dev_scifi_hits>(hits_bytes);
+    //const uint32_t hits_bytes = (11 * sizeof(float) ) * *host_accumulated_number_of_scifi_hits;
+    const uint32_t total_scifi_hits_size = 11 * host_accumulated_number_of_scifi_hits[0];
+    //debug_cout << "requested bytes = " << hits_bytes << std::endl;
+    argument_sizes[arg::dev_scifi_hits] = argen.size<arg::dev_scifi_hits>(total_scifi_hits_size);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::raw_bank_decoder>().set_opts(dim3(number_of_events), dim3(240), stream);
     sequence.item<seq::raw_bank_decoder>().set_arguments(
@@ -567,13 +568,13 @@ cudaError_t Stream::run_sequence(
     
     // SciFi Decoder Debugging
     {
-      std::vector<char> host_scifi_hits (hits_bytes);
+      std::vector<uint> host_scifi_hits (total_scifi_hits_size);
       std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
 
       cudaCheck(cudaMemcpyAsync(
         host_scifi_hits.data(),
         argen.generate<arg::dev_scifi_hits>(argument_offsets),
-        hits_bytes,
+        total_scifi_hits_size * sizeof(uint),
         cudaMemcpyDeviceToHost,
         stream
       ));
@@ -590,8 +591,8 @@ cudaError_t Stream::run_sequence(
         SciFi::SciFiHitCount scifi_hit_count;
         scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count.data(), event, number_of_events);
         
-        SciFi::SciFiHits scifi_hits; // {scifi_hit_count};
-        scifi_hits.typecast_sorted((char*) host_scifi_hits.data(), scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+        SciFi::SciFiHits scifi_hits; 
+        scifi_hits.typecast_sorted((uint*) host_scifi_hits.data(), scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
         
         for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
           const auto zone_offset = scifi_hit_count.layer_offsets[zone];
@@ -610,8 +611,8 @@ cudaError_t Stream::run_sequence(
       for (int event=0; event<number_of_events; ++event) {
         SciFi::SciFiHitCount scifi_hit_count;
         scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count.data(), event, number_of_events);
-        SciFi::SciFiHits scifi_hits; // {scifi_hit_count};
-        scifi_hits.typecast_sorted((char*) host_scifi_hits.data(), scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+        SciFi::SciFiHits scifi_hits; 
+        scifi_hits.typecast_sorted((uint*) host_scifi_hits.data(), scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
         
         for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
           const auto zone_offset = hits_layers_events_scifi->layer_offset[zone];
@@ -684,13 +685,13 @@ cudaError_t Stream::run_sequence(
         /* Run Forward on x86 architecture  */
         std::vector< trackChecker::Tracks > forward_tracks_events;
 
-        std::vector<char> host_scifi_hits (hits_bytes);
+        std::vector<uint> host_scifi_hits (total_scifi_hits_size);
         std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
 
         cudaCheck(cudaMemcpyAsync(
           host_scifi_hits.data(),
           argen.generate<arg::dev_scifi_hits>(argument_offsets),
-          hits_bytes,
+          total_scifi_hits_size * sizeof(uint),
           cudaMemcpyDeviceToHost,
           stream
         ));

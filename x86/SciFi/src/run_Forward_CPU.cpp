@@ -49,7 +49,7 @@ int run_forward_on_CPU (
     scifi_hit_count.typecast_after_prefix_sum(host_scifi_hit_count, i_event, number_of_events);
     
     SciFi::SciFiHits scifi_hits; 
-    scifi_hits.typecast_sorted((char*) host_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+    scifi_hits.typecast_sorted((uint*) host_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
     
     // initialize TMVA vars
     SciFi::Tracking::TMVA tmva1;

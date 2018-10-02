@@ -292,14 +292,14 @@ struct SciFiHits {
    *        pointed by base_pointer.
    */
   __host__ __device__
-  void typecast_unsorted(char* base_pointer, uint32_t total_number_of_hits);
+  void typecast_unsorted(uint32_t* base_pointer, uint32_t total_number_of_hits);
 
   /**
    * @brief Populates the SciFiHits object pointers from a sorted array of data
    *        pointed by base_pointer.
    */
   __host__ __device__
-  void typecast_sorted(char* base_pointer, uint32_t total_number_of_hits);
+  void typecast_sorted(uint32_t* base_pointer, uint32_t total_number_of_hits);
 
   /**
    * @brief Gets a hit in the SciFiHit format from the global hit index.

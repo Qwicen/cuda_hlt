@@ -167,32 +167,32 @@ void SciFiHitCount::typecast_after_prefix_sum(
   n_hits_layers = base_pointer + number_of_events * SciFi::number_of_zones + 1 + event_number * SciFi::number_of_zones;
 }
 
-void SciFiHits::typecast_unsorted(char* base, uint32_t total_number_of_hits) {
-  x0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  z0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  w     =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  dxdy  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  dzdy  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  yMin  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  yMax  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  LHCbID =    reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  planeCode = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  hitZone =   reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  temp  =     reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+void SciFiHits::typecast_unsorted(uint32_t* base, uint32_t total_number_of_hits) {
+  x0    =     reinterpret_cast<float*>(base);
+  z0    =     reinterpret_cast<float*>(base + total_number_of_hits);
+  w     =     reinterpret_cast<float*>(base + 2*total_number_of_hits); 
+  dxdy  =     reinterpret_cast<float*>(base + 3*total_number_of_hits); 
+  dzdy  =     reinterpret_cast<float*>(base + 4*total_number_of_hits); 
+  yMin  =     reinterpret_cast<float*>(base + 5*total_number_of_hits); 
+  yMax  =     reinterpret_cast<float*>(base + 6*total_number_of_hits); 
+  LHCbID =    base + 7*total_number_of_hits; 
+  planeCode = base + 8*total_number_of_hits; 
+  hitZone =   base + 9*total_number_of_hits; 
+  temp  =     base + 10*total_number_of_hits; 
 }
 
-void SciFiHits::typecast_sorted(char* base, uint32_t total_number_of_hits) {
-  temp  =     reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  x0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  z0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  w     =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  dxdy  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  dzdy  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  yMin  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  yMax  =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  LHCbID =    reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  planeCode = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  hitZone =   reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+void SciFiHits::typecast_sorted(uint32_t* base, uint32_t total_number_of_hits) {
+  temp  =     base; 
+  x0    =     reinterpret_cast<float*>(base + total_number_of_hits); 
+  z0    =     reinterpret_cast<float*>(base + 2*total_number_of_hits); 
+  w     =     reinterpret_cast<float*>(base + 3*total_number_of_hits); 
+  dxdy  =     reinterpret_cast<float*>(base + 4*total_number_of_hits); 
+  dzdy  =     reinterpret_cast<float*>(base + 5*total_number_of_hits);
+  yMin  =     reinterpret_cast<float*>(base + 6*total_number_of_hits); 
+  yMax  =     reinterpret_cast<float*>(base + 7*total_number_of_hits); 
+  LHCbID =    base + 8*total_number_of_hits; 
+  planeCode = base + 9*total_number_of_hits; 
+  hitZone =   base + 10*total_number_of_hits; 
 }
 
 SciFiHit SciFiHits::getHit(uint32_t index) const {
