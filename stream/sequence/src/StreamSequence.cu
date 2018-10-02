@@ -496,7 +496,8 @@ cudaError_t Stream::run_sequence(
     // info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
 
     // Raw Bank Decoder
-    const uint32_t hits_bytes = (14 * sizeof(float) + 1) * *host_accumulated_number_of_scifi_hits;
+    //const uint32_t hits_bytes = (14 * sizeof(float) + 1) * *host_accumulated_number_of_scifi_hits;
+    const uint32_t hits_bytes = (11 * sizeof(float) ) * *host_accumulated_number_of_scifi_hits;
     debug_cout << "requested bytes = " << hits_bytes << std::endl;
     argument_sizes[arg::dev_scifi_hits] = argen.size<arg::dev_scifi_hits>(hits_bytes);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
@@ -564,68 +565,68 @@ cudaError_t Stream::run_sequence(
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
     
-    // // SciFi Decoder Debugging
-    // {
-    //   std::vector<char> host_scifi_hits (hits_bytes);
-    //   std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
+    // SciFi Decoder Debugging
+    {
+      std::vector<char> host_scifi_hits (hits_bytes);
+      std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
 
-    //   cudaCheck(cudaMemcpyAsync(
-    //     host_scifi_hits.data(),
-    //     argen.generate<arg::dev_scifi_hits>(argument_offsets),
-    //     hits_bytes,
-    //     cudaMemcpyDeviceToHost,
-    //     stream
-    //   ));
-    //   cudaCheck(cudaMemcpyAsync(
-    //     host_scifi_hit_count.data(),
-    //     argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-    //     host_scifi_hit_count.size() * sizeof(uint),
-    //     cudaMemcpyDeviceToHost,
-    //     stream
-    //   ));
+      cudaCheck(cudaMemcpyAsync(
+        host_scifi_hits.data(),
+        argen.generate<arg::dev_scifi_hits>(argument_offsets),
+        hits_bytes,
+        cudaMemcpyDeviceToHost,
+        stream
+      ));
+      cudaCheck(cudaMemcpyAsync(
+        host_scifi_hit_count.data(),
+        argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+        host_scifi_hit_count.size() * sizeof(uint),
+        cudaMemcpyDeviceToHost,
+        stream
+      ));
 
-    //   std::ofstream outfile("dump.txt");
-    //   for (int event=0; event<number_of_events; ++event) {
-    //     SciFi::SciFiHitCount scifi_hit_count;
-    //     scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count.data(), event, number_of_events);
+      std::ofstream outfile("dump.txt");
+      for (int event=0; event<number_of_events; ++event) {
+        SciFi::SciFiHitCount scifi_hit_count;
+        scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count.data(), event, number_of_events);
         
-    //     SciFi::SciFiHits scifi_hits {scifi_hit_count};
-    //     scifi_hits.typecast_sorted((char*) host_scifi_hits.data(), scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+        SciFi::SciFiHits scifi_hits; // {scifi_hit_count};
+        scifi_hits.typecast_sorted((char*) host_scifi_hits.data(), scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
         
-    //     for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
-    //       const auto zone_offset = scifi_hits.hit_count.layer_offsets[zone];
-    //       for(size_t hit = 0; hit < scifi_hits.hit_count.n_hits_layers[zone]; hit++) {
-    //         auto h = scifi_hits.getHit(zone_offset + hit);
+        for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
+          const auto zone_offset = scifi_hit_count.layer_offsets[zone];
+          for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
+            auto h = scifi_hits.getHit(zone_offset + hit);
 
-    //         outfile << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " "
-    //           << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
-    //           << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
-    //       }
-    //     }
-    //   }
-    //   outfile.close();
+            outfile << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << std::endl;
+              // << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
+              // << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
+          }
+        }
+      }
+      outfile.close();
 
-    //   std::ofstream outfile_2("dump_2.txt");
-    //   for (int event=0; event<number_of_events; ++event) {
-    //     SciFi::SciFiHitCount scifi_hit_count;
-    //     scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count.data(), event, number_of_events);
-    //     SciFi::SciFiHits scifi_hits {scifi_hit_count};
-    //     scifi_hits.typecast_sorted((char*) host_scifi_hits.data(), scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+      std::ofstream outfile_2("dump_2.txt");
+      for (int event=0; event<number_of_events; ++event) {
+        SciFi::SciFiHitCount scifi_hit_count;
+        scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count.data(), event, number_of_events);
+        SciFi::SciFiHits scifi_hits; // {scifi_hit_count};
+        scifi_hits.typecast_sorted((char*) host_scifi_hits.data(), scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
         
-    //     for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
-    //       const auto zone_offset = hits_layers_events_scifi->layer_offset[zone];
+        for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
+          const auto zone_offset = hits_layers_events_scifi->layer_offset[zone];
 
-    //       for(size_t hit = 0; hit < scifi_hits.hit_count.n_hits_layers[zone]; hit++) {
-    //         auto h = hits_layers_events_scifi->getHit(zone_offset + hit);
+          for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
+            auto h = hits_layers_events_scifi->getHit(zone_offset + hit);
 
-    //         outfile_2 << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " "
-    //           << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
-    //           << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
-    //       }
-    //     }
-    //   }
-    //   outfile_2.close();
-    // }
+            outfile_2 << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << std::endl;
+              // << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
+              // << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
+          }
+        }
+      }
+      outfile_2.close();
+    } 
 
     ///////////////////////
     // Monte Carlo Check //

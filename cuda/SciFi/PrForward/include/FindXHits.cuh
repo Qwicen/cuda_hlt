@@ -25,6 +25,7 @@
 
 __host__ __device__ void collectAllXHits(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   float coordX[SciFi::Tracking::max_x_hits],
@@ -37,6 +38,7 @@ __host__ __device__ void collectAllXHits(
 
 __host__ __device__ void selectXCandidates(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   bool usedHits[SciFi::Constants::max_numhits_per_event],
@@ -54,6 +56,7 @@ __host__ __device__ void selectXCandidates(
 
 __host__ __device__ bool addHitsOnEmptyXLayers(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   float trackParameters[SciFi::Tracking::nTrackParams],
   const float xParams_seed[4],
   const float yParams_seed[4],

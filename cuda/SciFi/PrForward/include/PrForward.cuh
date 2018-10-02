@@ -56,7 +56,8 @@ __global__ void PrForward(
   SciFi::Tracking::Arrays* dev_constArrays);
 
 __host__ __device__ void find_forward_tracks(
-  const SciFi::SciFiHits& scifi_hits,  
+  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Track* outputTracks,
   uint* n_forward_tracks,
@@ -67,6 +68,7 @@ __host__ __device__ void find_forward_tracks(
 
 __host__ __device__ void selectFullCandidates(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   SciFi::Tracking::Track* candidate_tracks,
   int& n_candidate_tracks,
   SciFi::Tracking::Track* selected_tracks,

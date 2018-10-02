@@ -6,6 +6,7 @@
 //=========================================================================
 __host__ __device__ void collectStereoHits(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   SciFi::Tracking::Track& track,
   MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars,
@@ -44,8 +45,8 @@ __host__ __device__ void collectStereoHits(
     // -- Use a binary search to find the lower bound of the range of x values
     // -- This takes the y value into account
     const float lower_bound_at = -dxTol - yZone * constArrays->uvZone_dxdy[zone] + xPred;
-    int uv_zone_offset_begin = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[zone]];
-    int uv_zone_offset_end   = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[zone]+1];
+    int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]];
+    int uv_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]+1];
     int itH   = getLowerBound(scifi_hits.x0, lower_bound_at, uv_zone_offset_begin, uv_zone_offset_end);
     int itEnd = uv_zone_offset_end;
 
@@ -86,6 +87,7 @@ __host__ __device__ void collectStereoHits(
 //=========================================================================
 __host__ __device__ bool selectStereoHits(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   SciFi::Tracking::Track& track,
   SciFi::Tracking::Arrays* constArrays,
   float stereoCoords[SciFi::Tracking::max_stereo_hits],
@@ -182,7 +184,7 @@ __host__ __device__ bool selectStereoHits(
       velo_state, constArrays, pars)) continue;
     // debug_cout << "Passed the Y fit" << std::endl;
 
-    if(!addHitsOnEmptyStereoLayers(scifi_hits, track, trackStereoHits, n_trackStereoHits, constArrays, planeCounter, velo_state, pars))continue;
+    if(!addHitsOnEmptyStereoLayers(scifi_hits, scifi_hit_count, track, trackStereoHits, n_trackStereoHits, constArrays, planeCounter, velo_state, pars))continue;
     //debug_cout << "Passed adding hits on empty stereo layers" << std::endl;
   
     if(n_trackStereoHits < n_bestStereoHits) continue; //number of hits most important selection criteria!
@@ -231,6 +233,7 @@ __host__ __device__ bool selectStereoHits(
 //=========================================================================
 __host__ __device__ bool addHitsOnEmptyStereoLayers(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   SciFi::Tracking::Track& track,
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits,
@@ -271,8 +274,8 @@ __host__ __device__ bool addHitsOnEmptyStereoLayers(
     // -- Use a binary search to find the lower bound of the range of x values
     // -- This takes the y value into account
     const float lower_bound_at = -dxTol - yZone * constArrays->uvZone_dxdy[zone] + xPred;
-    int uv_zone_offset_begin = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[zone]];
-    int uv_zone_offset_end   = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[zone]+1];
+    int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]];
+    int uv_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]+1];
     int itH   = getLowerBound(scifi_hits.x0,lower_bound_at,uv_zone_offset_begin,uv_zone_offset_end);
     int itEnd = uv_zone_offset_end;
     

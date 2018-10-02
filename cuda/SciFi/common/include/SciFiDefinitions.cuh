@@ -272,8 +272,6 @@ struct SciFiHitCount {
 };
 
 struct SciFiHits {
-  // TODO: For now
-  SciFiHitCount hit_count;
 
   float* x0;
   float* z0;
@@ -288,9 +286,6 @@ struct SciFiHits {
   uint32_t* temp;
 
   SciFiHits() = default;
-
-  __device__ __host__
-  SciFiHits(const SciFiHitCount& param_hit_count) : hit_count(param_hit_count) {}
 
   /**
    * @brief Populates the SciFiHits object pointers from an unsorted array of data

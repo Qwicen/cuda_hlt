@@ -3,7 +3,8 @@
 #include "PrForward.cuh"
 
 void PrForwardWrapper(
-  const SciFi::SciFiHits& hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   const Velo::Consolidated::States& velo_states,
   const uint event_tracks_offset,
   const VeloUTTracking::TrackUT * veloUT_tracks,

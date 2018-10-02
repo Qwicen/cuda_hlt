@@ -16,6 +16,7 @@
 //
 __host__ __device__ void collectAllXHits(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   float coordX[SciFi::Tracking::max_x_hits],
@@ -89,8 +90,8 @@ __host__ __device__ void collectAllXHits(
     }
 
     // Get the zone bounds 
-    int x_zone_offset_begin = scifi_hits.hit_count.layer_offsets[constArrays->xZones[iZone]];
-    int x_zone_offset_end   = scifi_hits.hit_count.layer_offsets[constArrays->xZones[iZone]+1];
+    int x_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->xZones[iZone]];
+    int x_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->xZones[iZone]+1];
     int itH   = getLowerBound(scifi_hits.x0,xMin,x_zone_offset_begin,x_zone_offset_end); 
     int itEnd = getLowerBound(scifi_hits.x0,xMax,x_zone_offset_begin,x_zone_offset_end);
 
@@ -107,11 +108,11 @@ __host__ __device__ void collectAllXHits(
           float maxDx       = SciFi::Tracking::tolYCollectX + ( std::fabs( scifi_hits.x0[itH] - xCentral ) + std::fabs( yInZone ) ) * SciFi::Tracking::tolYSlopeCollectX;
           float xMinUV      = xPredUv - maxDx;
     
-    int uv_zone_offset_begin = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[iZone]];
-    int uv_zone_offset_end   = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[iZone]+1];  
+    int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone]];
+    int uv_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone]+1];  
     int triangleOffset       = side > 0 ? -1 : 1;
-    int triangle_zone_offset_begin = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]];
-    int triangle_zone_offset_end   = scifi_hits.hit_count.layer_offsets[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]+1];
+    int triangle_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]];
+    int triangle_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]+1];
     int itUV1                = getLowerBound(scifi_hits.x0,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);    
     int itUV2                = getLowerBound(scifi_hits.x0,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
 
@@ -172,6 +173,7 @@ __host__ __device__ void collectAllXHits(
 //=========================================================================
 __host__ __device__ void selectXCandidates(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   bool usedHits[SciFi::Constants::max_numhits_per_event],
@@ -387,7 +389,7 @@ __host__ __device__ void selectXCandidates(
       getTrackParameters(xAtRef, velo_state, constArrays, trackParameters); 
       fastLinearFit( scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter,pars);
       addHitsOnEmptyXLayers(
-        scifi_hits, trackParameters,
+        scifi_hits, scifi_hit_count, trackParameters,
         xParams_seed, yParams_seed,
         false, coordToFit,n_coordToFit,
         constArrays, planeCounter, pars, side);
@@ -399,7 +401,7 @@ __host__ __device__ void selectXCandidates(
     if (ok) ok = trackParameters[7]/trackParameters[8] < SciFi::Tracking::maxChi2PerDoF;
     if (ok )
       ok = addHitsOnEmptyXLayers(
-        scifi_hits, trackParameters,
+        scifi_hits, scifi_hit_count, trackParameters,
         xParams_seed, yParams_seed,
         true, coordToFit, n_coordToFit, 
         constArrays, planeCounter, pars, side);
@@ -436,6 +438,7 @@ __host__ __device__ void selectXCandidates(
 
 __host__ __device__ bool addHitsOnEmptyXLayers(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   float trackParameters[SciFi::Tracking::nTrackParams],
   const float xParams_seed[4],
   const float yParams_seed[4],
@@ -472,8 +475,8 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
     int best = -1;
 
     // -- Use a search to find the lower bound of the range of x values
-    int x_zone_offset_begin = scifi_hits.hit_count.layer_offsets[constArrays->xZones[iZone]];
-    int x_zone_offset_end   = scifi_hits.hit_count.layer_offsets[constArrays->xZones[iZone]+1];
+    int x_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->xZones[iZone]];
+    int x_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->xZones[iZone]+1];
     int itH   = getLowerBound(scifi_hits.x0,minX,x_zone_offset_begin,x_zone_offset_end);
     int itEnd = x_zone_offset_end;
     

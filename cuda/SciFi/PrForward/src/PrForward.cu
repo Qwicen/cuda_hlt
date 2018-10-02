@@ -45,10 +45,8 @@ __global__ void PrForward(
   SciFi::SciFiHitCount scifi_hit_count;
   scifi_hit_count.typecast_after_prefix_sum((uint*) dev_scifi_hit_count, event_number, number_of_events);
   
-  SciFi::SciFiHits scifi_hits {scifi_hit_count};
+  SciFi::SciFiHits scifi_hits;
   scifi_hits.typecast_sorted((char*) dev_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
-
-  // const SciFi::SciFiHits& scifi_hits = dev_scifi_hits + event_number;
 
   // initialize atomic SciFi tracks counter
   if ( threadIdx.x == 0 ) {
@@ -67,6 +65,7 @@ __global__ void PrForward(
       
       find_forward_tracks(
         scifi_hits,
+        scifi_hit_count,
         veloUTTr,
         scifi_tracks_event,
         n_scifi_tracks_event,
@@ -81,6 +80,7 @@ __global__ void PrForward(
 
 __host__ __device__ void find_forward_tracks(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Track* outputTracks,
   uint* n_forward_tracks,
@@ -112,12 +112,12 @@ __host__ __device__ void find_forward_tracks(
   
   if(yAtRef>-5.f)
     collectAllXHits(
-      scifi_hits, allXHits[1], n_x_hits[1],
+      scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
       coordX[1], xParams_seed, yParams_seed, constArrays,
       velo_state, veloUTTrack.qop, 1); 
   if(yAtRef< 5.f)
     collectAllXHits(
-      scifi_hits, allXHits[0], n_x_hits[0],
+      scifi_hits, scifi_hit_count, allXHits[0], n_x_hits[0],
       coordX[0], xParams_seed, yParams_seed, constArrays,
       velo_state, veloUTTrack.qop, -1);
 
@@ -127,13 +127,13 @@ __host__ __device__ void find_forward_tracks(
   bool usedHits[SciFi::Constants::max_numhits_per_event] = { false };
   
   if(yAtRef>-5.f)selectXCandidates(
-    scifi_hits, allXHits[1], n_x_hits[1],
+    scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
     usedHits, coordX[1], veloUTTrack,
     candidate_tracks, n_candidate_tracks,
     zRef_track, xParams_seed, yParams_seed,
     velo_state, pars_first,  constArrays, 1);
   if(yAtRef< 5.f)selectXCandidates(
-    scifi_hits, allXHits[0], n_x_hits[0],
+    scifi_hits, scifi_hit_count, allXHits[0], n_x_hits[0],
     usedHits, coordX[0], veloUTTrack,
     candidate_tracks, n_candidate_tracks,
     zRef_track, xParams_seed, yParams_seed,
@@ -143,7 +143,7 @@ __host__ __device__ void find_forward_tracks(
   int n_selected_tracks = 0;
     
   selectFullCandidates(
-    scifi_hits,
+    scifi_hits, scifi_hit_count,
     candidate_tracks,
     n_candidate_tracks,
     selected_tracks,
@@ -165,13 +165,13 @@ __host__ __device__ void find_forward_tracks(
   
   if (!ok && SciFi::Tracking::secondLoop) { // If you found nothing begin the 2nd loop
     if(yAtRef>-5.f)selectXCandidates(
-      scifi_hits, allXHits[1], n_x_hits[1],
+      scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
       usedHits, coordX[1], veloUTTrack,
       candidate_tracks2, n_candidate_tracks2,
       zRef_track, xParams_seed, yParams_seed,
       velo_state, pars_second, constArrays, 1);
     if(yAtRef< 5.f)selectXCandidates(
-      scifi_hits, allXHits[0], n_x_hits[0],
+      scifi_hits, scifi_hit_count, allXHits[0], n_x_hits[0],
       usedHits, coordX[0], veloUTTrack,
       candidate_tracks2, n_candidate_tracks2,
       zRef_track, xParams_seed, yParams_seed,
@@ -183,7 +183,7 @@ __host__ __device__ void find_forward_tracks(
     int n_selected_tracks2 = 0;
     
     selectFullCandidates(
-      scifi_hits,
+      scifi_hits, scifi_hit_count,
       candidate_tracks2,
       n_candidate_tracks2,
       selected_tracks2,
@@ -251,6 +251,7 @@ __host__ __device__ SciFi::Track makeTrack( SciFi::Tracking::Track track ) {
 //=========================================================================
 __host__ __device__ void selectFullCandidates(
   const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   SciFi::Tracking::Track* candidate_tracks,
   int& n_candidate_tracks,
   SciFi::Tracking::Track* selected_tracks,
@@ -284,7 +285,7 @@ __host__ __device__ void selectFullCandidates(
     int n_stereoHits = 0;
     float stereoCoords[SciFi::Tracking::max_stereo_hits];
     collectStereoHits(
-      scifi_hits,
+      scifi_hits, scifi_hit_count,
       *cand, velo_state,
       pars, constArrays, stereoCoords, 
       stereoHits, n_stereoHits);
@@ -293,7 +294,8 @@ __host__ __device__ void selectFullCandidates(
    
     // select best U/V hits
     if ( !selectStereoHits(
-      scifi_hits, *cand, constArrays,
+      scifi_hits, scifi_hit_count,
+      *cand, constArrays,
       stereoCoords, stereoHits, n_stereoHits,
       velo_state, pars) ) continue;
 

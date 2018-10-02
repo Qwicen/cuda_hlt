@@ -48,7 +48,7 @@ int run_forward_on_CPU (
     SciFi::SciFiHitCount scifi_hit_count;
     scifi_hit_count.typecast_after_prefix_sum(host_scifi_hit_count, i_event, number_of_events);
     
-    SciFi::SciFiHits scifi_hits {scifi_hit_count};
+    SciFi::SciFiHits scifi_hits; 
     scifi_hits.typecast_sorted((char*) host_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
     
     // initialize TMVA vars
@@ -61,6 +61,7 @@ int run_forward_on_CPU (
  
     PrForwardWrapper(
       scifi_hits,
+      scifi_hit_count,
       host_velo_states_event,
       event_tracks_offset,
       veloUT_tracks + i_event * VeloUTTracking::max_num_tracks,
