@@ -89,6 +89,7 @@ void read_scifi_events_into_arrays( SciFi::HitsSoA *hits_layers_events,
       std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_hitZone[ layer_offset ]) );
       raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer];
 
+      // CAUTION: over-writing planeCode: instead of 0-11, now 0-23!
       for ( int i_hit = 0; i_hit < n_hits_layers_events[i_event][i_layer]; ++i_hit ) {
         hits_layers_events[i_event].m_planeCode[ layer_offset + i_hit ] = i_layer;
       }

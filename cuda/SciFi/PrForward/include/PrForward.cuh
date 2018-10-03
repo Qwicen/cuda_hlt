@@ -43,7 +43,7 @@
 
 __global__ void PrForward(
   const uint* dev_scifi_hits,
-  const uint* dev_scifi_hit_count,
+  const uint32_t* dev_scifi_hit_count,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_states,

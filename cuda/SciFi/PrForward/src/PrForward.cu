@@ -13,7 +13,7 @@
 
 __global__ void PrForward(
   const uint* dev_scifi_hits,
-  const uint* dev_scifi_hit_count,
+  const uint32_t* dev_scifi_hit_count,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_states,
@@ -27,6 +27,10 @@ __global__ void PrForward(
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
+  const uint total_number_of_hits = dev_scifi_hit_count[number_of_events * SciFi::number_of_zones];
+
+  const uint* zone_offsets = dev_scifi_hit_count + event_number * SciFi::number_of_zones;
+  const uint* n_hits_zones = dev_scifi_hit_count + number_of_events * SciFi::number_of_zones + 1 + event_number * SciFi::number_of_zones;
 
   // Velo consolidated types
   const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
@@ -46,8 +50,29 @@ __global__ void PrForward(
   scifi_hit_count.typecast_after_prefix_sum((uint*) dev_scifi_hit_count, event_number, number_of_events);
   
   SciFi::SciFiHits scifi_hits;
-  scifi_hits.typecast_sorted((uint*) dev_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+  //scifi_hits.typecast_sorted((uint*)dev_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+  scifi_hits.typecast_sorted((uint*)dev_scifi_hits, total_number_of_hits);
 
+  if ( threadIdx.x == 0 ) {
+    for (int i_zone=0; i_zone < SciFi::number_of_zones; ++i_zone) {
+      int offset = zone_offsets[i_zone];
+      for ( int i_hit = 0; i_hit < n_hits_zones[i_zone]; ++i_hit ) {
+        int hit = offset + i_hit;
+        if ( scifi_hits.planeCode[hit] >= SciFi::Constants::n_zones )
+          printf("in PrForward: on plane %u, planeCode = %u \n", i_zone, scifi_hits.planeCode[hit] );
+      }
+    }
+  }
+  
+  // for (int i_zone=0; i_zone < SciFi::number_of_zones; ++i_zone) {
+  //   int offset = scifi_hit_count.layer_offset(i_zone);
+  //   for ( int i_hit = 0; i_hit < scifi_hit_count.layer_number_of_hits(i_zone); ++i_hit ) {
+  //     int hit = offset + i_hit;
+  //     if ( scifi_hits.planeCode[hit] >= SciFi::Constants::n_zones )
+  //       printf("in PrForward: on plane %u, planeCode = %u \n", i_zone, scifi_hits.planeCode[hit] );
+  //   }
+  // }
+  
   // initialize atomic SciFi tracks counter
   if ( threadIdx.x == 0 ) {
     *n_scifi_tracks_event = 0;

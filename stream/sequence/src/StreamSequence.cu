@@ -1,5 +1,8 @@
 #include "Stream.cuh"
 
+#include "TFile.h"
+#include "TTree.h"
+
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -543,7 +546,8 @@ cudaError_t Stream::run_sequence(
     //   constants.dev_scifi_tmva2,
     //   constants.dev_scifi_constArrays
     // );
-    // sequence.item<seq::PrForward>().invoke();    
+    // sequence.item<seq::PrForward>().invoke();  
+    
     
     
 
@@ -586,38 +590,67 @@ cudaError_t Stream::run_sequence(
         stream
       ));
 
+#ifdef WITH_ROOT
+      // Histograms only for checking and debugging
+      TFile *f = new TFile("../output/scifi.root", "RECREATE");
+      TTree *t_scifi_hits = new TTree("scifi_hits","scifi_hits");
+      uint planeCode, hitZone, LHCbID;
+      float x0, z0;
+
+      t_scifi_hits->Branch("planeCode", &planeCode);
+      t_scifi_hits->Branch("hitZone", &hitZone);
+      t_scifi_hits->Branch("LHCbID", &LHCbID);
+      t_scifi_hits->Branch("x0", &x0);
+      t_scifi_hits->Branch("z0", &z0);
+#endif
+      
       std::ofstream outfile("dump.txt");
+      const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::number_of_zones];;
       for (int event=0; event<number_of_events; ++event) {
         debug_cout << "at event = " << event << std::endl;
         SciFi::SciFiHitCount scifi_hit_count;
         scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count, event, number_of_events);
         
         SciFi::SciFiHits scifi_hits; 
-        scifi_hits.typecast_sorted((uint*) host_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+        scifi_hits.typecast_sorted((uint*) host_scifi_hits, total_number_of_hits);
         
         for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
           const auto zone_offset = scifi_hit_count.layer_offsets[zone];
           const auto o_zone_offset = hits_layers_events_scifi->layer_offset[zone];
-          debug_cout << "number of hits = " << scifi_hit_count.n_hits_layers[zone] << std::endl;
           for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
             
             auto h = scifi_hits.getHit(zone_offset + hit);
             auto o_h = hits_layers_events_scifi->getHit(o_zone_offset + hit);
-            
+
             if ( h.planeCode != o_h.planeCode )
-              warning_cout << "plane code not the same: " << h.planeCode << " vs " << o_h.planeCode << std::endl;
+              warning_cout << "plane code not the same: " << std::dec << h.planeCode << " vs " << o_h.planeCode << std::endl;
             if ( h.hitZone != o_h.hitZone )
-              warning_cout << "hit zone not the same: " << h.hitZone << " vs " << o_h.hitZone << std::endl;
+              warning_cout << "hit zone not the same: " << std::dec << h.hitZone << " vs " << o_h.hitZone << std::endl;
             if ( h.LHCbID != o_h.LHCbID )
-              warning_cout << "LHCb ID not the same: " << h.LHCbID << " vs " << o_h.LHCbID << std::endl;
-            
-              outfile << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << std::endl;
-              // << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
-              // << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
+              warning_cout << "LHCb ID not the same: " << std::hex << h.LHCbID << " vs " << o_h.LHCbID << std::endl;
+                        
+              outfile << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " " 
+              << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
+              << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
+#ifdef WITH_ROOT
+              planeCode = o_h.planeCode;
+              hitZone = o_h.hitZone;
+              LHCbID = o_h.LHCbID;
+              x0 = o_h.x0;
+              z0 = o_h.z0;
+              t_scifi_hits->Fill();
+#endif
+
+              
           }
         }
       }
       outfile.close();
+#ifdef WITH_ROOT
+      f->Write();
+      f->Close();
+#endif
+      
 
       std::ofstream outfile_2("dump_2.txt");
       for (int event=0; event<number_of_events; ++event) {
@@ -632,9 +665,9 @@ cudaError_t Stream::run_sequence(
           for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
             auto h = hits_layers_events_scifi->getHit(zone_offset + hit);
 
-            outfile_2 << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << std::endl;
-              // << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
-              // << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
+            outfile_2 << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " "
+              << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
+              << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
           }
         }
       }
