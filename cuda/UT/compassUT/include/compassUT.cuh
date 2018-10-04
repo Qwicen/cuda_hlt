@@ -7,13 +7,24 @@
 
 constexpr uint N_LAYERS = 4;
 
+// 
 struct layer_candidates {
-  int first;
-  int last;
+  uint first;
+  uint last;
 };
 
 struct track_candidates {
   layer_candidates layer[N_LAYERS];
+};
+
+struct window_indicator {
+  const int* m_base_pointer;
+  window_indicator(const int* base_pointer) : m_base_pointer(base_pointer) {}
+
+  const track_candidates* get_track_candidates(const int i_track)
+  {
+    return reinterpret_cast<const track_candidates*>(m_base_pointer + (2 * N_LAYERS * i_track));
+  }
 };
 
 __global__ void compassUT(
@@ -33,7 +44,7 @@ __global__ void compassUT(
   int* dev_atomics_compassUT, // size of number of events
   int* dev_windows_layers);
 
-__host__ __device__ bool find_best_hits(
+__host__ __device__ std::tuple<int,int,int,int> find_best_hits(
   const int i_track,
   const int* windows_layers,
   const UTHits& ut_hits,
@@ -42,8 +53,8 @@ __host__ __device__ bool find_best_hits(
   const float* ut_dxDy,
   const bool forward,
   TrackHelper& helper,
-  float* x_hit_layer,
-  int* bestHitCandidateIndices);
+  float* x_hit_layer);
+  // int* bestHitCandidateIndices);
 
 // =================================================
 // -- 2 helper functions for fit
@@ -61,12 +72,12 @@ __host__ __device__ void add_hits(
   for (int i_hit = 0; i_hit < N; ++i_hit) {
     const int hit_index = hitIndices[i_hit];
     const int planeCode = ut_hits.planeCode[hit_index];
-    const float ui      = x_hit_layer[planeCode];
-    const float dxDy    = ut_dxDy[planeCode];
-    const float ci      = ut_hits.cosT(hit_index, dxDy);
-    const float z       = ut_hits.zAtYEq0[hit_index];
-    const float dz      = 0.001 * (z - PrVeloUTConst::zMidUT);
-    const float wi      = ut_hits.weight[hit_index];
+    const float ui = x_hit_layer[planeCode];
+    const float dxDy = ut_dxDy[planeCode];
+    const float ci = ut_hits.cosT(hit_index, dxDy);
+    const float z = ut_hits.zAtYEq0[hit_index];
+    const float dz = 0.001 * (z - PrVeloUTConst::zMidUT);
+    const float wi = ut_hits.weight[hit_index];
 
     mat[0] += wi * ci;
     mat[1] += wi * ci * dz;
@@ -88,10 +99,10 @@ __host__ __device__ void add_chi2s(
   for (int i_hit = 0; i_hit < N; ++i_hit) {
     const int hit_index = hitIndices[i_hit];
     const int planeCode = ut_hits.planeCode[hit_index];
-    const float zd      = ut_hits.zAtYEq0[hit_index];
-    const float xd      = xUTFit + xSlopeUTFit * (zd - PrVeloUTConst::zMidUT);
-    const float x       = x_hit_layer[planeCode];
-    const float du      = xd - x;
+    const float zd = ut_hits.zAtYEq0[hit_index];
+    const float xd = xUTFit + xSlopeUTFit * (zd - PrVeloUTConst::zMidUT);
+    const float x = x_hit_layer[planeCode];
+    const float du = xd - x;
     chi2 += (du * du) * ut_hits.weight[hit_index];
   }
 }
@@ -132,18 +143,33 @@ __host__ __device__ void simple_fit(
   // -- Scale the z-component, to not run into numerical problems with floats
   // -- first add to sum values from hit at xMidField, zMidField hit
   const float zDiff = 0.001 * (PrVeloUTConst::zKink - PrVeloUTConst::zMidUT);
-  float mat[3]      = {helper.wb, helper.wb * zDiff, helper.wb * zDiff * zDiff};
-  float rhs[2]      = {helper.wb * helper.xMidField, helper.wb * helper.xMidField * zDiff};
+  float mat[3] = {helper.wb, helper.wb * zDiff, helper.wb * zDiff * zDiff};
+  float rhs[2] = {helper.wb * helper.xMidField, helper.wb * helper.xMidField * zDiff};
 
   // then add to sum values from hits on track
   add_hits<N>(mat, rhs, x_hit_layer, ut_hits, hitIndices, ut_dxDy);
 
-  const float denom       = 1. / (mat[0] * mat[2] - mat[1] * mat[1]);
+  // //
+
+  // add_hit(mat, rhs, x_hit_layer, ut_hits, hitIndices, ut_dxDy, hit0);  
+  // if (hit1 != -1) {
+  //   add_hit(mat, rhs, x_hit_layer, ut_hits, hitIndices, ut_dxDy, hit1);
+  // }
+
+  // add_hit(mat, rhs, x_hit_layer, ut_hits, hitIndices, ut_dxDy, hit2);
+  // if (hit3 != -1) {
+  //   add_hit(mat, rhs, x_hit_layer, ut_hits, hitIndices, ut_dxDy, hit3);  
+  // }
+
+  // //
+  
+
+  const float denom = 1. / (mat[0] * mat[2] - mat[1] * mat[1]);
   const float xSlopeUTFit = 0.001 * (mat[0] * rhs[1] - mat[1] * rhs[0]) * denom;
-  const float xUTFit      = (mat[2] * rhs[0] - mat[1] * rhs[1]) * denom;
+  const float xUTFit = (mat[2] * rhs[0] - mat[1] * rhs[1]) * denom;
 
   // new VELO slope x
-  const float xb            = xUTFit + xSlopeUTFit * (PrVeloUTConst::zKink - PrVeloUTConst::zMidUT);
+  const float xb = xUTFit + xSlopeUTFit * (PrVeloUTConst::zKink - PrVeloUTConst::zMidUT);
   const float xSlopeVeloFit = (xb - velo_state.x) * helper.invKinkVeloDist;
   const float chi2VeloSlope = (velo_state.tx - xSlopeVeloFit) * PrVeloUTConst::invSigmaVeloSlope;
 
@@ -155,9 +181,9 @@ __host__ __device__ void simple_fit(
 
   if (chi2UT < helper.bestParams[1]) {
     // calculate q/p
-    const float sinInX  = xSlopeVeloFit * std::sqrt(1. + xSlopeVeloFit * xSlopeVeloFit);
+    const float sinInX = xSlopeVeloFit * std::sqrt(1. + xSlopeVeloFit * xSlopeVeloFit);
     const float sinOutX = xSlopeUTFit * std::sqrt(1. + xSlopeUTFit * xSlopeUTFit);
-    const float qp      = (sinInX - sinOutX);
+    const float qp = (sinInX - sinOutX);
 
     helper.bestParams[0] = qp;
     helper.bestParams[1] = chi2UT;
@@ -166,7 +192,7 @@ __host__ __device__ void simple_fit(
 
     // Copy the selected hits to the helper
     for (int i_hit = 0; i_hit < N; ++i_hit) {
-      helper.bestHitIndices[i_hit]   = hitIndices[i_hit];
+      helper.bestHitIndices[i_hit] = hitIndices[i_hit];
       bestHitCandidateIndices[i_hit] = hitCandidateIndices[i_hit];
     }
     helper.n_hits = N;
