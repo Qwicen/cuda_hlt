@@ -88,6 +88,9 @@ __global__ void raw_bank_decoder(
     const uint32_t uniqueZone = ((id.uniqueQuarter() - 16) >> 1);
     uint32_t* hits_zone = hit_count.n_hits_layers + uniqueZone;
     uint32_t hitIndex = atomicAdd(hits_zone, 1);
+
+    assert( hitIndex < hit_count.layer_number_of_hits(uniqueZone) );
+    
     hitIndex += shared_layer_offsets[uniqueZone];
 
     hits.x0[hitIndex] = x0;

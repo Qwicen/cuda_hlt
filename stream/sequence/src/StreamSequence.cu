@@ -516,15 +516,15 @@ cudaError_t Stream::run_sequence(
     sequence.item<seq::raw_bank_decoder>().invoke();
    
     // SciFi hit sorting by x
-    argument_sizes[arg::dev_scifi_hit_permutations] = argen.size<arg::dev_scifi_hit_permutations>(*host_accumulated_number_of_scifi_hits);
-    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::scifi_sort_by_x>().set_opts(dim3(number_of_events), dim3(64), stream);
-    sequence.item<seq::scifi_sort_by_x>().set_arguments(
-      argen.generate<arg::dev_scifi_hits>(argument_offsets),
-      argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-      argen.generate<arg::dev_scifi_hit_permutations>(argument_offsets)
-    );
-    sequence.item<seq::scifi_sort_by_x>().invoke();
+    // argument_sizes[arg::dev_scifi_hit_permutations] = argen.size<arg::dev_scifi_hit_permutations>(*host_accumulated_number_of_scifi_hits);
+    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    // sequence.item<seq::scifi_sort_by_x>().set_opts(dim3(number_of_events), dim3(64), stream);
+    // sequence.item<seq::scifi_sort_by_x>().set_arguments(
+    //   argen.generate<arg::dev_scifi_hits>(argument_offsets),
+    //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+    //   argen.generate<arg::dev_scifi_hit_permutations>(argument_offsets)
+    // );
+    // sequence.item<seq::scifi_sort_by_x>().invoke();
  
     // SciFi tracking
     // argument_sizes[arg::dev_scifi_tracks] = argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks);
@@ -612,32 +612,45 @@ cudaError_t Stream::run_sequence(
         scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count, event, number_of_events);
         
         SciFi::SciFiHits scifi_hits; 
-        scifi_hits.typecast_sorted((uint*) host_scifi_hits, total_number_of_hits);
+        //scifi_hits.typecast_sorted((uint*) host_scifi_hits, total_number_of_hits);
+        scifi_hits.typecast_unsorted((uint*) host_scifi_hits, total_number_of_hits);
         
         for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
+        //for(size_t zone = 0; zone < 1; zone++) {
           const auto zone_offset = scifi_hit_count.layer_offsets[zone];
-          const auto o_zone_offset = hits_layers_events_scifi->layer_offset[zone];
+          const auto o_zone_offset = hits_layers_events_scifi[event].layer_offset[zone];
+          const auto o_zone_n_hits = hits_layers_events_scifi[event].layer_offset[zone+1] - hits_layers_events_scifi[event].layer_offset[zone];
+
+          if ( (scifi_hit_count.n_hits_layers[zone] != o_zone_n_hits) && zone != 23 )
+            debug_cout << std::dec << "at event " << event << " in zone " << zone << " different # of hits: " << scifi_hit_count.n_hits_layers[zone] << " vs " << o_zone_n_hits << std::endl;
+
+          if ( scifi_hit_count.n_hits_layers[zone] > scifi_hit_count.layer_number_of_hits(zone) )
+            warning_cout << "# of hits = " << scifi_hit_count.n_hits_layers[zone] << " > " << scifi_hit_count.layer_number_of_hits(zone) << std::endl;
+          
           for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
             
             auto h = scifi_hits.getHit(zone_offset + hit);
-            auto o_h = hits_layers_events_scifi->getHit(o_zone_offset + hit);
+            auto o_h = hits_layers_events_scifi[event].getHit(o_zone_offset + hit);
 
-            if ( h.planeCode != o_h.planeCode )
-              warning_cout << "plane code not the same: " << std::dec << h.planeCode << " vs " << o_h.planeCode << std::endl;
-            if ( h.hitZone != o_h.hitZone )
-              warning_cout << "hit zone not the same: " << std::dec << h.hitZone << " vs " << o_h.hitZone << std::endl;
-            if ( h.LHCbID != o_h.LHCbID )
-              warning_cout << "LHCb ID not the same: " << std::hex << h.LHCbID << " vs " << o_h.LHCbID << std::endl;
+            if ( h.planeCode != zone )
+              warning_cout << "plane code should be " << zone << ", but it is " << h.planeCode << std::endl;
+            
+            // if ( h.planeCode != o_h.planeCode )
+            //   warning_cout << "plane code not the same: " << std::dec << h.planeCode << " vs " << o_h.planeCode  << " in event " << event << std::endl;
+            // if ( h.hitZone != o_h.hitZone )
+            //   warning_cout << "hit zone not the same: " << std::dec << h.hitZone << " vs " << o_h.hitZone << std::endl;
+            // if ( h.LHCbID != o_h.LHCbID )
+            //   warning_cout << "LHCb ID not the same: " << std::hex << h.LHCbID << " vs " << o_h.LHCbID << " in event " << event << std::endl;
                         
               outfile << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " " 
               << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
               << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
 #ifdef WITH_ROOT
-              planeCode = o_h.planeCode;
-              hitZone = o_h.hitZone;
-              LHCbID = o_h.LHCbID;
-              x0 = o_h.x0;
-              z0 = o_h.z0;
+              planeCode = h.planeCode;
+              hitZone = h.hitZone;
+              LHCbID = h.LHCbID;
+              x0 = h.x0;
+              z0 = h.z0;
               t_scifi_hits->Fill();
 #endif
 
@@ -646,32 +659,53 @@ cudaError_t Stream::run_sequence(
         }
       }
       outfile.close();
+
 #ifdef WITH_ROOT
-      f->Write();
-      f->Close();
+      // Histograms only for checking and debugging
+      TTree *t_scifi_hits_dumped = new TTree("scifi_hits_dumped","scifi_hits_dumped");
+      uint planeCode_dumped, hitZone_dumped, LHCbID_dumped;
+      float x0_dumped, z0_dumped;
+
+      t_scifi_hits_dumped->Branch("planeCode", &planeCode_dumped);
+      t_scifi_hits_dumped->Branch("hitZone", &hitZone_dumped);
+      t_scifi_hits_dumped->Branch("LHCbID", &LHCbID_dumped);
+      t_scifi_hits_dumped->Branch("x0", &x0_dumped);
+      t_scifi_hits_dumped->Branch("z0", &z0_dumped);
 #endif
       
-
       std::ofstream outfile_2("dump_2.txt");
       for (int event=0; event<number_of_events; ++event) {
         SciFi::SciFiHitCount scifi_hit_count;
         scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count, event, number_of_events);
-        SciFi::SciFiHits scifi_hits; 
-        scifi_hits.typecast_sorted((uint*) host_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+        // SciFi::SciFiHits scifi_hits; 
+        // scifi_hits.typecast_sorted((uint*) host_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
         
         for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
-          const auto zone_offset = hits_layers_events_scifi->layer_offset[zone];
+          const auto zone_offset = hits_layers_events_scifi[event].layer_offset[zone];
 
           for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
-            auto h = hits_layers_events_scifi->getHit(zone_offset + hit);
+            auto h = hits_layers_events_scifi[event].getHit(zone_offset + hit);
 
             outfile_2 << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " "
               << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
               << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
+#ifdef WITH_ROOT
+            planeCode_dumped = h.planeCode;
+            hitZone_dumped = h.hitZone;
+            LHCbID_dumped = h.LHCbID;
+            x0_dumped = h.x0;
+            z0_dumped = h.z0;
+            t_scifi_hits_dumped->Fill();
+#endif
           }
         }
       }
       outfile_2.close();
+
+#ifdef WITH_ROOT
+      f->Write();
+      f->Close();
+#endif
     } 
 
     ///////////////////////
