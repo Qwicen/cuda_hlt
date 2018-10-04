@@ -1,5 +1,39 @@
 #include "SortByY.cuh"
 
+__global__ void ut_apply_permutation(
+  uint32_t* dev_ut_hits,
+  uint32_t* dev_ut_hit_offsets,
+  uint* dev_hit_permutations,
+  const uint* dev_unique_x_sector_layer_offsets,
+  const uint* dev_unique_x_sector_offsets,
+  const float* dev_unique_sector_xs,
+  const uint number_of_events
+) {
+  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
+  const uint total_number_of_hits = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
+
+  // Two UTHits objects are created: one typecasts the base_pointer assuming
+  // the data is unsorted, the other assuming the data is sorted.
+  // This makes sorting more readable
+  UTHits unsorted_ut_hits, sorted_ut_hits;
+  unsorted_ut_hits.typecast_unsorted(dev_ut_hits, total_number_of_hits);
+  sorted_ut_hits.typecast_sorted(dev_ut_hits, total_number_of_hits);
+
+  // Important note: Order matters, and should be kept as is
+  const uint start_offset = blockIdx.x * blockDim.x;
+  uint number_of_hits = blockDim.x;
+
+  if ((start_offset + number_of_hits) > total_number_of_hits) {
+    number_of_hits = total_number_of_hits - start_offset;
+  }
+
+  assert(start_offset < total_number_of_hits);
+  assert((start_offset + number_of_hits) <= total_number_of_hits);
+
+  apply_permutation<float>(dev_hit_permutations, start_offset, number_of_hits, unsorted_ut_hits.yBegin, sorted_ut_hits.yBegin);
+  apply_permutation<uint32_t>(dev_hit_permutations, start_offset, number_of_hits, unsorted_ut_hits.raw_bank_index, sorted_ut_hits.raw_bank_index);
+}
+
 __global__ void sort_by_y(
   uint32_t* dev_ut_hits,
   uint32_t* dev_ut_hit_offsets,
@@ -54,31 +88,10 @@ __global__ void sort_by_y(
       dev_hit_permutations,
       sector_group_number_of_hits,
       [&unsorted_ut_hits] (const int a, const int b) {
-        if (unsorted_ut_hits.yMid(a) > unsorted_ut_hits.yMid(b)) { return 1; }
-        if (unsorted_ut_hits.yMid(a) == unsorted_ut_hits.yMid(b)) { return 0; }
+        if (unsorted_ut_hits.yBegin[a] > unsorted_ut_hits.yBegin[b]) { return 1; }
+        if (unsorted_ut_hits.yBegin[a] == unsorted_ut_hits.yBegin[b]) { return 0; }
         return -1;
       }
     );
   }
-
-  // A thread may have filled in a value in dev_hit_permutations and another
-  // one may be using it in the next step
-  __syncthreads();
-
-  // Important note: Order matters, and should be kept as is
-  apply_permutation<uint>(dev_hit_permutations, ut_hit_offsets.layer_offset(0), total_number_of_hits, unsorted_ut_hits.planeCode, sorted_ut_hits.planeCode);
-  __syncthreads();
-  apply_permutation<uint>(dev_hit_permutations, ut_hit_offsets.layer_offset(0), total_number_of_hits, unsorted_ut_hits.LHCbID, sorted_ut_hits.LHCbID);
-  __syncthreads();
-  apply_permutation<uint>(dev_hit_permutations, ut_hit_offsets.layer_offset(0), total_number_of_hits, unsorted_ut_hits.highThreshold, sorted_ut_hits.highThreshold);
-  __syncthreads();
-  apply_permutation<float>(dev_hit_permutations, ut_hit_offsets.layer_offset(0), total_number_of_hits, unsorted_ut_hits.weight, sorted_ut_hits.weight);
-  __syncthreads();
-  apply_permutation<float>(dev_hit_permutations, ut_hit_offsets.layer_offset(0), total_number_of_hits, unsorted_ut_hits.xAtYEq0, sorted_ut_hits.xAtYEq0);
-  __syncthreads();
-  apply_permutation<float>(dev_hit_permutations, ut_hit_offsets.layer_offset(0), total_number_of_hits, unsorted_ut_hits.zAtYEq0, sorted_ut_hits.zAtYEq0);
-  __syncthreads();
-  apply_permutation<float>(dev_hit_permutations, ut_hit_offsets.layer_offset(0), total_number_of_hits, unsorted_ut_hits.yEnd, sorted_ut_hits.yEnd);
-  __syncthreads();
-  apply_permutation<float>(dev_hit_permutations, ut_hit_offsets.layer_offset(0), total_number_of_hits, unsorted_ut_hits.yBegin, sorted_ut_hits.yBegin);
 }

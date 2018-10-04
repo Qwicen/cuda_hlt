@@ -7,6 +7,7 @@
 
 static constexpr uint32_t ut_number_of_sectors_per_board = 6;
 static constexpr uint32_t ut_number_of_geometry_sectors = 1048;
+static constexpr uint32_t ut_decoding_in_order_threads_x = 64;
 
 /**
 * @brief Offset and number of hits of each layer.
@@ -49,6 +50,16 @@ struct UTHitOffsets {
     assert(layer_number < 4);
     return m_ut_hit_offsets[m_unique_x_sector_layer_offsets[layer_number+1]]
       - m_ut_hit_offsets[m_unique_x_sector_layer_offsets[layer_number]];
+  }
+
+  __device__ __host__
+  uint event_offset() const {
+    return m_ut_hit_offsets[0];
+  }
+
+  __device__ __host__
+  uint event_number_of_hits() const {
+    return m_ut_hit_offsets[m_number_of_unique_x_sectors] - m_ut_hit_offsets[0];
   }
 };
 
@@ -184,7 +195,7 @@ struct UTHits {
   uint32_t* highThreshold;
   uint32_t* LHCbID;
   uint32_t* planeCode;
-  uint32_t* temp;
+  uint32_t* raw_bank_index;
 
   /**
    * @brief Populates the UTHits object pointers from an unsorted array of data

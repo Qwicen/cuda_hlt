@@ -378,12 +378,31 @@ cudaError_t Stream::run_sequence(
     // }
     // info_cout << "Total number of UT hits: " << *host_accumulated_number_of_ut_hits << std::endl;
 
-    // Decode UT raw banks
+    // // Decode UT raw banks
+    // arguments.set_size<arg::dev_ut_hits>(UTHits::number_of_arrays * host_accumulated_number_of_ut_hits[0]);
+    // arguments.set_size<arg::dev_ut_hit_count>(number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
+    // scheduler.setup_next(arguments, sequence_step++);
+    // sequence.set_opts<seq::decode_raw_banks>(dim3(number_of_events), dim3(64, 4), stream);
+    // sequence.set_arguments<seq::decode_raw_banks>(
+    //   arguments.offset<arg::dev_ut_raw_input>(),
+    //   arguments.offset<arg::dev_ut_raw_input_offsets>(),
+    //   dev_ut_boards,
+    //   dev_ut_geometry,
+    //   constants.dev_ut_region_offsets,
+    //   constants.dev_unique_x_sector_layer_offsets,
+    //   constants.dev_unique_x_sector_offsets,
+    //   arguments.offset<arg::dev_ut_hit_offsets>(),
+    //   arguments.offset<arg::dev_ut_hits>(),
+    //   arguments.offset<arg::dev_ut_hit_count>()
+    // );
+    // sequence.invoke<seq::decode_raw_banks>();
+
+    // UT pre-decoding
     arguments.set_size<arg::dev_ut_hits>(UTHits::number_of_arrays * host_accumulated_number_of_ut_hits[0]);
     arguments.set_size<arg::dev_ut_hit_count>(number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
     scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::decode_raw_banks>(dim3(number_of_events), dim3(64, 4), stream);
-    sequence.set_arguments<seq::decode_raw_banks>(
+    sequence.set_opts<seq::ut_pre_decode>(dim3(number_of_events), dim3(192, 2), stream);
+    sequence.set_arguments<seq::ut_pre_decode>(
       arguments.offset<arg::dev_ut_raw_input>(),
       arguments.offset<arg::dev_ut_raw_input_offsets>(),
       dev_ut_boards,
@@ -395,7 +414,7 @@ cudaError_t Stream::run_sequence(
       arguments.offset<arg::dev_ut_hits>(),
       arguments.offset<arg::dev_ut_hit_count>()
     );
-    sequence.invoke<seq::decode_raw_banks>();
+    sequence.invoke<seq::ut_pre_decode>();
     
     // UT hit sorting by y
     arguments.set_size<arg::dev_ut_hit_permutations>(host_accumulated_number_of_ut_hits[0]);
@@ -410,28 +429,58 @@ cudaError_t Stream::run_sequence(
       constants.dev_unique_sector_xs
     );
     sequence.invoke<seq::sort_by_y>();
-    
-    // VeloUT tracking
-    arguments.set_size<arg::dev_veloUT_tracks>(number_of_events * VeloUTTracking::max_num_tracks);
-    arguments.set_size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics * number_of_events);
+
     scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::veloUT>(dim3(number_of_events), dim3(32), stream);
-    sequence.set_arguments<seq::veloUT>(
+    sequence.set_opts<seq::ut_apply_permutation>(dim3(((host_accumulated_number_of_ut_hits[0] + 1023) / 1024)), dim3(1024), stream);
+    sequence.set_arguments<seq::ut_apply_permutation>(
       arguments.offset<arg::dev_ut_hits>(),
       arguments.offset<arg::dev_ut_hit_offsets>(),
-      arguments.offset<arg::dev_atomics_storage>(),
-      arguments.offset<arg::dev_velo_track_hit_number>(),
-      arguments.offset<arg::dev_velo_track_hits>(),
-      arguments.offset<arg::dev_velo_states>(),
-      arguments.offset<arg::dev_veloUT_tracks>(),
-      arguments.offset<arg::dev_atomics_veloUT>(),
-      dev_ut_magnet_tool,
-      constants.dev_ut_dxDy,
+      arguments.offset<arg::dev_ut_hit_permutations>(),
       constants.dev_unique_x_sector_layer_offsets,
       constants.dev_unique_x_sector_offsets,
-      constants.dev_unique_sector_xs
+      constants.dev_unique_sector_xs,
+      number_of_events
     );
-    sequence.invoke<seq::veloUT>();
+    sequence.invoke<seq::ut_apply_permutation>();
+
+    // UT decode sorted
+    scheduler.setup_next(arguments, sequence_step++);
+    sequence.set_opts<seq::ut_decode_raw_banks_in_order>(dim3(number_of_events), dim3(1024), stream);
+    sequence.set_arguments<seq::ut_decode_raw_banks_in_order>(
+      arguments.offset<arg::dev_ut_raw_input>(),
+      arguments.offset<arg::dev_ut_raw_input_offsets>(),
+      dev_ut_boards,
+      dev_ut_geometry,
+      constants.dev_ut_region_offsets,
+      constants.dev_unique_x_sector_layer_offsets,
+      constants.dev_unique_x_sector_offsets,
+      arguments.offset<arg::dev_ut_hit_offsets>(),
+      arguments.offset<arg::dev_ut_hits>(),
+      arguments.offset<arg::dev_ut_hit_count>()
+    );
+    sequence.invoke<seq::ut_decode_raw_banks_in_order>();
+    
+    // // VeloUT tracking
+    // arguments.set_size<arg::dev_veloUT_tracks>(number_of_events * VeloUTTracking::max_num_tracks);
+    // arguments.set_size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics * number_of_events);
+    // scheduler.setup_next(arguments, sequence_step++);
+    // sequence.set_opts<seq::veloUT>(dim3(number_of_events), dim3(32), stream);
+    // sequence.set_arguments<seq::veloUT>(
+    //   arguments.offset<arg::dev_ut_hits>(),
+    //   arguments.offset<arg::dev_ut_hit_offsets>(),
+    //   arguments.offset<arg::dev_atomics_storage>(),
+    //   arguments.offset<arg::dev_velo_track_hit_number>(),
+    //   arguments.offset<arg::dev_velo_track_hits>(),
+    //   arguments.offset<arg::dev_velo_states>(),
+    //   arguments.offset<arg::dev_veloUT_tracks>(),
+    //   arguments.offset<arg::dev_atomics_veloUT>(),
+    //   dev_ut_magnet_tool,
+    //   constants.dev_ut_dxDy,
+    //   constants.dev_unique_x_sector_layer_offsets,
+    //   constants.dev_unique_x_sector_offsets,
+    //   constants.dev_unique_sector_xs
+    // );
+    // sequence.invoke<seq::veloUT>();
 
     // Transmission device to host
     // Velo tracks
@@ -440,114 +489,111 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(host_velo_track_hits, arguments.offset<arg::dev_velo_track_hits>(), host_accumulated_number_of_hits_in_velo_tracks[0] * sizeof(Velo::Hit), cudaMemcpyDeviceToHost, stream));
     cudaCheck(cudaMemcpyAsync(host_velo_states, arguments.offset<arg::dev_velo_states>(), host_number_of_reconstructed_velo_tracks[0] * sizeof(Velo::State), cudaMemcpyDeviceToHost, stream));
 
-    // VeloUT tracks
-    cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, arguments.offset<arg::dev_atomics_veloUT>(), arguments.size<arg::dev_atomics_veloUT>(), cudaMemcpyDeviceToHost, stream));
-    cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, arguments.offset<arg::dev_veloUT_tracks>(), arguments.size<arg::dev_veloUT_tracks>(), cudaMemcpyDeviceToHost, stream));
+    // // VeloUT tracks
+    // cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, arguments.offset<arg::dev_atomics_veloUT>(), arguments.size<arg::dev_atomics_veloUT>(), cudaMemcpyDeviceToHost, stream));
+    // cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, arguments.offset<arg::dev_veloUT_tracks>(), arguments.size<arg::dev_veloUT_tracks>(), cudaMemcpyDeviceToHost, stream));
 
-    // SciFi preprocessing
-    // Estimate cluster count
-    arguments.set_size<arg::dev_scifi_raw_input>(host_scifi_events_size);
-    arguments.set_size<arg::dev_scifi_raw_input_offsets>(host_scifi_event_offsets_size);
-    arguments.set_size<arg::dev_scifi_hit_count>(2 * number_of_events * SciFi::number_of_zones + 1);
+    // // SciFi preprocessing
+    // // Estimate cluster count
+    // arguments.set_size<arg::dev_scifi_raw_input>(host_scifi_events_size);
+    // arguments.set_size<arg::dev_scifi_raw_input_offsets>(host_scifi_event_offsets_size);
+    // arguments.set_size<arg::dev_scifi_hit_count>(2 * number_of_events * SciFi::number_of_zones + 1);
 
-    scheduler.setup_next(arguments, sequence_step++);
+    // scheduler.setup_next(arguments, sequence_step++);
 
-    cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_scifi_raw_input>(), host_scifi_events, host_scifi_events_size, cudaMemcpyHostToDevice, stream));
-    cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_scifi_raw_input_offsets>(), host_scifi_event_offsets, host_scifi_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
-    cudaCheck(cudaMemsetAsync(arguments.offset<arg::dev_scifi_hit_count>(), 0, arguments.size<arg::dev_scifi_hit_count>(), stream));
-    cudaEventRecord(cuda_generic_event, stream);
-    cudaEventSynchronize(cuda_generic_event);
+    // cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_scifi_raw_input>(), host_scifi_events, host_scifi_events_size, cudaMemcpyHostToDevice, stream));
+    // cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_scifi_raw_input_offsets>(), host_scifi_event_offsets, host_scifi_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
+    // cudaCheck(cudaMemsetAsync(arguments.offset<arg::dev_scifi_hit_count>(), 0, arguments.size<arg::dev_scifi_hit_count>(), stream));
+    // cudaEventRecord(cuda_generic_event, stream);
+    // cudaEventSynchronize(cuda_generic_event);
 
-    sequence.set_opts<seq::estimate_cluster_count>(dim3(number_of_events), dim3(240), stream);
-    sequence.set_arguments<seq::estimate_cluster_count>(
-      arguments.offset<arg::dev_scifi_raw_input>(),
-      arguments.offset<arg::dev_scifi_raw_input_offsets>(),
-      arguments.offset<arg::dev_scifi_hit_count>(),
-      dev_scifi_geometry
-    );
-    sequence.invoke<seq::estimate_cluster_count>();
+    // sequence.set_opts<seq::estimate_cluster_count>(dim3(number_of_events), dim3(240), stream);
+    // sequence.set_arguments<seq::estimate_cluster_count>(
+    //   arguments.offset<arg::dev_scifi_raw_input>(),
+    //   arguments.offset<arg::dev_scifi_raw_input_offsets>(),
+    //   arguments.offset<arg::dev_scifi_hit_count>(),
+    //   dev_scifi_geometry
+    // );
+    // sequence.invoke<seq::estimate_cluster_count>();
 
-    cudaEventRecord(cuda_generic_event, stream);
-    cudaEventSynchronize(cuda_generic_event);
+    // cudaEventRecord(cuda_generic_event, stream);
+    // cudaEventSynchronize(cuda_generic_event);
 
-    // Prefix sum of hit count (becomes hit offset)
-    // 1. Reduce
-    // 2. Single block
-    // 3. Scan
+    // // Prefix sum of hit count (becomes hit offset)
+    // // 1. Reduce
+    // // 2. Single block
+    // // 3. Scan
 
-    // Prefix sum: Reduce
-    const uint total_number_of_zones = number_of_events * SciFi::number_of_zones;
-    const size_t prefix_sum_auxiliary_array_4_size = (total_number_of_zones + 511) / 512;
-    arguments.set_size<arg::dev_prefix_sum_auxiliary_array_4>(prefix_sum_auxiliary_array_4_size);
-    scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::prefix_sum_reduce_scifi_hits>(dim3(prefix_sum_auxiliary_array_4_size), dim3(256), stream);
-    sequence.set_arguments<seq::prefix_sum_reduce_scifi_hits>(
-      arguments.offset<arg::dev_scifi_hit_count>(),
-      arguments.offset<arg::dev_prefix_sum_auxiliary_array_4>(),
-      total_number_of_zones
-    );
-    sequence.invoke<seq::prefix_sum_reduce_scifi_hits>();
+    // // Prefix sum: Reduce
+    // const uint total_number_of_zones = number_of_events * SciFi::number_of_zones;
+    // const size_t prefix_sum_auxiliary_array_4_size = (total_number_of_zones + 511) / 512;
+    // arguments.set_size<arg::dev_prefix_sum_auxiliary_array_4>(prefix_sum_auxiliary_array_4_size);
+    // scheduler.setup_next(arguments, sequence_step++);
+    // sequence.set_opts<seq::prefix_sum_reduce_scifi_hits>(dim3(prefix_sum_auxiliary_array_4_size), dim3(256), stream);
+    // sequence.set_arguments<seq::prefix_sum_reduce_scifi_hits>(
+    //   arguments.offset<arg::dev_scifi_hit_count>(),
+    //   arguments.offset<arg::dev_prefix_sum_auxiliary_array_4>(),
+    //   total_number_of_zones
+    // );
+    // sequence.invoke<seq::prefix_sum_reduce_scifi_hits>();
 
-    // Prefix sum: Single block
-    scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_arguments<seq::prefix_sum_single_block_scifi_hits>(
-      arguments.offset<arg::dev_scifi_hit_count>() + total_number_of_zones,
-      arguments.offset<arg::dev_prefix_sum_auxiliary_array_4>(),
-      prefix_sum_auxiliary_array_4_size
-    );
-    sequence.invoke<seq::prefix_sum_single_block_scifi_hits>();
+    // // Prefix sum: Single block
+    // scheduler.setup_next(arguments, sequence_step++);
+    // sequence.set_arguments<seq::prefix_sum_single_block_scifi_hits>(
+    //   arguments.offset<arg::dev_scifi_hit_count>() + total_number_of_zones,
+    //   arguments.offset<arg::dev_prefix_sum_auxiliary_array_4>(),
+    //   prefix_sum_auxiliary_array_4_size
+    // );
+    // sequence.invoke<seq::prefix_sum_single_block_scifi_hits>();
 
-    // Prefix sum: Scan
-    scheduler.setup_next(arguments, sequence_step++);
-    const uint pss_scifi_hits_blocks = prefix_sum_auxiliary_array_4_size==1 ? 1 : (prefix_sum_auxiliary_array_4_size-1);
-    sequence.set_opts<seq::prefix_sum_scan_scifi_hits>(dim3(pss_scifi_hits_blocks), dim3(512), stream);
-    sequence.set_arguments<seq::prefix_sum_scan_scifi_hits>(
-      arguments.offset<arg::dev_scifi_hit_count>(),
-      arguments.offset<arg::dev_prefix_sum_auxiliary_array_4>(),
-      total_number_of_zones
-    );
-    sequence.invoke<seq::prefix_sum_scan_scifi_hits>();
+    // // Prefix sum: Scan
+    // scheduler.setup_next(arguments, sequence_step++);
+    // const uint pss_scifi_hits_blocks = prefix_sum_auxiliary_array_4_size==1 ? 1 : (prefix_sum_auxiliary_array_4_size-1);
+    // sequence.set_opts<seq::prefix_sum_scan_scifi_hits>(dim3(pss_scifi_hits_blocks), dim3(512), stream);
+    // sequence.set_arguments<seq::prefix_sum_scan_scifi_hits>(
+    //   arguments.offset<arg::dev_scifi_hit_count>(),
+    //   arguments.offset<arg::dev_prefix_sum_auxiliary_array_4>(),
+    //   total_number_of_zones
+    // );
+    // sequence.invoke<seq::prefix_sum_scan_scifi_hits>();
 
-    // Fetch total number of hits
-    cudaCheck(cudaMemcpyAsync(host_accumulated_number_of_scifi_hits,
-      arguments.offset<arg::dev_scifi_hit_count>() + total_number_of_zones,
-      sizeof(uint), cudaMemcpyDeviceToHost, stream));
-    cudaEventRecord(cuda_generic_event, stream);
-    cudaEventSynchronize(cuda_generic_event);
+    // // Fetch total number of hits
+    // cudaCheck(cudaMemcpyAsync(host_accumulated_number_of_scifi_hits,
+    //   arguments.offset<arg::dev_scifi_hit_count>() + total_number_of_zones,
+    //   sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    // cudaEventRecord(cuda_generic_event, stream);
+    // cudaEventSynchronize(cuda_generic_event);
 
-    // info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
+    // // info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
 
 
-    // Raw Bank Decoder
-    const uint32_t hits_bytes = (14 * sizeof(float) + 1) * *host_accumulated_number_of_scifi_hits;
-    arguments.set_size<arg::dev_scifi_hits>(hits_bytes);
+    // // Raw Bank Decoder
+    // const uint32_t hits_bytes = (14 * sizeof(float) + 1) * *host_accumulated_number_of_scifi_hits;
+    // arguments.set_size<arg::dev_scifi_hits>(hits_bytes);
 
-    scheduler.setup_next(arguments, sequence_step++);
+    // scheduler.setup_next(arguments, sequence_step++);
 
-    sequence.set_opts<seq::raw_bank_decoder>(dim3(number_of_events), dim3(240), stream);
-    sequence.set_arguments<seq::raw_bank_decoder>(
-      arguments.offset<arg::dev_scifi_raw_input>(),
-      arguments.offset<arg::dev_scifi_raw_input_offsets>(),
-      arguments.offset<arg::dev_scifi_hit_count>(),
-      arguments.offset<arg::dev_scifi_hits>(),
-      dev_scifi_geometry
-    );
+    // sequence.set_opts<seq::raw_bank_decoder>(dim3(number_of_events), dim3(240), stream);
+    // sequence.set_arguments<seq::raw_bank_decoder>(
+    //   arguments.offset<arg::dev_scifi_raw_input>(),
+    //   arguments.offset<arg::dev_scifi_raw_input_offsets>(),
+    //   arguments.offset<arg::dev_scifi_hit_count>(),
+    //   arguments.offset<arg::dev_scifi_hits>(),
+    //   dev_scifi_geometry
+    // );
 
-    sequence.invoke<seq::raw_bank_decoder>();
+    // sequence.invoke<seq::raw_bank_decoder>();
 
-    cudaEventRecord(cuda_generic_event, stream);
-    cudaEventSynchronize(cuda_generic_event);
-
-    // SciFi hit sorting by x
-    arguments.set_size<arg::dev_scifi_hit_permutations>(*host_accumulated_number_of_scifi_hits);
-    scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::scifi_sort_by_x>(dim3(number_of_events), dim3(64), stream);
-    sequence.set_arguments<seq::scifi_sort_by_x>(
-      arguments.offset<arg::dev_scifi_hits>(),
-      arguments.offset<arg::dev_scifi_hit_count>(),
-      arguments.offset<arg::dev_scifi_hit_permutations>()
-    );
-    sequence.invoke<seq::scifi_sort_by_x>();
+    // // SciFi hit sorting by x
+    // arguments.set_size<arg::dev_scifi_hit_permutations>(*host_accumulated_number_of_scifi_hits);
+    // scheduler.setup_next(arguments, sequence_step++);
+    // sequence.set_opts<seq::scifi_sort_by_x>(dim3(number_of_events), dim3(64), stream);
+    // sequence.set_arguments<seq::scifi_sort_by_x>(
+    //   arguments.offset<arg::dev_scifi_hits>(),
+    //   arguments.offset<arg::dev_scifi_hit_count>(),
+    //   arguments.offset<arg::dev_scifi_hit_permutations>()
+    // );
+    // sequence.invoke<seq::scifi_sort_by_x>();
 
     /*
     // SciFi Decoder Debugging
@@ -579,6 +625,9 @@ cudaError_t Stream::run_sequence(
       }
     }*/
 
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+
     ///////////////////////
     // Monte Carlo Check //
     ///////////////////////
@@ -601,21 +650,21 @@ cudaError_t Stream::run_sequence(
           trackType
         );
 
-        /* CHECKING VeloUT TRACKS */
-        const std::vector< trackChecker::Tracks > veloUT_tracks = prepareVeloUTTracks(
-          host_veloUT_tracks,
-          host_atomics_veloUT,
-          number_of_events
-        );
+        // /* CHECKING VeloUT TRACKS */
+        // const std::vector< trackChecker::Tracks > veloUT_tracks = prepareVeloUTTracks(
+        //   host_veloUT_tracks,
+        //   host_atomics_veloUT,
+        //   number_of_events
+        // );
 
-        std::cout << "Checking VeloUT tracks reconstructed on GPU" << std::endl;
-        trackType = "VeloUT";
-        call_pr_checker (
-          veloUT_tracks,
-          folder_name_MC,
-          start_event_offset,
-          trackType
-        );
+        // std::cout << "Checking VeloUT tracks reconstructed on GPU" << std::endl;
+        // trackType = "VeloUT";
+        // call_pr_checker (
+        //   veloUT_tracks,
+        //   folder_name_MC,
+        //   start_event_offset,
+        //   trackType
+        // );
       } // only in first repetition
     } // do_check
   } // repetitions
