@@ -101,13 +101,8 @@ __global__ void raw_bank_decoder(
     hits.yMin[hitIndex] = yMin;
     hits.yMax[hitIndex] = yMax;
     hits.LHCbID[hitIndex] = lhcbid;
-    hits.planeCode[hitIndex] = 2 * planeCode + (uniqueZone % 2);
+    hits.planeCode[hitIndex] = 2 * planeCode + (uniqueZone % 2); //  planeCode;
     hits.hitZone[hitIndex] = uniqueZone % 2;
-
-    if ( hits.planeCode[hitIndex] >= SciFi::Constants::n_zones)
-      printf("WARNING: planeCode = %u \n", hits.planeCode[hitIndex]);
-    assert( hits.planeCode[hitIndex] < SciFi::Constants::n_zones );
-    assert( hits.hitZone[hitIndex] < 2 );
   };
 
   // copied straight from FTRawBankDecoder.cpp
