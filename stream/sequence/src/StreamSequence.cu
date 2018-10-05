@@ -522,7 +522,7 @@ cudaError_t Stream::run_sequence(
     argument_sizes[arg::dev_scifi_tracks] = argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks);
     argument_sizes[arg::dev_n_scifi_tracks] = argen.size<arg::dev_n_scifi_tracks>(number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::PrForward>().set_opts(dim3(number_of_events), dim3(1), stream);
+    sequence.item<seq::PrForward>().set_opts(dim3(number_of_events), dim3(32), stream);
 
     sequence.item<seq::PrForward>().set_arguments(
       argen.generate<arg::dev_scifi_hits>(argument_offsets),
@@ -553,13 +553,17 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
 
     // SciFi tracks
-    // cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, argen.generate<arg::dev_n_scifi_tracks>(argument_offsets), argen.size<arg::dev_n_scifi_tracks>(number_of_events), cudaMemcpyDeviceToHost, stream));
-    // cudaCheck(cudaMemcpyAsync(host_scifi_tracks, argen.generate<arg::dev_scifi_tracks>(argument_offsets), argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, argen.generate<arg::dev_n_scifi_tracks>(argument_offsets), argen.size<arg::dev_n_scifi_tracks>(number_of_events), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_scifi_tracks, argen.generate<arg::dev_scifi_tracks>(argument_offsets), argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks), cudaMemcpyDeviceToHost, stream));
     
     // Synchronize
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
-    
+
+    for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
+      debug_cout << "Found " << host_n_scifi_tracks[i_event] << " scifi tracks in event " << i_event << std::endl;
+    }
+
     
     ///////////////////////
     // Monte Carlo Check //
@@ -600,19 +604,19 @@ cudaError_t Stream::run_sequence(
         ); 
 
         /* CHECKING Scifi TRACKS */
-        // const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
-        //   host_scifi_tracks,
-        //   host_n_scifi_tracks,
-        //   number_of_events
-        // );
+        const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
+          host_scifi_tracks,
+          host_n_scifi_tracks,
+          number_of_events
+        );
         
-        // std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
-        // trackType = "Forward";
-        // call_pr_checker (
-        //   scifi_tracks,
-        //   folder_name_MC,
-        //   start_event_offset,
-        //   trackType);
+        std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
+        trackType = "Forward";
+        call_pr_checker (
+          scifi_tracks,
+          folder_name_MC,
+          start_event_offset,
+          trackType);
         
         /* Run Forward on x86 architecture  */
         // std::vector< trackChecker::Tracks > forward_tracks_events;
