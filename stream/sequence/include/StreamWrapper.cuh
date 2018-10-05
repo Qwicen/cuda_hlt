@@ -62,7 +62,6 @@ struct StreamWrapper {
     uint* host_ut_event_offsets,
     const size_t ut_events_size,
     const size_t ut_event_offsets_size,
-    SciFi::HitsSoA *hits_layers_events_scifi,
     char* host_scifi_events,
     uint* host_scifi_event_offsets,
     const size_t scifi_events_size,

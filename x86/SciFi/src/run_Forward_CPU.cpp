@@ -20,7 +20,7 @@ int run_forward_on_CPU (
 
 #ifdef WITH_ROOT
   // Histograms only for checking and debugging
-  TFile *f = new TFile("../output/Forward.root", "RECREATE");
+  TFile *f = new TFile("../output/scifi.root", "RECREATE");
   TTree *t_Forward_tracks = new TTree("Forward_tracks", "Forward_tracks");
   TTree *t_statistics = new TTree("statistics", "statistics");
   TTree *t_scifi_hits = new TTree("scifi_hits","scifi_hits");

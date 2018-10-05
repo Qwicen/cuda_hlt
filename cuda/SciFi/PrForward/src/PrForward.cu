@@ -125,7 +125,7 @@ __host__ __device__ void find_forward_tracks(
   SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks];
   int n_candidate_tracks = 0;
   bool usedHits[2][SciFi::Tracking::max_x_hits] = {false};
-
+  
   if(yAtRef>-5.f)selectXCandidates(
     scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
     usedHits[1], coordX[1], veloUTTrack,
@@ -152,8 +152,6 @@ __host__ __device__ void find_forward_tracks(
     velo_state, veloUTTrack.qop,
     pars_first, tmva1, tmva2, constArrays, false);
 
-
-  
   bool ok = false;
   for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
     if ( selected_tracks[i_track].hitsNum > 10 )
@@ -162,7 +160,7 @@ __host__ __device__ void find_forward_tracks(
 
   SciFi::Tracking::Track candidate_tracks2[SciFi::Tracking::max_tracks_second_loop];
   int n_candidate_tracks2 = 0;
-  
+
   if (!ok && SciFi::Tracking::secondLoop) { // If you found nothing begin the 2nd loop
     if(yAtRef>-5.f)selectXCandidates(
       scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
@@ -177,8 +175,6 @@ __host__ __device__ void find_forward_tracks(
       zRef_track, xParams_seed, yParams_seed,
       velo_state, pars_second, constArrays, -1);  
 
-  
-    
     SciFi::Tracking::Track selected_tracks2[SciFi::Tracking::max_tracks_second_loop];
     int n_selected_tracks2 = 0;
     

@@ -435,6 +435,8 @@ __host__ __device__ void selectXCandidates(
         if ( track.hitsNum >= SciFi::Tracking::max_scifi_hits ) break;
         track.addHit( hit );
       }
+      if ( n_candidate_tracks >= SciFi::max_tracks - 1 )
+        printf("n candidate tracks = %u \n", n_candidate_tracks );
       assert( n_candidate_tracks < SciFi::max_tracks - 1 );
       candidate_tracks[n_candidate_tracks++] = track;
     

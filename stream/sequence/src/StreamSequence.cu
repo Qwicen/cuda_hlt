@@ -17,7 +17,6 @@ cudaError_t Stream::run_sequence(
   const uint* host_ut_event_offsets,
   const size_t host_ut_events_size,
   const size_t host_ut_event_offsets_size,
-  SciFi::HitsSoA *hits_layers_events_scifi,
   char* host_scifi_events,
   uint* host_scifi_event_offsets,
   const size_t host_scifi_events_size,
@@ -542,8 +541,8 @@ cudaError_t Stream::run_sequence(
       constants.dev_scifi_tmva2,
       constants.dev_scifi_constArrays
     );
-    sequence.item<seq::PrForward>().invoke();  
-        
+    sequence.item<seq::PrForward>().invoke(); 
+            
 
     // Transmission device to host
     // Velo tracks
@@ -619,47 +618,47 @@ cudaError_t Stream::run_sequence(
           trackType);
         
         /* Run Forward on x86 architecture  */
-        std::vector< trackChecker::Tracks > forward_tracks_events;
+        // std::vector< trackChecker::Tracks > forward_tracks_events;
            
-        std::vector<uint> host_scifi_hits (total_scifi_hits_size);
-        std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
+        // std::vector<uint> host_scifi_hits (total_scifi_hits_size);
+        // std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
 
-        cudaCheck(cudaMemcpyAsync(
-          host_scifi_hits.data(),
-          argen.generate<arg::dev_scifi_hits>(argument_offsets),
-          total_scifi_hits_size * sizeof(uint),
-          cudaMemcpyDeviceToHost,
-          stream
-        ));
-        cudaCheck(cudaMemcpyAsync(
-          host_scifi_hit_count.data(),
-          argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-          host_scifi_hit_count.size() * sizeof(uint),
-          cudaMemcpyDeviceToHost,
-          stream
-        ));
+        // cudaCheck(cudaMemcpyAsync(
+        //   host_scifi_hits.data(),
+        //   argen.generate<arg::dev_scifi_hits>(argument_offsets),
+        //   total_scifi_hits_size * sizeof(uint),
+        //   cudaMemcpyDeviceToHost,
+        //   stream
+        // ));
+        // cudaCheck(cudaMemcpyAsync(
+        //   host_scifi_hit_count.data(),
+        //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+        //   host_scifi_hit_count.size() * sizeof(uint),
+        //   cudaMemcpyDeviceToHost,
+        //   stream
+        // ));
         
-        int rv = run_forward_on_CPU(
-          forward_tracks_events,
-          host_scifi_hits.data(),
-          host_scifi_hit_count.data(),
-          host_velo_tracks_atomics,
-          host_velo_track_hit_number,
-          (uint*)host_velo_states,
-          host_veloUT_tracks,
-          host_atomics_veloUT,
-          number_of_events );
+        // int rv = run_forward_on_CPU(
+        //   forward_tracks_events,
+        //   host_scifi_hits.data(),
+        //   host_scifi_hit_count.data(),
+        //   host_velo_tracks_atomics,
+        //   host_velo_track_hit_number,
+        //   (uint*)host_velo_states,
+        //   host_veloUT_tracks,
+        //   host_atomics_veloUT,
+        //   number_of_events );
         
-        if ( rv != 0 )
-          continue;
+        // if ( rv != 0 )
+        //   continue;
         
-        std::cout << "Checking Forward tracks reconstructed on CPU" << std::endl;
-        trackType = "Forward";
-        call_pr_checker (
-          forward_tracks_events,
-          folder_name_MC,
-          start_event_offset,
-          trackType);
+        // std::cout << "Checking Forward tracks reconstructed on CPU" << std::endl;
+        // trackType = "Forward";
+        // call_pr_checker (
+        //   forward_tracks_events,
+        //   folder_name_MC,
+        //   start_event_offset,
+        //   trackType);
       } // only in first repetition
     } // do_check
   } // repetitions

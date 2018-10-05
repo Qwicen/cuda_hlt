@@ -34,8 +34,7 @@ void printUsage(char* argv[]){
     << argv[0]
     << std::endl << " -f {folder containing bin files with raw bank information}"
     << std::endl << " -u {folder containing bin files with UT raw bank information}"
-    << std::endl << " -s {folder containing bin files with SciFi hit information}"
-    << std::endl << " -i {folder containing .bin files with SciFi raw bank information}"
+    << std::endl << " -s {folder containing bin files with SciFi raw bank information}"
     << std::endl << " -g {folder containing detector configuration}"
     << std::endl << " -d {folder containing .bin files with MC truth information}"
     << std::endl << " -n {number of events to process}=0 (all)"
@@ -55,7 +54,6 @@ int main(int argc, char *argv[])
 {
   std::string folder_name_velopix_raw;
   std::string folder_name_UT_raw = "";
-  std::string folder_name_scifi_hits = "";
   std::string folder_name_MC = "";
   std::string folder_name_SciFi_raw = "";
   std::string folder_name_detector_configuration = "";
@@ -72,7 +70,7 @@ int main(int argc, char *argv[])
   size_t reserve_mb = 1024;
 
   signed char c;
-  while ((c = getopt(argc, argv, "f:d:u:s:i:n:o:t:r:pha:b:d:v:c:k:m:g:x:")) != -1) {
+  while ((c = getopt(argc, argv, "f:d:u:s:n:o:t:r:pha:b:d:v:c:k:m:g:x:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_velopix_raw = std::string(optarg);
@@ -84,9 +82,6 @@ int main(int argc, char *argv[])
       folder_name_UT_raw = std::string(optarg);
       break;
     case 's':
-      folder_name_scifi_hits = std::string(optarg);
-      break;
-    case 'i':
       folder_name_SciFi_raw = std::string(optarg);
       break;
     case 'g':
@@ -137,7 +132,6 @@ int main(int argc, char *argv[])
 
     if (folder_name_velopix_raw.empty()) missing_folder = "velopix raw events";
     else if (folder_name_UT_raw.empty()) missing_folder = "UT raw events";
-    else if (folder_name_scifi_hits.empty()) missing_folder = "scifi hits events";
     else if (folder_name_SciFi_raw.empty()) missing_folder = "SciFi raw events";
     else if (folder_name_detector_configuration.empty()) missing_folder = "detector geometry";
     else if (folder_name_MC.empty() && do_check) missing_folder = "Monte Carlo";
@@ -159,8 +153,7 @@ int main(int argc, char *argv[])
   std::cout << "Requested options:" << std::endl
     << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
     << " folder with UT raw bank input (-u): " << folder_name_UT_raw << std::endl
-    << " folder with scifi hits input (-s): " << folder_name_scifi_hits << std::endl
-    << " folder with SciFi raw bank input (-i): " << folder_name_SciFi_raw << std::endl
+    << " folder with SciFi raw bank input (-s): " << folder_name_SciFi_raw << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " run checkers (-c): " << do_check << std::endl
@@ -182,20 +175,6 @@ int main(int argc, char *argv[])
    number_of_events_requested = get_number_of_events_requested(
     number_of_events_requested, folder_name_velopix_raw);
 
-  // Read SciFi hits
-  std::vector<char> scifi_events;
-  std::vector<unsigned int> scifi_event_offsets;
-  verbose_cout << "Reading SciFi hits for " << number_of_events_requested << " events " << std::endl;
-  read_folder( folder_name_scifi_hits, number_of_events_requested,
-               scifi_events, scifi_event_offsets,
-               start_event_offset );
-
-  SciFi::HitsSoA *scifi_hits_events = new SciFi::HitsSoA[number_of_events_requested];
-  uint32_t scifi_n_hits_layers_events[number_of_events_requested][SciFi::Constants::n_zones];
-  read_scifi_events_into_arrays( scifi_hits_events, scifi_n_hits_layers_events,
-                              scifi_events, scifi_event_offsets, number_of_events_requested );
-  //check_scifi_events( scifi_hits_events, scifi_n_hits_layers_events, number_of_events );
-                                            
   auto geometry_reader = GeometryReader(folder_name_detector_configuration);
   auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
   auto velo_reader = VeloReader(folder_name_velopix_raw);
@@ -253,7 +232,6 @@ int main(int argc, char *argv[])
         ut_reader.host_event_offsets,
         ut_reader.host_events_size,
         ut_reader.host_event_offsets_size,
-        scifi_hits_events,
         scifi_reader.host_events,
         scifi_reader.host_event_offsets,
         scifi_reader.host_events_size,
@@ -265,16 +243,9 @@ int main(int argc, char *argv[])
   );
   t.stop();
 
-  delete [] scifi_hits_events; 
- 
   std::cout << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
-
-  std::ofstream outfile;
-  outfile.open("../tests/test.txt", std::fstream::in | std::fstream::out | std::ios_base::app);
-  outfile << start_event_offset << "\t" << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << std::endl;
-  outfile.close();
-
+ 
   // Reset device
   cudaCheck(cudaDeviceReset());
 
