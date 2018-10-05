@@ -91,7 +91,7 @@ struct HitsSoA {
   SciFiHit getHit(uint32_t index) const;
 };
   
-const int max_tracks = 150; 
+const int max_tracks = 200; // 150; 
 const int max_track_size = 15 + VeloUTTracking::max_track_size;
 
 struct Track {
