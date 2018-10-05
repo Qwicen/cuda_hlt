@@ -27,11 +27,7 @@ __global__ void PrForward(
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
-  const uint total_number_of_hits = dev_scifi_hit_count[number_of_events * SciFi::number_of_zones];
-
-  const uint* zone_offsets = dev_scifi_hit_count + event_number * SciFi::number_of_zones;
-  const uint* n_hits_zones = dev_scifi_hit_count + number_of_events * SciFi::number_of_zones + 1 + event_number * SciFi::number_of_zones;
-
+  
   // Velo consolidated types
   const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
   const Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
@@ -42,36 +38,17 @@ __global__ void PrForward(
   const int* n_veloUT_tracks_event = dev_atomics_veloUT + event_number;
   VeloUTTracking::TrackUT* veloUT_tracks_event = dev_veloUT_tracks + event_number * VeloUTTracking::max_num_tracks;
 
-  // SciFi un-consolidated types
+  // SciFi un-consolidated track types
   SciFi::Track* scifi_tracks_event = dev_scifi_tracks + event_number * SciFi::max_tracks;
   uint* n_scifi_tracks_event = dev_n_scifi_tracks + event_number;
 
+  // SciFi hits
+  const uint total_number_of_hits = dev_scifi_hit_count[number_of_events * SciFi::number_of_zones];
   SciFi::SciFiHitCount scifi_hit_count;
   scifi_hit_count.typecast_after_prefix_sum((uint*) dev_scifi_hit_count, event_number, number_of_events);
-  
   SciFi::SciFiHits scifi_hits;
   scifi_hits.typecast_sorted((uint*)dev_scifi_hits, total_number_of_hits);
 
-  if ( threadIdx.x == 0 ) {
-    for (int i_zone=0; i_zone < SciFi::number_of_zones; ++i_zone) {
-      int offset = zone_offsets[i_zone];
-      for ( int i_hit = 0; i_hit < n_hits_zones[i_zone]; ++i_hit ) {
-        int hit = offset + i_hit;
-        if ( scifi_hits.planeCode[hit] >= SciFi::Constants::n_zones )
-          printf("in PrForward: on plane %u, planeCode = %u \n", i_zone, scifi_hits.planeCode[hit] );
-      }
-    }
-  }
-  
-  // for (int i_zone=0; i_zone < SciFi::number_of_zones; ++i_zone) {
-  //   int offset = scifi_hit_count.layer_offset(i_zone);
-  //   for ( int i_hit = 0; i_hit < scifi_hit_count.layer_number_of_hits(i_zone); ++i_hit ) {
-  //     int hit = offset + i_hit;
-  //     if ( scifi_hits.planeCode[hit] >= SciFi::Constants::n_zones )
-  //       printf("in PrForward: on plane %u, planeCode = %u \n", i_zone, scifi_hits.planeCode[hit] );
-  //   }
-  // }
-  
   // initialize atomic SciFi tracks counter
   if ( threadIdx.x == 0 ) {
     *n_scifi_tracks_event = 0;
@@ -145,24 +122,23 @@ __host__ __device__ void find_forward_tracks(
       coordX[0], xParams_seed, yParams_seed, constArrays,
       velo_state, veloUTTrack.qop, -1);
 
-
   SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks];
   int n_candidate_tracks = 0;
-  bool usedHits[SciFi::Constants::max_numhits_per_event] = { false };
-  
+  bool usedHits[2][SciFi::Tracking::max_x_hits] = {false};
+
   if(yAtRef>-5.f)selectXCandidates(
     scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
-    usedHits, coordX[1], veloUTTrack,
+    usedHits[1], coordX[1], veloUTTrack,
     candidate_tracks, n_candidate_tracks,
     zRef_track, xParams_seed, yParams_seed,
     velo_state, pars_first,  constArrays, 1);
   if(yAtRef< 5.f)selectXCandidates(
     scifi_hits, scifi_hit_count, allXHits[0], n_x_hits[0],
-    usedHits, coordX[0], veloUTTrack,
+    usedHits[0], coordX[0], veloUTTrack,
     candidate_tracks, n_candidate_tracks,
     zRef_track, xParams_seed, yParams_seed,
     velo_state, pars_first, constArrays, -1); 
- 
+  
   SciFi::Tracking::Track selected_tracks[SciFi::max_tracks];
   int n_selected_tracks = 0;
     
@@ -190,13 +166,13 @@ __host__ __device__ void find_forward_tracks(
   if (!ok && SciFi::Tracking::secondLoop) { // If you found nothing begin the 2nd loop
     if(yAtRef>-5.f)selectXCandidates(
       scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
-      usedHits, coordX[1], veloUTTrack,
+      usedHits[1], coordX[1], veloUTTrack,
       candidate_tracks2, n_candidate_tracks2,
       zRef_track, xParams_seed, yParams_seed,
       velo_state, pars_second, constArrays, 1);
     if(yAtRef< 5.f)selectXCandidates(
       scifi_hits, scifi_hit_count, allXHits[0], n_x_hits[0],
-      usedHits, coordX[0], veloUTTrack,
+      usedHits[0], coordX[0], veloUTTrack,
       candidate_tracks2, n_candidate_tracks2,
       zRef_track, xParams_seed, yParams_seed,
       velo_state, pars_second, constArrays, -1);  
@@ -255,7 +231,8 @@ __host__ __device__ void find_forward_tracks(
 #endif
       }
     }
-  }
+  }  
+    
 }
 
 // Turn SciFi::Tracking::Track into a SciFi::Track

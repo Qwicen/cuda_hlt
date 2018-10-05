@@ -21,8 +21,6 @@ void PrForwardWrapper(
     const uint velo_states_index = event_tracks_offset + veloUTTr.veloTrackIndex;
     const MiniState velo_state {velo_states, velo_states_index};
     
-    // TODO: hits_layers should point to the event
-
     find_forward_tracks(
       scifi_hits,
       scifi_hit_count,

@@ -89,7 +89,7 @@ __global__ void raw_bank_decoder(
     uint32_t* hits_zone = hit_count.n_hits_layers + uniqueZone;
     uint32_t hitIndex = atomicAdd(hits_zone, 1);
 
-    assert( hitIndex < hit_count.layer_number_of_hits(uniqueZone) );
+    assert( hitIndex < hit_count.n_hits_layers[uniqueZone] );
     
     hitIndex += shared_layer_offsets[uniqueZone];
 

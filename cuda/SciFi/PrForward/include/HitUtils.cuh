@@ -13,14 +13,17 @@ struct PlaneCounter{
   unsigned int nbDifferent = 0;
 
   __host__ __device__ inline void addHit( int plane ) {
+    assert( plane < SciFi::Constants::n_layers );
     nbDifferent += (int)( (planeList[plane] += 1 ) == 1) ;
   }
 
   __host__ __device__ inline void removeHit( int plane ) {
+    assert( plane < SciFi::Constants::n_layers );
     nbDifferent -= ((int)( (planeList[plane] -= 1 ) == 0)) ;
   }
 
   __host__ __device__ inline int nbInPlane( int plane ) const {
+    assert( plane < SciFi::Constants::n_layers );
     return planeList[plane];
   }
 

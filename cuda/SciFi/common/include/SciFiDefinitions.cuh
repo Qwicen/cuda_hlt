@@ -263,12 +263,6 @@ struct SciFiHitCount {
     assert(layer_number < SciFi::number_of_zones);
     return layer_offsets[layer_number];
   }
-
-  __device__ __host__
-  uint layer_number_of_hits(const uint layer_number) const {
-    assert(layer_number < SciFi::number_of_zones);
-    return layer_offsets[layer_number+1] - layer_offsets[layer_number];
-  }
 };
 
 struct SciFiHits {

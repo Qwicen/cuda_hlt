@@ -41,7 +41,7 @@ __host__ __device__ void selectXCandidates(
   const SciFi::SciFiHitCount& scifi_hit_count,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
-  bool usedHits[SciFi::Constants::max_numhits_per_event],
+  bool usedHits[SciFi::Tracking::max_x_hits],
   float coordX[SciFi::Tracking::max_x_hits],
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks],

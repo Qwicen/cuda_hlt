@@ -52,6 +52,7 @@ __host__ __device__ void collectAllXHits(
   int iZoneStartingPoint = side > 0 ? constArrays->zoneoffsetpar : 0;
 
   for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + constArrays->zoneoffsetpar; iZone++) {
+    assert ( iZone-iZoneStartingPoint < SciFi::number_of_zones );
     const float zZone   = constArrays->xZone_zPos[iZone-iZoneStartingPoint];
     const float xInZone = straightLineExtend(xParams_seed,zZone);
     const float yInZone = straightLineExtend(yParams_seed,zZone);
@@ -89,12 +90,16 @@ __host__ __device__ void collectAllXHits(
       }
     }
 
-    // Get the zone bounds 
+    // Get the zone bounds
+    assert ( iZone < SciFi::Constants::n_layers );
+    assert ( constArrays->xZones[iZone] < SciFi::Constants::n_zones );
     int x_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->xZones[iZone]];
-    int x_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->xZones[iZone]+1];
-    int itH   = getLowerBound(scifi_hits.x0,xMin,x_zone_offset_begin,x_zone_offset_end); 
-    int itEnd = getLowerBound(scifi_hits.x0,xMax,x_zone_offset_begin,x_zone_offset_end);
-
+    int x_zone_offset_end = x_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->xZones[iZone]];
+    const int itH   = getLowerBound(scifi_hits.x0,xMin,x_zone_offset_begin,x_zone_offset_end); 
+    const int itEnd = getLowerBound(scifi_hits.x0,xMax,x_zone_offset_begin,x_zone_offset_end);
+    assert( itH >=  x_zone_offset_begin && itH <= x_zone_offset_end );
+    assert( itEnd >=  x_zone_offset_begin && itEnd <= x_zone_offset_end );
+    
     // Skip making range but continue if the end is before or equal to the start
     if (!(itEnd > itH)) continue; 
  
@@ -109,10 +114,10 @@ __host__ __device__ void collectAllXHits(
           float xMinUV      = xPredUv - maxDx;
     
     int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone]];
-    int uv_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone]+1];  
+    int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[iZone]];
     int triangleOffset       = side > 0 ? -1 : 1;
     int triangle_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]];
-    int triangle_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]+1];
+    int triangle_zone_offset_end   = triangle_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]];
     int itUV1                = getLowerBound(scifi_hits.x0,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);    
     int itUV2                = getLowerBound(scifi_hits.x0,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
 
@@ -130,6 +135,7 @@ __host__ __device__ void collectAllXHits(
         if ( matchStereoHit( itUV1, uv_zone_offset_end, scifi_hits, xMinUV, xMaxUV) ) {
           if ( n_x_hits >= SciFi::Tracking::max_x_hits - 1)
             break;
+          assert( n_x_hits < SciFi::Tracking::max_x_hits - 1 );
           allXHits[n_x_hits++] = xHit;
         }
       }
@@ -151,19 +157,19 @@ __host__ __device__ void collectAllXHits(
     const int iStart = iZoneEnd[cptZone-1];
     const int iEnd = n_x_hits;
     iZoneEnd[cptZone++] = iEnd;
-    if( !(iStart == iEnd) ){
+    
+    if ( iStart < iEnd ) {
       xAtRef_SamePlaneHits(
         scifi_hits, allXHits,
         n_x_hits, coordX, xParams_seed, constArrays,
         velo_state, iStart, iEnd); //calc xRef for all hits on same layer
     }
     if ( n_x_hits >= SciFi::Tracking::max_x_hits )
-      break;
+      break; 
   }
 
   // Sort hits by coord
   thrust::sort_by_key(thrust::seq, coordX, coordX + n_x_hits, allXHits);
-
 }
 
 
@@ -176,7 +182,7 @@ __host__ __device__ void selectXCandidates(
   const SciFi::SciFiHitCount& scifi_hit_count,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
-  bool usedHits[SciFi::Constants::max_numhits_per_event],
+  bool usedHits[SciFi::Tracking::max_x_hits],
   float coordX[SciFi::Tracking::max_x_hits],
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks],
@@ -193,18 +199,16 @@ __host__ __device__ void selectXCandidates(
   int itEnd = n_x_hits;
   const float xStraight = straightLineExtend(xParams_seed,SciFi::Tracking::zReference);
   int it1 = 0;
-  int it2 = it1; 
+  int it2 = 0; 
   pars.minStereoHits = 0;
 
   PlaneCounter planeCounter;
-  
-  
-  while( true ) {
+
+  while (it1 < itEnd) {
     //find next unused Hits
-   
-    while ( it1+pars.minXHits - 1 < itEnd && usedHits[ allXHits[it1] ] ) ++it1;
+    while ( it1+pars.minXHits - 1 < itEnd && usedHits[it1] ) ++it1;
     it2 = it1 + pars.minXHits;
-    while (it2 <= itEnd && usedHits[ allXHits[it2-1] ] ) ++it2;
+    while (it2 <= itEnd && usedHits[it2-1] ) ++it2;
     if (it2 > itEnd) break;
 
     //define search window for Cluster
@@ -221,7 +225,7 @@ __host__ __device__ void selectXCandidates(
     // Cluster candidate found, now count planes
     planeCounter.clear();
     for (int itH = it1; itH != it2; ++itH) {
-      if (!usedHits[ allXHits[itH] ]) {
+      if (!usedHits[itH]) {
         const int plane = scifi_hits.planeCode[allXHits[itH]]/2;
         planeCounter.addHit( plane );
       }
@@ -229,7 +233,7 @@ __host__ __device__ void selectXCandidates(
     // Improve cluster (at the moment only add hits to the right)
     int itLast = it2 - 1;
     while (it2 < itEnd) {
-      if (usedHits[ allXHits[it2] ]) {
+      if (usedHits[it2]) {
         ++it2;
         continue;
       } 
@@ -238,8 +242,7 @@ __host__ __device__ void selectXCandidates(
       //Add next hit,
       // if there is only a small gap between the hits
       //    or inside window and plane is still empty
-      if ( ( coordX[it2] < coordX[itLast] + pars.maxXGap )
-           || 
+      if ( ( coordX[it2] < coordX[itLast] + pars.maxXGap ) || 
            ( (coordX[it2] - coordX[it1] < xWindow) && 
              (planeCounter.nbInPlane( scifi_hits.planeCode[allXHits[it2]]/2 )  == 0)
              ) 
@@ -250,9 +253,11 @@ __host__ __device__ void selectXCandidates(
         continue;
       }   
       //Found nothing to improve
-      break;
+      else {
+        break;
+      }
     }
-    
+
     //if not enough different planes, start again from the very beginning with next right hit
     if (planeCounter.nbDifferent < pars.minXHits) {
       ++it1;
@@ -269,7 +274,7 @@ __host__ __device__ void selectXCandidates(
     // The line fitter was a standalone helper class in our framework, here I've ripped
     // its functionality out, basically have a struct which contains all the parameters
     // and some light helper math functions operating on these.
-    
+  
     SciFi::Tracking::LineFitterPars lineFitParameters;
     lineFitParameters.m_z0 = SciFi::Tracking::zReference;
     float xAtRef = 0.;
@@ -284,10 +289,10 @@ __host__ __device__ void selectXCandidates(
       
       //seperate single and double hits
       for(auto itH = it1; it2 > itH; ++itH ){
-        if( usedHits[ allXHits[itH] ] ) continue;
+        if( usedHits[itH] ) continue;
         int planeCode = scifi_hits.planeCode[allXHits[itH]]/2;
         if( planeCounter.nbInPlane(planeCode) == 1 ){
-	  incrementLineFitParameters(lineFitParameters, scifi_hits, coordX, allXHits, itH);
+          incrementLineFitParameters(lineFitParameters, scifi_hits, coordX, allXHits, itH);
         }else{
           if ( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits ) {
             otherHits[planeCode][ nOtherHits[planeCode]++ ] = itH;
@@ -302,7 +307,7 @@ __host__ __device__ void selectXCandidates(
         
         float bestChi2 = 1e9f;
       
-        int best = otherHits[i][0];
+        int best = -1;
         for( int hit = 0; hit < nOtherHits[i]; ++hit ){
           const float chi2 = getLineFitChi2(lineFitParameters, scifi_hits, coordX, allXHits, otherHits[i][hit] );
           if( chi2 < bestChi2 ){
@@ -310,7 +315,9 @@ __host__ __device__ void selectXCandidates(
             best = hit;
           }
         }
-	incrementLineFitParameters(lineFitParameters, scifi_hits, coordX, allXHits,  otherHits[i][best]);
+        if ( best > -1 ) {
+          incrementLineFitParameters(lineFitParameters, scifi_hits, coordX, allXHits,  otherHits[i][best]);
+        }
       }
       solveLineFit(lineFitParameters);
       
@@ -322,7 +329,7 @@ __host__ __device__ void selectXCandidates(
       int itWindowStart = it1; 
       int itWindowEnd   = it1 + nPlanes; //pointing at last+1
       //Hit is used, go to next unused one
-      while( itWindowEnd<=it2  &&  usedHits[ allXHits[itWindowEnd-1] ]) ++itWindowEnd;
+      while( itWindowEnd<=it2  &&  usedHits[itWindowEnd-1]) ++itWindowEnd;
       if( itWindowEnd > it2) continue; //start from very beginning
     
       float minInterval = 1.e9f;
@@ -331,9 +338,9 @@ __host__ __device__ void selectXCandidates(
 
       PlaneCounter lplaneCounter;
       for (int itH = itWindowStart; itH != itWindowEnd; ++itH) {
-        if (!usedHits[ allXHits[itH]]) {
+        if (!usedHits[itH]) {
           lplaneCounter.addHit( scifi_hits.planeCode[allXHits[itH]]/2 );
-	}
+        }
       } 
       while ( itWindowEnd <= it2 ) {
         if ( lplaneCounter.nbDifferent >= nPlanes ) {
@@ -347,7 +354,7 @@ __host__ __device__ void selectXCandidates(
         } else {
           //too few planes, add one hit
           ++itWindowEnd;
-          while( itWindowEnd<=it2  &&  usedHits[ allXHits[itWindowEnd-1] ]) ++itWindowEnd;
+          while( itWindowEnd<=it2  &&  usedHits[itWindowEnd-1]) ++itWindowEnd;
           if( itWindowEnd > it2) break;
           lplaneCounter.addHit( scifi_hits.planeCode[allXHits[itWindowEnd-1]]/2 );
           continue;
@@ -355,7 +362,7 @@ __host__ __device__ void selectXCandidates(
         // move on to the right
         lplaneCounter.removeHit( scifi_hits.planeCode[allXHits[itWindowStart]]/2 );
         ++itWindowStart;
-        while( itWindowStart<itWindowEnd && usedHits[ allXHits[itWindowStart] ] ) ++itWindowStart;
+        while( itWindowStart<itWindowEnd && usedHits[itWindowStart] ) ++itWindowStart;
         //last hit guaranteed to be not used. Therefore there is always at least one hit to go to. No additional if required.
       }
       //TODO tune minInterval cut value
@@ -365,18 +372,18 @@ __host__ __device__ void selectXCandidates(
       }
       //Fill coords and compute average x at reference
       for ( int itH = it1; it2 != itH; ++itH ) {
-        if (!usedHits[ allXHits[itH]]) {
-          if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
+        if (!usedHits[itH]) {
+          if ( n_coordToFit >= SciFi::Tracking::max_coordToFit - 1 )
             break;
-          assert(n_coordToFit < SciFi::Tracking::max_coordToFit);
           coordToFit[n_coordToFit++] = allXHits[itH];
+          usedHits[itH] = true;
           xAtRef += coordX[ itH ];
         }
       }
       xAtRef /= ((float)n_coordToFit);
     } // end of magical second part
     //=== We have a candidate :)
-    
+  
     planeCounter.clear();
     for ( int j = 0; j < n_coordToFit; ++j ) {
       planeCounter.addHit( scifi_hits.planeCode[ coordToFit[j] ] / 2 );
@@ -386,8 +393,10 @@ __host__ __device__ void selectXCandidates(
     bool ok = planeCounter.nbDifferent > 3;
     float trackParameters[SciFi::Tracking::nTrackParams];
     if(ok){
-      getTrackParameters(xAtRef, velo_state, constArrays, trackParameters); 
+      getTrackParameters(xAtRef, velo_state, constArrays, trackParameters);
+      // to do: remove outlier from usedHits
       fastLinearFit( scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter,pars);
+      // to do: do we have to mark these as used as well?
       addHitsOnEmptyXLayers(
         scifi_hits, scifi_hit_count, trackParameters,
         xParams_seed, yParams_seed,
@@ -396,7 +405,8 @@ __host__ __device__ void selectXCandidates(
       
       ok = planeCounter.nbDifferent > 3;
     }
-    //== Fit and remove hits...
+    // == Fit and remove hits...
+    // to do: remove outlier from usedHits
     if (ok) ok = fitXProjection(scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
     if (ok) ok = trackParameters[7]/trackParameters[8] < SciFi::Tracking::maxChi2PerDoF;
     if (ok )
@@ -424,15 +434,14 @@ __host__ __device__ void selectXCandidates(
         int hit = coordToFit[i_hit];
         if ( track.hitsNum >= SciFi::Tracking::max_scifi_hits ) break;
         track.addHit( hit );
-        usedHits[hit] = true;
       }
+      assert( n_candidate_tracks < SciFi::max_tracks - 1 );
       candidate_tracks[n_candidate_tracks++] = track;
     
-    } 
+    }  
     ++it1;   
-  }
-
-  
+  } 
+    
 } 
 
 
@@ -476,7 +485,7 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
 
     // -- Use a search to find the lower bound of the range of x values
     int x_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->xZones[iZone]];
-    int x_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->xZones[iZone]+1];
+    int x_zone_offset_end   = x_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->xZones[iZone]];
     int itH   = getLowerBound(scifi_hits.x0,minX,x_zone_offset_begin,x_zone_offset_end);
     int itEnd = x_zone_offset_end;
     
@@ -489,10 +498,10 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
         best = itH;
       }    
     }    
-    if ( best != -1 ) {
+    if ( best > -1 ) {
       if ( n_coordToFit >= SciFi::Tracking::max_coordToFit - 1)
         break;
-      assert( n_coordToFit < SciFi::Tracking::max_coordToFit );
+      assert( n_coordToFit < SciFi::Tracking::max_coordToFit - 1 );
       coordToFit[n_coordToFit++] = best; // add the best hit here
       planeCounter.addHit( scifi_hits.planeCode[best]/2 );
       added = true;

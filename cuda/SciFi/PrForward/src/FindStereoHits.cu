@@ -46,7 +46,8 @@ __host__ __device__ void collectStereoHits(
     // -- This takes the y value into account
     const float lower_bound_at = -dxTol - yZone * constArrays->uvZone_dxdy[zone] + xPred;
     int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]];
-    int uv_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]+1];
+    int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[zone]];
+    
     int itH   = getLowerBound(scifi_hits.x0, lower_bound_at, uv_zone_offset_begin, uv_zone_offset_end);
     int itEnd = uv_zone_offset_end;
 
@@ -207,7 +208,7 @@ __host__ __device__ bool selectStereoHits(
 
       n_bestStereoHits = 0;
       for ( int i_hit = 0; i_hit < n_trackStereoHits; ++i_hit ) {
-        assert( n_bestStereoHits < SciFi::Tracking::max_stereo_hits );
+        assert( n_bestStereoHits < SciFi::Tracking::max_stereo_hits - 1 );
         bestStereoHits[n_bestStereoHits++] = trackStereoHits[i_hit];
       }
     }
@@ -275,7 +276,7 @@ __host__ __device__ bool addHitsOnEmptyStereoLayers(
     // -- This takes the y value into account
     const float lower_bound_at = -dxTol - yZone * constArrays->uvZone_dxdy[zone] + xPred;
     int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]];
-    int uv_zone_offset_end   = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]+1];
+    int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[zone]];
     int itH   = getLowerBound(scifi_hits.x0,lower_bound_at,uv_zone_offset_begin,uv_zone_offset_end);
     int itEnd = uv_zone_offset_end;
     
@@ -307,7 +308,7 @@ __host__ __device__ bool addHitsOnEmptyStereoLayers(
     }
 
     if ( -1 != best ) {
-      assert( n_stereoHits < SciFi::Tracking::max_stereo_hits );
+      assert( n_stereoHits < SciFi::Tracking::max_stereo_hits - 1 );
       stereoHits[n_stereoHits++] = best;
       planeCounter.addHit( scifi_hits.planeCode[best]/2 );
       added = true;

@@ -23,16 +23,24 @@ int run_forward_on_CPU (
   TFile *f = new TFile("../output/Forward.root", "RECREATE");
   TTree *t_Forward_tracks = new TTree("Forward_tracks", "Forward_tracks");
   TTree *t_statistics = new TTree("statistics", "statistics");
-  float x,z,w,dxdy,yMin,yMax;
-  unsigned int LHCbID;
-  float x_hit, y_hit, z_hit;
-  float first_x, first_y, first_z;
-  float last_x, last_y, last_z;
+  TTree *t_scifi_hits = new TTree("scifi_hits","scifi_hits");
+  uint planeCode, hitZone, LHCbID;
+  float x0, z0, w, dxdy, dzdy, yMin, yMax;
   float qop;
   int n_tracks;
     
   t_Forward_tracks->Branch("qop", &qop);
   t_statistics->Branch("n_tracks", &n_tracks);
+  t_scifi_hits->Branch("planeCode", &planeCode);
+  t_scifi_hits->Branch("hitZone", &hitZone);
+  t_scifi_hits->Branch("LHCbID", &LHCbID);
+  t_scifi_hits->Branch("x0", &x0);
+  t_scifi_hits->Branch("z0", &z0);
+  t_scifi_hits->Branch("w", &w);
+  t_scifi_hits->Branch("dxdy", &dxdy);
+  t_scifi_hits->Branch("dzdy", &dzdy);
+  t_scifi_hits->Branch("yMin", &yMin);
+  t_scifi_hits->Branch("yMax", &yMax);
 #endif
 
   for ( uint i_event = 0; i_event < number_of_events; ++i_event ) {
@@ -47,9 +55,32 @@ int run_forward_on_CPU (
 
     SciFi::SciFiHitCount scifi_hit_count;
     scifi_hit_count.typecast_after_prefix_sum(host_scifi_hit_count, i_event, number_of_events);
-    
+
+    const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::number_of_zones];
     SciFi::SciFiHits scifi_hits; 
-    scifi_hits.typecast_sorted((uint*) host_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
+    scifi_hits.typecast_sorted((uint*) host_scifi_hits, total_number_of_hits);
+
+#ifdef WITH_ROOT
+    // store hit variables in tree
+    for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
+      const auto zone_offset = scifi_hit_count.layer_offsets[zone];
+      for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
+        auto h = scifi_hits.getHit(zone_offset + hit);
+        planeCode = h.planeCode;
+        hitZone = h.hitZone;
+        LHCbID = h.LHCbID;
+        x0 = h.x0;
+        z0 = h.z0;
+        w  = h.w;
+        dxdy = h.dxdy;
+        dzdy = h.dzdy;
+        yMin = h.yMin;
+        yMax = h.yMax;
+        t_scifi_hits->Fill();
+      }
+    }
+#endif
+    
     
     // initialize TMVA vars
     SciFi::Tracking::TMVA tmva1;

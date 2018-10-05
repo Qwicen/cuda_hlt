@@ -496,13 +496,9 @@ cudaError_t Stream::run_sequence(
       sizeof(uint), cudaMemcpyDeviceToHost, stream));
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
-    //    info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
-
+    
     // Raw Bank Decoder
-    //const uint32_t hits_bytes = (14 * sizeof(float) + 1) * *host_accumulated_number_of_scifi_hits;
-    //const uint32_t hits_bytes = (11 * sizeof(float) ) * *host_accumulated_number_of_scifi_hits;
     const uint32_t total_scifi_hits_size = 11 * host_accumulated_number_of_scifi_hits[0];
-    //debug_cout << "requested bytes = " << hits_bytes << std::endl;
     argument_sizes[arg::dev_scifi_hits] = argen.size<arg::dev_scifi_hits>(total_scifi_hits_size);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::raw_bank_decoder>().set_opts(dim3(number_of_events), dim3(240), stream);
@@ -527,29 +523,27 @@ cudaError_t Stream::run_sequence(
     sequence.item<seq::scifi_sort_by_x>().invoke();
  
     // SciFi tracking
-    // argument_sizes[arg::dev_scifi_tracks] = argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks);
-    // argument_sizes[arg::dev_n_scifi_tracks] = argen.size<arg::dev_n_scifi_tracks>(number_of_events);
-    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    // sequence.item<seq::PrForward>().set_opts(dim3(number_of_events), dim3(32), stream);
+    argument_sizes[arg::dev_scifi_tracks] = argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks);
+    argument_sizes[arg::dev_n_scifi_tracks] = argen.size<arg::dev_n_scifi_tracks>(number_of_events);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::PrForward>().set_opts(dim3(number_of_events), dim3(32), stream);
 
-    // sequence.item<seq::PrForward>().set_arguments(
-    //   argen.generate<arg::dev_scifi_hits>(argument_offsets),
-    //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-    //   argen.generate<arg::dev_atomics_storage>(argument_offsets),
-    //   argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
-    //   argen.generate<arg::dev_velo_states>(argument_offsets),
-    //   argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
-    //   argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
-    //   argen.generate<arg::dev_scifi_tracks>(argument_offsets),
-    //   argen.generate<arg::dev_n_scifi_tracks>(argument_offsets),
-    //   constants.dev_scifi_tmva1,
-    //   constants.dev_scifi_tmva2,
-    //   constants.dev_scifi_constArrays
-    // );
-    // sequence.item<seq::PrForward>().invoke();  
-    
-    
-    
+    sequence.item<seq::PrForward>().set_arguments(
+      argen.generate<arg::dev_scifi_hits>(argument_offsets),
+      argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+      argen.generate<arg::dev_atomics_storage>(argument_offsets),
+      argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
+      argen.generate<arg::dev_velo_states>(argument_offsets),
+      argen.generate<arg::dev_veloUT_tracks>(argument_offsets),
+      argen.generate<arg::dev_atomics_veloUT>(argument_offsets),
+      argen.generate<arg::dev_scifi_tracks>(argument_offsets),
+      argen.generate<arg::dev_n_scifi_tracks>(argument_offsets),
+      constants.dev_scifi_tmva1,
+      constants.dev_scifi_tmva2,
+      constants.dev_scifi_constArrays
+    );
+    sequence.item<seq::PrForward>().invoke();  
+        
 
     // Transmission device to host
     // Velo tracks
@@ -563,151 +557,14 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
 
     // SciFi tracks
-    // cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, argen.generate<arg::dev_n_scifi_tracks>(argument_offsets), argen.size<arg::dev_n_scifi_tracks>(number_of_events), cudaMemcpyDeviceToHost, stream));
-    // cudaCheck(cudaMemcpyAsync(host_scifi_tracks, argen.generate<arg::dev_scifi_tracks>(argument_offsets), argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, argen.generate<arg::dev_n_scifi_tracks>(argument_offsets), argen.size<arg::dev_n_scifi_tracks>(number_of_events), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_scifi_tracks, argen.generate<arg::dev_scifi_tracks>(argument_offsets), argen.size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks), cudaMemcpyDeviceToHost, stream));
     
     // Synchronize
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
     
-    // SciFi Decoder Debugging
-    {
-      std::vector<uint> host_scifi_hits (total_scifi_hits_size);
-      std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
-
-      cudaCheck(cudaMemcpyAsync(
-        host_scifi_hits.data(),
-        argen.generate<arg::dev_scifi_hits>(argument_offsets),
-        host_scifi_hits.size() * sizeof(uint),
-        cudaMemcpyDeviceToHost,
-        stream
-      ));
-      cudaCheck(cudaMemcpyAsync(
-        host_scifi_hit_count.data(),
-        argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-        host_scifi_hit_count.size() * sizeof(uint),
-        cudaMemcpyDeviceToHost,
-        stream
-      ));
-
-#ifdef WITH_ROOT
-      // Histograms only for checking and debugging
-      TFile *f = new TFile("../output/scifi.root", "RECREATE");
-      TTree *t_scifi_hits = new TTree("scifi_hits","scifi_hits");
-      uint planeCode, hitZone, LHCbID;
-      float x0, z0;
-
-      t_scifi_hits->Branch("planeCode", &planeCode);
-      t_scifi_hits->Branch("hitZone", &hitZone);
-      t_scifi_hits->Branch("LHCbID", &LHCbID);
-      t_scifi_hits->Branch("x0", &x0);
-      t_scifi_hits->Branch("z0", &z0);
-#endif
-      
-      std::ofstream outfile("dump.txt");
-      const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::number_of_zones];;
-      for (int event=0; event<number_of_events; ++event) {
-        debug_cout << "at event = " << event << std::endl;
-        SciFi::SciFiHitCount scifi_hit_count;
-        scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count.data(), event, number_of_events);
-        
-        SciFi::SciFiHits scifi_hits; 
-        scifi_hits.typecast_sorted((uint*) host_scifi_hits.data(), total_number_of_hits);
-        //scifi_hits.typecast_unsorted((uint*) host_scifi_hits, total_number_of_hits);
-        
-        for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
-        //for(size_t zone = 0; zone < 1; zone++) {
-          const auto zone_offset = scifi_hit_count.layer_offsets[zone];
-          const auto o_zone_offset = hits_layers_events_scifi[event].layer_offset[zone];
-          const auto o_zone_n_hits = hits_layers_events_scifi[event].layer_offset[zone+1] - hits_layers_events_scifi[event].layer_offset[zone];
-
-          if ( (scifi_hit_count.n_hits_layers[zone] != o_zone_n_hits) && zone != 23 )
-            debug_cout << std::dec << "at event " << event << " in zone " << zone << " different # of hits: " << scifi_hit_count.n_hits_layers[zone] << " vs " << o_zone_n_hits << std::endl;
-
-          if ( scifi_hit_count.n_hits_layers[zone] != scifi_hit_count.layer_number_of_hits(zone) )
-            warning_cout << "# of hits = " << scifi_hit_count.n_hits_layers[zone] << " != " << scifi_hit_count.layer_number_of_hits(zone) << std::endl;
-          
-          for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
-            
-            auto h = scifi_hits.getHit(zone_offset + hit);
-            auto o_h = hits_layers_events_scifi[event].getHit(o_zone_offset + hit);
-
-            if ( h.planeCode != zone )
-              warning_cout << "plane code should be " << zone << ", but it is " << h.planeCode << std::endl;
-            
-            if ( h.planeCode != o_h.planeCode )
-              warning_cout << "plane code not the same: " << std::dec << h.planeCode << " vs " << o_h.planeCode  << " in event " << event << std::endl;
-            if ( h.hitZone != o_h.hitZone )
-              warning_cout << "hit zone not the same: " << std::dec << h.hitZone << " vs " << o_h.hitZone << std::endl;
-            if ( h.LHCbID != o_h.LHCbID )
-              warning_cout << "LHCb ID not the same: " << std::hex << h.LHCbID << " vs " << o_h.LHCbID << " in event " << event << std::endl;
-                        
-            outfile << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << std::endl; // " " 
-              // << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
-              // << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
-#ifdef WITH_ROOT
-              planeCode = h.planeCode;
-              hitZone = h.hitZone;
-              LHCbID = h.LHCbID;
-              x0 = h.x0;
-              z0 = h.z0;
-              t_scifi_hits->Fill();
-#endif
-
-              
-          }
-        }
-      }
-      outfile.close();
-
-#ifdef WITH_ROOT
-      // Histograms only for checking and debugging
-      TTree *t_scifi_hits_dumped = new TTree("scifi_hits_dumped","scifi_hits_dumped");
-      uint planeCode_dumped, hitZone_dumped, LHCbID_dumped;
-      float x0_dumped, z0_dumped;
-
-      t_scifi_hits_dumped->Branch("planeCode", &planeCode_dumped);
-      t_scifi_hits_dumped->Branch("hitZone", &hitZone_dumped);
-      t_scifi_hits_dumped->Branch("LHCbID", &LHCbID_dumped);
-      t_scifi_hits_dumped->Branch("x0", &x0_dumped);
-      t_scifi_hits_dumped->Branch("z0", &z0_dumped);
-#endif
-      
-      std::ofstream outfile_2("dump_2.txt");
-      for (int event=0; event<number_of_events; ++event) {
-        SciFi::SciFiHitCount scifi_hit_count;
-        scifi_hit_count.typecast_after_prefix_sum((uint*) host_scifi_hit_count.data(), event, number_of_events);
-        // SciFi::SciFiHits scifi_hits; 
-        // scifi_hits.typecast_sorted((uint*) host_scifi_hits, scifi_hit_count.layer_offsets[number_of_events * SciFi::number_of_zones]);
-        
-        for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
-          const auto zone_offset = hits_layers_events_scifi[event].layer_offset[zone];
-
-          for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
-            auto h = hits_layers_events_scifi[event].getHit(zone_offset + hit);
-
-            outfile_2 << std::setprecision(4) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << std::endl; //" "
-              // << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
-              // << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
-#ifdef WITH_ROOT
-            planeCode_dumped = h.planeCode;
-            hitZone_dumped = h.hitZone;
-            LHCbID_dumped = h.LHCbID;
-            x0_dumped = h.x0;
-            z0_dumped = h.z0;
-            t_scifi_hits_dumped->Fill();
-#endif
-          }
-        }
-      }
-      outfile_2.close();
-
-#ifdef WITH_ROOT
-      f->Write();
-      f->Close();
-#endif
-    } 
-
+    
     ///////////////////////
     // Monte Carlo Check //
     ///////////////////////
@@ -747,62 +604,62 @@ cudaError_t Stream::run_sequence(
         ); 
 
         /* CHECKING Scifi TRACKS */
-        // const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
-        //   host_scifi_tracks,
-        //   host_n_scifi_tracks,
-        //   number_of_events
-        // );
+        const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
+          host_scifi_tracks,
+          host_n_scifi_tracks,
+          number_of_events
+        );
         
-        // std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
-        // trackType = "Forward";
-        // call_pr_checker (
-        //   scifi_tracks,
-        //   folder_name_MC,
-        //   start_event_offset,
-        //   trackType);
+        std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
+        trackType = "Forward";
+        call_pr_checker (
+          scifi_tracks,
+          folder_name_MC,
+          start_event_offset,
+          trackType);
         
         /* Run Forward on x86 architecture  */
-        // std::vector< trackChecker::Tracks > forward_tracks_events;
+        std::vector< trackChecker::Tracks > forward_tracks_events;
+           
+        std::vector<uint> host_scifi_hits (total_scifi_hits_size);
+        std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
 
-        // std::vector<uint> host_scifi_hits (total_scifi_hits_size);
-        // std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
-
-        // cudaCheck(cudaMemcpyAsync(
-        //   host_scifi_hits.data(),
-        //   argen.generate<arg::dev_scifi_hits>(argument_offsets),
-        //   total_scifi_hits_size * sizeof(uint),
-        //   cudaMemcpyDeviceToHost,
-        //   stream
-        // ));
-        // cudaCheck(cudaMemcpyAsync(
-        //   host_scifi_hit_count.data(),
-        //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-        //   host_scifi_hit_count.size() * sizeof(uint),
-        //   cudaMemcpyDeviceToHost,
-        //   stream
-        // ));
+        cudaCheck(cudaMemcpyAsync(
+          host_scifi_hits.data(),
+          argen.generate<arg::dev_scifi_hits>(argument_offsets),
+          total_scifi_hits_size * sizeof(uint),
+          cudaMemcpyDeviceToHost,
+          stream
+        ));
+        cudaCheck(cudaMemcpyAsync(
+          host_scifi_hit_count.data(),
+          argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
+          host_scifi_hit_count.size() * sizeof(uint),
+          cudaMemcpyDeviceToHost,
+          stream
+        ));
         
-        // int rv = run_forward_on_CPU(
-        //   forward_tracks_events,
-        //   reinterpret_cast<uint*>(host_scifi_hits.data()),
-        //   reinterpret_cast<uint*>(host_scifi_hit_count.data()),
-        //   host_velo_tracks_atomics,
-        //   host_velo_track_hit_number,
-        //   (uint*)host_velo_states,
-        //   host_veloUT_tracks,
-        //   host_atomics_veloUT,
-        //   number_of_events );
+        int rv = run_forward_on_CPU(
+          forward_tracks_events,
+          host_scifi_hits.data(),
+          host_scifi_hit_count.data(),
+          host_velo_tracks_atomics,
+          host_velo_track_hit_number,
+          (uint*)host_velo_states,
+          host_veloUT_tracks,
+          host_atomics_veloUT,
+          number_of_events );
         
-        // if ( rv != 0 )
-        //   continue;
+        if ( rv != 0 )
+          continue;
         
-        // std::cout << "Checking Forward tracks reconstructed on CPU" << std::endl;
-        // trackType = "Forward";
-        // call_pr_checker (
-        //   forward_tracks_events,
-        //   folder_name_MC,
-        //   start_event_offset,
-        //   trackType);
+        std::cout << "Checking Forward tracks reconstructed on CPU" << std::endl;
+        trackType = "Forward";
+        call_pr_checker (
+          forward_tracks_events,
+          folder_name_MC,
+          start_event_offset,
+          trackType);
       } // only in first repetition
     } // do_check
   } // repetitions
