@@ -1,8 +1,5 @@
 #include "Stream.cuh"
 
-#include "TFile.h"
-#include "TTree.h"
-
 #include <iostream>
 #include <fstream>
 #include <iomanip>
