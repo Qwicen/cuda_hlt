@@ -9,7 +9,8 @@ __global__ void ut_decode_raw_banks_in_order(
   const uint *dev_unique_x_sector_offsets,
   const uint32_t *dev_ut_hit_offsets,
   uint32_t *dev_ut_hits,
-  uint32_t *dev_ut_hit_count)
+  uint32_t *dev_ut_hit_count,
+  uint* dev_hit_permutations)
 {
   const uint32_t number_of_events = gridDim.x;
   const uint32_t event_number = blockIdx.x;
@@ -19,12 +20,8 @@ __global__ void ut_decode_raw_banks_in_order(
 
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
 
-  UTHits ut_hits;
-  ut_hits.typecast_sorted(
-      dev_ut_hits,
-      dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]);
-
   const UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  UTHits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};
 
   const UTRawEvent raw_event(dev_ut_raw_input + event_offset);
   const UTBoards boards(ut_boards);
@@ -39,7 +36,7 @@ __global__ void ut_decode_raw_banks_in_order(
 
   for (int i=threadIdx.x; i<layer_number_of_hits; i+=blockDim.x) {
     const uint hit_index = layer_offset + i;
-    const uint32_t raw_bank_hit_index = ut_hits.raw_bank_index[hit_index];
+    const uint32_t raw_bank_hit_index = ut_hits.raw_bank_index[dev_hit_permutations[hit_index]];
     const uint raw_bank_index = raw_bank_hit_index >> 24;
     const uint hit_index_inside_raw_bank = raw_bank_hit_index & 0xFFFFFF;
 

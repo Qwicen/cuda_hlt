@@ -16,7 +16,6 @@
 #include "TupleIndicesChecker.cuh"
 #include "SequenceArgumentEnum.cuh"
 #include "VeloEventModel.cuh"
-#include "UTApplyPermutation.cuh"
 #include "UTCalculateNumberOfHits.cuh"
 #include "UTDecodeRawBanksInOrder.cuh"
 #include "UTFindPermutation.cuh"
@@ -48,10 +47,8 @@ constexpr auto sequence_algorithms() {
     prefix_sum_reduce,
     prefix_sum_single_block,
     prefix_sum_scan,
-    // decode_raw_banks,
     ut_pre_decode,
     ut_find_permutation,
-    ut_apply_permutation,
     ut_decode_raw_banks_in_order,
     veloUT,
     estimate_cluster_count,

@@ -15,8 +15,7 @@ __global__ void ut_find_permutation(
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
   
   const UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
-  UTHits unsorted_ut_hits;
-  unsorted_ut_hits.typecast_unsorted(dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]);
+  const UTHits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};
 
   // // Prints out all hits
   // if (threadIdx.x == 0 && threadIdx.y == 0) {
@@ -29,12 +28,12 @@ __global__ void ut_find_permutation(
   //       for (int j=0; j<n_hits_group; ++j) {
   //         const auto hit_index = group_offset + j;
   //         printf("  yBegin = %f, yEnd = %f, zAtYEq0 = %f, xAtYEq0 = %f, weight = %f, highThreshold = %u \n",
-  //          unsorted_ut_hits.yBegin[hit_index],
-  //          unsorted_ut_hits.yEnd[hit_index],
-  //          unsorted_ut_hits.zAtYEq0[hit_index],
-  //          unsorted_ut_hits.xAtYEq0[hit_index],
-  //          unsorted_ut_hits.weight[hit_index],
-  //          unsorted_ut_hits.highThreshold[hit_index]);
+  //          ut_hits.yBegin[hit_index],
+  //          ut_hits.yEnd[hit_index],
+  //          ut_hits.zAtYEq0[hit_index],
+  //          ut_hits.xAtYEq0[hit_index],
+  //          ut_hits.weight[hit_index],
+  //          ut_hits.highThreshold[hit_index]);
   //       }
   //     }
   //   }
@@ -49,7 +48,7 @@ __global__ void ut_find_permutation(
     assert(sector_group_number_of_hits < 256);
 
     for (int i=threadIdx.x; i<sector_group_number_of_hits; i+=blockDim.x) {
-      s_y_begin[i] = unsorted_ut_hits.yBegin[sector_group_offset + i];
+      s_y_begin[i] = ut_hits.yBegin[sector_group_offset + i];
     }
 
     __syncthreads();

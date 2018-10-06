@@ -27,7 +27,6 @@ enum seq_enum_t {
   prefix_sum_scan_ut_hits,
   ut_pre_decode,
   ut_find_permutation,
-  ut_apply_permutation,
   ut_decode_raw_banks_in_order,
   veloUT,
   estimate_cluster_count,

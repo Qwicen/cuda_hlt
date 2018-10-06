@@ -105,22 +105,10 @@ UTHit::UTHit(float    ut_yBegin,
   planeCode     = ut_planeCode    ;
 }
 
-void UTHits::typecast_unsorted(uint32_t* base_pointer, uint32_t total_number_of_hits) {
-  yEnd = reinterpret_cast<float*>(base_pointer);
-  yBegin = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
-  zAtYEq0 = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
-  xAtYEq0 = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
-  weight = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
-  highThreshold = base_pointer + 5*total_number_of_hits;
-  LHCbID = base_pointer + 6*total_number_of_hits;
-  planeCode = base_pointer + 7*total_number_of_hits;
-  raw_bank_index = base_pointer + 8*total_number_of_hits;
-}
-
-void UTHits::typecast_sorted(uint32_t* base_pointer, uint32_t total_number_of_hits) {
+UTHits::UTHits(uint32_t* base_pointer, uint32_t total_number_of_hits) {
   raw_bank_index = base_pointer;
-  yEnd = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
-  yBegin = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
+  yBegin = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
+  yEnd = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
   zAtYEq0 = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
   xAtYEq0 = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
   weight = reinterpret_cast<float*>(base_pointer + 5*total_number_of_hits);

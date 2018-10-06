@@ -23,7 +23,6 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_scan_ut_hits] = "Prefix sum scan (3) UT hits";
   a[seq::ut_pre_decode] = "UT pre-decode";
   a[seq::ut_find_permutation] = "UT find permutation";
-  a[seq::ut_apply_permutation] = "UT apply sort permutation";
   a[seq::ut_decode_raw_banks_in_order] = "UT decode raw banks in order";
   a[seq::veloUT] = "VeloUT tracking";
   a[seq::estimate_cluster_count] = "Estimate SciFi cluster count";
@@ -193,13 +192,6 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_ut_hit_offsets,
     arg::dev_prefix_sum_auxiliary_array_3
   };
-  // sequence_dependencies[seq::decode_raw_banks] = {
-  //   arg::dev_ut_raw_input,
-  //   arg::dev_ut_raw_input_offsets,
-  //   arg::dev_ut_hits,
-  //   arg::dev_ut_hit_offsets,
-  //   arg::dev_ut_hit_count
-  // };
   sequence_dependencies[seq::ut_pre_decode] = {
     arg::dev_ut_raw_input,
     arg::dev_ut_raw_input_offsets,
@@ -212,17 +204,13 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_ut_hit_offsets,
     arg::dev_ut_hit_permutations
   };
-  sequence_dependencies[seq::ut_apply_permutation] = {
-    arg::dev_ut_hits,
-    arg::dev_ut_hit_offsets,
-    arg::dev_ut_hit_permutations
-  };
   sequence_dependencies[seq::ut_decode_raw_banks_in_order] = {
     arg::dev_ut_raw_input,
     arg::dev_ut_raw_input_offsets,
     arg::dev_ut_hits,
     arg::dev_ut_hit_offsets,
-    arg::dev_ut_hit_count
+    arg::dev_ut_hit_count,
+    arg::dev_ut_hit_permutations
   };
   sequence_dependencies[seq::veloUT] = {
     arg::dev_ut_hits,
