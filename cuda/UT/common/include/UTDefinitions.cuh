@@ -5,9 +5,21 @@
 #include <ostream>
 #include "VeloUTDefinitions.cuh"
 
-static constexpr uint32_t ut_number_of_sectors_per_board = 6;
-static constexpr uint32_t ut_number_of_geometry_sectors = 1048;
-static constexpr uint32_t ut_decoding_in_order_threads_x = 64;
+namespace UTDecoding {
+
+static constexpr int frac_mask = 0x0003U; // frac
+static constexpr int chan_mask = 0x3FFCU; // channel
+static constexpr int thre_mask = 0x8000U; // threshold
+
+static constexpr int frac_offset = 0;  // frac
+static constexpr int chan_offset = 2;  // channel
+static constexpr int thre_offset = 15; // threshold
+
+static constexpr uint ut_number_of_sectors_per_board = 6;
+static constexpr uint ut_number_of_geometry_sectors = 1048;
+static constexpr uint ut_decoding_in_order_threads_x = 64;
+
+}
 
 /**
 * @brief Offset and number of hits of each layer.

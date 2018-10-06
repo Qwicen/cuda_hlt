@@ -21,9 +21,8 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_reduce_ut_hits] = "Prefix sum reduce (3) UT hits";
   a[seq::prefix_sum_single_block_ut_hits] = "Prefix sum single block (3) UT hits";
   a[seq::prefix_sum_scan_ut_hits] = "Prefix sum scan (3) UT hits";
-  // a[seq::decode_raw_banks] = "UT decode_raw_banks";
   a[seq::ut_pre_decode] = "UT pre-decode";
-  a[seq::sort_by_y] = "Sort by Y";
+  a[seq::ut_find_permutation] = "UT find permutation";
   a[seq::ut_apply_permutation] = "UT apply sort permutation";
   a[seq::ut_decode_raw_banks_in_order] = "UT decode raw banks in order";
   a[seq::veloUT] = "VeloUT tracking";
@@ -208,7 +207,7 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_ut_hit_offsets,
     arg::dev_ut_hit_count
   };
-  sequence_dependencies[seq::sort_by_y] = {
+  sequence_dependencies[seq::ut_find_permutation] = {
     arg::dev_ut_hits,
     arg::dev_ut_hit_offsets,
     arg::dev_ut_hit_permutations

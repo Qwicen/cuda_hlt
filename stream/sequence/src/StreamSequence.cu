@@ -289,9 +289,8 @@ cudaError_t Stream::run_sequence(
     // Setup opts and arguments for kernel call
     cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_ut_raw_input>(), host_ut_events, host_ut_events_size, cudaMemcpyHostToDevice, stream));
     cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_ut_raw_input_offsets>(), host_ut_event_offsets, host_ut_event_offsets_size * sizeof(uint32_t), cudaMemcpyHostToDevice, stream));
-    cudaEventRecord(cuda_generic_event, stream);
-    cudaEventSynchronize(cuda_generic_event);
-    sequence.set_opts<seq::ut_calculate_number_of_hits>(dim3(number_of_events), dim3(192, 2), stream);
+    cudaCheck(cudaMemsetAsync(arguments.offset<arg::dev_ut_hit_offsets>(), 0, arguments.size<arg::dev_ut_hit_offsets>(), stream));
+    sequence.set_opts<seq::ut_calculate_number_of_hits>(dim3(number_of_events), dim3(64, 4), stream);
     sequence.set_arguments<seq::ut_calculate_number_of_hits>(
       arguments.offset<arg::dev_ut_raw_input>(),
       arguments.offset<arg::dev_ut_raw_input_offsets>(),
@@ -378,30 +377,12 @@ cudaError_t Stream::run_sequence(
     // }
     // info_cout << "Total number of UT hits: " << *host_accumulated_number_of_ut_hits << std::endl;
 
-    // // Decode UT raw banks
-    // arguments.set_size<arg::dev_ut_hits>(UTHits::number_of_arrays * host_accumulated_number_of_ut_hits[0]);
-    // arguments.set_size<arg::dev_ut_hit_count>(number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
-    // scheduler.setup_next(arguments, sequence_step++);
-    // sequence.set_opts<seq::decode_raw_banks>(dim3(number_of_events), dim3(64, 4), stream);
-    // sequence.set_arguments<seq::decode_raw_banks>(
-    //   arguments.offset<arg::dev_ut_raw_input>(),
-    //   arguments.offset<arg::dev_ut_raw_input_offsets>(),
-    //   dev_ut_boards,
-    //   dev_ut_geometry,
-    //   constants.dev_ut_region_offsets,
-    //   constants.dev_unique_x_sector_layer_offsets,
-    //   constants.dev_unique_x_sector_offsets,
-    //   arguments.offset<arg::dev_ut_hit_offsets>(),
-    //   arguments.offset<arg::dev_ut_hits>(),
-    //   arguments.offset<arg::dev_ut_hit_count>()
-    // );
-    // sequence.invoke<seq::decode_raw_banks>();
-
     // UT pre-decoding
     arguments.set_size<arg::dev_ut_hits>(UTHits::number_of_arrays * host_accumulated_number_of_ut_hits[0]);
     arguments.set_size<arg::dev_ut_hit_count>(number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
     scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::ut_pre_decode>(dim3(number_of_events), dim3(192, 2), stream);
+    cudaCheck(cudaMemsetAsync(arguments.offset<arg::dev_ut_hit_count>(), 0, arguments.size<arg::dev_ut_hit_count>(), stream));
+    sequence.set_opts<seq::ut_pre_decode>(dim3(number_of_events), dim3(64, 4), stream);
     sequence.set_arguments<seq::ut_pre_decode>(
       arguments.offset<arg::dev_ut_raw_input>(),
       arguments.offset<arg::dev_ut_raw_input_offsets>(),
@@ -419,8 +400,8 @@ cudaError_t Stream::run_sequence(
     // UT hit sorting by y
     arguments.set_size<arg::dev_ut_hit_permutations>(host_accumulated_number_of_ut_hits[0]);
     scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::sort_by_y>(dim3(number_of_events), dim3(256), stream);
-    sequence.set_arguments<seq::sort_by_y>(
+    sequence.set_opts<seq::ut_find_permutation>(dim3(number_of_events, constants.host_unique_x_sector_layer_offsets[4]), dim3(16), stream);
+    sequence.set_arguments<seq::ut_find_permutation>(
       arguments.offset<arg::dev_ut_hits>(),
       arguments.offset<arg::dev_ut_hit_offsets>(),
       arguments.offset<arg::dev_ut_hit_permutations>(),
@@ -428,7 +409,7 @@ cudaError_t Stream::run_sequence(
       constants.dev_unique_x_sector_offsets,
       constants.dev_unique_sector_xs
     );
-    sequence.invoke<seq::sort_by_y>();
+    sequence.invoke<seq::ut_find_permutation>();
 
     scheduler.setup_next(arguments, sequence_step++);
     sequence.set_opts<seq::ut_apply_permutation>(dim3(((host_accumulated_number_of_ut_hits[0] + 1023) / 1024)), dim3(1024), stream);
