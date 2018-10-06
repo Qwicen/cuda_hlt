@@ -14,14 +14,9 @@ __global__ void ut_find_permutation(
   const uint sector_group_number = blockIdx.y;
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
   
-  UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
-
-  // Two UTHits objects are created: one typecasts the base_pointer assuming
-  // the data is unsorted, the other assuming the data is sorted.
-  // This makes sorting more readable
-  UTHits unsorted_ut_hits, sorted_ut_hits;
+  const UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  UTHits unsorted_ut_hits;
   unsorted_ut_hits.typecast_unsorted(dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]);
-  sorted_ut_hits.typecast_sorted(dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]);
 
   // // Prints out all hits
   // if (threadIdx.x == 0 && threadIdx.y == 0) {
@@ -48,14 +43,24 @@ __global__ void ut_find_permutation(
   const uint sector_group_offset = ut_hit_offsets.sector_group_offset(sector_group_number);
   const uint sector_group_number_of_hits = ut_hit_offsets.sector_group_number_of_hits(sector_group_number);
 
-  find_permutation(
-    sector_group_offset,
-    dev_hit_permutations,
-    sector_group_number_of_hits,
-    [&unsorted_ut_hits] (const int a, const int b) {
-      if (unsorted_ut_hits.yBegin[a] > unsorted_ut_hits.yBegin[b]) { return 1; }
-      if (unsorted_ut_hits.yBegin[a] == unsorted_ut_hits.yBegin[b]) { return 0; }
-      return -1;
+  if (sector_group_number_of_hits > 0) {
+    // TODO: Find a proper maximum and cover corner cases
+    __shared__ float s_y_begin [256];
+    assert(sector_group_number_of_hits < 256);
+
+    for (int i=threadIdx.x; i<sector_group_number_of_hits; i+=blockDim.x) {
+      s_y_begin[i] = unsorted_ut_hits.yBegin[sector_group_offset + i];
     }
-  );
+
+    __syncthreads();
+
+    find_permutation(
+      0,
+      dev_hit_permutations + sector_group_offset,
+      sector_group_number_of_hits,
+      [] (const int a, const int b) -> int {
+        return (s_y_begin[a] > s_y_begin[b]) - (s_y_begin[a] < s_y_begin[b]);
+      }
+    );
+  }
 }
