@@ -13,6 +13,7 @@ __global__ void ut_decode_raw_banks_in_order(
 {
   const uint32_t number_of_events = gridDim.x;
   const uint32_t event_number = blockIdx.x;
+  const uint layer_number = blockIdx.y;
   const uint32_t event_offset =
       dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
 
@@ -29,15 +30,15 @@ __global__ void ut_decode_raw_banks_in_order(
   const UTBoards boards(ut_boards);
   const UTGeometry geometry(ut_geometry);
 
-  // As a first implementation, iterate over all hits and store coalesced
-  const uint event_hit_starting_offset = ut_hit_offsets.event_offset();
-
   // if (threadIdx.x==0) {
   //   printf("%i, %i\n", event_hit_starting_offset, ut_hit_offsets.event_number_of_hits());
   // }
 
-  for (int i=threadIdx.x; i<ut_hit_offsets.event_number_of_hits(); i+=blockDim.x) {
-    const uint hit_index = event_hit_starting_offset + i;
+  const uint layer_offset = ut_hit_offsets.layer_offset(layer_number);
+  const uint layer_number_of_hits = ut_hit_offsets.layer_number_of_hits(layer_number);
+
+  for (int i=threadIdx.x; i<layer_number_of_hits; i+=blockDim.x) {
+    const uint hit_index = layer_offset + i;
     const uint32_t raw_bank_hit_index = ut_hits.raw_bank_index[hit_index];
     const uint raw_bank_index = raw_bank_hit_index >> 24;
     const uint hit_index_inside_raw_bank = raw_bank_hit_index & 0xFFFFFF;

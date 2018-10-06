@@ -412,7 +412,7 @@ cudaError_t Stream::run_sequence(
     sequence.invoke<seq::ut_find_permutation>();
 
     scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::ut_apply_permutation>(dim3(((host_accumulated_number_of_ut_hits[0] + 1023) / 1024)), dim3(1024), stream);
+    sequence.set_opts<seq::ut_apply_permutation>(dim3((host_accumulated_number_of_ut_hits[0] + 1023) / 1024), dim3(1024), stream);
     sequence.set_arguments<seq::ut_apply_permutation>(
       arguments.offset<arg::dev_ut_hits>(),
       arguments.offset<arg::dev_ut_hit_offsets>(),
@@ -426,7 +426,7 @@ cudaError_t Stream::run_sequence(
 
     // UT decode sorted
     scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::ut_decode_raw_banks_in_order>(dim3(number_of_events), dim3(1024), stream);
+    sequence.set_opts<seq::ut_decode_raw_banks_in_order>(dim3(number_of_events, VeloUTTracking::n_layers), dim3(64), stream);
     sequence.set_arguments<seq::ut_decode_raw_banks_in_order>(
       arguments.offset<arg::dev_ut_raw_input>(),
       arguments.offset<arg::dev_ut_raw_input_offsets>(),
