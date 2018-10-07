@@ -35,7 +35,7 @@ struct WindowIndicator {
 struct BestParams {
   float qp;
   float chi2UT;
-  float xUTFit;
+  float xUTFit; // TODO check we need this
   float xSlopeUTFit;
 
   __host__ __device__ BestParams () 
@@ -51,9 +51,9 @@ struct BestParams {
 // Functions definitions
 //=========================================================================
 __global__ void compassUT(
-  uint* dev_ut_hits, // actual hit content
+  uint* dev_ut_hits,
   const uint* dev_ut_hit_offsets,
-  int* dev_atomics_storage, // semi_prefixsum, offset to tracks
+  int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_track_hits,
   uint* dev_velo_states,
@@ -64,25 +64,38 @@ __global__ void compassUT(
   const uint* dev_unique_x_sector_offsets,
   const float* dev_unique_sector_xs,
   VeloUTTracking::TrackUT* dev_compassUT_tracks,
-  int* dev_atomics_compassUT, // size of number of events
+  int* dev_atomics_compassUT,
   int* dev_windows_layers);
 
-__host__ __device__ std::tuple<int, int, int, int> find_best_hits(
+__host__ __device__ void find_best_hits(
   const int i_track,
-  const int* windows_layers,
+  const int* dev_windows_layers,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
   const float* ut_dxDy,
   const bool forward,
-  TrackHelper& helper,
-  float* x_hit_layer);
-// int* bestHitCandidateIndices);
+  float* x_hit_layer,
+  int* best_hits,
+  BestParams& best_params);
 
 __host__ __device__ BestParams pkick_fit(
-  // const std::tuple<int,int,int,int>& best_hits,
   const int best_hits[N_LAYERS],
   const UTHits& ut_hits,
   const MiniState& velo_state,
   const float* ut_dxDy,
   const float yyProto);
+
+__device__ void save_track(
+  const int i_track,
+  const float* bdlTable,
+  const MiniState& velo_state,
+  const BestParams& best_params,
+  uint* dev_velo_track_hits,
+  const Velo::Consolidated::Tracks& velo_tracks,
+  const int num_best_hits,
+  const int* best_hits,
+  const UTHits& ut_hits,
+  const float* ut_dxDy,
+  int* n_veloUT_tracks,
+  VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks]);

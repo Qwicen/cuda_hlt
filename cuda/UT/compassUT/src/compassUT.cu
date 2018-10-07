@@ -46,8 +46,7 @@ __global__ void compassUT(
   //   2. # velo tracks in UT acceptance
   // This is to write the final track
   int* n_veloUT_tracks_event = dev_atomics_compassUT + event_number;
-  // VeloUTTracking::TrackUT* veloUT_tracks_event = dev_compassUT_tracks + event_number *
-  // VeloUTTracking::max_num_tracks;
+  VeloUTTracking::TrackUT* veloUT_tracks_event = dev_compassUT_tracks + event_number * VeloUTTracking::max_num_tracks;
 
   // initialize atomic veloUT tracks counter && active track
   if (threadIdx.x == 0) {
@@ -67,62 +66,65 @@ __global__ void compassUT(
   // int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
   // int n_hitCandidatesInLayers[VeloUTTracking::n_layers];
 
-  for (int i = threadIdx.x; i < number_of_tracks_event; i += blockDim.x) {
+  for (int i_track = threadIdx.x; i_track < number_of_tracks_event; i_track += blockDim.x) {
 
     // __syncthreads();
 
     // TODO the non active tracks should be -1
     // const int i_track = shared_active_tracks[threadIdx.x];
 
-    const uint velo_states_index = event_tracks_offset + i;
+    const uint velo_states_index = event_tracks_offset + i_track;
     const MiniState velo_state{velo_states, velo_states_index};
 
     //   __syncthreads();
 
-    TrackHelper helper{velo_state};
+    // TrackHelper helper{velo_state};
 
     // indices within hitCandidatesInLayers for selected hits belonging to best track
-    float x_hit_layer[N_LAYERS];
     // int hitCandidateIndices[N_LAYERS];
 
-    std::tuple<int,int,int,int> best_hits = find_best_hits(
-      i,
+    // TODO remove the x_hit_layer (not needed)
+    float x_hit_layer[N_LAYERS];
+    int best_hits[N_LAYERS] = {-1, -1, -1, -1};
+    BestParams best_params;
+
+    // TODO search backwards if we didn't found 4 hits
+    find_best_hits(
+      i_track,
       dev_windows_layers,
       ut_hits,
       ut_hit_offsets,
       velo_state,
       dev_ut_dxDy,
       true,
-      helper,
-      x_hit_layer);
+      x_hit_layer,
+      best_hits,
+      best_params);
 
-    // // go through UT layers in forward direction
-    // if (!find_best_hits(
-    //       i,
-    //       dev_windows_layers,
-    //       ut_hits,
-    //       ut_hit_offsets,
-    //       velo_state,
-    //       dev_ut_dxDy,
-    //       true,
-    //       helper,
-    //       x_hit_layer,
-    //       // hitCandidateIndices
-    //     )) {
+    // Count best hits
+    int total_num_hits = 0;
+    for (int i = 0; i < N_LAYERS; ++i) {
+      if (best_hits[i] >= 0) total_num_hits++;
+    }
 
-    //   // go through UT layers in backward direction
-    //   find_best_hits(
-    //     i,
-    //     dev_windows_layers,
-    //     ut_hits,
-    //     ut_hit_offsets,
-    //     velo_state,
-    //     dev_ut_dxDy,
-    //     false,
-    //     helper,
-    //     x_hit_layer,
-    //     hitCandidateIndices);
-    // }
+    const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
+
+    // write the final track
+    if (total_num_hits > 0) {
+      save_track(
+        i_track,
+        bdl_table,
+        velo_state,
+        best_params,
+        dev_velo_track_hits,
+        velo_tracks,
+        total_num_hits,
+        best_hits,
+        ut_hits,
+        dev_ut_dxDy,
+        n_veloUT_tracks_event,
+        veloUT_tracks_event);
+    }
 
     //     if ( helper.n_hits > 0 ) {
     //       const uint velo_track_hit_number = velo_tracks.number_of_hits(i_track);
@@ -188,7 +190,7 @@ __global__ void compassUT(
 //=========================================================================
 // hits_to_track
 //=========================================================================
-__host__ __device__ std::tuple<int,int,int,int> find_best_hits(
+__host__ __device__ void find_best_hits(
   const int i_track,
   const int* dev_windows_layers,
   const UTHits& ut_hits,
@@ -196,9 +198,9 @@ __host__ __device__ std::tuple<int,int,int,int> find_best_hits(
   const MiniState& velo_state,
   const float* ut_dxDy,
   const bool forward,
-  TrackHelper& helper,
-  float* x_hit_layer)
-  // int* bestHitCandidateIndices)
+  float* x_hit_layer,
+  int* best_hits,
+  BestParams& best_params)
 {
   // handle forward / backward cluster search
   int layers[N_LAYERS];
@@ -225,9 +227,6 @@ __host__ __device__ std::tuple<int,int,int,int> find_best_hits(
 
   const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
 
-  int best_hits[4] = {-1, -1, -1, -1};
-  // float fit = FLT_MAX; //MAX_FLOAT
-
   // auto is_valid = [](float dx, int layer, float y){
   //   if (dx < )
   // }
@@ -247,6 +246,7 @@ __host__ __device__ std::tuple<int,int,int,int> find_best_hits(
   // // -- Now refine the tolerance in Y
   // if ( ut_hits.isNotYCompatible( layer_offset + i, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx*invNormFact)) ) continue;
 
+  // BestParams best_params;
 
   for (int i_hit0 = from0; i_hit0 < to0; ++i_hit0) {
 
@@ -293,35 +293,16 @@ __host__ __device__ std::tuple<int,int,int,int> find_best_hits(
             best_hits[3] = i_hit3;
           }
         }
-        
-        // // Simple fit just one call with the 4 ints
-        BestParams best_params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
-        // const float fit_result = fit(i_hit0, i_hit2, index_best_hit_1, index_best_hit_3);
 
-        // if (fit_result.chi2 < fit.chi2) { // just check chi2
-        //   // override the hits with the found ones
-        //   // int hit0 = -1, hit1 = -1, hit2 = -1, hit3 = -1;
-        //   // override the fit
-        //   // fit = fit_result
-
-        //   // struct for fit and the needed parameters 
-        // }
+        // Fit the hits to get q/p, chi2
+        best_params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
       }
     }
   }
 
   if (best_hits[0] != -1 && best_hits[1] != -1 && best_hits[2] != -1 && best_hits[3] != -1) {
-    printf("hit0: %i, hit1: %i, hit2: %i, hit3: %i\n", best_hits[0], best_hits[1], best_hits[2], best_hits[3]);  
+    printf("hit0: %i, hit1: %i, hit2: %i, hit3: %i, q/p: %f, chi2: %f\n", best_hits[0], best_hits[1], best_hits[2], best_hits[3], best_params.qp, best_params.chi2UT);
   }
-
-  // return the found hits
-  return {best_hits[0], best_hits[1], best_hits[2], best_hits[3]};
-  // return {hit0, hit1, hit2, hit3, fit}; // also return the fit or the chi2
-
-  // how to return
-  // https://stackoverflow.com/questions/16713245/whats-the-best-way-to-return-a-tuple-from-function-in-c11
-  // return std::make_tuple(i_hit0, index_best_hit_1, i_hit2, index_best_hit_3);
-  // return std::forward_as_tuple(i_hit0, index_best_hit_1, i_hit2, index_best_hit_3);
 }
 
 //=========================================================================
@@ -428,4 +409,107 @@ __host__ __device__ BestParams pkick_fit(
   }
 
   return best_params;
+}
+
+// These things are all hardcopied from the PrTableForFunction and PrUTMagnetTool
+// If the granularity or whatever changes, this will give wrong results
+__host__ __device__ int master_index(const int index1, const int index2, const int index3){
+  return (index3*11 + index2)*31 + index1;
+}
+
+//=========================================================================
+// prepare the final track
+//=========================================================================
+__device__ void save_track(
+  const int i_track,
+  const float* bdl_table,
+  const MiniState& velo_state,
+  const BestParams& best_params,
+  uint* dev_velo_track_hits,
+  const Velo::Consolidated::Tracks& velo_tracks,
+  const int num_best_hits,
+  const int* best_hits,
+  const UTHits& ut_hits,
+  const float* ut_dxDy,
+  int* n_veloUT_tracks, // increment number of tracks
+  VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks]) // write the track
+{
+  //== Handle states. copy Velo one, add UT.
+  const float zOrigin = (std::fabs(velo_state.ty) > 0.001) ? velo_state.z - velo_state.y / velo_state.ty
+                                                           : velo_state.z - velo_state.x / velo_state.tx;
+
+  // -- These are calculations, copied and simplified from PrTableForFunction
+  const float var[3] = {velo_state.ty, zOrigin, velo_state.z};
+
+  const int index1 = std::max(0, std::min(30, int((var[0] + 0.3) / 0.6 * 30)));
+  const int index2 = std::max(0, std::min(10, int((var[1] + 250) / 500 * 10)));
+  const int index3 = std::max(0, std::min(10, int(var[2] / 800 * 10)));
+
+  assert(master_index(index1, index2, index3) < PrUTMagnetTool::N_bdl_vals);
+  float bdl = bdl_table[master_index(index1, index2, index3)];
+
+  const int num_idx = 3;
+  const float bdls[num_idx] = {bdl_table[master_index(index1 + 1, index2, index3)],
+                               bdl_table[master_index(index1, index2 + 1, index3)],
+                               bdl_table[master_index(index1, index2, index3 + 1)]};
+  const float deltaBdl[num_idx] = {0.02, 50.0, 80.0};
+  const float boundaries[num_idx] = {
+    -0.3f + float(index1) * deltaBdl[0], -250.0f + float(index2) * deltaBdl[1], 0.0f + float(index3) * deltaBdl[2]};
+
+  // This is an interpolation, to get a bit more precision
+  float addBdlVal = 0.0;
+  const float minValsBdl[num_idx] = {-0.3, -250.0, 0.0};
+  const float maxValsBdl[num_idx] = {0.3, 250.0, 800.0};
+  for (int i = 0; i < num_idx; ++i) {
+    if (var[i] < minValsBdl[i] || var[i] > maxValsBdl[i]) continue;
+    const float dTab_dVar = (bdls[i] - bdl) / deltaBdl[i];
+    const float dVar = (var[i] - boundaries[i]);
+    addBdlVal += dTab_dVar * dVar;
+  }
+  bdl += addBdlVal;
+
+  const float qpxz2p = -1 * std::sqrt(1. + velo_state.ty * velo_state.ty) / bdl * 3.3356 / Gaudi::Units::GeV;
+  const float qop = (std::abs(bdl) < 1.e-8) ? 0.0 : best_params.qp * qpxz2p;
+
+  // -- Don't make tracks that have grossly too low momentum
+  // -- Beware of the momentum resolution!
+  const float p = 1.3 * std::abs(1 / qop);
+  const float pt = p * std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty);
+
+  if (p < PrVeloUTConst::minMomentum || pt < PrVeloUTConst::minPT) return;
+
+  // the track will be added
+  uint n_tracks = atomicAdd(n_veloUT_tracks, 1);
+
+  // const float txUT = best_params.xSlopeUTFit;
+
+  // TODO change this to use the pointer to the hits
+  // TODO dev_velo_tracks_hits should be const
+  const uint velo_track_hit_number = velo_tracks.number_of_hits(i_track);
+  const Velo::Consolidated::Hits velo_track_hits = velo_tracks.get_hits(dev_velo_track_hits, i_track);
+
+  // TODO Maybe have a look and optimize this if possible
+  // add VELO hits to VeloUT track
+  VeloUTTracking::TrackUT track;
+  track.hitsNum = 0;
+  for (int i=0; i<velo_track_hit_number; ++i) {
+    track.addLHCbID(velo_track_hits.LHCbID[i]);
+    assert( track.hitsNum < VeloUTTracking::max_track_size);
+  }
+  track.set_qop( qop );
+
+  // const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
+
+  // Adding overlap hits
+  for ( int i = 0; i < num_best_hits; ++i ) {
+    int hit_index = best_hits[i];
+    if (hit_index >= 0) {
+      track.addLHCbID( ut_hits.LHCbID[hit_index] );
+      assert( track.hitsNum < VeloUTTracking::max_track_size);
+
+      // TODO add one overlap hit?
+    }
+  }
+  assert( n_tracks < VeloUTTracking::max_num_tracks );
+  VeloUT_tracks[n_tracks] = track;  
 }
