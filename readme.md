@@ -94,4 +94,4 @@ Here are some example run options:
     # Run one stream and print all memory allocations
     ./cu_hlt -n 5000 -p
 
-[This readme](readme_cuda_developer.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define global memory variables for this sequence and pass on the dependencies.
+[This readme](contributing.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define global memory variables for this sequence and pass on the dependencies.
