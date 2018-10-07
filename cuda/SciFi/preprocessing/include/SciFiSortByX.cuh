@@ -1,6 +1,6 @@
 #pragma once
+
 #include "SciFiDefinitions.cuh"
-#include "Sorting.cuh"
 
 __global__ void scifi_sort_by_x(
   char* scifi_hits,

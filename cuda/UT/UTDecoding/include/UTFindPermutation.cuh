@@ -2,7 +2,6 @@
 
 #include "VeloUTDefinitions.cuh"
 #include "UTDefinitions.cuh"
-#include "Sorting.cuh"
 
 __global__ void ut_find_permutation(
   uint32_t* dev_ut_hits,

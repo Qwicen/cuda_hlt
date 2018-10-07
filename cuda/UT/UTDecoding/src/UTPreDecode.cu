@@ -37,7 +37,7 @@ __global__ void ut_pre_decode(
   for (uint32_t raw_bank_index = threadIdx.x;
        raw_bank_index < raw_event.number_of_raw_banks;
        raw_bank_index += blockDim.x) {
-    UTRawBank raw_bank = raw_event.getUTRawBank(raw_bank_index);
+    const UTRawBank raw_bank = raw_event.getUTRawBank(raw_bank_index);
     const uint32_t m_nStripsPerHybrid =
         boards.stripsPerHybrids[raw_bank.sourceID];
 
@@ -78,14 +78,6 @@ __global__ void ut_pre_decode(
       uint *hits_count_sector_group = hit_count + base_sector_group_offset;
 
       const uint current_hit_count = atomicAdd(hits_count_sector_group, 1);
-
-      if (current_hit_count >= hit_offsets[base_sector_group_offset + 1] -
-                                     hit_offsets[base_sector_group_offset]) {
-        printf("Sector group %i, offsets %i, %i, current_hit_count %i\n",
-          base_sector_group_offset, hit_offsets[base_sector_group_offset],
-          hit_offsets[base_sector_group_offset + 1], current_hit_count);
-      }
-
       assert(current_hit_count < hit_offsets[base_sector_group_offset + 1] -
                                      hit_offsets[base_sector_group_offset]);
 

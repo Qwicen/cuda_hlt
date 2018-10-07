@@ -19,13 +19,6 @@ __global__ void ut_calculate_number_of_hits (
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
   uint32_t* hit_offsets = dev_ut_hit_offsets + event_number * number_of_unique_x_sectors;
 
-  // Initialize hit layers to 0
-  for (int i=threadIdx.x; i<number_of_unique_x_sectors; i+=blockDim.x) {
-    hit_offsets[i] = 0;
-  }
-
-  __syncthreads();
-
   const UTRawEvent raw_event(dev_ut_raw_input + event_offset);
   const UTBoards boards(ut_boards);
 

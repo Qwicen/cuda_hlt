@@ -1,4 +1,5 @@
 #include "UTFindPermutation.cuh"
+#include "FindPermutation.cuh"
 #include <cstdio>
 
 __global__ void ut_find_permutation(
@@ -50,27 +51,16 @@ __global__ void ut_find_permutation(
 
     __syncthreads();
 
-    // Note: This could be a specialization of find_permutation,
-    //       but we would need to parameterize the hit_start in sector_group.
-    //       At this stage, it would make sense perhaps to have one permutation
-    //       specialization for shared memory cases, and one for global cases.
-
     // Sort according to the natural order in s_y_begin
     // Store the permutation found into dev_hit_permutations
-    const auto sort_function = [] (const int a, const int b) -> int {
-      return (s_y_begin[a] > s_y_begin[b]) - (s_y_begin[a] < s_y_begin[b]);
-    };
-
-    for (uint i=threadIdx.x; i<sector_group_number_of_hits; i+=blockDim.x) {
-      const int hit_index = i;
-      uint position = 0;
-      for (uint j = 0; j < sector_group_number_of_hits; ++j) {
-        const int other_hit_index = j;
-        const int sort_result = sort_function(hit_index, other_hit_index);
-        position += sort_result>0 || (sort_result==0 && i>j);
+    find_permutation(
+      0,
+      sector_group_offset,
+      sector_group_number_of_hits,
+      dev_hit_permutations,
+      [] (const int a, const int b) -> int {
+        return (s_y_begin[a] > s_y_begin[b]) - (s_y_begin[a] < s_y_begin[b]);
       }
-      assert(position < sector_group_number_of_hits);
-      dev_hit_permutations[sector_group_offset + position] = sector_group_offset + hit_index; 
-    }
+    );
   }
 }
