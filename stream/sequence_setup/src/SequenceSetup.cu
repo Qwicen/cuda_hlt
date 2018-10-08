@@ -30,6 +30,7 @@ std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_
   a[seq::prefix_sum_scan_ut_hits] = "Prefix sum scan (4) SciFi hits";
   a[seq::raw_bank_decoder] = "Decode SciFi raw banks";
   a[seq::scifi_sort_by_x] = "Sort SciFi hits by X";
+  a[seq::PrForward] = "SciFi tracking";
   return a;
 }
 
@@ -70,6 +71,8 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_scifi_hit_permutations] = "dev_scifi_hit_permutations";
   a[arg::dev_prefix_sum_auxiliary_array_4] = "dev_prefix_sum_auxiliary_array_4";
   a[arg::dev_scifi_hits] = "dev_scifi_hits";
+  a[arg::dev_scifi_tracks] = "dev_scifi_tracks";
+  a[arg::dev_n_scifi_tracks] = "dev_n_scifi_tracks";
   return a;
 }
 

@@ -23,7 +23,7 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const std::string& tr
   uint8_t* input = (uint8_t*) event.data();
 
   uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
-  //std::cout << "num MCPs = " << number_mcp << std::endl;
+  //debug_cout << "num MCPs = " << number_mcp << std::endl;
   for (uint32_t i=0; i<number_mcp; ++i) {
     MCParticle p;
     p.key               = *((uint32_t*)  input); input += sizeof(uint32_t);

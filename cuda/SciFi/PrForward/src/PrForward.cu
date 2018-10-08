@@ -189,7 +189,7 @@ __host__ __device__ void find_forward_tracks(
       pars_second, tmva1, tmva2, constArrays, true);
 
     for ( int i_track = 0; i_track < n_selected_tracks2; ++i_track ) {
-      assert( n_selected_tracks < SciFi::max_tracks);
+      assert( n_selected_tracks < SciFi::max_tracks - 1);
       selected_tracks[n_selected_tracks++] = selected_tracks2[i_track];
     }
 
@@ -348,8 +348,10 @@ __host__ __device__ void selectFullCandidates(
         cand->quality = quality;
         cand->set_qop( qOverP );
 	// Must be a neater way to do this...
-        if (!secondLoop) assert (n_selected_tracks < SciFi::max_tracks );
-        else if (secondLoop)assert (n_selected_tracks < SciFi::Tracking::max_tracks_second_loop );
+        if (!secondLoop) 
+          assert (n_selected_tracks < SciFi::max_tracks - 1 );
+        else if (secondLoop)
+          assert (n_selected_tracks < SciFi::Tracking::max_tracks_second_loop - 1 );
         selected_tracks[n_selected_tracks++] = *cand;
       }
     }
