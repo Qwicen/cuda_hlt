@@ -7,7 +7,7 @@ void Constants::reserve_constants() {
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_fx, 512 * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_fy, 512 * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_ut_dxDy, VeloUTTracking::n_layers * sizeof(float)));
-  cudaCheck(cudaMalloc((void**)&dev_ut_region_offsets, 12 * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_ut_region_offsets, (VeloUTTracking::n_layers * VeloUTTracking::n_regions_in_layer + 1) * sizeof(uint)));
 }
 
 void Constants::initialize_constants() {
@@ -19,7 +19,7 @@ void Constants::initialize_constants() {
   cudaCheck(cudaMemcpy(dev_velo_module_zs, velo_module_zs.data(), velo_module_zs.size() * sizeof(float), cudaMemcpyHostToDevice));
 
   // Velo clustering candidate ks
-  host_candidate_ks = {0, 0, 1, 2, 2, 3, 3, 3, 3};
+  host_candidate_ks = {0, 0, 1, 4, 4, 5, 5, 5, 5};
   cudaCheck(cudaMemcpy(dev_velo_candidate_ks, host_candidate_ks.data(), host_candidate_ks.size() * sizeof(uint8_t), cudaMemcpyHostToDevice));
 
   // Velo clustering patterns
@@ -43,7 +43,7 @@ void Constants::initialize_constants() {
 
   cudaCheck(cudaMemcpy(dev_ut_dxDy, host_ut_dxDy.data(), host_ut_dxDy.size() * sizeof(float), cudaMemcpyHostToDevice));
 
-  host_ut_region_offsets = {0, 84, 164, 248, 332, 412, 496, 594, 674, 772, 870, 950};
+  host_ut_region_offsets = {0, 84, 164, 248, 332, 412, 496, 594, 674, 772, 870, 950, 1048};
   cudaCheck(cudaMemcpy(dev_ut_region_offsets, host_ut_region_offsets.data(), host_ut_region_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice));
 }
 
@@ -51,15 +51,16 @@ void Constants::initialize_ut_decoding_constants(
   const std::vector<char>& ut_geometry
 ) {
   const UTGeometry geometry(ut_geometry);
-  const int number_of_station_layers = 4;
 
   // Offset for each station / layer
-  const std::array<uint, 5> offsets {0, 248, 496, 772, 1048};
+  const std::array<uint, VeloUTTracking::n_layers + 1> offsets {
+    host_ut_region_offsets[0], host_ut_region_offsets[3], host_ut_region_offsets[6],
+    host_ut_region_offsets[9], host_ut_region_offsets[12]};
   auto current_sector_offset = 0;
   host_unique_x_sector_offsets[current_sector_offset];
   host_unique_x_sector_layer_offsets[0] = 0;
 
-  for (int i=0; i<number_of_station_layers; ++i) {
+  for (int i=0; i<VeloUTTracking::n_layers; ++i) {
     const auto offset = offsets[i];
     const auto size = offsets[i+1] - offsets[i];
 

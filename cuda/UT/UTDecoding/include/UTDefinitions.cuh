@@ -176,6 +176,7 @@ struct UTHit {
    one Hits structure exists per event
 */
 struct UTHits {
+  constexpr static uint number_of_arrays = 9;
   float* yBegin;
   float* yEnd;
   float* zAtYEq0;

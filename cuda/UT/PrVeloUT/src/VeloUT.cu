@@ -108,9 +108,11 @@ __global__ void veloUT(
           ut_hit_offsets,
           fudgeFactors,
           velo_state,
+          i_track,
           dev_ut_dxDy,
           dev_unique_sector_xs,
-          dev_unique_x_sector_layer_offsets)
+          dev_unique_x_sector_layer_offsets,
+          velo_tracks)
         ) continue;
 
     TrackHelper helper {velo_state};

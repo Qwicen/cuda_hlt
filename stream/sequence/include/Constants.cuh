@@ -24,11 +24,11 @@
  */
 struct Constants {
   std::array<float, VeloUTTracking::n_layers> host_ut_dxDy;
-  std::array<uint, 5> host_unique_x_sector_layer_offsets;
+  std::array<uint, VeloUTTracking::n_layers + 1> host_unique_x_sector_layer_offsets;
   std::vector<uint> host_unique_x_sector_offsets;
   std::vector<float> host_unique_sector_xs;
-  std::array<uint, 12> host_ut_region_offsets;
-  std::array<uint8_t, 9> host_candidate_ks;
+  std::array<uint, VeloUTTracking::n_layers * VeloUTTracking::n_regions_in_layer + 1> host_ut_region_offsets;
+  std::array<uint8_t, VeloClustering::lookup_table_size> host_candidate_ks;
 
   float* dev_velo_module_zs;
   uint8_t* dev_velo_candidate_ks;

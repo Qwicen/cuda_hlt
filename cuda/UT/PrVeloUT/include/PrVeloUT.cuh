@@ -55,9 +55,11 @@ __device__ bool getHits(
   UTHitOffsets& ut_hit_offsets,
   const float* fudgeFactors, 
   const MiniState& trState,
+  const uint i_track,
   const float* ut_dxDy,
   const float* dev_unique_sector_xs,
-  const uint* dev_unique_x_sector_layer_offsets); 
+  const uint* dev_unique_x_sector_layer_offsets,
+  const Velo::Consolidated::Tracks& velo_tracks); 
 
 __host__ __device__ bool formClusters(
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
@@ -102,11 +104,12 @@ __host__ __device__ void fillIterators(
   UTHitOffsets& ut_hit_offsets,
   int posLayers[4][85] );
 
-__host__ __device__ void findHits( 
-  const uint lowerBoundSectorGroup,
-  const uint upperBoundSectorGroup,
+__host__ __device__ void findHits(
+  const std::tuple<int, int, int, int, int, int>& candidates,
   UTHits& ut_hits,
   UTHitOffsets& ut_hit_offsets,
+  uint first_sector_group_in_layer,
+  uint number_of_sector_groups_in_layer,
   uint layer_offset,
   const int i_layer,
   const float* ut_dxDy,
@@ -115,7 +118,8 @@ __host__ __device__ void findHits(
   const float invNormFact,
   int hitCandidatesInLayer[VeloUTTracking::max_hit_candidates_per_layer],
   int &n_hitCandidatesInLayer,
-  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer]);
+  float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
+  const float* dev_unique_sector_xs);
 
 
 // =================================================
