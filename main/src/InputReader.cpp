@@ -2,7 +2,7 @@
 
 Reader::Reader(const std::string& folder_name) : folder_name(folder_name) {
   if (!exists_test(folder_name)) {
-    throw StrException("Folder with name " + folder_name + "does not exist.");
+    throw StrException("Folder " + folder_name + " does not exist.");
   }
 }
 

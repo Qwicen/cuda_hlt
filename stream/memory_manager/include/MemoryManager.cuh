@@ -2,7 +2,6 @@
 #include <algorithm>
 #include "Common.h"
 #include "Logger.h"
-#include "SequenceSetup.cuh"
 
 struct MemoryManager {
   size_t max_available_memory = (size_t) 8 * 1024 * 1024 * 1024; // 8 GiB
@@ -142,9 +141,10 @@ struct MemoryManager {
   /**
    * @brief Prints the current state of the memory segments.
    */
+  template<typename T = std::tuple<>, typename R = std::tuple<>>
   void print(
-    const std::array<std::string, std::tuple_size<algorithm_tuple_t>::value>& sequence_names = {},
-    const std::array<std::string, std::tuple_size<argument_tuple_t>::value>& argument_names = {},
+    const std::array<std::string, std::tuple_size<T>::value>& sequence_names = {},
+    const std::array<std::string, std::tuple_size<R>::value>& argument_names = {},
     const int step = -1
   ) {
     if (step!=-1) {

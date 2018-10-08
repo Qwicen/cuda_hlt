@@ -11,7 +11,7 @@
 #include "Logger.h"
 #include "Timer.h"
 #include "Tools.h"
-#include "BaseDynamicScheduler.cuh"
+#include "DynamicScheduler.cuh"
 #include "SequenceSetup.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "Constants.cuh"
@@ -25,11 +25,6 @@ class Timer;
 struct Stream {
   // Sequence and arguments
   sequence_t sequence;
-  argument_tuple_t arguments;
-
-  // Sequence and argument names
-  std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> sequence_names;
-  std::array<std::string, std::tuple_size<argument_tuple_t>::value> argument_names;
 
   // Stream datatypes
   cudaStream_t stream;
@@ -56,7 +51,6 @@ struct Stream {
 
   // UT
   uint* host_accumulated_number_of_ut_hits;
-  uint* host_ut_hit_count;
   VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
   UTHits * host_ut_hits_decoded;
@@ -70,7 +64,7 @@ struct Stream {
   
 
   // Dynamic scheduler
-  BaseDynamicScheduler scheduler;
+  DynamicScheduler<algorithm_tuple_t, argument_tuple_t> scheduler;
 
   // GPU pointers
   char* dev_velo_geometry;

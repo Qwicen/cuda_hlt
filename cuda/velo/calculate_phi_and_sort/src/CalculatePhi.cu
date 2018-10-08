@@ -1,28 +1,7 @@
 #include "VeloDefinitions.cuh"
 #include "CalculatePhiAndSort.cuh"
 #include "math_constants.h" // PI
-
-/**
- * @brief Calculate a single hit phi in odd sensor
- */
-__device__ float hit_phi_odd(
-  const float x,
-  const float y
-) {
-  return atan2(y, x);
-}
-
-/**
- * @brief Calculate a single hit phi in even sensor
- */
-__device__ float hit_phi_even(
-  const float x,
-  const float y
-) {
-  const auto phi = atan2(y, x);
-  const auto less_than_zero = phi < 0.f;
-  return phi + less_than_zero*2*CUDART_PI_F;
-}
+#include "VeloTools.cuh"
 
 /**
  * @brief Calculates a phi side

@@ -7,7 +7,7 @@
 
 __global__ void veloUT(
   uint* dev_ut_hits,
-  uint* dev_ut_hit_count,
+  uint* dev_ut_hit_offsets,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_track_hits,
@@ -15,5 +15,8 @@ __global__ void veloUT(
   VeloUTTracking::TrackUT* dev_veloUT_tracks,
   int* dev_atomics_veloUT,
   PrUTMagnetTool* dev_ut_magnet_tool,
-  float* dev_ut_dxDy
+  float* dev_ut_dxDy,
+  const uint* dev_unique_x_sector_layer_offsets,
+  const uint* dev_unique_x_sector_offsets,
+  const float* dev_unique_sector_xs
 );

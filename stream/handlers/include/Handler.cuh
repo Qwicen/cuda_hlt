@@ -62,11 +62,6 @@ struct Handler {
     arguments = std::tuple<T...>{param_arguments...};
   }
 
-  void invoke() {
-    call(function, num_blocks, num_threads,
-      shared_memory_size, stream, arguments);
-  }
-
   void set_opts(
     const dim3& param_num_blocks,
     const dim3& param_num_threads,
@@ -77,5 +72,10 @@ struct Handler {
     num_threads = param_num_threads;
     stream = &param_stream;
     shared_memory_size = param_shared_memory_size;
+  }
+  
+  void invoke() {
+    call(function, num_blocks, num_threads,
+      shared_memory_size, stream, arguments);
   }
 };

@@ -1,11 +1,13 @@
 #pragma once
 
 #include "MemoryManager.cuh"
+#include "Argument.cuh"
 
-struct BaseDynamicScheduler {
+template<typename T, typename R>
+struct DynamicScheduler {
   MemoryManager memory_manager;
-  std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> sequence_names;
-  std::array<std::string, std::tuple_size<argument_tuple_t>::value> argument_names;
+  std::array<std::string, std::tuple_size<T>::value> sequence_names;
+  std::array<std::string, std::tuple_size<R>::value> argument_names;
   std::vector<std::vector<int>> sequence_dependencies;
   std::vector<int> sequence_output_arguments;
   int current_sequence_step = 0;
@@ -14,11 +16,11 @@ struct BaseDynamicScheduler {
   std::vector<std::vector<int>> tags_to_initialize;
   std::vector<std::vector<int>> tags_to_free;
 
-  BaseDynamicScheduler() = default;
+  DynamicScheduler() = default;
 
-  BaseDynamicScheduler(
-    const std::array<std::string, std::tuple_size<algorithm_tuple_t>::value>& param_sequence_names,
-    const std::array<std::string, std::tuple_size<argument_tuple_t>::value>& param_argument_names,
+  DynamicScheduler(
+    const std::array<std::string, std::tuple_size<T>::value>& param_sequence_names,
+    const std::array<std::string, std::tuple_size<R>::value>& param_argument_names,
     const std::vector<std::vector<int>>& param_sequence_dependencies,
     const std::vector<int> param_sequence_output_arguments,
     const size_t reserved_mb,
@@ -102,8 +104,7 @@ struct BaseDynamicScheduler {
    *        increments the sequence step.
    */
   void setup_next(
-    const std::array<size_t, std::tuple_size<argument_tuple_t>::value>& argument_sizes,
-    std::array<uint, std::tuple_size<argument_tuple_t>::value>& argument_offsets,
+    ArgumentManager<R>& arguments,
     const int check_sequence_step = -1
   ) {
     assert(check_sequence_step==-1 || (current_sequence_step == check_sequence_step));
@@ -118,12 +119,13 @@ struct BaseDynamicScheduler {
     // Reserve space for all tags
     // that need to be initialized on this step
     for (auto tag : tags_to_initialize[current_sequence_step]) {
-      argument_offsets[tag] = memory_manager.reserve(tag, argument_sizes[tag]);
+      const auto requested_size = arguments.size(tag);
+      arguments.set_offset(tag, memory_manager.reserve(tag, requested_size));
     }
 
     // Print memory manager state
     if (do_print) {
-      memory_manager.print(sequence_names, argument_names, current_sequence_step);
+      memory_manager.print<T, R>(sequence_names, argument_names, current_sequence_step);
     }
 
     // Move to next step

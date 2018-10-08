@@ -75,19 +75,15 @@ cudaError_t Stream::initialize(
   // Define sequence of algorithms to execute
   sequence.set(sequence_algorithms());
 
-  // Get sequence and argument names
-  sequence_names = get_sequence_names();
-  argument_names = get_argument_names();
-
   // Set options for each algorithm
   // (number of blocks, number of threads, stream, dynamic shared memory space)
   // Setup sequence items opts that are static and will not change
   // regardless of events on flight
-  sequence.item<seq::prefix_sum_single_block>().set_opts(                      dim3(1), dim3(1024), stream);
-  sequence.item<seq::copy_and_prefix_sum_single_block>().set_opts(             dim3(1), dim3(1024), stream);
-  sequence.item<seq::prefix_sum_single_block_velo_track_hit_number>().set_opts(dim3(1), dim3(1024), stream);
-  sequence.item<seq::prefix_sum_single_block_ut_hits>().set_opts(              dim3(1), dim3(1024), stream);
-  sequence.item<seq::prefix_sum_single_block_scifi_hits>().set_opts(              dim3(1), dim3(1024), stream);
+  sequence.set_opts<seq::prefix_sum_single_block>(                      dim3(1), dim3(1024), stream);
+  sequence.set_opts<seq::copy_and_prefix_sum_single_block>(             dim3(1), dim3(1024), stream);
+  sequence.set_opts<seq::prefix_sum_single_block_velo_track_hit_number>(dim3(1), dim3(1024), stream);
+  sequence.set_opts<seq::prefix_sum_single_block_ut_hits>(              dim3(1), dim3(1024), stream);
+  sequence.set_opts<seq::prefix_sum_single_block_scifi_hits>(           dim3(1), dim3(1024), stream);
 
   // Get dependencies for each algorithm
   std::vector<std::vector<int>> sequence_dependencies = get_sequence_dependencies();
@@ -96,7 +92,7 @@ cudaError_t Stream::initialize(
   std::vector<int> sequence_output_arguments = get_sequence_output_arguments();
 
   // Prepare dynamic scheduler
-  scheduler = BaseDynamicScheduler{sequence_names, argument_names,
+  scheduler = {get_sequence_names(), get_argument_names(),
     sequence_dependencies, sequence_output_arguments,
     reserve_mb * 1024 * 1024, do_print_memory_manager};
 

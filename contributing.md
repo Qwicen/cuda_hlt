@@ -283,21 +283,21 @@ Finally, go to `stream/sequence/src/StreamSequence.cu` and insert the following 
     ...
     
     // Consolidate tracks
-    argument_sizes[arg::dev_velo_track_hits] = argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]);
-    argument_sizes[arg::dev_velo_states] = argen.size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]);
+    arguments.set_size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]);
+    arguments.set_size<arg::dev_velo_states>(host_number_of_reconstructed_velo_tracks[0]);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    sequence.item<seq::consolidate_tracks>().set_opts(dim3(number_of_events), dim3(32), stream);
-    sequence.item<seq::consolidate_tracks>().set_arguments(
-      argen.generate<arg::dev_atomics_storage>(argument_offsets),
-      argen.generate<arg::dev_tracks>(argument_offsets),
-      argen.generate<arg::dev_velo_track_hit_number>(argument_offsets),
-      argen.generate<arg::dev_velo_cluster_container>(argument_offsets),
-      argen.generate<arg::dev_estimated_input_size>(argument_offsets),
-      argen.generate<arg::dev_module_cluster_num>(argument_offsets),
-      argen.generate<arg::dev_velo_track_hits>(argument_offsets),
-      argen.generate<arg::dev_velo_states>(argument_offsets)
+    sequence.set_opts<seq::consolidate_tracks>(dim3(number_of_events), dim3(32), stream);
+    sequence.set_arguments<seq::consolidate_tracks>(
+      arguments.offset<arg::dev_atomics_storage>(),
+      arguments.offset<arg::dev_tracks>(),
+      arguments.offset<arg::dev_velo_track_hit_number>(),
+      arguments.offset<arg::dev_velo_cluster_container>(),
+      arguments.offset<arg::dev_estimated_input_size>(),
+      arguments.offset<arg::dev_module_cluster_num>(),
+      arguments.offset<arg::dev_velo_track_hits>(),
+      arguments.offset<arg::dev_velo_states>()
     );
-    sequence.item<seq::consolidate_tracks>().invoke();
+    sequence.invoke<seq::consolidate_tracks>();
 
     // Saxpy test
     for (int i = 0; i < saxpy_N; i++) {
@@ -306,22 +306,22 @@ Finally, go to `stream/sequence/src/StreamSequence.cu` and insert the following 
     }
 
     // Set arguments size
-    argument_sizes[arg::dev_x] = argen.size<arg::dev_x>(saxpy_N);
-    argument_sizes[arg::dev_y] = argen.size<arg::dev_y>(saxpy_N);
+    arguments.set_size<arg::dev_x>(saxpy_N);
+    arguments.set_size<arg::dev_y>(saxpy_N);
 
     // Reserve required arguments for this algorithm in the sequence
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
 
     // Copy memory from host to device
     cudaCheck(cudaMemcpyAsync(
-      argen.generate<arg::dev_x>(argument_offsets),
+      arguments.offset<arg::dev_x>(),
       host_x,
       saxpy_N * sizeof(float),
       cudaMemcpyHostToDevice,
       stream
     ));
     cudaCheck(cudaMemcpyAsync(
-      argen.generate<arg::dev_y>(argument_offsets),
+      arguments.offset<arg::dev_y>(),
       host_y,
       saxpy_N * sizeof(float),
       cudaMemcpyHostToDevice,
@@ -329,23 +329,23 @@ Finally, go to `stream/sequence/src/StreamSequence.cu` and insert the following 
     ));
 
     // Setup opts for kernel call
-    sequence.item<seq::saxpy>().set_opts(dim3((saxpy_N+255)/256), dim3(256), stream);
+    sequence.set_opts<seq::saxpy>(dim3((saxpy_N+255)/256), dim3(256), stream);
     
     // Setup arguments for kernel call
-    sequence.item<seq::saxpy>().set_arguments(
-      argen.generate<arg::dev_x>(argument_offsets),
-      argen.generate<arg::dev_y>(argument_offsets),
+    sequence.set_arguments<seq::saxpy>(
+      arguments.offset<arg::dev_x>(),
+      arguments.offset<arg::dev_y>(),
       saxpy_N,
       2.0f
     );
 
     // Kernel call
-    sequence.item<seq::saxpy>().invoke();
+    sequence.invoke<seq::saxpy>();
 
     // Retrieve result
     cudaCheck(cudaMemcpyAsync(host_y,
-      argen.generate<arg::dev_y>(argument_offsets),
-      argen.size<arg::dev_y>(saxpy_N),
+      arguments.offset<arg::dev_y>(),
+      arguments.size<arg::dev_y>(),
       cudaMemcpyDeviceToHost,
       stream
     ));
@@ -393,8 +393,8 @@ Coming back to Saxpy, we may not want to have the checking code laying around in
 ```clike
     // Retrieve result
     cudaCheck(cudaMemcpyAsync(host_y,
-      argen.generate<arg::dev_y>(argument_offsets),
-      argen.size<arg::dev_y>(saxpy_N),
+      arguments.offset<arg::dev_y>(),
+      arguments.size<arg::dev_y>(),
       cudaMemcpyDeviceToHost,
       stream
     ));
@@ -486,19 +486,17 @@ And refactor `StreamSequence.cu` to reflect this change:
 
 ```clike
     // Kernel call
-    sequence.item<seq::saxpy>().invoke();
+    sequence.invoke<seq::saxpy>();
 
     // Check result
     sequence.item<seq::saxpy>().check(
       host_y,
       saxpy_N,
-      argen.generate<arg::dev_y>(argument_offsets),
-      argen.size<arg::dev_y>(saxpy_N),
+      arguments.offset<arg::dev_y>(),
+      arguments.size<arg::dev_y>(),
       stream,
       cuda_generic_event
     );
 ```
 
 Now you are a `cuda_hlt` hacker.
-
-> Note: You can find the full example under the branch `saxpy_test`.
