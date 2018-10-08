@@ -61,7 +61,6 @@ __global__ void compassUT(
   const float* dev_ut_dxDy,
   int* dev_active_tracks,
   const uint* dev_unique_x_sector_layer_offsets,
-  const uint* dev_unique_x_sector_offsets,
   const float* dev_unique_sector_xs,
   VeloUTTracking::TrackUT* dev_compassUT_tracks,
   int* dev_atomics_compassUT,
@@ -75,7 +74,6 @@ __host__ __device__ void find_best_hits(
   const MiniState& velo_state,
   const float* ut_dxDy,
   const bool forward,
-  float* x_hit_layer,
   int* best_hits,
   BestParams& best_params);
 

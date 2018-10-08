@@ -493,7 +493,6 @@ cudaError_t Stream::run_sequence(
       constants.dev_ut_dxDy,
       argen.generate<arg::dev_active_tracks>(argument_offsets),
       constants.dev_unique_x_sector_layer_offsets,
-      constants.dev_unique_x_sector_offsets,
       constants.dev_unique_sector_xs,
       argen.generate<arg::dev_compassUT_tracks>(argument_offsets),
       argen.generate<arg::dev_atomics_compassUT>(argument_offsets),

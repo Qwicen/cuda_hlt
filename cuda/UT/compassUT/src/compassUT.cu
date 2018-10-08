@@ -13,7 +13,6 @@ __global__ void compassUT(
   const float* dev_ut_dxDy,
   int* dev_active_tracks,
   const uint* dev_unique_x_sector_layer_offsets, // prefixsum to point to the x hit of the sector, per layer
-  const uint* dev_unique_x_sector_offsets, // TODO remove this, only needed for decoding
   const float* dev_unique_sector_xs, // list of xs that define the groups
   VeloUTTracking::TrackUT* dev_compassUT_tracks,
   int* dev_atomics_compassUT, // size of number of events
@@ -58,37 +57,21 @@ __global__ void compassUT(
 
   // __syncthreads();
 
-  // const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
-  // const float* bdlTable     = &(dev_ut_magnet_tool->bdlTable[0]);
-
-  // array to store indices of selected hits in layers
-  // -> can then access the hit information in the HitsSoA
-  // int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
-  // int n_hitCandidatesInLayers[VeloUTTracking::n_layers];
+  const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
 
   for (int i_track = threadIdx.x; i_track < number_of_tracks_event; i_track += blockDim.x) {
-
-    // __syncthreads();
 
     // TODO the non active tracks should be -1
     // const int i_track = shared_active_tracks[threadIdx.x];
 
+    // select velo track to join with UT hits
     const uint velo_states_index = event_tracks_offset + i_track;
     const MiniState velo_state{velo_states, velo_states_index};
 
-    //   __syncthreads();
-
-    // TrackHelper helper{velo_state};
-
-    // indices within hitCandidatesInLayers for selected hits belonging to best track
-    // int hitCandidateIndices[N_LAYERS];
-
-    // TODO remove the x_hit_layer (not needed)
-    float x_hit_layer[N_LAYERS];
     int best_hits[N_LAYERS] = {-1, -1, -1, -1};
     BestParams best_params;
 
-    // TODO search backwards if we didn't found 4 hits
+    // Find compatible hits in the windows for this VELO track
     find_best_hits(
       i_track,
       dev_windows_layers,
@@ -97,7 +80,6 @@ __global__ void compassUT(
       velo_state,
       dev_ut_dxDy,
       true,
-      x_hit_layer,
       best_hits,
       best_params);
 
@@ -107,7 +89,23 @@ __global__ void compassUT(
       if (best_hits[i] >= 0) total_num_hits++;
     }
 
-    const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
+    // search backward if 4 hits were not found
+    if (total_num_hits < N_LAYERS) {
+      find_best_hits(
+        i_track,
+        dev_windows_layers,
+        ut_hits,
+        ut_hit_offsets,
+        velo_state,
+        dev_ut_dxDy,
+        false,
+        best_hits,
+        best_params);      
+    }
+
+    // if (best_hits[0] != -1 && best_hits[1] != -1 && best_hits[2] != -1 && best_hits[3] != -1) {
+    //   printf("hit0: %i, hit1: %i, hit2: %i, hit3: %i, q/p: %f, chi2: %f\n", best_hits[0], best_hits[1], best_hits[2], best_hits[3], best_params.qp, best_params.chi2UT);
+    // }
 
     // write the final track
     if (total_num_hits > 0) {
@@ -125,26 +123,6 @@ __global__ void compassUT(
         n_veloUT_tracks_event,
         veloUT_tracks_event);
     }
-
-    //     if ( helper.n_hits > 0 ) {
-    //       const uint velo_track_hit_number = velo_tracks.number_of_hits(i_track);
-    //       const Velo::Consolidated::Hits velo_track_hits = velo_tracks.get_hits(dev_velo_track_hits, i_track);
-
-    //       prepareOutputTrack(
-    //         i_track,
-    //         velo_track_hits,
-    //         velo_track_hit_number,
-    //         helper,
-    //         velo_state,
-    //         (int*) &windows_layers[0],
-    //         ut_hits,
-    //         ut_hit_count,
-    //         (float*) &x_hit_layer[0],
-    //         (int*) &hitCandidateIndices[0],
-    //         bdlTable,
-    //         veloUT_tracks_event,
-    //         n_veloUT_tracks_event);
-    //     }
 
     //     const int j = blockDim.x + threadIdx.x;
     //     if (j < *active_tracks) {
@@ -166,24 +144,6 @@ __global__ void compassUT(
 
   //   const int i_track = shared_active_tracks[threadIdx.x];
 
-  //   // MiniState aux_velo_state {velo_states, velo_states_index};
-  //   const uint velo_states_index = event_tracks_offset + i_track;
-  //   const MiniState velo_state {velo_states, velo_states_index};
-
-  //   get_windows(
-  //     i_track,
-  //     velo_state,
-  //     fudgeFactors,
-  //     ut_hits,
-  //     ut_hit_count,
-  //     dev_ut_dxDy,
-  //     (int*) &windows_layers[0]);
-
-  //   __syncthreads();
-
-  //   // for storing calculated x position of hits for this track
-  //   // float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
-
   // }
 }
 
@@ -198,7 +158,6 @@ __host__ __device__ void find_best_hits(
   const MiniState& velo_state,
   const float* ut_dxDy,
   const bool forward,
-  float* x_hit_layer,
   int* best_hits,
   BestParams& best_params)
 {
@@ -251,30 +210,30 @@ __host__ __device__ void find_best_hits(
   for (int i_hit0 = from0; i_hit0 < to0; ++i_hit0) {
 
     const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
-    x_hit_layer[0] = ut_hits.xAt(i_hit0, yy0, ut_dxDy[layers[0]]);
+    const float xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[layers[0]]);
     const float zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
     best_hits[0] = i_hit0;
 
     for (int i_hit2 = from2; i_hit2 < to2; ++i_hit2) {
 
       const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
-      x_hit_layer[2] = ut_hits.xAt(i_hit2, yy2, ut_dxDy[layers[2]]);
+      const float xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[layers[2]]);
       const float zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
       best_hits[2] = i_hit2;
 
       // same bool check for the hit
-      const float tx = (x_hit_layer[2] - x_hit_layer[0]) / (zhitLayer2 - zhitLayer0);
+      const float tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
       if (std::abs(tx - velo_state.tx) <= PrVeloUTConst::deltaTx2) {
         float hitTol = PrVeloUTConst::hitTol2;
 
         // Search for triplet
         for (int i_hit1 = from1; i_hit1 < to1; ++i_hit1) {
           const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
-          x_hit_layer[1] = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[1]]);
+          const float xhitLayer1 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[1]]);
           const float zhitLayer1 = ut_hits.zAtYEq0[i_hit1];
-          const float xextrapLayer1 = x_hit_layer[0] + tx * (zhitLayer1 - zhitLayer0);
-          if (std::abs(x_hit_layer[1] - xextrapLayer1) < hitTol) {
-            hitTol = std::abs(x_hit_layer[1] - xextrapLayer1);
+          const float xextrapLayer1 = xhitLayer0 + tx * (zhitLayer1 - zhitLayer0);
+          if (std::abs(xhitLayer1 - xextrapLayer1) < hitTol) {
+            hitTol = std::abs(xhitLayer1 - xextrapLayer1);
             // index_best_hit_1 = i_hit1;
             best_hits[1] = i_hit1;
           }
@@ -284,11 +243,11 @@ __host__ __device__ void find_best_hits(
         hitTol = PrVeloUTConst::hitTol2;
         for (int i_hit3 = from3; i_hit3 < to3; ++i_hit3) {
           const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
-          x_hit_layer[3] = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[3]]);
+          const float xhitLayer3 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[3]]);
           const float zhitLayer3 = ut_hits.zAtYEq0[i_hit3];
-          const float xextrapLayer3 = x_hit_layer[2] + tx * (zhitLayer3 - zhitLayer2);
-          if (std::abs(x_hit_layer[3] - xextrapLayer3) < hitTol) {
-            hitTol = std::abs(x_hit_layer[3] - xextrapLayer3);
+          const float xextrapLayer3 = xhitLayer2 + tx * (zhitLayer3 - zhitLayer2);
+          if (std::abs(xhitLayer3 - xextrapLayer3) < hitTol) {
+            hitTol = std::abs(xhitLayer3 - xextrapLayer3);
             // index_best_hit_3 = i_hit3;
             best_hits[3] = i_hit3;
           }
@@ -298,10 +257,6 @@ __host__ __device__ void find_best_hits(
         best_params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
       }
     }
-  }
-
-  if (best_hits[0] != -1 && best_hits[1] != -1 && best_hits[2] != -1 && best_hits[3] != -1) {
-    printf("hit0: %i, hit1: %i, hit2: %i, hit3: %i, q/p: %f, chi2: %f\n", best_hits[0], best_hits[1], best_hits[2], best_hits[3], best_params.qp, best_params.chi2UT);
   }
 }
 
@@ -476,10 +431,14 @@ __device__ void save_track(
   const float p = 1.3 * std::abs(1 / qop);
   const float pt = p * std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty);
 
+  // printf("p: %f, pt: %f, minMomentum: %f, minPT: %f\n", p, pt, PrVeloUTConst::minMomentum, PrVeloUTConst::minPT);
+
   if (p < PrVeloUTConst::minMomentum || pt < PrVeloUTConst::minPT) return;
 
   // the track will be added
   uint n_tracks = atomicAdd(n_veloUT_tracks, 1);
+
+  // printf("ADDING TRACK!\n");
 
   // const float txUT = best_params.xSlopeUTFit;
 
