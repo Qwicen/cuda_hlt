@@ -27,6 +27,7 @@ __host__ __device__ void collectStereoHits(
                             0.};
     float zZone = constArrays->uvZone_zPos[zone];
     const float yZone = straightLineExtend(parsY,zZone);
+    assert( constArrays->uvZones[zone] < SciFi::Constants::n_zones );
     zZone += constArrays->Zone_dzdy[ constArrays->uvZones[zone] ]*yZone;  // Correct for dzDy
     const float xPred  = straightLineExtend(parsX,zZone);
 
@@ -51,6 +52,10 @@ __host__ __device__ void collectStereoHits(
     int itH   = getLowerBound(scifi_hits.x0, lower_bound_at, uv_zone_offset_begin, uv_zone_offset_end);
     int itEnd = uv_zone_offset_end;
 
+    assert( itH >= uv_zone_offset_begin && itH <= uv_zone_offset_end );
+    assert( itEnd >= uv_zone_offset_begin && itEnd <= uv_zone_offset_end );
+    assert( itH <= itEnd );
+    
     if(triangleSearch){
       for ( ; itEnd != itH; ++itH ) {
         const float dx = scifi_hits.x0[itH] + yZone * scifi_hits.dxdy[itH] - xPred ;
@@ -104,7 +109,7 @@ __host__ __device__ bool selectStereoHits(
 			      track.trackParams[5],
                               track.trackParams[6]};
   float bestYParams[3];
-  float bestMeanDy       = 1e9f;
+  float bestMeanDy = 1e9f;
 
   int beginRange = -1; 
   
@@ -116,7 +121,7 @@ __host__ __device__ bool selectStereoHits(
     ++beginRange;
     planeCounter.clear();
     int endRange = beginRange;
-
+  
     float sumCoord = 0.;
     // bad hack to reproduce itereator behavior from before: *(-1) = 0
     int first_hit;
@@ -125,7 +130,6 @@ __host__ __device__ bool selectStereoHits(
     else
       first_hit = endRange-1;
     
-    // while( planeCounter.nbDifferent < pars.minStereoHits ||
     while( planeCounter.nbDifferent < pars.minStereoHits ||
            stereoCoords[ endRange ] < stereoCoords[ first_hit] + SciFi::Tracking::minYGap ) {
       planeCounter.addHit( scifi_hits.planeCode[ stereoHits[endRange] ] / 2 );

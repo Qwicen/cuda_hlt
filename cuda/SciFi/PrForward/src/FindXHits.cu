@@ -192,7 +192,7 @@ __host__ __device__ void selectXCandidates(
   bool usedHits[SciFi::Tracking::max_x_hits],
   float coordX[SciFi::Tracking::max_x_hits],
   const VeloUTTracking::TrackUT& veloUTTrack,
-  SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks],
+  SciFi::Tracking::Track candidate_tracks[SciFi::Tracking::max_candidate_tracks],
   int& n_candidate_tracks,
   const float zRef_track, 
   const float xParams_seed[4],
@@ -253,7 +253,7 @@ __host__ __device__ void selectXCandidates(
       //Add next hit,
       // if there is only a small gap between the hits
       //    or inside window and plane is still empty
-      assert( it2 < SciFi::Tracking::max_x_hits );
+      assert( it2 < itEnd );
       if ( ( coordX[it2] < coordX[itLast] + pars.maxXGap ) || 
            ( (coordX[it2] - coordX[it1] < xWindow) && 
              (planeCounter.nbInPlane( scifi_hits.planeCode[allXHits[it2]]/2 )  == 0)
@@ -308,6 +308,7 @@ __host__ __device__ void selectXCandidates(
           incrementLineFitParameters(lineFitParameters, scifi_hits, coordX, allXHits, itH);
         }else{
           if ( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits ) {
+            assert( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits );
             otherHits[planeCode][ nOtherHits[planeCode]++ ] = itH;
           }
         }
@@ -342,7 +343,7 @@ __host__ __device__ void selectXCandidates(
       int itWindowStart = it1; 
       int itWindowEnd   = it1 + nPlanes; //pointing at last+1
       //Hit is used, go to next unused one
-      while( itWindowEnd<=it2  &&  usedHits[itWindowEnd-1]) ++itWindowEnd;
+      while( itWindowEnd<=it2  &&  usedHits[itWindowEnd-1] && (itWindowEnd-1) < SciFi::Tracking::max_x_hits ) ++itWindowEnd;
       if( itWindowEnd > it2) continue; //start from very beginning
     
       float minInterval = 1.e9f;
@@ -351,6 +352,7 @@ __host__ __device__ void selectXCandidates(
 
       PlaneCounter lplaneCounter;
       for (int itH = itWindowStart; itH != itWindowEnd; ++itH) {
+        assert( itH < SciFi::Tracking::max_x_hits );
         if (!usedHits[itH]) {
           lplaneCounter.addHit( scifi_hits.planeCode[allXHits[itH]]/2 );
         }
@@ -358,6 +360,8 @@ __host__ __device__ void selectXCandidates(
       while ( itWindowEnd <= it2 ) {
         if ( lplaneCounter.nbDifferent >= nPlanes ) {
           //have nPlanes, check x distance
+          assert( itWindowEnd-1 < SciFi::Tracking::max_x_hits );
+          assert( itWindowStart < SciFi::Tracking::max_x_hits );
           const float dist = coordX[itWindowEnd-1] - coordX[itWindowStart];
           if ( dist < minInterval ) {
             minInterval = dist;
@@ -367,15 +371,19 @@ __host__ __device__ void selectXCandidates(
         } else {
           //too few planes, add one hit
           ++itWindowEnd;
-          while( itWindowEnd<=it2  &&  usedHits[itWindowEnd-1]) ++itWindowEnd;
+          if ( itWindowEnd > it2 ) break;
+          assert( itWindowEnd <= SciFi::Tracking::max_x_hits );
+          while( itWindowEnd<=it2  &&  usedHits[itWindowEnd-1] && itWindowEnd < SciFi::Tracking::max_x_hits ) ++itWindowEnd;
           if( itWindowEnd > it2) break;
           lplaneCounter.addHit( scifi_hits.planeCode[allXHits[itWindowEnd-1]]/2 );
           continue;
         } 
         // move on to the right
+        
         lplaneCounter.removeHit( scifi_hits.planeCode[allXHits[itWindowStart]]/2 );
         ++itWindowStart;
-        while( itWindowStart<itWindowEnd && usedHits[itWindowStart] ) ++itWindowStart;
+        assert( itWindowStart < itEnd );
+        while( itWindowStart<itWindowEnd && usedHits[itWindowStart] && itWindowStart < itEnd) ++itWindowStart;
         //last hit guaranteed to be not used. Therefore there is always at least one hit to go to. No additional if required.
       }
       //TODO tune minInterval cut value
@@ -383,13 +391,14 @@ __host__ __device__ void selectXCandidates(
         it1 = best;
         it2 = bestEnd;
       }
+      assert( it2 <= itEnd );
       //Fill coords and compute average x at reference
       for ( int itH = it1; it2 != itH; ++itH ) {
+        assert( itH < itEnd );
         if (!usedHits[itH]) {
           if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
             break;
           assert( n_coordToFit < SciFi::Tracking::max_coordToFit );
-          assert( itH < SciFi::Tracking::max_x_hits );
           coordToFit[n_coordToFit++] = allXHits[itH];
           usedHits[itH] = true;
           xAtRef += coordX[ itH ];
@@ -447,14 +456,13 @@ __host__ __device__ void selectXCandidates(
       }
       for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
         int hit = coordToFit[i_hit];
-        if ( track.hitsNum >= SciFi::Tracking::max_scifi_hits ) break;
+        assert( track.hitsNum < SciFi::Tracking::max_scifi_hits );
         track.addHit( hit );
       }
-      if ( n_candidate_tracks >= SciFi::max_tracks )
+      if ( n_candidate_tracks >= SciFi::Tracking::max_candidate_tracks )
         printf("n candidate tracks = %u \n", n_candidate_tracks );
-      assert( n_candidate_tracks < SciFi::max_tracks );
+      assert( n_candidate_tracks < SciFi::Tracking::max_candidate_tracks );
       candidate_tracks[n_candidate_tracks++] = track;
-    
     }  
     ++it1;   
   } 
@@ -486,6 +494,7 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
   int iZoneStartingPoint = side > 0 ? constArrays->zoneoffsetpar : 0;
 
   for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + constArrays->zoneoffsetpar; iZone++) {
+    assert( constArrays->xZones[iZone]/2 < SciFi::Constants::n_layers );
     if (planeCounter.nbInPlane( constArrays->xZones[iZone]/2 ) != 0) continue;
 
     const float parsX[4] = {trackParameters[0],
@@ -493,6 +502,7 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
                             trackParameters[2],
                             trackParameters[3]};
 
+    assert( iZone-iZoneStartingPoint < SciFi::Constants::n_zones );
     const float zZone  = constArrays->xZone_zPos[iZone-iZoneStartingPoint];
     const float xPred  = straightLineExtend(parsX,zZone);
     const float minX = xPred - xWindow;
@@ -501,6 +511,7 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
     int best = -1;
 
     // -- Use a search to find the lower bound of the range of x values
+    assert( constArrays->xZones[iZone] < SciFi::Constants::n_zones );
     int x_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->xZones[iZone]];
     int x_zone_offset_end   = x_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->xZones[iZone]];
     int itH   = getLowerBound(scifi_hits.x0,minX,x_zone_offset_begin,x_zone_offset_end);

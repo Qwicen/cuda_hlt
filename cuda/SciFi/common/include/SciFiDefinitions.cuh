@@ -11,6 +11,7 @@
 #include "VeloDefinitions.cuh"
 #include "VeloEventModel.cuh"
 #include "VeloUTDefinitions.cuh"
+#include "PrForwardConstants.cuh"
 
 #include "assert.h"
 
@@ -91,8 +92,8 @@ struct HitsSoA {
   SciFiHit getHit(uint32_t index) const;
 };
   
-const int max_tracks = 180; 
-const int max_track_size = 15 + VeloUTTracking::max_track_size;
+  const int max_tracks = 150; 
+  const int max_track_size = Tracking::max_scifi_hits + VeloUTTracking::max_track_size;
 
 struct Track {
   

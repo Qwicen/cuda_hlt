@@ -208,7 +208,7 @@ std::vector< trackChecker::Tracks > prepareForwardTracks(
 ) {
   std::vector< trackChecker::Tracks > checker_tracks;
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
-    //debug_cout << "found " << n_scifi_tracks[i_event] << " tracks on GPU " << std::endl;
+    debug_cout << "in event " << i_event << " found " << n_scifi_tracks[i_event] << " tracks " << std::endl;
     trackChecker::Tracks ch_tracks = prepareForwardTracksEvent(
       scifi_tracks + i_event * SciFi::max_tracks,
       n_scifi_tracks[i_event]);
@@ -225,7 +225,9 @@ trackChecker::Tracks prepareForwardTracksEvent(
   for ( int i_track = 0; i_track < n_forward_tracks; i_track++ ) {
     const SciFi::Track& forward_track = forward_tracks[i_track];
     trackChecker::Track checker_track;
-    assert( forward_track.hitsNum < SciFi::max_track_size);
+    if ( forward_track.hitsNum >= SciFi::max_track_size )
+      debug_cout << "at track " << i_track << " forward track hits Num = " << forward_track.hitsNum << std::endl;
+    assert( forward_track.hitsNum < SciFi::max_track_size );
     //debug_cout << "at track " << std::dec << i_track << " with " << forward_track.hitsNum << " hits " << std::endl;
     for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
       //debug_cout<<"\t LHCbIDs Forward["<<i_hit<<"] = " << std::hex << forward_track.LHCbIDs[i_hit]<< std::endl;

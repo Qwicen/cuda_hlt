@@ -20,6 +20,7 @@ namespace SciFi{
   
   namespace Tracking {
 
+    const int max_candidate_tracks = 250;
     const int max_tracks_second_loop = 30;
     const int max_x_hits = 500;
     const int max_other_hits = 5;

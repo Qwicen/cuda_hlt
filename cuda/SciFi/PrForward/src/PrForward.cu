@@ -228,7 +228,7 @@ __host__ __device__ void find_forward_tracks(
       coordX[0], xParams_seed, yParams_seed, constArrays,
       velo_state, veloUTTrack.qop, -1);
 
-  SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks];
+  SciFi::Tracking::Track candidate_tracks[SciFi::Tracking::max_candidate_tracks];
   int n_candidate_tracks = 0;
   bool usedHits[2][SciFi::Tracking::max_x_hits] = {false};
   
@@ -258,6 +258,13 @@ __host__ __device__ void find_forward_tracks(
     velo_state, veloUTTrack.qop,
     pars_first, tmva1, tmva2, constArrays, false);
 
+  // n_selected_tracks = 0;
+  // for ( int i_cand = 0; i_cand < n_candidate_tracks; ++i_cand ) {
+  //     assert (n_candidate_tracks < SciFi::max_tracks );
+  //     SciFi::Tracking::Track* cand = candidate_tracks + i_cand;
+  //     selected_tracks[n_selected_tracks++] = *cand;
+  //   }
+  
   bool ok = false;
   for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
     if ( selected_tracks[i_track].hitsNum > 10 )
@@ -294,11 +301,17 @@ __host__ __device__ void find_forward_tracks(
       velo_state, veloUTTrack.qop,
       pars_second, tmva1, tmva2, constArrays, true);
 
+    // n_selected_tracks2 = 0;
+    // for ( int i_cand = 0; i_cand < n_candidate_tracks2; ++i_cand ) {
+    //   assert (n_candidate_tracks2 < SciFi::Tracking::max_tracks_second_loop );
+    //   SciFi::Tracking::Track* cand = candidate_tracks2 + i_cand;
+    //   selected_tracks2[n_selected_tracks2++] = *cand;
+    // }
+    
     for ( int i_track = 0; i_track < n_selected_tracks2; ++i_track ) {
       assert( n_selected_tracks < SciFi::max_tracks );
       selected_tracks[n_selected_tracks++] = selected_tracks2[i_track];
     }
-
    
     
     ok = (n_selected_tracks > 0);
@@ -318,11 +331,16 @@ __host__ __device__ void find_forward_tracks(
         for ( int i_hit = 0; i_hit < veloUTTrack.hitsNum; ++i_hit ) {
           tr.addLHCbID( veloUTTrack.LHCbIDs[i_hit] );
         }
+        if ( tr.hitsNum >= VeloUTTracking::max_track_size )
+          printf("veloUT track hits Num = %u \n", tr.hitsNum );
+        assert( tr.hitsNum < VeloUTTracking::max_track_size );
+        
         // add LHCbIDs from SciFi part of the track
         for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
           tr.addLHCbID( scifi_hits.LHCbID[ track.hit_indices[i_hit] ] );
         }
-        
+        assert( tr.hitsNum < SciFi::max_track_size );
+
         assert(*n_forward_tracks < SciFi::max_tracks );
 #ifndef __CUDA_ARCH__
         outputTracks[(*n_forward_tracks)++] = tr;
@@ -459,7 +477,7 @@ __host__ __device__ void selectFullCandidates(
         else if (secondLoop)
           assert (n_selected_tracks < SciFi::Tracking::max_tracks_second_loop );
         selected_tracks[n_selected_tracks++] = *cand;
-      }
+      }  
     }
-  }
+   }
 }
