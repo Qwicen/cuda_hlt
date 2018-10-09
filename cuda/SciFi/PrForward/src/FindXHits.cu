@@ -53,6 +53,7 @@ __host__ __device__ void collectAllXHits(
 
   for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + constArrays->zoneoffsetpar; iZone++) {
     assert ( iZone-iZoneStartingPoint < SciFi::number_of_zones );
+    assert( iZone-iZoneStartingPoint < 12 );
     const float zZone   = constArrays->xZone_zPos[iZone-iZoneStartingPoint];
     const float xInZone = straightLineExtend(xParams_seed,zZone);
     const float yInZone = straightLineExtend(yParams_seed,zZone);
@@ -109,15 +110,18 @@ __host__ __device__ void collectAllXHits(
     const float zRatio      = ( this_uv_z - zMag ) / ( zZone - zMag );
     const float dx          = yInZone * constArrays->uvZone_dxdy[iZone-iZoneStartingPoint];
     const float xCentral    = xInZone + dx;
-          float xPredUv     = xInUv + ( scifi_hits.x0[itH] - xInZone) * zRatio - dx;
-          float maxDx       = SciFi::Tracking::tolYCollectX + ( std::fabs( scifi_hits.x0[itH] - xCentral ) + std::fabs( yInZone ) ) * SciFi::Tracking::tolYSlopeCollectX;
-          float xMinUV      = xPredUv - maxDx;
-    
-    int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone]];
-    int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[iZone]];
-    int triangleOffset       = side > 0 ? -1 : 1;
-    int triangle_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]];
-    int triangle_zone_offset_end   = triangle_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]];
+    const float xPredUv     = xInUv + ( scifi_hits.x0[itH] - xInZone) * zRatio - dx;
+    const float maxDx       = SciFi::Tracking::tolYCollectX + ( std::fabs( scifi_hits.x0[itH] - xCentral ) + std::fabs( yInZone ) ) * SciFi::Tracking::tolYSlopeCollectX;
+    const float xMinUV      = xPredUv - maxDx;
+
+    assert( constArrays->uvZones[iZone] < SciFi::Constants::n_zones );
+    const int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone]];
+    const int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[iZone]];
+    const int triangleOffset       = side > 0 ? -1 : 1;
+    assert( constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset] < SciFi::Constants::n_zones );
+    const int triangle_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]];
+    assert( constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset] < SciFi::Constants::n_zones );
+    const int triangle_zone_offset_end   = triangle_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]];
     int itUV1                = getLowerBound(scifi_hits.x0,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);    
     int itUV2                = getLowerBound(scifi_hits.x0,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
 
@@ -133,9 +137,9 @@ __host__ __device__ void collectAllXHits(
         const float xMaxUV  = xPredUv + maxDx;
         
         if ( matchStereoHit( itUV1, uv_zone_offset_end, scifi_hits, xMinUV, xMaxUV) ) {
-          if ( n_x_hits >= SciFi::Tracking::max_x_hits - 1)
+          if ( n_x_hits >= SciFi::Tracking::max_x_hits )
             break;
-          assert( n_x_hits < SciFi::Tracking::max_x_hits - 1 );
+          assert( n_x_hits < SciFi::Tracking::max_x_hits );
           allXHits[n_x_hits++] = xHit;
         }
       }
@@ -147,8 +151,9 @@ __host__ __device__ void collectAllXHits(
         const float xMaxUV  = xPredUv + maxDx;
 
         if ( matchStereoHit( itUV1, uv_zone_offset_end, scifi_hits, xMinUV, xMaxUV ) || matchStereoHitWithTriangle(itUV2, triangle_zone_offset_end, yInZone, scifi_hits, xMinUV, xMaxUV, side ) ) {
-          if ( n_x_hits >= SciFi::Tracking::max_x_hits - 1)
+          if ( n_x_hits >= SciFi::Tracking::max_x_hits )
             break;
+          assert( n_x_hits < SciFi::Tracking::max_x_hits );
           allXHits[n_x_hits++] = xHit;
         }
       }
@@ -156,6 +161,8 @@ __host__ __device__ void collectAllXHits(
     
     const int iStart = iZoneEnd[cptZone-1];
     const int iEnd = n_x_hits;
+    
+    assert( cptZone < 7 );
     iZoneEnd[cptZone++] = iEnd;
     
     if ( iStart < iEnd ) {
@@ -206,8 +213,11 @@ __host__ __device__ void selectXCandidates(
 
   while (it1 < itEnd) {
     //find next unused Hits
+    assert( it1 < SciFi::Tracking::max_x_hits );
     while ( it1+pars.minXHits - 1 < itEnd && usedHits[it1] ) ++it1;
     it2 = it1 + pars.minXHits;
+    if (it2 > itEnd) break;
+    assert( it2-1 < SciFi::Tracking::max_x_hits );
     while (it2 <= itEnd && usedHits[it2-1] ) ++it2;
     if (it2 > itEnd) break;
 
@@ -233,6 +243,7 @@ __host__ __device__ void selectXCandidates(
     // Improve cluster (at the moment only add hits to the right)
     int itLast = it2 - 1;
     while (it2 < itEnd) {
+      assert( it2 < SciFi::Tracking::max_x_hits );
       if (usedHits[it2]) {
         ++it2;
         continue;
@@ -242,6 +253,7 @@ __host__ __device__ void selectXCandidates(
       //Add next hit,
       // if there is only a small gap between the hits
       //    or inside window and plane is still empty
+      assert( it2 < SciFi::Tracking::max_x_hits );
       if ( ( coordX[it2] < coordX[itLast] + pars.maxXGap ) || 
            ( (coordX[it2] - coordX[it1] < xWindow) && 
              (planeCounter.nbInPlane( scifi_hits.planeCode[allXHits[it2]]/2 )  == 0)
@@ -289,6 +301,7 @@ __host__ __device__ void selectXCandidates(
       
       //seperate single and double hits
       for(auto itH = it1; it2 > itH; ++itH ){
+        assert( itH < SciFi::Tracking::max_x_hits );
         if( usedHits[itH] ) continue;
         int planeCode = scifi_hits.planeCode[allXHits[itH]]/2;
         if( planeCounter.nbInPlane(planeCode) == 1 ){
@@ -373,8 +386,10 @@ __host__ __device__ void selectXCandidates(
       //Fill coords and compute average x at reference
       for ( int itH = it1; it2 != itH; ++itH ) {
         if (!usedHits[itH]) {
-          if ( n_coordToFit >= SciFi::Tracking::max_coordToFit - 1 )
+          if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
             break;
+          assert( n_coordToFit < SciFi::Tracking::max_coordToFit );
+          assert( itH < SciFi::Tracking::max_x_hits );
           coordToFit[n_coordToFit++] = allXHits[itH];
           usedHits[itH] = true;
           xAtRef += coordX[ itH ];
@@ -435,9 +450,9 @@ __host__ __device__ void selectXCandidates(
         if ( track.hitsNum >= SciFi::Tracking::max_scifi_hits ) break;
         track.addHit( hit );
       }
-      if ( n_candidate_tracks >= SciFi::max_tracks - 1 )
+      if ( n_candidate_tracks >= SciFi::max_tracks )
         printf("n candidate tracks = %u \n", n_candidate_tracks );
-      assert( n_candidate_tracks < SciFi::max_tracks - 1 );
+      assert( n_candidate_tracks < SciFi::max_tracks );
       candidate_tracks[n_candidate_tracks++] = track;
     
     }  
@@ -501,9 +516,9 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
       }    
     }    
     if ( best > -1 ) {
-      if ( n_coordToFit >= SciFi::Tracking::max_coordToFit - 1)
+      if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
         break;
-      assert( n_coordToFit < SciFi::Tracking::max_coordToFit - 1 );
+      assert( n_coordToFit < SciFi::Tracking::max_coordToFit );
       coordToFit[n_coordToFit++] = best; // add the best hit here
       planeCounter.addHit( scifi_hits.planeCode[best]/2 );
       added = true;

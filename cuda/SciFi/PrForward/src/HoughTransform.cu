@@ -16,7 +16,7 @@ __host__ __device__ void xAtRef_SamePlaneHits(
   assert( itH < SciFi::Tracking::max_x_hits );
   float zHit    = scifi_hits.z0[allXHits[itH]]; //all hits in same layer
   float xFromVelo_Hit = straightLineExtend(xParams_seed,zHit);
-  float zMagSlope = constArrays->zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays->zMagnetParams[3] * pow(velo_state.ty,2);
+  float zMagSlope = constArrays->zMagnetParams[2] * powf(velo_state.tx,2) +  constArrays->zMagnetParams[3] * powf(velo_state.ty,2);
   float dSlopeDivPart = 1.f / ( zHit - constArrays->zMagnetParams[0]);
   float dz      = 1.e-3f * ( zHit - SciFi::Tracking::zReference );
   

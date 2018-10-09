@@ -57,9 +57,9 @@ __host__ __device__ void collectStereoHits(
         if ( dx >  dxTol ) break;
         if( yZone > scifi_hits.yMax[itH] + SciFi::Tracking::yTolUVSearch)continue;
         if( yZone < scifi_hits.yMin[itH] - SciFi::Tracking::yTolUVSearch)continue;
-        if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits - 1 )
+        if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits )
           break;
-        assert( n_stereoHits < SciFi::Tracking::max_stereo_hits - 1);
+        assert( n_stereoHits < SciFi::Tracking::max_stereo_hits );
         stereoHits[n_stereoHits] = itH;
         stereoCoords[n_stereoHits++] = dx*dxDySign;
       }
@@ -67,9 +67,9 @@ __host__ __device__ void collectStereoHits(
       for ( ; itEnd != itH; ++itH ) {
         const float dx = scifi_hits.x0[itH] + yZone * scifi_hits.dxdy[itH] - xPred ;
         if ( dx >  dxTol ) break;
-        if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits - 1 )
+        if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits )
           break;
-        assert( n_stereoHits < SciFi::Tracking::max_stereo_hits - 1);
+        assert( n_stereoHits < SciFi::Tracking::max_stereo_hits );
         stereoHits[n_stereoHits] = itH;
         stereoCoords[n_stereoHits++] = dx*dxDySign;
       }
@@ -208,7 +208,7 @@ __host__ __device__ bool selectStereoHits(
 
       n_bestStereoHits = 0;
       for ( int i_hit = 0; i_hit < n_trackStereoHits; ++i_hit ) {
-        assert( n_bestStereoHits < SciFi::Tracking::max_stereo_hits - 1 );
+        assert( n_bestStereoHits < SciFi::Tracking::max_stereo_hits );
         bestStereoHits[n_bestStereoHits++] = trackStereoHits[i_hit];
       }
     }

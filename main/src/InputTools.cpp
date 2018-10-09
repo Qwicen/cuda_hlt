@@ -94,6 +94,10 @@ std::vector<std::string> list_folder(
 
   // Sort folder contents (file names)
   std::sort(folderContents.begin(), folderContents.end(), naturalOrder);
+  // for ( int i_file = 0; i_file < folderContents.size(); ++i_file) {
+  //   debug_cout << "file " << i_file << " is called " << folderContents[i_file] << std::endl;
+  //}
+
   return folderContents;
 }
 

@@ -151,10 +151,11 @@ __global__ void PrForward(
     *n_scifi_tracks_event = 0;
   }
   __syncthreads();
-  
+
   // Loop over the veloUT input tracks
-  for ( int i = 0; i < (*n_veloUT_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
-    const int i_veloUT_track = i * blockDim.x + threadIdx.x;
+  for ( int i_veloUT_track = 0; i_veloUT_track < *n_veloUT_tracks_event; ++i_veloUT_track ) {
+  // for ( int i = 0; i < (*n_veloUT_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
+  //   const int i_veloUT_track = i * blockDim.x + threadIdx.x;
     if ( i_veloUT_track < *n_veloUT_tracks_event ) {
       const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks_event[i_veloUT_track];
       
@@ -173,6 +174,15 @@ __global__ void PrForward(
         velo_state);
     }
   }
+    
+    
+  // if ( threadIdx.x == 0 ) {
+  //   int n_hits = 0;
+  //   for ( int i_zone = 0; i_zone < SciFi::Constants::n_zones; ++i_zone ) {
+  //     n_hits += scifi_hit_count.n_hits_layers[i_zone];
+  //   }
+  //   printf("at event %u n_tracks = %u n_scifi_hits = %u \n", blockIdx.x, *n_scifi_tracks_event, n_hits);
+  // }
   
 }
 
@@ -205,7 +215,7 @@ __host__ __device__ void find_forward_tracks(
   SciFi::Tracking::HitSearchCuts pars_second{SciFi::Tracking::minXHits_2nd, SciFi::Tracking::maxXWindow_2nd, SciFi::Tracking::maxXWindowSlope_2nd, SciFi::Tracking::maxXGap_2nd, 4u};
 
   int allXHits[2][SciFi::Tracking::max_x_hits];
-  int n_x_hits[2] = {};
+  int n_x_hits[2] = {0};
   float coordX[2][SciFi::Tracking::max_x_hits];
   
   if(yAtRef>-5.f)
@@ -286,7 +296,7 @@ __host__ __device__ void find_forward_tracks(
       pars_second, tmva1, tmva2, constArrays, true);
 
     for ( int i_track = 0; i_track < n_selected_tracks2; ++i_track ) {
-      assert( n_selected_tracks < SciFi::max_tracks - 1);
+      assert( n_selected_tracks < SciFi::max_tracks );
       selected_tracks[n_selected_tracks++] = selected_tracks2[i_track];
     }
 
@@ -314,7 +324,7 @@ __host__ __device__ void find_forward_tracks(
           tr.addLHCbID( scifi_hits.LHCbID[ track.hit_indices[i_hit] ] );
         }
         
-        assert(*n_forward_tracks < SciFi::max_tracks - 1);
+        assert(*n_forward_tracks < SciFi::max_tracks );
 #ifndef __CUDA_ARCH__
         outputTracks[(*n_forward_tracks)++] = tr;
 #else
@@ -446,9 +456,9 @@ __host__ __device__ void selectFullCandidates(
         cand->set_qop( qOverP );
 	// Must be a neater way to do this...
         if (!secondLoop) 
-          assert (n_selected_tracks < SciFi::max_tracks - 1 );
+          assert (n_selected_tracks < SciFi::max_tracks );
         else if (secondLoop)
-          assert (n_selected_tracks < SciFi::Tracking::max_tracks_second_loop - 1 );
+          assert (n_selected_tracks < SciFi::Tracking::max_tracks_second_loop );
         selected_tracks[n_selected_tracks++] = *cand;
       }
     }
