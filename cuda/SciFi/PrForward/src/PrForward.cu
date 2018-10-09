@@ -325,6 +325,8 @@ __host__ __device__ void find_forward_tracks(
         }
         assert( tr.hitsNum < SciFi::max_track_size );
 
+        if ( *n_forward_tracks >= SciFi::max_tracks )
+          printf("n_forward_tracks = %u \n", *n_forward_tracks);
         assert(*n_forward_tracks < SciFi::max_tracks );
 #ifndef __CUDA_ARCH__
         outputTracks[(*n_forward_tracks)++] = tr;

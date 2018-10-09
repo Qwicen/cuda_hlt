@@ -92,7 +92,7 @@ struct HitsSoA {
   SciFiHit getHit(uint32_t index) const;
 };
   
-  const int max_tracks = 150; 
+  const int max_tracks = 200; // 150; 
   const int max_track_size = Tracking::max_scifi_hits + VeloUTTracking::max_track_size;
 
 struct Track {
@@ -103,7 +103,7 @@ struct Track {
   float chi2;
   
   __host__  __device__ void addLHCbID( unsigned int id ) {
-    assert( hitsNum < max_track_size - 1 );
+    assert( hitsNum < max_track_size );
     LHCbIDs[hitsNum++] =  id;
 }
   
