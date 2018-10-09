@@ -173,14 +173,12 @@ __global__ void PrForward(
         velo_state);
     }
   }
-    
-    
+
   // if ( threadIdx.x == 0 ) {
-  //   int n_hits = 0;
-  //   for ( int i_zone = 0; i_zone < SciFi::Constants::n_zones; ++i_zone ) {
-  //     n_hits += scifi_hit_count.n_hits_layers[i_zone];
+  //   printf("Found %u tracks in event %u \n", *n_scifi_tracks_event, event_number);
+  //   for ( int i_track = 0; i_track < *n_scifi_tracks_event; ++i_track ) {
+  //     printf("At event %u, track %u has %u hits \n", event_number, i_track, scifi_tracks_event[i_track].hitsNum );
   //   }
-  //   printf("at event %u n_tracks = %u n_scifi_hits = %u \n", blockIdx.x, *n_scifi_tracks_event, n_hits);
   // }
   
 }
@@ -257,14 +255,7 @@ __host__ __device__ void find_forward_tracks(
     xParams_seed, yParams_seed,
     velo_state, veloUTTrack.qop,
     pars_first, tmva1, tmva2, constArrays, false);
-
-  // n_selected_tracks = 0;
-  // for ( int i_cand = 0; i_cand < n_candidate_tracks; ++i_cand ) {
-  //     assert (n_candidate_tracks < SciFi::max_tracks );
-  //     SciFi::Tracking::Track* cand = candidate_tracks + i_cand;
-  //     selected_tracks[n_selected_tracks++] = *cand;
-  //   }
-  
+ 
   bool ok = false;
   for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
     if ( selected_tracks[i_track].hitsNum > 10 )
@@ -300,14 +291,7 @@ __host__ __device__ void find_forward_tracks(
       xParams_seed, yParams_seed,
       velo_state, veloUTTrack.qop,
       pars_second, tmva1, tmva2, constArrays, true);
-
-    // n_selected_tracks2 = 0;
-    // for ( int i_cand = 0; i_cand < n_candidate_tracks2; ++i_cand ) {
-    //   assert (n_candidate_tracks2 < SciFi::Tracking::max_tracks_second_loop );
-    //   SciFi::Tracking::Track* cand = candidate_tracks2 + i_cand;
-    //   selected_tracks2[n_selected_tracks2++] = *cand;
-    // }
-    
+ 
     for ( int i_track = 0; i_track < n_selected_tracks2; ++i_track ) {
       assert( n_selected_tracks < SciFi::max_tracks );
       selected_tracks[n_selected_tracks++] = selected_tracks2[i_track];

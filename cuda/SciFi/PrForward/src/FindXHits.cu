@@ -213,11 +213,11 @@ __host__ __device__ void selectXCandidates(
 
   while (it1 < itEnd) {
     //find next unused Hits
-    assert( it1 < SciFi::Tracking::max_x_hits );
+    assert( it1 < n_x_hits );
     while ( it1+pars.minXHits - 1 < itEnd && usedHits[it1] ) ++it1;
     it2 = it1 + pars.minXHits;
     if (it2 > itEnd) break;
-    assert( it2-1 < SciFi::Tracking::max_x_hits );
+    assert( it2-1 < n_x_hits );
     while (it2 <= itEnd && usedHits[it2-1] ) ++it2;
     if (it2 > itEnd) break;
 
@@ -235,6 +235,7 @@ __host__ __device__ void selectXCandidates(
     // Cluster candidate found, now count planes
     planeCounter.clear();
     for (int itH = it1; itH != it2; ++itH) {
+      assert( itH < n_x_hits );
       if (!usedHits[itH]) {
         const int plane = scifi_hits.planeCode[allXHits[itH]]/2;
         planeCounter.addHit( plane );
@@ -243,7 +244,7 @@ __host__ __device__ void selectXCandidates(
     // Improve cluster (at the moment only add hits to the right)
     int itLast = it2 - 1;
     while (it2 < itEnd) {
-      assert( it2 < SciFi::Tracking::max_x_hits );
+      assert( it2 < n_x_hits );
       if (usedHits[it2]) {
         ++it2;
         continue;
@@ -301,7 +302,7 @@ __host__ __device__ void selectXCandidates(
       
       //seperate single and double hits
       for(auto itH = it1; it2 > itH; ++itH ){
-        assert( itH < SciFi::Tracking::max_x_hits );
+        assert( itH < n_x_hits );
         if( usedHits[itH] ) continue;
         int planeCode = scifi_hits.planeCode[allXHits[itH]]/2;
         if( planeCounter.nbInPlane(planeCode) == 1 ){
@@ -343,7 +344,7 @@ __host__ __device__ void selectXCandidates(
       int itWindowStart = it1; 
       int itWindowEnd   = it1 + nPlanes; //pointing at last+1
       //Hit is used, go to next unused one
-      while( itWindowEnd<=it2  &&  usedHits[itWindowEnd-1] && (itWindowEnd-1) < SciFi::Tracking::max_x_hits ) ++itWindowEnd;
+      while( itWindowEnd<=it2  &&  usedHits[itWindowEnd-1] && (itWindowEnd-1) < n_x_hits ) ++itWindowEnd;
       if( itWindowEnd > it2) continue; //start from very beginning
     
       float minInterval = 1.e9f;
@@ -352,7 +353,7 @@ __host__ __device__ void selectXCandidates(
 
       PlaneCounter lplaneCounter;
       for (int itH = itWindowStart; itH != itWindowEnd; ++itH) {
-        assert( itH < SciFi::Tracking::max_x_hits );
+        assert( itH < n_x_hits );
         if (!usedHits[itH]) {
           lplaneCounter.addHit( scifi_hits.planeCode[allXHits[itH]]/2 );
         }
@@ -372,7 +373,7 @@ __host__ __device__ void selectXCandidates(
           //too few planes, add one hit
           ++itWindowEnd;
           if ( itWindowEnd > it2 ) break;
-          assert( itWindowEnd <= SciFi::Tracking::max_x_hits );
+          assert( itWindowEnd <= n_x_hits );
           while( itWindowEnd<=it2  &&  usedHits[itWindowEnd-1] && itWindowEnd < SciFi::Tracking::max_x_hits ) ++itWindowEnd;
           if( itWindowEnd > it2) break;
           lplaneCounter.addHit( scifi_hits.planeCode[allXHits[itWindowEnd-1]]/2 );
@@ -383,7 +384,7 @@ __host__ __device__ void selectXCandidates(
         lplaneCounter.removeHit( scifi_hits.planeCode[allXHits[itWindowStart]]/2 );
         ++itWindowStart;
         assert( itWindowStart < itEnd );
-        while( itWindowStart<itWindowEnd && usedHits[itWindowStart] && itWindowStart < itEnd) ++itWindowStart;
+        while( itWindowStart<itWindowEnd && usedHits[itWindowStart] && itWindowStart < n_x_hits) ++itWindowStart;
         //last hit guaranteed to be not used. Therefore there is always at least one hit to go to. No additional if required.
       }
       //TODO tune minInterval cut value
@@ -395,6 +396,7 @@ __host__ __device__ void selectXCandidates(
       //Fill coords and compute average x at reference
       for ( int itH = it1; it2 != itH; ++itH ) {
         assert( itH < itEnd );
+        assert( itH < n_x_hits );
         if (!usedHits[itH]) {
           if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
             break;
