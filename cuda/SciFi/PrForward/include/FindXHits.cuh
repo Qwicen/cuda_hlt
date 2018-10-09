@@ -52,7 +52,8 @@ __host__ __device__ void selectXCandidates(
   const MiniState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars,
   SciFi::Tracking::Arrays* constArrays,
-  int side);
+  int side,
+  const bool secondLoop);
 
 __host__ __device__ bool addHitsOnEmptyXLayers(
   const SciFi::SciFiHits& scifi_hits,

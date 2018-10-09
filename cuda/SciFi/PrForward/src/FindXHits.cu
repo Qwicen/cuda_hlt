@@ -200,7 +200,8 @@ __host__ __device__ void selectXCandidates(
   const MiniState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars,
   SciFi::Tracking::Arrays* constArrays,
-  int side)
+  int side,
+  const bool secondLoop)
 {
   if ( n_x_hits < pars.minXHits ) return;
   int itEnd = n_x_hits;
@@ -461,11 +462,19 @@ __host__ __device__ void selectXCandidates(
         assert( track.hitsNum < SciFi::Tracking::max_scifi_hits );
         track.addHit( hit );
       }
-      if ( n_candidate_tracks >= SciFi::Tracking::max_candidate_tracks )
-        printf("n candidate tracks = %u \n", n_candidate_tracks );
-      assert( n_candidate_tracks < SciFi::Tracking::max_candidate_tracks );
-      candidate_tracks[n_candidate_tracks++] = track;
-    }  
+      if ( !secondLoop ) {
+        if ( n_candidate_tracks >= SciFi::Tracking::max_candidate_tracks )
+          printf("n candidate tracks 1st loop = %u \n", n_candidate_tracks );
+        assert( n_candidate_tracks < SciFi::Tracking::max_candidate_tracks );
+        candidate_tracks[n_candidate_tracks++] = track;
+      }  
+      else if ( secondLoop ) {
+        if ( n_candidate_tracks >= SciFi::Tracking::max_tracks_second_loop )
+          printf("n candidate tracks 2nd loop = %u \n", n_candidate_tracks );
+        assert( n_candidate_tracks < SciFi::Tracking::max_tracks_second_loop );
+        candidate_tracks[n_candidate_tracks++] = track;
+      }
+    }
     ++it1;   
   } 
     

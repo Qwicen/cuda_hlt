@@ -567,21 +567,17 @@ cudaError_t Stream::run_sequence(
       constants.dev_scifi_tmva2,
       constants.dev_scifi_constArrays
     );
-    //sequence.invoke<seq::PrForward>(); 
+    sequence.invoke<seq::PrForward>(); 
             
 
     // Transmission device to host
     // SciFi tracks
-    // cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, arguments.offset<arg::dev_n_scifi_tracks>(), arguments.size<arg::dev_n_scifi_tracks>(), cudaMemcpyDeviceToHost, stream));
-    // cudaCheck(cudaMemcpyAsync(host_scifi_tracks, arguments.offset<arg::dev_scifi_tracks>(), arguments.size<arg::dev_scifi_tracks>(), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, arguments.offset<arg::dev_n_scifi_tracks>(), arguments.size<arg::dev_n_scifi_tracks>(), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_scifi_tracks, arguments.offset<arg::dev_scifi_tracks>(), arguments.size<arg::dev_scifi_tracks>(), cudaMemcpyDeviceToHost, stream));
 
     // Synchronize
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
-
-    // for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
-    //   debug_cout << "Event " << i_event << " has " << host_n_scifi_tracks[i_event] << " tracks " << std::endl;
-    // }
 
     ///////////////////////
     // Monte Carlo Check //
@@ -622,19 +618,19 @@ cudaError_t Stream::run_sequence(
         ); 
 
         /* CHECKING Scifi TRACKS */
-        // const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
-        //   host_scifi_tracks,
-        //   host_n_scifi_tracks,
-        //   number_of_events
-        // );
+        const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
+          host_scifi_tracks,
+          host_n_scifi_tracks,
+          number_of_events
+        );
         
-        // std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
-        // trackType = "Forward";
-        // call_pr_checker (
-        //   scifi_tracks,
-        //   folder_name_MC,
-        //   start_event_offset,
-        //   trackType);
+        std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
+        trackType = "Forward";
+        call_pr_checker (
+          scifi_tracks,
+          folder_name_MC,
+          start_event_offset,
+          trackType);
         
         /* Run Forward on x86 architecture  */
         std::vector< trackChecker::Tracks > forward_tracks_events;
