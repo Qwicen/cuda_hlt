@@ -83,7 +83,7 @@ __host__ __device__ void fastLinearFit(
       sdz  += w * d * z; 
     }    
     float den = (sz*sz-s0*sz2);
-    if( !(std::fabs(den) > 1e-5))return;
+    if( !(fabsf(den) > 1e-5))return;
     const float da  = (sdz * sz - sd * sz2) / den; 
     const float db  = (sd *  sz - s0 * sdz) / den; 
     trackParameters[0] += da;

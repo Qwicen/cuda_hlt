@@ -73,7 +73,7 @@ __host__ __device__ int fitParabola(
   const float c2 = sz3 * sz2 - sz * sz4; 
   const float d2 = sdz * sz2 - sz * sdz2;
   const float den = (b1 * c2 - b2 * c1 );
-  if(!(std::fabs(den) > 1e-5)) return false;
+  if(!(fabsf(den) > 1e-5)) return false;
   const float db  = (d1 * c2 - d2 * c1 ) / den; 
   const float dc  = (d2 * b1 - d1 * b2 ) / den; 
   const float da  = ( sd - db * sz - dc * sz2) / s0;
@@ -158,7 +158,7 @@ __host__ __device__ bool fitYProjection(
   //== Fit a line
   const float txs  = track.trackParams[0]; // simplify overgeneral c++ calculation
   const float tsxz = velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx; 
-  const float tolYMag = SciFi::Tracking::tolYMag + SciFi::Tracking::tolYMagSlope * fabs(txs-tsxz);
+  const float tolYMag = SciFi::Tracking::tolYMag + SciFi::Tracking::tolYMagSlope * fabsf(txs-tsxz);
   const float wMag   = 1./(tolYMag * tolYMag );
 
   bool doFit = true;
@@ -196,7 +196,7 @@ __host__ __device__ bool fitYProjection(
         sdz  += w * d * z;
       }
       const float den = (s0 * sz2 - sz * sz );
-      if(!(std::fabs(den) > 1e-5)) { 
+      if(!(fabsf(den) > 1e-5)) { 
         return false;
       }
       const float da  = (sd * sz2 - sdz * sz ) / den;

@@ -30,7 +30,7 @@ __host__ __device__ void collectStereoHits(
     zZone += constArrays->Zone_dzdy[ constArrays->uvZones[zone] ]*yZone;  // Correct for dzDy
     const float xPred  = straightLineExtend(parsX,zZone);
 
-    const bool triangleSearch = std::fabs(yZone) < SciFi::Tracking::tolYTriangleSearch;
+    const bool triangleSearch = fabsf(yZone) < SciFi::Tracking::tolYTriangleSearch;
     // even zone number: if ( yZone > 0 ) continue;
     // odd zone number: if ( -yZone > 0 ) continue;
     // -> check for upper / lower half
@@ -40,7 +40,7 @@ __host__ __device__ void collectStereoHits(
     //float dxDySign = 1.f - 2.f *(float)(zone.dxDy()<0); // same as ? zone.dxDy()<0 : -1 : +1 , but faster??!!
     const float dxDySign = constArrays->uvZone_dxdy[zone] < 0 ? -1.f : 1.f;
     const float seed_x_at_zZone = velo_state.x + (zZone - velo_state.z) * velo_state.tx;//Cached as we are upgrading one at a time, revisit
-    const float dxTol = SciFi::Tracking::tolY + SciFi::Tracking::tolYSlope * (std::fabs(xPred - seed_x_at_zZone) + std::fabs(yZone));
+    const float dxTol = SciFi::Tracking::tolY + SciFi::Tracking::tolYSlope * (fabsf(xPred - seed_x_at_zZone) + fabsf(yZone));
 
     // -- Use a binary search to find the lower bound of the range of x values
     // -- This takes the y value into account
@@ -266,12 +266,12 @@ __host__ __device__ bool addHitsOnEmptyStereoLayers(
     yZone = straightLineExtend(parsY,zZone);
     const float xPred  = straightLineExtend(parsX,zZone);
 
-    const bool triangleSearch = std::fabs(yZone) < SciFi::Tracking::tolYTriangleSearch;
+    const bool triangleSearch = fabsf(yZone) < SciFi::Tracking::tolYTriangleSearch;
     // change sign of yZone depending on whether we are in the upper or lower half
     if(!triangleSearch && (2.f*float((((constArrays->uvZones[zone])%2)==0))-1.f) * yZone > 0.f) continue;
 
     //only version without triangle search!
-    const float dxTol = SciFi::Tracking::tolY + SciFi::Tracking::tolYSlope * ( fabs( xPred - velo_state.x + (zZone - velo_state.z) * velo_state.tx) + fabs(yZone) );
+    const float dxTol = SciFi::Tracking::tolY + SciFi::Tracking::tolYSlope * ( fabsf( xPred - velo_state.x + (zZone - velo_state.z) * velo_state.tx) + fabsf(yZone) );
     // -- Use a binary search to find the lower bound of the range of x values
     // -- This takes the y value into account
     const float lower_bound_at = -dxTol - yZone * constArrays->uvZone_dxdy[zone] + xPred;

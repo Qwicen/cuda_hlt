@@ -437,7 +437,7 @@ __host__ __device__ void selectFullCandidates(
       mlpInput[0] = planeCounter.nbDifferent;
       mlpInput[1] = qOverP;
       mlpInput[2] = VeloUT_qOverP - qOverP; //veloUT - scifi
-      if(std::fabs(VeloUT_qOverP) < 1e-9f) mlpInput[2] = 0.f; //no momentum estiamte
+      if(fabsf(VeloUT_qOverP) < 1e-9f) mlpInput[2] = 0.f; //no momentum estiamte
       mlpInput[3] = pow(velo_state.tx,2) + pow(velo_state.ty,2);
       mlpInput[4] = by - by1;
       mlpInput[5] = bx - bx1;

@@ -43,7 +43,7 @@ __host__ __device__ float calcqOverP (
                  constArrays->momentumParams[5] * ty2 * ty2 );
   const float tx2 = velo_state.tx*velo_state.tx;
   float m_slope2 = tx2 + ty2;
-  float proj = sqrt( ( 1.f + m_slope2 ) / ( 1.f + tx2 ) ); 
+  float proj = sqrtf( ( 1.f + m_slope2 ) / ( 1.f + tx2 ) ); 
   qop = ( velo_state.tx - bx ) / ( coef * Gaudi::Units::GeV * proj * SciFi::Tracking::magscalefactor) ;
   return qop ;
   
@@ -80,7 +80,7 @@ __host__ __device__ float calcDxRef(float pt, MiniState velo_state) {
   const float tx2 = velo_state.tx*velo_state.tx;
   const float ty2 = velo_state.ty*velo_state.ty;
   float m_slope2 = tx2 + ty2;
-  return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  ty2 - 1000. * tx2; // tune this window
+  return 3973000. * sqrtf( m_slope2 ) / pt - 2200. *  ty2 - 1000. * tx2; // tune this window
 }
 
 __host__ __device__ float trackToHitDistance(

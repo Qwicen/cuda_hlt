@@ -36,7 +36,7 @@ __host__ __device__ void collectAllXHits(
   const float dir = q*SciFi::Tracking::magscalefactor*(-1.f);
 
   float slope2 = velo_state.tx*velo_state.tx + velo_state.ty*velo_state.ty; 
-  const float pt = std::sqrt( std::fabs(1./ (qOverP*qOverP) ) ) * (slope2) / (1. + slope2);
+  const float pt = sqrtf( fabsf(1./ (qOverP*qOverP) ) ) * (slope2) / (1. + slope2);
   const bool wSignTreatment = SciFi::Tracking::useWrongSignWindow && pt > SciFi::Tracking::wrongSignPT;
 
   float dxRefWS = 0.0; 
@@ -111,7 +111,7 @@ __host__ __device__ void collectAllXHits(
     const float dx          = yInZone * constArrays->uvZone_dxdy[iZone-iZoneStartingPoint];
     const float xCentral    = xInZone + dx;
     const float xPredUv     = xInUv + ( scifi_hits.x0[itH] - xInZone) * zRatio - dx;
-    const float maxDx       = SciFi::Tracking::tolYCollectX + ( std::fabs( scifi_hits.x0[itH] - xCentral ) + std::fabs( yInZone ) ) * SciFi::Tracking::tolYSlopeCollectX;
+    const float maxDx       = SciFi::Tracking::tolYCollectX + ( fabsf( scifi_hits.x0[itH] - xCentral ) + fabsf( yInZone ) ) * SciFi::Tracking::tolYSlopeCollectX;
     const float xMinUV      = xPredUv - maxDx;
 
     assert( constArrays->uvZones[iZone] < SciFi::Constants::n_zones );
@@ -126,13 +126,13 @@ __host__ __device__ void collectAllXHits(
     int itUV2                = getLowerBound(scifi_hits.x0,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
 
     const float xPredUVProto =  xInUv - xInZone * zRatio - dx;
-    const float maxDxProto   =  SciFi::Tracking::tolYCollectX + std::fabs( yInZone ) * SciFi::Tracking::tolYSlopeCollectX;
+    const float maxDxProto   =  SciFi::Tracking::tolYCollectX + fabsf( yInZone ) * SciFi::Tracking::tolYSlopeCollectX;
 
-    if ( std::fabs(yInZone) > SciFi::Tracking::tolYTriangleSearch ) { // no triangle search necessary!
+    if ( fabsf(yInZone) > SciFi::Tracking::tolYTriangleSearch ) { // no triangle search necessary!
       
       for (int xHit = itH; xHit < itEnd; ++xHit) { //loop over all xHits in a layer between xMin and xMax
         const float xPredUv = xPredUVProto + scifi_hits.x0[xHit]* zRatio;
-        const float maxDx   = maxDxProto   + std::fabs( scifi_hits.x0[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
+        const float maxDx   = maxDxProto   + fabsf( scifi_hits.x0[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
         const float xMinUV  = xPredUv - maxDx;
         const float xMaxUV  = xPredUv + maxDx;
         
@@ -146,7 +146,7 @@ __host__ __device__ void collectAllXHits(
     }else { // triangle search
       for (int xHit = itH; xHit < itEnd; ++xHit) {
         const float xPredUv = xPredUVProto + scifi_hits.x0[xHit]* zRatio;
-        const float maxDx   = maxDxProto   + std::fabs( scifi_hits.x0[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
+        const float maxDx   = maxDxProto   + fabsf( scifi_hits.x0[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
         const float xMinUV  = xPredUv - maxDx;
         const float xMaxUV  = xPredUv + maxDx;
 
@@ -223,8 +223,8 @@ __host__ __device__ void selectXCandidates(
 
     //define search window for Cluster
     //TODO better xWindow calculation?? how to tune this???
-    const float xWindow = pars.maxXWindow + (std::fabs(coordX[it1]) + 
-                                             std::fabs(coordX[it1] - xStraight)
+    const float xWindow = pars.maxXWindow + (fabsf(coordX[it1]) + 
+                                             fabsf(coordX[it1] - xStraight)
                                              ) * pars.maxXWindowSlope;
     
     if ( (coordX[it2 - 1] - coordX[it1]) > xWindow ) {
@@ -338,7 +338,7 @@ __host__ __device__ void selectXCandidates(
     } else { // start magical second part
       // 2) Try to find a small distance containing at least 5(4) different planes
       //    Most of the time do nothing
-      const unsigned int nPlanes =  std::min(planeCounter.nbDifferent,uint{5});
+      const unsigned int nPlanes =  fminf(planeCounter.nbDifferent,uint{5});
       int itWindowStart = it1; 
       int itWindowEnd   = it1 + nPlanes; //pointing at last+1
       //Hit is used, go to next unused one
@@ -481,7 +481,7 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
   bool  added = false;
   const float x1 = trackParameters[0];
   const float xStraight = straightLineExtend(xParams_seed,SciFi::Tracking::zReference);
-  const float xWindow = pars.maxXWindow + ( fabs( x1 ) + fabs( x1 - xStraight ) ) * pars.maxXWindowSlope;
+  const float xWindow = pars.maxXWindow + ( fabsf( x1 ) + fabsf( x1 - xStraight ) ) * pars.maxXWindowSlope;
 
   int iZoneStartingPoint = side > 0 ? constArrays->zoneoffsetpar : 0;
 
