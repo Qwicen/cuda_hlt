@@ -35,8 +35,8 @@ __host__ __device__ void collectAllXHits(
   const float q = qOverP > 0.f ? 1.f :-1.f;
   const float dir = q*SciFi::Tracking::magscalefactor*(-1.f);
 
-  float slope2 = pow(velo_state.tx,2) + pow(velo_state.ty,2); 
-  const float pt = std::sqrt( std::fabs(1./ (pow(qOverP,2) ) ) * (slope2) / (1. + slope2) );
+  float slope2 = velo_state.tx*velo_state.tx + velo_state.ty*velo_state.ty; 
+  const float pt = std::sqrt( std::fabs(1./ (qOverP*qOverP) ) ) * (slope2) / (1. + slope2);
   const bool wSignTreatment = SciFi::Tracking::useWrongSignWindow && pt > SciFi::Tracking::wrongSignPT;
 
   float dxRefWS = 0.0; 

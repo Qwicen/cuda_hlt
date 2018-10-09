@@ -153,9 +153,8 @@ __global__ void PrForward(
   __syncthreads();
 
   // Loop over the veloUT input tracks
-  for ( int i_veloUT_track = 0; i_veloUT_track < *n_veloUT_tracks_event; ++i_veloUT_track ) {
-  // for ( int i = 0; i < (*n_veloUT_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
-  //   const int i_veloUT_track = i * blockDim.x + threadIdx.x;
+  for ( int i = 0; i < (*n_veloUT_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
+    const int i_veloUT_track = i * blockDim.x + threadIdx.x;
     if ( i_veloUT_track < *n_veloUT_tracks_event ) {
       const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks_event[i_veloUT_track];
       

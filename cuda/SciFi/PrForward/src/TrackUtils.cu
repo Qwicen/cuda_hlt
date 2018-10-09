@@ -8,7 +8,7 @@ __host__ __device__ void getTrackParameters (
 {
   
   float dSlope  = ( xFromVelo(SciFi::Tracking::zReference,velo_state) - xAtRef ) / ( SciFi::Tracking::zReference - constArrays->zMagnetParams[0]);
-  const float zMagSlope = constArrays->zMagnetParams[2] * pow(velo_state.tx,2) +  constArrays->zMagnetParams[3] * pow(velo_state.ty,2);
+  const float zMagSlope = constArrays->zMagnetParams[2] * velo_state.tx*velo_state.tx +  constArrays->zMagnetParams[3] * velo_state.ty*velo_state.ty;
   const float zMag    = constArrays->zMagnetParams[0] + constArrays->zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
   const float xMag    = xFromVelo( zMag, velo_state );
   const float slopeT  = ( xAtRef - xMag ) / ( SciFi::Tracking::zReference - zMag );
@@ -33,15 +33,17 @@ __host__ __device__ float calcqOverP (
 {
   
   float qop(1.0f/Gaudi::Units::GeV) ;
-  float bx2  = bx * bx;
-  float coef = ( constArrays->momentumParams[0] +
+  const float bx2  = bx * bx;
+  const float ty2 = velo_state.ty*velo_state.ty;
+  const float coef = ( constArrays->momentumParams[0] +
                  constArrays->momentumParams[1] * bx2 +
                  constArrays->momentumParams[2] * bx2 * bx2 +
                  constArrays->momentumParams[3] * bx * velo_state.tx +
-                 constArrays->momentumParams[4] * pow(velo_state.ty,2) +
-                 constArrays->momentumParams[5] * pow(velo_state.ty,2) * pow(velo_state.ty,2) );
-  float m_slope2 = pow(velo_state.tx,2) + pow(velo_state.ty,2);
-  float proj = sqrt( ( 1.f + m_slope2 ) / ( 1.f + pow(velo_state.tx,2) ) ); 
+                 constArrays->momentumParams[4] * ty2 +
+                 constArrays->momentumParams[5] * ty2 * ty2 );
+  const float tx2 = velo_state.tx*velo_state.tx;
+  float m_slope2 = tx2 + ty2;
+  float proj = sqrt( ( 1.f + m_slope2 ) / ( 1.f + tx2 ) ); 
   qop = ( velo_state.tx - bx ) / ( coef * Gaudi::Units::GeV * proj * SciFi::Tracking::magscalefactor) ;
   return qop ;
   
@@ -55,8 +57,8 @@ __host__ __device__ float zMagnet(
 {
     
   return ( constArrays->zMagnetParams[0] +
-           constArrays->zMagnetParams[2] * pow(velo_state.tx,2) +
-           constArrays->zMagnetParams[3] * pow(velo_state.ty,2) );
+           constArrays->zMagnetParams[2] * velo_state.tx*velo_state.tx +
+           constArrays->zMagnetParams[3] * velo_state.ty*velo_state.ty );
 }
 
 __host__ __device__ void covariance (
@@ -75,8 +77,10 @@ __host__ __device__ void covariance (
 // calculate difference between straight line extrapolation and
 // where a track with wrongSignPT (2 GeV) would be on the reference plane (?)
 __host__ __device__ float calcDxRef(float pt, MiniState velo_state) {
-  float m_slope2 = pow(velo_state.tx,2) + pow(velo_state.ty,2);
-  return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  pow(velo_state.ty,2) - 1000. * pow(velo_state.tx,2); // tune this window
+  const float tx2 = velo_state.tx*velo_state.tx;
+  const float ty2 = velo_state.ty*velo_state.ty;
+  float m_slope2 = tx2 + ty2;
+  return 3973000. * sqrt( m_slope2 ) / pt - 2200. *  ty2 - 1000. * tx2; // tune this window
 }
 
 __host__ __device__ float trackToHitDistance(

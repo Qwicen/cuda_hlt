@@ -551,7 +551,7 @@ cudaError_t Stream::run_sequence(
     arguments.set_size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks);
     arguments.set_size<arg::dev_n_scifi_tracks>(number_of_events);
     scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::PrForward>(dim3(number_of_events), dim3(1), stream);
+    sequence.set_opts<seq::PrForward>(dim3(number_of_events), dim3(32), stream);
 
     sequence.set_arguments<seq::PrForward>(
       arguments.offset<arg::dev_scifi_hits>(),
