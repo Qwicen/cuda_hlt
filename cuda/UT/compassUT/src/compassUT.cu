@@ -1,6 +1,8 @@
 #include "compassUT.cuh"
 
-#include <float.h>
+#include "CalculateWindows.cuh"
+#include "BinarySearchFirstCandidate.cuh"
+#include "BinarySearch.cuh"
 
 __global__ void compassUT(
   uint* dev_ut_hits, // actual hit content
@@ -57,6 +59,7 @@ __global__ void compassUT(
 
   // __syncthreads();
 
+  const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
 
   for (int i_track = threadIdx.x; i_track < number_of_tracks_event; i_track += blockDim.x) {
@@ -68,13 +71,64 @@ __global__ void compassUT(
     const uint velo_states_index = event_tracks_offset + i_track;
     const MiniState velo_state{velo_states, velo_states_index};
 
+    // auto = std::tuple<int, int, int, int, int, int>
+    const auto windows_l0 = calculate_windows(
+        i_track,
+        0,
+        velo_state,
+        fudgeFactors,
+        ut_hits,
+        ut_hit_offsets,
+        dev_ut_dxDy,
+        dev_unique_sector_xs,
+        dev_unique_x_sector_layer_offsets,
+        velo_tracks);
+
+    const auto windows_l1 = calculate_windows(
+        i_track,
+        1,
+        velo_state,
+        fudgeFactors,
+        ut_hits,
+        ut_hit_offsets,
+        dev_ut_dxDy,
+        dev_unique_sector_xs,
+        dev_unique_x_sector_layer_offsets,
+        velo_tracks);
+
+    const auto windows_l2 = calculate_windows(
+        i_track,
+        2,
+        velo_state,
+        fudgeFactors,
+        ut_hits,
+        ut_hit_offsets,
+        dev_ut_dxDy,
+        dev_unique_sector_xs,
+        dev_unique_x_sector_layer_offsets,
+        velo_tracks);
+
+    const auto windows_l3 = calculate_windows(
+        i_track,
+        3,
+        velo_state,
+        fudgeFactors,
+        ut_hits,
+        ut_hit_offsets,
+        dev_ut_dxDy,
+        dev_unique_sector_xs,
+        dev_unique_x_sector_layer_offsets,
+        velo_tracks);
+
+    const std::tuple<int, int, int, int, int, int> dev_windows_layers_aux[N_LAYERS] = {windows_l0, windows_l1, windows_l2, windows_l3};
+
     int best_hits[N_LAYERS] = {-1, -1, -1, -1};
     BestParams best_params;
 
     // Find compatible hits in the windows for this VELO track
     find_best_hits(
       i_track,
-      dev_windows_layers,
+      dev_windows_layers_aux,
       ut_hits,
       ut_hit_offsets,
       velo_state,
@@ -89,19 +143,19 @@ __global__ void compassUT(
       if (best_hits[i] >= 0) total_num_hits++;
     }
 
-    // search backward if 4 hits were not found
-    if (total_num_hits < N_LAYERS) {
-      find_best_hits(
-        i_track,
-        dev_windows_layers,
-        ut_hits,
-        ut_hit_offsets,
-        velo_state,
-        dev_ut_dxDy,
-        false,
-        best_hits,
-        best_params);      
-    }
+    // // search backward if 4 hits were not found
+    // if (total_num_hits < N_LAYERS) {
+    //   find_best_hits(
+    //     i_track,
+    //     dev_windows_layers,
+    //     ut_hits,
+    //     ut_hit_offsets,
+    //     velo_state,
+    //     dev_ut_dxDy,
+    //     false,
+    //     best_hits,
+    //     best_params);      
+    // }
 
     // if (best_hits[0] != -1 && best_hits[1] != -1 && best_hits[2] != -1 && best_hits[3] != -1) {
     //   printf("hit0: %i, hit1: %i, hit2: %i, hit3: %i, q/p: %f, chi2: %f\n", best_hits[0], best_hits[1], best_hits[2], best_hits[3], best_params.qp, best_params.chi2UT);
@@ -152,7 +206,8 @@ __global__ void compassUT(
 //=========================================================================
 __host__ __device__ void find_best_hits(
   const int i_track,
-  const int* dev_windows_layers,
+  // const int* dev_windows_layers,
+  const std::tuple<int, int, int, int, int, int>* candidates_layers,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
@@ -170,21 +225,155 @@ __host__ __device__ void find_best_hits(
       layers[i_layer] = N_LAYERS - 1 - i_layer;
   }
 
-  // Get windows of all layers
-  WindowIndicator win_ranges(dev_windows_layers); 
-  const auto* ranges = win_ranges.get_track_candidates(i_track);
-  const int from0 = ranges->layer[0].first;
-  const int to0 = ranges->layer[0].last;
-  const int from2 = ranges->layer[2].first;
-  const int to2 = ranges->layer[2].last;
-  const int from1 = ranges->layer[1].first;
-  const int to1 = ranges->layer[1].last;
-  const int from3 = ranges->layer[3].first;
-  const int to3 = ranges->layer[3].last;
+  const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
+
+  // Get windows (l)ayer#_(g)roup#
+  const int from_l0_g0 = std::get<0>(candidates_layers[layers[0]]);
+  const int to_l0_g0 = std::get<1>(candidates_layers[layers[0]]);
+  const int from_l0_g1 = std::get<2>(candidates_layers[layers[0]]);
+  const int to_l0_g1 = std::get<3>(candidates_layers[layers[0]]);
+  const int from_l0_g2 = std::get<4>(candidates_layers[layers[0]]);
+  const int to_l0_g2 = std::get<5>(candidates_layers[layers[0]]);
+
+  const int from_l1_g0 = std::get<0>(candidates_layers[layers[1]]);
+  const int to_l1_g0 = std::get<1>(candidates_layers[layers[1]]);
+  const int from_l1_g1 = std::get<2>(candidates_layers[layers[1]]);
+  const int to_l1_g1 = std::get<3>(candidates_layers[layers[1]]);
+  const int from_l1_g2 = std::get<4>(candidates_layers[layers[1]]);
+  const int to_l1_g2 = std::get<5>(candidates_layers[layers[1]]);
+
+  const int from_l2_g0 = std::get<0>(candidates_layers[layers[2]]);
+  const int to_l2_g0 = std::get<1>(candidates_layers[layers[2]]);
+  const int from_l2_g1 = std::get<2>(candidates_layers[layers[2]]);
+  const int to_l2_g1 = std::get<3>(candidates_layers[layers[2]]);
+  const int from_l2_g2 = std::get<4>(candidates_layers[layers[2]]);
+  const int to_l2_g2 = std::get<5>(candidates_layers[layers[2]]);
+
+  const int from_l3_g0 = std::get<0>(candidates_layers[layers[3]]);
+  const int to_l3_g0 = std::get<1>(candidates_layers[layers[3]]);
+  const int from_l3_g1 = std::get<2>(candidates_layers[layers[3]]);
+  const int to_l3_g1 = std::get<3>(candidates_layers[layers[3]]);
+  const int from_l3_g2 = std::get<4>(candidates_layers[layers[3]]);
+  const int to_l3_g2 = std::get<5>(candidates_layers[layers[3]]);
+
+  // Check number of hits in the windows
+  const int num_candidates_l0_g0 = to_l0_g0 - from_l0_g0;
+  const int num_candidates_l0_g1 = to_l0_g1 - from_l0_g1;
+  const int num_candidates_l0_g2 = to_l0_g2 - from_l0_g2;
+
+  const int num_candidates_l1_g0 = to_l1_g0 - from_l1_g0;
+  const int num_candidates_l1_g1 = to_l1_g1 - from_l1_g1;
+  const int num_candidates_l1_g2 = to_l1_g2 - from_l1_g2;
+
+  const int num_candidates_l2_g0 = to_l2_g0 - from_l2_g0;
+  const int num_candidates_l2_g1 = to_l2_g1 - from_l2_g1;
+  const int num_candidates_l2_g2 = to_l2_g2 - from_l2_g2;
+
+  const int num_candidates_l3_g0 = to_l3_g0 - from_l3_g0;
+  const int num_candidates_l3_g1 = to_l3_g1 - from_l3_g1;
+  const int num_candidates_l3_g2 = to_l3_g2 - from_l3_g2;
+
+  // loop over the 3 windows, putting the index in the windows
+  // loop over layer 0
+  for (int i0=0; i0<num_candidates_l0_g0 + num_candidates_l0_g1 + num_candidates_l0_g2; ++i0) {
+    int i_hit0 = 0;
+    if (i0 < num_candidates_l0_g0) {
+      i_hit0 = from_l0_g0 + i0;
+    } else if (i0 < num_candidates_l0_g0 + num_candidates_l0_g1) {
+      i_hit0 = from_l0_g1 + i0 - num_candidates_l0_g0;
+    } else {
+      i_hit0 = from_l0_g2 + i0 - num_candidates_l0_g0 - num_candidates_l0_g1;
+    }
+    // ------------
+    const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
+    const float xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[layers[0]]);
+    const float zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
+    best_hits[0] = i_hit0;
+
+    // loop over layer 2
+    for (int i2=0; i2<num_candidates_l2_g0 + num_candidates_l2_g1 + num_candidates_l2_g2; ++i2) {
+      int i_hit2 = 0;
+      if (i2 < num_candidates_l2_g0) {
+        i_hit2 = from_l2_g0 + i2;
+      } else if (i2 < num_candidates_l2_g0 + num_candidates_l2_g1) {
+        i_hit2 = from_l2_g1 + i2 - num_candidates_l2_g0;
+      } else {
+        i_hit2 = from_l2_g2 + i2 - num_candidates_l2_g0 - num_candidates_l2_g1;
+      }
+      // ------------
+      const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
+      const float xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[layers[2]]);
+      const float zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
+      best_hits[2] = i_hit2;
+
+      const float tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
+      if (std::abs(tx - velo_state.tx) <= PrVeloUTConst::deltaTx2) {
+        float hitTol = PrVeloUTConst::hitTol2;
+
+        // search for triplet in layer1
+        for (int i1=0; i1<num_candidates_l1_g0 + num_candidates_l1_g1 + num_candidates_l1_g2; ++i1) {
+          int i_hit1 = 0;
+          if (i1 < num_candidates_l1_g0) {
+            i_hit1 = from_l1_g0 + i1;
+          } else if (i1 < num_candidates_l1_g0 + num_candidates_l1_g1) {
+            i_hit1 = from_l1_g1 + i1 - num_candidates_l1_g0;
+          } else {
+            i_hit1 = from_l1_g2 + i1 - num_candidates_l1_g0 - num_candidates_l1_g1;
+          }
+          // ------------
+          const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
+          const float xhitLayer1 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[1]]);
+          const float zhitLayer1 = ut_hits.zAtYEq0[i_hit1];
+          const float xextrapLayer1 = xhitLayer0 + tx * (zhitLayer1 - zhitLayer0);
+          if (std::abs(xhitLayer1 - xextrapLayer1) < hitTol) {
+            hitTol = std::abs(xhitLayer1 - xextrapLayer1);
+            // index_best_hit_1 = i_hit1;
+            best_hits[1] = i_hit1;
+          }
+        }
+
+        // search for quadruplet in layer3
+        hitTol = PrVeloUTConst::hitTol2;
+        for (int i3=0; i3<num_candidates_l3_g0 + num_candidates_l3_g1 + num_candidates_l3_g2; ++i3) {
+          int i_hit3 = 0;
+          if (i3 < num_candidates_l3_g0) {
+            i_hit3 = from_l3_g0 + i3;
+          } else if (i3 < num_candidates_l3_g0 + num_candidates_l3_g1) {
+            i_hit3 = from_l3_g1 + i3 - num_candidates_l3_g0;
+          } else {
+            i_hit3 = from_l3_g2 + i3 - num_candidates_l3_g0 - num_candidates_l3_g1;
+          }
+          // ------------
+          const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
+          const float xhitLayer3 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[3]]);
+          const float zhitLayer3 = ut_hits.zAtYEq0[i_hit3];
+          const float xextrapLayer3 = xhitLayer2 + tx * (zhitLayer3 - zhitLayer2);
+          if (std::abs(xhitLayer3 - xextrapLayer3) < hitTol) {
+            hitTol = std::abs(xhitLayer3 - xextrapLayer3);
+            // index_best_hit_3 = i_hit3;
+            best_hits[3] = i_hit3;
+          }          
+        }
+
+        // Fit the hits to get q/p, chi2
+        best_params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
+      }
+    }
+  }
+
+  // // Get windows of all layers
+  // WindowIndicator win_ranges(dev_windows_layers); 
+  // const auto* ranges = win_ranges.get_track_candidates(i_track);
+  // const int from0 = ranges->layer[0].first;
+  // const int to0 = ranges->layer[0].last;
+  // const int from2 = ranges->layer[2].first;
+  // const int to2 = ranges->layer[2].last;
+  // const int from1 = ranges->layer[1].first;
+  // const int to1 = ranges->layer[1].last;
+  // const int from3 = ranges->layer[3].first;
+  // const int to3 = ranges->layer[3].last;
   
   // printf("from0: %i, to0: %i, from1: %i, to1: %i, from2: %i, to2: %i, from3: %i, to3: %i\n", from0, to0, from1, to1, from2, to2, from3, to3);
-
-  const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
 
   // auto is_valid = [](float dx, int layer, float y){
   //   if (dx < )
@@ -207,57 +396,57 @@ __host__ __device__ void find_best_hits(
 
   // BestParams best_params;
 
-  for (int i_hit0 = from0; i_hit0 < to0; ++i_hit0) {
+  // for (int i_hit0 = from0; i_hit0 < to0; ++i_hit0) {
 
-    const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
-    const float xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[layers[0]]);
-    const float zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
-    best_hits[0] = i_hit0;
+  //   const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
+  //   const float xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[layers[0]]);
+  //   const float zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
+  //   best_hits[0] = i_hit0;
 
-    for (int i_hit2 = from2; i_hit2 < to2; ++i_hit2) {
+  //   for (int i_hit2 = from2; i_hit2 < to2; ++i_hit2) {
 
-      const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
-      const float xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[layers[2]]);
-      const float zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
-      best_hits[2] = i_hit2;
+  //     const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
+  //     const float xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[layers[2]]);
+  //     const float zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
+  //     best_hits[2] = i_hit2;
 
-      // same bool check for the hit
-      const float tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
-      if (std::abs(tx - velo_state.tx) <= PrVeloUTConst::deltaTx2) {
-        float hitTol = PrVeloUTConst::hitTol2;
+  //     // same bool check for the hit
+  //     const float tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
+  //     if (std::abs(tx - velo_state.tx) <= PrVeloUTConst::deltaTx2) {
+  //       float hitTol = PrVeloUTConst::hitTol2;
 
-        // Search for triplet
-        for (int i_hit1 = from1; i_hit1 < to1; ++i_hit1) {
-          const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
-          const float xhitLayer1 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[1]]);
-          const float zhitLayer1 = ut_hits.zAtYEq0[i_hit1];
-          const float xextrapLayer1 = xhitLayer0 + tx * (zhitLayer1 - zhitLayer0);
-          if (std::abs(xhitLayer1 - xextrapLayer1) < hitTol) {
-            hitTol = std::abs(xhitLayer1 - xextrapLayer1);
-            // index_best_hit_1 = i_hit1;
-            best_hits[1] = i_hit1;
-          }
-        }
+  //       // Search for triplet
+  //       for (int i_hit1 = from1; i_hit1 < to1; ++i_hit1) {
+  //         const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
+  //         const float xhitLayer1 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[1]]);
+  //         const float zhitLayer1 = ut_hits.zAtYEq0[i_hit1];
+  //         const float xextrapLayer1 = xhitLayer0 + tx * (zhitLayer1 - zhitLayer0);
+  //         if (std::abs(xhitLayer1 - xextrapLayer1) < hitTol) {
+  //           hitTol = std::abs(xhitLayer1 - xextrapLayer1);
+  //           // index_best_hit_1 = i_hit1;
+  //           best_hits[1] = i_hit1;
+  //         }
+  //       }
 
-        // Search for cuadruplet
-        hitTol = PrVeloUTConst::hitTol2;
-        for (int i_hit3 = from3; i_hit3 < to3; ++i_hit3) {
-          const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
-          const float xhitLayer3 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[3]]);
-          const float zhitLayer3 = ut_hits.zAtYEq0[i_hit3];
-          const float xextrapLayer3 = xhitLayer2 + tx * (zhitLayer3 - zhitLayer2);
-          if (std::abs(xhitLayer3 - xextrapLayer3) < hitTol) {
-            hitTol = std::abs(xhitLayer3 - xextrapLayer3);
-            // index_best_hit_3 = i_hit3;
-            best_hits[3] = i_hit3;
-          }
-        }
+  //       // Search for cuadruplet
+  //       hitTol = PrVeloUTConst::hitTol2;
+  //       for (int i_hit3 = from3; i_hit3 < to3; ++i_hit3) {
+  //         const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
+  //         const float xhitLayer3 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[3]]);
+  //         const float zhitLayer3 = ut_hits.zAtYEq0[i_hit3];
+  //         const float xextrapLayer3 = xhitLayer2 + tx * (zhitLayer3 - zhitLayer2);
+  //         if (std::abs(xhitLayer3 - xextrapLayer3) < hitTol) {
+  //           hitTol = std::abs(xhitLayer3 - xextrapLayer3);
+  //           // index_best_hit_3 = i_hit3;
+  //           best_hits[3] = i_hit3;
+  //         }
+  //       }
 
-        // Fit the hits to get q/p, chi2
-        best_params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
-      }
-    }
-  }
+  //       // Fit the hits to get q/p, chi2
+  //       best_params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
+  //     }
+  //   }
+  // }
 }
 
 //=========================================================================

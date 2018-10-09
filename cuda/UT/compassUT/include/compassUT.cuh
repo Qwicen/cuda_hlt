@@ -68,7 +68,8 @@ __global__ void compassUT(
 
 __host__ __device__ void find_best_hits(
   const int i_track,
-  const int* dev_windows_layers,
+  // const int* dev_windows_layers,
+  const std::tuple<int, int, int, int, int, int>* candidates_layers,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
