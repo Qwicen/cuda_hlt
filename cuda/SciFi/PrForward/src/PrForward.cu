@@ -472,7 +472,14 @@ __host__ __device__ void selectFullCandidates(
         else if (secondLoop)
           assert (n_selected_tracks < SciFi::Tracking::max_tracks_second_loop );
         selected_tracks[n_selected_tracks++] = *cand;
+        if (!secondLoop) {
+          if ( n_selected_tracks >= SciFi::max_tracks ) break;
+        }
+        else if ( secondLoop ) {
+          if ( n_selected_tracks >= SciFi::Tracking::max_tracks_second_loop ) break;
+        }
+          
       }  
     }
-   }
+  }
 }

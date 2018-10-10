@@ -20,13 +20,13 @@ namespace SciFi{
   
   namespace Tracking {
 
-    const int max_candidate_tracks = 250;
-    const int max_tracks_second_loop = 50;
+    const int max_candidate_tracks = 5;
+    const int max_tracks_second_loop = 5;
     const int max_x_hits = 500;
     const int max_other_hits = 5;
     const int max_stereo_hits = 25;
-    const int max_coordToFit = 15; 
-    const int max_scifi_hits = 20;
+    const int max_coordToFit = 15;  // only for x layers
+    const int max_scifi_hits = 20;  // for x and u/v layers
     
     const int nTrackParams = 9;
     

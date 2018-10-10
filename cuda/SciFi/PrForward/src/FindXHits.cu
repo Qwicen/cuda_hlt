@@ -204,6 +204,10 @@ __host__ __device__ void selectXCandidates(
   const bool secondLoop)
 {
   if ( n_x_hits < pars.minXHits ) return;
+  if ( secondLoop )
+    if ( n_candidate_tracks >= SciFi::Tracking::max_tracks_second_loop ) return;
+  if ( !secondLoop )
+    if ( n_candidate_tracks >= SciFi::Tracking::max_candidate_tracks ) return;
   int itEnd = n_x_hits;
   const float xStraight = straightLineExtend(xParams_seed,SciFi::Tracking::zReference);
   int it1 = 0;
@@ -463,18 +467,28 @@ __host__ __device__ void selectXCandidates(
         track.addHit( hit );
       }
       if ( !secondLoop ) {
-        if ( n_candidate_tracks >= SciFi::Tracking::max_candidate_tracks )
-          printf("n candidate tracks 1st loop = %u \n", n_candidate_tracks );
+        
         assert( n_candidate_tracks < SciFi::Tracking::max_candidate_tracks );
         candidate_tracks[n_candidate_tracks++] = track;
+        // if ( n_candidate_tracks >= SciFi::Tracking::max_candidate_tracks )
+        //   break;
       }  
       else if ( secondLoop ) {
-        if ( n_candidate_tracks >= SciFi::Tracking::max_tracks_second_loop )
-          printf("n candidate tracks 2nd loop = %u \n", n_candidate_tracks );
         assert( n_candidate_tracks < SciFi::Tracking::max_tracks_second_loop );
         candidate_tracks[n_candidate_tracks++] = track;
+        // if ( n_candidate_tracks >= SciFi::Tracking::max_tracks_second_loop )
+        //   break;
       }
     }
+    if ( secondLoop ) {
+      if ( n_candidate_tracks >= SciFi::Tracking::max_tracks_second_loop ) break;
+      assert( n_candidate_tracks < SciFi::Tracking::max_tracks_second_loop );
+    }
+    else if ( !secondLoop ) {
+      if ( n_candidate_tracks >= SciFi::Tracking::max_candidate_tracks ) break;
+      assert( n_candidate_tracks < SciFi::Tracking::max_candidate_tracks );
+    }
+    
     ++it1;   
   } 
     
