@@ -174,12 +174,12 @@ __global__ void PrForward(
     }
   }
 
-  // if ( threadIdx.x == 0 ) {
-  //   printf("Found %u tracks in event %u \n", *n_scifi_tracks_event, event_number);
-  //   for ( int i_track = 0; i_track < *n_scifi_tracks_event; ++i_track ) {
-  //     printf("At event %u, track %u has %u hits \n", event_number, i_track, scifi_tracks_event[i_track].hitsNum );
-  //   }
-  // }
+  if ( threadIdx.x == 0 ) {
+    printf("Found %u tracks in event %u \n", *n_scifi_tracks_event, event_number);
+    for ( int i_track = 0; i_track < *n_scifi_tracks_event; ++i_track ) {
+      printf("At event %u, track %u has %u hits \n", event_number, i_track, scifi_tracks_event[i_track].hitsNum );
+    }
+  }
   
 }
 

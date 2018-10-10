@@ -618,62 +618,62 @@ cudaError_t Stream::run_sequence(
         ); 
 
         /* CHECKING Scifi TRACKS */
-        const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
-          host_scifi_tracks,
-          host_n_scifi_tracks,
-          number_of_events
-        );
+        // const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
+        //   host_scifi_tracks,
+        //   host_n_scifi_tracks,
+        //   number_of_events
+        // );
         
-        std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
-        trackType = "Forward";
-        call_pr_checker (
-          scifi_tracks,
-          folder_name_MC,
-          start_event_offset,
-          trackType);
+        // std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
+        // trackType = "Forward";
+        // call_pr_checker (
+        //   scifi_tracks,
+        //   folder_name_MC,
+        //   start_event_offset,
+        //   trackType);
         
         /* Run Forward on x86 architecture  */
-        std::vector< trackChecker::Tracks > forward_tracks_events;
+        // std::vector< trackChecker::Tracks > forward_tracks_events;
            
-        std::vector<uint> host_scifi_hits (total_scifi_hits_size);
-        std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
+        // std::vector<uint> host_scifi_hits (total_scifi_hits_size);
+        // std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
 
-        cudaCheck(cudaMemcpyAsync(
-          host_scifi_hits.data(),
-          arguments.offset<arg::dev_scifi_hits>(),
-          arguments.size<arg::dev_scifi_hits>(),
-          cudaMemcpyDeviceToHost,
-          stream
-        ));
-        cudaCheck(cudaMemcpyAsync(
-          host_scifi_hit_count.data(),
-          arguments.offset<arg::dev_scifi_hit_count>(),
-          arguments.size<arg::dev_scifi_hit_count>(),
-          cudaMemcpyDeviceToHost,
-          stream
-        ));
+        // cudaCheck(cudaMemcpyAsync(
+        //   host_scifi_hits.data(),
+        //   arguments.offset<arg::dev_scifi_hits>(),
+        //   arguments.size<arg::dev_scifi_hits>(),
+        //   cudaMemcpyDeviceToHost,
+        //   stream
+        // ));
+        // cudaCheck(cudaMemcpyAsync(
+        //   host_scifi_hit_count.data(),
+        //   arguments.offset<arg::dev_scifi_hit_count>(),
+        //   arguments.size<arg::dev_scifi_hit_count>(),
+        //   cudaMemcpyDeviceToHost,
+        //   stream
+        // ));
         
-        int rv = run_forward_on_CPU(
-          forward_tracks_events,
-          host_scifi_hits.data(),
-          host_scifi_hit_count.data(),
-          host_velo_tracks_atomics,
-          host_velo_track_hit_number,
-          (uint*)host_velo_states,
-          host_veloUT_tracks,
-          host_atomics_veloUT,
-          number_of_events );
+        // int rv = run_forward_on_CPU(
+        //   forward_tracks_events,
+        //   host_scifi_hits.data(),
+        //   host_scifi_hit_count.data(),
+        //   host_velo_tracks_atomics,
+        //   host_velo_track_hit_number,
+        //   (uint*)host_velo_states,
+        //   host_veloUT_tracks,
+        //   host_atomics_veloUT,
+        //   number_of_events );
         
-        if ( rv != 0 )
-          continue;
+        // if ( rv != 0 )
+        //   continue;
         
-        std::cout << "Checking Forward tracks reconstructed on CPU" << std::endl;
-        trackType = "Forward";
-        call_pr_checker (
-          forward_tracks_events,
-          folder_name_MC,
-          start_event_offset,
-          trackType); 
+        // std::cout << "Checking Forward tracks reconstructed on CPU" << std::endl;
+        // trackType = "Forward";
+        // call_pr_checker (
+        //   forward_tracks_events,
+        //   folder_name_MC,
+        //   start_event_offset,
+        //   trackType); 
       } // only in first repetition
     } // do_check
   } // repetitions
