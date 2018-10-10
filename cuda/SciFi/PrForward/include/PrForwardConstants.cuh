@@ -22,6 +22,7 @@ namespace SciFi{
 
     const int max_candidate_tracks = 5;
     const int max_tracks_second_loop = 5;
+    const int max_selected_tracks = max_candidate_tracks + max_tracks_second_loop;
     const int max_x_hits = 500;
     const int max_other_hits = 5;
     const int max_stereo_hits = 25;

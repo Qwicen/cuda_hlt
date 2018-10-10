@@ -174,12 +174,12 @@ __global__ void PrForward(
     }
   }
 
-  if ( threadIdx.x == 0 ) {
-    printf("Found %u tracks in event %u \n", *n_scifi_tracks_event, event_number);
-    for ( int i_track = 0; i_track < *n_scifi_tracks_event; ++i_track ) {
-      printf("At event %u, track %u has %u hits \n", event_number, i_track, scifi_tracks_event[i_track].hitsNum );
-    }
-  }
+  // if ( threadIdx.x == 0 ) {
+  //   printf("Found %u tracks in event %u \n", *n_scifi_tracks_event, event_number);
+  //   for ( int i_track = 0; i_track < *n_scifi_tracks_event; ++i_track ) {
+  //     printf("At event %u, track %u has %u hits \n", event_number, i_track, scifi_tracks_event[i_track].hitsNum );
+  //   }
+  // }
   
 }
 
@@ -243,7 +243,7 @@ __host__ __device__ void find_forward_tracks(
     zRef_track, xParams_seed, yParams_seed,
     velo_state, pars_first, constArrays, -1, false); 
   
-  SciFi::Tracking::Track selected_tracks[SciFi::max_tracks];
+  SciFi::Tracking::Track selected_tracks[SciFi::Tracking::max_selected_tracks];
   int n_selected_tracks = 0;
     
   selectFullCandidates(
@@ -261,7 +261,7 @@ __host__ __device__ void find_forward_tracks(
     if ( selected_tracks[i_track].hitsNum > 10 )
       ok = true;
   }
-  assert( n_selected_tracks < SciFi::max_tracks );
+  assert( n_selected_tracks < SciFi::Tracking::max_selected_tracks );
 
   SciFi::Tracking::Track candidate_tracks2[SciFi::Tracking::max_tracks_second_loop];
   int n_candidate_tracks2 = 0;
@@ -294,24 +294,14 @@ __host__ __device__ void find_forward_tracks(
       pars_second, tmva1, tmva2, constArrays, true);
  
     for ( int i_track = 0; i_track < n_selected_tracks2; ++i_track ) {
-      assert( n_selected_tracks < SciFi::max_tracks );
+      assert( n_selected_tracks < SciFi::Tracking::max_selected_tracks );
       selected_tracks[n_selected_tracks++] = selected_tracks2[i_track];
-      assert( n_selected_tracks < SciFi::max_tracks );
     }
    
-    assert( n_selected_tracks < SciFi::max_tracks );
     ok = (n_selected_tracks > 0);
   }
-
-  if ( n_selected_tracks >= SciFi::max_tracks )
-    printf("n selected tracks = %u \n", n_selected_tracks );
-  assert( n_selected_tracks < SciFi::max_tracks );
-
+ 
   if(ok || !SciFi::Tracking::secondLoop){
-    if ( n_selected_tracks > 5 ) 
-      for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
-        printf("at track %u: quality = %f \n", i_track, selected_tracks[i_track].quality);
-      }
     thrust::sort( thrust::seq, selected_tracks, selected_tracks + n_selected_tracks, lowerByQuality);
     float minQuality = SciFi::Tracking::maxQuality;
     for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
@@ -468,12 +458,12 @@ __host__ __device__ void selectFullCandidates(
         cand->quality = quality;
         cand->set_qop( qOverP );
         if (!secondLoop) 
-          assert (n_selected_tracks < SciFi::max_tracks );
+          assert (n_selected_tracks < SciFi::Tracking::max_selected_tracks );
         else if (secondLoop)
           assert (n_selected_tracks < SciFi::Tracking::max_tracks_second_loop );
         selected_tracks[n_selected_tracks++] = *cand;
         if (!secondLoop) {
-          if ( n_selected_tracks >= SciFi::max_tracks ) break;
+          if ( n_selected_tracks >= SciFi::Tracking::max_selected_tracks ) break;
         }
         else if ( secondLoop ) {
           if ( n_selected_tracks >= SciFi::Tracking::max_tracks_second_loop ) break;
