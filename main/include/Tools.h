@@ -14,6 +14,7 @@
 #include "ClusteringDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
 #include "SciFiDefinitions.cuh"
+#include "MuonDefinitions.cuh"
 #include "Tracks.h"
 #include "InputTools.h"
 #include "velopix-input-reader.h"
@@ -82,6 +83,11 @@ std::vector< trackChecker::Tracks > prepareForwardTracks(
   const int number_of_events
 );
 
+void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
+                                 const std::vector<char> events,
+                                 const std::vector<unsigned int> event_offsets,
+                                 const int n_events );
+ 
 void call_pr_checker(
   const std::vector< trackChecker::Tracks >& all_tracks,
   const std::string& folder_name_MC,
