@@ -52,10 +52,10 @@ struct Stream {
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   char* host_velo_states;
   uint* host_accumulated_number_of_ut_hits;
-  VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
-  VeloUTTracking::TrackUT* host_compassUT_tracks;
+  VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_compassUT;
+  VeloUTTracking::TrackUT* host_compassUT_tracks;
 
   /* UT DECODING */
   UTHits * host_ut_hits_decoded;

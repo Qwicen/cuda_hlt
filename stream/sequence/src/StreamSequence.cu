@@ -510,140 +510,8 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
     cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
 
-    // // SciFi preprocessing
-    // // Estimate cluster count
-    // argument_sizes[arg::dev_scifi_raw_input] = argen.size<arg::dev_scifi_raw_input>(host_scifi_events_size);
-    // argument_sizes[arg::dev_scifi_raw_input_offsets] = argen.size<arg::dev_scifi_raw_input_offsets>(host_scifi_event_offsets_size);
-    // argument_sizes[arg::dev_scifi_hit_count] = argen.size<arg::dev_scifi_hit_count>(2 * number_of_events * SciFi::number_of_zones + 1);
-
-    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-
-    // cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_scifi_raw_input>(argument_offsets), host_scifi_events, host_scifi_events_size, cudaMemcpyHostToDevice, stream));
-    // cudaCheck(cudaMemcpyAsync(argen.generate<arg::dev_scifi_raw_input_offsets>(argument_offsets), host_scifi_event_offsets, host_scifi_event_offsets_size * sizeof(uint), cudaMemcpyHostToDevice, stream));
-    // cudaCheck(cudaMemsetAsync(argen.generate<arg::dev_scifi_hit_count>(argument_offsets), 0, argen.size<arg::dev_scifi_hit_count>(2 * number_of_events * SciFi::number_of_zones + 1), stream));
-    // cudaEventRecord(cuda_generic_event, stream);
-    // cudaEventSynchronize(cuda_generic_event);
-
-    // sequence.item<seq::estimate_cluster_count>().set_opts(dim3(number_of_events), dim3(240), stream);
-    // sequence.item<seq::estimate_cluster_count>().set_arguments(
-    //   argen.generate<arg::dev_scifi_raw_input>(argument_offsets),
-    //   argen.generate<arg::dev_scifi_raw_input_offsets>(argument_offsets),
-    //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-    //   dev_scifi_geometry
-    // );
-    // sequence.item<seq::estimate_cluster_count>().invoke();
-
-    // cudaEventRecord(cuda_generic_event, stream);
-    // cudaEventSynchronize(cuda_generic_event);
-
-    // // Prefix sum of hit count (becomes hit offset)
-    // // 1. Reduce
-    // // 2. Single block
-    // // 3. Scan
-
-    // // Prefix sum: Reduce
-    // const uint total_number_of_zones = number_of_events * SciFi::number_of_zones;
-    // const size_t prefix_sum_auxiliary_array_4_size = (total_number_of_zones + 511) / 512;
-    // argument_sizes[arg::dev_prefix_sum_auxiliary_array_4] = argen.size<arg::dev_prefix_sum_auxiliary_array_4>(prefix_sum_auxiliary_array_4_size);
-    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    // sequence.item<seq::prefix_sum_reduce_scifi_hits>().set_opts(dim3(prefix_sum_auxiliary_array_4_size), dim3(256), stream);
-    // sequence.item<seq::prefix_sum_reduce_scifi_hits>().set_arguments(
-    //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-    //   argen.generate<arg::dev_prefix_sum_auxiliary_array_4>(argument_offsets),
-    //   total_number_of_zones
-    // );
-    // sequence.item<seq::prefix_sum_reduce_scifi_hits>().invoke();
-
-    // // Prefix sum: Single block
-    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    // sequence.item<seq::prefix_sum_single_block_scifi_hits>().set_arguments(
-    //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets) + total_number_of_zones,
-    //   argen.generate<arg::dev_prefix_sum_auxiliary_array_4>(argument_offsets),
-    //   prefix_sum_auxiliary_array_4_size
-    // );
-    // sequence.item<seq::prefix_sum_single_block_scifi_hits>().invoke();
-
-    // // Prefix sum: Scan
-    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    // const uint pss_scifi_hits_blocks = prefix_sum_auxiliary_array_4_size==1 ? 1 : (prefix_sum_auxiliary_array_4_size-1);
-    // sequence.item<seq::prefix_sum_scan_scifi_hits>().set_opts(dim3(pss_scifi_hits_blocks), dim3(512), stream);
-    // sequence.item<seq::prefix_sum_scan_scifi_hits>().set_arguments(
-    //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-    //   argen.generate<arg::dev_prefix_sum_auxiliary_array_4>(argument_offsets),
-    //   total_number_of_zones
-    // );
-    // sequence.item<seq::prefix_sum_scan_scifi_hits>().invoke();
-
-    // // Fetch total number of hits
-    // cudaCheck(cudaMemcpyAsync(host_accumulated_number_of_scifi_hits,
-    //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets) + total_number_of_zones,
-    //   sizeof(uint), cudaMemcpyDeviceToHost, stream));
-    // cudaEventRecord(cuda_generic_event, stream);
-    // cudaEventSynchronize(cuda_generic_event);
-
-    // // info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
-
-
-    // // Raw Bank Decoder
-    // const uint32_t hits_bytes = (14 * sizeof(float) + 1) * *host_accumulated_number_of_scifi_hits;
-    // argument_sizes[arg::dev_scifi_hits] = argen.size<arg::dev_scifi_hits>(hits_bytes);
-
-    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-
-    // sequence.item<seq::raw_bank_decoder>().set_opts(dim3(number_of_events), dim3(240), stream);
-    // sequence.item<seq::raw_bank_decoder>().set_arguments(
-    //   argen.generate<arg::dev_scifi_raw_input>(argument_offsets),
-    //   argen.generate<arg::dev_scifi_raw_input_offsets>(argument_offsets),
-    //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-    //   argen.generate<arg::dev_scifi_hits>(argument_offsets),
-    //   dev_scifi_geometry
-    // );
-
-    // sequence.item<seq::raw_bank_decoder>().invoke();
-
-    // // SciFi hit sorting by x
-    // argument_sizes[arg::dev_scifi_hit_permutations] = argen.size<arg::dev_scifi_hit_permutations>(*host_accumulated_number_of_scifi_hits);
-    // scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
-    // sequence.item<seq::scifi_sort_by_x>().set_opts(dim3(number_of_events), dim3(64), stream);
-    // sequence.item<seq::scifi_sort_by_x>().set_arguments(
-    //   argen.generate<arg::dev_scifi_hits>(argument_offsets),
-    //   argen.generate<arg::dev_scifi_hit_count>(argument_offsets),
-    //   argen.generate<arg::dev_scifi_hit_permutations>(argument_offsets)
-    // );
-    // sequence.item<seq::scifi_sort_by_x>().invoke();
-
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
-
-    /*
-    // SciFi Decoder Debugging
-    const uint hit_count_uints = 2 * number_of_events * SciFi::number_of_zones + 1;
-    uint host_scifi_hit_count[hit_count_uints];
-    char* host_scifi_hits = new char[hits_bytes];
-    uint* host_scifi_hit_permutation = new uint[*host_accumulated_number_of_scifi_hits];
-    cudaCheck(cudaMemcpyAsync(&host_scifi_hit_count, argen.generate<arg::dev_scifi_hit_count>(argument_offsets), hit_count_uints*sizeof(uint), cudaMemcpyDeviceToHost, stream));
-    cudaCheck(cudaMemcpyAsync(host_scifi_hits, argen.generate<arg::dev_scifi_hits>(argument_offsets), argen.size<arg::dev_scifi_hits>(hits_bytes), cudaMemcpyDeviceToHost, stream));
-    cudaCheck(cudaMemcpyAsync(host_scifi_hit_permutation, argen.generate<arg::dev_scifi_hit_permutations>(argument_offsets), argen.size<arg::dev_scifi_hit_permutations>(*host_accumulated_number_of_scifi_hits), cudaMemcpyDeviceToHost, stream));
-    cudaEventRecord(cuda_generic_event, stream);
-    cudaEventSynchronize(cuda_generic_event);
-
-    SciFi::SciFiHits host_scifi_hits_struct;
-    host_scifi_hits_struct.typecast_sorted(host_scifi_hits, host_scifi_hit_count[number_of_events * SciFi::number_of_zones]);
-
-    //Print only non-empty hits
-    std::ofstream outfile("dump.txt");
-    SciFi::SciFiHitCount host_scifi_hit_count_struct;
-    for(size_t event = 0; event < number_of_events; event++) {
-      host_scifi_hit_count_struct.typecast_ascifier_prefix_sum(host_scifi_hit_count, event, number_of_events);
-      for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
-        for(size_t hit = 0; hit < host_scifi_hit_count_struct.n_hits_layers[zone]; hit++) {
-          auto h = host_scifi_hits_struct.getHit(host_scifi_hit_count_struct.layer_offsets[zone] + hit);
-          outfile << std::setprecision(8) << std::fixed << h.planeCode << " " << h.hitZone << " " << h.LHCbID << " "
-            << h.x0 << " " << h.z0 << " " << h.w<< " " << h.dxdy << " "
-            << h.dzdy << " " << h.yMin << " " << h.yMax  <<  std::endl;
-        }
-      }
-    }*/
 
     ///////////////////////
     // Monte Carlo Check //
@@ -678,6 +546,27 @@ cudaError_t Stream::run_sequence(
         trackType = "VeloUT";
         call_pr_checker (
           veloUT_tracks,
+          folder_name_MC,
+          start_event_offset,
+          trackType
+        );
+
+        // Check Compass UT tracks
+        cudaCheck(cudaMemcpyAsync(host_atomics_compassUT, argen.generate<arg::dev_atomics_compassUT>(argument_offsets), argen.size<arg::dev_atomics_compassUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
+        cudaCheck(cudaMemcpyAsync(host_compassUT_tracks, argen.generate<arg::dev_compassUT_tracks>(argument_offsets), argen.size<arg::dev_compassUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
+        cudaEventRecord(cuda_generic_event, stream);
+        cudaEventSynchronize(cuda_generic_event);
+
+        const std::vector<trackChecker::Tracks> compassUT_tracks = prepareVeloUTTracks(
+          host_compassUT_tracks,
+          host_atomics_compassUT,
+          number_of_events
+        );
+
+        std::cout << "Checking Compass UT tracks reconstructed on GPU" << std::endl;
+        trackType = "VeloUT";
+        call_pr_checker (
+          compassUT_tracks,
           folder_name_MC,
           start_event_offset,
           trackType
