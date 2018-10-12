@@ -310,9 +310,11 @@ __host__ __device__ void find_forward_tracks(
         selected_tracks, 
         n_selected_tracks,
         [] (SciFi::Tracking::Track t1, SciFi::Tracking::Track t2) {
-          return t1.quality < t2.quality;
+          if ( t1.quality < t2.quality ) return -1;
+          if ( t1.quality == t2.quality ) return 0;
+          return 1;
         }
-      ); 
+      );
       
     }
 
