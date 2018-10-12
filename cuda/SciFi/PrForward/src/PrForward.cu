@@ -302,7 +302,20 @@ __host__ __device__ void find_forward_tracks(
   }
  
   if(ok || !SciFi::Tracking::secondLoop){
-    thrust::sort( thrust::seq, selected_tracks, selected_tracks + n_selected_tracks, lowerByQuality);
+
+    if ( n_selected_tracks > 1 ) {
+      // not using thrust::sort due to temporary_buffer::allocate:: get_temporary_buffer failed" error
+      //thrust::sort( thrust::seq, selected_tracks, selected_tracks + n_selected_tracks, lowerByQuality);
+      sort_tracks( 
+        selected_tracks, 
+        n_selected_tracks,
+        [] (SciFi::Tracking::Track t1, SciFi::Tracking::Track t2) {
+          return t1.quality < t2.quality;
+        }
+      ); 
+      
+    }
+
     float minQuality = SciFi::Tracking::maxQuality;
     for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
       SciFi::Tracking::Track& track = selected_tracks[i_track];

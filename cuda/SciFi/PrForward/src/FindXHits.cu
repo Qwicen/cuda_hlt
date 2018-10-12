@@ -176,7 +176,11 @@ __host__ __device__ void collectAllXHits(
   }
 
   // Sort hits by coord
-  thrust::sort_by_key(thrust::seq, coordX, coordX + n_x_hits, allXHits);
+  // not using thrust::sort due to "temporary_buffer::allocate: get_temporary_buffer failed" erro
+  // every time thrust::sort is called, cudaMalloc is called, apparently there can be trouble
+  // doing this many times
+  //thrust::sort_by_key(thrust::seq, coordX, coordX + n_x_hits, allXHits); 
+  sortHitsByKey<SciFi::Tracking::max_x_hits>( coordX, n_x_hits, allXHits );
 }
 
 

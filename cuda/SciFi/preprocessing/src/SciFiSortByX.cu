@@ -69,16 +69,4 @@ __global__ void scifi_sort_by_x(
   __syncthreads();
   apply_permutation<float>( scifi_hit_permutations, zone_offsets[0], total_number_of_hits, unsorted_scifi_hits.x0, sorted_scifi_hits.x0 );
 
-#ifdef __CUDA_ARCH__
-  if ( threadIdx.x == 0 ) {
-    for (int i_zone=0; i_zone < SciFi::number_of_zones; ++i_zone) {
-      int offset = zone_offsets[i_zone];
-      for ( int i_hit = 0; i_hit < n_hits_zones[i_zone]; ++i_hit ) {
-        int hit = offset + i_hit;
-        if ( sorted_scifi_hits.planeCode[hit] >= SciFi::Constants::n_zones )
-          printf("after sorting: on plane %u, planeCode = %u \n", i_zone, sorted_scifi_hits.planeCode[hit] );
-      }
-    }
-  }
-#endif  
 }

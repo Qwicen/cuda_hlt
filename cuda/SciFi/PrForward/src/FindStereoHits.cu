@@ -84,8 +84,9 @@ __host__ __device__ void collectStereoHits(
   }
 
   // Sort hits by coord
-  thrust::sort_by_key(thrust::seq, stereoCoords, stereoCoords + n_stereoHits, stereoHits);
-
+  // not using thrust::sort due to temporary_buffer::allocate:: get_temporary_buffer failed" error
+  //thrust::sort_by_key(thrust::seq, stereoCoords, stereoCoords + n_stereoHits, stereoHits);
+  sortHitsByKey<SciFi::Tracking::max_stereo_hits>( stereoCoords, n_stereoHits, stereoHits );
 }
  
 //=========================================================================

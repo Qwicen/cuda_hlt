@@ -9,6 +9,7 @@ include_directories(../../cuda/SciFi/common/include)
 include_directories(../../cuda/velo/common/include)
 include_directories(../../cuda/event_model/common/include)
 include_directories(../../cuda/event_model/velo/include)
+include_directories(../../cuda/utils/sorting)
 
 file(GLOB x86Forward "src/*cpp" "../../cuda/SciFi/common/src/*cu" "../../cuda/SciFi/PrForward/src/*cu")
 

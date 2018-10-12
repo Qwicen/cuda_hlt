@@ -44,6 +44,37 @@ struct PlaneCounter{
   
 };
 
+template<int N> __host__ __device__  void sortHitsByKey( float* keys, int n, int* hits ) {
+   // find permutations
+  uint permutations[N];
+  assert( n <= N );
+  for ( int i = 0; i < n; ++i ) {
+    uint position = 0;
+    for ( int j = 0; j < n; ++j ) {
+      // sort keys in ascending order
+      int sort_result = -1;
+      if ( keys[i] > keys[j] ) sort_result = 1;
+      if ( keys[i] == keys[j] ) sort_result = 0;
+      position += sort_result>0 || (sort_result==0 && i>j);
+    }
+    permutations[position] = i;
+  }
+
+  // apply permutations, store hits in temporary container
+  int hits_tmp[N];
+  float keys_tmp[N];
+  for ( int i = 0; i < n; ++i ) {
+    const int index = permutations[i];
+    hits_tmp[i] = hits[index];
+    keys_tmp[i] = keys[index];
+  }
+  
+  // copy hits back to original container
+  for ( int i = 0; i < n; ++i ) {
+    hits[i] = hits_tmp[i];
+    keys[i] = keys_tmp[i];
+  }
+}
 
 // check that val is within [min, max]
 __host__ __device__ inline bool isInside(float val, const float min, const float max) {

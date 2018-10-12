@@ -13,7 +13,7 @@ void PrForwardWrapper(
   SciFi::Track outputTracks[SciFi::max_tracks],
   uint* n_forward_tracks)
 {
-  
+
   // Loop over the veloUT input tracks
   for ( int i_veloUT_track = 0; i_veloUT_track < n_veloUT_tracks; ++i_veloUT_track ) {
     const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks[i_veloUT_track];
