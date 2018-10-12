@@ -52,7 +52,7 @@ __host__ __device__ void collectAllXHits(
   int iZoneStartingPoint = side > 0 ? constArrays->zoneoffsetpar : 0;
 
   for(unsigned int iZone = iZoneStartingPoint; iZone < iZoneStartingPoint + constArrays->zoneoffsetpar; iZone++) {
-    assert ( iZone-iZoneStartingPoint < SciFi::number_of_zones );
+    assert ( iZone-iZoneStartingPoint < SciFi::Constants::n_zones );
     assert( iZone-iZoneStartingPoint < 12 );
     const float zZone   = constArrays->xZone_zPos[iZone-iZoneStartingPoint];
     const float xInZone = straightLineExtend(xParams_seed,zZone);

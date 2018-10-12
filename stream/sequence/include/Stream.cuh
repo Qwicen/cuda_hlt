@@ -57,7 +57,6 @@ struct Stream {
  
   // SciFi 
   uint* host_accumulated_number_of_scifi_hits;
-  SciFi::HitsSoA* host_scifi_hits;
   SciFi::Track* host_scifi_tracks;
   uint* host_n_scifi_tracks;
   

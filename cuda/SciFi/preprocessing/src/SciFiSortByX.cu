@@ -10,18 +10,18 @@ __global__ void scifi_sort_by_x(
   // Taken from UT sorting
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
-  const uint* zone_offsets = scifi_hit_count + event_number * SciFi::number_of_zones;
-  const uint* n_hits_zones = scifi_hit_count + number_of_events * SciFi::number_of_zones + 1 + event_number * SciFi::number_of_zones;
+  const uint* zone_offsets = scifi_hit_count + event_number * SciFi::Constants::n_zones;
+  const uint* n_hits_zones = scifi_hit_count + number_of_events * SciFi::Constants::n_zones + 1 + event_number * SciFi::Constants::n_zones;
 
   // Two SciFiHits objects are created: one typecasts the base_pointer assuming
   // the data is unsorted, the other assuming the data is sorted.
   // This makes sorting more readable
   SciFiHits unsorted_scifi_hits, sorted_scifi_hits;
-  unsorted_scifi_hits.typecast_unsorted(scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_zones]);
-  sorted_scifi_hits.typecast_sorted(scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_zones]);
+  unsorted_scifi_hits.typecast_unsorted(scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_zones]);
+  sorted_scifi_hits.typecast_sorted(scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_zones]);
 
   uint total_number_of_hits = 0;
-  for (int i_zone=0; i_zone < SciFi::number_of_zones; ++i_zone) {
+  for (int i_zone=0; i_zone < SciFi::Constants::n_zones; ++i_zone) {
     const uint zone_offset = zone_offsets[i_zone];
     const uint n_hits_zone = n_hits_zones[i_zone];
     total_number_of_hits += n_hits_zone;

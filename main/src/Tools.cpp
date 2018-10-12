@@ -45,57 +45,6 @@ bool check_velopix_events(
   }
   return true;
 }
-void read_scifi_events_into_arrays( SciFi::HitsSoA *hits_layers_events,
-                                 uint32_t n_hits_layers_events[][SciFi::Constants::n_zones],
-                                 const std::vector<char> events,
-                                 const std::vector<unsigned int> event_offsets,
-                                 const int n_events ) {
-
-
-  for ( int i_event = 0; i_event < n_events; ++i_event ) {
-    const char* raw_input = events.data() + event_offsets[i_event];
-    int n_hits_total = 0;
-    int accumulated_hits = 0;
-    int accumulated_hits_layers[12];
-    for ( int i_layer = 0; i_layer < SciFi::Constants::n_zones; ++i_layer ) {
-      n_hits_layers_events[i_event][i_layer] = *((uint32_t*)raw_input);
-      n_hits_total += n_hits_layers_events[i_event][i_layer];
-      raw_input += sizeof(uint32_t);
-      assert( n_hits_total < SciFi::Constants::max_numhits_per_event );
-      hits_layers_events[i_event].layer_offset[i_layer] = accumulated_hits;
-      accumulated_hits += n_hits_layers_events[i_event][i_layer];
-    }
-
-    for ( int i_layer = 0; i_layer < SciFi::Constants::n_zones; ++i_layer ) {
-      int layer_offset = hits_layers_events[i_event].layer_offset[i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &( hits_layers_events[i_event].m_x[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_z[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_w[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_dxdy[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_dzdy[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_yMin[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((float*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_yMax[ layer_offset ]) );
-      raw_input += sizeof(float) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((unsigned int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_LHCbID[ layer_offset ]) );
-      raw_input += sizeof(unsigned int) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_planeCode[ layer_offset ]) );
-      raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer];
-      std::copy_n((int*) raw_input, n_hits_layers_events[i_event][i_layer], &(hits_layers_events[i_event].m_hitZone[ layer_offset ]) );
-      raw_input += sizeof(int) * n_hits_layers_events[i_event][i_layer];
-
-      // CAUTION: over-writing planeCode: instead of 0-11, now 0-23!
-      for ( int i_hit = 0; i_hit < n_hits_layers_events[i_event][i_layer]; ++i_hit ) {
-        hits_layers_events[i_event].m_planeCode[ layer_offset + i_hit ] = i_layer;
-      }
-    }
-  }
-}
 
 /**
  * @brief Obtains results statistics.

@@ -56,13 +56,13 @@ int run_forward_on_CPU (
     SciFi::SciFiHitCount scifi_hit_count;
     scifi_hit_count.typecast_after_prefix_sum(host_scifi_hit_count, i_event, number_of_events);
 
-    const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::number_of_zones];
+    const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::Constants::n_zones];
     SciFi::SciFiHits scifi_hits; 
     scifi_hits.typecast_sorted((uint*) host_scifi_hits, total_number_of_hits);
 
 #ifdef WITH_ROOT
     // store hit variables in tree
-    for(size_t zone = 0; zone < SciFi::number_of_zones; zone++) {
+    for(size_t zone = 0; zone < SciFi::Constants::n_zones; zone++) {
       const auto zone_offset = scifi_hit_count.layer_offsets[zone];
       for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
         auto h = scifi_hits.getHit(zone_offset + hit);

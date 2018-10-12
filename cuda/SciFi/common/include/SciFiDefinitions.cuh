@@ -15,7 +15,7 @@
 
 #include "assert.h"
 
- struct FullState { 
+struct FullState { 
     float x, y, tx, ty, qOverP = 0.;
     float c00, c11, c22, c33, c44, c10, c20, c30, c40, c21, c31, c41, c32, c42, c43 = 0.;
     float chi2 = 0.;
@@ -62,39 +62,16 @@ namespace Constants {
   static constexpr uint n_zones              = 24;
   static constexpr uint n_layers             = 12;
       
-  static constexpr int layerCode[n_zones] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ,17, 18 ,19, 20, 21, 22, 23};
-  
   /* Cut-offs */
   static constexpr uint max_numhits_per_event = 10000; 
   static constexpr uint max_hit_candidates_per_layer = 200;
 
 } // Constants
 
-/* SoA for hit variables
-   The hits for every layer are written behind each other, the offsets 
-   are stored for access;
-   one Hits structure exists per event
-*/
-struct HitsSoA {
-  int layer_offset[Constants::n_zones] = {0};
-  
-  float m_x[Constants::max_numhits_per_event] = {0}; 
-  float m_z[Constants::max_numhits_per_event] = {0}; 
-  float m_w[Constants::max_numhits_per_event] = {0};
-  float m_dxdy[Constants::max_numhits_per_event] = {0};
-  float m_dzdy[Constants::max_numhits_per_event] = {0};
-  float m_yMin[Constants::max_numhits_per_event] = {0};
-  float m_yMax[Constants::max_numhits_per_event] = {0};
-  unsigned int m_LHCbID[Constants::max_numhits_per_event] = {0};
-  int m_planeCode[Constants::max_numhits_per_event] = {0};
-  int m_hitZone[Constants::max_numhits_per_event] = {0};
+const int max_tracks = 200; 
+const int max_track_size = Tracking::max_scifi_hits + VeloUTTracking::max_track_size;
 
-  SciFiHit getHit(uint32_t index) const;
-};
-  
-  const int max_tracks = 200; 
-  const int max_track_size = Tracking::max_scifi_hits + VeloUTTracking::max_track_size;
-
+// Track object used for storing tracks
 struct Track {
   
   unsigned int LHCbIDs[max_track_size];
@@ -115,8 +92,6 @@ struct Track {
 /**
  * @brief SciFi geometry description typecast.
  */
-
-constexpr uint32_t number_of_zones = 24;
 
 struct SciFiGeometry {
   size_t size;
@@ -261,7 +236,7 @@ struct SciFiHitCount {
 
   __device__ __host__
   uint layer_offset(const uint layer_number) const {
-    assert(layer_number < SciFi::number_of_zones);
+    assert(layer_number < SciFi::Constants::n_zones);
     return layer_offsets[layer_number];
   }
 };

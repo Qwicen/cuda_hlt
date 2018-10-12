@@ -454,7 +454,7 @@ cudaError_t Stream::run_sequence(
     // Estimate cluster count
     arguments.set_size<arg::dev_scifi_raw_input>(host_scifi_events_size);
     arguments.set_size<arg::dev_scifi_raw_input_offsets>(host_scifi_event_offsets_size);
-    arguments.set_size<arg::dev_scifi_hit_count>(2 * number_of_events * SciFi::number_of_zones + 1);
+    arguments.set_size<arg::dev_scifi_hit_count>(2 * number_of_events * SciFi::Constants::n_zones + 1);
 
     scheduler.setup_next(arguments, sequence_step++);
 
@@ -483,7 +483,7 @@ cudaError_t Stream::run_sequence(
     // 3. Scan
 
     // Prefix sum: Reduce
-    const uint total_number_of_zones = number_of_events * SciFi::number_of_zones;
+    const uint total_number_of_zones = number_of_events * SciFi::Constants::n_zones;
     const size_t prefix_sum_auxiliary_array_4_size = (total_number_of_zones + 511) / 512;
     arguments.set_size<arg::dev_prefix_sum_auxiliary_array_4>(prefix_sum_auxiliary_array_4_size);
     scheduler.setup_next(arguments, sequence_step++);
@@ -644,7 +644,7 @@ cudaError_t Stream::run_sequence(
         std::vector< trackChecker::Tracks > forward_tracks_events;
            
         std::vector<uint> host_scifi_hits (total_scifi_hits_size);
-        std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::number_of_zones + 1);
+        std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::Constants::n_zones + 1);
 
         cudaCheck(cudaMemcpyAsync(
           host_scifi_hits.data(),

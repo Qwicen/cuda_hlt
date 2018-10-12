@@ -123,7 +123,8 @@ namespace SciFi{
       const float        uvZone_dxdy[12]        = {0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892};
       const float        Zone_dzdy[24]          = {0.0036010};
     };
-   
+
+    // Track object used for finding tracks, not the final container for storing the tracks
     struct Track {
       int hit_indices[max_scifi_hits];
       float qop;

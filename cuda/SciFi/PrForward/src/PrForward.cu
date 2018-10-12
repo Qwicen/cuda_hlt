@@ -140,7 +140,7 @@ __global__ void PrForward(
   uint* n_scifi_tracks_event = dev_n_scifi_tracks + event_number;
 
   // SciFi hits
-  const uint total_number_of_hits = dev_scifi_hit_count[number_of_events * SciFi::number_of_zones];
+  const uint total_number_of_hits = dev_scifi_hit_count[number_of_events * SciFi::Constants::n_zones];
   SciFi::SciFiHitCount scifi_hit_count;
   scifi_hit_count.typecast_after_prefix_sum((uint*) dev_scifi_hit_count, event_number, number_of_events);
   SciFi::SciFiHits scifi_hits;

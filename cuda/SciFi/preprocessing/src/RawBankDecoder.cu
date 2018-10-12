@@ -39,17 +39,17 @@ __global__ void raw_bank_decoder(
   const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
 
   SciFiHits hits;
-  hits.typecast_unsorted(scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_zones]);
+  hits.typecast_unsorted(scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_zones]);
   SciFiHitCount hit_count;
   hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
 
-  __shared__ uint32_t shared_layer_offsets[SciFi::number_of_zones];
+  __shared__ uint32_t shared_layer_offsets[SciFi::Constants::n_zones];
 
-  for (uint i = threadIdx.x; i < SciFi::number_of_zones; i += blockDim.x) {
+  for (uint i = threadIdx.x; i < SciFi::Constants::n_zones; i += blockDim.x) {
     shared_layer_offsets[i] = hit_count.layer_offsets[i];
   }
 
-  for (uint i = threadIdx.x; i < SciFi::number_of_zones; i += blockDim.x) {
+  for (uint i = threadIdx.x; i < SciFi::Constants::n_zones; i += blockDim.x) {
     hit_count.n_hits_layers[i] = 0;
   }
 

@@ -154,7 +154,7 @@ void SciFiHitCount::typecast_before_prefix_sum(
   uint* base_pointer,
   const uint event_number
 ) {
-  n_hits_layers = base_pointer + event_number * SciFi::number_of_zones;
+  n_hits_layers = base_pointer + event_number * SciFi::Constants::n_zones;
 }
 
 __device__ __host__
@@ -163,8 +163,8 @@ void SciFiHitCount::typecast_after_prefix_sum(
   const uint event_number,
   const uint number_of_events
 ) {
-  layer_offsets = base_pointer + event_number *  SciFi::number_of_zones;
-  n_hits_layers = base_pointer + number_of_events * SciFi::number_of_zones + 1 + event_number * SciFi::number_of_zones;
+  layer_offsets = base_pointer + event_number *  SciFi::Constants::n_zones;
+  n_hits_layers = base_pointer + number_of_events * SciFi::Constants::n_zones + 1 + event_number * SciFi::Constants::n_zones;
 }
 
 void SciFiHits::typecast_unsorted(uint32_t* base, uint32_t total_number_of_hits) {
@@ -200,8 +200,4 @@ SciFiHit SciFiHits::getHit(uint32_t index) const {
           yMax[index], LHCbID[index], planeCode[index], hitZone[index]};
 }
 
-SciFiHit HitsSoA::getHit(uint32_t index) const {
-  return {m_x[index], m_z[index], m_w[index], m_dxdy[index], m_dzdy[index], m_yMin[index],
-          m_yMax[index], m_LHCbID[index], m_planeCode[index], m_hitZone[index]};
-}
 };
