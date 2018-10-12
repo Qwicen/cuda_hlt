@@ -1,4 +1,5 @@
 #include "Stream.cuh"
+#include <cuda_profiler_api.h>
 
 #include <iostream>
 #include <fstream>
@@ -26,6 +27,8 @@ cudaError_t Stream::run_sequence(
 
   for (uint repetition=0; repetition<number_of_repetitions; ++repetition) {
     uint sequence_step = 0;
+
+    cudaProfilerStart(); 
 
     // Reset scheduler
     scheduler.reset();
@@ -201,8 +204,9 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(host_number_of_reconstructed_velo_tracks, arguments.offset<arg::dev_atomics_storage>() + number_of_events * 2, sizeof(uint), cudaMemcpyDeviceToHost, stream));
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
+    //host_number_of_reconstructed_velo_tracks[0] = 0;
     size_t velo_track_hit_number_size = host_number_of_reconstructed_velo_tracks[0] + 1;
-
+    
     // Prefix sum of tracks hits
     // 1. Copy velo track hit number to a consecutive container
     // 2. Reduce
@@ -259,6 +263,8 @@ cudaError_t Stream::run_sequence(
       sizeof(uint), cudaMemcpyDeviceToHost, stream));
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
+    // host_accumulated_number_of_hits_in_velo_tracks[0] = 0;
+    // host_number_of_reconstructed_velo_tracks[0] = 0;
 
     // Consolidate tracks
     // TODO: The size specified (sizeof(Hits) / sizeof(uint)) is due to the
@@ -578,6 +584,8 @@ cudaError_t Stream::run_sequence(
     // Synchronize
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
+
+    cudaProfilerStop();
 
     ///////////////////////
     // Monte Carlo Check //
