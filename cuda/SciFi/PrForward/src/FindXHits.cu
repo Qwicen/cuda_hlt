@@ -465,6 +465,7 @@ __host__ __device__ void selectXCandidates(
       for (int k=0;k<7;++k){
         track.trackParams[k] = trackParameters[k];
       }
+      
       for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
         int hit = coordToFit[i_hit];
         assert( track.hitsNum < SciFi::Tracking::max_scifi_hits );
@@ -474,14 +475,10 @@ __host__ __device__ void selectXCandidates(
         
         assert( n_candidate_tracks < SciFi::Tracking::max_candidate_tracks );
         candidate_tracks[n_candidate_tracks++] = track;
-        // if ( n_candidate_tracks >= SciFi::Tracking::max_candidate_tracks )
-        //   break;
       }  
       else if ( secondLoop ) {
         assert( n_candidate_tracks < SciFi::Tracking::max_tracks_second_loop );
         candidate_tracks[n_candidate_tracks++] = track;
-        // if ( n_candidate_tracks >= SciFi::Tracking::max_tracks_second_loop )
-        //   break;
       }
     }
     if ( secondLoop ) {

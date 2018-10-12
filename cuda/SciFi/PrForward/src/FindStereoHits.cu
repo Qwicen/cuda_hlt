@@ -151,15 +151,14 @@ __host__ __device__ bool selectStereoHits(
 
         planeCounter.removeHit( scifi_hits.planeCode[ stereoHits[beginRange] ]/2 );
         sumCoord -= stereoCoords[ beginRange ];
+        beginRange++;
         continue;
       }
 
       if(endRange == n_stereoHits -1 ) break; //already at end, cluster cannot be expanded anymore
       //add next, if it decreases the range size and is empty
       if ( (planeCounter.nbInPlane( scifi_hits.planeCode[ stereoHits[beginRange] ]/2 ) == 0) ) {
-        if ( (averageCoord - stereoCoords[ beginRange ] > 
-              stereoCoords[ endRange ] - averageCoord )
-             ) {
+        if ( (averageCoord - stereoCoords[ beginRange ] > stereoCoords[ endRange ] - averageCoord ) ) {
           planeCounter.addHit( scifi_hits.planeCode[ stereoHits[endRange] ]/2 );
           sumCoord += stereoCoords[ endRange];
           endRange++;
@@ -169,6 +168,7 @@ __host__ __device__ bool selectStereoHits(
       
       break;
     }
+
     
     //Now we have a candidate, lets fit him
     // track = original; //only yparams are changed
@@ -189,7 +189,8 @@ __host__ __device__ bool selectStereoHits(
       scifi_hits, track, trackStereoHits,
       n_trackStereoHits, planeCounter,
       velo_state, constArrays, pars)) continue;
-    
+   
+
     if(!addHitsOnEmptyStereoLayers(scifi_hits, scifi_hit_count, track, trackStereoHits, n_trackStereoHits, constArrays, planeCounter, velo_state, pars))continue;
     
     if(n_trackStereoHits < n_bestStereoHits) continue; //number of hits most important selection criteria!
@@ -219,12 +220,13 @@ __host__ __device__ bool selectStereoHits(
     }
 
   } // beginRange loop (<endLoop)
-  
+
   if ( n_bestStereoHits > 0 ) {
     track.trackParams[4] = bestYParams[0];
     track.trackParams[5] = bestYParams[1];
     track.trackParams[6] = bestYParams[2];
     assert( n_bestStereoHits < n_stereoHits );
+
     for ( int i_hit = 0; i_hit < n_bestStereoHits; ++i_hit ) {
       int hit = bestStereoHits[i_hit];
       if ( track.hitsNum >= SciFi::Tracking::max_scifi_hits ) break;
