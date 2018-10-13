@@ -3,7 +3,7 @@
 UTBoards::UTBoards(const std::vector<char> & ut_boards) {
   uint32_t * p = (uint32_t *) ut_boards.data();
   number_of_boards   = *p; p += 1;
-  number_of_channels = ut_number_of_sectors_per_board * number_of_boards;
+  number_of_channels = UTDecoding::ut_number_of_sectors_per_board * number_of_boards;
   stripsPerHybrids   = p;  p += number_of_channels;
   stations           = p;  p += number_of_channels;
   layers             = p;  p += number_of_channels;
@@ -17,7 +17,7 @@ __device__ __host__ UTBoards::UTBoards(
 ) {
   uint32_t * p = (uint32_t *) ut_boards;
   number_of_boards   = *p; p += 1;
-  number_of_channels = ut_number_of_sectors_per_board * number_of_boards;
+  number_of_channels = UTDecoding::ut_number_of_sectors_per_board * number_of_boards;
   stripsPerHybrids   = p;  p += number_of_boards;
   stations           = p;  p += number_of_channels;
   layers             = p;  p += number_of_channels;
@@ -30,16 +30,16 @@ UTGeometry::UTGeometry(const std::vector<char> & ut_geometry) {
 
   uint32_t * p = (uint32_t *) ut_geometry.data();
   number_of_sectors = *((uint32_t *)p); p += 1;
-  firstStrip = (uint32_t *)p; p += ut_number_of_geometry_sectors;
-  pitch      = (float *)   p; p += ut_number_of_geometry_sectors;
-  dy         = (float *)   p; p += ut_number_of_geometry_sectors;
-  dp0diX     = (float *)   p; p += ut_number_of_geometry_sectors;
-  dp0diY     = (float *)   p; p += ut_number_of_geometry_sectors;
-  dp0diZ     = (float *)   p; p += ut_number_of_geometry_sectors;
-  p0X        = (float *)   p; p += ut_number_of_geometry_sectors;
-  p0Y        = (float *)   p; p += ut_number_of_geometry_sectors;
-  p0Z        = (float *)   p; p += ut_number_of_geometry_sectors;
-  cos        = (float *)   p; p += ut_number_of_geometry_sectors;
+  firstStrip = (uint32_t *)p; p += UTDecoding::ut_number_of_geometry_sectors;
+  pitch      = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  dy         = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  dp0diX     = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  dp0diY     = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  dp0diZ     = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  p0X        = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  p0Y        = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  p0Z        = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  cos        = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
 }
 
 __device__ __host__ UTGeometry::UTGeometry(
@@ -47,16 +47,16 @@ __device__ __host__ UTGeometry::UTGeometry(
 ) {
   uint32_t * p = (uint32_t *)ut_geometry;
   number_of_sectors = *((uint32_t *)p); p +=1;
-  firstStrip = (uint32_t *)p; p += ut_number_of_geometry_sectors;
-  pitch      = (float *)   p; p += ut_number_of_geometry_sectors;
-  dy         = (float *)   p; p += ut_number_of_geometry_sectors;
-  dp0diX     = (float *)   p; p += ut_number_of_geometry_sectors;
-  dp0diY     = (float *)   p; p += ut_number_of_geometry_sectors;
-  dp0diZ     = (float *)   p; p += ut_number_of_geometry_sectors;
-  p0X        = (float *)   p; p += ut_number_of_geometry_sectors;
-  p0Y        = (float *)   p; p += ut_number_of_geometry_sectors;
-  p0Z        = (float *)   p; p += ut_number_of_geometry_sectors;
-  cos        = (float *)   p; p += ut_number_of_geometry_sectors;
+  firstStrip = (uint32_t *)p; p += UTDecoding::ut_number_of_geometry_sectors;
+  pitch      = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  dy         = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  dp0diX     = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  dp0diY     = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  dp0diZ     = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  p0X        = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  p0Y        = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  p0Z        = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
+  cos        = (float *)   p; p += UTDecoding::ut_number_of_geometry_sectors;
 }
 
 __device__ __host__ UTRawBank::UTRawBank (
@@ -105,20 +105,8 @@ UTHit::UTHit(float    ut_yBegin,
   planeCode     = ut_planeCode    ;
 }
 
-void UTHits::typecast_unsorted(uint32_t* base_pointer, uint32_t total_number_of_hits) {
-  yBegin = reinterpret_cast<float*>(base_pointer);
-  yEnd = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
-  zAtYEq0 = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
-  xAtYEq0 = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
-  weight = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
-  highThreshold = base_pointer + 5*total_number_of_hits;
-  LHCbID = base_pointer + 6*total_number_of_hits;
-  planeCode = base_pointer + 7*total_number_of_hits;
-  temp = base_pointer + 8*total_number_of_hits;
-}
-
-void UTHits::typecast_sorted(uint32_t* base_pointer, uint32_t total_number_of_hits) {
-  temp = base_pointer;
+UTHits::UTHits(uint32_t* base_pointer, uint32_t total_number_of_hits) {
+  raw_bank_index = base_pointer;
   yBegin = reinterpret_cast<float*>(base_pointer + total_number_of_hits);
   yEnd = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits);
   zAtYEq0 = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);

@@ -14,3 +14,13 @@
     throw std::invalid_argument("cudaCheck failed");     \
   }                                                      \
 }
+
+/**
+ * @brief Cross architecture for statement.
+ * @details It can be used to iterate with variable _TYPE _I from 0 through _END.
+ */
+#ifdef __CUDA_ARCH__
+  #define FOR_STATEMENT(_TYPE, _I, _END) for (_TYPE _I=threadIdx.x; _I<_END; _I+=blockDim.x)
+#else
+  #define FOR_STATEMENT(_TYPE, _I, _END) for (_TYPE _I=0; _I<_END; ++_I)
+#endif

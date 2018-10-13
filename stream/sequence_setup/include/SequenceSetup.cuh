@@ -8,8 +8,6 @@
 #include "SearchByTriplet.cuh"
 #include "VeloKalmanFilter.cuh"
 #include "VeloUT.cuh"
-#include "SortByY.cuh"
-#include "UTDecoding.cuh"
 #include "EstimateClusterCount.cuh"
 #include "RawBankDecoder.cuh"
 #include "SciFiSortByX.cuh"
@@ -18,6 +16,10 @@
 #include "TupleIndicesChecker.cuh"
 #include "SequenceArgumentEnum.cuh"
 #include "VeloEventModel.cuh"
+#include "UTCalculateNumberOfHits.cuh"
+#include "UTDecodeRawBanksInOrder.cuh"
+#include "UTFindPermutation.cuh"
+#include "UTPreDecode.cuh"
 
 /**
  * @brief Algorithm tuple definition. All algorithms in the sequence
@@ -45,8 +47,9 @@ constexpr auto sequence_algorithms() {
     prefix_sum_reduce,
     prefix_sum_single_block,
     prefix_sum_scan,
-    decode_raw_banks,
-    sort_by_y,
+    ut_pre_decode,
+    ut_find_permutation,
+    ut_decode_raw_banks_in_order,
     veloUT,
     estimate_cluster_count,
     prefix_sum_reduce,
