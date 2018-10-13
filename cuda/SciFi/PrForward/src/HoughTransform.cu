@@ -29,6 +29,9 @@ __host__ __device__ void xAtRef_SamePlaneHits(
     // update zMag now that dSlope is known
     float zMag = zMagSlope + constArrays->zMagnetParams[1] *  dSlope * dSlope;
     float xMag    = xFromVelo_Hit + velo_state.tx * (zMag - zHit);
+    // calculate x position on reference plane (save in coodX)
+    // dxCoef: account for additional bending of track due to fringe field in first station
+    // expressed by quadratic and cubic term in z
     float dxCoef  = dz * dz * ( constArrays->xParams[0] + dz * constArrays->xParams[1] ) * dSlope;
     float ratio   = (  SciFi::Tracking::zReference - zMag ) / ( zHit - zMag );
     coordX[itH] = xMag + ratio * (xHit + dxCoef  - xMag);

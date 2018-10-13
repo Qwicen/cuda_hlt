@@ -131,36 +131,22 @@ __host__ __device__ void collectAllXHits(
     const float xPredUVProto =  xInUv - xInZone * zRatio - dx;
     const float maxDxProto   =  SciFi::Tracking::tolYCollectX + fabsf( yInZone ) * SciFi::Tracking::tolYSlopeCollectX;
 
-    if ( fabsf(yInZone) > SciFi::Tracking::tolYTriangleSearch ) { // no triangle search necessary!
+    const bool withTriangleSearch = fabsf(yInZone) < SciFi::Tracking::tolYTriangleSearch;
+    for (int xHit = itH; xHit < itEnd; ++xHit) { //loop over all xHits in a layer between xMin and xMax
+      const float xPredUv = xPredUVProto + scifi_hits.x0[xHit]* zRatio;
+      const float maxDx   = maxDxProto   + fabsf( scifi_hits.x0[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
+      const float xMinUV  = xPredUv - maxDx;
+      const float xMaxUV  = xPredUv + maxDx;
       
-      for (int xHit = itH; xHit < itEnd; ++xHit) { //loop over all xHits in a layer between xMin and xMax
-        const float xPredUv = xPredUVProto + scifi_hits.x0[xHit]* zRatio;
-        const float maxDx   = maxDxProto   + fabsf( scifi_hits.x0[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
-        const float xMinUV  = xPredUv - maxDx;
-        const float xMaxUV  = xPredUv + maxDx;
-        
-        if ( matchStereoHit( itUV1, uv_zone_offset_end, scifi_hits, xMinUV, xMaxUV) ) {
-          if ( n_x_hits >= SciFi::Tracking::max_x_hits )
-            break;
-          assert( n_x_hits < SciFi::Tracking::max_x_hits );
-          allXHits[n_x_hits++] = xHit;
-        }
-      }
-    }else { // triangle search
-      for (int xHit = itH; xHit < itEnd; ++xHit) {
-        const float xPredUv = xPredUVProto + scifi_hits.x0[xHit]* zRatio;
-        const float maxDx   = maxDxProto   + fabsf( scifi_hits.x0[xHit] -xCentral )* SciFi::Tracking::tolYSlopeCollectX;
-        const float xMinUV  = xPredUv - maxDx;
-        const float xMaxUV  = xPredUv + maxDx;
-
-        if ( matchStereoHit( itUV1, uv_zone_offset_end, scifi_hits, xMinUV, xMaxUV ) || matchStereoHitWithTriangle(itUV2, triangle_zone_offset_end, yInZone, scifi_hits, xMinUV, xMaxUV, side ) ) {
-          if ( n_x_hits >= SciFi::Tracking::max_x_hits )
-            break;
-          assert( n_x_hits < SciFi::Tracking::max_x_hits );
-          allXHits[n_x_hits++] = xHit;
-        }
+      if ( matchStereoHit( itUV1, uv_zone_offset_end, scifi_hits, xMinUV, xMaxUV) //) {
+           || ( withTriangleSearch && matchStereoHitWithTriangle(itUV2, triangle_zone_offset_end, yInZone, scifi_hits, xMinUV, xMaxUV, side ) ) ) {
+        if ( n_x_hits >= SciFi::Tracking::max_x_hits )
+          break;
+        assert( n_x_hits < SciFi::Tracking::max_x_hits );
+        allXHits[n_x_hits++] = xHit;
       }
     }
+    
     
     const int iStart = iZoneEnd[cptZone-1];
     const int iEnd = n_x_hits;
