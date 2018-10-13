@@ -1,6 +1,7 @@
 #include "HoughTransform.cuh"
 
-//calculate xref for this plane
+// project x position of hits from one plane onto the reference plane
+// save it in coordX
 //in the c++ this is vectorized, undoing because no point before CUDA (but vectorization is obvious)
 __host__ __device__ void xAtRef_SamePlaneHits(
   const SciFi::SciFiHits& scifi_hits,
@@ -16,14 +17,17 @@ __host__ __device__ void xAtRef_SamePlaneHits(
   assert( itH < SciFi::Tracking::max_x_hits );
   const float zHit    = scifi_hits.z0[allXHits[itH]]; //all hits in same layer
   const float xFromVelo_Hit = straightLineExtend(xParams_seed,zHit);
-  const float ty2 = velo_state.tx*velo_state.ty;
+  const float ty2 = velo_state.ty*velo_state.ty;
   const float zMagSlope = constArrays->zMagnetParams[2] * ty2 +  constArrays->zMagnetParams[3] * ty2;
+  // why not use 1. / (zHit - zMag) ?
   const float dSlopeDivPart = 1.f / ( zHit - constArrays->zMagnetParams[0]);
   const float dz      = 1.e-3f * ( zHit - SciFi::Tracking::zReference );
   
   while( itEnd>itH ){
     float xHit = scifi_hits.x0[allXHits[itH]];
+    // difference in slope before and after the kick
     float dSlope  = ( xFromVelo_Hit - xHit ) * dSlopeDivPart;
+    // update zMag now that dSlope is known
     float zMag    = constArrays->zMagnetParams[0] + constArrays->zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
     float xMag    = xFromVelo_Hit + velo_state.tx * (zMag - zHit);
     float dxCoef  = dz * dz * ( constArrays->xParams[0] + dz * constArrays->xParams[1] ) * dSlope;

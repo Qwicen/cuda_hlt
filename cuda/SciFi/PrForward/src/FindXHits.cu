@@ -27,9 +27,9 @@ __host__ __device__ void collectAllXHits(
   const float qOverP,
   int side)
 {
-  // A bunch of hardcoded numbers to set the search window
-  // really this should all be made configurable
+  // Find size of search window on reference plane, using Velo slopes and min pT as input  
   float dxRef = 0.9 * calcDxRef(SciFi::Tracking::minPt, velo_state);
+  // find position within magnet where bending happens
   float zMag = zMagnet(velo_state, constArrays);
  
   const float q = qOverP > 0.f ? 1.f :-1.f;
@@ -65,8 +65,7 @@ __host__ __device__ void collectAllXHits(
     // Here for now I assume the same min/max x and y for all stations, this again needs to
     // be read from some file blablabla although actually I suspect having some general tolerances
     // here is anyway good enough since we are doing a straight line extrapolation in the first place
-    // so we are hardly looking precisely if the track could have hit this plane
-    //debug_cout << "Looking for hits compatible with x = " << xInZone << " and y = " << yInZone << " on side " << side << std::endl;
+    // check (roughly) whether the extrapolated velo track is within the current zone
     if (side > 0) {
       if (!isInside(xInZone,SciFi::Tracking::xLim_Min,SciFi::Tracking::xLim_Max)
           || !isInside(yInZone,SciFi::Tracking::yLim_Min,SciFi::Tracking::yLim_Max)) continue;
@@ -75,6 +74,7 @@ __host__ __device__ void collectAllXHits(
           || !isInside(yInZone,side*SciFi::Tracking::yLim_Max,side*SciFi::Tracking::yLim_Min)) continue;
     }
 
+    // extrapolate dxRef (x window on reference plane) to plane of current zone
     const float xTol  = ( zZone < SciFi::Tracking::zReference ) ? dxRef * zZone / SciFi::Tracking::zReference :  dxRef * (zZone - zMag) / ( SciFi::Tracking::zReference - zMag );
     float xMin        = xInZone - xTol;
     float xMax        = xInZone + xTol;
@@ -91,7 +91,7 @@ __host__ __device__ void collectAllXHits(
       }
     }
 
-    // Get the zone bounds
+    // Get the hits within the bounds
     assert ( iZone < SciFi::Constants::n_layers );
     assert ( constArrays->xZones[iZone] < SciFi::Constants::n_zones );
     int x_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->xZones[iZone]];
@@ -114,6 +114,9 @@ __host__ __device__ void collectAllXHits(
     const float maxDx       = SciFi::Tracking::tolYCollectX + ( fabsf( scifi_hits.x0[itH] - xCentral ) + fabsf( yInZone ) ) * SciFi::Tracking::tolYSlopeCollectX;
     const float xMinUV      = xPredUv - maxDx;
 
+    // Get bounds in UV layers
+    // do one search on the same side as the x module
+    // if we are close to y = 0, also look within a region on the other side module ("triangle search")
     assert( constArrays->uvZones[iZone] < SciFi::Constants::n_zones );
     const int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[iZone]];
     const int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[iZone]];
@@ -164,12 +167,14 @@ __host__ __device__ void collectAllXHits(
     
     assert( cptZone < 7 );
     iZoneEnd[cptZone++] = iEnd;
-    
+
+    // project x of all hits to reference plane
+    // save it in coordX
     if ( iStart < iEnd ) {
       xAtRef_SamePlaneHits(
         scifi_hits, allXHits,
         n_x_hits, coordX, xParams_seed, constArrays,
-        velo_state, iStart, iEnd); //calc xRef for all hits on same layer
+        velo_state, iStart, iEnd); 
     }
     if ( n_x_hits >= SciFi::Tracking::max_x_hits )
       break; 

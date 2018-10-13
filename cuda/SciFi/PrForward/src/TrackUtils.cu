@@ -49,8 +49,11 @@ __host__ __device__ float calcqOverP (
   
 }
 
-// DvB: what does this do?
-// -> get position within magnet (?)
+// Find z zMag position within the magnet at which the bending ("kick") occurs
+// this is parameterized based on MC
+// the second parameter([1]) is multiplied by the difference in slope before and
+// after the kick, this slope is calculated from zMag and the x position of the track
+// at the reference plane -> it is calculated iteratively later
 __host__ __device__ float zMagnet(
   MiniState velo_state,
   SciFi::Tracking::Arrays* constArrays)

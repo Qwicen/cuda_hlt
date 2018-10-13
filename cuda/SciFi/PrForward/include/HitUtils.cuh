@@ -7,7 +7,8 @@
    Helper functions related to properties of hits on planes
  */
 
-
+// Helper used to keep track of how many x / stereo hits per lane have
+// been added to a candidate track
 struct PlaneCounter{
   int planeList[SciFi::Constants::n_layers] = {0};
   unsigned int nbDifferent = 0;
@@ -90,7 +91,7 @@ __host__ __device__ inline int getLowerBound(float range[],float value,int start
   return i;
 }
 
-// match stereo hits
+// match stereo hits to x hits
 __host__ __device__ inline bool matchStereoHit( const int itUV1, const int uv_zone_offset_end, const SciFi::SciFiHits& scifi_hits, const int xMinUV, const int xMaxUV ) {
 
   for (int stereoHit = itUV1; stereoHit != uv_zone_offset_end; ++stereoHit) {
@@ -101,6 +102,7 @@ __host__ __device__ inline bool matchStereoHit( const int itUV1, const int uv_zo
   return false;
 }
 
+// match stereo hits to x hits using triangle method
 __host__ __device__ inline bool matchStereoHitWithTriangle( const int itUV2, const int triangle_zone_offset_end, const float yInZone, const SciFi::SciFiHits& scifi_hits, const int xMinUV, const int xMaxUV, const int side ) {
   
   for (int stereoHit = itUV2; stereoHit != triangle_zone_offset_end; ++stereoHit) {

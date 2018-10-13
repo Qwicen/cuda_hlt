@@ -39,6 +39,8 @@
    *  2013-03-15 : Thomas Nikodem
    *  2015-02-13 : Sevda Esen [additional search in the triangles by Marian Stahl]
    *  2016-03-09 : Thomas Nikodem [complete restructuring]
+   *  2018-08    : Vava Gligorov [extract code from Rec, make compile within GPU framework
+   *  2018-09    : Dorothea vom Bruch [convert to CUDA, runs on GPU]
    */
 
 __global__ void PrForward(

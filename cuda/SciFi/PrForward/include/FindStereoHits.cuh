@@ -20,6 +20,17 @@
    which match to the VeloUT input track
  */
 
+__host__ __device__ void collectStereoHits(
+  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
+  SciFi::Tracking::Track& track,
+  MiniState velo_state,
+  SciFi::Tracking::HitSearchCuts& pars,
+  SciFi::Tracking::Arrays* constArrays,
+  float stereoCoords[SciFi::Tracking::max_stereo_hits],
+  int stereoHits[SciFi::Tracking::max_stereo_hits],
+  int& n_stereoHits);
+
 __host__ __device__ bool selectStereoHits(
   const SciFi::SciFiHits& scifi_hits,
   const SciFi::SciFiHitCount& scifi_hit_count,
@@ -41,14 +52,3 @@ __host__ __device__ bool addHitsOnEmptyStereoLayers(
   PlaneCounter& planeCounter,
   MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur);
-
-__host__ __device__ void collectStereoHits(
-  const SciFi::SciFiHits& scifi_hits,
-  const SciFi::SciFiHitCount& scifi_hit_count,
-  SciFi::Tracking::Track& track,
-  MiniState velo_state,
-  SciFi::Tracking::HitSearchCuts& pars,
-  SciFi::Tracking::Arrays* constArrays,
-  float stereoCoords[SciFi::Tracking::max_stereo_hits],
-  int stereoHits[SciFi::Tracking::max_stereo_hits],
-  int& n_stereoHits);

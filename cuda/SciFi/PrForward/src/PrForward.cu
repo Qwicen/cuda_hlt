@@ -104,10 +104,14 @@
 // 2013-03-15 : Thomas Nikodem
 // 2015-02-13 : Sevda Esen [additional search in the triangles by Marian Stahl]
 // 2016-03-09 : Thomas Nikodem [complete restructuring]
+// 2018-08    : Vava Gligorov [extract code from Rec, make compile within GPU framework
+// 2018-09    : Dorothea vom Bruch [convert to CUDA, runs on GPU]
 //-----------------------------------------------------------------------------
 
 //=============================================================================
 
+// Kernel to call Forward tracking on GPU
+// Loop over veloUT input tracks using threadIdx.x
 __global__ void PrForward(
   const uint* dev_scifi_hits,
   const uint32_t* dev_scifi_hit_count,
@@ -173,16 +177,13 @@ __global__ void PrForward(
         velo_state);
     }
   }
-
-  // if ( threadIdx.x == 0 ) {
-  //   printf("Found %u tracks in event %u \n", *n_scifi_tracks_event, event_number);
-  //   for ( int i_track = 0; i_track < *n_scifi_tracks_event; ++i_track ) {
-  //     printf("At event %u, track %u has %u hits \n", event_number, i_track, scifi_tracks_event[i_track].hitsNum );
-  //   }
-  // }
   
 }
 
+/* Look first in x layers, then in stereo layers for hits
+   do 1D Hough transform for x- and stereo hits
+   do global 1D Hough transform
+   use TMVAs to obtain track quality */
 __host__ __device__ void find_forward_tracks(
   const SciFi::SciFiHits& scifi_hits,
   const SciFi::SciFiHitCount& scifi_hit_count,

@@ -20,16 +20,16 @@ namespace SciFi{
   
   namespace Tracking {
 
-    const int max_candidate_tracks = 5;
-    const int max_tracks_second_loop = 5;
+    const int max_candidate_tracks = 5;   // max # of candidate tracks from x hits only
+    const int max_tracks_second_loop = 5; // same as above, but for second loop
     const int max_selected_tracks = max_candidate_tracks + max_tracks_second_loop;
-    const int max_x_hits = 500;
-    const int max_other_hits = 5;
-    const int max_stereo_hits = 25;
+    const int max_x_hits = 500;     // max # of hits in all x layers
+    const int max_other_hits = 5;   // max # of hits from x planes with more than 1 hit
+    const int max_stereo_hits = 25; // max # of hits in all stereo layers
     const int max_coordToFit = 15;  // only for x layers
     const int max_scifi_hits = 20;  // for x and u/v layers
     
-    const int nTrackParams = 9;
+    const int nTrackParams = 9;   
     
     const int TMVA_Nvars = 7;
     const int TMVA_Nlayers = 5;
@@ -100,6 +100,8 @@ namespace SciFi{
     
     struct Arrays {
       // the Magnet Parametrization
+      // parameterized in offset [0], (slope difference due to kick)^2 [1],
+      // tx^2 [2], ty^2 [3]
       const float        zMagnetParams[4]       = {5212.38, 406.609, -1102.35, -498.039};
       
       // more Parametrizations
