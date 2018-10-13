@@ -174,7 +174,7 @@ __host__ __device__ void collectAllXHits(
       xAtRef_SamePlaneHits(
         scifi_hits, allXHits,
         n_x_hits, coordX, xParams_seed, constArrays,
-        velo_state, iStart, iEnd); 
+        velo_state, zMag, iStart, iEnd); 
     }
     if ( n_x_hits >= SciFi::Tracking::max_x_hits )
       break; 

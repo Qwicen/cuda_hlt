@@ -21,7 +21,8 @@ __host__ __device__ void xAtRef_SamePlaneHits(
   float coordX[SciFi::Tracking::max_x_hits],
   const float xParams_seed[4],
   SciFi::Tracking::Arrays* constArrays,
-  MiniState velo_state, 
+  MiniState velo_state,
+  const float zMag, 
   int itH, int itEnd);
 
 __host__ __device__ bool fitXProjection(
