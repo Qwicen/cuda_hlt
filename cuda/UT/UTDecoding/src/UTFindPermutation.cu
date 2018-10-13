@@ -42,8 +42,8 @@ __global__ void ut_find_permutation(
   if (sector_group_number_of_hits > 0) {
     // Load yBegin into a shared memory container
     // TODO: Find a proper maximum and cover corner cases
-    __shared__ float s_y_begin [256];
-    assert(sector_group_number_of_hits < 256);
+    __shared__ float s_y_begin [UTDecoding::ut_max_hits_shared_sector_group];
+    assert(sector_group_number_of_hits < UTDecoding::ut_max_hits_shared_sector_group);
 
     for (int i=threadIdx.x; i<sector_group_number_of_hits; i+=blockDim.x) {
       s_y_begin[i] = ut_hits.yBegin[sector_group_offset + i];

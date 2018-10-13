@@ -18,7 +18,7 @@ __global__ void ut_decode_raw_banks_in_order(
   const uint32_t event_offset =
       dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
 
-  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
+  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[VeloUTTracking::n_layers];
 
   const UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
   UTHits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};

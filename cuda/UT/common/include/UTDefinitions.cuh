@@ -18,6 +18,7 @@ static constexpr int thre_offset = 15; // threshold
 static constexpr uint ut_number_of_sectors_per_board = 6;
 static constexpr uint ut_number_of_geometry_sectors = 1048;
 static constexpr uint ut_decoding_in_order_threads_x = 64;
+static constexpr uint ut_max_hits_shared_sector_group = 256;
 
 }
 
