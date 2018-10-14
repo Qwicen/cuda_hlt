@@ -168,7 +168,7 @@ __host__ __device__ void collectAllXHits(
       break; 
   }
 
-  // Sort hits by coord
+  // Sort hits by x on reference plane
   // not using thrust::sort due to "temporary_buffer::allocate: get_temporary_buffer failed" error
   // every time thrust::sort is called, cudaMalloc is called, apparently there can be trouble
   // doing this many times
@@ -176,7 +176,49 @@ __host__ __device__ void collectAllXHits(
   sortHitsByKey<SciFi::Tracking::max_x_hits>( coordX, n_x_hits, allXHits );
 }
 
+__host__ __device__ void improveXCluster(
+  int& it2,
+  const int it1,
+  const int itEnd,
+  const int n_x_hits,
+  const bool usedHits[SciFi::Tracking::max_x_hits],
+  const float coordX[SciFi::Tracking::max_x_hits],
+  const float xWindow,
+  const SciFi::Tracking::HitSearchCuts& pars,
+  PlaneCounter& planeCounter,
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const SciFi::SciFiHits& scifi_hits ) {
 
+   int itLast = it2 - 1;
+    while (it2 < itEnd) {
+      assert( it2 < n_x_hits );
+      if (usedHits[it2]) {
+        ++it2;
+        continue;
+      } 
+      //now  the first and last+1 hit exist and are not used!
+      
+      //Add next hit,
+      // if there is only a small gap between the hits
+      //    or inside window and plane is still empty
+      assert( it2 < itEnd );
+      if ( ( coordX[it2] < coordX[itLast] + pars.maxXGap ) || 
+           ( (coordX[it2] - coordX[it1] < xWindow) && 
+             (planeCounter.nbInPlane( scifi_hits.planeCode[allXHits[it2]]/2 )  == 0)
+             ) 
+         ) {
+        planeCounter.addHit( scifi_hits.planeCode[allXHits[it2]]/2 );
+        itLast = it2; 
+        ++it2;
+        continue;
+      }   
+      //Found nothing to improve
+      else {
+        break;
+      }
+    } 
+
+}
 
 //=========================================================================
 //  Select the zones in the allXHits array where we can have a track
@@ -205,6 +247,7 @@ __host__ __device__ void selectXCandidates(
     if ( n_candidate_tracks >= SciFi::Tracking::max_tracks_second_loop ) return;
   if ( !secondLoop )
     if ( n_candidate_tracks >= SciFi::Tracking::max_candidate_tracks ) return;
+  
   int itEnd = n_x_hits;
   const float xStraight = straightLineExtend(xParams_seed,SciFi::Tracking::zReference);
   int it1 = 0;
@@ -223,12 +266,10 @@ __host__ __device__ void selectXCandidates(
     while (it2 <= itEnd && usedHits[it2-1] ) ++it2;
     if (it2 > itEnd) break;
 
-    //define search window for Cluster
-    //TODO better xWindow calculation?? how to tune this???
-    const float xWindow = pars.maxXWindow + (fabsf(coordX[it1]) + 
-                                             fabsf(coordX[it1] - xStraight)
-                                             ) * pars.maxXWindowSlope;
-    
+    // Second part of 1D Hough transform:
+    // find a cluster of x positions on the reference plane that are close to each other
+    // TODO better xWindow calculation?? how to tune this???
+    const float xWindow = pars.maxXWindow + (fabsf(coordX[it1]) +  fabsf(coordX[it1] - xStraight) ) * pars.maxXWindowSlope;
     if ( (coordX[it2 - 1] - coordX[it1]) > xWindow ) {
       ++it1;
       continue;
@@ -242,37 +283,24 @@ __host__ __device__ void selectXCandidates(
         const int plane = scifi_hits.planeCode[allXHits[itH]]/2;
         planeCounter.addHit( plane );
       }
-    }   
-    // Improve cluster (at the moment only add hits to the right)
-    int itLast = it2 - 1;
-    while (it2 < itEnd) {
-      assert( it2 < n_x_hits );
-      if (usedHits[it2]) {
-        ++it2;
-        continue;
-      } 
-      //now  the first and last+1 hit exist and are not used!
-      
-      //Add next hit,
-      // if there is only a small gap between the hits
-      //    or inside window and plane is still empty
-      assert( it2 < itEnd );
-      if ( ( coordX[it2] < coordX[itLast] + pars.maxXGap ) || 
-           ( (coordX[it2] - coordX[it1] < xWindow) && 
-             (planeCounter.nbInPlane( scifi_hits.planeCode[allXHits[it2]]/2 )  == 0)
-             ) 
-         ) {
-        planeCounter.addHit( scifi_hits.planeCode[allXHits[it2]]/2 );
-        itLast = it2; 
-        ++it2;
-        continue;
-      }   
-      //Found nothing to improve
-      else {
-        break;
-      }
     }
 
+    // Improve cluster (at the moment only add hits to the right)
+    // to recover inefficiencies from requiring a stereo hit to
+    // be matched to an x-hit in the collectXHits step
+    improveXCluster(
+      it2,
+      it1,
+      itEnd,
+      n_x_hits,
+      usedHits,
+      coordX,
+      xWindow,
+      pars,
+      planeCounter,
+      allXHits,
+      scifi_hits);
+    
     //if not enough different planes, start again from the very beginning with next right hit
     if (planeCounter.nbDifferent < pars.minXHits) {
       ++it1;

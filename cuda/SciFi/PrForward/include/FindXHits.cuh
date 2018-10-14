@@ -36,6 +36,19 @@ __host__ __device__ void collectAllXHits(
   const float qop,
   int side);
 
+__host__ __device__ void improveXCluster(
+  int& it2,
+  const int it1,
+  const int itEnd,
+  const int n_x_hits,
+  const bool usedHits[SciFi::Tracking::max_x_hits],
+  const float coordX[SciFi::Tracking::max_x_hits],
+  const float xWindow,
+  const SciFi::Tracking::HitSearchCuts& pars,
+  PlaneCounter& planeCounter,
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const SciFi::SciFiHits& scifi_hits );
+
 __host__ __device__ void selectXCandidates(
   const SciFi::SciFiHits& scifi_hits,
   const SciFi::SciFiHitCount& scifi_hit_count,
