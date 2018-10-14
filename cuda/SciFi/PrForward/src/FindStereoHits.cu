@@ -154,7 +154,6 @@ __host__ __device__ bool selectStereoHits(
       n_trackStereoHits, planeCounter,
       velo_state, constArrays, pars)) continue;
    
-
     if(!addHitsOnEmptyStereoLayers(scifi_hits, scifi_hit_count, track, trackStereoHits, n_trackStereoHits, constArrays, planeCounter, velo_state, pars))continue;
     
     if(n_trackStereoHits < n_bestStereoHits) continue; //number of hits most important selection criteria!
@@ -252,39 +251,18 @@ __host__ __device__ bool addHitsOnEmptyStereoLayers(
     const float lower_bound_at = -dxTol - yZone * constArrays->uvZone_dxdy[zone] + xPred;
     int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]];
     int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[zone]];
-    int itH   = getLowerBound(scifi_hits.x0,lower_bound_at,uv_zone_offset_begin,uv_zone_offset_end);
-    int itEnd = uv_zone_offset_end;
-
-    assert( itH >= uv_zone_offset_begin && itH <= uv_zone_offset_end );
-    assert( itEnd >= uv_zone_offset_begin && itEnd <= uv_zone_offset_end );
+    int itBegin = getLowerBound(scifi_hits.x0,lower_bound_at,uv_zone_offset_begin,uv_zone_offset_end);
+    int itEnd   = uv_zone_offset_end;
     
-    int best = -1;
-    float bestChi2 = SciFi::Tracking::maxChi2Stereo;
-    if(triangleSearch){
-      for ( ; itEnd != itH; ++itH ) {
-        const float dx = scifi_hits.x0[itH] + yZone * scifi_hits.dxdy[itH] - xPred ;
-        if ( dx >  dxTol ) break;
-        if( yZone > scifi_hits.yMax[itH] + SciFi::Tracking::yTolUVSearch)continue;
-        if( yZone < scifi_hits.yMin[itH] - SciFi::Tracking::yTolUVSearch)continue;
-        const float chi2 = dx*dx*scifi_hits.w[itH];
-        if ( chi2 < bestChi2 ) {
-          bestChi2 = chi2;
-          best = itH;
-        }    
-      }    
-    }else{
-      //no triangle search, thus no min max check
-      for ( ; itEnd != itH; ++itH ) {
-        const float dx = scifi_hits.x0[itH] + yZone * scifi_hits.dxdy[itH] - xPred ;
-        if ( dx >  dxTol ) break;
-        const float chi2 = dx*dx*scifi_hits.w[itH];
-        if ( chi2 < bestChi2 ) {
-          bestChi2 = chi2;
-          best = itH;
-        }
-      }
-    }
-
+    int best = findBestStereoHitOnEmptyLayer(
+      itBegin,
+      itEnd,
+      scifi_hits,
+      yZone,
+      xPred,
+      dxTol,
+      triangleSearch);
+                          
     if ( -1 != best ) {
       assert( n_stereoHits < SciFi::Tracking::max_stereo_hits);
       stereoHits[n_stereoHits++] = best;

@@ -200,3 +200,12 @@ __host__ __device__ void cleanStereoHitCluster(
   float& sumCoord,
   PlaneCounter& planeCounter,
   const SciFi::SciFiHits& scifi_hits);
+
+__host__ __device__ int findBestStereoHitOnEmptyLayer(
+  const int itBegin,
+  const int itEnd,
+  const SciFi::SciFiHits& scifi_hits,
+  const float yZone,
+  const float xPred,
+  const float dxTol,
+  const bool triangleSearch);

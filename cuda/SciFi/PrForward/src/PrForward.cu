@@ -403,7 +403,6 @@ __host__ __device__ void selectFullCandidates(
       pars.minStereoHits = SciFi::Tracking::minTotalHits - cand->hitsNum;
     }
     
-    // search for hits in U/V layers
     int stereoHits[SciFi::Tracking::max_stereo_hits];
     int n_stereoHits = 0;
     float stereoCoords[SciFi::Tracking::max_stereo_hits];
@@ -414,8 +413,7 @@ __host__ __device__ void selectFullCandidates(
       stereoHits, n_stereoHits);
 
     if(n_stereoHits < pars.minStereoHits) continue;
-   
-    // select best U/V hits
+    
     if ( !selectStereoHits(
       scifi_hits, scifi_hit_count,
       *cand, constArrays,
@@ -428,7 +426,7 @@ __host__ __device__ void selectFullCandidates(
       planeCounter.addHit( scifi_hits.planeCode[hit]/2 );
     }
     
-    //make a fit of ALL hits
+    //make a fit of ALL hits using their x coordinate
     if(!quadraticFitX(scifi_hits, cand->trackParams, cand->hit_indices, cand->hitsNum, planeCounter, pars))continue;
  
     //track has enough hits, calcualte quality and save if good enough
