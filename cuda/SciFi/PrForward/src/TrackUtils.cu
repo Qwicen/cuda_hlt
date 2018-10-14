@@ -115,8 +115,10 @@ __host__ __device__ float chi2XHit(
    return hitdist*hitdist*scifi_hits.w[hit];
 }
 
-
-__host__ __device__ bool fitXProjection(
+// the track parameterization is cubic in (z-zRef),
+// however only the first three parametres are varied in this fit only
+// -> this is a quadratic fit
+__host__ __device__ bool quadraticFitX(
   const SciFi::SciFiHits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams],
   int coordToFit[SciFi::Tracking::max_coordToFit],
@@ -133,8 +135,7 @@ __host__ __device__ bool fitXProjection(
     
     float maxChi2 = 0.f; 
     float totChi2 = 0.f;  
-    //int   nDoF = -3; // fitted 3 parameters
-    int  nDoF = -3;
+    int   nDoF = -3; // fitted 3 parameters
     const bool notMultiple = planeCounter.nbDifferent == n_coordToFit;
 
     int worst = n_coordToFit;

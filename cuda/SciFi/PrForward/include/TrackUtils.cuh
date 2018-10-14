@@ -65,7 +65,7 @@ __host__ __device__ float chi2XHit(
   const SciFi::SciFiHits& scifi_hits,
   const int hit );
 
-__host__ __device__ bool fitXProjection(
+__host__ __device__ bool quadraticFitX(
   const SciFi::SciFiHits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams],
   int coordToFit[SciFi::Tracking::max_coordToFit],

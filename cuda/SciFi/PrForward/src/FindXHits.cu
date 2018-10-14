@@ -416,8 +416,10 @@ __host__ __device__ void selectXCandidates(
       ok = planeCounter.nbDifferent > 3;
     }
     // == Fit and remove hits...
+    // track described by cubic function, but fitting only first three parameters here
+    // -> quadratic fit
     // to do: remove outlier from usedHits
-    if (ok) ok = fitXProjection(scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
+    if (ok) ok = quadraticFitX(scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
     if (ok) ok = trackParameters[7]/trackParameters[8] < SciFi::Tracking::maxChi2PerDoF;
     if (ok )
       ok = addHitsOnEmptyXLayers(
@@ -426,10 +428,7 @@ __host__ __device__ void selectXCandidates(
         true, coordToFit, n_coordToFit, 
         constArrays, planeCounter, pars, side);
     if (ok) {
-      //set ModPrHits used , challenge in c++: we don't have the link any more!
-      //here it is fairly trivial... :)
-      //Do we really need isUsed in Forward? We can otherwise speed up the search quite a lot!
-      // --> we need it for the second loop
+      // save track properties in track object
       SciFi::Tracking::Track track;
       track.state_endvelo.x = velo_state.x;
       track.state_endvelo.y = velo_state.y;
@@ -447,7 +446,6 @@ __host__ __device__ void selectXCandidates(
         track.addHit( hit );
       }
       if ( !secondLoop ) {
-        
         assert( n_candidate_tracks < SciFi::Tracking::max_candidate_tracks );
         candidate_tracks[n_candidate_tracks++] = track;
       }  
@@ -530,7 +528,7 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
   }
   if ( !added ) return true;
   if ( fullFit ) {
-    return fitXProjection(scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
+    return quadraticFitX(scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
   }
   fastLinearFit( scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter, pars);
   return true;

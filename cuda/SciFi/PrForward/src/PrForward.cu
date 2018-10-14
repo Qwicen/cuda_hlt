@@ -429,7 +429,7 @@ __host__ __device__ void selectFullCandidates(
     }
     
     //make a fit of ALL hits
-    if(!fitXProjection(scifi_hits, cand->trackParams, cand->hit_indices, cand->hitsNum, planeCounter, pars))continue;
+    if(!quadraticFitX(scifi_hits, cand->trackParams, cand->hit_indices, cand->hitsNum, planeCounter, pars))continue;
  
     //track has enough hits, calcualte quality and save if good enough
     if(planeCounter.nbDifferent >= SciFi::Tracking::minTotalHits){
