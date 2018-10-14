@@ -8,6 +8,7 @@ include_directories(../../../cuda/event_model/velo/include)
 include_directories(../../../cuda/event_model/common/include)
 include_directories(../../../main/include)
 include_directories(../../../cuda/SciFi/common/include)
+include_directories(../../../cuda/Muon/common/include)
 include_directories(../../../checker/tracking/include)
 
 file(GLOB x86VeloUT_cpp "src/*cpp")
