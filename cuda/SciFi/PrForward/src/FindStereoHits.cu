@@ -38,47 +38,33 @@ __host__ __device__ void collectStereoHits(
     // -> only continue if yZone is in the correct half
     if(!triangleSearch && (2.f*float(((constArrays->uvZones[zone])%2)==0)-1.f) * yZone > 0.f) continue;
 
-    //float dxDySign = 1.f - 2.f *(float)(zone.dxDy()<0); // same as ? zone.dxDy()<0 : -1 : +1 , but faster??!!
     const float dxDySign = constArrays->uvZone_dxdy[zone] < 0 ? -1.f : 1.f;
-    const float seed_x_at_zZone = velo_state.x + (zZone - velo_state.z) * velo_state.tx;//Cached as we are upgrading one at a time, revisit
+    const float seed_x_at_zZone = xFromVelo( zZone, velo_state );
     const float dxTol = SciFi::Tracking::tolY + SciFi::Tracking::tolYSlope * (fabsf(xPred - seed_x_at_zZone) + fabsf(yZone));
 
-    // -- Use a binary search to find the lower bound of the range of x values
-    // -- This takes the y value into account
+    // find stereo hits whose x coordinate is within xTol of the prediction
+    // from the candidate track
+    // This takes the y value (max, min) into account
     const float lower_bound_at = -dxTol - yZone * constArrays->uvZone_dxdy[zone] + xPred;
     int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]];
     int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[zone]];
     
-    int itH   = getLowerBound(scifi_hits.x0, lower_bound_at, uv_zone_offset_begin, uv_zone_offset_end);
-    int itEnd = uv_zone_offset_end;
+    int itBegin = getLowerBound(scifi_hits.x0, lower_bound_at, uv_zone_offset_begin, uv_zone_offset_end);
+    int itEnd   = uv_zone_offset_end;
 
-    assert( itH >= uv_zone_offset_begin && itH <= uv_zone_offset_end );
-    assert( itEnd >= uv_zone_offset_begin && itEnd <= uv_zone_offset_end );
-    assert( itH <= itEnd );
+    findStereoHitsWithinXTol(
+      itBegin,
+      itEnd,
+      scifi_hits,
+      yZone,
+      xPred,
+      dxTol,
+      triangleSearch,
+      dxDySign,
+      n_stereoHits,
+      stereoCoords,
+      stereoHits);
     
-    if(triangleSearch){
-      for ( ; itEnd != itH; ++itH ) {
-        const float dx = scifi_hits.x0[itH] + yZone * scifi_hits.dxdy[itH] - xPred ;
-        if ( dx >  dxTol ) break;
-        if( yZone > scifi_hits.yMax[itH] + SciFi::Tracking::yTolUVSearch)continue;
-        if( yZone < scifi_hits.yMin[itH] - SciFi::Tracking::yTolUVSearch)continue;
-        if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits )
-          break;
-        assert( n_stereoHits < SciFi::Tracking::max_stereo_hits );
-        stereoHits[n_stereoHits] = itH;
-        stereoCoords[n_stereoHits++] = dx*dxDySign;
-      }
-    }else{ //no triangle search, thus no min max check
-      for ( ; itEnd != itH; ++itH ) {
-        const float dx = scifi_hits.x0[itH] + yZone * scifi_hits.dxdy[itH] - xPred ;
-        if ( dx >  dxTol ) break;
-        if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits )
-          break;
-        assert( n_stereoHits < SciFi::Tracking::max_stereo_hits );
-        stereoHits[n_stereoHits] = itH;
-        stereoCoords[n_stereoHits++] = dx*dxDySign;
-      }
-    }
     if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits )
       break;
   }

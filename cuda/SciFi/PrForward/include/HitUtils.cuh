@@ -166,3 +166,16 @@ __host__ __device__ void removeOutlier(
   int* coordToFit,
   int& n_coordToFit,
   const int worst );
+
+__host__ __device__ void findStereoHitsWithinXTol(
+  const int itBegin,
+  const int itEnd,
+  const SciFi::SciFiHits& scifi_hits,
+  const float yZone,
+  const float xPred,
+  const float dxTol,
+  const bool triangleSearch,
+  const float dxDySign,
+  int& n_stereoHits,
+  float stereoCoords[SciFi::Tracking::max_stereo_hits],
+  int stereoHits[SciFi::Tracking::max_stereo_hits]);
