@@ -12,7 +12,6 @@
 #include "SciFiDefinitions.cuh"
 #include "TrackUtils.cuh"
 #include "HitUtils.cuh"
-#include "HoughTransform.cuh"
 #include "PrVeloUT.cuh"
 
 /**

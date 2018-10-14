@@ -100,7 +100,7 @@ __host__ __device__ void collectAllXHits(
     const int itEnd = getLowerBound(scifi_hits.x0,xMax,x_zone_offset_begin,x_zone_offset_end);
     assert( itH >=  x_zone_offset_begin && itH <= x_zone_offset_end );
     assert( itEnd >=  x_zone_offset_begin && itEnd <= x_zone_offset_end );
-    
+
     // Skip making range but continue if the end is before or equal to the start
     if (!(itEnd > itH)) continue; 
  
@@ -156,6 +156,8 @@ __host__ __device__ void collectAllXHits(
 
     // project x of all hits to reference plane
     // save it in coordX
+    // -> first step of 1D Hough transform,
+    // select clusters of x hits on reference plane in selectXCandidates
     if ( iStart < iEnd ) {
       xAtRef_SamePlaneHits(
         scifi_hits, allXHits,
@@ -167,7 +169,7 @@ __host__ __device__ void collectAllXHits(
   }
 
   // Sort hits by coord
-  // not using thrust::sort due to "temporary_buffer::allocate: get_temporary_buffer failed" erro
+  // not using thrust::sort due to "temporary_buffer::allocate: get_temporary_buffer failed" error
   // every time thrust::sort is called, cudaMalloc is called, apparently there can be trouble
   // doing this many times
   //thrust::sort_by_key(thrust::seq, coordX, coordX + n_x_hits, allXHits); 

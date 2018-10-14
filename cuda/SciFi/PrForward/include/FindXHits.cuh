@@ -15,7 +15,7 @@
 #include "TrackUtils.cuh"
 #include "HitUtils.cuh"
 #include "LinearFitting.cuh"
-#include "HoughTransform.cuh"
+#include "ReferencePlaneProjection.cuh"
 #include "PrVeloUT.cuh"
 
 /**

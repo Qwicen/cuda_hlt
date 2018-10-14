@@ -24,7 +24,6 @@
 #include "TrackUtils.cuh"
 #include "LinearFitting.cuh"
 #include "HitUtils.cuh"
-#include "HoughTransform.cuh"
 #include "FindXHits.cuh"
 #include "FindStereoHits.cuh"
 #include "VeloEventModel.cuh"

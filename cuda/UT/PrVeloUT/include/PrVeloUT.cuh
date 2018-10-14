@@ -13,7 +13,6 @@
 #include "PrVeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "UTDefinitions.cuh"
-//#include "SciFiDefinitions.cuh"
 #include "VeloConsolidated.cuh"
 #include "VeloEventModel.cuh"
 
