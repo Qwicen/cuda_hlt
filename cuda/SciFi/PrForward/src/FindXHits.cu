@@ -274,16 +274,9 @@ __host__ __device__ void selectXCandidates(
       ++it1;
       continue;
     }
- 
-    // Cluster candidate found, now count planes
-    planeCounter.clear();
-    for (int itH = it1; itH != it2; ++itH) {
-      assert( itH < n_x_hits );
-      if (!usedHits[itH]) {
-        const int plane = scifi_hits.planeCode[allXHits[itH]]/2;
-        planeCounter.addHit( plane );
-      }
-    }
+
+    // find out which planes are present in the cluster
+    countPlanesOfXHits(planeCounter, it1, it2, n_x_hits, allXHits, usedHits, scifi_hits);
 
     // Improve cluster (at the moment only add hits to the right)
     // to recover inefficiencies from requiring a stereo hit to

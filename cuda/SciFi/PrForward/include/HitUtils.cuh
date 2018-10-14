@@ -45,6 +45,15 @@ struct PlaneCounter{
   
 };
 
+__host__ __device__ void countPlanesOfXHits(
+  PlaneCounter& planeCounter,
+  const int it1,
+  const int it2,
+  const int n_x_hits,
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const bool usedHits[SciFi::Tracking::max_x_hits],
+  const SciFi::SciFiHits& scifi_hits );
+
 template<int N> __host__ __device__  void sortHitsByKey( float* keys, int n, int* hits ) {
    // find permutations
   uint permutations[N];
