@@ -28,7 +28,7 @@ namespace Muon {
       float m_z[Constants::max_numhits_per_event] = {0}; 
       float m_dz[Constants::max_numhits_per_event] = {0}; 
       int m_uncrossed[Constants::max_numhits_per_event] = {0};
-      unsigined int m_time[Constants::max_numhits_per_event] = {0};
+      unsigned int m_time[Constants::max_numhits_per_event] = {0};
       int m_delta_time[Constants::max_numhits_per_event] = {0};
       int m_cluster_size[Constants::max_numhits_per_event] = {0};
            
