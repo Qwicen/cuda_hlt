@@ -46,7 +46,7 @@ void printUsage(char* argv[]){
     << std::endl << " -m {reserve Megabytes}=1024"
     << std::endl << " -v {verbosity}=3 (info)"
     << std::endl << " -p (print memory usage)"
-    << std::endl << " -x {run algorithms on x86 architecture as well (if possible)}=0"
+    << std::endl << " -x {run algorithms on x86 architecture if implementation is available}=0"
     << std::endl;
 }
 
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
-    << " run algorithms on x86 architecture as well (-x): " << run_on_x86 << std::endl
+    << " run algorithms on x86 architecture if implementation is available (-x): " << run_on_x86 << std::endl
     << " print memory usage (-p): " << print_memory_usage << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl

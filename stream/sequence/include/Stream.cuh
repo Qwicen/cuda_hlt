@@ -108,13 +108,32 @@ struct Stream {
     const uint* host_ut_event_offsets,
     const size_t host_ut_events_size,
     const size_t host_ut_event_offsets_size,
-    char* host_scifi_events,
-    uint* host_scifi_event_offsets,
+    const char* host_scifi_events,
+    const uint* host_scifi_event_offsets,
     const size_t scifi_events_size,
     const size_t scifi_event_offsets_size,
     const uint number_of_events,
     const uint number_of_repetitions
   );
+
+  cudaError_t run_sequence_on_x86(
+    const uint i_stream,
+    const char* host_velopix_events,
+    const uint* host_velopix_event_offsets,
+    const size_t host_velopix_events_size,
+    const size_t host_velopix_event_offsets_size,
+    const char* host_ut_events,
+    const uint* host_ut_event_offsets,
+    const size_t host_ut_events_size,
+    const size_t host_ut_event_offsets_size,
+    const char* host_scifi_events,
+    const uint* host_scifi_event_offsets,
+    const size_t scifi_events_size,
+    const size_t scifi_event_offsets_size,
+    const uint number_of_events,
+    const uint number_of_repetitions
+  );
+  
 
   void print_timing(
     const uint number_of_events,

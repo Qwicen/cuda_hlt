@@ -5,7 +5,10 @@
 #include <fstream>
 #include <iomanip>
 
-cudaError_t Stream::run_sequence(
+// run those algorithms that have an x86 implementation on x86
+// run all others on the GPU
+// copy necessary input for x86 algorithms from device to host
+cudaError_t Stream::run_sequence_on_x86(
   const uint i_stream,
   const char* host_velopix_events,
   const uint* host_velopix_event_offsets,
@@ -567,43 +570,32 @@ cudaError_t Stream::run_sequence(
       arguments.offset<arg::dev_scifi_hit_permutations>()
     );
     sequence.invoke<seq::scifi_sort_by_x>();
- 
-    // SciFi tracking
-    arguments.set_size<arg::dev_scifi_tracks>(number_of_events * SciFi::max_tracks);
-    arguments.set_size<arg::dev_n_scifi_tracks>(number_of_events);
-    scheduler.setup_next(arguments, sequence_step++);
-    sequence.set_opts<seq::PrForward>(dim3(number_of_events), dim3(32), stream);
-
-    sequence.set_arguments<seq::PrForward>(
-      arguments.offset<arg::dev_scifi_hits>(),
-      arguments.offset<arg::dev_scifi_hit_count>(),
-      arguments.offset<arg::dev_atomics_storage>(),
-      arguments.offset<arg::dev_velo_track_hit_number>(),
-      arguments.offset<arg::dev_velo_states>(),
-      arguments.offset<arg::dev_veloUT_tracks>(),
-      arguments.offset<arg::dev_atomics_veloUT>(),
-      arguments.offset<arg::dev_scifi_tracks>(),
-      arguments.offset<arg::dev_n_scifi_tracks>(),
-      constants.dev_scifi_tmva1,
-      constants.dev_scifi_tmva2,
-      constants.dev_scifi_constArrays
-    );
-    sequence.invoke<seq::PrForward>(); 
-            
-
-    // Transmission device to host
-    // SciFi tracks
-    cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, arguments.offset<arg::dev_n_scifi_tracks>(), arguments.size<arg::dev_n_scifi_tracks>(), cudaMemcpyDeviceToHost, stream));
-    cudaCheck(cudaMemcpyAsync(host_scifi_tracks, arguments.offset<arg::dev_scifi_tracks>(), arguments.size<arg::dev_scifi_tracks>(), cudaMemcpyDeviceToHost, stream));
 
     // Synchronize
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
 
     cudaProfilerStop();
-
-    cudaEventRecord(cuda_generic_event, stream);
-    cudaEventSynchronize(cuda_generic_event);
+    
+    /* Run Forward on x86 architecture  */
+    std::vector< trackChecker::Tracks > forward_tracks_events;
+    std::vector<uint> host_scifi_hits (total_scifi_hits_size);
+    std::vector<uint> host_scifi_hit_count (2 * number_of_events * SciFi::Constants::n_zones + 1);
+    
+    cudaCheck(cudaMemcpyAsync(host_scifi_hits.data(), arguments.offset<arg::dev_scifi_hits>(), arguments.size<arg::dev_scifi_hits>(), cudaMemcpyDeviceToHost, stream ));
+    cudaCheck(cudaMemcpyAsync(host_scifi_hit_count.data(), arguments.offset<arg::dev_scifi_hit_count>(), arguments.size<arg::dev_scifi_hit_count>(), cudaMemcpyDeviceToHost, stream ));
+        
+    int rv = run_forward_on_CPU(
+      forward_tracks_events,
+      host_scifi_hits.data(),
+      host_scifi_hit_count.data(),
+      host_velo_tracks_atomics,
+      host_velo_track_hit_number,
+      (uint*)host_velo_states,
+      host_veloUT_tracks,
+      host_atomics_veloUT,
+      number_of_events );
+            
 
     ///////////////////////
     // Monte Carlo Check //
@@ -634,32 +626,27 @@ cudaError_t Stream::run_sequence(
           number_of_events
         );
 
-        std::cout << "Checking VeloUT tracks reconstructed on GPU" << std::endl;
-        trackType = "VeloUT";
-        call_pr_checker (
-          veloUT_tracks,
-          folder_name_MC,
-          start_event_offset,
-          trackType
-        ); 
-
-        /* CHECKING Scifi TRACKS */
-        const std::vector< trackChecker::Tracks > scifi_tracks = prepareForwardTracks(
-          host_scifi_tracks,
-          host_n_scifi_tracks,
-          number_of_events
-        );
+         std::cout << "Checking VeloUT tracks reconstructed on GPU" << std::endl;
+         trackType = "VeloUT";
+         call_pr_checker (
+           veloUT_tracks,
+           folder_name_MC,
+           start_event_offset,
+           trackType); 
         
-        std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
+        /* CHECKING Scifi TRACKS */
+        std::cout << "Checking Forward tracks reconstructed on CPU" << std::endl;
         trackType = "Forward";
         call_pr_checker (
-          scifi_tracks,
+          forward_tracks_events,
           folder_name_MC,
           start_event_offset,
           trackType);
-            
+        
       } // only in first repetition
     } // do_check
+    // only execute once: not for performance, only for cross-check with GPU results 
+    break;
   } // repetitions
 
   return cudaSuccess;

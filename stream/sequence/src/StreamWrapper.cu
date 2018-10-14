@@ -70,23 +70,44 @@ void StreamWrapper::run_stream(
   const uint number_of_repetitions
 ) {
   auto& s = *(streams[i]);
-  s.run_sequence(
-    i,
-    host_velopix_events,
-    host_velopix_event_offsets,
-    velopix_events_size,
-    velopix_event_offsets_size,
-    host_ut_events,
-    host_ut_event_offsets,
-    ut_events_size,
-    ut_event_offsets_size,
-    host_scifi_events,
-    host_scifi_event_offsets,
-    scifi_events_size,
-    scifi_event_offsets_size,
-    number_of_events,
-    number_of_repetitions
-  );
+  if ( s.run_on_x86 ) {
+    s.run_sequence_on_x86(
+      i,
+      host_velopix_events,
+      host_velopix_event_offsets,
+      velopix_events_size,
+      velopix_event_offsets_size,
+      host_ut_events,
+      host_ut_event_offsets,
+      ut_events_size,
+      ut_event_offsets_size,
+      host_scifi_events,
+      host_scifi_event_offsets,
+      scifi_events_size,
+      scifi_event_offsets_size,
+      number_of_events,
+      number_of_repetitions
+    );
+  }
+  else {
+    s.run_sequence(
+      i,
+      host_velopix_events,
+      host_velopix_event_offsets,
+      velopix_events_size,
+      velopix_event_offsets_size,
+      host_ut_events,
+      host_ut_event_offsets,
+      ut_events_size,
+      ut_event_offsets_size,
+      host_scifi_events,
+      host_scifi_event_offsets,
+      scifi_events_size,
+      scifi_event_offsets_size,
+      number_of_events,
+      number_of_repetitions
+    );
+  }
 }
 
 StreamWrapper::~StreamWrapper() {
