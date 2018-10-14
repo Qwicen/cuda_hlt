@@ -17,6 +17,7 @@ __host__ __device__ void collectStereoHits(
 {
   
   for ( int zone = 0; zone < SciFi::Constants::n_layers; ++zone ) {
+    // get yZone and xPred: x and y values at z of layer based on candidate track parameters
     const float parsX[4] = {track.trackParams[0],
                             track.trackParams[1],
                             track.trackParams[2],
@@ -89,7 +90,6 @@ __host__ __device__ bool selectStereoHits(
   MiniState velo_state, 
   SciFi::Tracking::HitSearchCuts& pars)
 {
-  //why do we rely on xRef? --> coord is NOT xRef for stereo HITS!
   int bestStereoHits[SciFi::Tracking::max_stereo_hits];
   int n_bestStereoHits = 0;
   float originalYParams[3] = {track.trackParams[4],
@@ -98,7 +98,7 @@ __host__ __device__ bool selectStereoHits(
   float bestYParams[3];
   float bestMeanDy = 1e9f;
 
-  if(pars.minStereoHits > n_stereoHits) return false; //otherwise crash if minHits is too large
+  if(pars.minStereoHits > n_stereoHits) return false; 
   int endLoop = n_stereoHits - pars.minStereoHits;
   
   PlaneCounter planeCounter;
@@ -113,49 +113,28 @@ __host__ __device__ bool selectStereoHits(
       first_hit = 0;
     else
       first_hit = endRange-1;
-    
-    while( planeCounter.nbDifferent < pars.minStereoHits ||
-           stereoCoords[ endRange ] < stereoCoords[ first_hit] + SciFi::Tracking::minYGap && endRange < n_stereoHits - 1) {
-      planeCounter.addHit( scifi_hits.planeCode[ stereoHits[endRange] ] / 2 );
-          sumCoord += stereoCoords[ endRange ];
-          ++endRange;
-          if ( endRange == n_stereoHits - 1 ) break;
-          first_hit = endRange-1;
-    }
 
-    assert( beginRange < endLoop );
-    assert( endRange < n_stereoHits );
-    
-    //clean cluster
-    while ( endRange < n_stereoHits - 1 ) {
-      const float averageCoord = sumCoord / float(endRange-beginRange);
-      
-      // remove first if not single and farthest from mean
-      if ( planeCounter.nbInPlane( scifi_hits.planeCode[ stereoHits[beginRange] ]/2 ) > 1 &&
-           ((averageCoord - stereoCoords[ beginRange ]) > 1.0f * 
-            (stereoCoords[ endRange-1 ] - averageCoord)) ) {
+    findStereoHitClusterByDx(
+      planeCounter,
+      endRange,
+      pars,
+      stereoCoords,
+      stereoHits,
+      n_stereoHits,
+      scifi_hits,
+      sumCoord,
+      first_hit );
 
-        planeCounter.removeHit( scifi_hits.planeCode[ stereoHits[beginRange] ]/2 );
-        sumCoord -= stereoCoords[ beginRange ];
-        beginRange++;
-        continue;
-      }
-
-      if(endRange == n_stereoHits -1 ) break; //already at end, cluster cannot be expanded anymore
-      //add next, if it decreases the range size and is empty
-      if ( (planeCounter.nbInPlane( scifi_hits.planeCode[ stereoHits[beginRange] ]/2 ) == 0) ) {
-        if ( (averageCoord - stereoCoords[ beginRange ] > stereoCoords[ endRange ] - averageCoord ) ) {
-          planeCounter.addHit( scifi_hits.planeCode[ stereoHits[endRange] ]/2 );
-          sumCoord += stereoCoords[ endRange];
-          endRange++;
-          continue;
-        }
-      }
-      
-      break;
-    }
-
-    
+    cleanStereoHitCluster(
+      beginRange,
+      endRange,
+      n_stereoHits,
+      stereoHits,
+      stereoCoords,
+      sumCoord,
+      planeCounter,
+      scifi_hits ); 
+        
     //Now we have a candidate, lets fit him
     // track = original; //only yparams are changed
     track.trackParams[4] = originalYParams[0];
@@ -164,7 +143,6 @@ __host__ __device__ bool selectStereoHits(
    
     int trackStereoHits[SciFi::Tracking::max_stereo_hits];
     int n_trackStereoHits = 0;
-
     assert( endRange < n_stereoHits );
     for ( int range = beginRange; range < endRange; ++range ) {
       trackStereoHits[n_trackStereoHits++] = stereoHits[range];

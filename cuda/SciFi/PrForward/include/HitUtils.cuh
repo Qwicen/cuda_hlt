@@ -179,3 +179,24 @@ __host__ __device__ void findStereoHitsWithinXTol(
   int& n_stereoHits,
   float stereoCoords[SciFi::Tracking::max_stereo_hits],
   int stereoHits[SciFi::Tracking::max_stereo_hits]);
+
+__host__ __device__ void findStereoHitClusterByDx(
+  PlaneCounter& planeCounter,
+  int& endRange,
+  const SciFi::Tracking::HitSearchCuts& pars,
+  float stereoCoords[SciFi::Tracking::max_stereo_hits],
+  int stereoHits[SciFi::Tracking::max_stereo_hits],
+  const int n_stereoHits,
+  const SciFi::SciFiHits& scifi_hits,
+  float& sumCoord,
+  int& first_hit);
+
+__host__ __device__ void cleanStereoHitCluster(
+  int& beginRange,
+  int& endRange,
+  const int n_stereoHits,
+  const int stereoHits[SciFi::Tracking::max_stereo_hits],
+  const float stereoCoords[SciFi::Tracking::max_stereo_hits],
+  float& sumCoord,
+  PlaneCounter& planeCounter,
+  const SciFi::SciFiHits& scifi_hits);
