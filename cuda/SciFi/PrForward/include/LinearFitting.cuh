@@ -43,6 +43,14 @@ __host__ __device__ void fitHitsFromSingleHitPlanes(
   int otherHits[SciFi::Constants::n_layers][SciFi::Tracking::max_other_hits],
   int nOtherHits[SciFi::Constants::n_layers] );
 
+__host__ __device__ void addAndFitHitsFromMultipleHitPlanes(
+  const int nOtherHits[SciFi::Constants::n_layers],
+  SciFi::Tracking::LineFitterPars& lineFitParameters,
+  const SciFi::SciFiHits& scifi_hits,
+  const float coordX[SciFi::Tracking::max_x_hits],
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const int otherHits[SciFi::Constants::n_layers][SciFi::Tracking::max_other_hits]);
+
 __host__ __device__ float getLineFitDistance(
   SciFi::Tracking::LineFitterPars &parameters,
   const SciFi::SciFiHits& scifi_hits,

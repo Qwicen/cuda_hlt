@@ -334,24 +334,15 @@ __host__ __device__ void selectXCandidates(
         otherHits, nOtherHits );
       
       //select best other hits (only best other hit is enough!)
-      for(int i = 0; i < SciFi::Constants::n_layers; i++){ 
-        if(nOtherHits[i] == 0) continue;
+      // include them in fit
+      addAndFitHitsFromMultipleHitPlanes(
+        nOtherHits,
+        lineFitParameters,
+        scifi_hits,
+        coordX,
+        allXHits,
+        otherHits);
         
-        float bestChi2 = 1e9f;
-      
-        int best = -1;
-        for( int hit = 0; hit < nOtherHits[i]; ++hit ){
-          const float chi2 = getLineFitChi2(lineFitParameters, scifi_hits, coordX, allXHits, otherHits[i][hit] );
-          if( chi2 < bestChi2 ){
-            bestChi2 = chi2;
-            best = hit;
-          }
-        }
-        if ( best > -1 ) {
-          incrementLineFitParameters(lineFitParameters, scifi_hits, coordX, allXHits,  otherHits[i][best]);
-        }
-      }
-      solveLineFit(lineFitParameters);
       
       xAtRef = lineFitParameters.m_c0; //Used to be a helper function now a straight access
     } else { // start magical second part

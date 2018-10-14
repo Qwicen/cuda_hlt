@@ -5,21 +5,21 @@
  */
 
 __host__ __device__ float getLineFitDistance(
-  SciFi::Tracking::LineFitterPars &parameters,
+  const SciFi::Tracking::LineFitterPars& parameters,
   const SciFi::SciFiHits& scifi_hits,
-  float coordX[SciFi::Tracking::max_x_hits],
-  int allXHits[SciFi::Tracking::max_x_hits],
-  int it )
+  const float coordX[SciFi::Tracking::max_x_hits],
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const int it )
 { 
   return coordX[it] - (parameters.m_c0 + (scifi_hits.z0[ allXHits[it] ] - parameters.m_z0) * parameters.m_tc);
 }
 
 __host__ __device__ float getLineFitChi2(
-  SciFi::Tracking::LineFitterPars &parameters,
+  const SciFi::Tracking::LineFitterPars& parameters,
   const SciFi::SciFiHits& scifi_hits,
-  float coordX[SciFi::Tracking::max_x_hits],
-  int allXHits[SciFi::Tracking::max_x_hits],
-  int it) {
+  const float coordX[SciFi::Tracking::max_x_hits],
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const int it) {
   float d = getLineFitDistance( parameters, scifi_hits, coordX, allXHits, it ); 
   return d * d * coordX[it]; 
 }
@@ -75,7 +75,33 @@ __host__ __device__ void fitHitsFromSingleHitPlanes(
     }
   }
   solveLineFit(lineFitParameters);
+}
 
+__host__ __device__ void addAndFitHitsFromMultipleHitPlanes(
+  const int nOtherHits[SciFi::Constants::n_layers],
+  SciFi::Tracking::LineFitterPars& lineFitParameters,
+  const SciFi::SciFiHits& scifi_hits,
+  const float coordX[SciFi::Tracking::max_x_hits],
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const int otherHits[SciFi::Constants::n_layers][SciFi::Tracking::max_other_hits]) {
+
+  for(int i = 0; i < SciFi::Constants::n_layers; i++){ 
+    if(nOtherHits[i] == 0) continue;
+    
+    float bestChi2 = 1e9f;
+    int best = -1;
+    for( int hit = 0; hit < nOtherHits[i]; ++hit ){
+      const float chi2 = getLineFitChi2(lineFitParameters, scifi_hits, coordX, allXHits, otherHits[i][hit] );
+      if( chi2 < bestChi2 ){
+        bestChi2 = chi2;
+        best = hit;
+      }
+    }
+    if ( best > -1 ) {
+      incrementLineFitParameters(lineFitParameters, scifi_hits, coordX, allXHits,  otherHits[i][best]);
+    }
+  }
+  solveLineFit(lineFitParameters);
 }
 
 __host__ __device__ void fastLinearFit(
