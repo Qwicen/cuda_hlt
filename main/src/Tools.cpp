@@ -102,6 +102,7 @@ void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
                                  const int n_events ) {
   
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
+
     const char* raw_input = events.data() + event_offsets[i_event];      
     std::copy_n((int*) raw_input, Muon::Constants::n_stations, muon_station_hits[i_event].m_number_of_hits_per_station);
     raw_input += sizeof(int) * Muon::Constants::n_stations;
@@ -117,9 +118,37 @@ void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
 
       std::copy_n((int*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_tile[station_offset]) );
       raw_input += sizeof(int) * number_of_hits;
-      
+
+      std::copy_n((float*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_x[station_offset]) );
+      raw_input += sizeof(int) * number_of_hits;
+
+      std::copy_n((float*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_dx[station_offset]) );
+      raw_input += sizeof(int) * number_of_hits;
+
+      std::copy_n((float*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_y[station_offset]) );
+      raw_input += sizeof(int) * number_of_hits;
+
+      std::copy_n((float*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_dy[station_offset]) );
+      raw_input += sizeof(int) * number_of_hits;
+
+      std::copy_n((float*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_z[station_offset]) );
+      raw_input += sizeof(int) * number_of_hits;
+
+      std::copy_n((float*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_dz[station_offset]) );
+      raw_input += sizeof(int) * number_of_hits;
+
+      std::copy_n((int*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_uncrossed[station_offset]) );
+      raw_input += sizeof(int) * number_of_hits;
+
+      std::copy_n((unsigned int*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_time[station_offset]) );
+      raw_input += sizeof(int) * number_of_hits;
+
+      std::copy_n((int*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_delta_time[station_offset]) );
+      raw_input += sizeof(int) * number_of_hits;
+
+      std::copy_n((int*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_cluster_size[station_offset]) );
+      raw_input += sizeof(int) * number_of_hits;
     }
-    
   }
 }
 
