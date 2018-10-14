@@ -26,10 +26,10 @@ __host__ __device__ void collectStereoHits(
                             track.trackParams[6],
                             0.};
     float zZone = constArrays->uvZone_zPos[zone];
-    const float yZone = straightLineExtend(parsY,zZone);
+    const float yZone = evalCubicParameterization(parsY,zZone);
     assert( constArrays->uvZones[zone] < SciFi::Constants::n_zones );
     zZone += constArrays->Zone_dzdy[ constArrays->uvZones[zone] ]*yZone;  // Correct for dzDy
-    const float xPred  = straightLineExtend(parsX,zZone);
+    const float xPred  = evalCubicParameterization(parsX,zZone);
 
     const bool triangleSearch = fabsf(yZone) < SciFi::Tracking::tolYTriangleSearch;
     // even zone number: if ( yZone > 0 ) continue;
@@ -272,10 +272,10 @@ __host__ __device__ bool addHitsOnEmptyStereoLayers(
                             track.trackParams[6],
                             0.};
 
-    float yZone = straightLineExtend(parsY,zZone);
+    float yZone = evalCubicParameterization(parsY,zZone);
     zZone = constArrays->Zone_dzdy[constArrays->uvZones[zone]]*yZone;  // Correct for dzDy
-    yZone = straightLineExtend(parsY,zZone);
-    const float xPred  = straightLineExtend(parsX,zZone);
+    yZone = evalCubicParameterization(parsY,zZone);
+    const float xPred  = evalCubicParameterization(parsX,zZone);
 
     const bool triangleSearch = fabsf(yZone) < SciFi::Tracking::tolYTriangleSearch;
     // change sign of yZone depending on whether we are in the upper or lower half

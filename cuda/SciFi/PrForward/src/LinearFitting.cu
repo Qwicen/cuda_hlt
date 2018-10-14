@@ -104,6 +104,9 @@ __host__ __device__ void addAndFitHitsFromMultipleHitPlanes(
   solveLineFit(lineFitParameters);
 }
 
+// the track parameterization is cubic in (z-zRef),
+// however only the first two parametres are varied in this fit
+// -> this is a linear fit
 __host__ __device__ void fastLinearFit(
   const SciFi::SciFiHits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams], 
@@ -128,7 +131,7 @@ __host__ __device__ void fastLinearFit(
                               trackParameters[2],
                               trackParameters[3]};
       const float zHit = scifi_hits.z0[hit];
-      float track_x_at_zHit = straightLineExtend(parsX,zHit);
+      float track_x_at_zHit = evalCubicParameterization(parsX,zHit);
       const float d = scifi_hits.x0[hit] - track_x_at_zHit;
       const float w = scifi_hits.w[hit];
       const float z = zHit - SciFi::Tracking::zReference;

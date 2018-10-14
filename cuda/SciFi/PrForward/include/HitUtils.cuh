@@ -54,6 +54,42 @@ __host__ __device__ void countPlanesOfXHits(
   const bool usedHits[SciFi::Tracking::max_x_hits],
   const SciFi::SciFiHits& scifi_hits );
 
+__host__ __device__ void countUnusedXHitsOnPlanes(
+  PlaneCounter& lplaneCounter,
+  const int itWindowStart,
+  const int itWindowEnd,
+  const int n_x_hits,
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const bool usedHits[SciFi::Tracking::max_x_hits],
+  const SciFi::SciFiHits& scifi_hits);
+
+__host__ __device__ void addXHitsForCandidateWithTooFewPlanes(
+  int& itWindowStart,
+  int& itWindowEnd,
+  const int it2,
+  const int itEnd,
+  float& minInterval,
+  PlaneCounter& lplaneCounter,
+  const int nPlanes,
+  const float coordX[SciFi::Tracking::max_x_hits],
+  int& best,
+  int& bestEnd,
+  const bool usedHits[SciFi::Tracking::max_x_hits],
+  const int n_x_hits,
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const SciFi::SciFiHits& scifi_hits);
+
+__host__ __device__ void collectXHitsToFit(
+  const int it1,
+  const int it2,
+  const int n_x_hits,
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  bool usedHits[SciFi::Tracking::max_x_hits],
+  int coordToFit[SciFi::Tracking::max_x_hits],
+  int& n_coordToFit,
+  const float coordX[SciFi::Tracking::max_x_hits],
+  float& xAtRef);
+
 template<int N> __host__ __device__  void sortHitsByKey( float* keys, int n, int* hits ) {
    // find permutations
   uint permutations[N];
@@ -101,54 +137,25 @@ __host__ __device__ inline int getLowerBound(float range[],float value,int start
 }
 
 // match stereo hits to x hits
-__host__ __device__ inline bool matchStereoHit( const int itUV1, const int uv_zone_offset_end, const SciFi::SciFiHits& scifi_hits, const int xMinUV, const int xMaxUV ) {
+__host__ __device__ bool matchStereoHit(
+  const int itUV1,
+  const int uv_zone_offset_end,
+  const SciFi::SciFiHits& scifi_hits,
+  const int xMinUV,
+  const int xMaxUV );
 
-  for (int stereoHit = itUV1; stereoHit != uv_zone_offset_end; ++stereoHit) {
-    if ( scifi_hits.x0[stereoHit] > xMinUV ) {
-      return (scifi_hits.x0[stereoHit] < xMaxUV );
-    }
-  }
-  return false;
-}
+__host__ __device__ bool matchStereoHitWithTriangle(
+  const int itUV2,
+  const int triangle_zone_offset_end,
+  const float yInZone,
+  const SciFi::SciFiHits& scifi_hits,
+  const int xMinUV,
+  const int xMaxUV,
+  const int side );
 
-// match stereo hits to x hits using triangle method
-__host__ __device__ inline bool matchStereoHitWithTriangle( const int itUV2, const int triangle_zone_offset_end, const float yInZone, const SciFi::SciFiHits& scifi_hits, const int xMinUV, const int xMaxUV, const int side ) {
-  
-  for (int stereoHit = itUV2; stereoHit != triangle_zone_offset_end; ++stereoHit) {
-    if ( scifi_hits.x0[stereoHit] > xMinUV ) {
-      // Triangle search condition depends on side
-      if (side > 0) { // upper
-        if (scifi_hits.yMax[stereoHit] > yInZone - SciFi::Tracking::yTolUVSearch) {
-          return true;
-        }
-      }
-      else { // lower
-        if (scifi_hits.yMin[stereoHit] < yInZone + SciFi::Tracking::yTolUVSearch) {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
-__host__ __device__ inline void removeOutlier(
+__host__ __device__ void removeOutlier(
   const SciFi::SciFiHits& scifi_hits,
   PlaneCounter& planeCounter,
   int* coordToFit,
   int& n_coordToFit,
-  const int worst ) {
-  planeCounter.removeHit( scifi_hits.planeCode[worst]/2 );
-  int coordToFit_temp[SciFi::Tracking::max_stereo_hits];
-  int i_hit_temp = 0;
-  for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
-    int hit = coordToFit[i_hit];
-    if (hit != worst) coordToFit_temp[i_hit_temp++] = hit;
- 
-  }
-  n_coordToFit = i_hit_temp;
-  for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
-    coordToFit[i_hit] = coordToFit_temp[i_hit];
-  }
-  
-}
+  const int worst );

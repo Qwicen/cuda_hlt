@@ -17,7 +17,7 @@ __host__ __device__ void xAtRef_SamePlaneHits(
   //this is quite computationally expensive mind, should take care when porting
   assert( itH < SciFi::Tracking::max_x_hits );
   const float zHit    = scifi_hits.z0[allXHits[itH]]; //all hits in same layer
-  const float xFromVelo_Hit = straightLineExtend(xParams_seed,zHit);
+  const float xFromVelo_Hit = evalCubicParameterization(xParams_seed,zHit);
   const float ty2 = velo_state.ty*velo_state.ty;
   const float dSlopeDivPart = 1.f / ( zHit - constArrays->zMagnetParams[0]);
   const float dz      = 1.e-3f * ( zHit - SciFi::Tracking::zReference );

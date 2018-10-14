@@ -22,8 +22,7 @@ __host__ __device__ inline float yFromVelo( const float z, MiniState velo_state 
   return velo_state.y + (z-velo_state.z) * velo_state.ty; 
 }
 
-// params[0] = x/y, params[1] = tx/ty
-__host__ __device__ inline float straightLineExtend(const float params[4], float z) {
+__host__ __device__ inline float evalCubicParameterization(const float params[4], float z) {
   float dz = z - SciFi::Tracking::zReference;
   return params[0] + (params[1]+(params[2] + params[3]*dz)*dz)*dz;
 }

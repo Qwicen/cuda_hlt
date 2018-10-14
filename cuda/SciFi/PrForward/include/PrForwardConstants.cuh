@@ -148,6 +148,15 @@ namespace SciFi{
       int hitsNum = 0;
       float quality;
       float chi2;
+      // [0]: xRef
+      // [1]: (xRef-xMag)/(zRef-zMag)
+      // [2]: xParams[0] * dSlope
+      // [3]: xParams[1] * dSlope
+      // [4]:
+      // [5]:
+      // [6]:
+      // [7]: chi2
+      // [8]: nDoF
       float trackParams[SciFi::Tracking::nTrackParams];
       Velo::State state_endvelo;
      
