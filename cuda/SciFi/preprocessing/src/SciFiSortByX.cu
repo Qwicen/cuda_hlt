@@ -1,4 +1,6 @@
 #include "SciFiSortByX.cuh"
+#include "FindPermutation.cuh"
+#include "ApplyPermutation.cuh"
 
 using namespace SciFi;
 
@@ -28,8 +30,9 @@ __global__ void scifi_sort_by_x(
 
     find_permutation(
       zone_offset,
+      zone_offset,
+      n_hits_zone,
     	scifi_hit_permutations,
-    	n_hits_zone,
       [&unsorted_scifi_hits] (const int a, const int b) {
         if (unsorted_scifi_hits.x0[a] > unsorted_scifi_hits.x0[b]) { return 1; }
         if (unsorted_scifi_hits.x0[a] == unsorted_scifi_hits.x0[b]) { return 0; }

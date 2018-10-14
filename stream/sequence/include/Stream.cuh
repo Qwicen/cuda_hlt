@@ -15,10 +15,10 @@
 #include "SequenceSetup.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "Constants.cuh"
-#include "run_VeloUT_CPU.h"
-#include "run_Forward_CPU.h"
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
+#include "run_VeloUT_CPU.h"
+#include "run_Forward_CPU.h"
 
 class Timer;
 

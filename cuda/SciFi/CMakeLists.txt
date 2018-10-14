@@ -14,6 +14,7 @@ include_directories(../event_model/common/include)
 include_directories(../event_model/velo/include)
 include_directories(preprocessing/include)
 include_directories(../utils/sorting/include)
+include_directories(../../main/include)
 
 cuda_add_library(SciFi STATIC
   ${scifi_common}

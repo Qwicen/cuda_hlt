@@ -5,8 +5,22 @@
 #include <ostream>
 #include "VeloUTDefinitions.cuh"
 
-static constexpr uint32_t ut_number_of_sectors_per_board = 6;
-static constexpr uint32_t ut_number_of_geometry_sectors = 1048;
+namespace UTDecoding {
+
+static constexpr int frac_mask = 0x0003U; // frac
+static constexpr int chan_mask = 0x3FFCU; // channel
+static constexpr int thre_mask = 0x8000U; // threshold
+
+static constexpr int frac_offset = 0;  // frac
+static constexpr int chan_offset = 2;  // channel
+static constexpr int thre_offset = 15; // threshold
+
+static constexpr uint ut_number_of_sectors_per_board = 6;
+static constexpr uint ut_number_of_geometry_sectors = 1048;
+static constexpr uint ut_decoding_in_order_threads_x = 64;
+static constexpr uint ut_max_hits_shared_sector_group = 256;
+
+}
 
 /**
 * @brief Offset and number of hits of each layer.
@@ -49,6 +63,16 @@ struct UTHitOffsets {
     assert(layer_number < 4);
     return m_ut_hit_offsets[m_unique_x_sector_layer_offsets[layer_number+1]]
       - m_ut_hit_offsets[m_unique_x_sector_layer_offsets[layer_number]];
+  }
+
+  __device__ __host__
+  uint event_offset() const {
+    return m_ut_hit_offsets[0];
+  }
+
+  __device__ __host__
+  uint event_number_of_hits() const {
+    return m_ut_hit_offsets[m_number_of_unique_x_sectors] - m_ut_hit_offsets[0];
   }
 };
 
@@ -184,21 +208,14 @@ struct UTHits {
   uint32_t* highThreshold;
   uint32_t* LHCbID;
   uint32_t* planeCode;
-  uint32_t* temp;
+  uint32_t* raw_bank_index;
 
   /**
-   * @brief Populates the UTHits object pointers from an unsorted array of data
+   * @brief Populates the UTHits object pointers to an array of data
    *        pointed by base_pointer.
    */
   __host__ __device__ 
-  void typecast_unsorted(uint32_t* base_pointer, uint32_t total_number_of_hits);
-
-  /**
-   * @brief Populates the UTHits object pointers from a sorted array of data
-   *        pointed by base_pointer.
-   */
-  __host__ __device__ 
-  void typecast_sorted(uint32_t* base_pointer, uint32_t total_number_of_hits);
+  UTHits(uint32_t* base_pointer, uint32_t total_number_of_hits);
 
   /**
    * @brief Gets a hit in the UTHit format from the global hit index.
