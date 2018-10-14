@@ -18,8 +18,8 @@ namespace Muon {
        one Hits structure exists per event
     */
     struct HitsSoA {
-      int m_number_of_hits_per_station[n_stations] = {0};
-      int m_station_offsets = {0};
+      int m_number_of_hits_per_station[Constants::n_stations] = {0};
+      int m_station_offsets[Constants::n_stations] = {0};
       int m_tile[Constants::max_numhits_per_event] = {0}; 
       float m_x[Constants::max_numhits_per_event] = {0}; 
       float m_dx[Constants::max_numhits_per_event] = {0}; 

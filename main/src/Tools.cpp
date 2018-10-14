@@ -102,15 +102,17 @@ void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
                                  const int n_events ) {
   
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
-    const char* raw_input = events.data() + event_offsets[i_event];
-    std::copy_n((int*) raw_input, Muon::Constants::n_stations, &(muon_station_hits[i_event].m_number_of_hits_per_station));
+
+    const char* raw_input = events.data() + event_offsets[i_event];      
+    std::copy_n((int*) raw_input, Muon::Constants::n_stations, muon_station_hits[i_event].m_number_of_hits_per_station);
+    raw_input += sizeof(int) * Muon::Constants::n_stations;
 
     muon_station_hits[i_event].m_station_offsets[0] = 0;
     for(int i_station = 1; i_station < Muon::Constants::n_stations; ++i_station) {
       muon_station_hits[i_event].m_station_offsets[i_station] = muon_station_hits[i_event].m_station_offsets[i_station - 1] + muon_station_hits[i_event].m_number_of_hits_per_station[i_event - 1];
     }
     
-    for(int i_station = 0; i_station < Muon::Constants::n_events; ++i_station) {
+    for(int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station) {
       const int station_offset = muon_station_hits[i_event].m_station_offsets[i_station];
       const int number_of_hits = muon_station_hits[i_event].m_number_of_hits_per_station[i_station];
 
