@@ -34,7 +34,22 @@ namespace SciFi{
     const int TMVA_Nvars = 7;
     const int TMVA_Nlayers = 5;
 
-        // dump a bunch of options here
+    // Formerly PrParameters
+    struct HitSearchCuts {
+    __host__ __device__ HitSearchCuts(unsigned int minXHits_, float maxXWindow_,
+                 float maxXWindowSlope_, float maxXGap_,
+                 unsigned int minStereoHits_)
+    : minXHits{minXHits_}, maxXWindow{maxXWindow_},
+        maxXWindowSlope{maxXWindowSlope_}, maxXGap{maxXGap_},
+        minStereoHits{minStereoHits_} {}
+      const unsigned int minXHits;
+      const float        maxXWindow;
+      const float        maxXWindowSlope;
+      const float        maxXGap;
+      unsigned int       minStereoHits;
+    };
+    
+    // dump a bunch of options here
     const float        deltaQuality = 0.1; // Difference in quality btw two tracks which share hits when clone killing
     const float        cloneFraction = 0.4; // The fraction of shared SciFi hits btw two tracks to trigger the clone killing
     

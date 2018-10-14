@@ -33,9 +33,9 @@ __host__ __device__ void solveLineFit(SciFi::Tracking::LineFitterPars &parameter
 __host__ __device__ void incrementLineFitParameters(
   SciFi::Tracking::LineFitterPars &parameters,
   const SciFi::SciFiHits& scifi_hits,
-  float coordX[SciFi::Tracking::max_x_hits],
-  int allXHits[SciFi::Tracking::max_x_hits],
-  int it)
+  const float coordX[SciFi::Tracking::max_x_hits],
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const int it)
 {
     float c = coordX[it];
     const int hit = allXHits[it];
@@ -47,6 +47,36 @@ __host__ __device__ void incrementLineFitParameters(
     parameters.m_sc   += w * c;
     parameters.m_scz  += w * c * z;
 } 
+
+__host__ __device__ void fitHitsFromSingleHitPlanes(
+  const int it1,
+  const int it2,
+  const bool usedHits[SciFi::Tracking::max_x_hits],
+  const SciFi::SciFiHits& scifi_hits,
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const int n_x_hits,
+  const PlaneCounter planeCounter,
+  SciFi::Tracking::LineFitterPars& lineFitParameters,
+  const float coordX[SciFi::Tracking::max_x_hits],
+  int otherHits[SciFi::Constants::n_layers][SciFi::Tracking::max_other_hits],
+  int nOtherHits[SciFi::Constants::n_layers]) {
+
+  for(auto itH = it1; it2 > itH; ++itH ){
+    assert( itH < n_x_hits );
+    if( usedHits[itH] ) continue;
+    int planeCode = scifi_hits.planeCode[allXHits[itH]]/2;
+    if( planeCounter.nbInPlane(planeCode) == 1 ){
+      incrementLineFitParameters(lineFitParameters, scifi_hits, coordX, allXHits, itH);
+    }else{
+      if ( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits ) {
+        assert( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits );
+        otherHits[planeCode][ nOtherHits[planeCode]++ ] = itH;
+      }
+    }
+  }
+  solveLineFit(lineFitParameters);
+
+}
 
 __host__ __device__ void fastLinearFit(
   const SciFi::SciFiHits& scifi_hits,

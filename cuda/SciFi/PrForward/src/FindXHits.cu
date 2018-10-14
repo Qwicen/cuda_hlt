@@ -323,22 +323,16 @@ __host__ __device__ void selectXCandidates(
       int otherHits[SciFi::Constants::n_layers][SciFi::Tracking::max_other_hits] = {0};
       int nOtherHits[SciFi::Constants::n_layers] = {0};
       
-      //seperate single and double hits
-      for(auto itH = it1; it2 > itH; ++itH ){
-        assert( itH < n_x_hits );
-        if( usedHits[itH] ) continue;
-        int planeCode = scifi_hits.planeCode[allXHits[itH]]/2;
-        if( planeCounter.nbInPlane(planeCode) == 1 ){
-          incrementLineFitParameters(lineFitParameters, scifi_hits, coordX, allXHits, itH);
-        }else{
-          if ( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits ) {
-            assert( nOtherHits[planeCode] < SciFi::Tracking::max_other_hits );
-            otherHits[planeCode][ nOtherHits[planeCode]++ ] = itH;
-          }
-        }
-      }
-      solveLineFit(lineFitParameters);
-
+      // fit hits on planes with only one hit
+      // save the other hits in separate array
+      fitHitsFromSingleHitPlanes(
+        it1, it2,
+        usedHits, scifi_hits,
+        allXHits, n_x_hits,
+        planeCounter,
+        lineFitParameters, coordX,
+        otherHits, nOtherHits );
+      
       //select best other hits (only best other hit is enough!)
       for(int i = 0; i < SciFi::Constants::n_layers; i++){ 
         if(nOtherHits[i] == 0) continue;

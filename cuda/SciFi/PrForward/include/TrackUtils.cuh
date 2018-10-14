@@ -12,37 +12,6 @@
    Helper functions related to track properties
  */
 
-namespace SciFi {
-  namespace Tracking {
-    // Formerly PrParameters
-    struct HitSearchCuts {
-    __host__ __device__ HitSearchCuts(unsigned int minXHits_, float maxXWindow_,
-                 float maxXWindowSlope_, float maxXGap_,
-                 unsigned int minStereoHits_)
-    : minXHits{minXHits_}, maxXWindow{maxXWindow_},
-        maxXWindowSlope{maxXWindowSlope_}, maxXGap{maxXGap_},
-        minStereoHits{minStereoHits_} {}
-      const unsigned int minXHits;
-      const float        maxXWindow;
-      const float        maxXWindowSlope;
-      const float        maxXGap;
-      unsigned int       minStereoHits;
-    };
-
-    struct LineFitterPars {
-      float   m_z0 = 0.; 
-      float   m_c0 = 0.; 
-      float   m_tc = 0.; 
-      
-      float m_s0 = 0.; 
-      float m_sz = 0.; 
-      float m_sz2 = 0.; 
-      float m_sc = 0.; 
-      float m_scz = 0.;   
-    };
-  } // Tracking
-} // SciFi
-
 // extrapolate x position from given state to z
 __host__ __device__ inline float xFromVelo( const float z, MiniState velo_state ) { 
   return velo_state.x + (z-velo_state.z) * velo_state.tx; 
