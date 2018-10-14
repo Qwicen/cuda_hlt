@@ -115,6 +115,7 @@ __host__ __device__ void fastLinearFit(
   PlaneCounter planeCounter,
   SciFi::Tracking::HitSearchCuts& pars)
 {
+  // re-do fit every time an outlier was removed
   bool fit = true;
   while (fit) {
     //== Fit a line

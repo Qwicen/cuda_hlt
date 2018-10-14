@@ -90,6 +90,13 @@ __host__ __device__ void collectXHitsToFit(
   const float coordX[SciFi::Tracking::max_x_hits],
   float& xAtRef);
 
+__host__ __device__ int findBestXHitOnEmptyLayer(
+  const int itEnd,
+  const int itH,
+  const SciFi::SciFiHits& scifi_hits,
+  const float maxX,
+  const float xPred);
+
 template<int N> __host__ __device__  void sortHitsByKey( float* keys, int n, int* hits ) {
    // find permutations
   uint permutations[N];

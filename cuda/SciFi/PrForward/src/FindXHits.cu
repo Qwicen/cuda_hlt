@@ -249,7 +249,7 @@ __host__ __device__ void selectXCandidates(
     if ( n_candidate_tracks >= SciFi::Tracking::max_candidate_tracks ) return;
   
   int itEnd = n_x_hits;
-  const float xStraight = evalCubicParameterization(xParams_seed,SciFi::Tracking::zReference);
+  const float xTrack = evalCubicParameterization(xParams_seed,SciFi::Tracking::zReference);
   int it1 = 0;
   int it2 = 0; 
   pars.minStereoHits = 0;
@@ -269,7 +269,7 @@ __host__ __device__ void selectXCandidates(
     // Second part of 1D Hough transform:
     // find a cluster of x positions on the reference plane that are close to each other
     // TODO better xWindow calculation?? how to tune this???
-    const float xWindow = pars.maxXWindow + (fabsf(coordX[it1]) +  fabsf(coordX[it1] - xStraight) ) * pars.maxXWindowSlope;
+    const float xWindow = pars.maxXWindow + (fabsf(coordX[it1]) +  fabsf(coordX[it1] - xTrack) ) * pars.maxXWindowSlope;
     if ( (coordX[it2 - 1] - coordX[it1]) > xWindow ) {
       ++it1;
       continue;
@@ -299,21 +299,16 @@ __host__ __device__ void selectXCandidates(
       ++it1;
       continue;
     }
-    //====================================================================
+    
     //  Now we have a (rather) clean candidate, do best hit selection
-    //  Two possibilities:
-    //  1) If there are enough planes with only one hit, do a straight
-    //      line fit through these and select good matching others
-    //  2) Do some magic
-    //==================================================================== 
- 
     SciFi::Tracking::LineFitterPars lineFitParameters;
     lineFitParameters.m_z0 = SciFi::Tracking::zReference;
     float xAtRef = 0.;
     const unsigned int nbSingle = planeCounter.nbSingle();
     int coordToFit[SciFi::Tracking::max_coordToFit];
     int n_coordToFit = 0;
-  
+    // 1) If there are enough planes with only one hit, do a straight
+    //    line fit through these and select good matching others
     if ( nbSingle >= SciFi::Tracking::minSingleHits && nbSingle != planeCounter.nbDifferent ) {
       //1) we have enough single planes (thus two) to make a straight line fit
       int otherHits[SciFi::Constants::n_layers][SciFi::Tracking::max_other_hits] = {0};
@@ -340,7 +335,10 @@ __host__ __device__ void selectXCandidates(
         otherHits);
               
       xAtRef = lineFitParameters.m_c0; 
-    } else { // start magical second part
+    }
+    //  2) Try to find a cluster on the reference plane with a maximal
+    //     spread and from a minimum # of different planes
+    else {
       // 2) Try to find a small distance containing at least 5(4) different planes
       //    Most of the time do nothing
       const unsigned int nPlanes =  fminf(planeCounter.nbDifferent,uint{5});
@@ -404,7 +402,9 @@ __host__ __device__ void selectXCandidates(
     float trackParameters[SciFi::Tracking::nTrackParams];
     if(ok){
       getTrackParameters(xAtRef, velo_state, constArrays, trackParameters);
-      // 
+      // Track described by cubic function in (z-zRef), but only first two terms are adjusted
+      // during fitting procedure -> linear fit
+      // nb: usedHits are currently not un-marked when removing ourliers
       fastLinearFit( scifi_hits, trackParameters, coordToFit, n_coordToFit, planeCounter,pars);
       // to do: do we have to mark these as used as well?
       addHitsOnEmptyXLayers(
@@ -488,9 +488,9 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
   //is there an empty plane? otherwise skip here!
   if (planeCounter.nbDifferent > 11) return true;
   bool  added = false;
-  const float x1 = trackParameters[0];
-  const float xStraight = evalCubicParameterization(xParams_seed,SciFi::Tracking::zReference);
-  const float xWindow = pars.maxXWindow + ( fabsf( x1 ) + fabsf( x1 - xStraight ) ) * pars.maxXWindowSlope;
+  const float x1 = trackParameters[0]; // mean xRef of this candidate
+  const float xAtRefFromSeed = evalCubicParameterization(xParams_seed,SciFi::Tracking::zReference);
+  const float xWindow = pars.maxXWindow + ( fabsf( x1 ) + fabsf( x1 - xAtRefFromSeed ) ) * pars.maxXWindowSlope;
 
   int iZoneStartingPoint = side > 0 ? constArrays->zoneoffsetpar : 0;
 
@@ -505,11 +505,10 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
 
     assert( iZone-iZoneStartingPoint < SciFi::Constants::n_zones );
     const float zZone  = constArrays->xZone_zPos[iZone-iZoneStartingPoint];
+    // predicted x position on this plane based on current candidate
     const float xPred  = evalCubicParameterization(parsX,zZone);
     const float minX = xPred - xWindow;
     const float maxX = xPred + xWindow;
-    float bestChi2 = 1.e9f;
-    int best = -1;
 
     // -- Use a search to find the lower bound of the range of x values
     assert( constArrays->xZones[iZone] < SciFi::Constants::n_zones );
@@ -517,16 +516,9 @@ __host__ __device__ bool addHitsOnEmptyXLayers(
     int x_zone_offset_end   = x_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->xZones[iZone]];
     int itH   = getLowerBound(scifi_hits.x0,minX,x_zone_offset_begin,x_zone_offset_end);
     int itEnd = x_zone_offset_end;
+
+    int best = findBestXHitOnEmptyLayer(itEnd, itH, scifi_hits, maxX, xPred);  
     
-    for ( ; itEnd != itH; ++itH ) {
-      if( scifi_hits.x0[itH] > maxX ) break;
-      const float d = scifi_hits.x0[itH] - xPred; //fast distance good enough at this point (?!)
-      const float chi2 = d*d * scifi_hits.w[itH];
-      if ( chi2 < bestChi2 ) {
-        bestChi2 = chi2;
-        best = itH;
-      }    
-    }    
     if ( best > -1 ) {
       if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
         break;
