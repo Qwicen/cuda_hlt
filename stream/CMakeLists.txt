@@ -45,6 +45,7 @@ if ( ROOT_FOUND )
   target_link_libraries(Stream
   Velo
   VeloUT
+  PatPV
   x86PatPV
   x86VeloUT
   ${ROOT_LIBRAIRES})
@@ -52,6 +53,7 @@ else()
   target_link_libraries(Stream
   Velo
   VeloUT
+  PatPV
   x86PatPV
   x86VeloUT)
 endif()

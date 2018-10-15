@@ -151,6 +151,12 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_track_hits,
     arg::dev_velo_states
   };
+  sequence_dependencies[seq::patPV] = {
+    arg::dev_velo_states,
+    arg::dev_atomics_storage,
+    arg::dev_outvtxvec,
+    arg::dev_number_of_vertex
+  };
   sequence_dependencies[seq::veloUT] = {
     arg::dev_ut_hits,
     arg::dev_atomics_storage,
@@ -178,6 +184,8 @@ std::vector<int> get_sequence_output_arguments() {
   return {
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number,
-    arg::dev_velo_track_hits
+    arg::dev_velo_track_hits,
+    arg::dev_outvtxvec,
+    arg::dev_number_of_vertex
   };
 }
