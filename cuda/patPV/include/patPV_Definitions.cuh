@@ -30,12 +30,12 @@ struct vtxCluster final {
 
 };
 
-struct XYZPoint {
+__device__ struct XYZPoint {
   double x = 0.;
   double y = 0.;
   double z = 0.;
-  XYZPoint(double m_x, double m_y, double m_z) : x(m_x), y(m_y), z(m_z) {};
-  XYZPoint() {};
+  __device__ XYZPoint(double m_x, double m_y, double m_z) : x(m_x), y(m_y), z(m_z) {};
+  __device__ XYZPoint() {};
 
 };
 

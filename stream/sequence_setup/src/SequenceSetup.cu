@@ -185,6 +185,7 @@ std::vector<int> get_sequence_output_arguments() {
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,
+    arg::dev_velo_states,
     arg::dev_outvtxvec,
     arg::dev_number_of_vertex
   };
