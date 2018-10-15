@@ -486,6 +486,7 @@ cudaError_t Stream::run_sequence(
 
 
   //declare all memory needed for PV finding here
+        std::cout << "CHECKING PVs TRACKS from x86" << std::endl;
 
     //seeds
     XYZPoint  seeds[number_of_events * PatPV::max_number_vertices];
