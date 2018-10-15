@@ -57,6 +57,12 @@ struct Stream {
   VeloUTTracking::TrackUT* host_veloUT_tracks;
   int* host_atomics_veloUT;
 
+  //for PatPV
+  XYZPoint * host_seeds;
+  uint * host_number_seeds;
+  Vertex* host_vertex;
+  int * host_number_vertex;
+
   // Dynamic scheduler
   BaseDynamicScheduler scheduler;
 

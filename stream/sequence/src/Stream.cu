@@ -56,6 +56,15 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMallocHost((void**)&host_veloUT_tracks, max_number_of_events * VeloUTTracking::max_num_tracks * sizeof(VeloUTTracking::TrackUT)));
   cudaCheck(cudaMallocHost((void**)&host_atomics_veloUT, VeloUTTracking::num_atomics * max_number_of_events * sizeof(int)));
 
+  //PatPV
+  cudaCheck(cudaMallocHost((void**)&host_seeds, VeloTracking::max_tracks * max_number_of_events * sizeof(XYZPoint)));
+  cudaCheck(cudaMallocHost((void**)&host_number_seeds,  max_number_of_events * sizeof(uint)));
+
+  cudaCheck(cudaMallocHost((void**)&host_vertex,  PatPV::max_number_vertices* max_number_of_events * sizeof(Vertex)));
+  cudaCheck(cudaMallocHost((void**)&host_number_vertex,  max_number_of_events * sizeof(int)));
+
+
+
   // Define sequence of algorithms to execute
   sequence.set(sequence_algorithms());
 

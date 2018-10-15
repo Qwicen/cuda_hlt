@@ -288,7 +288,7 @@ cudaError_t Stream::run_sequence(
 
 
     //getSeeds
-    argument_sizes[arg::dev_seeds] = argen.size<arg::dev_seeds>(VeloTracking::number_of_saved_velo_states * host_number_of_reconstructed_velo_tracks[0]);
+    argument_sizes[arg::dev_seeds] = argen.size<arg::dev_seeds>( host_number_of_reconstructed_velo_tracks[0]);
     argument_sizes[arg::dev_number_seeds] = argen.size<arg::dev_number_seeds>(number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::getSeeds>().set_opts(dim3(number_of_events), 1, stream);
@@ -302,7 +302,7 @@ cudaError_t Stream::run_sequence(
 
 
         //fitSeeds
-    argument_sizes[arg::dev_vertex] = argen.size<arg::dev_vertex>(PatPV::max_number_vertices);
+    argument_sizes[arg::dev_vertex] = argen.size<arg::dev_vertex>(PatPV::max_number_vertices * number_of_events);
     argument_sizes[arg::dev_number_vertex] = argen.size<arg::dev_number_vertex>(number_of_events);
     scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
     sequence.item<seq::fitSeeds>().set_opts(dim3(number_of_events), 1, stream);
@@ -324,6 +324,13 @@ cudaError_t Stream::run_sequence(
       cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, argen.generate<arg::dev_velo_track_hit_number>(argument_offsets), argen.size<arg::dev_velo_track_hit_number>(velo_track_hit_number_size), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_velo_track_hits, argen.generate<arg::dev_velo_track_hits>(argument_offsets), argen.size<arg::dev_velo_track_hits>(host_accumulated_number_of_hits_in_velo_tracks[0]), cudaMemcpyDeviceToHost, stream));
       cudaCheck(cudaMemcpyAsync(host_velo_states, argen.generate<arg::dev_velo_states>(argument_offsets), argen.size<arg::dev_velo_states>(VeloTracking::number_of_saved_velo_states * host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
+
+
+      //PatPV
+      cudaCheck(cudaMemcpyAsync(host_seeds, argen.generate<arg::dev_seeds>(argument_offsets), argen.size<arg::dev_seeds>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
+
+      cudaCheck(cudaMemcpyAsync(host_number_seeds, argen.generate<arg::dev_number_seeds>(argument_offsets), argen.size<arg::dev_number_seeds>(number_of_events), cudaMemcpyDeviceToHost, stream)); 
+
     }
 
   //patPV
@@ -500,6 +507,18 @@ cudaError_t Stream::run_sequence(
          );
 
      checkPVs(folder_name_pv, true, number_of_events, out_vertices, number_of_vertex);
+     int acc_seeds = 0;
+     int acc_seeds_prev = 0;
+     for(int i=0;i < number_of_events; i++) {
+      acc_seeds_prev = acc_seeds;
+      acc_seeds = host_number_seeds[i];
+      for(int j =acc_seeds_prev; j < acc_seeds; j++)
+      {
+
+        std::cout<<"seed: "<<host_seeds[j].x << " " << host_seeds[j].y << " "  <<host_seeds[j].z << std::endl; 
+      }
+      
+     }
 
     
 
