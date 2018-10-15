@@ -8,6 +8,8 @@
 #include "SearchByTriplet.cuh"
 #include "VeloKalmanFilter.cuh"
 #include "patPV.cuh"
+#include "getSeeds.cuh"
+#include "fitSeeds.cuh"
 
 #include "VeloUT.cuh"
 
@@ -39,6 +41,8 @@ constexpr auto sequence_algorithms() {
     prefix_sum_scan,
     consolidate_tracks,
     velo_fit,
+    getSeeds,
+    fitSeeds,
     patPV,
     veloUT
   );
@@ -85,12 +89,16 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_prefix_sum_auxiliary_array_2, uint>,
   Argument<arg::dev_velo_track_hits, VeloTracking::Hit<mc_check_enabled>>,
   Argument<arg::dev_velo_states, VeloState>,
+  Argument<arg::dev_seeds, XYZPoint>,
+  Argument<arg::dev_number_seeds, uint>,
+  Argument<arg::dev_vertex, Vertex>,
+  Argument<arg::dev_number_vertex, int>,
   Argument<arg::dev_outvtxvec, Vertex>,
   Argument<arg::dev_number_of_vertex, uint>,
   Argument<arg::dev_ut_hits, VeloUTTracking::HitsSoA>,
   Argument<arg::dev_veloUT_tracks, VeloUTTracking::TrackUT>,
   Argument<arg::dev_atomics_veloUT, int>
->;
+>;  
 
 /**
  * @brief Returns an array with names for every element in the sequence.

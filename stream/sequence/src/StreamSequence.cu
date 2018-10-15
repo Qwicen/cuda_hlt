@@ -286,6 +286,37 @@ cudaError_t Stream::run_sequence(
     );
     sequence.item<seq::velo_fit>().invoke();
 
+
+    //getSeeds
+    argument_sizes[arg::dev_seeds] = argen.size<arg::dev_seeds>(VeloTracking::number_of_saved_velo_states * host_number_of_reconstructed_velo_tracks[0]);
+    argument_sizes[arg::dev_number_seeds] = argen.size<arg::dev_number_seeds>(number_of_events);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::getSeeds>().set_opts(dim3(number_of_events), 1, stream);
+    sequence.item<seq::getSeeds>().set_arguments(
+      argen.generate<arg::dev_velo_states>(argument_offsets),
+      argen.generate<arg::dev_atomics_storage>(argument_offsets),
+      argen.generate<arg::dev_seeds>(argument_offsets),
+      argen.generate<arg::dev_number_seeds>(argument_offsets)
+    );
+    sequence.item<seq::getSeeds>().invoke();
+
+
+        //fitSeeds
+    argument_sizes[arg::dev_vertex] = argen.size<arg::dev_vertex>(PatPV::max_number_vertices);
+    argument_sizes[arg::dev_number_vertex] = argen.size<arg::dev_number_vertex>(number_of_events);
+    scheduler.setup_next(argument_sizes, argument_offsets, sequence_step++);
+    sequence.item<seq::fitSeeds>().set_opts(dim3(number_of_events), 1, stream);
+    sequence.item<seq::fitSeeds>().set_arguments(
+      argen.generate<arg::dev_vertex>(argument_offsets),
+      argen.generate<arg::dev_number_vertex>(argument_offsets),
+      argen.generate<arg::dev_seeds>(argument_offsets),
+      argen.generate<arg::dev_number_seeds>(argument_offsets)
+    );
+    sequence.item<seq::fitSeeds>().invoke();
+
+
+
+
         // Transmission device to host
     if (transmit_device_to_host) {
       cudaCheck(cudaMemcpyAsync(host_number_of_tracks, argen.generate<arg::dev_atomics_storage>(argument_offsets), number_of_events * sizeof(int), cudaMemcpyDeviceToHost, stream));

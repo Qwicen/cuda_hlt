@@ -22,6 +22,8 @@ enum seq_enum_t {
   prefix_sum_scan_velo_track_hit_number,
   consolidate_tracks,
   velo_fit,
+  getSeeds,
+  fitSeeds,
   patPV,
   veloUT
 };
@@ -54,6 +56,10 @@ enum arg_enum_t {
   dev_prefix_sum_auxiliary_array_2,
   dev_velo_track_hits,
   dev_velo_states,
+  dev_seeds,
+  dev_number_seeds,
+  dev_vertex,
+  dev_number_vertex,
   dev_outvtxvec,
   dev_number_of_vertex,
   dev_ut_hits,
@@ -61,3 +67,4 @@ enum arg_enum_t {
   dev_atomics_veloUT
 };
 }
+
