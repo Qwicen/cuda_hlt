@@ -12,7 +12,7 @@
 #include "TTree.h"
 #include <algorithm>
 
-void checkPVs(  const std::string& folder_name_MC,  const bool& fromNtuple, uint number_of_files, Vertex * rec_vertex, uint* number_of_vertex);
+void checkPVs(  const std::string& folder_name_MC,  const bool& fromNtuple, uint number_of_files, Vertex * rec_vertex, int* number_of_vertex);
 
 
 

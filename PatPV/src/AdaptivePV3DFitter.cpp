@@ -282,7 +282,7 @@ bool fitVertex( XYZPoint& seedPoint,
   vtx.setPosition( vtxpos ) ;
   vtx.setCovMatrix( vtxcov ) ;
   // Set tracks. Compute final chi2.
-  vtx.clearTracks();
+ // vtx.clearTracks();
 
 
 

@@ -188,7 +188,8 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_number_vertex,
     arg::dev_seeds,
     arg::dev_number_seeds,
-    arg::dev_velo_states
+    arg::dev_velo_states,
+    arg::dev_atomics_storage
   };
 
 

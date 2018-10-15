@@ -7,7 +7,7 @@
 #endif
 
 
-void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint number_of_files, Vertex * rec_vertex, uint* number_of_vertex)
+void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint number_of_files, Vertex * rec_vertex, int* number_of_vertex)
 
 
 {
@@ -115,7 +115,8 @@ void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint num
     double sigz = sqrt(pv->cov22);
     XYZPoint a3d(sigx,sigy,sigz);
     recinfo.positionSigma = a3d;
-    recinfo.nTracks = pv->tracks.size();
+    //recinfo.nTracks = pv->tracks.size();
+    recinfo.nTracks = pv->nTracks;
     double minRD = 99999.;
     double maxRD = -99999.;
     double chi2 = pv->chi2;

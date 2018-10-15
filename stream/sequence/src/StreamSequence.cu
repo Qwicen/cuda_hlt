@@ -311,7 +311,8 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_number_vertex>(argument_offsets),
       argen.generate<arg::dev_seeds>(argument_offsets),
       argen.generate<arg::dev_number_seeds>(argument_offsets),
-      argen.generate<arg::dev_velo_states>(argument_offsets)
+      argen.generate<arg::dev_velo_states>(argument_offsets),
+      argen.generate<arg::dev_atomics_storage>(argument_offsets)
     );
     sequence.item<seq::fitSeeds>().invoke();
 
@@ -331,6 +332,10 @@ cudaError_t Stream::run_sequence(
       cudaCheck(cudaMemcpyAsync(host_seeds, argen.generate<arg::dev_seeds>(argument_offsets), argen.size<arg::dev_seeds>(host_number_of_reconstructed_velo_tracks[0]), cudaMemcpyDeviceToHost, stream)); 
 
       cudaCheck(cudaMemcpyAsync(host_number_seeds, argen.generate<arg::dev_number_seeds>(argument_offsets), argen.size<arg::dev_number_seeds>(number_of_events), cudaMemcpyDeviceToHost, stream)); 
+
+      cudaCheck(cudaMemcpyAsync(host_vertex, argen.generate<arg::dev_vertex>(argument_offsets), argen.size<arg::dev_vertex>(PatPV::max_number_vertices * number_of_events), cudaMemcpyDeviceToHost, stream)); 
+
+      cudaCheck(cudaMemcpyAsync(host_number_vertex, argen.generate<arg::dev_number_vertex>(argument_offsets), argen.size<arg::dev_number_vertex>(number_of_events), cudaMemcpyDeviceToHost, stream)); 
 
     }
 
@@ -508,7 +513,10 @@ cudaError_t Stream::run_sequence(
 
          ); */
 
-     checkPVs(folder_name_pv, true, number_of_events, out_vertices, number_of_vertex);
+    // checkPVs(folder_name_pv, true, number_of_events, out_vertices, number_of_vertex);
+
+    
+    // checkPVs(folder_name_pv, true, number_of_events, out_vertices, host_number_vertex);
 
      std::cout <<number_of_events << " events" << std::endl;
 
@@ -527,8 +535,21 @@ cudaError_t Stream::run_sequence(
       
      }
 
-    
+    int acc_vertex = 0;
+    int acc_vert_prev = 0;
+     for(int i=0;i < number_of_events; i++) {
+      std::cout << host_number_vertex[i] << " vertices in event " << i << std::endl;
+      acc_vert_prev = acc_vertex;
+      acc_vertex = acc_vertex + host_number_vertex[i];
+      for(int j = 0; j < acc_vertex - acc_vert_prev; j++) {
+        int index = PatPV::max_number_vertices * i + j;
+        std::cout<<"vertex: "<<host_vertex[index].x << " " <<host_vertex[index].y << " "  <<host_vertex[index].z << std::endl;
+      }
+   // dev_vertex[PatPV::max_number_vertices * number_of_events + counter_vertex]
+      }
 
+      std::cout << "checking GPU vertices:" << std::endl;
+      checkPVs(folder_name_pv, true, number_of_events, host_vertex, host_number_vertex);
 
 
       } // only in first repitition

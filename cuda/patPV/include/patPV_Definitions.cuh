@@ -44,20 +44,20 @@ __device__ struct XYZPoint {
 
 
 
-struct Vector2 {
+__device__ struct Vector2 {
   double x;
   double y;
 
-  Vector2(double m_x, double m_y) : x(m_x), y(m_y){}
+  __device__ Vector2(double m_x, double m_y) : x(m_x), y(m_y){}
 };
 
  
 
 
 
-class Vertex {
+__device__ class Vertex {
   public:
-    Vertex() {};
+    __device__ Vertex() {};
     double x = 0.;
     double y = 0.;
     double z = 0.;
@@ -71,18 +71,17 @@ class Vertex {
     double cov21 = 0.;
     double cov22 = 0.;
 
-    std::vector<VeloState> tracks;
-    std::vector<double> weights;
-    void setChi2AndDoF(double m_chi2, int m_ndof) {
+
+    __device__ void setChi2AndDoF(double m_chi2, int m_ndof) {
       chi2 = m_chi2;
       ndof = m_ndof;
     }
-    void setPosition(XYZPoint& point) {
+    __device__ void setPosition(XYZPoint& point) {
       x = point.x;
       y = point.y;
       z = point.z;
     }
-    void setCovMatrix(double * m_cov) {
+    __device__ void setCovMatrix(double * m_cov) {
       cov00 = m_cov[0];
       cov10 = m_cov[1];
       cov11 = m_cov[2];
@@ -90,15 +89,9 @@ class Vertex {
       cov21 = m_cov[4];
       cov22 = m_cov[5];
     }
+   int nTracks = 0.;
 
-    void clearTracks() {
-      tracks.clear();
-      weights.clear();
-    };
-    void addToTracks(VeloState track, double weight) {
-      tracks.push_back(track);
-      weights.push_back(weight);
-    };
+
 };
 
 #endif DEFINITIONS_H
