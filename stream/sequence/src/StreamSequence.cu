@@ -487,7 +487,7 @@ cudaError_t Stream::run_sequence(
 
   //declare all memory needed for PV finding here
         std::cout << "CHECKING PVs TRACKS from x86" << std::endl;
-
+/*
     //seeds
     XYZPoint  seeds[number_of_events * PatPV::max_number_vertices];
     uint number_of_seeds[number_of_events];
@@ -508,16 +508,21 @@ cudaError_t Stream::run_sequence(
          );
 
      checkPVs(folder_name_pv, true, number_of_events, out_vertices, number_of_vertex);
+*/
+     std::cout <<number_of_events << " events" << std::endl;
+
      int acc_seeds = 0;
      int acc_seeds_prev = 0;
      for(int i=0;i < number_of_events; i++) {
+      std::cout << host_number_seeds[i] << " seeds in event " << i << std::endl;
       acc_seeds_prev = acc_seeds;
-      acc_seeds = host_number_seeds[i];
-      for(int j =acc_seeds_prev; j < acc_seeds; j++)
+      acc_seeds = acc_seeds + host_number_seeds[i];
+      for(int j =0; j < acc_seeds - acc_seeds_prev; j++)
       {
-
-        std::cout<<"seed: "<<host_seeds[j].x << " " << host_seeds[j].y << " "  <<host_seeds[j].z << std::endl; 
+        int index = PatPV::max_number_vertices * i + j;
+        std::cout<<"seed: "<<host_seeds[index].x << " " << host_seeds[index].y << " "  <<host_seeds[index].z << std::endl; 
       }
+
       
      }
 

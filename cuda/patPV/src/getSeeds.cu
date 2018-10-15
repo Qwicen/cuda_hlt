@@ -88,7 +88,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
   beamspot.z = 0;
 
   int event_number = blockIdx.x;
-  int number_of_events = blockDim.x;
+  int number_of_events = gridDim.x;
    //int * number_of_tracks = dev_atomics_storage;
    //int * acc_tracks = dev_atomics_storage + number_of_events;
 
@@ -98,20 +98,9 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
   VeloState * state_base_pointer = dev_velo_states + 2 * acc_tracks;
 
-  XYZPoint point;
-  point.x = 1.;
-  point.y = 1.;
-  point.z = 1.;
-  int number_seeds = 0;
-  for(int i = 0; i < number_of_tracks; i++) {
-    point.x = i;
-  point.y = i;
-  point.z = i;
-  number_seeds++;
-    dev_seeds[i] = point;
-  }
 
-  dev_number_seed[event_number] = number_seeds;
+
+  
 
     vtxCluster  vclusters[VeloTracking::max_tracks];
 
@@ -140,5 +129,134 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
   }
 
+  double  zseeds[VeloTracking::max_tracks];
+
+  int number_final_clusters = findClusters(vclusters, zseeds, counter_number_of_clusters);
+
+  for(int i = 0; i < number_final_clusters; i++) dev_seeds[event_number * PatPV::max_number_vertices + i] = XYZPoint{ beamspot.x, beamspot.y, zseeds[i]};
+  
+
+  dev_number_seed[event_number] = number_final_clusters;
+
 
  };
+
+ __device__ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)  {
+
+
+  
+  
+
+  
+  for(int i = 0; i < number_of_clusters; i++) {
+    vclus[i].sigsq *= mcu_factorToIncreaseErrors*mcu_factorToIncreaseErrors; // blow up errors
+    vclus[i].sigsqmin = vclus[i].sigsq;
+  }
+
+
+  //maybe sort in z before merging? -> does not seem to help
+
+  bool no_merges = false;
+  while(!no_merges) {
+    //reset merged flags
+    for (int j = 0; j < number_of_clusters; j++) vclus[j].merged = false;
+
+    no_merges = true;
+    for(int index_cluster = 0; index_cluster < number_of_clusters - 1; index_cluster++) {
+
+
+      //skip cluster which have already been merged
+      if(vclus[index_cluster].ntracks == 0) continue;
+
+   //sorting by chi2dist seems to increase efficiency in nominal code
+
+
+      
+      for(int index_second_cluster = 0; index_second_cluster < number_of_clusters ; index_second_cluster++) {
+        if(vclus[index_second_cluster].merged || vclus[index_cluster].merged) continue;
+        //skip cluster which have already been merged
+        if(vclus[index_second_cluster].ntracks == 0) continue;
+        if(index_cluster == index_second_cluster) continue;
+        double z1 = vclus[index_cluster].z;
+        double z2 = vclus[index_second_cluster].z;
+        double s1 = vclus[index_cluster].sigsq;
+        double s2 = vclus[index_second_cluster].sigsq;
+        double s1min = vclus[index_cluster].sigsqmin;
+        double s2min = vclus[index_second_cluster].sigsqmin;
+        double sigsqmin = s1min;
+        if(s2min<s1min) sigsqmin = s2min;
+
+
+        double zdist = z1 - z2;
+        double chi2dist = zdist*zdist/(s1+s2);
+        //merge if chi2dist is smaller than max
+        if (chi2dist<mcu_maxChi2Merge ) {
+          no_merges = false;
+          double w_inv = (s1*s2/(s1+s2));
+          double zmerge = w_inv*(z1/s1+z2/s2);
+
+          vclus[index_cluster].z        = zmerge;
+          vclus[index_cluster].sigsq    = w_inv;
+          vclus[index_cluster].sigsqmin = sigsqmin;
+          vclus[index_cluster].ntracks += vclus[index_second_cluster].ntracks;
+          vclus[index_second_cluster].ntracks = 0;  // mark second cluster as used
+          vclus[index_cluster].merged = true;
+          vclus[index_second_cluster].merged = true;
+
+          //break;
+        } 
+      }
+    }
+  }
+ 
+  
+
+  int return_number_of_clusters = 0;
+  //count final number of clusters
+  vtxCluster pvclus[VeloTracking::max_tracks];
+  for(int i = 0; i < number_of_clusters; i++) {
+    if(vclus[i].ntracks != 0)     {pvclus[return_number_of_clusters] = vclus[i]; return_number_of_clusters++;}
+  } 
+
+
+  //clean up clusters, do we gain much from this?
+
+  // Select good clusters.
+
+  int number_good_clusters = 0;
+
+  for(int index = 0; index < return_number_of_clusters; index++) {
+
+    int n_tracks_close = 0;
+    for(int i = 0; i < number_of_clusters; i++) if(fabs(vclus[i].z - pvclus[index].z ) < mcu_dzCloseTracksInCluster ) n_tracks_close++;
+  
+
+    double dist_to_closest = 1000000.;
+    if(return_number_of_clusters > 1) {
+      for(int index2 = 0; index2 < return_number_of_clusters; index2++) {
+        if( index!=index2 && ( fabs( pvclus[index2].z - pvclus[index].z) < dist_to_closest) )  dist_to_closest = fabs( pvclus[index2].z - pvclus[index].z);
+      }
+    }
+
+    // ratio to remove clusters made of one low error track and many large error ones
+    double rat = pvclus[index].sigsq/pvclus[index].sigsqmin;
+    bool igood = false;
+    int ntracks = pvclus[index].ntracks;
+    if( ntracks >= mcu_minClusterMult ) {
+      if( dist_to_closest>10. && rat<0.95) igood=true;
+      if( ntracks >= mcu_highMult && rat < mcu_ratioSig2HighMult)  igood=true;
+      if( ntracks <  mcu_highMult && rat < mcu_ratioSig2LowMult )  igood=true;
+    }
+    // veto
+    if( n_tracks_close < mcu_minCloseTracksInCluster ) igood = false;
+    if(igood) {zclusters[number_good_clusters] = pvclus[index].z; number_good_clusters++;}
+
+
+  }
+
+
+
+  //return return_number_of_clusters;
+  return number_good_clusters;
+
+}

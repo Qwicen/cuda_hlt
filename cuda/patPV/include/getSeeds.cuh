@@ -7,3 +7,5 @@ __global__ void getSeeds(
   int * dev_atomics_storage,
   XYZPoint * dev_seeds,
   uint * dev_number_seeds);
+
+ __device__ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters);
