@@ -132,6 +132,7 @@ __global__ void compassUT(
       ut_hits,
       ut_hit_offsets,
       velo_state,
+      fudgeFactors,
       dev_ut_dxDy,
       true,
       best_hits,
@@ -147,7 +148,7 @@ __global__ void compassUT(
     // if (total_num_hits < N_LAYERS) {
     //   find_best_hits(
     //     i_track,
-    //     dev_windows_layers,
+    //     dev_windows_layers_aux,
     //     ut_hits,
     //     ut_hit_offsets,
     //     velo_state,
@@ -202,6 +203,40 @@ __global__ void compassUT(
 }
 
 //=========================================================================
+// Check if hit is inside tolerance and refine by Y
+//=========================================================================
+__host__ __device__ __inline__ bool check_tol_refine(
+  const int hit_index,
+  const UTHits& ut_hits,
+  const MiniState& velo_state,
+  const float normFactNum,
+  const float xTol,
+  const float dxDy) 
+{  
+  bool valid_hit = true;
+
+  // const float normFactNum = normFact[ut_hits.planeCode[i_hit0]];
+  const float xTolNormFact = xTol * (1.0 / normFactNum);
+
+  const float zInit = ut_hits.zAtYEq0[hit_index];
+  const float yApprox = velo_state.y + velo_state.ty * (zInit - velo_state.z);
+  const float xOnTrackProto = velo_state.x + velo_state.tx * (zInit - velo_state.z);
+  // const float dxDy = ut_dxDy[ut_hits.planeCode[hit_index]];
+
+  const float xx = ut_hits.xAt(hit_index, yApprox, dxDy);
+  const float dx = xx - xOnTrackProto;
+
+  if (dx < -xTolNormFact || dx > xTolNormFact) valid_hit=false;
+
+  // Now refine the tolerance in Y
+  if (ut_hits.isNotYCompatible(
+        hit_index, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx * (1.0 / normFactNum))))
+    valid_hit=false;
+
+  return valid_hit;
+}
+
+//=========================================================================
 // hits_to_track
 //=========================================================================
 __host__ __device__ void find_best_hits(
@@ -211,6 +246,7 @@ __host__ __device__ void find_best_hits(
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
+  const float* fudgeFactors,
   const float* ut_dxDy,
   const bool forward,
   int* best_hits,
@@ -225,7 +261,20 @@ __host__ __device__ void find_best_hits(
       layers[i_layer] = N_LAYERS - 1 - i_layer;
   }
 
+  const float invTheta = std::min(500., 1.0 / std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty));
+  const float minMom = std::max(PrVeloUTConst::minPT * invTheta, float(1.5) * Gaudi::Units::GeV);
+  const float xTol = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
   const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
+
+  const float absSlopeY = std::abs( velo_state.ty );
+  const int index = (int)(absSlopeY*100 + 0.5);
+  assert( 3 + 4*index < PrUTMagnetTool::N_dxLay_vals );  
+  const std::array<float,4> normFact = { 
+    fudgeFactors[4*index], 
+    fudgeFactors[1 + 4*index], 
+    fudgeFactors[2 + 4*index], 
+    fudgeFactors[3 + 4*index] 
+  };  
 
   // Get windows (l)ayer#_(g)roup#
   const int from_l0_g0 = std::get<0>(candidates_layers[layers[0]]);
@@ -284,7 +333,17 @@ __host__ __device__ void find_best_hits(
     } else {
       i_hit0 = from_l0_g2 + i0 - num_candidates_l0_g0 - num_candidates_l0_g1;
     }
-    // ------------
+
+    if (!check_tol_refine(
+      i_hit0,
+      ut_hits,
+      velo_state,
+      normFact[ut_hits.planeCode[i_hit0]],
+      xTol,
+      ut_dxDy[ut_hits.planeCode[i_hit0]])
+    ) continue;
+
+    // Get the hit to check with next layer
     const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
     const float xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[layers[0]]);
     const float zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
@@ -300,7 +359,17 @@ __host__ __device__ void find_best_hits(
       } else {
         i_hit2 = from_l2_g2 + i2 - num_candidates_l2_g0 - num_candidates_l2_g1;
       }
-      // ------------
+
+      if (!check_tol_refine(
+        i_hit2,
+        ut_hits,
+        velo_state,
+        normFact[ut_hits.planeCode[i_hit2]],
+        xTol,
+        ut_dxDy[ut_hits.planeCode[i_hit2]])
+      ) continue;
+
+      // Get the hit to check with next layer
       const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
       const float xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[layers[2]]);
       const float zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
@@ -320,6 +389,16 @@ __host__ __device__ void find_best_hits(
           } else {
             i_hit1 = from_l1_g2 + i1 - num_candidates_l1_g0 - num_candidates_l1_g1;
           }
+
+          if (!check_tol_refine(
+            i_hit1,
+            ut_hits,
+            velo_state,
+            normFact[ut_hits.planeCode[i_hit1]],
+            xTol,
+            ut_dxDy[ut_hits.planeCode[i_hit1]])
+          ) continue;          
+
           // ------------
           const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
           const float xhitLayer1 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[1]]);
@@ -343,6 +422,16 @@ __host__ __device__ void find_best_hits(
           } else {
             i_hit3 = from_l3_g2 + i3 - num_candidates_l3_g0 - num_candidates_l3_g1;
           }
+
+          if (!check_tol_refine(
+            i_hit3,
+            ut_hits,
+            velo_state,
+            normFact[ut_hits.planeCode[i_hit3]],
+            xTol,
+            ut_dxDy[ut_hits.planeCode[i_hit3]])
+          ) continue;
+                    
           // ------------
           const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
           const float xhitLayer3 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[3]]);
@@ -645,8 +734,6 @@ __device__ void save_track(
     assert( track.hitsNum < VeloUTTracking::max_track_size);
   }
   track.set_qop( qop );
-
-  // const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
 
   // Adding overlap hits
   for ( int i = 0; i < num_best_hits; ++i ) {

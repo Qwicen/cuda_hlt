@@ -73,6 +73,7 @@ __host__ __device__ void find_best_hits(
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
+  const float* fudgeFactors,
   const float* ut_dxDy,
   const bool forward,
   int* best_hits,

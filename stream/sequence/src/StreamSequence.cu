@@ -510,6 +510,10 @@ cudaError_t Stream::run_sequence(
     cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, argen.generate<arg::dev_atomics_veloUT>(argument_offsets), argen.size<arg::dev_atomics_veloUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
     cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, argen.generate<arg::dev_veloUT_tracks>(argument_offsets), argen.size<arg::dev_veloUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
 
+    // compassUT tracks
+    cudaCheck(cudaMemcpyAsync(host_atomics_compassUT, argen.generate<arg::dev_atomics_compassUT>(argument_offsets), argen.size<arg::dev_atomics_compassUT>(VeloUTTracking::num_atomics*number_of_events), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_compassUT_tracks, argen.generate<arg::dev_compassUT_tracks>(argument_offsets), argen.size<arg::dev_compassUT_tracks>(number_of_events*VeloUTTracking::max_num_tracks), cudaMemcpyDeviceToHost, stream));
+
     // // SciFi preprocessing
     // // Estimate cluster count
     // argument_sizes[arg::dev_scifi_raw_input] = argen.size<arg::dev_scifi_raw_input>(host_scifi_events_size);
@@ -678,6 +682,22 @@ cudaError_t Stream::run_sequence(
         trackType = "VeloUT";
         call_pr_checker (
           veloUT_tracks,
+          folder_name_MC,
+          start_event_offset,
+          trackType
+        );
+
+        /* CHECKING compassUT TRACKS */
+        const std::vector< trackChecker::Tracks > compassUT_tracks = prepareVeloUTTracks(
+          host_compassUT_tracks,
+          host_atomics_compassUT,
+          number_of_events
+        );
+
+        std::cout << "Checking compassUT tracks reconstructed on GPU" << std::endl;
+        trackType = "VeloUT";
+        call_pr_checker (
+          compassUT_tracks,
           folder_name_MC,
           start_event_offset,
           trackType
