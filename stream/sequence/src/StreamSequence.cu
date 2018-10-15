@@ -310,7 +310,8 @@ cudaError_t Stream::run_sequence(
       argen.generate<arg::dev_vertex>(argument_offsets),
       argen.generate<arg::dev_number_vertex>(argument_offsets),
       argen.generate<arg::dev_seeds>(argument_offsets),
-      argen.generate<arg::dev_number_seeds>(argument_offsets)
+      argen.generate<arg::dev_number_seeds>(argument_offsets),
+      argen.generate<arg::dev_velo_states>(argument_offsets)
     );
     sequence.item<seq::fitSeeds>().invoke();
 
@@ -487,15 +488,15 @@ cudaError_t Stream::run_sequence(
 
   //declare all memory needed for PV finding here
         std::cout << "CHECKING PVs TRACKS from x86" << std::endl;
-/*
+
     //seeds
     XYZPoint  seeds[number_of_events * PatPV::max_number_vertices];
     uint number_of_seeds[number_of_events];
     //output vertices
     Vertex out_vertices[number_of_events * PatPV::max_number_vertices];
     uint  number_of_vertex[number_of_events];
-
-    run_PatPV_on_CPU(
+    //somehow this breaks the execution with error
+    /*run_PatPV_on_CPU(
      host_velo_states,
      host_accumulated_tracks,
      host_number_of_tracks,
@@ -505,10 +506,10 @@ cudaError_t Stream::run_sequence(
      seeds,
      number_of_seeds
 
-         );
+         ); */
 
      checkPVs(folder_name_pv, true, number_of_events, out_vertices, number_of_vertex);
-*/
+
      std::cout <<number_of_events << " events" << std::endl;
 
      int acc_seeds = 0;
