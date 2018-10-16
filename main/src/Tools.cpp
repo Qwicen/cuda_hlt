@@ -228,6 +228,49 @@ void check_scifi_events( const SciFi::HitsSoA *hits_layers_events,
   
 }
 
+#define hits_to_out 3
+void check_muon_events( const Muon::HitsSoA * muon_station_hits,
+  const int n_events ){
+
+  float average_number_of_hits_per_event = 0;
+
+  for ( int i_event = 0; i_event < n_events; ++i_event ) {
+
+    float number_of_hits_per_event = 0;
+
+    for ( int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station ) {
+
+      const int station_offset = muon_station_hits[i_event].m_station_offsets[i_station];
+      const int number_of_hits = muon_station_hits[i_event].m_number_of_hits_per_station[i_station];
+      number_of_hits_per_event += number_of_hits;
+
+      debug_cout << "checks on station " << i_station << ", with" << number_of_hits << " hits" << std::endl;
+      for ( int i_hit; i_hit < hits_to_out; ++i_hit ) {
+        printf("\t at hit %u, tile = %i, x = %f, dx = %f, y = %f, dy = %f, z = %f, dz = %f, uncrossed = %i, time = %x, delta_time = %i, cluster_size = %i \n", 
+          i_hit,
+          muon_station_hits.m_tile[ station_offset + i_hit ],
+          muon_station_hits.m_x[ station_offset + i_hit ],
+          muon_station_hits.m_dx[ station_offset + i_hit ]
+          muon_station_hits.m_y[ station_offset + i_hit ],
+          muon_station_hits.m_dy[ station_offset + i_hit ]
+          muon_station_hits.m_z[ station_offset + i_hit ],
+          muon_station_hits.m_dz[ station_offset + i_hit ],
+          muon_station_hits.m_uncrossed[ station_offset + i_hit ],
+          muon_station_hits.m_time[ station_offset + i_hit ],
+          muon_station_hits.m_delta_time[ station_offset + i_hit ],
+          muon_station_hits.m_cluster_size[ station_offset + i_hit ]
+          );
+      }
+    }
+
+    average_number_of_hits_per_event += number_of_hits_per_event;
+    debug_cout << "# of Muon hits = " << number_of_hits_per_event << std::endl;
+  }
+
+  average_number_of_hits_per_event = average_number_of_hits_per_event / n_events;
+  debug_cout << "average # of Muon hits / event = " << average_number_of_hits_per_event << std::endl;
+}
+
 
 
 /**
