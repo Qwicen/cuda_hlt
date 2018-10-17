@@ -1,9 +1,6 @@
 #pragma once
 
-#include <dirent.h>
-#include <math.h>
-#include <iostream>
-#include <iomanip>
+#include <cfloat>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -11,73 +8,33 @@
 #include <algorithm>
 #include <map>
 #include <cmath>
-#include <stdint.h>
+#include <cstdint>
 #include "Logger.h"
-#include "VeloDefinitions.cuh"
+#include "VeloEventModel.cuh"
 #include "ClusteringDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
-#include "PrVeloUTMagnetToolDefinitions.cuh"
-#include "PrVeloUTDefinitions.cuh"
 #include "Tracks.h"
 #include "InputTools.h"
 #include "velopix-input-reader.h"
 #include "TrackChecker.h"
 #include "MCParticle.h"
+#include "VeloConsolidated.cuh"
 
-void readGeometry(
-  const std::string& foldername,
-  std::vector<char>& geometry
-);
-
-void check_velopix_events(
-  const std::vector<char> events,
-  const std::vector<unsigned int> event_offsets,
+bool check_velopix_events(
+  const std::vector<char>& events,
+  const std::vector<uint>& event_offsets,
   int n_events
 );
-
-void read_ut_events_into_arrays(  VeloUTTracking::HitsSoA *ut_hits_events,
-                                  const std::vector<char> events,
-				  const std::vector<unsigned int> event_offsets,
-				  int n_events );
-
-void check_ut_events( const VeloUTTracking::HitsSoA *hits_layers_events,
-                      const int n_events
-		      );
-
-void read_UT_magnet_tool( PrUTMagnetTool* host_magnet_tool );
 
 std::map<std::string, float> calcResults(
   std::vector<float>& times
 );
 
-template <bool mc_check>
-void printTrack(
-  VeloTracking::Track<mc_check>* tracks,
-  const int trackNumber,
-  std::ofstream& outstream
-);
-
-template <bool mc_check>
-void printTracks(
-  VeloTracking::Track<mc_check>* tracks,
-  int* n_tracks,
-  int n_events,
-  std::ofstream& outstream
-);
-
-template <bool mc_check>
-void writeBinaryTrack(
-  const unsigned int* hit_IDs,
-  const VeloTracking::Track <mc_check> & track,
-  std::ofstream& outstream
-);
-
-std::vector< trackChecker::Tracks > prepareTracks(
+std::vector<trackChecker::Tracks> prepareTracks(
+  uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number_pinned,
-  VeloTracking::Hit<true>* host_velo_track_hits_pinned,                                       
-  int* host_accumulated_tracks,
-  int* host_number_of_tracks_pinned,
-  const int &number_of_events
+  char* host_velo_track_hits_pinned,
+  const uint number_of_events
 );
 
 trackChecker::Tracks prepareVeloUTTracksEvent(

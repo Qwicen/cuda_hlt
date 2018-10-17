@@ -63,6 +63,7 @@ __global__ void velo_fit(
   //get pointer to trackhits of current event
   int* tracks_insert_pointer = dev_atomics_storage + event_number;
 
+
   //get total number of tracks
   const int number_of_tracks = *tracks_insert_pointer;
 

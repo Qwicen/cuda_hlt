@@ -6,8 +6,14 @@ include_directories(scheduler/include)
 include_directories(sequence/include)
 include_directories(sequence_setup/include)
 include_directories(../main/include)
-include_directories(../cuda/veloUT/common/include)
-include_directories(../cuda/veloUT/PrVeloUT/include)
+include_directories(../cuda/utils/prefix_sum/include)
+include_directories(../cuda/utils/sorting/include)
+include_directories(../cuda/event_model/velo/include)
+include_directories(../cuda/event_model/common/include)
+include_directories(../cuda/UT/common/include)
+include_directories(../cuda/UT/PrVeloUT/include)
+include_directories(../cuda/UT/UTDecoding/include)
+include_directories(../cuda/UT/sorting/include)
 include_directories(../cuda/velo/common/include)
 include_directories(../cuda/velo/calculate_phi_and_sort/include)
 include_directories(../cuda/velo/consolidate_tracks/include)
@@ -16,10 +22,13 @@ include_directories(../cuda/velo/prefix_sum/include)
 include_directories(../cuda/velo/search_by_triplet/include)
 include_directories(../cuda/velo/simplified_kalman_filter/include)
 include_directories(../cuda/patPV/include)
+include_directories(../cuda/SciFi/preprocessing/include)
+include_directories(../cuda/SciFi/common/include)
 include_directories(../x86/velo/clustering/include)
-include_directories(../checker/tracking/include)
 include_directories(../x86/veloUT/PrVeloUT/include)
 include_directories(../PatPV/include)
+include_directories(../checker/tracking/include)
+include_directories(../cuda/utils/include)
 
 file(GLOB stream_gear "gear/src/*cu")
 file(GLOB stream_handlers "handlers/src/*cu")
@@ -42,19 +51,24 @@ cuda_add_library(Stream STATIC
 
 if ( ROOT_FOUND )
   target_compile_definitions(Stream PUBLIC WITH_ROOT)
+  message("-- Found ROOT, setting WITH_ROOT to true")
   target_link_libraries(Stream
+  Utils
   Velo
-  VeloUT
   PatPV
   x86PatPV
+  UT
+  SciFi
   x86VeloUT
-  ${ROOT_LIBRAIRES})
+  ${ROOT_LIBRARIES})
 else()
   target_link_libraries(Stream
+  Utils
   Velo
-  VeloUT
   PatPV
   x86PatPV
+  UT
+  SciFi
   x86VeloUT)
 endif()
 

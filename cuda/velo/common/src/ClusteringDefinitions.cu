@@ -1,16 +1,11 @@
 #include "ClusteringDefinitions.cuh"
 
-__constant__ uint8_t VeloClustering::sp_patterns [256];
-__constant__ uint8_t VeloClustering::candidate_ks [9];
-__constant__ float VeloClustering::sp_fx [512];
-__constant__ float VeloClustering::sp_fy [512];
-
 __device__ __host__ VeloRawEvent::VeloRawEvent(
   const char* event
 ) {
   const char* p = event;
   number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
-  raw_bank_offset = (uint32_t*) p; p += number_of_raw_banks * sizeof(uint32_t);
+  raw_bank_offset = (uint32_t*) p; p += (number_of_raw_banks + 1) * sizeof(uint32_t);
   payload = (char*) p;
 }
 

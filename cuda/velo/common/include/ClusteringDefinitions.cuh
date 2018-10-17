@@ -4,18 +4,12 @@
 #include <stdint.h>
 #include <vector>
 #include <iostream>
-
 #include "VeloDefinitions.cuh"
 
 namespace VeloClustering {
   // Adjusted to minbias events. In the future, it should
   // be adjusted on the go.
   static constexpr uint32_t max_candidates_event = 3000;
-
-  extern __constant__ uint8_t sp_patterns [256];
-  extern __constant__ uint8_t candidate_ks [9];
-  extern __constant__ float sp_fx [512];
-  extern __constant__ float sp_fy [512];
 
   static constexpr uint32_t mask_bottom          = 0xFFFEFFFF;
   static constexpr uint32_t mask_top             = 0xFFFF7FFF;
@@ -24,6 +18,7 @@ namespace VeloClustering {
   static constexpr uint32_t mask_ltr_top_right   = 0x7FFF0000;
   static constexpr uint32_t mask_rtl_bottom_left = 0x0000FFFE;
   static constexpr uint32_t max_clustering_iterations = 12;
+  static constexpr uint32_t lookup_table_size = 9;
 }
 
 namespace LHCb {

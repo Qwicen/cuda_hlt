@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "VeloDefinitions.cuh"
+#include "VeloEventModel.cuh"
 #include "Common.h"
 
 __device__ float velo_kalman_filter_step(

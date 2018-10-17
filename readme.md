@@ -6,7 +6,7 @@ a full HLT1 realization on GPU.
 
 Requisites
 ----------
-The project requires a graphics card with CUDA support, CUDA 9.2 and a compiler supporting C++14. It also requires the developer package of `tbb`.
+The project requires a graphics card with CUDA support, CUDA 9.2, Cmake 3.11.2 or higher and a compiler supporting C++14. It also requires the developer package of `tbb`.
 
 If you are working from a node with CVMFS and CentOS 7, we suggest the following setup:
 
@@ -30,24 +30,15 @@ You can check your compiler standard compatibility by scrolling to the `C++14 fe
 
 Optional: you can compile the project with ROOT. Then, trees will be filled with variables to check when running the VeloUT algorithm on x86 architecture.
 
-<details><summary>Building and running inside Docker: (click to expand)</summary><p>
-
-The following lines will build the code base from any computer with NVidia-Docker, assuming you are in the directory with the code checkout and want to build in `build`:
-
-```bash
-docker run --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 --rm -v $(pwd):/cuda_hlt -it nvidia/cuda:9.2-devel-ubuntu18.04 bash
-
-apt update && apt install -y cmake libtbb-dev
-mkdir build
-cmake ..
-make
-```
-
-</p></details>
+[Building and running inside Docker](readme_docker.md)
 
 Where to find input
 -------------
-Input from 10k events can be found here: /afs/cern.ch/work/d/dovombru/public/gpu_input/10kevents
+Input from 1k events can be found here: 
+
+minimum bias (for performance checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbias.tar.gz
+
+Bs->PhiPhi (for efficiency checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi.tar.gz
 
 How to run it
 -------------
@@ -62,8 +53,8 @@ The build process doesn't differ from standard cmake projects:
 There are some cmake options to configure the build process:
 
    * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
-   * The option to run the validation, on by default, can be turned off with `-DMC_CHECK=Off`. 
-   
+   * The option to run the validation, on by default, can be turned off with `-DMC_CHECK=Off`.
+
 
 The MC validation is a standalone version of the PrChecker, it was written by
 Manuel Schiller, Rainer Schwemmer and Daniel Cámpora.
@@ -72,15 +63,15 @@ Some binary input files are included with the project for testing.
 A run of the program with no arguments will let you know the basic options:
 
     Usage: ./cu_hlt
-    -f {folder containing .bin files with raw bank information}
-    -d {folder containing .bin files with MC truth information}
-    -e {folder containing bin files with UT hit information}
-    -g {folder containing geometry descriptions}
+    -f {folder containing bin files with VP raw bank information}
+    -u {folder containing bin files with UT raw bank information}
+    -i {folder containing bin files with SciFi raw bank information}
+    -g {folder containing detector configuration}
+    -d {folder containing bin files with MC truth information}
     -n {number of events to process}=0 (all)
     -o {offset of events from which to start}=0 (beginning)
     -t {number of threads / streams}=1
     -r {number of repetitions per thread / stream}=1
-    -b {transmit device to host}=1
     -c {run checkers}=0
     -k {simplified kalman filter}=0
     -m {reserve Megabytes}=1024
@@ -92,23 +83,15 @@ A run of the program with no arguments will let you know the basic options:
 Here are some example run options:
 
     # Run all input files once with the tracking validation
-    ./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -d ../input/minbias/MC_info -g ../input/geometry/
+    ./cu_hlt
 
-    # Note: For the examples below, cu_hlt must have been compiled with -DMC_CHECK=Off
-    # Run a total of 1000 events, round robin over the existing ones
-    ./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -g ../input/geometry/ -n 1000
+    # Run a total of 1000 events, round robin over the existing ones, without tracking validation
+    ./cu_hlt -c 0 -n 1000
 
     # Run four streams, each with 4000 events, 20 repetitions
-    ./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -g ../input/geometry/ -t 4 -n 4000 -r 20
+    ./cu_hlt -t 4 -n 4000 -r 20 -c 0
 
-    # Run twelve streams, each with 3500 events, 40 repetitions
-    ./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -g ../input/geometry/ -n 3500 -t 12 -r 40
-
-    # Run clustering and Velopix efficiency validations, no repetitions or multiple threads needed
-    # Note: cu_hlt must have been compiled with -DMC_CHECK=On
-    ./cu_hlt -f ../input/minbias/velopix_raw -d ../input/minbias/MC_info -e ../input/minbias/ut_hits -g ../input/geometry/ -n 10 -t 1 -r 1 -c 1
-    
     # Run one stream and print all memory allocations
-    ./cu_hlt -f ../input/minbias/velopix_raw -e ../input/minbias/ut_hits -g ../input/geometry/ -n 5000 -t 1 -r 1 -p
+    ./cu_hlt -n 5000 -p
 
-[This readme](readme_cuda_developer.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define global memory variables for this sequence and pass on the dependencies.
+[This readme](contributing.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define global memory variables for this sequence and pass on the dependencies.

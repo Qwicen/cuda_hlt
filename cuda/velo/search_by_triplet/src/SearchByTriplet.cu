@@ -1,4 +1,4 @@
-﻿#include "SearchByTriplet.cuh"
+#include "SearchByTriplet.cuh"
 #include "ClusteringDefinitions.cuh"
 
 /**
@@ -8,15 +8,16 @@ __global__ void search_by_triplet(
   uint32_t* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
-  VeloTracking::TrackHits* dev_tracks,
-  VeloTracking::TrackletHits* dev_tracklets,
+  Velo::TrackHits* dev_tracks,
+  Velo::TrackletHits* dev_tracklets,
   uint* dev_tracks_to_follow,
-  VeloTracking::TrackletHits* dev_weak_tracks,
+  Velo::TrackletHits* dev_weak_tracks,
   bool* dev_hit_used,
   int* dev_atomics_storage,
   short* dev_h0_candidates,
   short* dev_h2_candidates,
-  unsigned short* dev_rel_indices
+  unsigned short* dev_rel_indices,
+  const float* dev_velo_module_zs
 ) {
   /* Data initialization */
   // Each event is treated with two blocks, one for each side.
@@ -39,7 +40,7 @@ __global__ void search_by_triplet(
   // const float* hit_IDs = (float*) (dev_velo_cluster_container + 2 * number_of_hits + hit_offset);
 
   // Per event datatypes
-  VeloTracking::TrackHits* tracks = dev_tracks + tracks_offset;
+  Velo::TrackHits* tracks = dev_tracks + tracks_offset;
   uint* tracks_insert_pointer = (uint*) dev_atomics_storage + event_number;
 
   // Per side datatypes
@@ -48,8 +49,8 @@ __global__ void search_by_triplet(
   short* h2_candidates = dev_h2_candidates + 2*hit_offset;
 
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * VeloTracking::ttf_modulo;
-  VeloTracking::TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::max_weak_tracks;
- VeloTracking:: TrackletHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
+  Velo::TrackletHits* weak_tracks = dev_weak_tracks + event_number * VeloTracking::max_weak_tracks;
+  Velo::TrackletHits* tracklets = dev_tracklets + event_number * VeloTracking::ttf_modulo;
   unsigned short* h1_rel_indices = dev_rel_indices + event_number * VeloTracking::max_numhits_in_module;
 
   // Initialize variables according to event number and module side
@@ -62,7 +63,7 @@ __global__ void search_by_triplet(
 
   // Shared memory
   extern __shared__ float shared_best_fits [];
-  __shared__ int module_data [12];
+  __shared__ int module_data [18];
 
   // Initialize hit_used
   const auto current_event_number_of_hits = module_hitStarts[VeloTracking::n_modules] - hit_offset;
@@ -80,7 +81,7 @@ __global__ void search_by_triplet(
 
   // Process modules
   process_modules(
-    (VeloTracking::Module*) &module_data[0],
+    (Velo::Module*) &module_data[0],
     (float*) &shared_best_fits[0],
     VP::NModules-1,
     2,
@@ -93,6 +94,7 @@ __global__ void search_by_triplet(
     hit_Xs,
     hit_Ys,
     hit_Zs,
+    hit_Phis,
     weaktracks_insert_pointer,
     tracklets_insert_pointer,
     ttf_insert_pointer,
@@ -104,6 +106,7 @@ __global__ void search_by_triplet(
     number_of_hits,
     h1_rel_indices,
     local_number_of_hits,
-    hit_offset
+    hit_offset,
+    dev_velo_module_zs
   );
 }
