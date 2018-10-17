@@ -500,7 +500,7 @@ cudaError_t Stream::run_sequence(
     //output vertices
     Vertex out_vertices[number_of_events * PatPV::max_number_vertices];
     uint  number_of_vertex[number_of_events];
-    //somehow this breaks the execution with error
+    //somehow this breaks the execution without any error
     /*run_PatPV_on_CPU(
      host_velo_states,
      host_accumulated_tracks,
