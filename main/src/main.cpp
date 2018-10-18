@@ -29,6 +29,7 @@
 #include "StreamWrapper.cuh"
 #include "Constants.cuh"
 #include "MuonDefinitions.cuh"
+#include "MuonFeatures.h"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
@@ -209,7 +210,13 @@ int main(int argc, char *argv[])
 
   const int hits_to_out = 3;
   check_muon_events(muon_hits_events.data(), hits_to_out, number_of_events_requested);
-
+  auto muTrack = new State(0,0,1,1,1);
+  std::vector<double> features = calcBDT(*muTrack, muon_hits_events[0]);
+  for(auto f : features) {
+      std::cout << f << " ";
+  }
+  std::cout<<std::endl;
+  delete muTrack;
 
   auto geometry_reader = GeometryReader(folder_name_detector_configuration);
   auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
