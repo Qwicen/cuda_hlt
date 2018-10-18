@@ -8,11 +8,13 @@ std::vector<double> calcBDT(State &muTrack,
     std::vector<double> times, dts, cross, resX, resY, minDist, distSeedHit;
     
     // let's start
-    CommonMuonTool muTool;
+    std::vector<float>m_stationZ;
     std::vector<std::pair<float,float>> extrapolation;
     for (int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station) {
-	extrapolation.emplace_back(muTrack.x + muTrack.tx * (i_station + 1),
-			           muTrack.y + muTrack.ty * (i_station + 1 ));
+	const int station_offset = hits.m_station_offsets[i_station];
+	m_stationZ.push_back(hits.m_z[station_offset]);
+	extrapolation.emplace_back(muTrack.x + muTrack.tx * m_stationZ[i_station],
+			           muTrack.y + muTrack.ty * m_stationZ[i_station]);
     }
     
     for( unsigned int st = 0; st != Muon::Constants::n_stations; ++st ){
@@ -57,7 +59,7 @@ std::vector<double> calcBDT(State &muTrack,
                     times[s] = hits.m_time[idx];
                     dts[s] = hits.m_delta_time[idx];
                     (hits.m_uncrossed[idx]==0) ? cross[s] = 2. : cross[s] = hits.m_uncrossed[idx];
-                    float travDist = sqrt((muTool.m_stationZ[s]-muTool.m_stationZ[0])*(muTool.m_stationZ[s]-muTool.m_stationZ[0])+
+                    float travDist = sqrt((m_stationZ[s]-m_stationZ[0])*(m_stationZ[s]-m_stationZ[0])+
                                       (extrapolation[s].first-extrapolation[0].first)*(extrapolation[s].first-extrapolation[0].first)+
                                       (extrapolation[s].second-extrapolation[0].second)*(extrapolation[s].second-extrapolation[0].second));
                     float errMS = commonFactor*travDist*sqrt(travDist)*0.23850119787527452;
