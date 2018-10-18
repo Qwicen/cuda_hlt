@@ -5,14 +5,18 @@
 #include "VeloDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
 
-constexpr uint N_LAYERS = 4;
+constexpr uint N_LAYERS = VeloUTTracking::n_layers;
 
 //=========================================================================
 // Point to correct position for windows pointers
 //=========================================================================
 struct LayerCandidates {
-  uint first;
-  uint last;
+  int from0;
+  int to0;
+  int from1;
+  int to1;
+  int from2;
+  int to2;
 };
 
 struct TrackCandidates {
@@ -66,9 +70,20 @@ __global__ void compassUT(
   int* dev_atomics_compassUT,
   int* dev_windows_layers);
 
+__host__ __device__ bool velo_track_in_UT_acceptance(
+  const MiniState& state);
+
+__host__ __device__ bool check_tol_refine(
+  const int hit_index,
+  const UTHits& ut_hits,
+  const MiniState& velo_state,
+  const float normFactNum,
+  const float xTol,
+  const float dxDy);
+
 __host__ __device__ void find_best_hits(
   const int i_track,
-  // const int* dev_windows_layers,
+  const int* dev_windows_layers,
   const std::tuple<int, int, int, int, int, int>* candidates_layers,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
