@@ -1,10 +1,10 @@
 #pragma once
 
 #include "cuda_runtime.h"
+#include "Common.cuh"
 #include <ostream>
 #include <tuple>
 #include <utility>
-#include "Common.cuh"
 
 template<class Fn, class Tuple, unsigned long... I>
 auto call_impl(

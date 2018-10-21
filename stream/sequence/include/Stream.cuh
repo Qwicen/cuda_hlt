@@ -19,6 +19,8 @@
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
 
+#include "EstimateInputSize.cuh"
+
 class Timer;
 
 struct Stream {
@@ -114,4 +116,11 @@ struct Stream {
     const uint number_of_events,
     const std::vector<std::pair<std::string, float>>& times
   );
+
+  void operator()(const monostate& state);
+  
+  void operator()(
+    decltype(estimate_input_size_t(estimate_input_size))& state,
+    ArgumentManager<argument_tuple_t>& arguments,
+    const std::tuple<const uint, const char*, const uint*, const size_t, const size_t>& const_arguments);
 };
