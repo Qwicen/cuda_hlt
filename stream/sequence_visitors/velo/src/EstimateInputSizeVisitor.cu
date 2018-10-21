@@ -1,14 +1,15 @@
 #include "Stream.cuh"
 
 template<>
-void Stream::visit<decltype(estimate_input_size_t(estimate_input_size))>(
+void StreamVisitor::visit<decltype(estimate_input_size_t(estimate_input_size))>(
   decltype(estimate_input_size_t(estimate_input_size))& state,
-  ArgumentManager<argument_tuple_t>& arguments,
   const int sequence_step,
-  const RuntimeOptions& runtime_options)
+  const RuntimeOptions& runtime_options,
+  const Constants& constants,
+  ArgumentManager<argument_tuple_t>& arguments,
+  HostBuffers& host_buffers,
+  cudaStream_t& cuda_stream)
 {
-  std::cout << "EstimateInputSize" << std::endl;
-
   // Estimate input size
   // Set arguments and reserve memory
   arguments.set_size<arg::dev_raw_input>(runtime_options.host_velopix_events_size);
@@ -20,7 +21,7 @@ void Stream::visit<decltype(estimate_input_size_t(estimate_input_size))>(
   scheduler.setup_next(arguments, sequence_step);
 
   // Setup opts and arguments for kernel call
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(32, 26), stream);
+  state.set_opts(dim3(runtime_options.number_of_events), dim3(32, 26), cuda_stream);
   state.set_arguments(
     arguments.offset<arg::dev_raw_input>(),
     arguments.offset<arg::dev_raw_input_offsets>(),
@@ -31,9 +32,10 @@ void Stream::visit<decltype(estimate_input_size_t(estimate_input_size))>(
     constants.dev_velo_candidate_ks
   );
 
-  cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_raw_input>(), runtime_options.host_velopix_events, arguments.size<arg::dev_raw_input>(), cudaMemcpyHostToDevice, stream));
-  cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_raw_input_offsets>(), runtime_options.host_velopix_event_offsets, arguments.size<arg::dev_raw_input_offsets>(), cudaMemcpyHostToDevice, stream));
-  cudaEventRecord(cuda_generic_event, stream);
+  // Fetch required arguments from 
+  cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_raw_input>(), runtime_options.host_velopix_events, arguments.size<arg::dev_raw_input>(), cudaMemcpyHostToDevice, cuda_stream));
+  cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_raw_input_offsets>(), runtime_options.host_velopix_event_offsets, arguments.size<arg::dev_raw_input_offsets>(), cudaMemcpyHostToDevice, cuda_stream));
+  cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
 
   // Kernel call

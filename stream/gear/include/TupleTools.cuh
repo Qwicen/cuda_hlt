@@ -10,7 +10,7 @@ struct tuple_indices {
 
 template <typename Ftor, typename Tuple, size_t... Is, typename... Args>
 void run_sequence_tuple_impl(Ftor&& ftor, Tuple&& tuple, std::index_sequence<Is...>, Args&&... args) {
-    auto _ = { (ftor(Is, std::get<Is>(std::forward<Tuple>(tuple)), args...), void(), 0)... };
+    auto _ = { (ftor.visit(std::get<Is>(std::forward<Tuple>(tuple)), Is, args...), void(), 0)... };
 }
 
 template <typename Ftor, typename Tuple, typename... Args>

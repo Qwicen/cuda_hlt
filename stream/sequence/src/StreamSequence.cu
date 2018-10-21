@@ -24,6 +24,8 @@ cudaError_t Stream::run_sequence(
     // state = std::visit(*this, state, arguments, runtime_options);
 
     // Non-C++17 solution
+
+    // Visit all algorithms in configured sequence
     run_sequence_tuple(*this, sequence_tuple, arguments, runtime_options);
 
     // // Convert the estimated sizes to module hit start format (argument_offsets)
