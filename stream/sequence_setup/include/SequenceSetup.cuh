@@ -23,32 +23,18 @@
 #include "SequenceArgumentEnum.cuh"
 #include "VeloEventModel.cuh"
 
-template <class T, class Tuple>
-struct tuple_index;
-
-template <class T, class... Types>
-struct tuple_index<T, std::tuple<T, Types...>> {
-  static const std::size_t value = 0;
-};
-
-template <class T, class U, class... Types>
-struct tuple_index<T, std::tuple<U, Types...>> {
-  static const std::size_t value = 1 + tuple_index<T, std::tuple<Types...>>::value;
-};
-
-struct monostate {};
-
 #define SEQUENCE(...) \
-  typedef std::tuple<monostate, __VA_ARGS__, monostate> sequence_tuple_n;
-  // Prepared for C++17
+  typedef std::tuple<__VA_ARGS__> sequence_tuple_n;
+  // Prepared for C++17 variant
   // typedef std::variant<monostate, __VA_ARGS__> state_n;
 
 SEQUENCE(decltype(estimate_input_size_t(estimate_input_size)))
 
-template<typename T>
-auto transition(const T& state) {
-  return typename std::tuple_element<tuple_index<T, sequence_tuple_n>::value + 1, sequence_tuple_n>::type{};
-}
+// Prepared for C++17 variant
+// template<typename T>
+// auto transition(const T& state) {
+//   return typename std::tuple_element<tuple_index<T, sequence_tuple_n>::value + 1, sequence_tuple_n>::type{};
+// }
 
 /**
  * @brief Algorithm tuple definition. All algorithms in the sequence

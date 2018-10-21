@@ -223,8 +223,7 @@ int main(int argc, char *argv[])
     static_cast<uint>(0),
     static_cast<uint>(tbb_threads),
     [&] (uint i) {
-      stream_wrapper.run_stream(
-        i,
+      auto runtime_options = RuntimeOptions{
         velo_reader.host_events,
         velo_reader.host_event_offsets,
         velo_reader.host_events_size,
@@ -238,7 +237,11 @@ int main(int argc, char *argv[])
         scifi_reader.host_events_size,
         scifi_reader.host_event_offsets_size,
         number_of_events_requested,
-        number_of_repetitions
+        number_of_repetitions};
+
+      stream_wrapper.run_stream(
+        i,
+        runtime_options
       );
     }
   );

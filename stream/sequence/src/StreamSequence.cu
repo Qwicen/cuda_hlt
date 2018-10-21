@@ -6,25 +6,13 @@
 
 cudaError_t Stream::run_sequence(
   const uint i_stream,
-  const char* host_velopix_events,
-  const uint* host_velopix_event_offsets,
-  const size_t host_velopix_events_size,
-  const size_t host_velopix_event_offsets_size,
-  const char* host_ut_events,
-  const uint* host_ut_event_offsets,
-  const size_t host_ut_events_size,
-  const size_t host_ut_event_offsets_size,
-  char* host_scifi_events,
-  uint* host_scifi_event_offsets,
-  const size_t host_scifi_events_size,
-  const size_t host_scifi_event_offsets_size,
-  const uint number_of_events,
-  const uint number_of_repetitions
+  const RuntimeOptions& runtime_options
 ) {
   // Generate object for populating arguments
   ArgumentManager<argument_tuple_t> arguments {dev_base_pointer};
+  sequence_tuple_n sequence_tuple;
 
-  for (uint repetition=0; repetition<number_of_repetitions; ++repetition) {
+  for (uint repetition=0; repetition<runtime_options.number_of_repetitions; ++repetition) {
     uint sequence_step = 0;
 
     // Reset scheduler
@@ -32,17 +20,11 @@ cudaError_t Stream::run_sequence(
 
     // For when we have C++17
     // state_n state;
-    // state = std::visit(*this, state, number_of_events, arguments);
-    // state = std::visit(*this, state, number_of_events, arguments);
+    // state = std::visit(*this, state, arguments, runtime_options);
+    // state = std::visit(*this, state, arguments, runtime_options);
 
     // Non-C++17 solution
-    auto state = monostate{};
-    this->operator()(state);
-
-    auto tuple = std::make_tuple(number_of_events, host_velopix_events,
-        host_velopix_event_offsets, host_velopix_events_size, host_velopix_event_offsets_size);
-    auto state1 = transition(state);
-    this->operator()(state1, arguments, tuple);
+    apply_unary(*this, sequence_tuple, arguments, runtime_options);
 
     // // Convert the estimated sizes to module hit start format (argument_offsets)
     // // Set arguments and reserve memory
