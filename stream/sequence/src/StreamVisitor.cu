@@ -1,6 +1,7 @@
 #include "Stream.cuh"
 
 void Stream::operator()(
+  const int sequence_step,
   decltype(estimate_input_size_t(estimate_input_size))& state,
   ArgumentManager<argument_tuple_t>& arguments,
   const RuntimeOptions& runtime_options)
@@ -15,7 +16,7 @@ void Stream::operator()(
   arguments.set_size<arg::dev_module_cluster_num>(runtime_options.number_of_events * VeloTracking::n_modules);
   arguments.set_size<arg::dev_module_candidate_num>(runtime_options.number_of_events);
   arguments.set_size<arg::dev_cluster_candidates>(runtime_options.number_of_events * VeloClustering::max_candidates_event);
-  scheduler.setup_next(arguments, 0);
+  scheduler.setup_next(arguments, sequence_step);
 
   // Setup opts and arguments for kernel call
   state.set_opts(dim3(runtime_options.number_of_events), dim3(32, 26), stream);

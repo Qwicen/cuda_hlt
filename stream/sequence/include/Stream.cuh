@@ -105,6 +105,7 @@ struct Stream {
   );
 
   void operator()(
+    const int sequence_step,
     decltype(estimate_input_size_t(estimate_input_size))& state,
     ArgumentManager<argument_tuple_t>& arguments,
     const std::tuple<const uint, const char*, const uint*, const size_t, const size_t>& const_arguments);

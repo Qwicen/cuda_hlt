@@ -8,12 +8,12 @@ cudaError_t Stream::run_sequence(
   const uint i_stream,
   const RuntimeOptions& runtime_options
 ) {
-  // Generate object for populating arguments
-  ArgumentManager<argument_tuple_t> arguments {dev_base_pointer};
-  sequence_tuple_n sequence_tuple;
+  // Sequence tuple
+  const sequence_tuple_n sequence_tuple;
 
   for (uint repetition=0; repetition<runtime_options.number_of_repetitions; ++repetition) {
-    uint sequence_step = 0;
+    // Generate object for populating arguments
+    ArgumentManager<argument_tuple_t> arguments {dev_base_pointer};
 
     // Reset scheduler
     scheduler.reset();
@@ -24,7 +24,7 @@ cudaError_t Stream::run_sequence(
     // state = std::visit(*this, state, arguments, runtime_options);
 
     // Non-C++17 solution
-    apply_unary(*this, sequence_tuple, arguments, runtime_options);
+    run_sequence_tuple(*this, sequence_tuple, arguments, runtime_options);
 
     // // Convert the estimated sizes to module hit start format (argument_offsets)
     // // Set arguments and reserve memory
