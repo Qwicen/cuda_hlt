@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RuntimeOptions.h"
+#include "Logger.h"
 #include "Constants.cuh"
 #include "Argument.cuh"
 #include "HostBuffers.cuh"

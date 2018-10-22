@@ -11,7 +11,7 @@
  */
 #define ALGORITHM(FUNCTION_NAME, EXPOSED_TYPE_NAME) \
   struct EXPOSED_TYPE_NAME {\
-    constexpr static auto name {#FUNCTION_NAME};\
+    constexpr static auto name {#EXPOSED_TYPE_NAME};\
     decltype(HandlerMaker::make_handler(FUNCTION_NAME)) handler {FUNCTION_NAME};\
     void set_opts(\
       const dim3& param_num_blocks,\
