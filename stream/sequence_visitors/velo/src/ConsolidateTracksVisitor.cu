@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "ConsolidateTracks.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(search_by_triplet_t(search_by_triplet))>(
-  decltype(search_by_triplet_t(search_by_triplet))& state,
+void StreamVisitor::visit<consolidate_tracks_t>(
+  consolidate_tracks_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

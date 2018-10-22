@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "PrefixSum.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<prefix_sum_reduce_velo_clusters_t>(
+  prefix_sum_reduce_velo_clusters_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
@@ -30,8 +31,8 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
 }
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<prefix_sum_single_block_velo_clusters_t>(
+  prefix_sum_single_block_velo_clusters_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
@@ -56,8 +57,8 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
 }
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<prefix_sum_scan_velo_clusters_t>(
+  prefix_sum_scan_velo_clusters_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

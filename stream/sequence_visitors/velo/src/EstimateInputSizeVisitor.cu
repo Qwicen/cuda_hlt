@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "EstimateInputSize.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(estimate_input_size_t(estimate_input_size))>(
-  decltype(estimate_input_size_t(estimate_input_size))& state,
+void StreamVisitor::visit<estimate_input_size_t>(
+  estimate_input_size_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

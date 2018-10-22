@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "CalculateNumberOfUTHits.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<calculate_number_of_ut_hits_t>(
+  calculate_number_of_ut_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

@@ -4,11 +4,6 @@
  * @brief Sets up the chain that will be executed later.
  */
 cudaError_t Stream::initialize(
-  const std::vector<char>& velopix_geometry,
-  const std::vector<char>& ut_boards,
-  const std::vector<char>& ut_geometry,
-  const std::vector<char>& ut_magnet_tool,
-  const std::vector<char>& scifi_geometry,
   const uint max_number_of_events,
   const bool param_do_check,
   const bool param_do_simplified_kalman_filter,
@@ -35,26 +30,6 @@ cudaError_t Stream::initialize(
   folder_name_MC = param_folder_name_MC;
   start_event_offset = param_start_event_offset;
   constants = param_constants;
-
-  // Special case
-  // Populate velo geometry
-  cudaCheck(cudaMalloc((void**)&dev_velo_geometry, velopix_geometry.size()));
-  cudaCheck(cudaMemcpyAsync(dev_velo_geometry, velopix_geometry.data(), velopix_geometry.size(), cudaMemcpyHostToDevice, cuda_stream));
-
-  // Populate UT boards and geometry
-  cudaCheck(cudaMalloc((void**)&dev_ut_boards, ut_boards.size()));
-  cudaCheck(cudaMemcpyAsync(dev_ut_boards, ut_boards.data(), ut_boards.size(), cudaMemcpyHostToDevice, cuda_stream));
-
-  cudaCheck(cudaMalloc((void**)&dev_ut_geometry, ut_geometry.size()));
-  cudaCheck(cudaMemcpyAsync(dev_ut_geometry, ut_geometry.data(), ut_geometry.size(), cudaMemcpyHostToDevice, cuda_stream));
-
-  // Populate UT magnet tool values
-  cudaCheck(cudaMalloc((void**)&dev_ut_magnet_tool, ut_magnet_tool.size()));
-  cudaCheck(cudaMemcpyAsync(dev_ut_magnet_tool, ut_magnet_tool.data(), ut_magnet_tool.size(), cudaMemcpyHostToDevice, cuda_stream));
-
-  // Populate FT geometry
-  cudaCheck(cudaMalloc((void**)&dev_scifi_geometry, scifi_geometry.size()));
-  cudaCheck(cudaMemcpyAsync(dev_scifi_geometry, scifi_geometry.data(), scifi_geometry.size(), cudaMemcpyHostToDevice, cuda_stream));
 
   // Reserve host buffers
   host_buffers.reserve();

@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "PrefixSum.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<prefix_sum_reduce_scifi_hits_t>(
+  prefix_sum_reduce_scifi_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
@@ -27,8 +28,8 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
 }
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<prefix_sum_single_block_scifi_hits_t>(
+  prefix_sum_single_block_scifi_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
@@ -53,8 +54,8 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
 }
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<prefix_sum_scan_scifi_hits_t>(
+  prefix_sum_scan_scifi_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
@@ -90,5 +91,3 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
 
   // info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
 }
-
-

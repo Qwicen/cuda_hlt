@@ -1,43 +1,5 @@
 #pragma once
 
-namespace seq {
-/**
- * seq_enum_t contains all steps of the sequence in the expected
- *            order of execution.
- */
-enum seq_enum_t {
-  estimate_input_size,
-  prefix_sum_reduce,
-  prefix_sum_single_block,
-  prefix_sum_scan,
-  masked_velo_clustering,
-  calculate_phi_and_sort,
-  fill_candidates,
-  search_by_triplet,
-  weak_tracks_adder,
-  copy_and_prefix_sum_single_block,
-  copy_velo_track_hit_number,
-  prefix_sum_reduce_velo_track_hit_number,
-  prefix_sum_single_block_velo_track_hit_number,
-  prefix_sum_scan_velo_track_hit_number,
-  consolidate_tracks,
-  ut_calculate_number_of_hits,
-  prefix_sum_reduce_ut_hits,
-  prefix_sum_single_block_ut_hits,
-  prefix_sum_scan_ut_hits,
-  ut_pre_decode,
-  ut_find_permutation,
-  ut_decode_raw_banks_in_order,
-  veloUT,
-  estimate_cluster_count,
-  prefix_sum_reduce_scifi_hits,
-  prefix_sum_single_block_scifi_hits,
-  prefix_sum_scan_scifi_hits,
-  raw_bank_decoder,
-  scifi_sort_by_x
-};
-}
-
 namespace arg {
 /**
  * arg_enum_t Arguments for all algorithms in the sequence.

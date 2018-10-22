@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "SciFiRawBankDecoder.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<scifi_raw_bank_decoder_t>(
+  scifi_raw_bank_decoder_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

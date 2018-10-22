@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "EstimateClusterCount.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<estimate_cluster_count_t>(
+  estimate_cluster_count_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

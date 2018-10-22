@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "CalculatePhiAndSort.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(calculate_phi_and_sort_t(calculate_phi_and_sort))>(
-  decltype(calculate_phi_and_sort_t(calculate_phi_and_sort))& state,
+void StreamVisitor::visit<calculate_phi_and_sort_t>(
+  calculate_phi_and_sort_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

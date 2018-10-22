@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "UTFindPermutation.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<ut_find_permutation_t>(
+  ut_find_permutation_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

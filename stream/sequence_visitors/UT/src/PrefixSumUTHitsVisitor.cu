@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "PrefixSum.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<prefix_sum_reduce_ut_hits_t>(
+  prefix_sum_reduce_ut_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
@@ -28,8 +29,8 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
 }
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<prefix_sum_single_block_ut_hits_t>(
+  prefix_sum_single_block_ut_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
@@ -54,8 +55,8 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
 }
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<prefix_sum_scan_ut_hits_t>(
+  prefix_sum_scan_ut_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

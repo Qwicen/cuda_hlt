@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "PrefixSum.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<copy_and_prefix_sum_t>(
+  copy_and_prefix_sum_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

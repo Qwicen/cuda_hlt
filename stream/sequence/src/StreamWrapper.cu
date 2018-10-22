@@ -3,11 +3,6 @@
 
 void StreamWrapper::initialize_streams(
   const uint n,
-  const std::vector<char>& velopix_geometry,
-  const std::vector<char>& ut_boards,
-  const std::vector<char>& ut_geometry,
-  const std::vector<char>& ut_magnet_tool,
-  const std::vector<char>& scifi_geometry,
   const uint number_of_events,
   const bool do_check,
   const bool do_simplified_kalman_filter,
@@ -24,11 +19,6 @@ void StreamWrapper::initialize_streams(
 
   for (int i=0; i<streams.size(); ++i) {
     streams[i]->initialize(
-      velopix_geometry,
-      ut_boards,
-      ut_geometry,
-      ut_magnet_tool,
-      scifi_geometry,
       number_of_events,
       do_check,
       do_simplified_kalman_filter,

@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "MaskedVeloClustering.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(masked_velo_clustering_t(masked_velo_clustering))>(
-  decltype(masked_velo_clustering_t(masked_velo_clustering))& state,
+void StreamVisitor::visit<masked_velo_clustering_t>(
+  masked_velo_clustering_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

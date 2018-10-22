@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Handler.cuh"
+
 __device__ void fill_candidates_impl(
   short* h0_candidates,
   short* h2_candidates,
@@ -16,3 +18,5 @@ __global__ void fill_candidates(
   short* dev_h0_candidates,
   short* dev_h2_candidates
 );
+
+ALGORITHM(fill_candidates, fill_candidates_t)

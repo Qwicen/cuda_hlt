@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "UTDecodeSorted.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<ut_decode_sorted_t>(
+  ut_decode_sorted_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

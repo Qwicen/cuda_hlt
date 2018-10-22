@@ -17,3 +17,5 @@ __global__ void masked_velo_clustering(
   float* dev_velo_sp_fx,
   float* dev_velo_sp_fy
 );
+
+ALGORITHM(masked_velo_clustering, masked_velo_clustering_t)

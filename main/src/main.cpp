@@ -196,16 +196,17 @@ int main(int argc, char *argv[])
   Constants constants;
   constants.reserve_and_initialize();
   constants.initialize_ut_decoding_constants(ut_geometry);
+  constants.initialize_geometry_constants(
+    velo_geometry,
+    ut_boards,
+    ut_geometry,
+    ut_magnet_tool,
+    scifi_geometry);
 
   // Create streams
   StreamWrapper stream_wrapper;
   stream_wrapper.initialize_streams(
     tbb_threads,
-    velo_geometry,
-    ut_boards,
-    ut_geometry,
-    ut_magnet_tool,
-    scifi_geometry,
     number_of_events_requested,
     do_check,
     do_simplified_kalman_filter,

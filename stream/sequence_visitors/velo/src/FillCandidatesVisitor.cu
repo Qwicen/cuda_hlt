@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "FillCandidates.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(fill_candidates_t(fill_candidates))>(
-  decltype(fill_candidates_t(fill_candidates))& state,
+void StreamVisitor::visit<fill_candidates_t>(
+  fill_candidates_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

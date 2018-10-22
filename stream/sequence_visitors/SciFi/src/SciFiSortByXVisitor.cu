@@ -1,8 +1,9 @@
 #include "StreamVisitor.cuh"
+#include "SciFiSortByX.cuh"
 
 template<>
-void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
-  decltype(weak_tracks_adder_t(weak_tracks_adder))& state,
+void StreamVisitor::visit<scifi_sort_by_x_t>(
+  scifi_sort_by_x_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,

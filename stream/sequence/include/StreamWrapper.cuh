@@ -32,11 +32,6 @@ struct StreamWrapper {
    */
   void initialize_streams(
     const uint n,
-    const std::vector<char>& velopix_geometry,
-    const std::vector<char>& ut_boards,
-    const std::vector<char>& ut_geometry,
-    const std::vector<char>& ut_magnet_tool,
-    const std::vector<char>& scifi_geometry,
     const uint number_of_events,
     const bool do_check,
     const bool do_simplified_kalman_filter,

@@ -40,14 +40,6 @@ struct Stream {
   // Dynamic scheduler
   DynamicScheduler<algorithm_tuple_t, argument_tuple_t> scheduler;
 
-  // GPU pointers
-  char* dev_velo_geometry;
-  char* dev_ut_boards;
-  char* dev_ut_geometry;
-  char* dev_scifi_geometry;
-  char* dev_base_pointer;
-  PrUTMagnetTool* dev_ut_magnet_tool;
-
   // Host buffers
   HostBuffers host_buffers;
 
@@ -62,11 +54,6 @@ struct Stream {
   StreamVisitor stream_visitor;
 
   cudaError_t initialize(
-    const std::vector<char>& velopix_geometry,
-    const std::vector<char>& ut_boards,
-    const std::vector<char>& ut_geometry,
-    const std::vector<char>& ut_magnet_tool,
-    const std::vector<char>& scifi_geometry,
     const uint max_number_of_events,
     const bool param_do_check,
     const bool param_do_simplified_kalman_filter,
