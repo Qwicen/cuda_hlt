@@ -239,13 +239,15 @@ int main(int argc, char *argv[])
         number_of_events_requested,
         number_of_repetitions};
 
-      stream_wrapper.run_stream(
-        i,
-        runtime_options
-      );
+      stream_wrapper.run_stream(runtime_options);
     }
   );
   t.stop();
+
+  // Do optional Monte Carlo truth test
+  if (do_check) {
+    stream_wrapper.run_monte_carlo_test(runtime_options);
+  }
 
   std::cout << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;

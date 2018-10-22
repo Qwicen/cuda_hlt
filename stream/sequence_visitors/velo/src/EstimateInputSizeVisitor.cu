@@ -1,4 +1,4 @@
-#include "Stream.cuh"
+#include "StreamVisitor.cuh"
 
 template<>
 void StreamVisitor::visit<decltype(estimate_input_size_t(estimate_input_size))>(
@@ -8,9 +8,9 @@ void StreamVisitor::visit<decltype(estimate_input_size_t(estimate_input_size))>(
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
   HostBuffers& host_buffers,
-  cudaStream_t& cuda_stream)
+  cudaStream_t& cuda_stream,
+  cudaEvent_t& cuda_generic_event)
 {
-  // Estimate input size
   // Set arguments and reserve memory
   arguments.set_size<arg::dev_raw_input>(runtime_options.host_velopix_events_size);
   arguments.set_size<arg::dev_raw_input_offsets>(runtime_options.host_velopix_event_offsets_size);
@@ -32,7 +32,7 @@ void StreamVisitor::visit<decltype(estimate_input_size_t(estimate_input_size))>(
     constants.dev_velo_candidate_ks
   );
 
-  // Fetch required arguments from 
+  // Fetch required arguments
   cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_raw_input>(), runtime_options.host_velopix_events, arguments.size<arg::dev_raw_input>(), cudaMemcpyHostToDevice, cuda_stream));
   cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_raw_input_offsets>(), runtime_options.host_velopix_event_offsets, arguments.size<arg::dev_raw_input_offsets>(), cudaMemcpyHostToDevice, cuda_stream));
   cudaEventRecord(cuda_generic_event, cuda_stream);

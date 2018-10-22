@@ -20,11 +20,11 @@
 #include "Argument.cuh"
 #include "Sequence.cuh"
 #include "TupleIndicesChecker.cuh"
-#include "SequenceArgumentEnum.cuh"
+#include "ArgumentEnum.cuh"
 #include "VeloEventModel.cuh"
 
 #define SEQUENCE(...) \
-  typedef std::tuple<__VA_ARGS__> sequence_tuple_n;
+  typedef std::tuple<__VA_ARGS__> sequence_t;
   // Prepared for C++17 variant
   // typedef std::variant<monostate, __VA_ARGS__> state_n;
 

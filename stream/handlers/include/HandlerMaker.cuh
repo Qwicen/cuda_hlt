@@ -2,9 +2,6 @@
 
 #include "HandlerDispatcher.cuh"
 
-// Note: Add here additional custom handlers
-#include "HandlerCalculatePhiAndSort.cuh"
-
 template<unsigned long I>
 struct HandlerMaker {
   template<typename R, typename... T>

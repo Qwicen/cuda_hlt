@@ -35,6 +35,9 @@ file(GLOB stream_scheduler "scheduler/src/*cu")
 file(GLOB stream_sequence "sequence/src/*cu")
 file(GLOB stream_sequence_cpp "sequence/src/*cpp")
 file(GLOB stream_sequence_setup "sequence_setup/src/*cu")
+file(GLOB stream_sequence_visitors_velo "sequence_visitors/velo/src/*cu")
+file(GLOB stream_sequence_visitors_UT "sequence_visitors/UT/src/*cu")
+file(GLOB stream_sequence_visitors_SciFi "sequence_visitors/SciFi/src/*cu")
 
 cuda_add_library(Stream STATIC
   ${stream_gear}
@@ -44,6 +47,9 @@ cuda_add_library(Stream STATIC
   ${stream_sequence}
   ${stream_sequence_cpp}
   ${stream_sequence_setup}
+  ${stream_sequence_visitors_velo}
+  ${stream_sequence_visitors_UT}
+  ${stream_sequence_visitors_SciFi}
   )
 
 if ( ROOT_FOUND )

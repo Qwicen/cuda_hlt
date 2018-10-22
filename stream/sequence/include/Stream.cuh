@@ -18,20 +18,18 @@
 #include "run_VeloUT_CPU.h"
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
-
+#include "RuntimeOptions.cuh"
 #include "EstimateInputSize.cuh"
 
 class Timer;
 
 struct Stream {
   // Sequence and arguments
-  sequence_t sequence;
+  sequence_t sequence_tuple;
 
   // Stream datatypes
-  cudaStream_t stream;
+  cudaStream_t cuda_stream;
   cudaEvent_t cuda_generic_event;
-  cudaEvent_t cuda_event_start;
-  cudaEvent_t cuda_event_stop;
   uint stream_number;
 
   // Launch options
@@ -51,12 +49,18 @@ struct Stream {
   char* dev_base_pointer;
   PrUTMagnetTool* dev_ut_magnet_tool;
 
+  // Host buffers
+  HostBuffers host_buffers;
+
   // Monte Carlo folder name
   std::string folder_name_MC;
   uint start_event_offset;
 
   // Constants
   Constants constants;
+
+  // Visitors for sequence algorithms
+  StreamVisitor stream_visitor;
 
   cudaError_t initialize(
     const std::vector<char>& velopix_geometry,
@@ -76,20 +80,11 @@ struct Stream {
     const Constants& param_constants
   );
 
-  cudaError_t run_sequence(
-    const uint i_stream,
+  void run_monte_carlo_test(
     const RuntimeOptions& runtime_options
   );
 
-  void print_timing(
-    const uint number_of_events,
-    const std::vector<std::pair<std::string, float>>& times
+  cudaError_t run_sequence(
+    const RuntimeOptions& runtime_options
   );
-
-  template<typename T>
-  void visit(
-    T& state,
-    const int sequence_step,
-    ArgumentManager<argument_tuple_t>& arguments,
-    const std::tuple<const uint, const char*, const uint*, const size_t, const size_t>& const_arguments);
 };

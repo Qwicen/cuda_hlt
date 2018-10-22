@@ -52,41 +52,14 @@ void StreamWrapper::initialize_streams(
   }
 }
 
-void StreamWrapper::run_stream(
-  const uint i,
-  char* host_velopix_events,
-  uint* host_velopix_event_offsets,
-  const size_t velopix_events_size,
-  const size_t velopix_event_offsets_size,
-  char* host_ut_events,
-  uint* host_ut_event_offsets,
-  const size_t ut_events_size,
-  const size_t ut_event_offsets_size,
-  char* host_scifi_events,
-  uint* host_scifi_event_offsets,
-  const size_t scifi_events_size,
-  const size_t scifi_event_offsets_size,
-  const uint number_of_events,
-  const uint number_of_repetitions
-) {
+void StreamWrapper::run_stream(const RuntimeOptions& runtime_options) {
   auto& s = *(streams[i]);
-  s.run_sequence(
-    i,
-    host_velopix_events,
-    host_velopix_event_offsets,
-    velopix_events_size,
-    velopix_event_offsets_size,
-    host_ut_events,
-    host_ut_event_offsets,
-    ut_events_size,
-    ut_event_offsets_size,
-    host_scifi_events,
-    host_scifi_event_offsets,
-    scifi_events_size,
-    scifi_event_offsets_size,
-    number_of_events,
-    number_of_repetitions
-  );
+  s.run_sequence(runtime_options);
+}
+
+void StreamWrapper::run_monte_carlo_test(const RuntimeOptions& runtime_options) {
+  auto& s = *(streams[i]);
+  s.run_monte_carlo_test(runtime_options);
 }
 
 StreamWrapper::~StreamWrapper() {

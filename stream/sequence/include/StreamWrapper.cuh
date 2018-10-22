@@ -49,23 +49,12 @@ struct StreamWrapper {
   );
 
   /**
-   * @brief Runs stream i
+   * @brief Runs stream.
    */
-  void run_stream(
-    const uint i,
-    char* host_velopix_events,
-    uint* host_velopix_event_offsets,
-    const size_t velopix_events_size,
-    const size_t velopix_event_offsets_size,
-    char* host_ut_events,
-    uint* host_ut_event_offsets,
-    const size_t ut_events_size,
-    const size_t ut_event_offsets_size,
-    char* host_scifi_events,
-    uint* host_scifi_event_offsets,
-    const size_t scifi_events_size,
-    const size_t scifi_event_offsets_size,
-    const uint number_of_events,
-    const uint number_of_repetitions
-  );
+  void run_stream(const RuntimeOptions& runtime_options);
+
+  /**
+   * @brief Runs Monte Carlo test. Stream must be run beforehand.
+   */
+  void run_monte_carlo_test(const RuntimeOptions& runtime_options)
 };
