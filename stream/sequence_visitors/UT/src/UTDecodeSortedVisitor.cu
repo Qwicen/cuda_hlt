@@ -11,18 +11,25 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  arguments.set_size<arg::dev_ut_hit_permutations>(host_buffers.host_accumulated_number_of_ut_hits[0]);
   scheduler.setup_next(arguments, sequence_step);
 
-  state.set_opts(dim3(number_of_events), dim3(256), cuda_stream);
+  state.set_opts(dim3(runtime_options.number_of_events, VeloUTTracking::n_layers), dim3(64), cuda_stream);
   state.set_arguments(
-    arguments.offset<arg::dev_ut_hits>(),
-    arguments.offset<arg::dev_ut_hit_offsets>(),
-    arguments.offset<arg::dev_ut_hit_permutations>(),
+    arguments.offset<arg::dev_ut_raw_input>(),
+    arguments.offset<arg::dev_ut_raw_input_offsets>(),
+    constants.dev_ut_boards,
+    constants.dev_ut_geometry,
+    constants.dev_ut_region_offsets,
     constants.dev_unique_x_sector_layer_offsets,
     constants.dev_unique_x_sector_offsets,
-    constants.dev_unique_sector_xs
+    arguments.offset<arg::dev_ut_hit_offsets>(),
+    arguments.offset<arg::dev_ut_hits>(),
+    arguments.offset<arg::dev_ut_hit_count>(),
+    arguments.offset<arg::dev_ut_hit_permutations>()
   );
 
   state.invoke();
 }
+
+
+

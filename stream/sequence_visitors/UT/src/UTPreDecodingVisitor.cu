@@ -11,10 +11,14 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  // Decode UT raw banks
   arguments.set_size<arg::dev_ut_hits>(UTHits::number_of_arrays * host_buffers.host_accumulated_number_of_ut_hits[0]);
   arguments.set_size<arg::dev_ut_hit_count>(runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
   scheduler.setup_next(arguments, sequence_step);
+
+  cudaCheck(cudaMemsetAsync(arguments.offset<arg::dev_ut_hit_count>(),
+    0,
+    arguments.size<arg::dev_ut_hit_count>(),
+    cuda_stream));
 
   state.set_opts(dim3(runtime_options.number_of_events), dim3(64, 4), cuda_stream);
   state.set_arguments(

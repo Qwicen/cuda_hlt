@@ -14,7 +14,7 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
   // Set arguments and reserve memory
   arguments.set_size<arg::dev_ut_raw_input>(runtime_options.host_ut_events_size);
   arguments.set_size<arg::dev_ut_raw_input_offsets>(runtime_options.host_ut_event_offsets_size);
-  arguments.set_size<arg::dev_ut_hit_offsets>(number_of_events * constants.host_unique_x_sector_layer_offsets[4] + 1);
+  arguments.set_size<arg::dev_ut_hit_offsets>(runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4] + 1);
   scheduler.setup_next(arguments, sequence_step);
 
   // Setup opts and arguments for kernel call
@@ -30,10 +30,12 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
     cudaMemcpyHostToDevice,
     cuda_stream));
 
-  cudaEventRecord(cuda_generic_event, cuda_stream);
-  cudaEventSynchronize(cuda_generic_event);
+  cudaCheck(cudaMemsetAsync(arguments.offset<arg::dev_ut_hit_offsets>(),
+    0,
+    arguments.size<arg::dev_ut_hit_offsets>(),
+    cuda_stream));
 
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(192, 2), cuda_stream);
+  state.set_opts(dim3(runtime_options.number_of_events), dim3(64, 4), cuda_stream);
   state.set_arguments(
     arguments.offset<arg::dev_ut_raw_input>(),
     arguments.offset<arg::dev_ut_raw_input_offsets>(),
@@ -46,7 +48,7 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
 
   // Invoke kernel
   state.invoke();
-  
+
   // // Print UT hit count per event per layer
   // std::vector<uint> host_ut_hit_count (number_of_events * constants.host_unique_x_sector_layer_offsets[4] + 1);
   // cudaCheck(cudaMemcpyAsync(host_ut_hit_count.data(), arguments.offset<arg::dev_ut_hit_offsets>(), argen.size<arg::dev_ut_hit_offsets>(number_of_events * constants.host_unique_x_sector_layer_offsets[4] + 1), cudaMemcpyDeviceToHost, stream));

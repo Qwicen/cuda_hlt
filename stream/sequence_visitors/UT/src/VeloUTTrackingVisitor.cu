@@ -34,6 +34,7 @@ void StreamVisitor::visit<decltype(weak_tracks_adder_t(weak_tracks_adder))>(
 
   state.invoke();
 
+  // TODO: Maybe this should not go here
   // Fetch all UT tracks
   cudaCheck(cudaMemcpyAsync(host_buffers.host_atomics_veloUT,
     arguments.offset<arg::dev_atomics_veloUT>(),
