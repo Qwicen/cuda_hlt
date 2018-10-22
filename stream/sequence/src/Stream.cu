@@ -18,8 +18,6 @@ cudaError_t Stream::initialize(
   // Set stream and events
   cudaCheck(cudaStreamCreate(&cuda_stream));
   cudaCheck(cudaEventCreate(&cuda_generic_event));
-  cudaCheck(cudaEventCreate(&cuda_event_start));
-  cudaCheck(cudaEventCreate(&cuda_event_stop));
 
   // Set stream options
   stream_number = param_stream_number;
@@ -32,10 +30,7 @@ cudaError_t Stream::initialize(
   constants = param_constants;
 
   // Reserve host buffers
-  host_buffers.reserve();
-
-  // Define sequence of algorithms to execute
-  sequence.set(sequence_algorithms());
+  host_buffers.reserve(max_number_of_events);
 
   // Get dependencies for each algorithm
   std::vector<std::vector<int>> sequence_dependencies = get_sequence_dependencies();
@@ -44,8 +39,9 @@ cudaError_t Stream::initialize(
   std::vector<int> sequence_output_arguments = get_sequence_output_arguments();
 
   // Prepare dynamic scheduler
-  scheduler = {get_sequence_names(), get_argument_names(),
-    sequence_dependencies, sequence_output_arguments,
+  scheduler = {
+    // get_sequence_names(),
+    get_argument_names(), sequence_dependencies, sequence_output_arguments,
     reserve_mb * 1024 * 1024, do_print_memory_manager};
 
   // Malloc a configurable reserved memory
@@ -69,6 +65,7 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
       runtime_options,
       constants,
       arguments,
+      scheduler,
       host_buffers,
       cuda_stream,
       cuda_generic_event);
@@ -77,14 +74,14 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
   return cudaSuccess;
 }
 
-void Stream::run_monte_carlo_test(const RuntimeOptions& runtime_options) {
+void Stream::run_monte_carlo_test(const uint number_of_events_requested) {
   std::cout << "Checking Velo tracks reconstructed on GPU" << std::endl;
 
   const std::vector<trackChecker::Tracks> tracks_events = prepareTracks(
     host_buffers.host_velo_tracks_atomics,
     host_buffers.host_velo_track_hit_number,
     host_buffers.host_velo_track_hits,
-    runtime_options.number_of_events);
+    number_of_events_requested);
 
   call_pr_checker(
     tracks_events,
@@ -97,7 +94,7 @@ void Stream::run_monte_carlo_test(const RuntimeOptions& runtime_options) {
   const std::vector<trackChecker::Tracks> veloUT_tracks = prepareVeloUTTracks(
     host_buffers.host_veloUT_tracks,
     host_buffers.host_atomics_veloUT,
-    runtime_options.number_of_events
+    number_of_events_requested
   );
 
   std::cout << "Checking VeloUT tracks reconstructed on GPU" << std::endl;

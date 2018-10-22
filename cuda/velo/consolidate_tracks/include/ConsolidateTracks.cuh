@@ -26,4 +26,4 @@ __global__ void consolidate_tracks(
   uint* dev_velo_states
 );
 
-ALGORITHM(consolidated_tracks, consolidate_tracks_t)
+ALGORITHM(consolidate_tracks, consolidate_tracks_t)

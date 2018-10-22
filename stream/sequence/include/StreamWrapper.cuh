@@ -9,6 +9,7 @@
 #include "Logger.h"
 #include "Common.h"
 #include "Constants.cuh"
+#include "RuntimeOptions.h"
 
 // Forward definition of Stream, to avoid
 // inability to compile kernel calls (due to <<< >>>
@@ -46,10 +47,10 @@ struct StreamWrapper {
   /**
    * @brief Runs stream.
    */
-  void run_stream(const RuntimeOptions& runtime_options);
+  void run_stream(const uint i, const RuntimeOptions& runtime_options);
 
   /**
    * @brief Runs Monte Carlo test. Stream must be run beforehand.
    */
-  void run_monte_carlo_test(const RuntimeOptions& runtime_options)
+  void run_monte_carlo_test(const uint i, const uint number_of_events_requested);
 };

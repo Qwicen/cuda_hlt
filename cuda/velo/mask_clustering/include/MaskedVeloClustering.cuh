@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cassert>
 #include "ClusteringDefinitions.cuh"
+#include "Handler.cuh"
 
 __global__ void masked_velo_clustering(
   char* dev_raw_input,

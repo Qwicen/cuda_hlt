@@ -3,20 +3,14 @@
 #include <iostream>
 #include "ArgumentEnum.cuh"
 #include "ConfiguredSequence.cuh"
+#include "TupleIndicesChecker.cuh"
+#include "Argument.cuh"
 
 // Prepared for C++17 variant
 // template<typename T>
 // auto transition(const T& state) {
 //   return typename std::tuple_element<tuple_index<T, sequence_tuple_n>::value + 1, sequence_tuple_n>::type{};
 // }
-
-/**
- * @brief Definition of the algorithm tuple type.
- *        make_algorithm_tuple receives as argument a tuple
- *        with the kernel functions and
- *        deduces its return type (void) and datatypes.
- */
-using algorithm_tuple_t = decltype(make_algorithm_tuple(sequence_algorithms()));
 
 /**
  * @brief Argument tuple definition. All arguments and their types should

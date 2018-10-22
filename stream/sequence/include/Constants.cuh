@@ -12,6 +12,7 @@
 #include "VeloUTDefinitions.cuh"
 #include "UTDefinitions.cuh"
 #include "Logger.h"
+#include "PrVeloUTMagnetToolDefinitions.h"
 
 /**
  * @brief Struct intended as a singleton with constants defined on GPU.
@@ -46,7 +47,6 @@ struct Constants {
   char* dev_ut_boards;
   char* dev_ut_geometry;
   char* dev_scifi_geometry;
-  char* dev_base_pointer;
   PrUTMagnetTool* dev_ut_magnet_tool;
   
   /**

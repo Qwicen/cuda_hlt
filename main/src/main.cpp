@@ -21,6 +21,7 @@
 #include "tbb/tbb.h"
 #include "cuda_runtime.h"
 #include "CudaCommon.h"
+#include "RuntimeOptions.h"
 #include "Logger.h"
 #include "Tools.h"
 #include "InputTools.h"
@@ -240,14 +241,14 @@ int main(int argc, char *argv[])
         number_of_events_requested,
         number_of_repetitions};
 
-      stream_wrapper.run_stream(runtime_options);
+      stream_wrapper.run_stream(i, runtime_options);
     }
   );
   t.stop();
 
   // Do optional Monte Carlo truth test
   if (do_check) {
-    stream_wrapper.run_monte_carlo_test(runtime_options);
+    stream_wrapper.run_monte_carlo_test(0, number_of_events_requested);
   }
 
   std::cout << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl

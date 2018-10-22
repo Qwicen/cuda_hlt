@@ -2,6 +2,7 @@
 
 #include "cuda_runtime.h"
 #include <stdexcept>
+#include <iostream>
 
 /**
  * @brief Macro to check cuda calls.

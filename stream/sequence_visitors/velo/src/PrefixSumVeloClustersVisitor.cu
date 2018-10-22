@@ -8,6 +8,7 @@ void StreamVisitor::visit<prefix_sum_reduce_velo_clusters_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
+  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -37,6 +38,7 @@ void StreamVisitor::visit<prefix_sum_single_block_velo_clusters_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
+  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -46,7 +48,7 @@ void StreamVisitor::visit<prefix_sum_single_block_velo_clusters_t>(
 
   // Prefix Sum Single Block
   scheduler.setup_next(arguments, sequence_step);
-  sequence.set_opts<seq::prefix_sum_single_block>(dim3(1), dim3(1024), cuda_stream);
+  state.set_opts(dim3(1), dim3(1024), cuda_stream);
   state.set_arguments(
     arguments.offset<arg::dev_estimated_input_size>() + VeloTracking::n_modules * runtime_options.number_of_events,
     arguments.offset<arg::dev_cluster_offset>(),
@@ -63,6 +65,7 @@ void StreamVisitor::visit<prefix_sum_scan_velo_clusters_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
+  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -87,6 +90,6 @@ void StreamVisitor::visit<prefix_sum_scan_velo_clusters_t>(
     cudaMemcpyDeviceToHost,
     cuda_stream));
 
-  cudaEventRecord(cuda_generic_event, stream);
+  cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
 }

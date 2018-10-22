@@ -8,6 +8,7 @@ void StreamVisitor::visit<estimate_cluster_count_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
+  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -15,7 +16,7 @@ void StreamVisitor::visit<estimate_cluster_count_t>(
   arguments.set_size<arg::dev_scifi_raw_input>(runtime_options.host_scifi_events_size);
   arguments.set_size<arg::dev_scifi_raw_input_offsets>(runtime_options.host_scifi_event_offsets_size);
   arguments.set_size<arg::dev_scifi_hit_count>(2 * runtime_options.number_of_events * SciFi::number_of_zones + 1);
-  scheduler.setup_next(arguments, sequence_step++);
+  scheduler.setup_next(arguments, sequence_step);
 
   cudaCheck(cudaMemcpyAsync(arguments.offset<arg::dev_scifi_raw_input>(),
     runtime_options.host_scifi_events,
@@ -37,15 +38,13 @@ void StreamVisitor::visit<estimate_cluster_count_t>(
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
 
-  sequence.set_opts<seq::estimate_cluster_count>(dim3(runtime_options.number_of_events), dim3(240), cuda_stream);
-  sequence.set_arguments<seq::estimate_cluster_count>(
+  state.set_opts(dim3(runtime_options.number_of_events), dim3(240), cuda_stream);
+  state.set_arguments(
     arguments.offset<arg::dev_scifi_raw_input>(),
     arguments.offset<arg::dev_scifi_raw_input_offsets>(),
     arguments.offset<arg::dev_scifi_hit_count>(),
     constants.dev_scifi_geometry
   );
-  sequence.invoke<seq::estimate_cluster_count>();
-
-  cudaEventRecord(cuda_generic_event, cuda_stream);
-  cudaEventSynchronize(cuda_generic_event);
+  
+  state.invoke();
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CudaCommon.h"
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
 
@@ -24,7 +25,7 @@ struct HostBuffers {
   /**
    * @brief Reserves all host buffers.
    */
-  void reserve();
+  void reserve(const uint max_number_of_events);
 
   /**
    * @brief Returns total number of velo track hits.

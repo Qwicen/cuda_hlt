@@ -13,12 +13,13 @@
 #include "Tools.h"
 #include "DynamicScheduler.cuh"
 #include "SequenceSetup.cuh"
-#include "PrVeloUTMagnetToolDefinitions.h"
 #include "Constants.cuh"
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
-#include "RuntimeOptions.cuh"
+#include "RuntimeOptions.h"
 #include "EstimateInputSize.cuh"
+#include "HostBuffers.cuh"
+#include "StreamVisitor.cuh"
 
 class Timer;
 
@@ -38,7 +39,7 @@ struct Stream {
   bool run_on_x86;
 
   // Dynamic scheduler
-  DynamicScheduler<algorithm_tuple_t, argument_tuple_t> scheduler;
+  DynamicScheduler<sequence_t, argument_tuple_t> scheduler;
 
   // Host buffers
   HostBuffers host_buffers;
@@ -46,6 +47,9 @@ struct Stream {
   // Monte Carlo folder name
   std::string folder_name_MC;
   uint start_event_offset;
+
+  // GPU Memory base pointer
+  char* dev_base_pointer;
 
   // Constants
   Constants constants;
@@ -67,7 +71,7 @@ struct Stream {
   );
 
   void run_monte_carlo_test(
-    const RuntimeOptions& runtime_options
+    const uint number_of_events_requested
   );
 
   cudaError_t run_sequence(

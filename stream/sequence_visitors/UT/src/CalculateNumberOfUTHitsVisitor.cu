@@ -1,13 +1,14 @@
 #include "StreamVisitor.cuh"
-#include "CalculateNumberOfUTHits.cuh"
+#include "UTCalculateNumberOfHits.cuh"
 
 template<>
-void StreamVisitor::visit<calculate_number_of_ut_hits_t>(
-  calculate_number_of_ut_hits_t& state,
+void StreamVisitor::visit<ut_calculate_number_of_hits_t>(
+  ut_calculate_number_of_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
+  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)

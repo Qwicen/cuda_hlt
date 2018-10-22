@@ -8,6 +8,7 @@ void StreamVisitor::visit<prefix_sum_reduce_ut_hits_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
+  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -35,6 +36,7 @@ void StreamVisitor::visit<prefix_sum_single_block_ut_hits_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
+  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -61,6 +63,7 @@ void StreamVisitor::visit<prefix_sum_scan_ut_hits_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
+  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)

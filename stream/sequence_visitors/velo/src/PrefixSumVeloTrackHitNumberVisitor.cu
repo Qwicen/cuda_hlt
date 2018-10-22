@@ -8,6 +8,7 @@ void StreamVisitor::visit<prefix_sum_reduce_velo_track_hit_number_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
+  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -35,6 +36,7 @@ void StreamVisitor::visit<prefix_sum_single_block_velo_track_hit_number_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
+  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -61,12 +63,13 @@ void StreamVisitor::visit<prefix_sum_scan_velo_track_hit_number_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   ArgumentManager<argument_tuple_t>& arguments,
+  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
   // Prefix sum: Scan
-  scheduler.setup_next(arguments, sequence_step++);
+  scheduler.setup_next(arguments, sequence_step);
   const size_t prefix_sum_auxiliary_array_size =
     (host_buffers.host_number_of_reconstructed_velo_tracks[0] + 511) / 512;
   const uint pss_velo_track_hit_number_opts =

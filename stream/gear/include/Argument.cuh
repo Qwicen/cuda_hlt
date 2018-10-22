@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tuple>
-#include "Common.cuh"
+#include "TupleTools.cuh"
 
 /**
  * @brief A single argument.

@@ -12,9 +12,6 @@
 #include "EstimateClusterCount.cuh"
 #include "RawBankDecoder.cuh"
 #include "SciFiSortByX.cuh"
-#include "Argument.cuh"
-#include "Sequence.cuh"
-#include "TupleIndicesChecker.cuh"
 #include "VeloEventModel.cuh"
 #include "UTCalculateNumberOfHits.cuh"
 #include "UTDecodeRawBanksInOrder.cuh"
@@ -59,4 +56,5 @@ SEQUENCE(
   prefix_sum_single_block_scifi_hits_t,
   prefix_sum_scan_scifi_hits_t,
   raw_bank_decoder_t,
-  scifi_sort_by_x_t)
+  scifi_sort_by_x_t
+)

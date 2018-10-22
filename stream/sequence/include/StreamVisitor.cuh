@@ -1,9 +1,11 @@
 #pragma once
 
-#include "RuntimeOptions.cuh"
+#include "RuntimeOptions.h"
 #include "Constants.cuh"
-#include "ArgumentManager.cuh"
+#include "Argument.cuh"
 #include "HostBuffers.cuh"
+#include "SequenceSetup.cuh"
+#include "DynamicScheduler.cuh"
 
 struct StreamVisitor {
   template<typename T>
@@ -13,6 +15,7 @@ struct StreamVisitor {
     const RuntimeOptions& runtime_options,
     const Constants& constants,
     ArgumentManager<argument_tuple_t>& arguments,
+    DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
     HostBuffers& host_buffers,
     cudaStream_t& cuda_stream,
     cudaEvent_t& cuda_generic_event);

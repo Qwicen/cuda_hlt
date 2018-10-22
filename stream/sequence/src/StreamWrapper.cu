@@ -42,14 +42,14 @@ void StreamWrapper::initialize_streams(
   }
 }
 
-void StreamWrapper::run_stream(const RuntimeOptions& runtime_options) {
+void StreamWrapper::run_stream(const uint i, const RuntimeOptions& runtime_options) {
   auto& s = *(streams[i]);
   s.run_sequence(runtime_options);
 }
 
-void StreamWrapper::run_monte_carlo_test(const RuntimeOptions& runtime_options) {
+void StreamWrapper::run_monte_carlo_test(const uint i, const uint number_of_events_requested) {
   auto& s = *(streams[i]);
-  s.run_monte_carlo_test(runtime_options);
+  s.run_monte_carlo_test(number_of_events_requested);
 }
 
 StreamWrapper::~StreamWrapper() {

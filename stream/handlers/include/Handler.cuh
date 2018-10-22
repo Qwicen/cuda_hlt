@@ -1,7 +1,5 @@
 #pragma once
 
-#include "cuda_runtime.h"
-#include "TupleTools.cuh"
 #include <ostream>
 #include <tuple>
 #include <utility>
@@ -95,9 +93,9 @@ struct Handler {
   }
   
   void invoke() {
-    using indices = typename tuple_indices<std::tuple<T...>>::type;
     invoke_impl(function, num_blocks, num_threads,
-      shared_memory_size, stream, arguments, indices());
+      shared_memory_size, stream, arguments,
+      std::make_index_sequence<std::tuple_size<std::tuple<T...>>::value>());
   }
 };
 
