@@ -42,16 +42,16 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
   // -- This is hardcoded, so faster
   // -- If you ever change the Table in the magnet tool, this will be wrong
   const float absSlopeY = std::abs(velo_state.ty);
-  const int index       = (int) (absSlopeY * 100 + 0.5);
+  const int index       = (int) (absSlopeY * 100 + 0.5f);
   assert(3 + 4 * index < PrUTMagnetTool::N_dxLay_vals);
   const float normFact[4]{
     fudge_factors[4 * index], fudge_factors[1 + 4 * index], fudge_factors[2 + 4 * index], fudge_factors[3 + 4 * index]};
 
   // -- this 500 seems a little odd...
   // to do: change back!
-  const float invTheta = std::min(500., 1.0 / std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty));
-  const float minMom   = std::max(PrVeloUTConst::minPT * invTheta, float(1.5) * Gaudi::Units::GeV);
-  const float xTol     = std::abs(1. / (PrVeloUTConst::distToMomentum * minMom));
+  const float invTheta = std::min(500.0f, 1.0f / std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty));
+  const float minMom   = std::max(PrVeloUTConst::minPT * invTheta, 1.5f * Gaudi::Units::GeV);
+  const float xTol     = std::abs(1.0f / (PrVeloUTConst::distToMomentum * minMom));
   // const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
 
   int layer_offset = ut_hit_offsets.layer_offset(layer);
@@ -60,7 +60,7 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
   const float z_at_layer = ut_hits.zAtYEq0[layer_offset];
   const float y_track     = velo_state.y + velo_state.ty * (z_at_layer - velo_state.z);
   const float x_track     = velo_state.x + velo_state.tx * (z_at_layer - velo_state.z);
-  const float invNormFact = 1.0 / normFact[layer];
+  const float invNormFact = 1.0f / normFact[layer];
 
   // Second sector group search
   const float tolerance_in_x = xTol * invNormFact;

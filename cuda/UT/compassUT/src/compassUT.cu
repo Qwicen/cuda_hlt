@@ -23,7 +23,7 @@ __global__ void compassUT(
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
 
-  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
+  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[N_LAYERS];
   const uint total_number_of_hits = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
 
   // Velo consolidated types
@@ -101,7 +101,7 @@ __global__ void compassUT(
     }
 
     // write the final track
-    if (total_num_hits >= 3) {
+    if (total_num_hits >= (N_LAYERS - 1)) {
       save_track(
         i_track,
         bdl_table,
@@ -173,7 +173,7 @@ __host__ __device__ __inline__ bool check_tol_refine(
 {
   bool valid_hit = true;
 
-  const float xTolNormFact = xTol * (1.0 / normFactNum);
+  const float xTolNormFact = xTol * (1.0f / normFactNum);
 
   const float zInit = ut_hits.zAtYEq0[hit_index];
   const float yApprox = velo_state.y + velo_state.ty * (zInit - velo_state.z);
@@ -186,7 +186,7 @@ __host__ __device__ __inline__ bool check_tol_refine(
 
   // Now refine the tolerance in Y
   if (ut_hits.isNotYCompatible(
-        hit_index, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx * (1.0 / normFactNum))))
+        hit_index, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx * (1.0f / normFactNum))))
     valid_hit = false;
 
   return valid_hit;
@@ -219,13 +219,13 @@ __host__ __device__ void find_best_hits(
       layers[i_layer] = N_LAYERS - 1 - i_layer;
   }
 
-  const float invTheta = std::min(500., 1.0 / std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty));
-  const float minMom = std::max(PrVeloUTConst::minPT * invTheta, float(1.5) * Gaudi::Units::GeV);
+  const float invTheta = std::min(500.0f, 1.0f / std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty));
+  const float minMom = std::max(PrVeloUTConst::minPT * invTheta, 1.5f * Gaudi::Units::GeV);
   const float xTol = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
   const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
 
   const float absSlopeY = std::abs( velo_state.ty );
-  const int index = (int)(absSlopeY*100 + 0.5);
+  const int index = (int)(absSlopeY*100 + 0.5f);
   assert( 3 + 4*index < PrUTMagnetTool::N_dxLay_vals );  
   const std::array<float,4> normFact = { 
     fudgeFactors[4*index], 
@@ -446,12 +446,12 @@ __host__ __device__ BestParams pkick_fit(
 
   // Scale the z-component, to not run into numerical problems with floats
   // first add to sum values from hit at xMidField, zMidField hit
-  const float zDiff = 0.001 * (PrVeloUTConst::zKink - PrVeloUTConst::zMidUT);
+  const float zDiff = 0.001f * (PrVeloUTConst::zKink - PrVeloUTConst::zMidUT);
 
   // Helper stuff from velo state
   const float xMidField = velo_state.x + velo_state.tx * (PrVeloUTConst::zKink - velo_state.z);
   const float a = PrVeloUTConst::sigmaVeloSlope * (PrVeloUTConst::zKink - velo_state.z);
-  const float wb = 1. / (a * a);
+  const float wb = 1.0f / (a * a);
 
   float mat[3] = {wb, wb * zDiff, wb * zDiff * zDiff};
   float rhs[2] = {wb * xMidField, wb * xMidField * zDiff};
@@ -464,7 +464,7 @@ __host__ __device__ BestParams pkick_fit(
       const float wi = ut_hits.weight[hit_index];
       const float dxDy = ut_dxDy[ut_hits.planeCode[hit_index]];
       const float ci = ut_hits.cosT(hit_index, dxDy);
-      const float dz = 0.001 * (ut_hits.zAtYEq0[hit_index] - PrVeloUTConst::zMidUT);
+      const float dz = 0.001f * (ut_hits.zAtYEq0[hit_index] - PrVeloUTConst::zMidUT);
       // x_pos_layer
       const float yy = yyProto + (velo_state.ty * ut_hits.zAtYEq0[hit_index]);
       const float ui = ut_hits.xAt(hit_index, yy, dxDy);
@@ -477,8 +477,8 @@ __host__ __device__ BestParams pkick_fit(
     }
   }
 
-  const float denom = 1. / (mat[0] * mat[2] - mat[1] * mat[1]);
-  const float xSlopeUTFit = 0.001 * (mat[0] * rhs[1] - mat[1] * rhs[0]) * denom;
+  const float denom = 1.0f / (mat[0] * mat[2] - mat[1] * mat[1]);
+  const float xSlopeUTFit = 0.001f * (mat[0] * rhs[1] - mat[1] * rhs[0]) * denom;
   const float xUTFit = (mat[2] * rhs[0] - mat[1] * rhs[1]) * denom;
 
   // new VELO slope x
@@ -514,8 +514,8 @@ __host__ __device__ BestParams pkick_fit(
   // Save the best parameters if chi2 is good
   if (chi2UT < PrVeloUTConst::maxPseudoChi2) {
     // calculate q/p
-    const float sinInX = xSlopeVeloFit * std::sqrt(1. + xSlopeVeloFit * xSlopeVeloFit);
-    const float sinOutX = xSlopeUTFit * std::sqrt(1. + xSlopeUTFit * xSlopeUTFit);
+    const float sinInX = xSlopeVeloFit * std::sqrt(1.0f + xSlopeVeloFit * xSlopeVeloFit);
+    const float sinOutX = xSlopeUTFit * std::sqrt(1.0f + xSlopeUTFit * xSlopeUTFit);
 
     best_params.qp = sinInX - sinOutX;
     best_params.chi2UT = chi2UT;
@@ -551,13 +551,13 @@ __device__ void save_track(
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks]) // write the track
 {
   //== Handle states. copy Velo one, add UT.
-  const float zOrigin = (std::fabs(velo_state.ty) > 0.001) ? velo_state.z - velo_state.y / velo_state.ty
+  const float zOrigin = (std::fabs(velo_state.ty) > 0.001f) ? velo_state.z - velo_state.y / velo_state.ty
                                                            : velo_state.z - velo_state.x / velo_state.tx;
 
   // -- These are calculations, copied and simplified from PrTableForFunction
   const float var[3] = {velo_state.ty, zOrigin, velo_state.z};
 
-  const int index1 = std::max(0, std::min(30, int((var[0] + 0.3) / 0.6 * 30)));
+  const int index1 = std::max(0, std::min(30, int((var[0] + 0.3f) / 0.6f * 30)));
   const int index2 = std::max(0, std::min(10, int((var[1] + 250) / 500 * 10)));
   const int index3 = std::max(0, std::min(10, int(var[2] / 800 * 10)));
 
@@ -568,14 +568,14 @@ __device__ void save_track(
   const float bdls[num_idx] = {bdl_table[master_index(index1 + 1, index2, index3)],
                                bdl_table[master_index(index1, index2 + 1, index3)],
                                bdl_table[master_index(index1, index2, index3 + 1)]};
-  const float deltaBdl[num_idx] = {0.02, 50.0, 80.0};
+  const float deltaBdl[num_idx] = {0.02f, 50.0f, 80.0f};
   const float boundaries[num_idx] = {
     -0.3f + float(index1) * deltaBdl[0], -250.0f + float(index2) * deltaBdl[1], 0.0f + float(index3) * deltaBdl[2]};
 
   // This is an interpolation, to get a bit more precision
-  float addBdlVal = 0.0;
-  const float minValsBdl[num_idx] = {-0.3, -250.0, 0.0};
-  const float maxValsBdl[num_idx] = {0.3, 250.0, 800.0};
+  float addBdlVal = 0.0f;
+  const float minValsBdl[num_idx] = {-0.3f, -250.0f, 0.0f};
+  const float maxValsBdl[num_idx] = {0.3f, 250.0f, 800.0f};
   for (int i = 0; i < num_idx; ++i) {
     if (var[i] < minValsBdl[i] || var[i] > maxValsBdl[i]) continue;
     const float dTab_dVar = (bdls[i] - bdl) / deltaBdl[i];
@@ -584,12 +584,12 @@ __device__ void save_track(
   }
   bdl += addBdlVal;
 
-  const float qpxz2p = -1 * std::sqrt(1. + velo_state.ty * velo_state.ty) / bdl * 3.3356 / Gaudi::Units::GeV;
-  const float qop = (std::abs(bdl) < 1.e-8) ? 0.0 : best_params.qp * qpxz2p;
+  const float qpxz2p = -1 * std::sqrt(1.0f + velo_state.ty * velo_state.ty) / bdl * 3.3356f / Gaudi::Units::GeV;
+  const float qop = (std::abs(bdl) < 1.e-8f) ? 0.0f : best_params.qp * qpxz2p;
 
   // -- Don't make tracks that have grossly too low momentum
   // -- Beware of the momentum resolution!
-  const float p = 1.3 * std::abs(1 / qop);
+  const float p = 1.3f * std::abs(1 / qop);
   const float pt = p * std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty);
 
   if (p < PrVeloUTConst::minMomentum || pt < PrVeloUTConst::minPT) return;
