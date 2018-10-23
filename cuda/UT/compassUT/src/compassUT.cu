@@ -64,6 +64,8 @@ __global__ void compassUT(
 
   for (int i_track = threadIdx.x; i_track < number_of_tracks_event; i_track += blockDim.x) {
 
+    const uint current_track_offset = event_tracks_offset + i_track;
+
     // TODO the non active tracks should be -1
     // const int i_track = shared_active_tracks[threadIdx.x];
 
@@ -71,60 +73,9 @@ __global__ void compassUT(
     const uint velo_states_index = event_tracks_offset + i_track;
     const MiniState velo_state{velo_states, velo_states_index};
 
-    if (i_track >= number_of_tracks_event) continue;
-    if (velo_states.backward[velo_states_index]) continue;
-    if(!velo_track_in_UT_acceptance(velo_state)) continue;    
-
-    // auto = std::tuple<int, int, int, int, int, int>
-    const auto windows_l0 = calculate_windows(
-        i_track,
-        0,
-        velo_state,
-        fudgeFactors,
-        ut_hits,
-        ut_hit_offsets,
-        dev_ut_dxDy,
-        dev_unique_sector_xs,
-        dev_unique_x_sector_layer_offsets,
-        velo_tracks);
-
-    const auto windows_l1 = calculate_windows(
-        i_track,
-        1,
-        velo_state,
-        fudgeFactors,
-        ut_hits,
-        ut_hit_offsets,
-        dev_ut_dxDy,
-        dev_unique_sector_xs,
-        dev_unique_x_sector_layer_offsets,
-        velo_tracks);
-
-    const auto windows_l2 = calculate_windows(
-        i_track,
-        2,
-        velo_state,
-        fudgeFactors,
-        ut_hits,
-        ut_hit_offsets,
-        dev_ut_dxDy,
-        dev_unique_sector_xs,
-        dev_unique_x_sector_layer_offsets,
-        velo_tracks);
-
-    const auto windows_l3 = calculate_windows(
-        i_track,
-        3,
-        velo_state,
-        fudgeFactors,
-        ut_hits,
-        ut_hit_offsets,
-        dev_ut_dxDy,
-        dev_unique_sector_xs,
-        dev_unique_x_sector_layer_offsets,
-        velo_tracks);
-
-    const std::tuple<int, int, int, int, int, int> dev_windows_layers_aux[N_LAYERS] = {windows_l0, windows_l1, windows_l2, windows_l3};
+    // if (i_track >= number_of_tracks_event) continue;
+    // if (velo_states.backward[velo_states_index]) continue;
+    // if(!velo_track_in_UT_acceptance(velo_state)) continue;    
 
     int best_hits[N_LAYERS] = {-1, -1, -1, -1};
     BestParams best_params;
@@ -132,8 +83,8 @@ __global__ void compassUT(
     // Find compatible hits in the windows for this VELO track
     find_best_hits(
       i_track,
+      current_track_offset,
       dev_windows_layers,
-      dev_windows_layers_aux,
       ut_hits,
       ut_hit_offsets,
       velo_state,
@@ -212,7 +163,7 @@ __host__ __device__ bool velo_track_in_UT_acceptance(const MiniState& state)
 //=========================================================================
 // Check if hit is inside tolerance and refine by Y
 //=========================================================================
-__host__ __device__ bool check_tol_refine(
+__host__ __device__ __inline__ bool check_tol_refine(
   const int hit_index,
   const UTHits& ut_hits,
   const MiniState& velo_state,
@@ -248,8 +199,8 @@ __host__ __device__ bool check_tol_refine(
 //=========================================================================
 __host__ __device__ void find_best_hits(
   const int i_track,
+  const uint current_track_offset,
   const int* dev_windows_layers,
-  const std::tuple<int, int, int, int, int, int>* candidates_layers,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
@@ -286,63 +237,34 @@ __host__ __device__ void find_best_hits(
   // // Get windows of all layers
   // WindowIndicator win_ranges(dev_windows_layers); 
   // const auto* ranges = win_ranges.get_track_candidates(i_track);
-  // // Get windows (l)ayer#_(g)roup#
-  // const int from_l0_g0 = ranges->layer[0].from0;
-  // const int to_l0_g0 = ranges->layer[0].to0;
-  // const int from_l0_g1 = ranges->layer[0].from1;
-  // const int to_l0_g1 = ranges->layer[0].to1;
-  // const int from_l0_g2 = ranges->layer[0].from2;
-  // const int to_l0_g2 = ranges->layer[0].to2;
 
-  // const int from_l1_g0 = ranges->layer[1].from0;
-  // const int to_l1_g0 = ranges->layer[1].to0;
-  // const int from_l1_g1 = ranges->layer[1].from1;
-  // const int to_l1_g1 = ranges->layer[1].to1;
-  // const int from_l1_g2 = ranges->layer[1].from2;
-  // const int to_l1_g2 = ranges->layer[1].to2;
+  const int from_l0_g0 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0];
+  const int to_l0_g0 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 1];
+  const int from_l0_g1 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 2];
+  const int to_l0_g1 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 3];
+  const int from_l0_g2 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 4];
+  const int to_l0_g2 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 5];
 
-  // const int from_l2_g0 = ranges->layer[2].from0;
-  // const int to_l2_g0 = ranges->layer[2].to0;
-  // const int from_l2_g1 = ranges->layer[2].from1;
-  // const int to_l2_g1 = ranges->layer[2].to1;
-  // const int from_l2_g2 = ranges->layer[2].from2;
-  // const int to_l2_g2 = ranges->layer[2].to2;
+  const int from_l1_g0 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1];
+  const int to_l1_g0 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1 + 1];
+  const int from_l1_g1 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1 + 2];
+  const int to_l1_g1 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1 + 3];
+  const int from_l1_g2 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1 + 4];
+  const int to_l1_g2 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1 + 5];
 
-  // const int from_l3_g0 = ranges->layer[3].from0;
-  // const int to_l3_g0 = ranges->layer[3].to0;
-  // const int from_l3_g1 = ranges->layer[3].from1;
-  // const int to_l3_g1 = ranges->layer[3].to1;
-  // const int from_l3_g2 = ranges->layer[3].from2;
-  // const int to_l3_g2 = ranges->layer[3].to2;
+  const int from_l2_g0 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2];
+  const int to_l2_g0 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2 + 1];
+  const int from_l2_g1 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2 + 2];
+  const int to_l2_g1 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2 + 3];
+  const int from_l2_g2 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2 + 4];
+  const int to_l2_g2 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2 + 5];
 
-  // Get windows (l)ayer#_(g)roup#
-  const int from_l0_g0 = std::get<0>(candidates_layers[layers[0]]);
-  const int to_l0_g0 = std::get<1>(candidates_layers[layers[0]]);
-  const int from_l0_g1 = std::get<2>(candidates_layers[layers[0]]);
-  const int to_l0_g1 = std::get<3>(candidates_layers[layers[0]]);
-  const int from_l0_g2 = std::get<4>(candidates_layers[layers[0]]);
-  const int to_l0_g2 = std::get<5>(candidates_layers[layers[0]]);
-
-  const int from_l1_g0 = std::get<0>(candidates_layers[layers[1]]);
-  const int to_l1_g0 = std::get<1>(candidates_layers[layers[1]]);
-  const int from_l1_g1 = std::get<2>(candidates_layers[layers[1]]);
-  const int to_l1_g1 = std::get<3>(candidates_layers[layers[1]]);
-  const int from_l1_g2 = std::get<4>(candidates_layers[layers[1]]);
-  const int to_l1_g2 = std::get<5>(candidates_layers[layers[1]]);
-
-  const int from_l2_g0 = std::get<0>(candidates_layers[layers[2]]);
-  const int to_l2_g0 = std::get<1>(candidates_layers[layers[2]]);
-  const int from_l2_g1 = std::get<2>(candidates_layers[layers[2]]);
-  const int to_l2_g1 = std::get<3>(candidates_layers[layers[2]]);
-  const int from_l2_g2 = std::get<4>(candidates_layers[layers[2]]);
-  const int to_l2_g2 = std::get<5>(candidates_layers[layers[2]]);
-
-  const int from_l3_g0 = std::get<0>(candidates_layers[layers[3]]);
-  const int to_l3_g0 = std::get<1>(candidates_layers[layers[3]]);
-  const int from_l3_g1 = std::get<2>(candidates_layers[layers[3]]);
-  const int to_l3_g1 = std::get<3>(candidates_layers[layers[3]]);
-  const int from_l3_g2 = std::get<4>(candidates_layers[layers[3]]);
-  const int to_l3_g2 = std::get<5>(candidates_layers[layers[3]]);
+  const int from_l3_g0 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3];
+  const int to_l3_g0 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3 + 1];
+  const int from_l3_g1 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3 + 2];
+  const int to_l3_g1 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3 + 3];
+  const int from_l3_g2 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3 + 4];
+  const int to_l3_g2 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3 + 5];
 
   // Check number of hits in the windows
   const int num_candidates_l0_g0 = to_l0_g0 - from_l0_g0;
@@ -360,16 +282,6 @@ __host__ __device__ void find_best_hits(
   const int num_candidates_l3_g0 = to_l3_g0 - from_l3_g0;
   const int num_candidates_l3_g1 = to_l3_g1 - from_l3_g1;
   const int num_candidates_l3_g2 = to_l3_g2 - from_l3_g2;
-
-  // printf("from_l0_g0: %i, to_l0_g0: %i, from_l0_g1: %i, to_l0_g1: %i, from_l0_g2: %i, to_l0_g2: %i\n", from_l0_g0, to_l0_g0, from_l0_g1, to_l0_g1, from_l0_g2, to_l0_g2);
-  // printf("from_l1_g0: %i, to_l1_g0: %i, from_l1_g1: %i, to_l1_g1: %i, from_l1_g2: %i, to_l1_g2: %i\n", from_l1_g0, to_l1_g0, from_l1_g1, to_l1_g1, from_l1_g2, to_l1_g2);
-  // printf("from_l2_g0: %i, to_l2_g0: %i, from_l2_g1: %i, to_l2_g1: %i, from_l2_g2: %i, to_l2_g2: %i\n", from_l2_g0, to_l2_g0, from_l2_g1, to_l2_g1, from_l2_g2, to_l2_g2);
-  // printf("from_l3_g0: %i, to_l3_g0: %i, from_l3_g1: %i, to_l3_g1: %i, from_l3_g2: %i, to_l3_g2: %i\n", from_l3_g0, to_l3_g0, from_l3_g1, to_l3_g1, from_l3_g2, to_l3_g2);
-
-  // printf("num_can_l0_g0: %i, num_can_l0_g1: %i, num_can_l0_g2: %i\n", num_candidates_l0_g0, num_candidates_l0_g1, num_candidates_l0_g2);
-  // printf("num_can_l1_g0: %i, num_can_l1_g1: %i, num_can_l1_g2: %i\n", num_candidates_l1_g0, num_candidates_l1_g1, num_candidates_l1_g2);
-  // printf("num_can_l2_g0: %i, num_can_l2_g1: %i, num_can_l2_g2: %i\n", num_candidates_l2_g0, num_candidates_l2_g1, num_candidates_l2_g2);
-  // printf("num_can_l3_g0: %i, num_can_l3_g1: %i, num_can_l3_g2: %i\n", num_candidates_l3_g0, num_candidates_l3_g1, num_candidates_l3_g2);
 
   bool fourLayerSolution = false;
 

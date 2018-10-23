@@ -7,7 +7,6 @@ __global__ void ut_search_windows(
   const uint* dev_ut_hit_offsets,
   int* dev_atomics_storage, // semi_prefixsum, offset to tracks
   uint* dev_velo_track_hit_number,
-  uint* dev_velo_track_hits,
   uint* dev_velo_states,
   PrUTMagnetTool* dev_ut_magnet_tool,
   const float* dev_ut_dxDy,
@@ -62,7 +61,7 @@ __global__ void ut_search_windows(
         last_candidate  = std::get<1>(candidates);
         left_group_first_candidate = std::get<2>(candidates);
         left_group_last_candidate = std::get<3>(candidates);
-        right_group_last_candidate = std::get<4>(candidates);
+        right_group_first_candidate = std::get<4>(candidates);
         right_group_last_candidate = std::get<5>(candidates);
       }
     }
@@ -74,5 +73,7 @@ __global__ void ut_search_windows(
     dev_windows_layers[6 * VeloUTTracking::n_layers * current_track_offset + 6 * layer + 3] = left_group_last_candidate;
     dev_windows_layers[6 * VeloUTTracking::n_layers * current_track_offset + 6 * layer + 4] = right_group_first_candidate;
     dev_windows_layers[6 * VeloUTTracking::n_layers * current_track_offset + 6 * layer + 5] = right_group_last_candidate;
+
+
   }
 }

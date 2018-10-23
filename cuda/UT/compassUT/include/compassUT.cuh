@@ -73,7 +73,7 @@ __global__ void compassUT(
 __host__ __device__ bool velo_track_in_UT_acceptance(
   const MiniState& state);
 
-__host__ __device__ bool check_tol_refine(
+__host__ __device__ __inline__ bool check_tol_refine(
   const int hit_index,
   const UTHits& ut_hits,
   const MiniState& velo_state,
@@ -83,8 +83,8 @@ __host__ __device__ bool check_tol_refine(
 
 __host__ __device__ void find_best_hits(
   const int i_track,
+  const uint current_track_offset,
   const int* dev_windows_layers,
-  const std::tuple<int, int, int, int, int, int>* candidates_layers,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
