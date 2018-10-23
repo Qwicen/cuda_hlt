@@ -96,6 +96,7 @@ __global__ void compassUT(
 
     // Count found hits
     int total_num_hits = 0;
+    #pragma unroll
     for (int i = 0; i < N_LAYERS; ++i) {
       if (best_hits[i] >= 0) total_num_hits++;
     }
@@ -192,6 +193,20 @@ __host__ __device__ __inline__ bool check_tol_refine(
   return valid_hit;
 }
 
+__host__ __device__ __inline__ int set_index(
+  const int i, const int from0, const int from1, const int from2, const int num_cand_0, const int num_cand_1)
+{
+  int hit = 0;
+  if (i < num_cand_0) {
+    hit = from0 + i;
+  } else if (i < num_cand_0 + num_cand_1) {
+    hit = from1 + i - num_cand_0;
+  } else {
+    hit = from2 + i - num_cand_0 - num_cand_1;
+  }
+  return hit;
+}
+
 //=========================================================================
 // Get the best 3 or 4 hits, 1 per layer, for a given VELO track
 // When iterating over a panel, 3 windows are given, we set the index
@@ -212,6 +227,7 @@ __host__ __device__ void find_best_hits(
 {
   // handle forward / backward cluster search
   int layers[N_LAYERS];
+  #pragma unroll
   for (int i_layer = 0; i_layer < N_LAYERS; ++i_layer) {
     if (forward)
       layers[i_layer] = i_layer;
@@ -283,19 +299,13 @@ __host__ __device__ void find_best_hits(
   const int num_candidates_l3_g1 = to_l3_g1 - from_l3_g1;
   const int num_candidates_l3_g2 = to_l3_g2 - from_l3_g2;
 
-  bool fourLayerSolution = false;
+  // bool fourLayerSolution = false;
 
   // loop over the 3 windows, putting the index in the windows
   // loop over layer 0
   for (int i0=0; i0<num_candidates_l0_g0 + num_candidates_l0_g1 + num_candidates_l0_g2; ++i0) {
-    int i_hit0 = 0;
-    if (i0 < num_candidates_l0_g0) {
-      i_hit0 = from_l0_g0 + i0;
-    } else if (i0 < num_candidates_l0_g0 + num_candidates_l0_g1) {
-      i_hit0 = from_l0_g1 + i0 - num_candidates_l0_g0;
-    } else {
-      i_hit0 = from_l0_g2 + i0 - num_candidates_l0_g0 - num_candidates_l0_g1;
-    }
+
+    int i_hit0 = set_index(i0, from_l0_g0, from_l0_g1, from_l0_g2, num_candidates_l0_g0, num_candidates_l0_g1);
 
     if (!check_tol_refine(
       i_hit0,
@@ -314,14 +324,8 @@ __host__ __device__ void find_best_hits(
 
     // loop over layer 2
     for (int i2=0; i2<num_candidates_l2_g0 + num_candidates_l2_g1 + num_candidates_l2_g2; ++i2) {
-      int i_hit2 = 0;
-      if (i2 < num_candidates_l2_g0) {
-        i_hit2 = from_l2_g0 + i2;
-      } else if (i2 < num_candidates_l2_g0 + num_candidates_l2_g1) {
-        i_hit2 = from_l2_g1 + i2 - num_candidates_l2_g0;
-      } else {
-        i_hit2 = from_l2_g2 + i2 - num_candidates_l2_g0 - num_candidates_l2_g1;
-      }
+
+      int i_hit2 = set_index(i2, from_l2_g0, from_l2_g1, from_l2_g2, num_candidates_l2_g0, num_candidates_l2_g1);
 
       if (!check_tol_refine(
         i_hit2,
@@ -345,14 +349,8 @@ __host__ __device__ void find_best_hits(
 
       // search for triplet in layer1
       for (int i1=0; i1<num_candidates_l1_g0 + num_candidates_l1_g1 + num_candidates_l1_g2; ++i1) {
-        int i_hit1 = 0;
-        if (i1 < num_candidates_l1_g0) {
-          i_hit1 = from_l1_g0 + i1;
-        } else if (i1 < num_candidates_l1_g0 + num_candidates_l1_g1) {
-          i_hit1 = from_l1_g1 + i1 - num_candidates_l1_g0;
-        } else {
-          i_hit1 = from_l1_g2 + i1 - num_candidates_l1_g0 - num_candidates_l1_g1;
-        }
+
+        int i_hit1 = set_index(i1, from_l1_g0, from_l1_g1, from_l1_g2, num_candidates_l1_g0, num_candidates_l1_g1);
 
         if (!check_tol_refine(
           i_hit1,
@@ -378,14 +376,8 @@ __host__ __device__ void find_best_hits(
       // search for quadruplet in layer3
       hitTol = PrVeloUTConst::hitTol2;
       for (int i3=0; i3<num_candidates_l3_g0 + num_candidates_l3_g1 + num_candidates_l3_g2; ++i3) {
-        int i_hit3 = 0;
-        if (i3 < num_candidates_l3_g0) {
-          i_hit3 = from_l3_g0 + i3;
-        } else if (i3 < num_candidates_l3_g0 + num_candidates_l3_g1) {
-          i_hit3 = from_l3_g1 + i3 - num_candidates_l3_g0;
-        } else {
-          i_hit3 = from_l3_g2 + i3 - num_candidates_l3_g0 - num_candidates_l3_g1;
-        }
+
+        int i_hit3 = set_index(i3, from_l3_g0, from_l3_g1, from_l3_g2, num_candidates_l3_g0, num_candidates_l3_g1);
 
         if (!check_tol_refine(
           i_hit3,
@@ -436,6 +428,7 @@ __host__ __device__ BestParams pkick_fit(
 
   // accumulate the high threshold
   int n_high_thres = 0;
+  #pragma unroll
   for (int i = 0; i < N_LAYERS; ++i) {
     if (best_hits[i] >= 0) { n_high_thres += ut_hits.highThreshold[best_hits[i]]; }
   }
@@ -457,6 +450,7 @@ __host__ __device__ BestParams pkick_fit(
   float rhs[2] = {wb * xMidField, wb * xMidField * zDiff};
 
   // add hits
+  #pragma unroll
   for (int i = 0; i < N_LAYERS; ++i) {
     int hit_index = best_hits[i];
     if (hit_index >= 0) {
@@ -491,6 +485,7 @@ __host__ __device__ BestParams pkick_fit(
   float chi2UT = chi2VeloSlope * chi2VeloSlope;
   // add chi2
   int total_num_hits = 0;
+  #pragma unroll
   for (int i = 0; i < N_LAYERS; ++i) {
     int hit_index = best_hits[i];
     if (hit_index >= 0) {
@@ -615,6 +610,7 @@ __device__ void save_track(
   track.set_qop( qop );
 
   // Adding hits to track
+  #pragma unroll
   for ( int i = 0; i < N_LAYERS; ++i ) {
     int hit_index = best_hits[i];
     if (hit_index >= 0) {
