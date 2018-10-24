@@ -17,11 +17,6 @@ __global__ void saxpy(float *x, float *y, int n, float a) {
 }
 ```
 
-> Note: You may notice I changed the order of the parameters, and put first the pointers `float* x, float* y`. Putting them at the end leads to the following compiler error, which I still have to understand `
-Error: Internal Compiler Error (codegen): "there was an error in verifying the lgenfe output!"
-`.
-
-
 ### Adding the CUDA algorithm
 
 We want to add the algorithm to a specific folder inside the `cuda` folder:
@@ -143,7 +138,7 @@ Next, we need to define the arguments to be passed to our function. We need to d
 
 We will distinguish arguments just passed by value from pointers to device memory. We don't need to schedule those simply passed by value like `n` and `a`. We care however about `x` and `y`, since they require some reserving and freeing in memory.
 
-Let's give these arguments a name that won't collide, like `dev_x` and `dev_y`. Now, we need to add them in three places. First, `arg_enum_t` in `stream/sequence_setup/include/SequenceArgumentEnum.cuh`:
+Let's give these arguments a name that won't collide, like `dev_x` and `dev_y`. Now, we need to add them in three places. First, `arg_enum_t` in `stream/sequence_setup/include/ArgumentEnum.cuh`:
 
 ```clike
 /**
@@ -173,7 +168,7 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_velo_track_hit_number, uint>,
   Argument<arg::dev_prefix_sum_auxiliary_array_2, uint>,
   Argument<arg::dev_velo_track_hits, Hit>,
-  Argument<arg::dev_velo_states, VeloState>,
+  Argument<arg::dev_velo_states, Velo::State>,
   Argument<arg::dev_x, float>,
   Argument<arg::dev_y, float>
 >;
