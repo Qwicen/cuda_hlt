@@ -10,8 +10,7 @@
 #include "VeloKalmanFilter.cuh"
 #include "VeloUT.cuh"
 #include "SciFiCalculateClusterCount.cuh"
-#include "RawBankDecoder.cuh"
-#include "SciFiSortByX.cuh"
+#include "SciFiRawBankDecoder.cuh"
 #include "VeloEventModel.cuh"
 #include "UTCalculateNumberOfHits.cuh"
 #include "UTDecodeRawBanksInOrder.cuh"
@@ -50,10 +49,10 @@ SEQUENCE(
   ut_pre_decode_t,
   ut_find_permutation_t,
   ut_decode_raw_banks_in_order_t,
-  veloUT_t,
+  // veloUT_t,
   scifi_calculate_cluster_count_t,
   prefix_sum_reduce_scifi_hits_t,
   prefix_sum_single_block_scifi_hits_t,
   prefix_sum_scan_scifi_hits_t,
-  raw_bank_decoder_t
+  scifi_raw_bank_decoder_t
 )

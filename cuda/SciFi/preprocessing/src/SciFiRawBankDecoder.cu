@@ -1,9 +1,9 @@
-#include "RawBankDecoder.cuh"
+#include "SciFiRawBankDecoder.cuh"
 #include "assert.h"
 
 using namespace SciFi;
 
-__global__ void raw_bank_decoder(
+__global__ void scifi_raw_bank_decoder(
   char *scifi_events,
   uint *scifi_event_offsets,
   uint *scifi_hit_count,

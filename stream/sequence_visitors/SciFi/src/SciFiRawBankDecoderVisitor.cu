@@ -1,9 +1,9 @@
 #include "SequenceVisitor.cuh"
-#include "RawBankDecoder.cuh"
+#include "SciFiRawBankDecoder.cuh"
 
 template<>
-void SequenceVisitor::visit<raw_bank_decoder_t>(
-  raw_bank_decoder_t& state,
+void SequenceVisitor::visit<scifi_raw_bank_decoder_t>(
+  scifi_raw_bank_decoder_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
