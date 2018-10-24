@@ -164,3 +164,30 @@ void Constants::initialize_ut_decoding_constants(
   cudaCheck(cudaMemcpy(dev_unique_x_sector_offsets, host_unique_x_sector_offsets.data(), host_unique_x_sector_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_unique_sector_xs, host_unique_sector_xs.data(), host_unique_sector_xs.size() * sizeof(float), cudaMemcpyHostToDevice));
 }
+
+void Constants::initialize_geometry_constants(
+  const std::vector<char>& velopix_geometry,
+  const std::vector<char>& ut_boards,
+  const std::vector<char>& ut_geometry,
+  const std::vector<char>& ut_magnet_tool,
+  const std::vector<char>& scifi_geometry)
+{
+  // Populate velo geometry
+  cudaCheck(cudaMalloc((void**)&dev_velo_geometry, velopix_geometry.size()));
+  cudaCheck(cudaMemcpy(dev_velo_geometry, velopix_geometry.data(), velopix_geometry.size(), cudaMemcpyHostToDevice));
+
+  // Populate UT boards and geometry
+  cudaCheck(cudaMalloc((void**)&dev_ut_boards, ut_boards.size()));
+  cudaCheck(cudaMemcpy(dev_ut_boards, ut_boards.data(), ut_boards.size(), cudaMemcpyHostToDevice));
+
+  cudaCheck(cudaMalloc((void**)&dev_ut_geometry, ut_geometry.size()));
+  cudaCheck(cudaMemcpy(dev_ut_geometry, ut_geometry.data(), ut_geometry.size(), cudaMemcpyHostToDevice));
+
+  // Populate UT magnet tool values
+  cudaCheck(cudaMalloc((void**)&dev_ut_magnet_tool, ut_magnet_tool.size()));
+  cudaCheck(cudaMemcpy(dev_ut_magnet_tool, ut_magnet_tool.data(), ut_magnet_tool.size(), cudaMemcpyHostToDevice));
+
+  // Populate FT geometry
+  cudaCheck(cudaMalloc((void**)&dev_scifi_geometry, scifi_geometry.size()));
+  cudaCheck(cudaMemcpy(dev_scifi_geometry, scifi_geometry.data(), scifi_geometry.size(), cudaMemcpyHostToDevice));
+}

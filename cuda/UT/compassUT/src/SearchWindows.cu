@@ -1,5 +1,6 @@
 #include "CalculateWindows.cuh"
 #include "SearchWindows.cuh"
+#include "Handler.cuh"
 #include <tuple>
 
 __global__ void ut_search_windows(
@@ -27,11 +28,8 @@ __global__ void ut_search_windows(
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset    = velo_tracks.tracks_offset(event_number);
 
-  UTHitOffsets ut_hit_offsets{
-    dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
-
-  UTHits ut_hits;
-  ut_hits.typecast_sorted(dev_ut_hits, total_number_of_hits);
+  UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  UTHits ut_hits {dev_ut_hits, total_number_of_hits};
 
   const float* fudge_factors = &(dev_ut_magnet_tool->dxLayTable[0]);
 

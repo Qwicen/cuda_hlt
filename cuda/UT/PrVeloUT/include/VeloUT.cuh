@@ -4,6 +4,7 @@
 #include "VeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "PrVeloUT.cuh"
+#include "Handler.cuh"
 
 __global__ void veloUT(
   uint* dev_ut_hits,
@@ -20,3 +21,5 @@ __global__ void veloUT(
   const uint* dev_unique_x_sector_offsets,
   const float* dev_unique_sector_xs
 );
+
+ALGORITHM(veloUT, veloUT_t)

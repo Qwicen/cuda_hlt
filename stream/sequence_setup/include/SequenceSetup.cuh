@@ -1,78 +1,16 @@
 #pragma once
 
-#include "CalculatePhiAndSort.cuh"
-#include "ConsolidateTracks.cuh"
-#include "MaskedVeloClustering.cuh"
-#include "EstimateInputSize.cuh"
-#include "PrefixSum.cuh"
-#include "SearchByTriplet.cuh"
-#include "VeloKalmanFilter.cuh"
-#include "VeloUT.cuh"
-#include "compassUT.cuh"
-#include "SortByY.cuh"
-#include "UTDecoding.cuh"
-#include "EstimateClusterCount.cuh"
-#include "RawBankDecoder.cuh"
-#include "SciFiSortByX.cuh"
-#include "Argument.cuh"
-#include "Sequence.cuh"
+#include <iostream>
+#include "ArgumentEnum.cuh"
+#include "ConfiguredSequence.cuh"
 #include "TupleIndicesChecker.cuh"
-#include "SequenceArgumentEnum.cuh"
-#include "VeloEventModel.cuh"
-#include "SearchWindows.cuh"
+#include "Argument.cuh"
 
-/**
- * @brief Algorithm tuple definition. All algorithms in the sequence
- *        should be added here in the same order as seq_enum_t
- *        (this condition is checked at compile time).
- */
-constexpr auto sequence_algorithms() {
-  return std::make_tuple(
-    estimate_input_size,
-    prefix_sum_reduce,
-    prefix_sum_single_block,
-    prefix_sum_scan,
-    masked_velo_clustering,
-    calculate_phi_and_sort,
-    fill_candidates,
-    search_by_triplet,
-    weak_tracks_adder,
-    copy_and_prefix_sum_single_block,
-    copy_velo_track_hit_number,
-    prefix_sum_reduce,
-    prefix_sum_single_block,
-    prefix_sum_scan,
-    consolidate_tracks,
-    ut_calculate_number_of_hits,
-    prefix_sum_reduce,
-    prefix_sum_single_block,
-    prefix_sum_scan,
-    decode_raw_banks,
-    sort_by_y,
-    veloUT,
-    ut_search_windows,
-    compassUT,
-    estimate_cluster_count,
-    prefix_sum_reduce,
-    prefix_sum_single_block,
-    prefix_sum_scan,
-    raw_bank_decoder,
-    scifi_sort_by_x
-  );
-}
-
-/**
- * @brief Definition of the algorithm tuple type.
- *        make_algorithm_tuple receives as argument a tuple
- *        with the kernel functions and
- *        deduces its return type (void) and datatypes.
- */
-using algorithm_tuple_t = decltype(make_algorithm_tuple(sequence_algorithms()));
-
-/**
- * Sequence type.
- */
-using sequence_t = Sequence<algorithm_tuple_t>;
+// Prepared for C++17 variant
+// template<typename T>
+// auto transition(const T& state) {
+//   return typename std::tuple_element<tuple_index<T, sequence_tuple_n>::value + 1, sequence_tuple_n>::type{};
+// }
 
 /**
  * @brief Argument tuple definition. All arguments and their types should
@@ -128,11 +66,6 @@ using argument_tuple_t = std::tuple<
 >;
 
 /**
- * @brief Returns an array with names for every element in the sequence.
- */
-std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_names();
-
-/**
  * @brief Returns an array with names for every argument.
  */
 std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_names();
@@ -159,13 +92,6 @@ std::vector<std::vector<int>> get_sequence_dependencies();
  *          All output arguments should be returned here.
  */
 std::vector<int> get_sequence_output_arguments();
-
-/**
- * @brief Checks the sequence tuple is defined sequentially and
- *        starting at 0.
- */
-static_assert(check_tuple_indices<algorithm_tuple_t>(),
-  "Sequence tuple indices are not sequential starting at zero");
 
 /**
  * @brief Checks the argument tuple is defined sequentially and

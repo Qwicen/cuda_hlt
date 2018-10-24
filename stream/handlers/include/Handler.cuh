@@ -1,70 +1,83 @@
 #pragma once
 
-#include "cuda_runtime.h"
 #include <ostream>
 #include <tuple>
 #include <utility>
-#include "Common.cuh"
 
+/**
+ * @brief      Macro for defining algorithms defined by a function name.
+ *             A struct is created with name EXPOSED_TYPE_NAME that encapsulates
+ *             a Handler of type FUNCTION_NAME.
+ */
+#define ALGORITHM(FUNCTION_NAME, EXPOSED_TYPE_NAME) \
+  struct EXPOSED_TYPE_NAME {\
+    constexpr static auto name {#EXPOSED_TYPE_NAME};\
+    decltype(HandlerMaker::make_handler(FUNCTION_NAME)) handler {FUNCTION_NAME};\
+    void set_opts(\
+      const dim3& param_num_blocks,\
+      const dim3& param_num_threads,\
+      cudaStream_t& param_stream,\
+      const unsigned param_shared_memory_size = 0\
+    ) {\
+      handler.set_opts(param_num_blocks, param_num_threads,\
+        param_stream, param_shared_memory_size);\
+    }\
+    template<typename... T>\
+    void set_arguments(T... param_arguments) {\
+      handler.set_arguments(param_arguments...);\
+    }\
+    void invoke() {\
+      handler.invoke();\
+    }\
+  };
+
+/**
+ * @brief      Invokes a function specified by its function and arguments.
+ *
+ * @param[in]  function            The function.
+ * @param[in]  num_blocks          Number of blocks of kernel invocation.
+ * @param[in]  num_threads         Number of threads of kernel invocation.
+ * @param[in]  shared_memory_size  Shared memory size.
+ * @param      stream              The stream where the function will be run.
+ * @param[in]  arguments           The arguments of the function.
+ * @param[in]  I                   Index sequence
+ *
+ * @return     Return value of the function.
+ */
 template<class Fn, class Tuple, unsigned long... I>
-auto call_impl(
-  Fn fn,
+auto invoke_impl(
+  Fn function,
   const dim3& num_blocks,
   const dim3& num_threads,
   const unsigned shared_memory_size,
   cudaStream_t* stream,
-  const Tuple& t,
+  const Tuple& arguments,
   std::index_sequence<I...>
-) -> decltype(fn(std::get<I>(t)...)) {
-  return fn<<<num_blocks, num_threads, shared_memory_size, *stream>>>(std::get<I>(t)...);
+) -> decltype(function(std::get<I>(arguments)...)) {
+  return function<<<num_blocks, num_threads, shared_memory_size, *stream>>>(std::get<I>(arguments)...);
 }
 
-template<typename Fn, typename Tuple>
-auto call(
-  Fn fn,
-  const dim3& num_blocks,
-  const dim3& num_threads,
-  const unsigned shared_memory_size,
-  cudaStream_t* stream,
-  const Tuple& args
-) {
-  using indices = typename tuple_indices<Tuple>::type;
-  return call_impl(fn, num_blocks, num_threads, shared_memory_size,
-    stream, args, indices());
-}
-
+/**
+ * @brief      A Handler that encapsulates a CUDA function.
+ *             It exposes set_opts, to set its CUDA specific function
+ *             call parameters (inside the <<< >>>).
+ *             set_arguments allows to set up the arguments of the function.
+ */
 template<typename R, typename... T>
-std::tuple<T...> tuple_parameters (R(_)(T...)) {
-  return std::tuple<T...>{};
-}
-
-template<typename R, typename... T>
-R return_type (R(_)(T...)) {
-  return R{};
-}
-
-template<unsigned long I, typename R, typename... T>
 struct Handler {
-  constexpr static unsigned long i = I;
   dim3 num_blocks, num_threads;
   unsigned shared_memory_size = 0;
   cudaStream_t* stream;
 
-  // Call arguments
+  // Call arguments and function
   std::tuple<T...> arguments;
   R(*function)(T...);
 
   Handler() = default;
-
   Handler(R(*param_function)(T...)) : function(param_function) {}
 
   void set_arguments(T... param_arguments) {
     arguments = std::tuple<T...>{param_arguments...};
-  }
-
-  void invoke() {
-    call(function, num_blocks, num_threads,
-      shared_memory_size, stream, arguments);
   }
 
   void set_opts(
@@ -77,5 +90,22 @@ struct Handler {
     num_threads = param_num_threads;
     stream = &param_stream;
     shared_memory_size = param_shared_memory_size;
+  }
+  
+  void invoke() {
+    invoke_impl(function, num_blocks, num_threads,
+      shared_memory_size, stream, arguments,
+      std::make_index_sequence<std::tuple_size<std::tuple<T...>>::value>());
+  }
+};
+
+/**
+ * @brief      A helper to make Handlers without needing
+ *             to specify its function type (ie. "HandlerMaker::make_handler(function)").
+ */
+struct HandlerMaker {
+  template<typename R, typename... T>
+  static Handler<R, T...> make_handler(R(f)(T...)) {
+    return Handler<R, T...>{f};
   }
 };

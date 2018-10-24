@@ -6,7 +6,7 @@ a full HLT1 realization on GPU.
 
 Requisites
 ----------
-The project requires a graphics card with CUDA support, CUDA 9.2 and a compiler supporting C++14. It also requires the developer package of `tbb`.
+The project requires a graphics card with CUDA support, CUDA 9.2, Cmake 3.11.2 or higher and a compiler supporting C++14. It also requires the developer package of `tbb`.
 
 If you are working from a node with CVMFS and CentOS 7, we suggest the following setup:
 
@@ -94,4 +94,4 @@ Here are some example run options:
     # Run one stream and print all memory allocations
     ./cu_hlt -n 5000 -p
 
-[This readme](readme_cuda_developer.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define global memory variables for this sequence and pass on the dependencies.
+[This readme](contributing.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define global memory variables for this sequence and pass on the dependencies.
