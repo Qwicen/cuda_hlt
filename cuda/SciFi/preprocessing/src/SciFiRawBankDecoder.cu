@@ -18,7 +18,7 @@ __device__ void make_cluster (
   // maybe not hardcoded, or in another place
   constexpr float invClusRes[] = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
 
-  const SciFi::SciFiChannelID id (chan);
+  const SciFi::SciFiChannelID id {chan};
 
   // Offset to save space in geometry structure, see DumpFTGeometry.cpp
   const uint32_t mat = id.uniqueMat() - 512;
@@ -79,14 +79,6 @@ __global__ void scifi_raw_bank_decoder(
   hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
   const uint number_of_hits_in_event = hit_count.event_number_of_hits();
 
-  __shared__ uint32_t shared_mat_offsets[SciFi::number_of_mats];
-
-  for (uint i = threadIdx.x; i < SciFi::number_of_mats; i += blockDim.x) {
-    shared_mat_offsets[i] = hit_count.mat_offsets[i];
-  }
-
-  __syncthreads();
-
   for (int i=threadIdx.x; i<number_of_hits_in_event; i+=blockDim.x) {
     const uint32_t cluster_reference = hits.cluster_reference[hit_count.event_offset() + i];
 
@@ -144,7 +136,7 @@ __global__ void scifi_raw_bank_decoder(
     }
 
     make_cluster(
-      shared_mat_offsets[correctedMat] + i,
+      hit_count.event_offset() + i,
       hit_count,
       geom,
       cluster_chan,
