@@ -24,6 +24,36 @@ __device__ bool velo_track_in_UTA_acceptance(const MiniState& state)
   return true;
 }
 
+//=========================================================================
+// Check if hit is inside tolerance and refine by Y
+//=========================================================================
+__host__ __device__ __inline__ bool is_valid_tol_refine (
+  const int hit_index,
+  const UTHits& ut_hits,
+  const MiniState& velo_state,
+  const float normFactNum,
+  const float xTol,
+  const float dxDy)
+{
+  const float xTolNormFact = xTol * (1.0f / normFactNum);
+
+  const float zInit = ut_hits.zAtYEq0[hit_index];
+  const float yApprox = velo_state.y + velo_state.ty * (zInit - velo_state.z);
+  const float xOnTrackProto = velo_state.x + velo_state.tx * (zInit - velo_state.z);
+
+  const float xx = ut_hits.xAt(hit_index, yApprox, dxDy);
+  const float dx = xx - xOnTrackProto;
+
+  if (dx < -xTolNormFact || dx > xTolNormFact) return false;
+
+  // Now refine the tolerance in Y
+  if (ut_hits.isNotYCompatible(
+        hit_index, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx * (1.0f / normFactNum))))
+    return false;
+
+  return true;
+}
+
 //=============================================================================
 // Get the windows
 //=============================================================================
@@ -63,7 +93,7 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
   const float invNormFact = 1.0f / normFact[layer];
 
   // Second sector group search
-  const float tolerance_in_x = xTol * invNormFact;
+  // const float tolerance_in_x = xTol * invNormFact;
 
   // Find sector group for lowerBoundX and upperBoundX
   const int first_sector_group_in_layer = dev_unique_x_sector_layer_offsets[layer];
@@ -83,11 +113,14 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
     const auto sector_candidates = find_candidates_in_sector_group(
       ut_hits,
       ut_hit_offsets,
+      velo_state,
       dev_unique_sector_xs,
       x_track,
       y_track,
       dx_dy,
+      normFact[layer],
       invNormFact,
+      xTol,
       sector_group
     );
 
@@ -102,11 +135,14 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
       const auto left_group_candidates = find_candidates_in_sector_group(
         ut_hits,
         ut_hit_offsets,
+        velo_state,
         dev_unique_sector_xs,
         x_track,
         y_track,
         dx_dy,
+        normFact[layer],
         invNormFact,
+        xTol,
         left_group
       );
 
@@ -122,11 +158,14 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
       const auto right_group_candidates = find_candidates_in_sector_group(
         ut_hits,
         ut_hit_offsets,
+        velo_state,
         dev_unique_sector_xs,
         x_track,
         y_track,
         dx_dy,
+        normFact[layer],
         invNormFact,
+        xTol,
         right_group
       );
 
@@ -139,16 +178,19 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
     left_group_first_candidate, left_group_last_candidate,
     right_group_first_candidate, right_group_last_candidate
   };
-}
+} 
 
 __device__ std::tuple<int, int> find_candidates_in_sector_group(
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_offsets,
+  const MiniState& velo_state,
   const float* dev_unique_sector_xs,
   const float x_track,
   const float y_track,
   const float dx_dy,
+  const float normFact,
   const float invNormFact,
+  const float xTol,
   const int sector_group)
 {
   const float x_at_left_sector  = dev_unique_sector_xs[sector_group];
@@ -169,6 +211,7 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
     [&] (const auto value, const auto array_element, const int index, const float margin) {
       return (value + margin > ut_hits.yBegin[sector_group_offset + index] && value - margin < array_element);
     });
+
   if (first_candidate != -1) {
     last_candidate = binary_search_second_candidate(
       ut_hits.yBegin + sector_group_offset + first_candidate,
@@ -177,6 +220,36 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
       tol);
     first_candidate += sector_group_offset;
     last_candidate = last_candidate == 0 ? first_candidate + 1 : first_candidate + last_candidate;
+  }
+
+  // refine first candidate
+  for (int i=first_candidate; i<last_candidate; ++i) {
+    if (is_valid_tol_refine(
+      i,
+      ut_hits,
+      velo_state,
+      normFact,
+      xTol,
+      dx_dy)
+    ) {
+      first_candidate = i;
+      break;
+    }
+  }
+
+  // refine last candidate
+  for (int i=last_candidate; i>first_candidate; --i) {
+    if (is_valid_tol_refine(
+      i,
+      ut_hits,
+      velo_state,
+      normFact,
+      xTol,
+      dx_dy)
+    ) {
+      last_candidate = i;
+      break;
+    }
   }
 
   return {first_candidate, last_candidate};

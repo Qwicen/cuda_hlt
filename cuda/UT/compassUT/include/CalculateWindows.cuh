@@ -22,9 +22,12 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
 __device__ std::tuple<int, int> find_candidates_in_sector_group(
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_offsets,
+  const MiniState& velo_state,
   const float* dev_unique_sector_xs,
   const float x_track,
   const float y_track,
   const float dx_dy,
+  const float normFact,
   const float invNormFact,
+  const float xTol,
   const int sector_group);

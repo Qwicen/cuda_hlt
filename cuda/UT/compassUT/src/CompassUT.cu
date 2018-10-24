@@ -169,8 +169,6 @@ __host__ __device__ __inline__ bool check_tol_refine(
   const float xTol,
   const float dxDy)
 {
-  bool valid_hit = true;
-
   const float xTolNormFact = xTol * (1.0f / normFactNum);
 
   const float zInit = ut_hits.zAtYEq0[hit_index];
@@ -180,14 +178,14 @@ __host__ __device__ __inline__ bool check_tol_refine(
   const float xx = ut_hits.xAt(hit_index, yApprox, dxDy);
   const float dx = xx - xOnTrackProto;
 
-  if (dx < -xTolNormFact || dx > xTolNormFact) valid_hit = false;
+  if (dx < -xTolNormFact || dx > xTolNormFact) return false;
 
   // Now refine the tolerance in Y
   if (ut_hits.isNotYCompatible(
         hit_index, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx * (1.0f / normFactNum))))
-    valid_hit = false;
+    return false;
 
-  return valid_hit;
+  return true;
 }
 
 __host__ __device__ __inline__ int set_index(
