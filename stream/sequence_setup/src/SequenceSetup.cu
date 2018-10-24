@@ -213,6 +213,12 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_scifi_hit_count,
     arg::dev_prefix_sum_auxiliary_array_4
   };
+  sequence_dependencies[tuple_contains<scifi_pre_decode_t, sequence_t>::index] = {
+    arg::dev_scifi_raw_input,
+    arg::dev_scifi_raw_input_offsets,
+    arg::dev_scifi_hit_count,
+    arg::dev_scifi_hits
+  };
   sequence_dependencies[tuple_contains<scifi_raw_bank_decoder_t, sequence_t>::index] = {
     arg::dev_scifi_raw_input,
     arg::dev_scifi_raw_input_offsets,

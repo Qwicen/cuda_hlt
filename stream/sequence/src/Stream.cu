@@ -69,6 +69,10 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
       host_buffers,
       cuda_stream,
       cuda_generic_event);
+
+    // Synchronize everything up until this point
+    cudaEventRecord(cuda_generic_event, cuda_stream);
+    cudaEventSynchronize(cuda_generic_event);
   }
 
   return cudaSuccess;

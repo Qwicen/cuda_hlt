@@ -11,6 +11,7 @@
 #include "VeloUT.cuh"
 #include "SciFiCalculateClusterCount.cuh"
 #include "SciFiRawBankDecoder.cuh"
+#include "SciFiPreDecode.cuh"
 #include "VeloEventModel.cuh"
 #include "UTCalculateNumberOfHits.cuh"
 #include "UTDecodeRawBanksInOrder.cuh"
@@ -54,5 +55,6 @@ SEQUENCE(
   prefix_sum_reduce_scifi_hits_t,
   prefix_sum_single_block_scifi_hits_t,
   prefix_sum_scan_scifi_hits_t,
+  scifi_pre_decode_t,
   scifi_raw_bank_decoder_t
 )

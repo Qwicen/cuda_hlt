@@ -91,7 +91,6 @@ namespace SciFiRawBankParams { //from SciFi/SciFiDAQ/src/SciFiRawBankParams.h
   static constexpr uint16_t clusterMaxWidth = 4;
 }
 
-
 struct SciFiChannelID {
   uint32_t channelID;
   __device__ __host__ uint32_t channel() const;
@@ -121,11 +120,11 @@ struct SciFiChannelID {
                       quarterMask       = 0xc000L,
                       layerMask         = 0x30000L,
                       stationMask       = 0xc0000L,
-                      uniqueLayerMask   = layerMask + stationMask,
-                      uniqueQuarterMask = quarterMask + layerMask + stationMask,
-                      uniqueModuleMask  = moduleMask + quarterMask + layerMask + stationMask,
-                      uniqueMatMask     = matMask + moduleMask + quarterMask + layerMask + stationMask,
-                      uniqueSiPMMask    = sipmMask + matMask + moduleMask + quarterMask + layerMask + stationMask
+                      uniqueLayerMask   = layerMask | stationMask,
+                      uniqueQuarterMask = quarterMask | layerMask | stationMask,
+                      uniqueModuleMask  = moduleMask | quarterMask | layerMask | stationMask,
+                      uniqueMatMask     = matMask | moduleMask | quarterMask | layerMask | stationMask,
+                      uniqueSiPMMask    = sipmMask | matMask | moduleMask | quarterMask | layerMask | stationMask
 };
   enum channelIDBits{channelBits       = 0,
                      sipmBits          = 7,
@@ -156,7 +155,7 @@ struct SciFiHitCount{
     const uint number_of_events
   );
 
-   __device__ __host__
+  __device__ __host__
   uint mat_offset(const uint mat_number) const {
     return mat_offsets[mat_number];
   }
@@ -167,17 +166,28 @@ struct SciFiHitCount{
   }
 
   __device__ __host__
- uint zone_offset(const uint zone_number) const {
-   constexpr uint32_t first_corrected_unique_mat_in_zone[] = {
-     0, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640,
-     688, 736, 784, 832, 880, 928, 976, 1024};
-   return mat_offsets[first_corrected_unique_mat_in_zone[zone_number]];
- }
+  uint zone_offset(const uint zone_number) const {
+    // TODO: Make this a constant
+    constexpr uint32_t first_corrected_unique_mat_in_zone[] = {
+      0, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640,
+      688, 736, 784, 832, 880, 928, 976, 1024};
+    return mat_offsets[first_corrected_unique_mat_in_zone[zone_number]];
+  }
 
- __device__ __host__
- uint zone_number_of_hits(const uint zone_number) const {
-   return zone_offset(zone_number + 1) - zone_offset(zone_number);
- }
+  __device__ __host__
+  uint zone_number_of_hits(const uint zone_number) const {
+    return zone_offset(zone_number + 1) - zone_offset(zone_number);
+  }
+
+  __device__ __host__
+  uint event_number_of_hits() const {
+    return mat_offsets[SciFi::number_of_mats] - mat_offsets[0];
+  }
+
+  __device__ __host__
+  uint event_offset() const {
+    return mat_offsets[0];
+  }
 };
 
 struct SciFiHit {
@@ -207,7 +217,6 @@ struct SciFiHit {
 
   return stream;
 }
-
 };
 
 struct SciFiHits {
@@ -222,7 +231,7 @@ struct SciFiHits {
   uint32_t* planeCode;
   uint32_t* hitZone;
   uint32_t* mat;
-  uint32_t* temp;
+  uint32_t* cluster_reference;
 
   SciFiHits() = default;
 

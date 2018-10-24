@@ -16,7 +16,7 @@ void SequenceVisitor::visit<scifi_raw_bank_decoder_t>(
   arguments.set_size<arg::dev_scifi_hits>(host_buffers.scifi_hits_bytes());
   scheduler.setup_next(arguments, sequence_step);
 
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(240), cuda_stream);
+  state.set_opts(dim3(runtime_options.number_of_events), dim3(256), cuda_stream);
   state.set_arguments(
     arguments.offset<arg::dev_scifi_raw_input>(),
     arguments.offset<arg::dev_scifi_raw_input_offsets>(),

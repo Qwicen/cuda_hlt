@@ -210,11 +210,11 @@ void SciFiHits::typecast_unsorted(char* base, uint32_t total_number_of_hits) {
   LHCbID =    reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   planeCode = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   hitZone =   reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  temp  =     reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  cluster_reference  =     reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
 }
 
 void SciFiHits::typecast_sorted(char* base, uint32_t total_number_of_hits) {
-  temp  =     reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
+  cluster_reference  =     reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
   x0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   z0    =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
   w     =     reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
