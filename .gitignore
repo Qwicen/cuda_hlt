@@ -16,3 +16,5 @@ debug*
 .#*
 CMakeFiles
 CMakeCache.txt
+run.sh
+setup.sh
