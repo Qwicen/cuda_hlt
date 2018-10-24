@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "PrefixSum.cuh"
 
 template<>
-void StreamVisitor::visit<copy_velo_track_hit_number_t>(
+void SequenceVisitor::visit<copy_velo_track_hit_number_t>(
   copy_velo_track_hit_number_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

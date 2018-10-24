@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "EstimateClusterCount.cuh"
 
 template<>
-void StreamVisitor::visit<estimate_cluster_count_t>(
+void SequenceVisitor::visit<estimate_cluster_count_t>(
   estimate_cluster_count_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

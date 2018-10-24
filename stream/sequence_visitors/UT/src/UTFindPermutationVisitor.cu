@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "UTFindPermutation.cuh"
 
 template<>
-void StreamVisitor::visit<ut_find_permutation_t>(
+void SequenceVisitor::visit<ut_find_permutation_t>(
   ut_find_permutation_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

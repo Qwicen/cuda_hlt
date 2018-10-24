@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "SearchByTriplet.cuh"
 
 template<>
-void StreamVisitor::visit<search_by_triplet_t>(
+void SequenceVisitor::visit<search_by_triplet_t>(
   search_by_triplet_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

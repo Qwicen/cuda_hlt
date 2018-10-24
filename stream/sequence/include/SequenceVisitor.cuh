@@ -8,7 +8,7 @@
 #include "SequenceSetup.cuh"
 #include "DynamicScheduler.cuh"
 
-struct StreamVisitor {
+struct SequenceVisitor {
   template<typename T>
   void visit(
     T& state,

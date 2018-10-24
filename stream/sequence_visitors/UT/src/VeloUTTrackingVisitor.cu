@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "VeloUT.cuh"
 
 template<>
-void StreamVisitor::visit<veloUT_t>(
+void SequenceVisitor::visit<veloUT_t>(
   veloUT_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "EstimateInputSize.cuh"
 
 template<>
-void StreamVisitor::visit<estimate_input_size_t>(
+void SequenceVisitor::visit<estimate_input_size_t>(
   estimate_input_size_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "WeakTracksAdder.cuh"
 
 template<>
-void StreamVisitor::visit<weak_tracks_adder_t>(
+void SequenceVisitor::visit<weak_tracks_adder_t>(
   weak_tracks_adder_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

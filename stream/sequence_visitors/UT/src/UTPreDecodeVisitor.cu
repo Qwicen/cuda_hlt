@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "UTPreDecode.cuh"
 
 template<>
-void StreamVisitor::visit<ut_pre_decode_t>(
+void SequenceVisitor::visit<ut_pre_decode_t>(
   ut_pre_decode_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

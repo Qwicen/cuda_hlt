@@ -60,7 +60,7 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
 
     // Visit all algorithms in configured sequence
     run_sequence_tuple(
-      stream_visitor,
+      sequence_visitor,
       sequence_tuple,
       runtime_options,
       constants,

@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "FillCandidates.cuh"
 
 template<>
-void StreamVisitor::visit<fill_candidates_t>(
+void SequenceVisitor::visit<fill_candidates_t>(
   fill_candidates_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

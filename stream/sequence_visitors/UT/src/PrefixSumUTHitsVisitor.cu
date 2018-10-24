@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "PrefixSum.cuh"
 
 template<>
-void StreamVisitor::visit<prefix_sum_reduce_ut_hits_t>(
+void SequenceVisitor::visit<prefix_sum_reduce_ut_hits_t>(
   prefix_sum_reduce_ut_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
@@ -30,7 +30,7 @@ void StreamVisitor::visit<prefix_sum_reduce_ut_hits_t>(
 }
 
 template<>
-void StreamVisitor::visit<prefix_sum_single_block_ut_hits_t>(
+void SequenceVisitor::visit<prefix_sum_single_block_ut_hits_t>(
   prefix_sum_single_block_ut_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
@@ -57,7 +57,7 @@ void StreamVisitor::visit<prefix_sum_single_block_ut_hits_t>(
 }
 
 template<>
-void StreamVisitor::visit<prefix_sum_scan_ut_hits_t>(
+void SequenceVisitor::visit<prefix_sum_scan_ut_hits_t>(
   prefix_sum_scan_ut_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

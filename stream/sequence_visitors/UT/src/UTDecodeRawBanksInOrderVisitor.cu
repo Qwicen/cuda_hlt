@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "UTDecodeRawBanksInOrder.cuh"
 
 template<>
-void StreamVisitor::visit<ut_decode_raw_banks_in_order_t>(
+void SequenceVisitor::visit<ut_decode_raw_banks_in_order_t>(
   ut_decode_raw_banks_in_order_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
