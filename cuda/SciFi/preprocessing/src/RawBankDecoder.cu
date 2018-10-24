@@ -3,26 +3,6 @@
 
 using namespace SciFi;
 
-__device__ uint32_t channelInBank(uint32_t c) {
-  return (c >> SciFiRawBankParams::cellShift);
-}
-
-__device__ uint16_t getLinkInBank(uint16_t c){
-  return (c >> SciFiRawBankParams::linkShift);
-}
-
-__device__ int cell(uint16_t c) {
-  return (c >> SciFiRawBankParams::cellShift     ) & SciFiRawBankParams::cellMaximum;
-}
-
-__device__ int fraction(uint16_t c) {
-  return (c >> SciFiRawBankParams::fractionShift ) & SciFiRawBankParams::fractionMaximum;
-}
-
-__device__ bool cSize(uint16_t c) {
-  return (c >> SciFiRawBankParams::sizeShift     ) & SciFiRawBankParams::sizeMaximum;
-}
-
 __global__ void raw_bank_decoder(
   char *scifi_events,
   uint *scifi_event_offsets,
@@ -39,24 +19,24 @@ __global__ void raw_bank_decoder(
   const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
 
   SciFiHits hits;
-  hits.typecast_unsorted(scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_zones]);
+  hits.typecast_unsorted(scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_mats]);
   SciFiHitCount hit_count;
   hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
 
-  __shared__ uint32_t shared_layer_offsets[SciFi::number_of_zones];
+  __shared__ uint32_t shared_mat_offsets[SciFi::number_of_mats];
 
-  for (uint i = threadIdx.x; i < SciFi::number_of_zones; i += blockDim.x) {
-    shared_layer_offsets[i] = hit_count.layer_offsets[i];
+  for (uint i = threadIdx.x; i < SciFi::number_of_mats; i += blockDim.x) {
+    shared_mat_offsets[i] = hit_count.mat_offsets[i];
   }
 
-  for (uint i = threadIdx.x; i < SciFi::number_of_zones; i += blockDim.x) {
-    hit_count.n_hits_layers[i] = 0;
+  for (uint i = threadIdx.x; i < SciFi::number_of_mats; i += blockDim.x) {
+    hit_count.n_hits_mats[i] = 0;
   }
 
   __syncthreads();
 
   // Merge of PrStoreFTHit and RawBankDecoder.
-  auto make_cluster = [&](uint32_t chan, uint8_t fraction, uint8_t pseudoSize) {
+  auto make_cluster = [&](uint32_t chan, uint8_t fraction, uint8_t pseudoSize, uint32_t uniqueMat) {
     const SciFi::SciFiChannelID id(chan);
 
     // Offset to save space in geometry structure, see DumpFTGeometry.cpp
@@ -86,9 +66,15 @@ __global__ void raw_bank_decoder(
 
     // Apparently the unique* methods are not designed to start at 0, therefore -16
     const uint32_t uniqueZone = ((id.uniqueQuarter() - 16) >> 1);
-    uint32_t* hits_zone = hit_count.n_hits_layers + uniqueZone;
-    uint32_t hitIndex = atomicAdd(hits_zone, 1);
-    hitIndex += shared_layer_offsets[uniqueZone];
+    uint32_t* hits_mat = hit_count.n_hits_mats + uniqueMat;
+    uint32_t hitIndex = (*hits_mat)++;
+
+    if(id.reversedZone())
+      hitIndex = hit_count.mat_number_of_hits(uniqueMat) - 1 - hitIndex;
+
+    assert( hitIndex < hit_count.mat_number_of_hits(uniqueMat));
+
+    hitIndex += shared_mat_offsets[uniqueMat];
 
     hits.x0[hitIndex] = x0;
     hits.z0[hitIndex] = z0;
@@ -98,29 +84,29 @@ __global__ void raw_bank_decoder(
     hits.yMin[hitIndex] = yMin;
     hits.yMax[hitIndex] = yMax;
     hits.LHCbID[hitIndex] = lhcbid;
-    hits.planeCode[hitIndex] = planeCode;
+    hits.planeCode[hitIndex] = 2 * planeCode + (uniqueZone % 2); //  planeCode;
     hits.hitZone[hitIndex] = uniqueZone % 2;
   };
 
   // copied straight from FTRawBankDecoder.cpp
-  auto make_clusters = [&](uint32_t firstChannel, uint16_t c, uint16_t c2) {
+  auto make_clusters = [&](uint32_t firstChannel, uint16_t c, uint16_t c2, uint32_t uniqueMat) {
     unsigned int delta = (cell(c2) - cell(c));
 
     // fragmented clusters, size > 2*max size
     // only edges were saved, add middles now
-    if ( delta  > SciFiRawBankParams::clusterMaxWidth ) {
+    if (delta  > SciFiRawBankParams::clusterMaxWidth) {
       //add the first edge cluster, and then the middle clusters
-      for(unsigned int  i = SciFiRawBankParams::clusterMaxWidth; i < delta ; i+= SciFiRawBankParams::clusterMaxWidth){
+      for(unsigned int i = SciFiRawBankParams::clusterMaxWidth; i < delta; i += SciFiRawBankParams::clusterMaxWidth){
         // all middle clusters will have same size as the first cluster,
         // so re-use the fraction
-        make_cluster( firstChannel+i, fraction(c), 0 );
+        make_cluster(firstChannel + i, fraction(c), 0, uniqueMat);
       }
       //add the last edge
-      make_cluster  ( firstChannel+delta, fraction(c2), 0 );
+      make_cluster  (firstChannel + delta, fraction(c2), 0, uniqueMat);
     } else { //big cluster size upto size 8
       unsigned int widthClus  =  2 * delta - 1 + fraction(c2);
-      make_cluster( firstChannel+(widthClus-1)/2 - int((SciFiRawBankParams::clusterMaxWidth - 1)/2),
-                    (widthClus-1)%2, widthClus );
+      make_cluster(firstChannel+(widthClus-1)/2 - (SciFiRawBankParams::clusterMaxWidth - 1)/2,
+                    (widthClus-1)%2, widthClus, uniqueMat);
     }//end if adjacent clusters
   };//End lambda make_clusters
 
@@ -134,16 +120,18 @@ __global__ void raw_bank_decoder(
     for( ;  it < last; ++it ){ // loop over the clusters
       uint16_t c = *it;
       uint32_t ch = geom.bank_first_channel[rawbank.sourceID] + channelInBank(c);
+      auto chid = SciFiChannelID(ch);
+      uint32_t correctedMat = chid.correctedUniqueMat();
 
       if( !cSize(c) || it+1 == last ) { //No size flag or last cluster
-        make_cluster(ch, fraction(c), 4);
+        make_cluster(ch, fraction(c), 4, correctedMat);
       } else {//Flagged or not the last one.
         unsigned c2 = *(it+1);
         if( cSize(c2) && getLinkInBank(c) == getLinkInBank(c2) ) {
-          make_clusters(ch,c,c2);
+          make_clusters(ch,c,c2, correctedMat);
           ++it;
         } else {
-          make_cluster(ch, fraction(c), 4);
+          make_cluster(ch, fraction(c), 4, correctedMat);
         }
       }
     }

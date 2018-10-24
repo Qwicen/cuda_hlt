@@ -1,4 +1,5 @@
 #include "HostBuffers.cuh"
+#include "SciFiDefinitions.cuh"
 
 void HostBuffers::reserve(const uint max_number_of_events) {
   cudaCheck(cudaMallocHost((void**)&host_velo_tracks_atomics, (2 * max_number_of_events + 1) * sizeof(int)));
@@ -19,5 +20,5 @@ size_t HostBuffers::velo_track_hit_number_size() {
 }
 
 uint32_t HostBuffers::scifi_hits_bytes() {
-  return (14 * sizeof(float) + 1) * host_accumulated_number_of_scifi_hits[0];
+  return sizeof(SciFi::SciFiHit) + sizeof(uint32_t) * host_accumulated_number_of_scifi_hits[0];
 }

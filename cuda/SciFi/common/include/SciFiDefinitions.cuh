@@ -8,7 +8,9 @@
  * @brief SciFi geometry description typecast.
  */
 namespace SciFi {
+  // Maybe these should not be hardcoded?
 constexpr uint32_t number_of_zones = 24;
+constexpr uint32_t number_of_mats = 1024;
 
 struct SciFiGeometry {
   size_t size;
@@ -96,7 +98,9 @@ struct SciFiChannelID {
   __device__ __host__ uint32_t sipm() const;
   __device__ __host__ uint32_t mat() const;
   __device__ __host__ uint32_t uniqueMat() const;
+  __device__ __host__ uint32_t correctedUniqueMat() const;
   __device__ __host__ uint32_t module() const;
+  __device__ __host__ uint32_t correctedModule() const;
   __device__ __host__ uint32_t uniqueModule() const;
   __device__ __host__ uint32_t quarter() const;
   __device__ __host__ uint32_t uniqueQuarter() const;
@@ -105,6 +109,7 @@ struct SciFiChannelID {
   __device__ __host__ uint32_t station() const;
   __device__ __host__ uint32_t die() const;
   __device__ __host__ bool isBottom() const;
+  __device__ __host__ bool reversedZone() const;
   __device__ __host__ SciFiChannelID operator+=(const uint32_t& other);
   __host__ std::string toString();
   __device__ __host__ SciFiChannelID(const uint32_t channelID);
@@ -135,8 +140,8 @@ struct SciFiChannelID {
 * @brief Offset and number of hits of each layer.
 */
 struct SciFiHitCount{
-  uint* layer_offsets;
-  uint* n_hits_layers;
+  uint* mat_offsets;
+  uint* n_hits_mats;
 
   __device__ __host__
   void typecast_before_prefix_sum(
@@ -150,6 +155,29 @@ struct SciFiHitCount{
     const uint event_number,
     const uint number_of_events
   );
+
+   __device__ __host__
+  uint mat_offset(const uint mat_number) const {
+    return mat_offsets[mat_number];
+  }
+
+  __device__ __host__
+  uint mat_number_of_hits(const uint mat_number) const {
+    return mat_offsets[mat_number+1] - mat_offsets[mat_number];
+  }
+
+  __device__ __host__
+ uint zone_offset(const uint zone_number) const {
+   constexpr uint32_t first_corrected_unique_mat_in_zone[] = {
+     0, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640,
+     688, 736, 784, 832, 880, 928, 976, 1024};
+   return mat_offsets[first_corrected_unique_mat_in_zone[zone_number]];
+ }
+
+ __device__ __host__
+ uint zone_number_of_hits(const uint zone_number) const {
+   return zone_offset(zone_number + 1) - zone_offset(zone_number);
+ }
 };
 
 struct SciFiHit {
@@ -193,6 +221,7 @@ struct SciFiHits {
   uint32_t* LHCbID;
   uint32_t* planeCode;
   uint32_t* hitZone;
+  uint32_t* mat;
   uint32_t* temp;
 
   SciFiHits() = default;
@@ -216,4 +245,10 @@ struct SciFiHits {
    */
   SciFiHit getHit(uint32_t index) const;
 };
+
+__device__ uint32_t channelInBank(uint32_t c);
+__device__ uint16_t getLinkInBank(uint16_t c);
+__device__ int cell(uint16_t c);
+__device__ int fraction(uint16_t c);
+__device__ bool cSize(uint16_t c);
 }

@@ -119,6 +119,19 @@ __device__ __host__ uint32_t SciFiChannelID::module() const {
   return ((channelID & moduleMask) >> moduleBits);
 }
 
+__device__ __host__ uint SciFiChannelID::correctedModule() const {
+  // Returns local module ID in ascending x order.
+  // There may be a faster way to do this.
+  uint uQuarter = uniqueQuarter() - 16;
+  uint module_count = uQuarter >= 32? 6:5;
+  uint q = uQuarter % 4;
+  if(q == 0 || q == 2)
+    return module_count - 1 - module();
+  if(q == 1 || q == 3)
+    return module();
+  return 0;
+};
+
 __device__ __host__ uint32_t SciFiChannelID::quarter() const {
   return ((channelID & quarterMask) >> quarterBits);
 }
@@ -126,21 +139,36 @@ __device__ __host__ uint32_t SciFiChannelID::quarter() const {
 __device__ __host__ uint32_t SciFiChannelID::layer() const {
   return ((channelID & layerMask) >> layerBits);
 }
+
 __device__ __host__ uint32_t SciFiChannelID::station() const {
   return ((channelID & stationMask) >> stationBits);
 }
+
 __device__ __host__ uint32_t SciFiChannelID::uniqueLayer() const {
   return ((channelID & uniqueLayerMask) >> layerBits);
 }
+
 __device__ __host__ uint32_t SciFiChannelID::uniqueMat() const {
   return ((channelID & uniqueMatMask) >> matBits);
 }
+
+__device__ __host__ uint32_t SciFiChannelID::correctedUniqueMat() const {
+  // Returns global mat ID in ascending x order without any gaps.
+  // Geometry dependent. No idea how to not hardcode this.
+  uint32_t quarter = uniqueQuarter() - 16;
+  return (quarter < 32? quarter : 32) * 5 * 4 +
+         (quarter >= 32? quarter - 32 : 0) * 6 * 4 + 4 * correctedModule()
+         + (reversedZone()? 3 - mat() : mat());
+}
+
 __device__ __host__ uint32_t SciFiChannelID::uniqueModule() const {
   return ((channelID & uniqueModuleMask) >> moduleBits);
 }
+
 __device__ __host__ uint32_t SciFiChannelID::uniqueQuarter() const {
   return ((channelID & uniqueQuarterMask) >> quarterBits);
 }
+
 __device__ __host__ uint32_t SciFiChannelID::die() const {
   return ((channelID & 0x40) >> 6);
 }
@@ -149,11 +177,17 @@ __device__ __host__ bool SciFiChannelID::isBottom() const {
  return (quarter() == 0 || quarter() == 1);
 }
 
+__device__ __host__ bool SciFiChannelID::reversedZone() const{
+  uint zone = ((uniqueQuarter() - 16) >> 1) % 4;
+  return zone == 1 || zone == 2;
+};
+
+
 void SciFiHitCount::typecast_before_prefix_sum(
   uint* base_pointer,
   const uint event_number
 ) {
-  n_hits_layers = base_pointer + event_number * SciFi::number_of_zones;
+  n_hits_mats = base_pointer + event_number * SciFi::number_of_mats;
 }
 
 void SciFiHitCount::typecast_after_prefix_sum(
@@ -161,8 +195,8 @@ void SciFiHitCount::typecast_after_prefix_sum(
   const uint event_number,
   const uint number_of_events
 ) {
-  layer_offsets = base_pointer + event_number *  SciFi::number_of_zones;
-  n_hits_layers = base_pointer + number_of_events * SciFi::number_of_zones + 1 + event_number * SciFi::number_of_zones;
+  mat_offsets = base_pointer + event_number * SciFi::number_of_mats;
+  n_hits_mats = base_pointer + number_of_events * SciFi::number_of_mats + 1 + event_number * SciFi::number_of_mats;
 }
 
 void SciFiHits::typecast_unsorted(char* base, uint32_t total_number_of_hits) {
@@ -197,4 +231,25 @@ SciFiHit SciFiHits::getHit(uint32_t index) const {
   return {x0[index], z0[index], w[index], dxdy[index], dzdy[index], yMin[index],
           yMax[index], LHCbID[index], planeCode[index], hitZone[index]};
 }
+
+__device__ uint32_t channelInBank(uint32_t c) {
+  return (c >> SciFiRawBankParams::cellShift);
+}
+
+__device__ uint16_t getLinkInBank(uint16_t c) {
+  return (c >> SciFiRawBankParams::linkShift);
+}
+
+__device__ int cell(uint16_t c) {
+  return (c >> SciFiRawBankParams::cellShift     ) & SciFiRawBankParams::cellMaximum;
+}
+
+__device__ int fraction(uint16_t c) {
+  return (c >> SciFiRawBankParams::fractionShift ) & SciFiRawBankParams::fractionMaximum;
+}
+
+__device__ bool cSize(uint16_t c) {
+  return (c >> SciFiRawBankParams::sizeShift     ) & SciFiRawBankParams::sizeMaximum;
+}
+
 };

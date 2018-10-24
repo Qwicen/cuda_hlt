@@ -196,7 +196,7 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_veloUT_tracks,
     arg::dev_atomics_veloUT
   };
-  sequence_dependencies[tuple_contains<estimate_cluster_count_t, sequence_t>::index] = {
+  sequence_dependencies[tuple_contains<scifi_calculate_cluster_count_t, sequence_t>::index] = {
     arg::dev_scifi_raw_input,
     arg::dev_scifi_raw_input_offsets,
     arg::dev_scifi_hit_count
