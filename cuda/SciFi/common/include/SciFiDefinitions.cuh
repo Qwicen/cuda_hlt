@@ -193,27 +193,33 @@ struct SciFiHitCount{
 struct SciFiHit {
   float x0;
   float z0;
-  float w;
-  float dxdy;
-  float dzdy;
-  float yMin;
-  float yMax;
-  uint32_t LHCbID;
-  uint32_t planeCode;
-  uint32_t hitZone;
+  uint32_t channel;
+  uint32_t assembled_datatype;
+
+  // float w;
+  // float dxdy;
+  // float dzdy;
+  // float yMin;
+  // float yMax;
+  // uint32_t LHCbID;
+  // uint32_t planeCode;
+  // uint32_t hitZone;
 
   friend std::ostream& operator<<(std::ostream& stream, const SciFiHit& hit) {
   stream << "SciFi hit {"
-    << hit.planeCode << ", "
-    << hit.hitZone << ", "
-    << hit.LHCbID << ", "
+    // << hit.planeCode << ", "
+    // << hit.hitZone << ", "
+    // << hit.LHCbID << ", "
     << hit.x0 << ", "
     << hit.z0 << ", "
-    << hit.w<< ", "
-    << hit.dxdy << ", "
-    << hit.dzdy << ", "
-    << hit.yMin << ", "
-    << hit.yMax << "}";
+    << hit.channel << ", "
+    << hit.assembled_datatype
+    // << hit.w<< ", "
+    // << hit.dxdy << ", "
+    // << hit.dzdy << ", "
+    // << hit.yMin << ", "
+    // << hit.yMax <<
+    << "}";
 
   return stream;
 }
@@ -222,36 +228,17 @@ struct SciFiHit {
 struct SciFiHits {
   float* x0;
   float* z0;
-  float* w;
-  float* dxdy;
-  float* dzdy;
-  float* yMin;
-  float* yMax;
-  uint32_t* LHCbID;
-  uint32_t* planeCode;
-  uint32_t* hitZone;
-  uint32_t* mat;
+  uint32_t* channel;
+  uint32_t* assembled_datatype;
   uint32_t* cluster_reference;
 
-  SciFiHits() = default;
-
-  /**
-   * @brief Populates the SciFiHits object pointers from an unsorted array of data
-   *        pointed by base_pointer.
-   */
-  __host__ __device__
-  void typecast_unsorted(char* base_pointer, uint32_t total_number_of_hits);
-
-  /**
-   * @brief Populates the SciFiHits object pointers from a sorted array of data
-   *        pointed by base_pointer.
-   */
-  __host__ __device__
-  void typecast_sorted(char* base_pointer, uint32_t total_number_of_hits);
+  __device__ __host__
+  SciFiHits(char* base, uint32_t total_number_of_hits);
 
   /**
    * @brief Gets a hit in the SciFiHit format from the global hit index.
    */
+  __device__ __host__
   SciFiHit getHit(uint32_t index) const;
 };
 

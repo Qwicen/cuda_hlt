@@ -55,8 +55,7 @@ __global__ void scifi_pre_decode(
   SciFiGeometry geom(scifi_geometry);
   const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
 
-  SciFiHits hits;
-  hits.typecast_unsorted(scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_mats]);
+  SciFiHits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_mats]};
   SciFiHitCount hit_count;
   hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
 

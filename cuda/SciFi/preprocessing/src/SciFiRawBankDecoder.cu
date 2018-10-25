@@ -16,19 +16,19 @@ __device__ void make_cluster (
 {
   // TODO: Move to constants
   // maybe not hardcoded, or in another place
-  constexpr float invClusRes[] = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
+  // constexpr float invClusRes[] = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
 
   const SciFi::SciFiChannelID id {chan};
 
   // Offset to save space in geometry structure, see DumpFTGeometry.cpp
   const uint32_t mat = id.uniqueMat() - 512;
-  const uint32_t iQuarter = id.uniqueQuarter() - 16;
+  // const uint32_t iQuarter = id.uniqueQuarter() - 16;
   const uint32_t planeCode = id.uniqueLayer() - 4;
   // See Kernel/LHCbID.h. Maybe no hardcoding?
-  const uint32_t lhcbid = (10u << 28) + chan;
+  // const uint32_t lhcbid = (10u << 28) + chan;
   const float dxdy = geom.dxdy[mat];
   const float dzdy = geom.dzdy[mat];
-  const float globaldy = geom.globaldy[mat];
+  // const float globaldy = geom.globaldy[mat];
   float uFromChannel = geom.uBegin[mat] + (2 * id.channel() + 1 + fraction) * geom.halfChannelPitch[mat];
   if( id.die() ) uFromChannel += geom.dieGap[mat];
   uFromChannel += id.sipm() * geom.sipmPitch[mat];
@@ -39,25 +39,32 @@ __device__ void make_cluster (
   const float z0 = endPointZ - dzdy * endPointY;
 
   // ORIGINAL: if(id.isBottom()) std::swap(yMin, yMax);
-  float yMin = endPointY + id.isBottom() * globaldy;
-  float yMax = endPointY + !id.isBottom() * globaldy;
+  // float yMin = endPointY + id.isBottom() * globaldy;
+  // float yMax = endPointY + !id.isBottom() * globaldy;
 
   assert( pseudoSize < 9 && "Pseudosize of cluster is > 8. Out of range.");
-  float werrX = invClusRes[pseudoSize];
+  // float werrX = invClusRes[pseudoSize];
 
   // Apparently the unique* methods are not designed to start at 0, therefore -16
   const uint32_t uniqueZone = ((id.uniqueQuarter() - 16) >> 1);
-
+  
+  const uint plane_code = 2 * planeCode + (uniqueZone % 2);
   hits.x0[hit_index] = x0;
   hits.z0[hit_index] = z0;
-  hits.w[hit_index] = werrX * werrX;
-  hits.dxdy[hit_index] = dxdy;
-  hits.dzdy[hit_index] = dzdy;
-  hits.yMin[hit_index] = yMin;
-  hits.yMax[hit_index] = yMax;
-  hits.LHCbID[hit_index] = lhcbid;
-  hits.planeCode[hit_index] = 2 * planeCode + (uniqueZone % 2); //  planeCode;
-  hits.hitZone[hit_index] = uniqueZone % 2;
+  hits.channel[hit_index] = chan;
+  hits.assembled_datatype[hit_index] = fraction << 19 | plane_code << 14 | pseudoSize << 10 | mat;
+  
+  // TODO: Make accessors for these datatypes
+  // hits.x0[hit_index] = x0;
+  // hits.z0[hit_index] = z0;
+  // hits.w[hit_index] = werrX * werrX;
+  // hits.dxdy[hit_index] = dxdy;
+  // hits.dzdy[hit_index] = dzdy;
+  // hits.yMin[hit_index] = yMin;
+  // hits.yMax[hit_index] = yMax;
+  // hits.LHCbID[hit_index] = lhcbid;
+  // hits.planeCode[hit_index] = 2 * planeCode + (uniqueZone % 2); //  planeCode;
+  // hits.hitZone[hit_index] = uniqueZone % 2;
 };
 
 __global__ void scifi_raw_bank_decoder(
@@ -73,8 +80,7 @@ __global__ void scifi_raw_bank_decoder(
   const SciFiGeometry geom {scifi_geometry};
   const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
 
-  SciFiHits hits;
-  hits.typecast_unsorted(scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_mats]);
+  SciFiHits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_mats]};
   SciFiHitCount hit_count;
   hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
   const uint number_of_hits_in_event = hit_count.event_number_of_hits();
