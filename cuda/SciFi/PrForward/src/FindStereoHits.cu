@@ -39,7 +39,7 @@ __host__ __device__ void collectStereoHits(
     // -> only continue if yZone is in the correct half
     if(!triangleSearch && (2.f*float(((constArrays->uvZones[zone])%2)==0)-1.f) * yZone > 0.f) continue;
 
-    const float dxDySign = constArrays->uvZone_dxdy[zone] < 0 ? -1.f : 1.f;
+    const float dxDySign = constArrays->uvZone_dxdy[zone] < 0.f ? -1.f : 1.f;
     const float seed_x_at_zZone = xFromVelo( zZone, velo_state );
     const float dxTol = SciFi::Tracking::tolY + SciFi::Tracking::tolYSlope * (fabsf(xPred - seed_x_at_zZone) + fabsf(yZone));
 

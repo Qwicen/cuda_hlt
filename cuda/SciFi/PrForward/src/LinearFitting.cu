@@ -119,11 +119,11 @@ __host__ __device__ void fastLinearFit(
   bool fit = true;
   while (fit) {
     //== Fit a line
-    float s0   = 0.;
-    float sz   = 0.;
-    float sz2  = 0.;
-    float sd   = 0.;
-    float sdz  = 0.;
+    float s0   = 0.f;
+    float sz   = 0.f;
+    float sz2  = 0.f;
+    float sd   = 0.f;
+    float sdz  = 0.f;
 
     for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
       int hit = coordToFit[i_hit];
@@ -143,7 +143,7 @@ __host__ __device__ void fastLinearFit(
       sdz  += w * d * z; 
     }    
     float den = (sz*sz-s0*sz2);
-    if( !(fabsf(den) > 1e-5))return;
+    if( !(fabsf(den) > 1e-5f))return;
     const float da  = (sdz * sz - sd * sz2) / den; 
     const float db  = (sd *  sz - s0 * sdz) / den; 
     trackParameters[0] += da;

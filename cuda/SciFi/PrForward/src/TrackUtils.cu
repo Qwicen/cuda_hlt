@@ -22,8 +22,8 @@ __host__ __device__ void getTrackParameters (
   trackParams[4] = yFromVelo( SciFi::Tracking::zReference, velo_state );
   trackParams[5] = velo_state.ty + dyCoef * SciFi::Tracking::byParams;
   trackParams[6] = dyCoef * SciFi::Tracking::cyParams;
-  trackParams[7] = 0.0;
-  trackParams[8] = 0.0; // last elements are chi2 and ndof, as float 
+  trackParams[7] = 0.0f;
+  trackParams[8] = 0.0f; // last elements are chi2 and ndof, as float 
 }
 
 __host__ __device__ float calcqOverP (
@@ -83,7 +83,7 @@ __host__ __device__ float calcDxRef(float pt, MiniState velo_state) {
   const float tx2 = velo_state.tx*velo_state.tx;
   const float ty2 = velo_state.ty*velo_state.ty;
   float m_slope2 = tx2 + ty2;
-  return 3973000. * sqrtf( m_slope2 ) / pt - 2200. *  ty2 - 1000. * tx2; // tune this window
+  return 3973000.f * sqrtf( m_slope2 ) / pt - 2200.f *  ty2 - 1000.f * tx2; // tune this window
 }
 
 __host__ __device__ float trackToHitDistance(
@@ -98,7 +98,7 @@ __host__ __device__ float trackToHitDistance(
   const float parsY[4] = {trackParameters[4],
                           trackParameters[5],
                           trackParameters[6],
-                          0.}; 
+                          0.f}; 
   float z_Hit = scifi_hits.z0[hit] + 
     scifi_hits.dzdy[hit]*evalCubicParameterization(parsY, scifi_hits.z0[hit]);
   float x_track = evalCubicParameterization(parsX,z_Hit);
@@ -186,7 +186,7 @@ __host__ __device__ bool fitYProjection(
   const float txs  = track.trackParams[0]; // simplify overgeneral c++ calculation
   const float tsxz = velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx; 
   const float tolYMag = SciFi::Tracking::tolYMag + SciFi::Tracking::tolYMagSlope * fabsf(txs-tsxz);
-  const float wMag   = 1./(tolYMag * tolYMag );
+  const float wMag   = 1.f/(tolYMag * tolYMag );
 
   bool doFit = true;
   while ( doFit ) {

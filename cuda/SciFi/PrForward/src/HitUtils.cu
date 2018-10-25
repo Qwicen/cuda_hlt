@@ -153,7 +153,6 @@ __host__ __device__ void collectXHitsToFit(
     if (!usedHits[itH]) {
       if ( n_coordToFit >= SciFi::Tracking::max_coordToFit )
         break;
-      assert( n_coordToFit < SciFi::Tracking::max_coordToFit );
       coordToFit[n_coordToFit++] = allXHits[itH];
       usedHits[itH] = true;
       xAtRef += coordX[ itH ];

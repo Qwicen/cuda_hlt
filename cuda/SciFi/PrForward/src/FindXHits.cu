@@ -28,7 +28,7 @@ __host__ __device__ void collectAllXHits(
   int side)
 {
   // Find size of search window on reference plane, using Velo slopes and min pT as input  
-  float dxRef = 0.9 * calcDxRef(SciFi::Tracking::minPt, velo_state);
+  float dxRef = 0.9f * calcDxRef(SciFi::Tracking::minPt, velo_state);
   // find position within magnet where bending happens
   float zMag = zMagnet(velo_state, constArrays);
  
@@ -36,13 +36,13 @@ __host__ __device__ void collectAllXHits(
   const float dir = q*SciFi::Tracking::magscalefactor*(-1.f);
 
   float slope2 = velo_state.tx*velo_state.tx + velo_state.ty*velo_state.ty; 
-  const float pt = sqrtf( fabsf(1./ (qOverP*qOverP) ) ) * (slope2) / (1. + slope2);
+  const float pt = sqrtf( fabsf(1.f/ (qOverP*qOverP) ) ) * (slope2) / (1.f + slope2);
   const bool wSignTreatment = SciFi::Tracking::useWrongSignWindow && pt > SciFi::Tracking::wrongSignPT;
 
   float dxRefWS = 0.0; 
   if( wSignTreatment ){
     // DvB: what happens if we use the acual momentum from VeloUT here instead of a constant?
-    dxRefWS = 0.9 * calcDxRef(SciFi::Tracking::wrongSignPT, velo_state); //make windows a bit too small - FIXME check effect of this, seems wrong
+    dxRefWS = 0.9f * calcDxRef(SciFi::Tracking::wrongSignPT, velo_state); //make windows a bit too small - FIXME check effect of this, seems wrong
   }
 
   int iZoneEnd[7]; //6 x planes

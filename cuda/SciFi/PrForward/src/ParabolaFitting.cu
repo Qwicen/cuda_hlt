@@ -22,7 +22,7 @@ __host__ __device__ int fitParabola(
     int hit = coordToFit[i_hit];
     float d = trackToHitDistance(trackParameters, scifi_hits, hit);
     if (!xFit)
-      d *= - 1. / scifi_hits.dxdy[hit];//TODO multiplication much faster than division!
+      d *= - 1.f / scifi_hits.dxdy[hit];//TODO multiplication much faster than division!
     float w = scifi_hits.w[hit];
     float z = .001f * ( scifi_hits.z0[hit] - SciFi::Tracking::zReference );
     s0   += w;
@@ -41,7 +41,7 @@ __host__ __device__ int fitParabola(
   const float c2 = sz3 * sz2 - sz * sz4; 
   const float d2 = sdz * sz2 - sz * sdz2;
   const float den = (b1 * c2 - b2 * c1 );
-  if(!(fabsf(den) > 1e-5)) return false;
+  if(!(fabsf(den) > 1e-5f)) return false;
   const float db  = (d1 * c2 - d2 * c1 ) / den; 
   const float dc  = (d2 * b1 - d1 * b2 ) / den; 
   const float da  = ( sd - db * sz - dc * sz2) / s0;

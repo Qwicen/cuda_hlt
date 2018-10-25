@@ -94,9 +94,9 @@ void call_pr_checker_impl(
         if (containsDuplicates) {
           warning_cout << "WARNING: Track #" << std::dec << i_track << " contains duplicate LHCb IDs" << std::endl;
           for (auto id : ids) {
-            warning_cout << std::hex << id << ", ";
+            warning_cout << std::hex << "0x" << id << ", ";
           }
-          warning_cout << std::endl << std::endl;
+          warning_cout << std::endl << std::endl << std::hex;
         }
         i_track++;
       }

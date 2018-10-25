@@ -39,11 +39,7 @@ void Constants::initialize_constants() {
 
   // UT geometry constants
   // layer configuration: XUVX, U and V layers tilted by +/- 5 degrees = 0.087 radians
-  host_ut_dxDy[0] = 0.;
-  host_ut_dxDy[1] = 0.08748867;
-  host_ut_dxDy[2] = -0.0874886;
-  host_ut_dxDy[3] = 0.;
-
+  host_ut_dxDy = {0., 0.08748867, -0.0874886, 0.};
   cudaCheck(cudaMemcpy(dev_ut_dxDy, host_ut_dxDy.data(), host_ut_dxDy.size() * sizeof(float), cudaMemcpyHostToDevice));
   
   host_ut_region_offsets = {0, 84, 164, 248, 332, 412, 496, 594, 674, 772, 870, 950, 1048};
