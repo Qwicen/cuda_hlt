@@ -3,7 +3,8 @@
 #include "VeloEventModel.cuh"
 #include "VeloConsolidated.cuh"
 #include "Common.h"
-#include <stdint.h>
+#include "Handler.cuh"
+#include <cstdint>
 
 __device__ Velo::State means_square_fit(
   Velo::Consolidated::Hits& consolidated_hits,
@@ -24,3 +25,5 @@ __global__ void consolidate_tracks(
   uint* dev_velo_track_hits,
   uint* dev_velo_states
 );
+
+ALGORITHM(consolidate_tracks, consolidate_tracks_t)

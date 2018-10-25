@@ -2,6 +2,7 @@
 
 #include "UTDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
+#include "Handler.cuh"
 
 __global__ void ut_decode_raw_banks_in_order(
   const uint32_t *dev_ut_raw_input,
@@ -14,3 +15,5 @@ __global__ void ut_decode_raw_banks_in_order(
   uint32_t *dev_ut_hits,
   uint32_t *dev_ut_hit_count,
   uint* dev_hit_permutations);
+
+ALGORITHM(ut_decode_raw_banks_in_order, ut_decode_raw_banks_in_order_t)

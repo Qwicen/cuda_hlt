@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PrForward.cuh"
+#include "PrForwardTools.cuh"
 
 void PrForwardWrapper(
   const SciFi::SciFiHits& scifi_hits,

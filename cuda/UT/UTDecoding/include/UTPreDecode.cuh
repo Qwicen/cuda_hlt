@@ -2,6 +2,7 @@
 
 #include "UTDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
+#include "Handler.cuh"
 
 __global__ void ut_pre_decode(
   const uint32_t *dev_ut_raw_input,
@@ -13,3 +14,5 @@ __global__ void ut_pre_decode(
   const uint32_t *dev_ut_hit_offsets,
   uint32_t *dev_ut_hits,
   uint32_t *dev_ut_hit_count);
+
+ALGORITHM(ut_pre_decode, ut_pre_decode_t)

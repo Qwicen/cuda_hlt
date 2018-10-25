@@ -2,6 +2,7 @@
 
 #include "UTDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
+#include "Handler.cuh"
 
 __global__ void ut_calculate_number_of_hits (
   const uint32_t* dev_ut_raw_input,
@@ -12,3 +13,5 @@ __global__ void ut_calculate_number_of_hits (
   const uint* dev_unique_x_sector_offsets,
   uint32_t* dev_ut_hit_offsets
 );
+
+ALGORITHM(ut_calculate_number_of_hits, ut_calculate_number_of_hits_t)

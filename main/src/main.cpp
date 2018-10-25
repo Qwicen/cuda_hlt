@@ -21,6 +21,7 @@
 #include "tbb/tbb.h"
 #include "cuda_runtime.h"
 #include "CudaCommon.h"
+#include "RuntimeOptions.h"
 #include "Logger.h"
 #include "Tools.h"
 #include "InputTools.h"
@@ -185,16 +186,17 @@ int main(int argc, char *argv[])
   Constants constants;
   constants.reserve_and_initialize();
   constants.initialize_ut_decoding_constants(ut_geometry);
+  constants.initialize_geometry_constants(
+    velo_geometry,
+    ut_boards,
+    ut_geometry,
+    ut_magnet_tool,
+    scifi_geometry);
 
   // Create streams
   StreamWrapper stream_wrapper;
   stream_wrapper.initialize_streams(
     tbb_threads,
-    velo_geometry,
-    ut_boards,
-    ut_geometry,
-    ut_magnet_tool,
-    scifi_geometry,
     number_of_events_requested,
     do_check,
     do_simplified_kalman_filter,
@@ -212,8 +214,7 @@ int main(int argc, char *argv[])
     static_cast<uint>(0),
     static_cast<uint>(tbb_threads),
     [&] (uint i) {
-      stream_wrapper.run_stream(
-        i,
+      auto runtime_options = RuntimeOptions{
         velo_reader.host_events,
         velo_reader.host_event_offsets,
         velo_reader.host_events_size,
@@ -227,11 +228,17 @@ int main(int argc, char *argv[])
         scifi_reader.host_events_size,
         scifi_reader.host_event_offsets_size,
         number_of_events_requested,
-        number_of_repetitions
-      );
+        number_of_repetitions};
+
+      stream_wrapper.run_stream(i, runtime_options);
     }
   );
   t.stop();
+
+  // Do optional Monte Carlo truth test
+  if (do_check) {
+    stream_wrapper.run_monte_carlo_test(0, number_of_events_requested);
+  }
 
   std::cout << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;

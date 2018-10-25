@@ -2,6 +2,7 @@
 
 #include "VeloUTDefinitions.cuh"
 #include "UTDefinitions.cuh"
+#include "Handler.cuh"
 
 __global__ void ut_find_permutation(
   uint32_t* dev_ut_hits,
@@ -11,3 +12,5 @@ __global__ void ut_find_permutation(
   const uint* dev_unique_x_sector_offsets,
   const float* dev_unique_sector_xs
  );
+
+ALGORITHM(ut_find_permutation, ut_find_permutation_t)

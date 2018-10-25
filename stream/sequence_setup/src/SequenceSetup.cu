@@ -1,39 +1,5 @@
 #include "SequenceSetup.cuh"
-
-std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> get_sequence_names() {
-  std::array<std::string, std::tuple_size<algorithm_tuple_t>::value> a;
-  a[seq::estimate_input_size] = "Estimate input size";
-  a[seq::prefix_sum_reduce] = "Prefix sum reduce";
-  a[seq::prefix_sum_single_block] = "Prefix sum single block";
-  a[seq::prefix_sum_scan] = "Prefix sum scan";
-  a[seq::masked_velo_clustering] = "Masked Velo clustering";
-  a[seq::calculate_phi_and_sort] = "Calculate phi and sort";
-  a[seq::fill_candidates] = "Fill candidates";
-  a[seq::search_by_triplet] = "Search by triplet";
-  a[seq::weak_tracks_adder] = "Weak tracks adder";
-  a[seq::copy_and_prefix_sum_single_block] = "Copy and prefix sum single block";
-  a[seq::copy_velo_track_hit_number] = "Copy Velo track hit number";
-  a[seq::prefix_sum_reduce_velo_track_hit_number] = "Prefix sum reduce (2) Velo track hit number";
-  a[seq::prefix_sum_single_block_velo_track_hit_number] = "Prefix sum single block (2) Velo track hit number";
-  a[seq::prefix_sum_scan_velo_track_hit_number] = "Prefix sum scan (2) Velo track hit number";
-  a[seq::consolidate_tracks] = "Consolidate tracks";
-  a[seq::ut_calculate_number_of_hits] = "UT calculate number of hits";
-  a[seq::prefix_sum_reduce_ut_hits] = "Prefix sum reduce (3) UT hits";
-  a[seq::prefix_sum_single_block_ut_hits] = "Prefix sum single block (3) UT hits";
-  a[seq::prefix_sum_scan_ut_hits] = "Prefix sum scan (3) UT hits";
-  a[seq::ut_pre_decode] = "UT pre-decode";
-  a[seq::ut_find_permutation] = "UT find permutation";
-  a[seq::ut_decode_raw_banks_in_order] = "UT decode raw banks in order";
-  a[seq::veloUT] = "VeloUT tracking";
-  a[seq::estimate_cluster_count] = "Estimate SciFi cluster count";
-  a[seq::prefix_sum_reduce_ut_hits] = "Prefix sum reduce (4) SciFi hits";
-  a[seq::prefix_sum_single_block_ut_hits] = "Prefix sum single block (4) SciFi hits";
-  a[seq::prefix_sum_scan_ut_hits] = "Prefix sum scan (4) SciFi hits";
-  a[seq::raw_bank_decoder] = "Decode SciFi raw banks";
-  a[seq::scifi_sort_by_x] = "Sort SciFi hits by X";
-  a[seq::PrForward] = "SciFi tracking";
-  return a;
-}
+#include "TupleTools.cuh"
 
 std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_names() {
   std::array<std::string, std::tuple_size<argument_tuple_t>::value> a;
@@ -80,11 +46,18 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
 
 std::vector<std::vector<int>> get_sequence_dependencies() {
   // Vector of dependecies for each algorithm
+  // Note: It may be that some algorithms are not in the configured sequence_t.
+  //       Regardless, all algorithms should have all dependencies specified below.
+  //       A "hacky and easy" way to get around this problem is to specify the sequence_dependencies
+  //       array to be of size tuple_size<sequence_t>::value + 1, as done below. That way, if the index is
+  //       size+1 (meaning the type couldn't be found), the last element will be populated and
+  //       possibly overriden if another algorithm is not in the sequence.
+  //       The last element of sequence_dependencies should be considered garbage and not accessed for now.
   std::vector<std::vector<int>> sequence_dependencies (
-    std::tuple_size<argument_tuple_t>::value
+    std::tuple_size<sequence_t>::value + 1
   );
-
-  sequence_dependencies[seq::estimate_input_size] = {
+ 
+  sequence_dependencies[tuple_contains<estimate_input_size_t, sequence_t>::index] = {
     arg::dev_raw_input,
     arg::dev_raw_input_offsets,
     arg::dev_estimated_input_size,
@@ -92,19 +65,19 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_module_candidate_num,
     arg::dev_cluster_candidates
   };
-  sequence_dependencies[seq::prefix_sum_reduce] = {
+  sequence_dependencies[tuple_contains<prefix_sum_reduce_velo_clusters_t, sequence_t>::index] = {
     arg::dev_estimated_input_size,
     arg::dev_cluster_offset
   };
-  sequence_dependencies[seq::prefix_sum_single_block] = {
+  sequence_dependencies[tuple_contains<prefix_sum_single_block_velo_clusters_t, sequence_t>::index] = {
     arg::dev_estimated_input_size,
     arg::dev_cluster_offset
   };
-  sequence_dependencies[seq::prefix_sum_scan] = {
+  sequence_dependencies[tuple_contains<prefix_sum_scan_velo_clusters_t, sequence_t>::index] = {
     arg::dev_estimated_input_size,
     arg::dev_cluster_offset
   };
-  sequence_dependencies[seq::masked_velo_clustering] = {
+  sequence_dependencies[tuple_contains<masked_velo_clustering_t, sequence_t>::index] = {
     arg::dev_raw_input,
     arg::dev_raw_input_offsets,
     arg::dev_estimated_input_size,
@@ -113,20 +86,20 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_cluster_candidates,
     arg::dev_velo_cluster_container
   };
-  sequence_dependencies[seq::calculate_phi_and_sort] = {
+  sequence_dependencies[tuple_contains<calculate_phi_and_sort_t, sequence_t>::index] = {
     arg::dev_estimated_input_size,
     arg::dev_module_cluster_num,
     arg::dev_velo_cluster_container,
     arg::dev_hit_permutation
   };
-  sequence_dependencies[seq::fill_candidates] = {
+  sequence_dependencies[tuple_contains<fill_candidates_t, sequence_t>::index] = {
     arg::dev_velo_cluster_container,
     arg::dev_estimated_input_size,
     arg::dev_module_cluster_num,
     arg::dev_h0_candidates,
     arg::dev_h2_candidates
   };
-  sequence_dependencies[seq::search_by_triplet] = {
+  sequence_dependencies[tuple_contains<search_by_triplet_t, sequence_t>::index] = {
     arg::dev_velo_cluster_container,
     arg::dev_estimated_input_size,
     arg::dev_module_cluster_num,
@@ -140,7 +113,7 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_h2_candidates,
     arg::dev_rel_indices
   };
-  sequence_dependencies[seq::weak_tracks_adder] = {
+  sequence_dependencies[tuple_contains<weak_tracks_adder_t, sequence_t>::index] = {
     arg::dev_velo_cluster_container,
     arg::dev_estimated_input_size,
     arg::dev_tracks,
@@ -148,27 +121,27 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_hit_used,
     arg::dev_atomics_storage
   };
-  sequence_dependencies[seq::copy_and_prefix_sum_single_block] = {
+  sequence_dependencies[tuple_contains<copy_and_prefix_sum_single_block_t, sequence_t>::index] = {
     arg::dev_atomics_storage
   };
-  sequence_dependencies[seq::copy_velo_track_hit_number] = {
+  sequence_dependencies[tuple_contains<copy_velo_track_hit_number_t, sequence_t>::index] = {
     arg::dev_tracks,
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number
   };
-  sequence_dependencies[seq::prefix_sum_reduce_velo_track_hit_number] = {
+  sequence_dependencies[tuple_contains<prefix_sum_reduce_velo_track_hit_number_t, sequence_t>::index] = {
     arg::dev_velo_track_hit_number,
     arg::dev_prefix_sum_auxiliary_array_2
   };
-  sequence_dependencies[seq::prefix_sum_single_block_velo_track_hit_number] = {
+  sequence_dependencies[tuple_contains<prefix_sum_single_block_velo_track_hit_number_t, sequence_t>::index] = {
     arg::dev_velo_track_hit_number,
     arg::dev_prefix_sum_auxiliary_array_2
   };
-  sequence_dependencies[seq::prefix_sum_scan_velo_track_hit_number] = {
+  sequence_dependencies[tuple_contains<prefix_sum_scan_velo_track_hit_number_t, sequence_t>::index] = {
     arg::dev_velo_track_hit_number,
     arg::dev_prefix_sum_auxiliary_array_2
   };
-  sequence_dependencies[seq::consolidate_tracks] = {
+  sequence_dependencies[tuple_contains<consolidate_tracks_t, sequence_t>::index] = {
     arg::dev_atomics_storage,
     arg::dev_tracks,
     arg::dev_velo_track_hit_number,
@@ -178,36 +151,36 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_track_hits,
     arg::dev_velo_states
   };
-  sequence_dependencies[seq::ut_calculate_number_of_hits] = {
+  sequence_dependencies[tuple_contains<ut_calculate_number_of_hits_t, sequence_t>::index] = {
     arg::dev_ut_raw_input,
     arg::dev_ut_raw_input_offsets,
     arg::dev_ut_hit_offsets
   };
-  sequence_dependencies[seq::prefix_sum_reduce_ut_hits] = {
+  sequence_dependencies[tuple_contains<prefix_sum_reduce_ut_hits_t, sequence_t>::index] = {
     arg::dev_ut_hit_offsets,
     arg::dev_prefix_sum_auxiliary_array_3
   };
-  sequence_dependencies[seq::prefix_sum_single_block_ut_hits] = {
+  sequence_dependencies[tuple_contains<prefix_sum_single_block_ut_hits_t, sequence_t>::index] = {
     arg::dev_ut_hit_offsets,
     arg::dev_prefix_sum_auxiliary_array_3
   };
-  sequence_dependencies[seq::prefix_sum_scan_ut_hits] = {
+  sequence_dependencies[tuple_contains<prefix_sum_scan_ut_hits_t, sequence_t>::index] = {
     arg::dev_ut_hit_offsets,
     arg::dev_prefix_sum_auxiliary_array_3
   };
-  sequence_dependencies[seq::ut_pre_decode] = {
+  sequence_dependencies[tuple_contains<ut_pre_decode_t, sequence_t>::index] = {
     arg::dev_ut_raw_input,
     arg::dev_ut_raw_input_offsets,
     arg::dev_ut_hits,
     arg::dev_ut_hit_offsets,
     arg::dev_ut_hit_count
   };
-  sequence_dependencies[seq::ut_find_permutation] = {
+  sequence_dependencies[tuple_contains<ut_find_permutation_t, sequence_t>::index] = {
     arg::dev_ut_hits,
     arg::dev_ut_hit_offsets,
     arg::dev_ut_hit_permutations
   };
-  sequence_dependencies[seq::ut_decode_raw_banks_in_order] = {
+  sequence_dependencies[tuple_contains<ut_decode_raw_banks_in_order_t, sequence_t>::index] = {
     arg::dev_ut_raw_input,
     arg::dev_ut_raw_input_offsets,
     arg::dev_ut_hits,
@@ -215,7 +188,7 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_ut_hit_count,
     arg::dev_ut_hit_permutations
   };
-  sequence_dependencies[seq::veloUT] = {
+  sequence_dependencies[tuple_contains<veloUT_t, sequence_t>::index] = {
     arg::dev_ut_hits,
     arg::dev_ut_hit_offsets,
     arg::dev_atomics_storage,
@@ -225,35 +198,35 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_veloUT_tracks,
     arg::dev_atomics_veloUT
   };
-   sequence_dependencies[seq::estimate_cluster_count] = {
+  sequence_dependencies[tuple_contains<estimate_cluster_count_t, sequence_t>::index] = {
     arg::dev_scifi_raw_input,
     arg::dev_scifi_raw_input_offsets,
     arg::dev_scifi_hit_count
   };
-  sequence_dependencies[seq::prefix_sum_reduce_scifi_hits] = {
+  sequence_dependencies[tuple_contains<prefix_sum_reduce_scifi_hits_t, sequence_t>::index] = {
     arg::dev_scifi_hit_count,
     arg::dev_prefix_sum_auxiliary_array_4
   };
-  sequence_dependencies[seq::prefix_sum_single_block_scifi_hits] = {
+  sequence_dependencies[tuple_contains<prefix_sum_single_block_scifi_hits_t, sequence_t>::index] = {
     arg::dev_scifi_hit_count,
     arg::dev_prefix_sum_auxiliary_array_4
   };
-  sequence_dependencies[seq::prefix_sum_scan_scifi_hits] = {
+  sequence_dependencies[tuple_contains<prefix_sum_scan_scifi_hits_t, sequence_t>::index] = {
     arg::dev_scifi_hit_count,
     arg::dev_prefix_sum_auxiliary_array_4
   };
-  sequence_dependencies[seq::raw_bank_decoder] = {
+  sequence_dependencies[tuple_contains<raw_bank_decoder_t, sequence_t>::index] = {
     arg::dev_scifi_raw_input,
     arg::dev_scifi_raw_input_offsets,
     arg::dev_scifi_hit_count,
     arg::dev_scifi_hits
   };
-  sequence_dependencies[seq::scifi_sort_by_x] = {
+  sequence_dependencies[tuple_contains<scifi_sort_by_x_t, sequence_t>::index] = {
     arg::dev_scifi_hits,
     arg::dev_scifi_hit_count,
     arg::dev_scifi_hit_permutations
   };
-  sequence_dependencies[seq::PrForward] = {
+  sequence_dependencies[tuple_contains<scifi_pr_forward_t, sequence_t>::index] = {
     arg::dev_scifi_hits,
     arg::dev_scifi_hit_count,
     arg::dev_atomics_storage,
