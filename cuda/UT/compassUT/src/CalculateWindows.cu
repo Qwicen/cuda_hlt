@@ -220,36 +220,57 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
       tol);
     first_candidate += sector_group_offset;
     last_candidate = last_candidate == 0 ? first_candidate + 1 : first_candidate + last_candidate;
-  }
 
-  // refine first candidate
-  for (int i=first_candidate; i<last_candidate; ++i) {
-    if (is_valid_tol_refine(
-      i,
-      ut_hits,
-      velo_state,
-      normFact,
-      xTol,
-      dx_dy)
-    ) {
-      first_candidate = i;
-      break;
-    }
-  }
+    bool found = false;
 
-  // refine last candidate
-  for (int i=last_candidate; i>first_candidate; --i) {
-    if (is_valid_tol_refine(
-      i,
-      ut_hits,
-      velo_state,
-      normFact,
-      xTol,
-      dx_dy)
-    ) {
-      last_candidate = i;
-      break;
+    // refine first candidate
+    for (int i=first_candidate; i<last_candidate; ++i) {
+      if (is_valid_tol_refine(
+        i,
+        ut_hits,
+        velo_state,
+        normFact,
+        xTol,
+        dx_dy)
+      ) {
+        first_candidate = i;
+        found = true;
+        break;
+      }
     }
+
+    if (!found) {
+      first_candidate = -1;
+      last_candidate = -1;      
+    }
+
+    // if (found == true) {
+
+    //   bool last_found = false;
+
+    //   // refine last candidate
+    //   for (int i=last_candidate; i>first_candidate; --i) {
+    //     if (is_valid_tol_refine(
+    //       i,
+    //       ut_hits,
+    //       velo_state,
+    //       normFact,
+    //       xTol,
+    //       dx_dy)
+    //     ) {
+    //       last_candidate = i + 1;
+    //       last_found = true;
+    //       break;
+    //     }
+    //   }
+
+    //   if (!last_found) {
+    //     last_candidate = first_candidate - 1;
+    //   }
+    // } else {
+    //   first_candidate = -1;
+    //   last_candidate = -1;
+    // }
   }
 
   return {first_candidate, last_candidate};

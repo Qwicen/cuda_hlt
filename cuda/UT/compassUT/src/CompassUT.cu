@@ -54,6 +54,10 @@ __global__ void compass_ut(
 
   // int shared_active_tracks[2 * VeloUTTracking::num_threads - 1];
 
+  // // store windows and num candidates in shared mem
+  // // 32 * 4 * 3(num_windows) * 2 (from, size) = 768 (3072 bytes)
+  // __shared__ int win_size_shared[VeloUTTracking::num_threads * N_LAYERS * 3 * 2];
+
   // __syncthreads();
 
   const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
@@ -77,11 +81,20 @@ __global__ void compass_ut(
     int best_hits[N_LAYERS] = {-1, -1, -1, -1};
     BestParams best_params;
 
+    // fill_shared_windows(
+    //   i_track, 
+    //   dev_windows_layers, 
+    //   current_track_offset, 
+    //   win_size_shared);
+
+    // __syncthreads();
+
     // Find compatible hits in the windows for this VELO track
     find_best_hits(
       i_track,
       current_track_offset,
       dev_windows_layers,
+      // win_size_shared,
       ut_hits,
       ut_hit_offsets,
       velo_state,
@@ -158,6 +171,51 @@ __host__ __device__ bool velo_track_in_UT_acceptance(const MiniState& state)
   return true;
 }
 
+//=============================================================================
+// Fill windows and sizes for shared memory
+// we store the initial hit of the window and the size of the window 
+// (3 windows per layer)
+//=============================================================================
+__host__ __device__ __inline__ void fill_shared_windows(
+  const int thr_idx,
+  const int* windows_layers,
+  const uint current_track_offset,
+  int* win_size_shared)
+{
+  const int total_offset = 6 * N_LAYERS * current_track_offset;
+  // layer 0
+  win_size_shared[thr_idx]     = windows_layers[total_offset];
+  win_size_shared[thr_idx + 1] = windows_layers[total_offset + 1] - windows_layers[total_offset];
+  win_size_shared[thr_idx + 2] = windows_layers[total_offset + 2];
+  win_size_shared[thr_idx + 3] = windows_layers[total_offset + 3] - windows_layers[total_offset + 2];
+  win_size_shared[thr_idx + 4] = windows_layers[total_offset + 4];
+  win_size_shared[thr_idx + 5] = windows_layers[total_offset + 5] - windows_layers[total_offset + 4];
+
+  // layer 1
+  win_size_shared[thr_idx + 6]     = windows_layers[total_offset + 6];
+  win_size_shared[thr_idx + 6 + 1] = windows_layers[total_offset + 6 + 1] - windows_layers[total_offset + 6];
+  win_size_shared[thr_idx + 6 + 2] = windows_layers[total_offset + 6 + 2];
+  win_size_shared[thr_idx + 6 + 3] = windows_layers[total_offset + 6 + 3] - windows_layers[total_offset + 6 + 2];
+  win_size_shared[thr_idx + 6 + 4] = windows_layers[total_offset + 6 + 4];
+  win_size_shared[thr_idx + 6 + 5] = windows_layers[total_offset + 6 + 5] - windows_layers[total_offset + 6 + 4];
+
+  // layer 2
+  win_size_shared[thr_idx + 12]     = windows_layers[total_offset + 12];
+  win_size_shared[thr_idx + 12 + 1] = windows_layers[total_offset + 12 + 1] - windows_layers[total_offset + 12];
+  win_size_shared[thr_idx + 12 + 2] = windows_layers[total_offset + 12 + 2];
+  win_size_shared[thr_idx + 12 + 3] = windows_layers[total_offset + 12 + 3] - windows_layers[total_offset + 12 + 2];
+  win_size_shared[thr_idx + 12 + 4] = windows_layers[total_offset + 12 + 4];
+  win_size_shared[thr_idx + 12 + 5] = windows_layers[total_offset + 12 + 5] - windows_layers[total_offset + 12 + 4];
+
+  // layer 3
+  win_size_shared[thr_idx + 18]     = windows_layers[total_offset + 18];
+  win_size_shared[thr_idx + 18 + 1] = windows_layers[total_offset + 18 + 1] - windows_layers[total_offset + 18];
+  win_size_shared[thr_idx + 18 + 2] = windows_layers[total_offset + 18 + 2];
+  win_size_shared[thr_idx + 18 + 3] = windows_layers[total_offset + 18 + 3] - windows_layers[total_offset + 18 + 2];
+  win_size_shared[thr_idx + 18 + 4] = windows_layers[total_offset + 18 + 4];
+  win_size_shared[thr_idx + 18 + 5] = windows_layers[total_offset + 18 + 5] - windows_layers[total_offset + 18 + 4];
+}
+
 //=========================================================================
 // Check if hit is inside tolerance and refine by Y
 //=========================================================================
@@ -211,6 +269,7 @@ __host__ __device__ void find_best_hits(
   const int i_track,
   const uint current_track_offset,
   const int* dev_windows_layers,
+  // const int* win_size_shared,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
@@ -232,7 +291,7 @@ __host__ __device__ void find_best_hits(
 
   const float invTheta = std::min(500.0f, 1.0f / std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty));
   const float minMom = std::max(PrVeloUTConst::minPT * invTheta, 1.5f * Gaudi::Units::GeV);
-  const float xTol = std::abs(1. / ( PrVeloUTConst::distToMomentum * minMom ));
+  const float xTol = std::abs(1.0f / ( PrVeloUTConst::distToMomentum * minMom ));
   const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
 
   const float absSlopeY = std::abs( velo_state.ty );
@@ -248,7 +307,6 @@ __host__ __device__ void find_best_hits(
   // // Get windows of all layers
   // WindowIndicator win_ranges(dev_windows_layers); 
   // const auto* ranges = win_ranges.get_track_candidates(i_track);
-
   const int from_l0_g0 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0];
   const int to_l0_g0 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 1];
   const int from_l0_g1 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 2];

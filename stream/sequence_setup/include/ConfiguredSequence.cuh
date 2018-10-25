@@ -52,13 +52,13 @@ SEQUENCE(
   ut_pre_decode_t,
   ut_find_permutation_t,
   ut_decode_raw_banks_in_order_t,
-  veloUT_t,
+  // veloUT_t,
   ut_search_windows_t,
   compass_ut_t,
-  estimate_cluster_count_t,
-  prefix_sum_reduce_scifi_hits_t,
-  prefix_sum_single_block_scifi_hits_t,
-  prefix_sum_scan_scifi_hits_t,
-  raw_bank_decoder_t,
-  scifi_sort_by_x_t
+  // estimate_cluster_count_t,
+  // prefix_sum_reduce_scifi_hits_t,
+  // prefix_sum_single_block_scifi_hits_t,
+  // prefix_sum_scan_scifi_hits_t,
+  // raw_bank_decoder_t,
+  // scifi_sort_by_x_t
 )

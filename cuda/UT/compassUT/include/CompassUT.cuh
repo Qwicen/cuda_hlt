@@ -71,8 +71,14 @@ __global__ void compass_ut(
   int* dev_atomics_compassUT,
   int* dev_windows_layers);
 
-__host__ __device__ bool velo_track_in_UT_acceptance(
+__host__ __device__ __inline__ bool velo_track_in_UT_acceptance(
   const MiniState& state);
+
+__host__ __device__ __inline__ void fill_shared_windows(
+  const int thr_idx,
+  const int* windows_layers,
+  const uint current_track_offset,
+  int* win_size_shared);
 
 __host__ __device__ __inline__ bool check_tol_refine(
   const int hit_index,
@@ -86,6 +92,7 @@ __host__ __device__ void find_best_hits(
   const int i_track,
   const uint current_track_offset,
   const int* dev_windows_layers,
+  // const int* win_size_shared,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
