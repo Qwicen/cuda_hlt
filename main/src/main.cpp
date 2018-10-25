@@ -43,7 +43,8 @@ void printUsage(char* argv[]){
     << std::endl << " -k {simplified kalman filter}=0"
     << std::endl << " -m {reserve Megabytes}=1024"
     << std::endl << " -v {verbosity}=3 (info)"
-    << std::endl << " -p (print memory usage)"
+    << std::endl << " -p {print memory usage}=0"
+    << std::endl << " -a {run only data preparation algorithms: decoding, clustering, sorting}=0"
     << std::endl << " -x {run algorithms on x86 architecture if implementation is available}=0"
     << std::endl;
 }
@@ -63,10 +64,11 @@ int main(int argc, char *argv[])
   bool do_check = true;
   bool do_simplified_kalman_filter = false;
   bool run_on_x86 = false;
+  bool data_preparation_only = false;
   size_t reserve_mb = 1024;
 
   signed char c;
-  while ((c = getopt(argc, argv, "f:d:n:o:t:r:pha:b:d:v:c:k:m:g:x:")) != -1) {
+  while ((c = getopt(argc, argv, "f:d:n:o:t:r:pha:b:d:v:c:k:m:g:x:a:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_raw_banks = std::string(optarg);
@@ -106,6 +108,9 @@ int main(int argc, char *argv[])
       break;
     case 'p':
       print_memory_usage = true;
+      break;
+    case 'a':
+      data_preparation_only = atoi(optarg);
       break;
     case '?':
     case 'h':
@@ -149,6 +154,7 @@ int main(int argc, char *argv[])
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
     << " run algorithms on x86 architecture if implementation is available (-x): " << run_on_x86 << std::endl
+    << " run only data preparation algorithms: decoding, clustering, sorting (-a): " << data_preparation_only << std::endl
     << " print memory usage (-p): " << print_memory_usage << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
@@ -199,6 +205,7 @@ int main(int argc, char *argv[])
     do_simplified_kalman_filter,
     print_memory_usage,
     run_on_x86,
+    data_preparation_only,
     folder_name_MC,
     start_event_offset,
     reserve_mb,
