@@ -39,6 +39,8 @@ std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_n
   a[arg::dev_scifi_hit_permutations] = "dev_scifi_hit_permutations";
   a[arg::dev_prefix_sum_auxiliary_array_4] = "dev_prefix_sum_auxiliary_array_4";
   a[arg::dev_scifi_hits] = "dev_scifi_hits";
+  a[arg::dev_scifi_tracks] = "dev_scifi_tracks";
+  a[arg::dev_n_scifi_tracks] = "dev_n_scifi_tracks";
   return a;
 }
 
@@ -224,6 +226,17 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_scifi_hit_count,
     arg::dev_scifi_hit_permutations
   };
+  sequence_dependencies[tuple_contains<scifi_pr_forward_t, sequence_t>::index] = {
+    arg::dev_scifi_hits,
+    arg::dev_scifi_hit_count,
+    arg::dev_atomics_storage,
+    arg::dev_velo_track_hit_number,
+    arg::dev_velo_states,
+    arg::dev_veloUT_tracks,
+    arg::dev_atomics_veloUT,
+    arg::dev_scifi_tracks,
+    arg::dev_n_scifi_tracks
+  };
 
   return sequence_dependencies;
 }
@@ -234,6 +247,8 @@ std::vector<int> get_sequence_output_arguments() {
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,
     arg::dev_atomics_veloUT,
-    arg::dev_veloUT_tracks
+    arg::dev_veloUT_tracks,
+    arg::dev_scifi_tracks,
+    arg::dev_n_scifi_tracks
   };
 }

@@ -41,6 +41,8 @@ enum arg_enum_t {
   dev_prefix_sum_auxiliary_array_4,
   dev_scifi_hit_permutations,
   dev_scifi_hits,
-  dev_scifi_raw_input
+  dev_scifi_raw_input,
+  dev_scifi_tracks,
+  dev_n_scifi_tracks
 };
 }

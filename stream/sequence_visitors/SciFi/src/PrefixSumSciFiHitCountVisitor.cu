@@ -14,7 +14,7 @@ void SequenceVisitor::visit<prefix_sum_reduce_scifi_hits_t>(
   cudaEvent_t& cuda_generic_event)
 {
   // Prefix sum: Reduce
-  const uint total_number_of_zones = runtime_options.number_of_events * SciFi::number_of_zones;
+  const uint total_number_of_zones = runtime_options.number_of_events * SciFi::Constants::n_zones;
   const size_t prefix_sum_auxiliary_array_size = (total_number_of_zones + 511) / 512;
   arguments.set_size<arg::dev_prefix_sum_auxiliary_array_4>(prefix_sum_auxiliary_array_size);
   scheduler.setup_next(arguments, sequence_step);
@@ -44,7 +44,7 @@ void SequenceVisitor::visit<prefix_sum_single_block_scifi_hits_t>(
   // Prefix sum: Single block
   scheduler.setup_next(arguments, sequence_step);
 
-  const uint total_number_of_zones = runtime_options.number_of_events * SciFi::number_of_zones;
+  const uint total_number_of_zones = runtime_options.number_of_events * SciFi::Constants::n_zones;
   const size_t prefix_sum_auxiliary_array_size = (total_number_of_zones + 511) / 512;
   state.set_opts(dim3(1), dim3(1024), cuda_stream);
   state.set_arguments(
@@ -71,7 +71,7 @@ void SequenceVisitor::visit<prefix_sum_scan_scifi_hits_t>(
   // Prefix sum: Scan
   scheduler.setup_next(arguments, sequence_step);
 
-  const uint total_number_of_zones = runtime_options.number_of_events * SciFi::number_of_zones;
+  const uint total_number_of_zones = runtime_options.number_of_events * SciFi::Constants::n_zones;
   const size_t prefix_sum_auxiliary_array_size = (total_number_of_zones + 511) / 512;
   const uint pss_scifi_hits_blocks = prefix_sum_auxiliary_array_size==1 ? 1 : (prefix_sum_auxiliary_array_size-1);
   state.set_opts(dim3(pss_scifi_hits_blocks), dim3(512), cuda_stream);

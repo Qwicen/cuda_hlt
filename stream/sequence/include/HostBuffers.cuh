@@ -3,6 +3,7 @@
 #include "CudaCommon.h"
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
+#include "SciFiDefinitions.cuh"
 
 struct HostBuffers {
   // Pinned host datatypes
@@ -14,6 +15,8 @@ struct HostBuffers {
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   char* host_velo_states;
   uint* host_accumulated_number_of_ut_hits;
+  SciFi::Track* host_scifi_tracks;
+  uint* host_n_scifi_tracks;
 
   // UT tracking
   int* host_atomics_veloUT;
