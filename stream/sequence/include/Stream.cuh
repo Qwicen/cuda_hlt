@@ -38,7 +38,6 @@ struct Stream {
   bool do_simplified_kalman_filter;
   bool do_print_memory_manager;
   bool run_on_x86;
-  bool data_preparation_only;
 
   /* Pinned host datatypes */
   // Velo
@@ -92,7 +91,6 @@ struct Stream {
     const bool param_do_simplified_kalman_filter,
     const bool param_print_memory_usage,
     const bool param_run_on_x86,
-    const bool param_data_preparation_only,
     const std::string& param_folder_name_MC,
     const uint param_start_event_offset,
     const size_t param_reserve_mb,

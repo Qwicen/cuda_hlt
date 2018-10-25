@@ -174,8 +174,7 @@ cudaError_t Stream::run_sequence(
       arguments.offset<arg::dev_rel_indices>(),
       constants.dev_velo_module_zs
     );
-    if ( !data_preparation_only )
-      sequence.invoke<seq::search_by_triplet>();
+    sequence.invoke<seq::search_by_triplet>();
 
     // Weak tracks adder
     scheduler.setup_next(arguments, sequence_step++);
@@ -189,8 +188,7 @@ cudaError_t Stream::run_sequence(
       arguments.offset<arg::dev_hit_used>(),
       arguments.offset<arg::dev_atomics_storage>()
     );
-    if ( !data_preparation_only )
-      sequence.invoke<seq::weak_tracks_adder>();
+    sequence.invoke<seq::weak_tracks_adder>();
 
     // Calculate prefix sum of found tracks
     scheduler.setup_next(arguments, sequence_step++);
@@ -200,18 +198,13 @@ cudaError_t Stream::run_sequence(
       (uint*) arguments.offset<arg::dev_atomics_storage>() + number_of_events,
       number_of_events
     );
-    if ( !data_preparation_only )
-      sequence.invoke<seq::copy_and_prefix_sum_single_block>();
+    sequence.invoke<seq::copy_and_prefix_sum_single_block>();
 
     // Fetch number of reconstructed tracks
-    if ( data_preparation_only ) {
-      host_number_of_reconstructed_velo_tracks[0] = 0;
-    }
-    else {
-      cudaCheck(cudaMemcpyAsync(host_number_of_reconstructed_velo_tracks, arguments.offset<arg::dev_atomics_storage>() + number_of_events * 2, sizeof(uint), cudaMemcpyDeviceToHost, stream));
-      cudaEventRecord(cuda_generic_event, stream);
-      cudaEventSynchronize(cuda_generic_event);
-    }
+    cudaCheck(cudaMemcpyAsync(host_number_of_reconstructed_velo_tracks, arguments.offset<arg::dev_atomics_storage>() + number_of_events * 2, sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+    
     size_t velo_track_hit_number_size = host_number_of_reconstructed_velo_tracks[0] + 1;
     
     // Prefix sum of tracks hits
@@ -229,8 +222,7 @@ cudaError_t Stream::run_sequence(
       arguments.offset<arg::dev_atomics_storage>(),
       arguments.offset<arg::dev_velo_track_hit_number>()
     );
-    if ( !data_preparation_only )
-      sequence.invoke<seq::copy_velo_track_hit_number>();
+    sequence.invoke<seq::copy_velo_track_hit_number>();
 
     // Prefix sum: Reduce
     const size_t prefix_sum_auxiliary_array_2_size = (host_number_of_reconstructed_velo_tracks[0] + 511) / 512;
@@ -242,8 +234,7 @@ cudaError_t Stream::run_sequence(
       arguments.offset<arg::dev_prefix_sum_auxiliary_array_2>(),
       host_number_of_reconstructed_velo_tracks[0]
     );
-    if ( !data_preparation_only )
-      sequence.invoke<seq::prefix_sum_reduce_velo_track_hit_number>();
+    sequence.invoke<seq::prefix_sum_reduce_velo_track_hit_number>();
 
     // Prefix sum: Single block
     scheduler.setup_next(arguments, sequence_step++);
@@ -252,8 +243,7 @@ cudaError_t Stream::run_sequence(
       arguments.offset<arg::dev_prefix_sum_auxiliary_array_2>(),
       prefix_sum_auxiliary_array_2_size
     );
-    if ( !data_preparation_only )
-      sequence.invoke<seq::prefix_sum_single_block_velo_track_hit_number>();
+    sequence.invoke<seq::prefix_sum_single_block_velo_track_hit_number>();
 
     // Prefix sum: Scan
     scheduler.setup_next(arguments, sequence_step++);
@@ -265,21 +255,15 @@ cudaError_t Stream::run_sequence(
       arguments.offset<arg::dev_prefix_sum_auxiliary_array_2>(),
       host_number_of_reconstructed_velo_tracks[0]
     );
-    if ( !data_preparation_only )
-      sequence.invoke<seq::prefix_sum_scan_velo_track_hit_number>();
+    sequence.invoke<seq::prefix_sum_scan_velo_track_hit_number>();
 
     // Fetch total number of hits accumulated with all tracks
-    if ( data_preparation_only ) {
-      host_accumulated_number_of_hits_in_velo_tracks[0] = 0;
-      host_number_of_reconstructed_velo_tracks[0] = 0;
-    } else {
-      cudaCheck(cudaMemcpyAsync(host_accumulated_number_of_hits_in_velo_tracks,
-        arguments.offset<arg::dev_velo_track_hit_number>() + host_number_of_reconstructed_velo_tracks[0],
-        sizeof(uint), cudaMemcpyDeviceToHost, stream));
-      cudaEventRecord(cuda_generic_event, stream);
-      cudaEventSynchronize(cuda_generic_event);
-    }
-
+    cudaCheck(cudaMemcpyAsync(host_accumulated_number_of_hits_in_velo_tracks,
+      arguments.offset<arg::dev_velo_track_hit_number>() + host_number_of_reconstructed_velo_tracks[0],
+      sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    cudaEventRecord(cuda_generic_event, stream);
+    cudaEventSynchronize(cuda_generic_event);
+    
     // Consolidate tracks
     // TODO: The size specified (sizeof(Hits) / sizeof(uint)) is due to the
     //       lgenfe error from the nvcc compiler, present in Cuda 9.2. Once it
@@ -298,8 +282,7 @@ cudaError_t Stream::run_sequence(
       arguments.offset<arg::dev_velo_track_hits>(),
       arguments.offset<arg::dev_velo_states>()
     );
-    if ( !data_preparation_only )
-      sequence.invoke<seq::consolidate_tracks>();
+    sequence.invoke<seq::consolidate_tracks>();
 
     // Calculate number of UT hits
     // Set arguments and reserve memory
@@ -470,22 +453,19 @@ cudaError_t Stream::run_sequence(
       constants.dev_unique_x_sector_offsets,
       constants.dev_unique_sector_xs
     );
-    if ( !data_preparation_only )
-      sequence.invoke<seq::veloUT>();
+    sequence.invoke<seq::veloUT>();
 
     // Transmission device to host
-    if ( !data_preparation_only ) {
-      // Velo tracks
-      cudaCheck(cudaMemcpyAsync(host_velo_tracks_atomics, arguments.offset<arg::dev_atomics_storage>(), (2 * number_of_events + 1) * sizeof(uint), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, arguments.offset<arg::dev_velo_track_hit_number>(), arguments.size<arg::dev_velo_track_hit_number>(), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_velo_track_hits, arguments.offset<arg::dev_velo_track_hits>(), host_accumulated_number_of_hits_in_velo_tracks[0] * sizeof(Velo::Hit), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_velo_states, arguments.offset<arg::dev_velo_states>(), host_number_of_reconstructed_velo_tracks[0] * sizeof(Velo::State), cudaMemcpyDeviceToHost, stream));
-      
-      // VeloUT tracks
-      cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, arguments.offset<arg::dev_atomics_veloUT>(), arguments.size<arg::dev_atomics_veloUT>(), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, arguments.offset<arg::dev_veloUT_tracks>(), arguments.size<arg::dev_veloUT_tracks>(), cudaMemcpyDeviceToHost, stream));
-    }
-
+    // Velo tracks
+    cudaCheck(cudaMemcpyAsync(host_velo_tracks_atomics, arguments.offset<arg::dev_atomics_storage>(), (2 * number_of_events + 1) * sizeof(uint), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_velo_track_hit_number, arguments.offset<arg::dev_velo_track_hit_number>(), arguments.size<arg::dev_velo_track_hit_number>(), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_velo_track_hits, arguments.offset<arg::dev_velo_track_hits>(), host_accumulated_number_of_hits_in_velo_tracks[0] * sizeof(Velo::Hit), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_velo_states, arguments.offset<arg::dev_velo_states>(), host_number_of_reconstructed_velo_tracks[0] * sizeof(Velo::State), cudaMemcpyDeviceToHost, stream));
+    
+    // VeloUT tracks
+    cudaCheck(cudaMemcpyAsync(host_atomics_veloUT, arguments.offset<arg::dev_atomics_veloUT>(), arguments.size<arg::dev_atomics_veloUT>(), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_veloUT_tracks, arguments.offset<arg::dev_veloUT_tracks>(), arguments.size<arg::dev_veloUT_tracks>(), cudaMemcpyDeviceToHost, stream));
+    
     // SciFi preprocessing
     // Estimate cluster count
     arguments.set_size<arg::dev_scifi_raw_input>(host_scifi_events_size);
@@ -606,17 +586,14 @@ cudaError_t Stream::run_sequence(
       constants.dev_scifi_tmva2,
       constants.dev_scifi_constArrays
     );
-    if ( !data_preparation_only )
-      sequence.invoke<seq::PrForward>(); 
+    sequence.invoke<seq::PrForward>(); 
             
 
     // Transmission device to host
     // SciFi tracks
-    if ( !data_preparation_only ) {
-      cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, arguments.offset<arg::dev_n_scifi_tracks>(), arguments.size<arg::dev_n_scifi_tracks>(), cudaMemcpyDeviceToHost, stream));
-      cudaCheck(cudaMemcpyAsync(host_scifi_tracks, arguments.offset<arg::dev_scifi_tracks>(), arguments.size<arg::dev_scifi_tracks>(), cudaMemcpyDeviceToHost, stream));
-    }
-
+    cudaCheck(cudaMemcpyAsync(host_n_scifi_tracks, arguments.offset<arg::dev_n_scifi_tracks>(), arguments.size<arg::dev_n_scifi_tracks>(), cudaMemcpyDeviceToHost, stream));
+    cudaCheck(cudaMemcpyAsync(host_scifi_tracks, arguments.offset<arg::dev_scifi_tracks>(), arguments.size<arg::dev_scifi_tracks>(), cudaMemcpyDeviceToHost, stream));
+    
     // Synchronize
     cudaEventRecord(cuda_generic_event, stream);
     cudaEventSynchronize(cuda_generic_event);
@@ -628,7 +605,7 @@ cudaError_t Stream::run_sequence(
     ///////////////////////
 
     if (do_check && i_stream == 0) {
-      if (repetition == 0 && !data_preparation_only) { // only check efficiencies once
+      if (repetition == 0) { // only check efficiencies once
         std::cout << "Checking Velo tracks reconstructed on GPU" << std::endl;
 
         const std::vector<trackChecker::Tracks> tracks_events = prepareTracks(
