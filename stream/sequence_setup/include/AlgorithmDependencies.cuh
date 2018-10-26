@@ -1,7 +1,24 @@
 #pragma once
 
+#include <tuple>
+#include "CalculatePhiAndSort.cuh"
+#include "ConsolidateTracks.cuh"
+#include "MaskedVeloClustering.cuh"
+#include "EstimateInputSize.cuh"
+#include "PrefixSum.cuh"
+#include "SearchByTriplet.cuh"
+#include "VeloKalmanFilter.cuh"
+#include "VeloUT.cuh"
+#include "EstimateClusterCount.cuh"
+#include "RawBankDecoder.cuh"
+#include "SciFiSortByX.cuh"
+#include "VeloEventModel.cuh"
+#include "UTCalculateNumberOfHits.cuh"
+#include "UTDecodeRawBanksInOrder.cuh"
+#include "UTFindPermutation.cuh"
+#include "UTPreDecode.cuh"
+#include "PrForward.cuh"
 #include "Arguments.cuh"
-#include "ConfiguredSequence.cuh"
 
 /**
  * @brief Definition of the dependencies of each algorithm.
@@ -178,6 +195,17 @@ typedef std::tuple<
     dev_scifi_hits,
     dev_scifi_hit_count,
     dev_scifi_hit_permutations
+  >,
+  AlgorithmDependencies<scifi_pr_forward_t,
+    dev_scifi_hits,
+    dev_scifi_hit_count,
+    dev_atomics_storage,
+    dev_velo_track_hit_number,
+    dev_velo_states,
+    dev_veloUT_tracks,
+    dev_atomics_veloUT,
+    dev_scifi_tracks,
+    dev_n_scifi_tracks
   >
 > algorithms_dependencies_t;
 
@@ -192,5 +220,7 @@ typedef std::tuple<
   dev_velo_track_hit_number,
   dev_velo_track_hits,
   dev_atomics_veloUT,
-  dev_veloUT_tracks
+  dev_veloUT_tracks,
+  dev_scifi_tracks,
+  dev_n_scifi_tracks
 > output_arguments_t;

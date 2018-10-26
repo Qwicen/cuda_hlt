@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "RawBankDecoder.cuh"
 
 template<>
-void StreamVisitor::visit<raw_bank_decoder_t>(
+void SequenceVisitor::visit<raw_bank_decoder_t>(
   raw_bank_decoder_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

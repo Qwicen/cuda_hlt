@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "PrefixSum.cuh"
 
 template<>
-void StreamVisitor::visit<prefix_sum_reduce_velo_clusters_t>(
+void SequenceVisitor::visit<prefix_sum_reduce_velo_clusters_t>(
   prefix_sum_reduce_velo_clusters_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
@@ -32,7 +32,7 @@ void StreamVisitor::visit<prefix_sum_reduce_velo_clusters_t>(
 }
 
 template<>
-void StreamVisitor::visit<prefix_sum_single_block_velo_clusters_t>(
+void SequenceVisitor::visit<prefix_sum_single_block_velo_clusters_t>(
   prefix_sum_single_block_velo_clusters_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
@@ -59,7 +59,7 @@ void StreamVisitor::visit<prefix_sum_single_block_velo_clusters_t>(
 }
 
 template<>
-void StreamVisitor::visit<prefix_sum_scan_velo_clusters_t>(
+void SequenceVisitor::visit<prefix_sum_scan_velo_clusters_t>(
   prefix_sum_scan_velo_clusters_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

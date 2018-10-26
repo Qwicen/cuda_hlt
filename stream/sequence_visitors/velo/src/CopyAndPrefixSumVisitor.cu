@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "PrefixSum.cuh"
 
 template<>
-void StreamVisitor::visit<copy_and_prefix_sum_single_block_t>(
+void SequenceVisitor::visit<copy_and_prefix_sum_single_block_t>(
   copy_and_prefix_sum_single_block_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

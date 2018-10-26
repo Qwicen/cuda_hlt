@@ -19,7 +19,7 @@
 #include "RuntimeOptions.h"
 #include "EstimateInputSize.cuh"
 #include "HostBuffers.cuh"
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 
 class Timer;
 
@@ -55,7 +55,7 @@ struct Stream {
   Constants constants;
 
   // Visitors for sequence algorithms
-  StreamVisitor stream_visitor;
+  SequenceVisitor sequence_visitor;
 
   cudaError_t initialize(
     const uint max_number_of_events,
@@ -73,6 +73,7 @@ struct Stream {
   void run_monte_carlo_test(
     const uint number_of_events_requested
   );
+  
 
   cudaError_t run_sequence(
     const RuntimeOptions& runtime_options

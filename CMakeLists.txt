@@ -55,8 +55,9 @@ set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;
 add_subdirectory(cuda)
 add_subdirectory(stream)
 add_subdirectory(checker)
+add_subdirectory(x86/UT/PrVeloUT)
+add_subdirectory(x86/SciFi)
 add_subdirectory(x86/velo/clustering)
-add_subdirectory(x86/veloUT/PrVeloUT)
 
 # Include directories
 include_directories(main/include)
@@ -70,12 +71,16 @@ include_directories(cuda/velo/consolidate_tracks/include)
 include_directories(cuda/velo/mask_clustering/include)
 include_directories(cuda/velo/search_by_triplet/include)
 include_directories(cuda/velo/simplified_kalman_filter/include)
+include_directories(cuda/SciFi/common/include)
 include_directories(cuda/utils/prefix_sum/include)
 include_directories(cuda/event_model/velo/include)
 include_directories(cuda/event_model/common/include)
 include_directories(checker/tracking/include)
 include_directories(stream/sequence/include)
-
+include_directories(x86/SciFi/include)
+include_directories(cuda/SciFi/PrForward/include)
+include_directories(cuda/UT/UTDecoding/include)
+  
 # Files from source directories
 file(GLOB main_sources "main/src/*")
 
@@ -88,10 +93,11 @@ if ( ROOT_FOUND )
     Utils
     Velo
     UT
+    SciFi
     x86VeloUT
+    x86Forward
     Stream
     x86Clustering
-    SciFi
     TrackChecking
     CheckClustering
     ${ROOT_LIBRARIES})
@@ -101,10 +107,11 @@ else()
     Utils
     Velo
     UT
+    SciFi
     x86VeloUT
+    x86Forward
     Stream
     x86Clustering
-    SciFi
     TrackChecking
     CheckClustering)
 endif()

@@ -1,8 +1,10 @@
 #pragma once
 
+#include <tuple>
 #include "Argument.cuh"
 #include "VeloEventModel.cuh"
 #include "VeloUTDefinitions.cuh"
+#include "PrForward.cuh"
 
 /**
  * @brief Definition of arguments. All arguments should be defined here,
@@ -45,6 +47,8 @@ ARGUMENT(dev_prefix_sum_auxiliary_array_4, uint)
 ARGUMENT(dev_scifi_hit_permutations, uint)
 ARGUMENT(dev_scifi_hits, char)
 ARGUMENT(dev_scifi_raw_input, char)
+ARGUMENT(dev_scifi_tracks, Scifi::Track)
+ARGUMENT(dev_n_scifi_tracks, uint)
 
 /**
  * @brief Argument tuple definition. All arguments should be added here.
@@ -87,5 +91,7 @@ using argument_tuple_t = std::tuple<
   dev_prefix_sum_auxiliary_array_4,
   dev_scifi_hit_permutations,
   dev_scifi_hits,
-  dev_scifi_raw_input
+  dev_scifi_raw_input,
+  dev_scifi_tracks,
+  dev_n_scifi_tracks
 >;

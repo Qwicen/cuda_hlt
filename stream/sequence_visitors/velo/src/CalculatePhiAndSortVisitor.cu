@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "CalculatePhiAndSort.cuh"
 
 template<>
-void StreamVisitor::visit<calculate_phi_and_sort_t>(
+void SequenceVisitor::visit<calculate_phi_and_sort_t>(
   calculate_phi_and_sort_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

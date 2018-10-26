@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "UTCalculateNumberOfHits.cuh"
 
 template<>
-void StreamVisitor::visit<ut_calculate_number_of_hits_t>(
+void SequenceVisitor::visit<ut_calculate_number_of_hits_t>(
   ut_calculate_number_of_hits_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

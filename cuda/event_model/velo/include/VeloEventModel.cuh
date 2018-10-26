@@ -124,16 +124,13 @@ struct Track { // 4 + 26 * 16 = 420 B
  *                        0.f
  */
 
-// DvB: we should check whether the covariance matrix elements are needed
-// for the propagation, otherwise we don't have to store them longer than
-// the Velo scope and we could make a reduced VeloState
-// DvB: they are needed for the PV finding 
 struct State { // 48 B
   float x, y, tx, ty;
   float c00, c20, c22, c11, c31, c33;
   float chi2;
   float z;
   bool backward;
+
 };
 
 /**
@@ -145,4 +142,4 @@ struct TrackFitParameters {
   bool backward;
 };
 
-}
+} // Velo namespace

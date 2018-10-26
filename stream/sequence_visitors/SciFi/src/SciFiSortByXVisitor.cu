@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "SciFiSortByX.cuh"
 
 template<>
-void StreamVisitor::visit<scifi_sort_by_x_t>(
+void SequenceVisitor::visit<scifi_sort_by_x_t>(
   scifi_sort_by_x_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,

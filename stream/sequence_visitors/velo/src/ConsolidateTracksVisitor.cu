@@ -1,8 +1,8 @@
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "ConsolidateTracks.cuh"
 
 template<>
-void StreamVisitor::visit<consolidate_tracks_t>(
+void SequenceVisitor::visit<consolidate_tracks_t>(
   consolidate_tracks_t& state,
   const int sequence_step,
   const RuntimeOptions& runtime_options,
