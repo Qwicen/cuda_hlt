@@ -17,6 +17,7 @@
 #include "UTDecodeRawBanksInOrder.cuh"
 #include "UTFindPermutation.cuh"
 #include "UTPreDecode.cuh"
+#include "PrForward.cuh"
 
 #define SEQUENCE(...) \
   typedef std::tuple<__VA_ARGS__> sequence_t;
@@ -57,4 +58,5 @@ SEQUENCE(
   prefix_sum_scan_scifi_hits_t,
   scifi_pre_decode_t,
   scifi_raw_bank_decoder_t
+  scifi_pr_forward_t
 )

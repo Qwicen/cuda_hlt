@@ -45,6 +45,6 @@ void SequenceVisitor::visit<scifi_calculate_cluster_count_t>(
     arguments.offset<arg::dev_scifi_hit_count>(),
     constants.dev_scifi_geometry
   );
-  
+
   state.invoke();
 }

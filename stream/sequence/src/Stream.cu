@@ -70,7 +70,6 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
       cuda_stream,
       cuda_generic_event);
 
-    // Synchronize everything up until this point
     cudaEventRecord(cuda_generic_event, cuda_stream);
     cudaEventSynchronize(cuda_generic_event);
   }
@@ -108,4 +107,18 @@ void Stream::run_monte_carlo_test(const uint number_of_events_requested) {
     start_event_offset,
     "VeloUT"
   );
+
+  /* CHECKING Scifi TRACKS */
+  const std::vector<trackChecker::Tracks> scifi_tracks = prepareForwardTracks(
+    host_buffers.host_scifi_tracks,
+    host_buffers.host_n_scifi_tracks,
+    number_of_events_requested
+  );
+
+  std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
+  call_pr_checker (
+    scifi_tracks,
+    folder_name_MC,
+    start_event_offset,
+    "Forward");
 }

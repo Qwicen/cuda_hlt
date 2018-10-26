@@ -4,13 +4,98 @@
 #include <vector>
 #include <ostream>
 
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include "Common.h"
+#include "Logger.h"
+#include "VeloDefinitions.cuh"
+#include "VeloEventModel.cuh"
+#include "VeloUTDefinitions.cuh"
+#include "PrForwardConstants.cuh"
+
+#include "assert.h"
+
+struct FullState {
+    float x, y, tx, ty, qOverP = 0.;
+    float c00, c11, c22, c33, c44, c10, c20, c30, c40, c21, c31, c41, c32, c42, c43 = 0.;
+    float chi2 = 0.;
+    float z = 0.;
+  };
+
+namespace SciFi {
+
+// Maybe these should not be hardcoded?
+constexpr uint32_t number_of_zones = 24;
+constexpr uint32_t number_of_mats = 1024;
+
+/*struct SciFiHit {
+  float x0;
+  float z0;
+  float w;
+  float dxdy;
+  float dzdy;
+  float yMin;
+  float yMax;
+  uint32_t LHCbID;
+  uint32_t planeCode;
+  uint32_t hitZone;
+
+  friend std::ostream& operator<<(std::ostream& stream, const SciFiHit& hit) {
+  stream << "SciFi hit {"
+    << hit.planeCode << ", "
+    << hit.hitZone << ", "
+    << hit.LHCbID << ", "
+    << hit.x0 << ", "
+    << hit.z0 << ", "
+    << hit.w<< ", "
+    << hit.dxdy << ", "
+    << hit.dzdy << ", "
+    << hit.yMin << ", "
+    << hit.yMax << "}";
+
+  return stream;
+}
+};*/
+
+namespace Constants {
+  /* Detector description
+     There are three stations with four layers each
+  */
+  static constexpr uint n_stations           = 3;
+  static constexpr uint n_layers_per_station = 4;
+  static constexpr uint n_zones              = 24;
+  static constexpr uint n_layers             = 12;
+
+  /* Cut-offs */
+  static constexpr uint max_numhits_per_event = 10000;
+  static constexpr uint max_hit_candidates_per_layer = 200;
+
+} // Constants
+
+const int max_tracks = 200;
+const int max_track_size = Tracking::max_scifi_hits + VeloUTTracking::max_track_size;
+
+// Track object used for storing tracks
+struct Track {
+
+  unsigned int LHCbIDs[max_track_size];
+  float qop;
+  unsigned short hitsNum = 0;
+  float chi2;
+
+  __host__  __device__ void addLHCbID( unsigned int id ) {
+    assert( hitsNum < max_track_size );
+    LHCbIDs[hitsNum++] =  id;
+}
+
+  __host__ __device__ void set_qop( float _qop ) {
+    qop = _qop;
+  }
+};
+
 /**
  * @brief SciFi geometry description typecast.
  */
-namespace SciFi {
-  // Maybe these should not be hardcoded?
-constexpr uint32_t number_of_zones = 24;
-constexpr uint32_t number_of_mats = 1024;
 
 struct SciFiGeometry {
   size_t size;
@@ -226,6 +311,7 @@ struct SciFiHit {
 };
 
 struct SciFiHits {
+
   float* x0;
   float* z0;
   uint32_t* channel;

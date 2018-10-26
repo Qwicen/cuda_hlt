@@ -6,6 +6,7 @@
 
 #include "VeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
+#include "SciFiDefinitions.cuh"
 #include "Logger.h"
 #include "Common.h"
 #include "Constants.cuh"

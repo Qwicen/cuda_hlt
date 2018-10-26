@@ -190,6 +190,7 @@ void SciFiHitCount::typecast_before_prefix_sum(
   n_hits_mats = base_pointer + event_number * SciFi::number_of_mats;
 }
 
+__device__ __host__
 void SciFiHitCount::typecast_after_prefix_sum(
   uint* base_pointer,
   const uint event_number,

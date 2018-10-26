@@ -73,6 +73,7 @@ struct Stream {
   void run_monte_carlo_test(
     const uint number_of_events_requested
   );
+  
 
   cudaError_t run_sequence(
     const RuntimeOptions& runtime_options
