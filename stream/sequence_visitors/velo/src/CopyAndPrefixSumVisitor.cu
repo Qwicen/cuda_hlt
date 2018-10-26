@@ -14,7 +14,7 @@ void StreamVisitor::visit<copy_and_prefix_sum_single_block_t>(
   cudaEvent_t& cuda_generic_event)
 {
   // Calculate prefix sum of found tracks
-  scheduler.setup_next(arguments, sequence_step);
+  scheduler.setup<decltype(state)>(arguments, sequence_step);
 
   state.set_opts(dim3(1), dim3(1024), cuda_stream);
   state.set_arguments(
