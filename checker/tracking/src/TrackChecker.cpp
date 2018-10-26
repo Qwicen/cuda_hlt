@@ -18,7 +18,6 @@
 
 void TrackCheckerVelo::SetCategories() {
   m_categories = {{ // define which categories to monitor
-    // Renato's categories
      TrackEffReport({ "Electrons long eta25",
         [] (const MCParticles::const_reference& mcp)
         { return mcp.isLong && mcp.isElectron() && mcp.inEta2_5(); },
@@ -179,85 +178,21 @@ void TrackCheckerVelo::SetCategories() {
         [] (const MCParticles::const_reference& mcp)
           { return mcp.hasVelo && !mcp.isElectron() && mcp.inEta2_5(); },
         })
-     
-
-    
-    // currently implemented in PrChecker2 (master branch)
-    // TrackEffReport({ "Velo",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.hasVelo && !mcp.isElectron() && mcp.inEta2_5(); },
-    //     }),
-    // TrackEffReport({ "Long",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && !mcp.isElectron() && mcp.inEta2_5(); },
-    //     }),
-    // TrackEffReport({ "Long, p > 5 GeV",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && !mcp.isElectron() && mcp.p > 5e3 && mcp.inEta2_5(); },
-    //     }),
-    // TrackEffReport({ "Long strange",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && mcp.fromStrangeDecay && !mcp.isElectron() && mcp.inEta2_5(); },
-    //     }),
-    // TrackEffReport({ "Long strange, p > 5 GeV",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && mcp.fromStrangeDecay && !mcp.isElectron() && mcp.p > 5e3 && mcp.inEta2_5(); },
-    //     }),
-    // TrackEffReport({ "Long from B",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && mcp.fromBeautyDecay && !mcp.isElectron() && mcp.inEta2_5(); },
-    //     }),
-    // TrackEffReport({ "Long from B, p > 5 GeV",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && mcp.fromBeautyDecay && !mcp.isElectron() && mcp.p > 5e3 && mcp.inEta2_5(); },
-    //       }),
-    // TrackEffReport({ "Long electrons",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && mcp.isElectron() && mcp.inEta2_5(); },
-    //       }),
-    // TrackEffReport({ "Long from B electrons",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.inEta2_5(); },
-    //       }),
-    // TrackEffReport({ "Long from B electrons, p > 5 GeV",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.p > 5e3 && mcp.inEta2_5(); },
-    //       }),
-    // TrackEffReport({ "Long from B, p > 3 GeV, pt > 0.5 GeV",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && mcp.fromBeautyDecay && !mcp.isElectron() && mcp.p > 3e3 && mcp.pt > 0.5e3 && mcp.inEta2_5(); },
-    //       })
-
-
-
-    
-    // TrackEffReport({ "Long from D",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && mcp.isFromD && !mcp.isElectron() && mcp.inEta2_5(); },
-    //     }),
-    // TrackEffReport({ "Long from D, p > 5 GeV",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isLong && mcp.isFromD && !mcp.isElectron() && mcp.p > 5e3 && mcp.inEta2_5(); },
-    //     }),
-    // TrackEffReport({ "Down",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isDown && !mcp.isElectron() && mcp.inEta2_5(); },
-    //     }),
-    // TrackEffReport({ "Down, p > 5 GeV",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isDown && !mcp.isElectron() && mcp.p > 5e3 && mcp.inEta2_5(); },
-    //     }),
-    // TrackEffReport({ "Down strange",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isStrangeDown && !mcp.isElectron() && mcp.inEta2_5(); },
-    //     }),
-    // TrackEffReport({ "Down strange, p > 5 GeV",
-    //     [] (const MCParticles::const_reference& mcp)
-    //     { return mcp.isStrangeDown && !mcp.isElectron() && mcp.p > 5e3 && mcp.inEta2_5(); },
-    // 	})
     }};
 };
  
+void TrackCheckerVelo::SetHistoCategories() {
+  m_histo_categories = {{ // define which categories to create histograms for
+     TrackHistos({ "Electrons long eta25",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.isElectron() && mcp.inEta2_5(); },
+        }),
+     TrackHistos({ "Electrons long fromB eta25",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.inEta2_5(); },
+        })
+    }};
+};
 
 void TrackCheckerVeloUT::SetCategories() {
   m_categories = {{ // define which categories to monitor
@@ -320,6 +255,18 @@ void TrackCheckerVeloUT::SetCategories() {
     }}; 
 }; 
 
+void TrackCheckerVeloUT::SetHistoCategories() {
+  m_histo_categories = {{ // define which categories to create histograms for 
+    TrackHistos({ "Velo",
+        [] (const MCParticles::const_reference& mcp)
+	  { return mcp.hasVelo && !mcp.isElectron() && mcp.inEta2_5(); },
+        }),
+    TrackHistos({ "Velo+UT",
+        [] (const MCParticles::const_reference& mcp)
+	  { return mcp.hasVelo && mcp.hasUT && !mcp.isElectron() && mcp.inEta2_5(); },
+        })
+    }};
+};
 
 void TrackCheckerForward::SetCategories() {
   m_categories = {{ // define which categories to monitor
@@ -366,6 +313,19 @@ void TrackCheckerForward::SetCategories() {
     }}; 
 };   
 
+void TrackCheckerForward::SetHistoCategories() {
+  m_histo_categories = {{ // define which categories to create histograms for
+      TrackHistos({ "Long",
+	  [] (const MCParticles::const_reference& mcp)
+	    { return mcp.isLong && !mcp.isElectron() && mcp.inEta2_5(); },
+	  }),
+    TrackHistos({ "Long, p > 5 GeV",
+	  [] (const MCParticles::const_reference& mcp)
+	    { return mcp.isLong && mcp.p > 5e3 && !mcp.isElectron() && mcp.inEta2_5(); },
+	  })
+    }};
+};
+
 TrackChecker::~TrackChecker()
 {
   std::printf("%-50s: %9lu/%9lu %6.2f%% (%6.2f%%) ghosts\n",
@@ -379,6 +339,7 @@ TrackChecker::~TrackChecker()
 
 void TrackChecker::TrackEffReport::operator()(const MCParticles& mcps)
 {
+  // find number of MCPs within category
   for (auto mcp: mcps) {
     if (m_accept(mcp)) {
       ++m_naccept, ++m_nacceptperevt;
@@ -439,11 +400,22 @@ TrackChecker::TrackEffReport::~TrackEffReport()
   }
 }
 
+void TrackChecker::TrackHistos::operator()(const MCParticles& mcps)
+{
+  // filter MC particles and fill histograms
+  for (auto mcp: mcps) {
+    if (m_accept(mcp)) {
+      // fill...
+    }
+  }
+}
+
 void TrackChecker::operator()(const trackChecker::Tracks& tracks,
     const MCAssociator& mcassoc, const MCParticles& mcps)
 {
   // register MC particles
   for (auto& report: m_categories) report(mcps);
+  
   // go through tracks
   const std::size_t ntracksperevt = tracks.size();
   std::size_t nghostsperevt = 0;

@@ -8,7 +8,7 @@
  * @date 2018-02-19
  *
  * 2018-07 Dorothea vom Bruch: updated to run over different track types, 
- * euse exact same categories as PrChecker2, 
+ * use exact same categories as PrChecker2, 
  * take input from Renato Quagliani's TrackerDumper
  */
 
@@ -22,6 +22,8 @@
 #include "Tracks.h"
 #include "MCAssociator.h"
 #include "Logger.h"
+#include "Histograms.h"
+
 
 class TrackChecker
 {
@@ -64,7 +66,7 @@ class TrackChecker
             /// register MC particles
             void operator()(const MCParticles& mcps);
             /// register track and its MC association
-	  void operator()(trackChecker::Tracks::const_reference& track,
+	    void operator()(trackChecker::Tracks::const_reference& track,
                     MCParticles::const_reference& mcp,
                     const float weight);
             /// notify of end of event
@@ -72,6 +74,8 @@ class TrackChecker
             /// free resources, and print result
             ~TrackEffReport();
         };
+
+       
 
         const float m_minweight = 0.7f;
         std::vector<TrackEffReport> m_categories;
@@ -81,30 +85,61 @@ class TrackChecker
         std::size_t m_nghosts = 0;
         float m_ghostperevent = 0.f;
 
+        virtual void SetHistoCategories() = 0;
+        virtual void SetCategories() = 0;
+        
     public:
         TrackChecker() {};
         ~TrackChecker();
         void operator()(const trackChecker::Tracks& tracks,
                 const MCAssociator& mcassoc,
-                const MCParticles& mcps);
+                        const MCParticles& mcps);
+        //                Histos histos);
+
+        struct TrackHistos {
+          std::string m_name;
+          AcceptFn m_accept;
+
+          /// construction from name and accept criterion for eff. denom.
+          template <typename F>
+          TrackHistos(const std::string& name, const F& accept) :
+            m_name(name), m_accept(accept)
+          {}
+          /// construction from name and accept criterion for eff. denom.
+          template <typename F>
+          TrackHistos(std::string&& name, F&& accept) :
+            m_name(std::move(name)), m_accept(std::move(accept))
+          {}
+
+          /// filter MC particles and fill histograms
+          void operator()(const MCParticles& mcps);
+        };
+        
+        std::vector<TrackHistos> m_histo_categories;
+
+        
 };
 
 class TrackCheckerVelo : public TrackChecker
 {
   public:
       void SetCategories();
+      void SetHistoCategories();
       TrackCheckerVelo() {
         SetCategories();
+        SetHistoCategories();
       };
-  
+        
 };
 
 class TrackCheckerVeloUT : public TrackChecker
 {
   public:
       void SetCategories();
+      void SetHistoCategories();
       TrackCheckerVeloUT() {
         SetCategories();
+        SetHistoCategories();
       };
   
 };
@@ -113,8 +148,10 @@ class TrackCheckerForward : public TrackChecker
 {
   public:
       void SetCategories();
+      void SetHistoCategories();
       TrackCheckerForward() {
         SetCategories();
+        SetHistoCategories();
       };
   
 }; 
