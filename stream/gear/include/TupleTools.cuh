@@ -42,30 +42,53 @@ struct tuple_contains<T, std::tuple<U, Ts...>> : tuple_contains<T, std::tuple<Ts
   static constexpr int index = 1 + tuple_contains<T, std::tuple<Ts...>>::index;
 };
 
-/**
- * @brief      Runs a sequence of algorithms (implementation).
- *
- * @param[in]  ftor       Functor containing the visit function for all types in the tuple.
- * @param[in]  tuple      Sequence of algorithms.
- * @param[in]  Is         Indices of all elements in the tuple.
- * @param[in]  args       Additional arguments to the visit function.
- */
-template <typename Ftor, typename Tuple, size_t... Is, typename... Args>
-void run_sequence_tuple_impl(Ftor&& ftor, Tuple&& tuple, std::index_sequence<Is...>, Args&&... args) {
-    auto _ = { (ftor.visit(std::get<Is>(std::forward<Tuple>(tuple)), Is, args...), void(), 0)... };
-}
+// Appends a Tuple with the Element
+template<typename Tuple, typename Element>
+struct tuple_append;
 
-/**
- * @brief      Runs a sequence of algorithms.
- *
- * @param[in]  ftor       Functor containing the visit function for all types in the tuple.
- * @param[in]  tuple      Sequence of algorithms.
- * @param[in]  args       Additional arguments to the visit function.
- */
-template <typename Ftor, typename Tuple, typename... Args>
-void run_sequence_tuple(Ftor&& ftor, Tuple&& tuple, Args&&... args) {
-    run_sequence_tuple_impl(std::forward<Ftor>(ftor),
-                     std::forward<Tuple>(tuple),
-                     std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value> {},
-                     args...);
-}
+template<typename... T, typename E>
+struct tuple_append<std::tuple<T...>, E> {
+  using t = std::tuple<T..., E>;
+};
+
+template<typename E>
+struct tuple_append<std::tuple<>, E> {
+  using t = std::tuple<E>;
+};
+
+// Reverses a tuple
+template<typename Tuple>
+struct tuple_reverse;
+
+template<>
+struct tuple_reverse<std::tuple<>> {
+  using t = std::tuple<>;
+};
+
+template<typename T, typename... Elements>
+struct tuple_reverse<std::tuple<T, Elements...>> {
+  using previous_t = typename tuple_reverse<std::tuple<Elements...>>::t;
+  using t = typename tuple_append<previous_t, T>::t;
+};
+
+// Returns types in Tuple not in OtherTuple
+template<typename Tuple, typename OtherTuple>
+struct tuple_elements_not_in;
+
+template<typename OtherTuple>
+struct tuple_elements_not_in<std::tuple<>, OtherTuple> {
+  using t = std::tuple<>;
+};
+
+template<typename Tuple>
+struct tuple_elements_not_in<Tuple, std::tuple<>> {
+  using t = Tuple;
+};
+
+template<typename T, typename... Elements, typename OtherTuple>
+struct tuple_elements_not_in<std::tuple<T, Elements...>, OtherTuple> {
+  using previous_t = typename tuple_elements_not_in<std::tuple<Elements...>, OtherTuple>::t;
+  using t = typename std::conditional_t<tuple_contains<T, OtherTuple>::value,
+    previous_t,
+    typename tuple_append<previous_t, T>::t>;
+};

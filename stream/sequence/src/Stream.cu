@@ -59,7 +59,7 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
     scheduler.reset();
 
     // Visit all algorithms in configured sequence
-    run_sequence_tuple(
+    Sch::run_sequence_tuple(
       sequence_visitor,
       sequence_tuple,
       runtime_options,

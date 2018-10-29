@@ -11,8 +11,6 @@
 #include "Logger.h"
 #include "Timer.h"
 #include "Tools.h"
-#include "DynamicScheduler.cuh"
-#include "SequenceSetup.cuh"
 #include "Constants.cuh"
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
@@ -20,6 +18,9 @@
 #include "EstimateInputSize.cuh"
 #include "HostBuffers.cuh"
 #include "SequenceVisitor.cuh"
+#include "SchedulerMachinery.cuh"
+#include "Scheduler.cuh"
+#include "AlgorithmDependencies.cuh"
 
 class Timer;
 
@@ -39,7 +40,7 @@ struct Stream {
   bool run_on_x86;
 
   // Dynamic scheduler
-  DynamicScheduler<sequence_t, argument_tuple_t> scheduler;
+  Scheduler<sequence_t, argument_tuple_t> scheduler;
 
   // Host buffers
   HostBuffers host_buffers;
