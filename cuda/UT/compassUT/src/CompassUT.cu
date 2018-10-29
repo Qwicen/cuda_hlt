@@ -56,9 +56,7 @@ __global__ void compass_ut(
 
   // // store windows and num candidates in shared mem
   // // 32 * 4 * 3(num_windows) * 2 (from, size) = 768 (3072 bytes)
-  // __shared__ int win_size_shared[VeloUTTracking::num_threads * N_LAYERS * 3 * 2];
-
-  // __syncthreads();
+  __shared__ int win_size_shared[VeloUTTracking::num_threads * N_LAYERS * 3 * 2];
 
   const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
@@ -67,86 +65,102 @@ __global__ void compass_ut(
 
     const uint current_track_offset = event_tracks_offset + i_track;
 
-    // TODO the non active tracks should be -1
-    // const int i_track = shared_active_tracks[threadIdx.x];
-
-    // select velo track to join with UT hits
-    const uint velo_states_index = event_tracks_offset + i_track;
-    const MiniState velo_state{velo_states, velo_states_index};
-
-    // if (i_track >= number_of_tracks_event) continue;
-    // if (velo_states.backward[velo_states_index]) continue;
-    // if(!velo_track_in_UT_acceptance(velo_state)) continue;    
-
-    int best_hits[N_LAYERS] = {-1, -1, -1, -1};
-    BestParams best_params;
-
-    // fill_shared_windows(
-    //   i_track, 
-    //   dev_windows_layers, 
-    //   current_track_offset, 
-    //   win_size_shared);
+    // if ( /* one win is active */ > 0) {
+    //   int current_track = atomicAdd(active_tracks, 1);
+    //   shared_active_tracks[current_track] = current_track_offset;
+    // }
 
     // __syncthreads();
 
-    // Find compatible hits in the windows for this VELO track
-    find_best_hits(
-      i_track,
-      current_track_offset,
-      dev_windows_layers,
-      // win_size_shared,
-      ut_hits,
-      ut_hit_offsets,
-      velo_state,
-      fudgeFactors,
-      dev_ut_dxDy,
-      true,
-      best_hits,
-      best_params);
+    // if (*active_tracks >= blockDim.x) {
 
-    // Count found hits
-    int total_num_hits = 0;
-    #pragma unroll
-    for (int i = 0; i < N_LAYERS; ++i) {
-      if (best_hits[i] >= 0) total_num_hits++;
-    }
+      // __syncthreads();
 
-    // write the final track
-    if (total_num_hits >= (N_LAYERS - 1)) {
-      save_track(
+      // if (threadIdx.x == 0) {
+      //   *active_tracks -= blockDim.x;
+      // }
+
+      // __syncthreads();
+
+      // TODO the non active tracks should be -1
+      // const int i_track = shared_active_tracks[threadIdx.x];
+
+      // select velo track to join with UT hits
+      const uint velo_states_index = event_tracks_offset + i_track;
+      const MiniState velo_state{velo_states, velo_states_index};
+
+      // if (i_track >= number_of_tracks_event) continue;
+      // if (velo_states.backward[velo_states_index]) continue;
+      // if(!velo_track_in_UT_acceptance(velo_state)) continue;    
+
+      int best_hits[N_LAYERS] = {-1, -1, -1, -1};
+      BestParams best_params;
+
+      fill_shared_windows( 
+        dev_windows_layers, 
+        current_track_offset, 
+        win_size_shared);
+
+      // __syncthreads();
+
+      // Find compatible hits in the windows for this VELO track
+      find_best_hits(
         i_track,
-        bdl_table,
-        velo_state,
-        best_params,
-        dev_velo_track_hits,
-        velo_tracks,
-        total_num_hits,
-        best_hits,
+        current_track_offset,
+        dev_windows_layers,
+        win_size_shared,
         ut_hits,
+        ut_hit_offsets,
+        velo_state,
+        fudgeFactors,
         dev_ut_dxDy,
-        n_veloUT_tracks_event,
-        veloUT_tracks_event);
+        true,
+        best_hits,
+        best_params);
+
+      // Count found hits
+      int total_num_hits = 0;
+      #pragma unroll
+      for (int i = 0; i < N_LAYERS; ++i) {
+        if (best_hits[i] >= 0) total_num_hits++;
+      }
+
+      // write the final track
+      if (total_num_hits >= (N_LAYERS - 1)) {
+        save_track(
+          i_track,
+          bdl_table,
+          velo_state,
+          best_params,
+          dev_velo_track_hits,
+          velo_tracks,
+          total_num_hits,
+          best_hits,
+          ut_hits,
+          dev_ut_dxDy,
+          n_veloUT_tracks_event,
+          veloUT_tracks_event);
+      }
+
+      //     const int j = blockDim.x + threadIdx.x;
+      //     if (j < *active_tracks) {
+      //       shared_active_tracks[threadIdx.x] = shared_active_tracks[j];
+      //     }
+
+      //     __syncthreads();
+
+      //     if (threadIdx.x == 0) {
+      //       *active_tracks -= blockDim.x;
+      //     }
     }
-
-    //     const int j = blockDim.x + threadIdx.x;
-    //     if (j < *active_tracks) {
-    //       shared_active_tracks[threadIdx.x] = shared_active_tracks[j];
-    //     }
-
-    //     __syncthreads();
-
-    //     if (threadIdx.x == 0) {
-    //       *active_tracks -= blockDim.x;
-    //     }
-  }
+  // }
 
   // // remaining tracks
   // if (threadIdx.x < *active_tracks) {
 
-  //   // store a window(2 positions) for each layer, for each thrack
-  //   __shared__ int windows_layers[VeloUTTracking::num_threads * VeloUTTracking::n_layers * 2];
-
   //   const int i_track = shared_active_tracks[threadIdx.x];
+
+  //   // do the rest of the processing
 
   // }
 }
@@ -176,44 +190,44 @@ __host__ __device__ bool velo_track_in_UT_acceptance(const MiniState& state)
 // we store the initial hit of the window and the size of the window 
 // (3 windows per layer)
 //=============================================================================
-__host__ __device__ __inline__ void fill_shared_windows(
-  const int thr_idx,
+__device__ __inline__ void fill_shared_windows(
   const int* windows_layers,
   const uint current_track_offset,
   int* win_size_shared)
 {
   const int total_offset = 6 * N_LAYERS * current_track_offset;
+  const int idx = 24 * threadIdx.x;
   // layer 0
-  win_size_shared[thr_idx]     = windows_layers[total_offset];
-  win_size_shared[thr_idx + 1] = windows_layers[total_offset + 1] - windows_layers[total_offset];
-  win_size_shared[thr_idx + 2] = windows_layers[total_offset + 2];
-  win_size_shared[thr_idx + 3] = windows_layers[total_offset + 3] - windows_layers[total_offset + 2];
-  win_size_shared[thr_idx + 4] = windows_layers[total_offset + 4];
-  win_size_shared[thr_idx + 5] = windows_layers[total_offset + 5] - windows_layers[total_offset + 4];
+  win_size_shared[idx]     = windows_layers[total_offset];
+  win_size_shared[idx + 1] = windows_layers[total_offset + 1] - win_size_shared[idx];
+  win_size_shared[idx + 2] = windows_layers[total_offset + 2];
+  win_size_shared[idx + 3] = windows_layers[total_offset + 3] - win_size_shared[idx + 2];
+  win_size_shared[idx + 4] = windows_layers[total_offset + 4];
+  win_size_shared[idx + 5] = windows_layers[total_offset + 5] - win_size_shared[idx + 4];
 
   // layer 1
-  win_size_shared[thr_idx + 6]     = windows_layers[total_offset + 6];
-  win_size_shared[thr_idx + 6 + 1] = windows_layers[total_offset + 6 + 1] - windows_layers[total_offset + 6];
-  win_size_shared[thr_idx + 6 + 2] = windows_layers[total_offset + 6 + 2];
-  win_size_shared[thr_idx + 6 + 3] = windows_layers[total_offset + 6 + 3] - windows_layers[total_offset + 6 + 2];
-  win_size_shared[thr_idx + 6 + 4] = windows_layers[total_offset + 6 + 4];
-  win_size_shared[thr_idx + 6 + 5] = windows_layers[total_offset + 6 + 5] - windows_layers[total_offset + 6 + 4];
+  win_size_shared[idx + 6]     = windows_layers[total_offset + 6];
+  win_size_shared[idx + 6 + 1] = windows_layers[total_offset + 6 + 1] - win_size_shared[idx + 6];
+  win_size_shared[idx + 6 + 2] = windows_layers[total_offset + 6 + 2];
+  win_size_shared[idx + 6 + 3] = windows_layers[total_offset + 6 + 3] - win_size_shared[idx + 6 + 2];
+  win_size_shared[idx + 6 + 4] = windows_layers[total_offset + 6 + 4];
+  win_size_shared[idx + 6 + 5] = windows_layers[total_offset + 6 + 5] - win_size_shared[idx + 6 + 4];
 
   // layer 2
-  win_size_shared[thr_idx + 12]     = windows_layers[total_offset + 12];
-  win_size_shared[thr_idx + 12 + 1] = windows_layers[total_offset + 12 + 1] - windows_layers[total_offset + 12];
-  win_size_shared[thr_idx + 12 + 2] = windows_layers[total_offset + 12 + 2];
-  win_size_shared[thr_idx + 12 + 3] = windows_layers[total_offset + 12 + 3] - windows_layers[total_offset + 12 + 2];
-  win_size_shared[thr_idx + 12 + 4] = windows_layers[total_offset + 12 + 4];
-  win_size_shared[thr_idx + 12 + 5] = windows_layers[total_offset + 12 + 5] - windows_layers[total_offset + 12 + 4];
+  win_size_shared[idx + 12]     = windows_layers[total_offset + 12];
+  win_size_shared[idx + 12 + 1] = windows_layers[total_offset + 12 + 1] - win_size_shared[idx + 12];
+  win_size_shared[idx + 12 + 2] = windows_layers[total_offset + 12 + 2];
+  win_size_shared[idx + 12 + 3] = windows_layers[total_offset + 12 + 3] - win_size_shared[idx + 12 + 2];
+  win_size_shared[idx + 12 + 4] = windows_layers[total_offset + 12 + 4];
+  win_size_shared[idx + 12 + 5] = windows_layers[total_offset + 12 + 5] - win_size_shared[idx + 12 + 4];
 
   // layer 3
-  win_size_shared[thr_idx + 18]     = windows_layers[total_offset + 18];
-  win_size_shared[thr_idx + 18 + 1] = windows_layers[total_offset + 18 + 1] - windows_layers[total_offset + 18];
-  win_size_shared[thr_idx + 18 + 2] = windows_layers[total_offset + 18 + 2];
-  win_size_shared[thr_idx + 18 + 3] = windows_layers[total_offset + 18 + 3] - windows_layers[total_offset + 18 + 2];
-  win_size_shared[thr_idx + 18 + 4] = windows_layers[total_offset + 18 + 4];
-  win_size_shared[thr_idx + 18 + 5] = windows_layers[total_offset + 18 + 5] - windows_layers[total_offset + 18 + 4];
+  win_size_shared[idx + 18]     = windows_layers[total_offset + 18];
+  win_size_shared[idx + 18 + 1] = windows_layers[total_offset + 18 + 1] - win_size_shared[idx + 18];
+  win_size_shared[idx + 18 + 2] = windows_layers[total_offset + 18 + 2];
+  win_size_shared[idx + 18 + 3] = windows_layers[total_offset + 18 + 3] - win_size_shared[idx + 18 + 2];
+  win_size_shared[idx + 18 + 4] = windows_layers[total_offset + 18 + 4];
+  win_size_shared[idx + 18 + 5] = windows_layers[total_offset + 18 + 5] - win_size_shared[idx + 18 + 4];
 }
 
 //=========================================================================
@@ -265,11 +279,11 @@ __host__ __device__ __inline__ int set_index(
 // When iterating over a panel, 3 windows are given, we set the index
 // to be only in the windows
 //=========================================================================
-__host__ __device__ void find_best_hits(
+__device__ void find_best_hits(
   const int i_track,
   const uint current_track_offset,
   const int* dev_windows_layers,
-  // const int* win_size_shared,
+  const int* win_size_shared,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
@@ -307,58 +321,21 @@ __host__ __device__ void find_best_hits(
   // // Get windows of all layers
   // WindowIndicator win_ranges(dev_windows_layers); 
   // const auto* ranges = win_ranges.get_track_candidates(i_track);
-  const int from_l0_g0 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0];
-  const int to_l0_g0 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 1];
-  const int from_l0_g1 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 2];
-  const int to_l0_g1 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 3];
-  const int from_l0_g2 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 4];
-  const int to_l0_g2 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 0 + 5];
-
-  const int from_l1_g0 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1];
-  const int to_l1_g0 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1 + 1];
-  const int from_l1_g1 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1 + 2];
-  const int to_l1_g1 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1 + 3];
-  const int from_l1_g2 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1 + 4];
-  const int to_l1_g2 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 1 + 5];
-
-  const int from_l2_g0 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2];
-  const int to_l2_g0 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2 + 1];
-  const int from_l2_g1 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2 + 2];
-  const int to_l2_g1 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2 + 3];
-  const int from_l2_g2 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2 + 4];
-  const int to_l2_g2 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 2 + 5];
-
-  const int from_l3_g0 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3];
-  const int to_l3_g0 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3 + 1];
-  const int from_l3_g1 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3 + 2];
-  const int to_l3_g1 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3 + 3];
-  const int from_l3_g2 = dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3 + 4];
-  const int to_l3_g2 =   dev_windows_layers[6 * N_LAYERS * current_track_offset + 6 * 3 + 5];
-
-  // Check number of hits in the windows
-  const int num_candidates_l0_g0 = to_l0_g0 - from_l0_g0;
-  const int num_candidates_l0_g1 = to_l0_g1 - from_l0_g1;
-  const int num_candidates_l0_g2 = to_l0_g2 - from_l0_g2;
-
-  const int num_candidates_l1_g0 = to_l1_g0 - from_l1_g0;
-  const int num_candidates_l1_g1 = to_l1_g1 - from_l1_g1;
-  const int num_candidates_l1_g2 = to_l1_g2 - from_l1_g2;
-
-  const int num_candidates_l2_g0 = to_l2_g0 - from_l2_g0;
-  const int num_candidates_l2_g1 = to_l2_g1 - from_l2_g1;
-  const int num_candidates_l2_g2 = to_l2_g2 - from_l2_g2;
-
-  const int num_candidates_l3_g0 = to_l3_g0 - from_l3_g0;
-  const int num_candidates_l3_g1 = to_l3_g1 - from_l3_g1;
-  const int num_candidates_l3_g2 = to_l3_g2 - from_l3_g2;
+  const int idx = 24 * threadIdx.x;
 
   // bool fourLayerSolution = false;
 
   // loop over the 3 windows, putting the index in the windows
   // loop over layer 0
-  for (int i0=0; i0<num_candidates_l0_g0 + num_candidates_l0_g1 + num_candidates_l0_g2; ++i0) {
+  for (int i0=0; i0<win_size_shared[idx + 1] + win_size_shared[idx + 3] + win_size_shared[idx + 5]; ++i0) {
 
-    int i_hit0 = set_index(i0, from_l0_g0, from_l0_g1, from_l0_g2, num_candidates_l0_g0, num_candidates_l0_g1);
+    int i_hit0 = set_index(
+      i0,
+      win_size_shared[idx],
+      win_size_shared[idx + 2],
+      win_size_shared[idx + 4],
+      win_size_shared[idx + 1],
+      win_size_shared[idx + 3]);
 
     if (!check_tol_refine(
       i_hit0,
@@ -376,9 +353,15 @@ __host__ __device__ void find_best_hits(
     best_hits[0] = i_hit0;
 
     // loop over layer 2
-    for (int i2=0; i2<num_candidates_l2_g0 + num_candidates_l2_g1 + num_candidates_l2_g2; ++i2) {
+    for (int i2=0; i2<win_size_shared[idx + 12 + 1] + win_size_shared[idx + 12 + 3] + win_size_shared[idx + 12 + 5]; ++i2) {
 
-      int i_hit2 = set_index(i2, from_l2_g0, from_l2_g1, from_l2_g2, num_candidates_l2_g0, num_candidates_l2_g1);
+      int i_hit2 = set_index(
+        i2,
+        win_size_shared[idx + 12],
+        win_size_shared[idx + 12 + 2],
+        win_size_shared[idx + 12 + 4],
+        win_size_shared[idx + 12 + 1],
+        win_size_shared[idx + 12 + 3]);
 
       if (!check_tol_refine(
         i_hit2,
@@ -401,9 +384,15 @@ __host__ __device__ void find_best_hits(
       float hitTol = PrVeloUTConst::hitTol2;
 
       // search for triplet in layer1
-      for (int i1=0; i1<num_candidates_l1_g0 + num_candidates_l1_g1 + num_candidates_l1_g2; ++i1) {
+      for (int i1=0; i1<win_size_shared[idx + 6 + 1] + win_size_shared[idx + 6 + 3] + win_size_shared[idx + 6 + 5]; ++i1) {
 
-        int i_hit1 = set_index(i1, from_l1_g0, from_l1_g1, from_l1_g2, num_candidates_l1_g0, num_candidates_l1_g1);
+        int i_hit1 = set_index(
+          i1,
+          win_size_shared[idx + 6],
+          win_size_shared[idx + 6 + 2],
+          win_size_shared[idx + 6 + 4],
+          win_size_shared[idx + 6 + 1],
+          win_size_shared[idx + 6 + 3]);
 
         if (!check_tol_refine(
           i_hit1,
@@ -428,9 +417,15 @@ __host__ __device__ void find_best_hits(
 
       // search for quadruplet in layer3
       hitTol = PrVeloUTConst::hitTol2;
-      for (int i3=0; i3<num_candidates_l3_g0 + num_candidates_l3_g1 + num_candidates_l3_g2; ++i3) {
+      for (int i3=0; i3<win_size_shared[idx + 18 + 1] + win_size_shared[idx + 18 + 3] + win_size_shared[idx + 18 + 5]; ++i3) {
 
-        int i_hit3 = set_index(i3, from_l3_g0, from_l3_g1, from_l3_g2, num_candidates_l3_g0, num_candidates_l3_g1);
+        int i_hit3 = set_index(
+          i3,
+          win_size_shared[idx + 18],
+          win_size_shared[idx + 18 + 2],
+          win_size_shared[idx + 18 + 4],
+          win_size_shared[idx + 18 + 1],
+          win_size_shared[idx + 18 + 3]);
 
         if (!check_tol_refine(
           i_hit3,
