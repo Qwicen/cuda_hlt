@@ -10,11 +10,10 @@
 /**
  * Generic StrException launcher
  */
-class StrException : public std::exception
+struct StrException : public std::exception
 {
-public:
-    std::string s;
-    StrException(std::string ss) : s(ss) {}
-    ~StrException() throw () {} // Updated
-    const char* what() const throw() { return s.c_str(); }
+  std::string s;
+  StrException(std::string ss) : s(ss) {}
+  ~StrException() throw () {} // Updated
+  const char* what() const throw() { return s.c_str(); }
 };

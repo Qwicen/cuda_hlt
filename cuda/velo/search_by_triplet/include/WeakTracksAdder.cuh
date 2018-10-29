@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VeloEventModel.cuh"
+#include "Handler.cuh"
 
 __device__ void weak_tracks_adder_impl(
   uint* weaktracks_insert_pointer,
@@ -21,3 +22,5 @@ __global__ void weak_tracks_adder(
   bool* dev_hit_used,
   int* dev_atomics_storage
 );
+
+ALGORITHM(weak_tracks_adder, weak_tracks_adder_t)

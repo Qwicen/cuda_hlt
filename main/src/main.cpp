@@ -21,6 +21,7 @@
 #include "tbb/tbb.h"
 #include "cuda_runtime.h"
 #include "CudaCommon.h"
+#include "RuntimeOptions.h"
 #include "Logger.h"
 #include "Tools.h"
 #include "InputTools.h"
@@ -32,9 +33,7 @@
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
-    << std::endl << " -f {folder containing .bin files with VP raw bank information}"
-    << std::endl << " -u {folder containing bin files with UT raw bank information}"
-    << std::endl << " -i {folder containing .bin files with SciFi raw bank information}"
+    << std::endl << " -f {folder containing directories with raw bank binaries for every sub-detector}"
     << std::endl << " -g {folder containing detector configuration}"
     << std::endl << " -d {folder containing .bin files with MC truth information}"
     << std::endl << " -j {folder containing .bin files with PV truth information}"
@@ -46,16 +45,15 @@ void printUsage(char* argv[]){
     << std::endl << " -k {simplified kalman filter}=0"
     << std::endl << " -m {reserve Megabytes}=1024"
     << std::endl << " -v {verbosity}=3 (info)"
-    << std::endl << " -p (print memory usage)"
-    << std::endl << " -x {run algorithms on x86 architecture as well (if possible)}=0"
+    << std::endl << " -p {print memory usage}=0"
+    << std::endl << " -a {run only data preparation algorithms: decoding, clustering, sorting}=0"
+    << std::endl << " -x {run algorithms on x86 architecture if implementation is available}=0"
     << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
-  std::string folder_name_velopix_raw = "../input/minbias/velopix_raw/";
-  std::string folder_name_UT_raw = "../input/minbias/ut_raw/";
-  std::string folder_name_SciFi_raw = "../input/minbias/scifi_raw/";
+  std::string folder_name_raw_banks = "../input/minbias/banks/";
   std::string folder_name_MC = "../input/minbias/MC_info/";
   std::string folder_name_detector_configuration = "../input/detector_configuration/";
   std::string folder_name_pv = "";
@@ -72,22 +70,16 @@ int main(int argc, char *argv[])
   size_t reserve_mb = 1024;
 
   signed char c;
-  while ((c = getopt(argc, argv, "f:d:u:i:n:o:t:r:pha:b:d:j:v:c:k:m:g:x:")) != -1) {
+  while ((c = getopt(argc, argv, "f:d:i:n:o:t:r:pha:b:d:v:c:k:m:g:x")) != -1) {
     switch (c) {
     case 'f':
-      folder_name_velopix_raw = std::string(optarg);
+      folder_name_raw_banks = std::string(optarg);
       break;
     case 'd':
       folder_name_MC = std::string(optarg);
       break;
     case 'i':
       folder_name_pv = std::string(optarg);
-    case 'u':
-      folder_name_UT_raw = std::string(optarg);
-      break;
-    case 'i':
-      folder_name_SciFi_raw = std::string(optarg);
-      break;
     case 'g':
       folder_name_detector_configuration = std::string(optarg);
       break;
@@ -130,13 +122,10 @@ int main(int argc, char *argv[])
   }
 
   // Options sanity check
-  if (folder_name_velopix_raw.empty() || folder_name_UT_raw.empty() || folder_name_SciFi_raw.empty() ||
-    folder_name_detector_configuration.empty() || (folder_name_MC.empty() && do_check)) {
+  if (folder_name_raw_banks.empty() || folder_name_detector_configuration.empty() || (folder_name_MC.empty() && do_check)) {
     std::string missing_folder = "";
 
-    if (folder_name_velopix_raw.empty()) missing_folder = "velopix raw events";
-    else if (folder_name_UT_raw.empty()) missing_folder = "UT raw events";
-    else if (folder_name_SciFi_raw.empty()) missing_folder = "SciFi raw events";
+    if (folder_name_raw_banks.empty()) missing_folder = "raw banks";
     else if (folder_name_detector_configuration.empty()) missing_folder = "detector geometry";
     else if (folder_name_MC.empty() && do_check) missing_folder = "Monte Carlo";
     else if (folder_name_pv.empty() && do_check) missing_folder = "PV truth";
@@ -156,9 +145,7 @@ int main(int argc, char *argv[])
 
   // Show call options
   std::cout << "Requested options:" << std::endl
-    << " folder with velopix raw bank input (-f): " << folder_name_velopix_raw << std::endl
-    << " folder with UT raw bank input (-u): " << folder_name_UT_raw << std::endl
-    << " folder with SciFi raw bank input (-i): " << folder_name_SciFi_raw << std::endl
+    << " folder containing directories with raw bank binaries for every sub-detector (-f): " << folder_name_raw_banks << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " folder with PV truth input (-j): " << folder_name_pv << std::endl
@@ -169,7 +156,7 @@ int main(int argc, char *argv[])
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
     << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
-    << " run algorithms on x86 architecture as well (-x): " << run_on_x86 << std::endl
+    << " run algorithms on x86 architecture if implementation is available (-x): " << run_on_x86 << std::endl
     << " print memory usage (-p): " << print_memory_usage << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
@@ -178,9 +165,12 @@ int main(int argc, char *argv[])
   // Read all inputs
   info_cout << "Reading input datatypes" << std::endl;
 
+  std::string folder_name_velopix_raw = folder_name_raw_banks + "VP"; 
   number_of_events_requested = get_number_of_events_requested(
     number_of_events_requested, folder_name_velopix_raw);
 
+  std::string folder_name_UT_raw = folder_name_raw_banks + "UT";
+  std::string folder_name_SciFi_raw = folder_name_raw_banks + "FTCluster";
   auto geometry_reader = GeometryReader(folder_name_detector_configuration);
   auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
   auto velo_reader = VeloReader(folder_name_velopix_raw);
@@ -202,16 +192,17 @@ int main(int argc, char *argv[])
   Constants constants;
   constants.reserve_and_initialize();
   constants.initialize_ut_decoding_constants(ut_geometry);
+  constants.initialize_geometry_constants(
+    velo_geometry,
+    ut_boards,
+    ut_geometry,
+    ut_magnet_tool,
+    scifi_geometry);
 
   // Create streams
   StreamWrapper stream_wrapper;
   stream_wrapper.initialize_streams(
     tbb_threads,
-    velo_geometry,
-    ut_boards,
-    ut_geometry,
-    ut_magnet_tool,
-    scifi_geometry,
     number_of_events_requested,
     do_check,
     do_simplified_kalman_filter,
@@ -230,8 +221,7 @@ int main(int argc, char *argv[])
     static_cast<uint>(0),
     static_cast<uint>(tbb_threads),
     [&] (uint i) {
-      stream_wrapper.run_stream(
-        i,
+      auto runtime_options = RuntimeOptions{
         velo_reader.host_events,
         velo_reader.host_event_offsets,
         velo_reader.host_events_size,
@@ -245,11 +235,17 @@ int main(int argc, char *argv[])
         scifi_reader.host_events_size,
         scifi_reader.host_event_offsets_size,
         number_of_events_requested,
-        number_of_repetitions
-      );
+        number_of_repetitions};
+
+      stream_wrapper.run_stream(i, runtime_options);
     }
   );
   t.stop();
+
+  // Do optional Monte Carlo truth test
+  if (do_check) {
+    stream_wrapper.run_monte_carlo_test(0, number_of_events_requested);
+  }
 
   std::cout << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;

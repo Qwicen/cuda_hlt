@@ -19,13 +19,14 @@ struct DynamicScheduler {
   DynamicScheduler() = default;
 
   DynamicScheduler(
-    const std::array<std::string, std::tuple_size<T>::value>& param_sequence_names,
+    // const std::array<std::string, std::tuple_size<T>::value>& param_sequence_names,
     const std::array<std::string, std::tuple_size<R>::value>& param_argument_names,
     const std::vector<std::vector<int>>& param_sequence_dependencies,
     const std::vector<int> param_sequence_output_arguments,
     const size_t reserved_mb,
     const bool param_do_print)
-  : sequence_names(param_sequence_names),
+  :
+    // sequence_names(param_sequence_names),
     argument_names(param_argument_names),
     sequence_dependencies(param_sequence_dependencies),
     sequence_output_arguments(param_sequence_output_arguments),

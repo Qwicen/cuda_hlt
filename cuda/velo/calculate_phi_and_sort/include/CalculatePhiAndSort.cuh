@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cassert>
 #include "VeloDefinitions.cuh"
+#include "Handler.cuh"
 
 __device__ void calculate_phi(
   const uint* module_hitStarts,
@@ -30,3 +31,5 @@ __global__ void calculate_phi_and_sort(
   uint32_t* dev_velo_cluster_container,
   uint* dev_hit_permutations
 );
+
+ALGORITHM(calculate_phi_and_sort, calculate_phi_and_sort_t)

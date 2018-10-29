@@ -1,5 +1,6 @@
 #include "../include/ConsolidateTracks.cuh"
 
+
 /**
  * @brief Calculates the parameters according to a root means square fit
  */

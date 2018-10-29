@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "VeloEventModel.cuh"
 #include "Common.h"
+#include "Handler.cuh"
 
 __device__ float velo_kalman_filter_step(
   const float z,
@@ -97,3 +98,5 @@ __global__ void velo_fit(
   VeloState* dev_velo_states,
   const VeloTracking::TrackHits* dev_tracks
 );
+
+ALGORITHM(velo_fit, velo_fit_t)

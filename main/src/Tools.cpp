@@ -43,7 +43,6 @@ bool check_velopix_events(
     error_cout << error_count << " errors detected." << std::endl;
     return false;
   }
-
   return true;
 }
 
@@ -112,13 +111,15 @@ trackChecker::Tracks prepareVeloUTTracksEvent(
   const VeloUTTracking::TrackUT* veloUT_tracks,
   const int n_veloUT_tracks
 ) {
-  debug_cout << "event has " << n_veloUT_tracks << " tracks" << std::endl;
+  //debug_cout << "event has " << n_veloUT_tracks << " tracks" << std::endl;
   trackChecker::Tracks checker_tracks;
   for ( int i_track = 0; i_track < n_veloUT_tracks; ++i_track ) {
     VeloUTTracking::TrackUT veloUT_track = veloUT_tracks[i_track];
     trackChecker::Track checker_track;
     assert( veloUT_track.hitsNum < VeloUTTracking::max_track_size);
+    //debug_cout << "at track " << std::dec << i_track << std::endl;
     for ( int i_hit = 0; i_hit < veloUT_track.hitsNum; ++i_hit ) {
+      //debug_cout<<"\t LHCbIDsVeloUT["<<i_hit<<"] = "<< std::hex << veloUT_track.LHCbIDs[i_hit] << std::endl;
       LHCbID lhcb_id( veloUT_track.LHCbIDs[i_hit] );
       checker_track.addId( lhcb_id );
     }
@@ -127,6 +128,66 @@ trackChecker::Tracks prepareVeloUTTracksEvent(
 
   return checker_tracks;
 }
+
+trackChecker::Tracks prepareForwardTracksVeloUTOnly(
+  std::vector< VeloUTTracking::TrackUT > forward_tracks
+) {
+  trackChecker::Tracks checker_tracks;
+  int i_track = 0;
+  for ( VeloUTTracking::TrackUT forward_track : forward_tracks ) {
+    trackChecker::Track checker_track;
+    //debug_cout << "at track " << std::dec << i_track << std::endl;
+    for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
+      // debug_cout<<"\t LHCbIDsForward["<<i_hit<<"] = " << std::hex << forward_track.LHCbIDs[i_hit]<< std::endl;
+      LHCbID lhcb_id( forward_track.LHCbIDs[i_hit] );
+      checker_track.addId( lhcb_id );
+    }
+    checker_tracks.push_back( checker_track );
+    ++i_track;
+  }
+  //debug_cout<<"end prepareForwardTracks"<<std::endl;
+
+  return checker_tracks;
+}
+
+std::vector< trackChecker::Tracks > prepareForwardTracks(
+  SciFi::Track* scifi_tracks,
+  uint* n_scifi_tracks,
+  const int number_of_events
+) {
+  std::vector< trackChecker::Tracks > checker_tracks;
+  for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
+    debug_cout << "in event " << i_event << " found " << n_scifi_tracks[i_event] << " tracks " << std::endl;
+    trackChecker::Tracks ch_tracks = prepareForwardTracksEvent(
+      scifi_tracks + i_event * SciFi::max_tracks,
+      n_scifi_tracks[i_event]);
+    checker_tracks.push_back( ch_tracks );
+  }
+  return checker_tracks;
+}
+
+trackChecker::Tracks prepareForwardTracksEvent(
+  SciFi::Track forward_tracks[SciFi::max_tracks],
+  const uint n_forward_tracks
+) {
+  trackChecker::Tracks checker_tracks;
+  for ( int i_track = 0; i_track < n_forward_tracks; i_track++ ) {
+    const SciFi::Track& forward_track = forward_tracks[i_track];
+    trackChecker::Track checker_track;
+    if ( forward_track.hitsNum >= SciFi::max_track_size )
+      debug_cout << "at track " << i_track << " forward track hits Num = " << forward_track.hitsNum << std::endl;
+    assert( forward_track.hitsNum < SciFi::max_track_size );
+    //debug_cout << "at track " << std::dec << i_track << " with " << forward_track.hitsNum << " hits " << std::endl;
+    for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
+      //debug_cout<<"\t LHCbIDs Forward["<<i_hit<<"] = " << std::hex << forward_track.LHCbIDs[i_hit]<< std::endl;
+      LHCbID lhcb_id( forward_track.LHCbIDs[i_hit] );
+      checker_track.addId( lhcb_id );
+    }
+    checker_tracks.push_back( checker_track );
+  }
+  
+  return checker_tracks;
+} 
 
 std::vector< trackChecker::Tracks > prepareVeloUTTracks(
   const VeloUTTracking::TrackUT* veloUT_tracks,
@@ -158,6 +219,13 @@ void call_pr_checker(
   }
   else if ( trackType == "VeloUT" ) {
     call_pr_checker_impl<TrackCheckerVeloUT> (
+      all_tracks,
+      folder_name_MC,
+      start_event_offset,
+      trackType);
+  }
+  else if ( trackType == "Forward" ) {
+    call_pr_checker_impl<TrackCheckerForward> (
       all_tracks,
       folder_name_MC,
       start_event_offset,

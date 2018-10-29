@@ -6,14 +6,15 @@
 #include <algorithm>
 #include <fstream>
 #include <cassert>
-#include "Logger.h"
-#include "SystemOfUnits.h"
+
+#include "VeloDefinitions.cuh"
 #include "VeloEventModel.cuh"
 #include "VeloUTDefinitions.cuh"
 #include "PrVeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "UTDefinitions.cuh"
 #include "VeloConsolidated.cuh"
+#include "VeloEventModel.cuh"
 
 struct MiniState {
   float x, y, tx, ty, z;
@@ -56,6 +57,8 @@ struct TrackHelper{
     }
   };
 
+__host__ __device__ void propagate_state_to_end_velo( Velo::State& velo_state );
+
 __host__ __device__ bool veloTrackInUTAcceptance(
   const MiniState& state
 );
@@ -97,6 +100,7 @@ __host__ __device__ void prepareOutputTrack(
   const int hitCandidateIndices[VeloUTTracking::n_layers],
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
   int* n_veloUT_tracks,
+  const int i_velo_track,
   const float* bdlTable);
 
 __host__ __device__ void fillArray(

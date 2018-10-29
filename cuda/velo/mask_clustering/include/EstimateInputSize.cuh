@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cassert>
 #include "ClusteringDefinitions.cuh"
+#include "Handler.cuh"
 
 __global__ void estimate_input_size(
   char* dev_raw_input,
@@ -13,3 +14,5 @@ __global__ void estimate_input_size(
   uint32_t* dev_cluster_candidates,
   uint8_t* dev_velo_candidate_ks
 );
+
+ALGORITHM(estimate_input_size, estimate_input_size_t)

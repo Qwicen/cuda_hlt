@@ -6,6 +6,7 @@ namespace VeloTracking {
 // Detector constants
 static constexpr uint n_modules = 52;
 static constexpr uint n_sensors = n_modules * 4;
+static constexpr float z_endVelo = 770;
 
 // How many concurrent h1s to process max
 // It should be a divisor of NUMTHREADS_X

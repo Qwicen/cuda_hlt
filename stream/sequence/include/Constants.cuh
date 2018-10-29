@@ -10,8 +10,12 @@
 #include "ClusteringDefinitions.cuh"
 #include "ClusteringCommon.h"
 #include "VeloUTDefinitions.cuh"
+#include "PrForwardConstants.cuh"
+#include "TMVA_Forward_1.cuh"
+#include "TMVA_Forward_2.cuh"
 #include "UTDefinitions.cuh"
 #include "Logger.h"
+#include "PrVeloUTMagnetToolDefinitions.h"
 
 /**
  * @brief Struct intended as a singleton with constants defined on GPU.
@@ -36,11 +40,24 @@ struct Constants {
   float* dev_velo_sp_fx;
   float* dev_velo_sp_fy;
   float* dev_ut_dxDy;
+  SciFi::Tracking::TMVA* dev_scifi_tmva1;
+  SciFi::Tracking::TMVA* dev_scifi_tmva2;
+  SciFi::Tracking::Arrays* dev_scifi_constArrays;
   uint* dev_unique_x_sector_layer_offsets;
   uint* dev_unique_x_sector_offsets;
   uint* dev_ut_region_offsets;
   float* dev_unique_sector_xs;
+
+  // Geometry constants
+  char* dev_velo_geometry;
+  char* dev_ut_boards;
+  char* dev_ut_geometry;
+  char* dev_scifi_geometry;
+  PrUTMagnetTool* dev_ut_magnet_tool;
   
+  /**
+   * @brief Reserves and initializes constants.
+   */
   void reserve_and_initialize() {
     reserve_constants();
     initialize_constants();
@@ -60,4 +77,14 @@ struct Constants {
    * @brief Initializes UT decoding constants.
    */
   void initialize_ut_decoding_constants(const std::vector<char>& ut_geometry);
+
+  /**
+   * @brief Initializes geometry constants and magnet field.
+   */
+  void initialize_geometry_constants(
+    const std::vector<char>& velopix_geometry,
+    const std::vector<char>& ut_boards,
+    const std::vector<char>& ut_geometry,
+    const std::vector<char>& ut_magnet_tool,
+    const std::vector<char>& scifi_geometry);
 };
