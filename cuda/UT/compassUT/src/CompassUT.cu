@@ -37,7 +37,7 @@ __global__ void compass_ut(
   UTHits ut_hits {dev_ut_hits, total_number_of_hits};
 
   // active track pointer
-  // int* active_tracks = dev_active_tracks + event_number;
+  int* active_tracks = dev_active_tracks + event_number;
 
   // dev_atomics_compassUT contains in an SoA:
   //   1. # of veloUT tracks
@@ -49,7 +49,7 @@ __global__ void compass_ut(
   // initialize atomic veloUT tracks counter && active track
   if (threadIdx.x == 0) {
     *n_veloUT_tracks_event = 0;
-    // *active_tracks         = 0;
+    *active_tracks         = 0;
   }
 
   // int shared_active_tracks[2 * VeloUTTracking::num_threads - 1];
@@ -65,82 +65,30 @@ __global__ void compass_ut(
 
     const uint current_track_offset = event_tracks_offset + i_track;
 
-    // if ( /* one win is active */ > 0) {
-    //   int current_track = atomicAdd(active_tracks, 1);
-    //   shared_active_tracks[current_track] = current_track_offset;
-    // }
+    if ( found_active_windows(dev_windows_layers, current_track_offset) ) {
+      int current_track = atomicAdd(active_tracks, 1);
+      // shared_active_tracks[current_track] = current_track_offset;
+    }
 
-    // __syncthreads();
+    __syncthreads();
 
-    // if (*active_tracks >= blockDim.x) {
+    if (*active_tracks >= blockDim.x) {
 
-      // __syncthreads();
-
-      // if (threadIdx.x == 0) {
-      //   *active_tracks -= blockDim.x;
-      // }
-
-      // __syncthreads();
-
-      // TODO the non active tracks should be -1
-      // const int i_track = shared_active_tracks[threadIdx.x];
-
-      // select velo track to join with UT hits
-      const uint velo_states_index = event_tracks_offset + i_track;
-      const MiniState velo_state{velo_states, velo_states_index};
-
-      // if (i_track >= number_of_tracks_event) continue;
-      // if (velo_states.backward[velo_states_index]) continue;
-      // if(!velo_track_in_UT_acceptance(velo_state)) continue;    
-
-      int best_hits[N_LAYERS] = {-1, -1, -1, -1};
-      BestParams best_params;
-
-      fill_shared_windows( 
-        dev_windows_layers, 
-        current_track_offset, 
-        win_size_shared);
-
-      // __syncthreads();
-
-      // Find compatible hits in the windows for this VELO track
-      find_best_hits(
-        i_track,
-        current_track_offset,
-        dev_windows_layers,
-        win_size_shared,
-        ut_hits,
-        ut_hit_offsets,
-        velo_state,
-        fudgeFactors,
-        dev_ut_dxDy,
-        true,
-        best_hits,
-        best_params);
-
-      // Count found hits
-      int total_num_hits = 0;
-      #pragma unroll
-      for (int i = 0; i < N_LAYERS; ++i) {
-        if (best_hits[i] >= 0) total_num_hits++;
-      }
-
-      // write the final track
-      if (total_num_hits >= (N_LAYERS - 1)) {
-        save_track(
-          i_track,
-          bdl_table,
-          velo_state,
-          best_params,
-          dev_velo_track_hits,
-          velo_tracks,
-          total_num_hits,
-          best_hits,
-          ut_hits,
-          dev_ut_dxDy,
-          n_veloUT_tracks_event,
-          veloUT_tracks_event);
-      }
+    compass_ut_tracking(
+      dev_windows_layers,
+      dev_velo_track_hits,
+      i_track,
+      current_track_offset,
+      velo_states,
+      velo_tracks,
+      ut_hits,
+      ut_hit_offsets,
+      fudgeFactors,
+      bdl_table,
+      dev_ut_dxDy,
+      win_size_shared,
+      n_veloUT_tracks_event,
+      veloUT_tracks_event);
 
       //     const int j = blockDim.x + threadIdx.x;
       //     if (j < *active_tracks) {
@@ -153,16 +101,104 @@ __global__ void compass_ut(
       //       *active_tracks -= blockDim.x;
       //     }
     }
-  // }
+  }
 
   // // remaining tracks
   // if (threadIdx.x < *active_tracks) {
 
   //   const int i_track = shared_active_tracks[threadIdx.x];
 
-  //   // do the rest of the processing
-
+  //   compass_ut_tracking(
+  //     dev_windows_layers,
+  //     dev_velo_track_hits,
+  //     i_track,
+  //     current_track_offset,
+  //     velo_states,
+  //     velo_tracks,
+  //     ut_hits,
+  //     ut_hit_offsets,
+  //     fudgeFactors,
+  //     bdl_table,
+  //     dev_ut_dxDy,
+  //     win_size_shared,
+  //     n_veloUT_tracks_event,
+  //     veloUT_tracks_event);
   // }
+}
+
+__device__ void compass_ut_tracking(
+  const int* dev_windows_layers,
+  uint* dev_velo_track_hits,
+  const int i_track,
+  const uint current_track_offset,
+  const Velo::Consolidated::States& velo_states,
+  const Velo::Consolidated::Tracks& velo_tracks,
+  const UTHits& ut_hits,
+  const UTHitOffsets& ut_hit_offsets,
+  const float* fudgeFactors,
+  const float* bdl_table,
+  const float* dev_ut_dxDy,
+  int* win_size_shared,
+  int* n_veloUT_tracks_event,
+  VeloUTTracking::TrackUT* veloUT_tracks_event)
+{
+  // __syncthreads();
+
+  // if (threadIdx.x == 0) {
+  //   *active_tracks -= blockDim.x;
+  // }
+
+  // __syncthreads();
+
+  // select velo track to join with UT hits
+  const MiniState velo_state{velo_states, current_track_offset};
+
+  int best_hits[N_LAYERS] = {-1, -1, -1, -1};
+  BestParams best_params;
+
+  fill_shared_windows( 
+    dev_windows_layers, 
+    current_track_offset, 
+    win_size_shared);
+
+  // Find compatible hits in the windows for this VELO track
+  find_best_hits(
+    i_track,
+    current_track_offset,
+    dev_windows_layers,
+    win_size_shared,
+    ut_hits,
+    ut_hit_offsets,
+    velo_state,
+    fudgeFactors,
+    dev_ut_dxDy,
+    true,
+    best_hits,
+    best_params);
+
+  // Count found hits
+  int total_num_hits = 0;
+  #pragma unroll
+  for (int i = 0; i < N_LAYERS; ++i) {
+    if (best_hits[i] >= 0) total_num_hits++;
+  }
+
+  // write the final track
+  if (total_num_hits >= (N_LAYERS - 1)) {
+    save_track(
+      i_track,
+      bdl_table,
+      velo_state,
+      best_params,
+      dev_velo_track_hits,
+      velo_tracks,
+      total_num_hits,
+      best_hits,
+      ut_hits,
+      dev_ut_dxDy,
+      n_veloUT_tracks_event,
+      veloUT_tracks_event);
+  }  
 }
 
 //=============================================================================
@@ -228,6 +264,22 @@ __device__ __inline__ void fill_shared_windows(
   win_size_shared[idx + 18 + 3] = windows_layers[total_offset + 18 + 3] - win_size_shared[idx + 18 + 2];
   win_size_shared[idx + 18 + 4] = windows_layers[total_offset + 18 + 4];
   win_size_shared[idx + 18 + 5] = windows_layers[total_offset + 18 + 5] - win_size_shared[idx + 18 + 4];
+}
+
+//=========================================================================
+// Determine if there are valid windows for this track
+//=========================================================================
+__device__ __inline__ bool found_active_windows(
+  const int* windows_layers,
+  const uint current_track_offset)
+{
+  const int total_offset = 6 * N_LAYERS * current_track_offset;
+
+  for (int i=total_offset; i<=total_offset + 18 + 5; ++i) {
+    if (windows_layers[i] != -1) return true;
+  }
+
+  return false;
 }
 
 //=========================================================================
