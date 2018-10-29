@@ -22,8 +22,12 @@
 #include "Tracks.h"
 #include "MCAssociator.h"
 #include "Logger.h"
-#include "Histograms.h"
 
+#ifdef WITH_ROOT
+#include "TH1D.h"
+#include "TFile.h"
+#include "TDirectory.h"
+#endif
 
 class TrackChecker
 {
@@ -75,49 +79,57 @@ class TrackChecker
             ~TrackEffReport();
         };
 
-       
-
-        const float m_minweight = 0.7f;
-        std::vector<TrackEffReport> m_categories;
-
-        std::size_t m_nevents = 0;
-        std::size_t m_ntracks = 0;
-        std::size_t m_nghosts = 0;
-        float m_ghostperevent = 0.f;
-
-        virtual void SetHistoCategories() = 0;
-        virtual void SetCategories() = 0;
-        
-    public:
-        TrackChecker() {};
-        ~TrackChecker();
-        void operator()(const trackChecker::Tracks& tracks,
-                const MCAssociator& mcassoc,
-                        const MCParticles& mcps);
-        //                Histos histos);
-
-        struct TrackHistos {
+        struct HistoCategory {
           std::string m_name;
           AcceptFn m_accept;
-
+          
           /// construction from name and accept criterion for eff. denom.
           template <typename F>
-          TrackHistos(const std::string& name, const F& accept) :
+          HistoCategory(const std::string& name, const F& accept) :
             m_name(name), m_accept(accept)
           {}
           /// construction from name and accept criterion for eff. denom.
           template <typename F>
-          TrackHistos(std::string&& name, F&& accept) :
+          HistoCategory(std::string&& name, F&& accept) :
             m_name(std::move(name)), m_accept(std::move(accept))
           {}
-
-          /// filter MC particles and fill histograms
-          void operator()(const MCParticles& mcps);
         };
-        
-        std::vector<TrackHistos> m_histo_categories;
+                
+        std::vector<TrackEffReport> m_categories;
+        std::vector<HistoCategory> m_histo_categories;
+        std::string m_trackerName = "";
 
+        struct Histos {
+#ifdef WITH_ROOT
+          std::map< std::string, TH1D > h_reconstructible_eta;
+          
+#endif
+        };
+
+        Histos histos;
         
+        const float m_minweight = 0.7f;
+        std::size_t m_nevents = 0;
+        std::size_t m_ntracks = 0;
+        std::size_t m_nghosts = 0;
+        float m_ghostperevent = 0.f;
+        
+        virtual void SetHistoCategories() = 0;
+        virtual void SetCategories() = 0;
+        
+    public:
+        TrackChecker() {
+        };
+        ~TrackChecker();
+        void operator()(const trackChecker::Tracks& tracks,
+          const MCAssociator& mcassoc,
+          const MCParticles& mcps);
+#ifdef WITH_ROOT
+        void initHistos();
+        void fillReconstructibleHistos(
+          const MCParticles& mcps,
+          const HistoCategory& category);
+#endif                
 };
 
 class TrackCheckerVelo : public TrackChecker
@@ -128,6 +140,7 @@ class TrackCheckerVelo : public TrackChecker
       TrackCheckerVelo() {
         SetCategories();
         SetHistoCategories();
+        m_trackerName = "Velo";
       };
         
 };
@@ -140,6 +153,7 @@ class TrackCheckerVeloUT : public TrackChecker
       TrackCheckerVeloUT() {
         SetCategories();
         SetHistoCategories();
+        m_trackerName = "VeloUT";
       };
   
 };
@@ -152,6 +166,9 @@ class TrackCheckerForward : public TrackChecker
       TrackCheckerForward() {
         SetCategories();
         SetHistoCategories();
+        m_trackerName = "Forward";
       };
   
-}; 
+};
+
+

@@ -80,6 +80,11 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
 void Stream::run_monte_carlo_test(const uint number_of_events_requested) {
   std::cout << "Checking Velo tracks reconstructed on GPU" << std::endl;
 
+#ifdef WITH_ROOT
+  TFile *f = new TFile("../output/efficiency_plots.root", "RECREATE");
+  f->Close();
+#endif
+  
   const std::vector<trackChecker::Tracks> tracks_events = prepareTracks(
     host_buffers.host_velo_tracks_atomics,
     host_buffers.host_velo_track_hit_number,

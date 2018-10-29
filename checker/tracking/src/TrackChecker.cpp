@@ -183,11 +183,11 @@ void TrackCheckerVelo::SetCategories() {
  
 void TrackCheckerVelo::SetHistoCategories() {
   m_histo_categories = {{ // define which categories to create histograms for
-     TrackHistos({ "Electrons long eta25",
+     HistoCategory({ "Electrons long eta25",
         [] (const MCParticles::const_reference& mcp)
         { return mcp.isLong && mcp.isElectron() && mcp.inEta2_5(); },
         }),
-     TrackHistos({ "Electrons long fromB eta25",
+     HistoCategory({ "Electrons long fromB eta25",
         [] (const MCParticles::const_reference& mcp)
         { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.inEta2_5(); },
         })
@@ -257,11 +257,11 @@ void TrackCheckerVeloUT::SetCategories() {
 
 void TrackCheckerVeloUT::SetHistoCategories() {
   m_histo_categories = {{ // define which categories to create histograms for 
-    TrackHistos({ "Velo",
+    HistoCategory({ "Velo",
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.hasVelo && !mcp.isElectron() && mcp.inEta2_5(); },
         }),
-    TrackHistos({ "Velo+UT",
+    HistoCategory({ "Velo+UT",
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.hasVelo && mcp.hasUT && !mcp.isElectron() && mcp.inEta2_5(); },
         })
@@ -315,11 +315,11 @@ void TrackCheckerForward::SetCategories() {
 
 void TrackCheckerForward::SetHistoCategories() {
   m_histo_categories = {{ // define which categories to create histograms for
-      TrackHistos({ "Long",
+      HistoCategory({ "Long",
 	  [] (const MCParticles::const_reference& mcp)
 	    { return mcp.isLong && !mcp.isElectron() && mcp.inEta2_5(); },
 	  }),
-    TrackHistos({ "Long, p > 5 GeV",
+    HistoCategory({ "Long, p > 5 GeV",
 	  [] (const MCParticles::const_reference& mcp)
 	    { return mcp.isLong && mcp.p > 5e3 && !mcp.isElectron() && mcp.inEta2_5(); },
 	  })
@@ -335,6 +335,23 @@ TrackChecker::~TrackChecker()
       100.f * m_ghostperevent);
   m_categories.clear();
   std::printf("\n");
+
+  // write histograms to file
+  // printf("Saving file 1 \n");
+#ifdef WITH_ROOT
+  printf("Saving file 2 \n");
+  TFile *f = new TFile("../output/efficiency_plots.root", "UPDATE");
+  const std::string dirName = "Track/PrChecker2Fast/" + m_trackerName;
+  f->cd();
+  TDirectory *trackerDir = f->mkdir(dirName.c_str());
+  trackerDir->cd();
+  for ( auto histo : histos.h_reconstructible_eta ) {
+    trackerDir->cd();
+    histo.second.Write();
+  }
+  f->Write();
+  f->Close();
+#endif
 }
 
 void TrackChecker::TrackEffReport::operator()(const MCParticles& mcps)
@@ -400,22 +417,39 @@ TrackChecker::TrackEffReport::~TrackEffReport()
   }
 }
 
-void TrackChecker::TrackHistos::operator()(const MCParticles& mcps)
-{
-  // filter MC particles and fill histograms
-  for (auto mcp: mcps) {
-    if (m_accept(mcp)) {
-      // fill...
-    }
+#ifdef WITH_ROOT
+void TrackChecker::initHistos() {
+  for ( auto histo : m_histo_categories ) {
+    const std::string category = histo.m_name;
+    std::string name = category + "_Eta_reconstructible";
+    histos.h_reconstructible_eta[name] = TH1D(name.c_str(), name.c_str(), 0, 7, 50);
   }
 }
 
+void TrackChecker::fillReconstructibleHistos(
+  const MCParticles& mcps,
+  const HistoCategory& category)
+{
+  const std::string eta_name = category.m_name + "_Eta_reconstructible";
+  for ( auto mcp : mcps ) {
+    if ( category.m_accept )
+      histos.h_reconstructible_eta[eta_name].Fill(1);
+  }
+}
+
+#endif
 void TrackChecker::operator()(const trackChecker::Tracks& tracks,
     const MCAssociator& mcassoc, const MCParticles& mcps)
 {
   // register MC particles
   for (auto& report: m_categories) report(mcps);
-  
+  // fill normalization histograms:
+  // reconstructible MC particles in various categories
+#ifdef WITH_ROOT
+  for ( auto& histo_cat : m_histo_categories )
+    fillReconstructibleHistos(mcps, histo_cat);
+#endif
+            
   // go through tracks
   const std::size_t ntracksperevt = tracks.size();
   std::size_t nghostsperevt = 0;
