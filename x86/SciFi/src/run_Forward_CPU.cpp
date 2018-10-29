@@ -10,6 +10,7 @@ int run_forward_on_CPU (
   std::vector< trackChecker::Tracks >& forward_tracks_events,
   uint* host_scifi_hits,
   uint* host_scifi_hit_count,
+  char* host_scifi_geometry,
   uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number,
   uint* host_velo_states,
@@ -28,7 +29,7 @@ int run_forward_on_CPU (
   float x0, z0, w, dxdy, dzdy, yMin, yMax;
   float qop;
   int n_tracks;
-    
+
   t_Forward_tracks->Branch("qop", &qop);
   t_statistics->Branch("n_tracks", &n_tracks);
   t_scifi_hits->Branch("planeCode", &planeCode);
@@ -57,8 +58,8 @@ int run_forward_on_CPU (
     scifi_hit_count.typecast_after_prefix_sum(host_scifi_hit_count, i_event, number_of_events);
 
     const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::Constants::n_zones];
-    SciFi::SciFiHits scifi_hits; 
-    scifi_hits.typecast_sorted((uint*) host_scifi_hits, total_number_of_hits);
+    const SciFi::SciFiGeometry scifi_geometry(host_scifi_geometry);
+    SciFi::SciFiHits scifi_hits(host_scifi_hits, total_number_of_hits, &scifi_geometry);
 
 #ifdef WITH_ROOT
     // store hit variables in tree
@@ -80,8 +81,8 @@ int run_forward_on_CPU (
       }
     }
 #endif
-    
-    
+
+
     // initialize TMVA vars
     SciFi::Tracking::TMVA tmva1;
     SciFi::Tracking::TMVA1_Init( tmva1 );
@@ -89,7 +90,7 @@ int run_forward_on_CPU (
     SciFi::Tracking::TMVA2_Init( tmva2 );
 
     SciFi::Tracking::Arrays constArrays;
- 
+
     PrForwardWrapper(
       scifi_hits,
       scifi_hit_count,
@@ -103,7 +104,7 @@ int run_forward_on_CPU (
       forward_tracks,
       &n_forward_tracks);
 
-       
+
 #ifdef WITH_ROOT
     // store qop in tree
     for ( int i_track = 0; i_track < n_forward_tracks; ++i_track ) {
@@ -113,18 +114,18 @@ int run_forward_on_CPU (
     n_tracks = n_forward_tracks;
     t_statistics->Fill();
 #endif
-    
+
     // save in format for track checker
     trackChecker::Tracks checker_tracks = prepareForwardTracksEvent( forward_tracks, n_forward_tracks );
-    
+
     forward_tracks_events.emplace_back( checker_tracks );
 
   }
-  
+
 #ifdef WITH_ROOT
   f->Write();
   f->Close();
 #endif
-  
+
   return 0;
 }

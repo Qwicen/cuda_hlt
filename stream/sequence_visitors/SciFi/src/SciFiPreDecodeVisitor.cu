@@ -13,7 +13,7 @@ void SequenceVisitor::visit<scifi_pre_decode_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  arguments.set_size<arg::dev_scifi_hits>(host_buffers.scifi_hits_bytes());
+  arguments.set_size<arg::dev_scifi_hits>(host_buffers.scifi_hits_uints());
   scheduler.setup_next(arguments, sequence_step);
 
   state.set_opts(dim3(runtime_options.number_of_events), dim3(240), cuda_stream);

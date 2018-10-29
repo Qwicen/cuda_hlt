@@ -200,18 +200,72 @@ void SciFiHitCount::typecast_after_prefix_sum(
   n_hits_mats = base_pointer + number_of_events * SciFi::number_of_mats + 1 + event_number * SciFi::number_of_mats;
 }
 
-SciFiHits::SciFiHits(char* base, uint32_t total_number_of_hits) {
-  x0 = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  z0 = reinterpret_cast<float*>(base); base += sizeof(float) * total_number_of_hits;
-  channel = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  assembled_datatype = reinterpret_cast<uint32_t*>(base); base += sizeof(uint32_t) * total_number_of_hits;
-  cluster_reference = reinterpret_cast<uint32_t*>(base);
+SciFiHits::SciFiHits(uint32_t* base, const uint total_number_of_hits, const SciFiGeometry* dev_geom) {
+  geom = dev_geom;
+  x0 = reinterpret_cast<float*>(base);
+  z0 = reinterpret_cast<float*>(base + total_number_of_hits);
+  channel = reinterpret_cast<uint32_t*>(base + 2 * total_number_of_hits);
+  assembled_datatype = reinterpret_cast<uint32_t*>(base + 3 * total_number_of_hits);
+  cluster_reference = reinterpret_cast<uint32_t*>(base + 4 * total_number_of_hits);
 }
 
 __device__ __host__
 SciFiHit SciFiHits::getHit(uint32_t index) const {
   return {x0[index], z0[index], channel[index], assembled_datatype[index]};
 }
+
+__device__ __host__ float SciFiHits::w(uint32_t index) const {
+  // TODO: Move to constants
+  constexpr float invClusRes[] = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
+  float werrX = invClusRes[pseudoSize(index)];
+  return werrX * werrX;
+};
+
+__device__ __host__ float SciFiHits::dxdy(uint32_t index) const {
+  return geom->dxdy[mat(index)];
+};
+
+__device__ __host__ float SciFiHits::dzdy(uint32_t index) const {
+  return geom->dxdy[mat(index)];
+};
+
+__device__ __host__ float SciFiHits::yMin(uint32_t index) const {
+  const SciFiChannelID id(channel[index]);
+  float uFromChannel = geom->uBegin[mat(index)] + (2 * id.channel() + 1 + fraction(index)) * geom->halfChannelPitch[mat(index)];
+  if( id.die() ) uFromChannel += geom->dieGap[mat(index)];
+  const float endPointY = geom->mirrorPointY[mat(index)] + geom->ddxY[mat(index)] * uFromChannel;
+  return endPointY + id.isBottom() * geom->globaldy[mat(index)];
+};
+
+__device__ __host__ float SciFiHits::yMax(uint32_t index) const {
+  const SciFiChannelID id(channel[index]);
+  float uFromChannel = geom->uBegin[mat(index)] + (2 * id.channel() + 1 + fraction(index)) * geom->halfChannelPitch[mat(index)];
+  if( id.die() ) uFromChannel += geom->dieGap[mat(index)];
+  const float endPointY = geom->mirrorPointY[mat(index)] + geom->ddxY[mat(index)] * uFromChannel;
+  return endPointY + !id.isBottom() * geom->globaldy[mat(index)];
+};
+
+__device__ __host__ uint32_t SciFiHits::LHCbID(uint32_t index) const {
+  return (10u << 28) + channel[index];
+};
+
+__device__ __host__ uint32_t SciFiHits::mat(uint32_t index) const {
+  return assembled_datatype[index] & 0x3ff;
+};
+
+__device__ __host__ uint32_t SciFiHits::pseudoSize(uint32_t index) const{
+  return (assembled_datatype[index] >> 10) & 0xf;
+};
+
+__device__ __host__ uint32_t SciFiHits::planeCode(uint32_t index) const {
+  return (assembled_datatype[index] >> 14) & 0x1f;
+};
+
+__device__ __host__ uint32_t SciFiHits::fraction(uint32_t index) const{
+  return (assembled_datatype[index] >> 19) & 0x1;
+};
+
+
 
 __device__ uint32_t channelInBank(uint32_t c) {
   return (c >> SciFiRawBankParams::cellShift);

@@ -317,15 +317,26 @@ struct SciFiHits {
   uint32_t* channel;
   uint32_t* assembled_datatype;
   uint32_t* cluster_reference;
+  const SciFiGeometry* geom;
 
   __device__ __host__
-  SciFiHits(char* base, uint32_t total_number_of_hits);
+  SciFiHits(uint* base, const uint32_t total_number_of_hits, const SciFiGeometry* geom);
 
   /**
    * @brief Gets a hit in the SciFiHit format from the global hit index.
    */
   __device__ __host__
   SciFiHit getHit(uint32_t index) const;
+  __device__ __host__ float w(uint32_t index) const;
+  __device__ __host__ float dxdy(uint32_t index) const;
+  __device__ __host__ float dzdy(uint32_t index) const;
+  __device__ __host__ float yMin(uint32_t index) const;
+  __device__ __host__ float yMax(uint32_t index) const;
+  __device__ __host__ uint32_t LHCbID(uint32_t index) const;
+  __device__ __host__ uint32_t planeCode(uint32_t index) const;
+  __device__ __host__ uint32_t mat(uint32_t index) const;
+  __device__ __host__ uint32_t fraction(uint32_t index) const;
+  __device__ __host__ uint32_t pseudoSize(uint32_t index) const;
 };
 
 __device__ uint32_t channelInBank(uint32_t c);

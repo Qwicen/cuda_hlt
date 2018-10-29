@@ -41,17 +41,17 @@ void Constants::initialize_constants() {
   // layer configuration: XUVX, U and V layers tilted by +/- 5 degrees = 0.087 radians
   host_ut_dxDy = {0., 0.08748867, -0.0874886, 0.};
   cudaCheck(cudaMemcpy(dev_ut_dxDy, host_ut_dxDy.data(), host_ut_dxDy.size() * sizeof(float), cudaMemcpyHostToDevice));
-  
+
   host_ut_region_offsets = {0, 84, 164, 248, 332, 412, 496, 594, 674, 772, 870, 950, 1048};
   cudaCheck(cudaMemcpy(dev_ut_region_offsets, host_ut_region_offsets.data(), host_ut_region_offsets.size() * sizeof(uint), cudaMemcpyHostToDevice));
-  
+
   // SciFi constants
   SciFi::Tracking::TMVA host_tmva1;
   SciFi::Tracking::TMVA host_tmva2;
   SciFi::Tracking::TMVA1_Init( host_tmva1 );
   SciFi::Tracking::TMVA2_Init( host_tmva2 );
   SciFi::Tracking::Arrays host_constArrays;
-  
+
   cudaCheck(cudaMemcpy(dev_scifi_tmva1, &host_tmva1, sizeof(SciFi::Tracking::TMVA), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_scifi_tmva2, &host_tmva2, sizeof(SciFi::Tracking::TMVA), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_scifi_constArrays, &host_constArrays, sizeof(SciFi::Tracking::Arrays), cudaMemcpyHostToDevice));

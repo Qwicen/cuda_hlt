@@ -16,11 +16,12 @@ void SequenceVisitor::visit<scifi_pr_forward_t>(
   arguments.set_size<arg::dev_scifi_tracks>(runtime_options.number_of_events * SciFi::max_tracks);
   arguments.set_size<arg::dev_n_scifi_tracks>(runtime_options.number_of_events);
   scheduler.setup_next(arguments, sequence_step);
-  
+
   state.set_opts(dim3(runtime_options.number_of_events), dim3(32), cuda_stream);
   state.set_arguments(
     arguments.offset<arg::dev_scifi_hits>(),
     arguments.offset<arg::dev_scifi_hit_count>(),
+    constants.dev_scifi_geometry,
     arguments.offset<arg::dev_atomics_storage>(),
     arguments.offset<arg::dev_velo_track_hit_number>(),
     arguments.offset<arg::dev_velo_states>(),
@@ -32,8 +33,8 @@ void SequenceVisitor::visit<scifi_pr_forward_t>(
     constants.dev_scifi_tmva2,
     constants.dev_scifi_constArrays
   );
-  state.invoke(); 
-  
+  state.invoke();
+
   // Transmission device to host
   // SciFi tracks
   cudaCheck(cudaMemcpyAsync(host_buffers.host_n_scifi_tracks,

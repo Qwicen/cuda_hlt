@@ -43,19 +43,16 @@ __global__ void scifi_pre_decode(
   char *scifi_events,
   uint *scifi_event_offsets,
   uint *scifi_hit_count,
-  char *scifi_hits,
+  uint *scifi_hits,
   char *scifi_geometry
 ) {
   const int number_of_events = gridDim.x;
   const int event_number = blockIdx.x;
 
-  // maybe not hardcoded, or in another place
-  constexpr float invClusRes[] = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
-
   SciFiGeometry geom(scifi_geometry);
   const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
 
-  SciFiHits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_mats]};
+  SciFiHits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_mats], &geom};
   SciFiHitCount hit_count;
   hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
 
@@ -162,7 +159,7 @@ __global__ void scifi_pre_decode(
           } else {
             // Condition 1: "10"
             const int condition_1 = 0x02;
-            
+
             store_sorted_cluster_reference (
               hit_count,
               correctedMat,

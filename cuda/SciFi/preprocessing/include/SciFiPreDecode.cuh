@@ -19,7 +19,7 @@ __global__ void scifi_pre_decode(
   char *scifi_events,
   uint *scifi_event_offsets,
   uint *scifi_hit_count,
-  char *scifi_hits,
+  uint *scifi_hits,
   char *scifi_geometry);
 
 ALGORITHM(scifi_pre_decode, scifi_pre_decode_t)

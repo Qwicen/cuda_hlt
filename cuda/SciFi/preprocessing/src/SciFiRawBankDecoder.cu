@@ -11,7 +11,6 @@ __device__ void make_cluster (
   uint32_t chan,
   uint8_t fraction,
   uint8_t pseudoSize,
-  uint32_t uniqueMat,
   SciFiHits& hits)
 {
   // TODO: Move to constants
@@ -47,13 +46,13 @@ __device__ void make_cluster (
 
   // Apparently the unique* methods are not designed to start at 0, therefore -16
   const uint32_t uniqueZone = ((id.uniqueQuarter() - 16) >> 1);
-  
+
   const uint plane_code = 2 * planeCode + (uniqueZone % 2);
   hits.x0[hit_index] = x0;
   hits.z0[hit_index] = z0;
   hits.channel[hit_index] = chan;
   hits.assembled_datatype[hit_index] = fraction << 19 | plane_code << 14 | pseudoSize << 10 | mat;
-  
+
   // TODO: Make accessors for these datatypes
   // hits.x0[hit_index] = x0;
   // hits.z0[hit_index] = z0;
@@ -71,7 +70,7 @@ __global__ void scifi_raw_bank_decoder(
   char *scifi_events,
   uint *scifi_event_offsets,
   uint *scifi_hit_count,
-  char *scifi_hits,
+  uint *scifi_hits,
   char *scifi_geometry)
 {
   const uint number_of_events = gridDim.x;
@@ -80,7 +79,7 @@ __global__ void scifi_raw_bank_decoder(
   const SciFiGeometry geom {scifi_geometry};
   const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
 
-  SciFiHits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_mats]};
+  SciFiHits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_mats], &geom};
   SciFiHitCount hit_count;
   hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
   const uint number_of_hits_in_event = hit_count.event_number_of_hits();
@@ -107,7 +106,7 @@ __global__ void scifi_raw_bank_decoder(
     const uint16_t c = *it;
     const uint32_t ch = geom.bank_first_channel[rawbank.sourceID] + channelInBank(c);
     const auto chid = SciFiChannelID(ch);
-    const uint32_t correctedMat = chid.correctedUniqueMat();
+    //const uint32_t correctedMat = chid.correctedUniqueMat();
 
     // Call parameters for make_cluster
     uint32_t cluster_chan = ch;
@@ -123,7 +122,7 @@ __global__ void scifi_raw_bank_decoder(
 
         if (delta_parameter == 0) {
           // add the last edge
-          // make_cluster  (firstChannel + delta, fraction(c2), 0, uniqueMat);  
+          // make_cluster  (firstChannel + delta, fraction(c2), 0, uniqueMat);
           cluster_chan += delta;
           cluster_fraction = fraction(c2);
         } else {
@@ -148,7 +147,6 @@ __global__ void scifi_raw_bank_decoder(
       cluster_chan,
       cluster_fraction,
       pseudoSize,
-      correctedMat,
       hits);
   }
 }
