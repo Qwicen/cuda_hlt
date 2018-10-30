@@ -82,6 +82,7 @@ class TrackChecker
         struct HistoCategory {
           std::string m_name;
           AcceptFn m_accept;
+          std::set<uint32_t> m_keysseen;
           
           /// construction from name and accept criterion for eff. denom.
           template <typename F>
@@ -139,7 +140,7 @@ class TrackChecker
           const HistoCategory& category);
         void fillReconstructedHistos(
           const MCParticle& mcp,
-          const HistoCategory& category);
+          HistoCategory& category);
 #endif                
 };
 

@@ -186,7 +186,7 @@ void TrackCheckerVelo::SetHistoCategories() {
      HistoCategory({ "VeloTracks_electrons",
         [] (const MCParticles::const_reference& mcp)
           { return mcp.hasVelo && mcp.isElectron(); },
-        }),
+           }) ,
      HistoCategory({ "VeloTracks_eta25_electrons",
         [] (const MCParticles::const_reference& mcp)
         { return mcp.hasVelo && mcp.isElectron() && mcp.inEta2_5(); },
@@ -206,7 +206,7 @@ void TrackCheckerVelo::SetHistoCategories() {
      HistoCategory({ "VeloTracks_notElectrons",
         [] (const MCParticles::const_reference& mcp)
           { return mcp.hasVelo && !mcp.isElectron(); },
-        }),
+           }) ,
      HistoCategory({ "VeloTracks_eta25_notElectrons",
         [] (const MCParticles::const_reference& mcp)
         { return mcp.hasVelo && !mcp.isElectron() && mcp.inEta2_5(); },
@@ -421,6 +421,8 @@ TrackChecker::~TrackChecker()
   const std::string name = "../output/PrCheckerPlots.root";
   TFile *f = new TFile(name.c_str(), "UPDATE");
   std::string dirName = m_trackerName;
+  if ( m_trackerName == "VeloUT" )
+    dirName = "Upstream";
   TDirectory *trackerDir = f->mkdir(dirName.c_str());
   trackerDir->cd();
   for ( auto histo : histos.h_reconstructible_eta )
@@ -561,20 +563,22 @@ void TrackChecker::fillReconstructibleHistos(
 
 void TrackChecker::fillReconstructedHistos(
   const MCParticle& mcp,
-  const HistoCategory& category)           
+  HistoCategory& category)           
 {
-  if ( category.m_accept(mcp) ) {
-    const std::string eta_name = category.m_name + "_Eta_reconstructed";
-    const std::string p_name   = category.m_name + "_P_reconstructed";
-    const std::string pt_name  = category.m_name + "_Pt_reconstructed";
-    const std::string phi_name = category.m_name + "_Phi_reconstructed";
-    const std::string nPV_name = category.m_name + "_nPV_reconstructed";
-    histos.h_reconstructed_eta[eta_name].Fill(mcp.eta);
-    histos.h_reconstructed_p[p_name].Fill(mcp.p);
-    histos.h_reconstructed_pt[pt_name].Fill(mcp.pt);
-    histos.h_reconstructed_phi[phi_name].Fill(mcp.phi);
-    histos.h_reconstructed_nPV[nPV_name].Fill(mcp.nPV);
-  }
+  if ( !( category.m_accept(mcp) ) ) return;
+  if ( (category.m_keysseen).count(mcp.key) ) return; // clone track
+  (category.m_keysseen).insert(mcp.key); // not clone track, mark as matched
+  
+  const std::string eta_name = category.m_name + "_Eta_reconstructed";
+  const std::string p_name   = category.m_name + "_P_reconstructed";
+  const std::string pt_name  = category.m_name + "_Pt_reconstructed";
+  const std::string phi_name = category.m_name + "_Phi_reconstructed";
+  const std::string nPV_name = category.m_name + "_nPV_reconstructed";
+  histos.h_reconstructed_eta[eta_name].Fill(mcp.eta);
+  histos.h_reconstructed_p[p_name].Fill(mcp.p);
+  histos.h_reconstructed_pt[pt_name].Fill(mcp.pt);
+  histos.h_reconstructed_phi[phi_name].Fill(mcp.phi);
+  histos.h_reconstructed_nPV[nPV_name].Fill(mcp.nPV);
 }
 #endif
 
@@ -611,10 +615,11 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
     // add to various categories
     for (auto& report: m_categories) {
       report(track, mcp, weight);
+    }
       // fill histograms of reconstructible MC particles in various categories
 #ifdef WITH_ROOT
-  for ( auto& histo_cat : m_histo_categories )
-    fillReconstructedHistos(mcp, histo_cat);
+    for ( auto& histo_cat : m_histo_categories ) {
+      fillReconstructedHistos(mcp, histo_cat);
 #endif
     }
   }
