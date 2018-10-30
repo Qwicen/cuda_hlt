@@ -81,7 +81,7 @@ void Stream::run_monte_carlo_test(const uint number_of_events_requested) {
   std::cout << "Checking Velo tracks reconstructed on GPU" << std::endl;
 
 #ifdef WITH_ROOT
-  TFile *f = new TFile("../output/efficiency_plots.root", "RECREATE");
+  TFile *f = new TFile("../output/PrCheckerPlots.root", "RECREATE");
   f->Close();
 #endif
   

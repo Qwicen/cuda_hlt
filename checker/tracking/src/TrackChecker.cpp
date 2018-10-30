@@ -183,14 +183,46 @@ void TrackCheckerVelo::SetCategories() {
  
 void TrackCheckerVelo::SetHistoCategories() {
   m_histo_categories = {{ // define which categories to create histograms for
-     HistoCategory({ "Electrons long eta25",
+     HistoCategory({ "VeloTracks_electrons",
         [] (const MCParticles::const_reference& mcp)
-        { return mcp.isLong && mcp.isElectron() && mcp.inEta2_5(); },
+          { return mcp.hasVelo && mcp.isElectron(); },
         }),
-     HistoCategory({ "Electrons long fromB eta25",
+     HistoCategory({ "VeloTracks_eta25_electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.hasVelo && mcp.isElectron() && mcp.inEta2_5(); },
+           }),
+     HistoCategory({ "LongFromB_eta25_electrons",
         [] (const MCParticles::const_reference& mcp)
         { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.inEta2_5(); },
-        })
+           }),
+     HistoCategory({ "LongFromD_eta25_electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromCharmDecay && mcp.isElectron() && mcp.inEta2_5(); },
+           }),
+     HistoCategory({ "LongStrange_eta25_electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromStrangeDecay && mcp.isElectron() && mcp.inEta2_5(); },
+           }),
+     HistoCategory({ "VeloTracks_notElectrons",
+        [] (const MCParticles::const_reference& mcp)
+          { return mcp.hasVelo && !mcp.isElectron(); },
+        }),
+     HistoCategory({ "VeloTracks_eta25_notElectrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.hasVelo && !mcp.isElectron() && mcp.inEta2_5(); },
+           }),
+     HistoCategory({ "LongFromB_eta25_notElectrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && !mcp.isElectron() && mcp.inEta2_5(); },
+           }),
+     HistoCategory({ "LongFromD_eta25_notElectrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromCharmDecay && !mcp.isElectron() && mcp.inEta2_5(); },
+           }),
+     HistoCategory({ "LongStrange_eta25_notElectrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromStrangeDecay && !mcp.isElectron() && mcp.inEta2_5(); },
+           })
     }};
 };
 
@@ -257,14 +289,38 @@ void TrackCheckerVeloUT::SetCategories() {
 
 void TrackCheckerVeloUT::SetHistoCategories() {
   m_histo_categories = {{ // define which categories to create histograms for 
-    HistoCategory({ "Velo",
+    HistoCategory({ "VeloUTTracks_eta25_electrons",
         [] (const MCParticles::const_reference& mcp)
-	  { return mcp.hasVelo && !mcp.isElectron() && mcp.inEta2_5(); },
+	  { return mcp.hasVelo && mcp.hasUT && mcp.isElectron() && mcp.inEta2_5(); },
         }),
-    HistoCategory({ "Velo+UT",
+    HistoCategory({ "LongFromB_eta25_electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.inEta2_5(); },
+          }),
+    HistoCategory({ "LongFromD_eta25_electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromCharmDecay && mcp.isElectron() && mcp.inEta2_5(); },
+          }),
+    HistoCategory({ "LongStrange_eta25_electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromStrangeDecay && mcp.isElectron() && mcp.inEta2_5(); },
+          }),
+    HistoCategory({ "VeloUTTracks_eta25_notElectrons",
         [] (const MCParticles::const_reference& mcp)
 	  { return mcp.hasVelo && mcp.hasUT && !mcp.isElectron() && mcp.inEta2_5(); },
-        })
+          }),
+    HistoCategory({ "LongFromB_eta25_notElectrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && !mcp.isElectron() && mcp.inEta2_5(); },
+          }),
+    HistoCategory({ "LongFromD_eta25_notElectrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromCharmDecay && !mcp.isElectron() && mcp.inEta2_5(); },
+          }),
+    HistoCategory({ "LongStrange_eta25_notElectrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromStrangeDecay && !mcp.isElectron() && mcp.inEta2_5(); },
+          })
     }};
 };
 
@@ -315,14 +371,38 @@ void TrackCheckerForward::SetCategories() {
 
 void TrackCheckerForward::SetHistoCategories() {
   m_histo_categories = {{ // define which categories to create histograms for
-      HistoCategory({ "Long",
+      HistoCategory({ "Long_eta25_electrons",
+	  [] (const MCParticles::const_reference& mcp)
+	    { return mcp.isLong && mcp.isElectron() && mcp.inEta2_5(); },
+	  }),
+      HistoCategory({ "LongFromB_eta25_electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && mcp.isElectron() && mcp.inEta2_5(); },
+            }),
+      HistoCategory({ "LongFromD_eta25_electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromCharmDecay && mcp.isElectron() && mcp.inEta2_5(); },
+            }),
+      HistoCategory({ "LongStrange_eta25_electrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromStrangeDecay && mcp.isElectron() && mcp.inEta2_5(); },
+            }),
+      HistoCategory({ "Long_eta25_notElectrons",
 	  [] (const MCParticles::const_reference& mcp)
 	    { return mcp.isLong && !mcp.isElectron() && mcp.inEta2_5(); },
-	  }),
-    HistoCategory({ "Long, p > 5 GeV",
-	  [] (const MCParticles::const_reference& mcp)
-	    { return mcp.isLong && mcp.p > 5e3 && !mcp.isElectron() && mcp.inEta2_5(); },
-	  })
+            }),
+      HistoCategory({ "LongFromB_eta25_notElectrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromBeautyDecay && !mcp.isElectron() && mcp.inEta2_5(); },
+            }),
+      HistoCategory({ "LongFromD_eta25_notElectrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromCharmDecay && !mcp.isElectron() && mcp.inEta2_5(); },
+            }),
+      HistoCategory({ "LongStrange_eta25_notElectrons",
+        [] (const MCParticles::const_reference& mcp)
+        { return mcp.isLong && mcp.fromStrangeDecay && !mcp.isElectron() && mcp.inEta2_5(); },
+            })
     }};
 };
 
@@ -337,16 +417,13 @@ TrackChecker::~TrackChecker()
   std::printf("\n");
 
   // write histograms to file
-  // printf("Saving file 1 \n");
 #ifdef WITH_ROOT
-  printf("Saving file 2 \n");
-  TFile *f = new TFile("../output/efficiency_plots.root", "UPDATE");
-  const std::string dirName = "Track/PrChecker2Fast/" + m_trackerName;
-  f->cd();
+  const std::string name = "../output/PrCheckerPlots.root";
+  TFile *f = new TFile(name.c_str(), "UPDATE");
+  std::string dirName = m_trackerName;
   TDirectory *trackerDir = f->mkdir(dirName.c_str());
   trackerDir->cd();
   for ( auto histo : histos.h_reconstructible_eta ) {
-    trackerDir->cd();
     histo.second.Write();
   }
   f->Write();
@@ -422,7 +499,7 @@ void TrackChecker::initHistos() {
   for ( auto histo : m_histo_categories ) {
     const std::string category = histo.m_name;
     std::string name = category + "_Eta_reconstructible";
-    histos.h_reconstructible_eta[name] = TH1D(name.c_str(), name.c_str(), 0, 7, 50);
+    histos.h_reconstructible_eta[name] = TH1D(name.c_str(), name.c_str(), 50, 0, 7);
   }
 }
 
@@ -432,12 +509,12 @@ void TrackChecker::fillReconstructibleHistos(
 {
   const std::string eta_name = category.m_name + "_Eta_reconstructible";
   for ( auto mcp : mcps ) {
-    if ( category.m_accept )
-      histos.h_reconstructible_eta[eta_name].Fill(1);
+    if ( category.m_accept(mcp) )
+      histos.h_reconstructible_eta[eta_name].Fill(mcp.eta);
   }
 }
-
 #endif
+
 void TrackChecker::operator()(const trackChecker::Tracks& tracks,
     const MCAssociator& mcassoc, const MCParticles& mcps)
 {
@@ -472,7 +549,6 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
     // add to various categories
     for (auto& report: m_categories) {
       report(track, mcp, weight);
-      
     }
   }
   // almost done, notify of end of event...
