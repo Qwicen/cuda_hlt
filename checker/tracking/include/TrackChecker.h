@@ -102,7 +102,15 @@ class TrackChecker
         struct Histos {
 #ifdef WITH_ROOT
           std::map< std::string, TH1D > h_reconstructible_eta;
-          
+          std::map< std::string, TH1D > h_reconstructible_p;
+          std::map< std::string, TH1D > h_reconstructible_pt;
+          //std::map< std::string, TH1D > h_reconstructible_phi;
+          //std::map< std::string, TH1D > h_reconstructible_nPV;
+          std::map< std::string, TH1D > h_reconstructed_eta;
+          std::map< std::string, TH1D > h_reconstructed_p;
+          std::map< std::string, TH1D > h_reconstructed_pt;
+          //std::map< std::string, TH1D > h_reconstructed_phi;
+          //std::map< std::string, TH1D > h_reconstructed_nPV;
 #endif
         };
 
@@ -128,6 +136,9 @@ class TrackChecker
         void initHistos();
         void fillReconstructibleHistos(
           const MCParticles& mcps,
+          const HistoCategory& category);
+        void fillReconstructedHistos(
+          const MCParticle& mcp,
           const HistoCategory& category);
 #endif                
 };

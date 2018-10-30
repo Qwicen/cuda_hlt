@@ -423,9 +423,18 @@ TrackChecker::~TrackChecker()
   std::string dirName = m_trackerName;
   TDirectory *trackerDir = f->mkdir(dirName.c_str());
   trackerDir->cd();
-  for ( auto histo : histos.h_reconstructible_eta ) {
+  for ( auto histo : histos.h_reconstructible_eta )
     histo.second.Write();
-  }
+  for ( auto histo : histos.h_reconstructible_p )
+    histo.second.Write();
+  for ( auto histo : histos.h_reconstructible_pt )
+    histo.second.Write();
+  for ( auto histo : histos.h_reconstructed_eta )
+    histo.second.Write();
+  for ( auto histo : histos.h_reconstructed_p )
+    histo.second.Write();
+  for ( auto histo : histos.h_reconstructed_pt )
+    histo.second.Write();
   f->Write();
   f->Close();
 #endif
@@ -499,7 +508,18 @@ void TrackChecker::initHistos() {
   for ( auto histo : m_histo_categories ) {
     const std::string category = histo.m_name;
     std::string name = category + "_Eta_reconstructible";
-    histos.h_reconstructible_eta[name] = TH1D(name.c_str(), name.c_str(), 50, 0, 7);
+    histos.h_reconstructible_eta[name] = TH1D(name.c_str(), name.c_str(), 50., 0., 7.);
+    name = category + "_P_reconstructible";
+    histos.h_reconstructible_p[name] = TH1D(name.c_str(), name.c_str(), 50., 0.,100000.);
+    name = category + "_Pt_reconstructible";
+    histos.h_reconstructible_pt[name] = TH1D(name.c_str(), name.c_str(), 50., 0.,100000.);
+    
+    name = category + "_Eta_reconstructed";
+    histos.h_reconstructed_eta[name] = TH1D(name.c_str(), name.c_str(), 50., 0., 7.);
+    name = category + "_P_reconstructed";
+    histos.h_reconstructed_p[name] = TH1D(name.c_str(), name.c_str(), 50., 0., 100000.);
+    name = category + "_Pt_reconstructed";
+    histos.h_reconstructed_pt[name] = TH1D(name.c_str(), name.c_str(), 50., 0., 100000.);
   }
 }
 
@@ -508,9 +528,28 @@ void TrackChecker::fillReconstructibleHistos(
   const HistoCategory& category)
 {
   const std::string eta_name = category.m_name + "_Eta_reconstructible";
+  const std::string p_name   = category.m_name + "_P_reconstructible";
+  const std::string pt_name  = category.m_name + "_Pt_reconstructible";
   for ( auto mcp : mcps ) {
-    if ( category.m_accept(mcp) )
+    if ( category.m_accept(mcp) ) {
       histos.h_reconstructible_eta[eta_name].Fill(mcp.eta);
+      histos.h_reconstructible_p[p_name].Fill(mcp.p);
+      histos.h_reconstructible_pt[pt_name].Fill(mcp.pt);
+    }
+  }
+}
+
+void TrackChecker::fillReconstructedHistos(
+  const MCParticle& mcp,
+  const HistoCategory& category)           
+{
+  if ( category.m_accept(mcp) ) {
+    const std::string eta_name = category.m_name + "_Eta_reconstructed";
+    const std::string p_name   = category.m_name + "_P_reconstructed";
+    const std::string pt_name  = category.m_name + "_Pt_reconstructed";
+    histos.h_reconstructed_eta[eta_name].Fill(mcp.eta);
+    histos.h_reconstructed_p[p_name].Fill(mcp.p);
+    histos.h_reconstructed_pt[pt_name].Fill(mcp.pt);
   }
 }
 #endif
@@ -520,8 +559,7 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
 {
   // register MC particles
   for (auto& report: m_categories) report(mcps);
-  // fill normalization histograms:
-  // reconstructible MC particles in various categories
+  // fill histograms of reconstructible MC particles in various categories
 #ifdef WITH_ROOT
   for ( auto& histo_cat : m_histo_categories )
     fillReconstructibleHistos(mcps, histo_cat);
@@ -540,7 +578,7 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
     }
     // have MC association, check weight
     const auto weight = assoc.front().second;
-	if (weight < m_minweight) {
+    if (weight < m_minweight) {
       ++nghostsperevt;
       continue;
     }
@@ -549,6 +587,11 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
     // add to various categories
     for (auto& report: m_categories) {
       report(track, mcp, weight);
+      // fill histograms of reconstructible MC particles in various categories
+#ifdef WITH_ROOT
+  for ( auto& histo_cat : m_histo_categories )
+    fillReconstructedHistos(mcp, histo_cat);
+#endif
     }
   }
   // almost done, notify of end of event...
