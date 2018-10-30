@@ -108,16 +108,12 @@ __host__ __device__ __inline__ bool check_tol_refine(
   const float dxDy);
 
 __device__ void find_best_hits(
-  const int i_track,
-  const uint current_track_offset,
-  const int* dev_windows_layers,
   const int* win_size_shared,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
   const float* fudgeFactors,
   const float* ut_dxDy,
-  const bool forward,
   int* best_hits,
   BestParams& best_params);
 

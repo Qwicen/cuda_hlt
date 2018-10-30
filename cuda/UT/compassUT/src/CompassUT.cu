@@ -52,10 +52,11 @@ __global__ void compass_ut(
     *active_tracks         = 0;
   }
 
-  // int shared_active_tracks[2 * VeloUTTracking::num_threads - 1];
+  // store the tracks with valid windows
+  __shared__ int shared_active_tracks[2 * VeloUTTracking::num_threads - 1];
 
-  // // store windows and num candidates in shared mem
-  // // 32 * 4 * 3(num_windows) * 2 (from, size) = 768 (3072 bytes)
+  // store windows and num candidates in shared mem
+  // 32 * 4 * 3(num_windows) * 2 (from, size) = 768 (3072 bytes)
   __shared__ int win_size_shared[VeloUTTracking::num_threads * N_LAYERS * 3 * 2];
 
   const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
@@ -67,12 +68,49 @@ __global__ void compass_ut(
 
     if ( found_active_windows(dev_windows_layers, current_track_offset) ) {
       int current_track = atomicAdd(active_tracks, 1);
-      // shared_active_tracks[current_track] = current_track_offset;
+      shared_active_tracks[current_track] = i_track;
     }
 
     __syncthreads();
 
     if (*active_tracks >= blockDim.x) {
+
+      compass_ut_tracking(
+        dev_windows_layers,
+        dev_velo_track_hits,
+        shared_active_tracks[threadIdx.x],
+        event_tracks_offset + shared_active_tracks[threadIdx.x],
+        velo_states,
+        velo_tracks,
+        ut_hits,
+        ut_hit_offsets,
+        fudgeFactors,
+        bdl_table,
+        dev_ut_dxDy,
+        win_size_shared,
+        n_veloUT_tracks_event,
+        veloUT_tracks_event);
+
+      const int j = blockDim.x + threadIdx.x;
+      if (j < *active_tracks) {
+        shared_active_tracks[threadIdx.x] = shared_active_tracks[j];
+      }
+
+      __syncthreads();
+
+      if (threadIdx.x == 0) {
+        *active_tracks -= blockDim.x;
+      }
+
+      __syncthreads();
+    }
+  }
+
+  // remaining tracks
+  if (threadIdx.x < *active_tracks) {
+
+    const int i_track = shared_active_tracks[threadIdx.x];
+    const uint current_track_offset = event_tracks_offset + i_track;
 
     compass_ut_tracking(
       dev_windows_layers,
@@ -89,41 +127,7 @@ __global__ void compass_ut(
       win_size_shared,
       n_veloUT_tracks_event,
       veloUT_tracks_event);
-
-      //     const int j = blockDim.x + threadIdx.x;
-      //     if (j < *active_tracks) {
-      //       shared_active_tracks[threadIdx.x] = shared_active_tracks[j];
-      //     }
-
-      //     __syncthreads();
-
-      //     if (threadIdx.x == 0) {
-      //       *active_tracks -= blockDim.x;
-      //     }
-    }
   }
-
-  // // remaining tracks
-  // if (threadIdx.x < *active_tracks) {
-
-  //   const int i_track = shared_active_tracks[threadIdx.x];
-
-  //   compass_ut_tracking(
-  //     dev_windows_layers,
-  //     dev_velo_track_hits,
-  //     i_track,
-  //     current_track_offset,
-  //     velo_states,
-  //     velo_tracks,
-  //     ut_hits,
-  //     ut_hit_offsets,
-  //     fudgeFactors,
-  //     bdl_table,
-  //     dev_ut_dxDy,
-  //     win_size_shared,
-  //     n_veloUT_tracks_event,
-  //     veloUT_tracks_event);
-  // }
 }
 
 __device__ void compass_ut_tracking(
@@ -142,13 +146,6 @@ __device__ void compass_ut_tracking(
   int* n_veloUT_tracks_event,
   VeloUTTracking::TrackUT* veloUT_tracks_event)
 {
-  // __syncthreads();
-
-  // if (threadIdx.x == 0) {
-  //   *active_tracks -= blockDim.x;
-  // }
-
-  // __syncthreads();
 
   // select velo track to join with UT hits
   const MiniState velo_state{velo_states, current_track_offset};
@@ -160,19 +157,15 @@ __device__ void compass_ut_tracking(
     dev_windows_layers, 
     current_track_offset, 
     win_size_shared);
-
+  
   // Find compatible hits in the windows for this VELO track
   find_best_hits(
-    i_track,
-    current_track_offset,
-    dev_windows_layers,
     win_size_shared,
     ut_hits,
     ut_hit_offsets,
     velo_state,
     fudgeFactors,
     dev_ut_dxDy,
-    true,
     best_hits,
     best_params);
 
@@ -199,26 +192,6 @@ __device__ void compass_ut_tracking(
       n_veloUT_tracks_event,
       veloUT_tracks_event);
   }  
-}
-
-//=============================================================================
-// Reject tracks outside of acceptance or pointing to the beam pipe
-//=============================================================================
-__host__ __device__ bool velo_track_in_UT_acceptance(const MiniState& state)
-{
-  const float xMidUT = state.x + state.tx * (PrVeloUTConst::zMidUT - state.z);
-  const float yMidUT = state.y + state.ty * (PrVeloUTConst::zMidUT - state.z);
-
-  if (xMidUT * xMidUT + yMidUT * yMidUT < PrVeloUTConst::centralHoleSize * PrVeloUTConst::centralHoleSize) return false;
-  if ((std::abs(state.tx) > PrVeloUTConst::maxXSlope) || (std::abs(state.ty) > PrVeloUTConst::maxYSlope)) return false;
-
-  if (
-    PrVeloUTConst::passTracks && std::abs(xMidUT) < PrVeloUTConst::passHoleSize &&
-    std::abs(yMidUT) < PrVeloUTConst::passHoleSize) {
-    return false;
-  }
-
-  return true;
 }
 
 //=============================================================================
@@ -312,7 +285,7 @@ __host__ __device__ __inline__ bool check_tol_refine(
   return true;
 }
 
-__host__ __device__ __inline__ int set_index(
+__device__ __inline__ int set_index(
   const int i, const int from0, const int from1, const int from2, const int num_cand_0, const int num_cand_1)
 {
   int hit = 0;
@@ -332,16 +305,12 @@ __host__ __device__ __inline__ int set_index(
 // to be only in the windows
 //=========================================================================
 __device__ void find_best_hits(
-  const int i_track,
-  const uint current_track_offset,
-  const int* dev_windows_layers,
   const int* win_size_shared,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
   const float* fudgeFactors,
   const float* ut_dxDy,
-  const bool forward,
   int* best_hits,
   BestParams& best_params)
 {
@@ -349,7 +318,7 @@ __device__ void find_best_hits(
   int layers[N_LAYERS];
   #pragma unroll
   for (int i_layer = 0; i_layer < N_LAYERS; ++i_layer) {
-    if (forward)
+    if (true)
       layers[i_layer] = i_layer;
     else
       layers[i_layer] = N_LAYERS - 1 - i_layer;
