@@ -429,11 +429,19 @@ TrackChecker::~TrackChecker()
     histo.second.Write();
   for ( auto histo : histos.h_reconstructible_pt )
     histo.second.Write();
+  for ( auto histo : histos.h_reconstructible_phi )
+    histo.second.Write();
+  for ( auto histo : histos.h_reconstructible_nPV )
+    histo.second.Write();
   for ( auto histo : histos.h_reconstructed_eta )
     histo.second.Write();
   for ( auto histo : histos.h_reconstructed_p )
     histo.second.Write();
   for ( auto histo : histos.h_reconstructed_pt )
+    histo.second.Write();
+  for ( auto histo : histos.h_reconstructed_phi )
+    histo.second.Write();
+  for ( auto histo : histos.h_reconstructed_nPV )
     histo.second.Write();
   f->Write();
   f->Close();
@@ -505,21 +513,29 @@ TrackChecker::TrackEffReport::~TrackEffReport()
 
 #ifdef WITH_ROOT
 void TrackChecker::initHistos() {
-  for ( auto histo : m_histo_categories ) {
-    const std::string category = histo.m_name;
+  for ( auto histoCat : m_histo_categories ) {
+    const std::string category = histoCat.m_name;
     std::string name = category + "_Eta_reconstructible";
-    histos.h_reconstructible_eta[name] = TH1D(name.c_str(), name.c_str(), 50., 0., 7.);
+    histos.h_reconstructible_eta[name] = TH1D(name.c_str(), name.c_str(), 50, 0., 7.);
     name = category + "_P_reconstructible";
-    histos.h_reconstructible_p[name] = TH1D(name.c_str(), name.c_str(), 50., 0.,100000.);
+    histos.h_reconstructible_p[name] = TH1D(name.c_str(), name.c_str(), 50, 0.,100000.);
     name = category + "_Pt_reconstructible";
-    histos.h_reconstructible_pt[name] = TH1D(name.c_str(), name.c_str(), 50., 0.,100000.);
+    histos.h_reconstructible_pt[name] = TH1D(name.c_str(), name.c_str(), 50, 0.,100000.);
+    name = category + "_Phi_reconstructible";
+    histos.h_reconstructible_phi[name] = TH1D(name.c_str(), name.c_str(), 25, -3.142,3.142);
+    name = category + "_nPV_reconstructible";
+    histos.h_reconstructible_nPV[name] = TH1D(name.c_str(), name.c_str(), 21, -0.5,20.5);
     
     name = category + "_Eta_reconstructed";
-    histos.h_reconstructed_eta[name] = TH1D(name.c_str(), name.c_str(), 50., 0., 7.);
+    histos.h_reconstructed_eta[name] = TH1D(name.c_str(), name.c_str(), 50, 0., 7.);
     name = category + "_P_reconstructed";
-    histos.h_reconstructed_p[name] = TH1D(name.c_str(), name.c_str(), 50., 0., 100000.);
+    histos.h_reconstructed_p[name] = TH1D(name.c_str(), name.c_str(), 50, 0., 100000.);
     name = category + "_Pt_reconstructed";
-    histos.h_reconstructed_pt[name] = TH1D(name.c_str(), name.c_str(), 50., 0., 100000.);
+    histos.h_reconstructed_pt[name] = TH1D(name.c_str(), name.c_str(), 50, 0., 100000.);
+    name = category + "_Phi_reconstructed";
+    histos.h_reconstructed_phi[name] = TH1D(name.c_str(), name.c_str(), 25, -3.142,3.142);
+    name = category + "_nPV_reconstructed";
+    histos.h_reconstructed_nPV[name] = TH1D(name.c_str(), name.c_str(), 21, -0.5,20.5);
   }
 }
 
@@ -530,11 +546,15 @@ void TrackChecker::fillReconstructibleHistos(
   const std::string eta_name = category.m_name + "_Eta_reconstructible";
   const std::string p_name   = category.m_name + "_P_reconstructible";
   const std::string pt_name  = category.m_name + "_Pt_reconstructible";
+  const std::string phi_name = category.m_name + "_Phi_reconstructible";
+  const std::string nPV_name = category.m_name + "_nPV_reconstructible";
   for ( auto mcp : mcps ) {
     if ( category.m_accept(mcp) ) {
       histos.h_reconstructible_eta[eta_name].Fill(mcp.eta);
       histos.h_reconstructible_p[p_name].Fill(mcp.p);
       histos.h_reconstructible_pt[pt_name].Fill(mcp.pt);
+      histos.h_reconstructible_phi[phi_name].Fill(mcp.phi);
+      histos.h_reconstructible_nPV[nPV_name].Fill(mcp.nPV);
     }
   }
 }
@@ -547,9 +567,13 @@ void TrackChecker::fillReconstructedHistos(
     const std::string eta_name = category.m_name + "_Eta_reconstructed";
     const std::string p_name   = category.m_name + "_P_reconstructed";
     const std::string pt_name  = category.m_name + "_Pt_reconstructed";
+    const std::string phi_name = category.m_name + "_Phi_reconstructed";
+    const std::string nPV_name = category.m_name + "_nPV_reconstructed";
     histos.h_reconstructed_eta[eta_name].Fill(mcp.eta);
     histos.h_reconstructed_p[p_name].Fill(mcp.p);
     histos.h_reconstructed_pt[pt_name].Fill(mcp.pt);
+    histos.h_reconstructed_phi[phi_name].Fill(mcp.phi);
+    histos.h_reconstructed_nPV[nPV_name].Fill(mcp.nPV);
   }
 }
 #endif

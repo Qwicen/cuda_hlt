@@ -104,13 +104,13 @@ class TrackChecker
           std::map< std::string, TH1D > h_reconstructible_eta;
           std::map< std::string, TH1D > h_reconstructible_p;
           std::map< std::string, TH1D > h_reconstructible_pt;
-          //std::map< std::string, TH1D > h_reconstructible_phi;
-          //std::map< std::string, TH1D > h_reconstructible_nPV;
+          std::map< std::string, TH1D > h_reconstructible_phi;
+          std::map< std::string, TH1D > h_reconstructible_nPV;
           std::map< std::string, TH1D > h_reconstructed_eta;
           std::map< std::string, TH1D > h_reconstructed_p;
           std::map< std::string, TH1D > h_reconstructed_pt;
-          //std::map< std::string, TH1D > h_reconstructed_phi;
-          //std::map< std::string, TH1D > h_reconstructed_nPV;
+          std::map< std::string, TH1D > h_reconstructed_phi;
+          std::map< std::string, TH1D > h_reconstructed_nPV;
 #endif
         };
 
