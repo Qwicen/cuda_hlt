@@ -112,6 +112,9 @@ class TrackChecker
           std::map< std::string, TH1D > h_reconstructed_pt;
           std::map< std::string, TH1D > h_reconstructed_phi;
           std::map< std::string, TH1D > h_reconstructed_nPV;
+
+          TH1D h_ghost_nPV;
+          TH1D h_total_nPV;
 #endif
         };
 
@@ -141,6 +144,8 @@ class TrackChecker
         void fillReconstructedHistos(
           const MCParticle& mcp,
           HistoCategory& category);
+        void fillTotalHistos( const MCParticle& mcp );
+        void fillGhostHistos( const MCParticle& mcp );
 #endif                
 };
 

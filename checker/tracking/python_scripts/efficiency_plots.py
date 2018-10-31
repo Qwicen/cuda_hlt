@@ -33,7 +33,7 @@ def getTrackers() :
     
 def getGhostHistoNames() :
     #return ["eta", "nPV"] # currently no eta information available from track
-    return []
+    return ["nPV"]
 
 f = ROOT.TFile.Open("../../../output/PrCheckerPlots.root", "read")
 outputfile = ROOT.TFile( "efficiency_plots.root", "recreate" )

@@ -40,18 +40,6 @@ def ghostHistoDict() :
     
     return basedict
 
-def getTrackerNames() :
-     basedict = {
-        "Velo" : {},
-        "VeloUT" : {},
-        "Forward" : {} 
-        }
-     basedict["Velo"] = "Velo"
-     basedict["VeloUT"] = "Upstream"
-     basedict["Forward"] = "Forward"
-
-     return basedict
-
 def getCuts() :
      basedict = {
         "Velo" : {},

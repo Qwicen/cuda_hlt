@@ -55,6 +55,9 @@ TrackChecker::~TrackChecker()
     histo.second.Write();
   for ( auto histo : histos.h_reconstructed_nPV )
     histo.second.Write();
+  histos.h_ghost_nPV.Write();
+  histos.h_total_nPV.Write();
+  
   f->Write();
   f->Close();
 #endif
@@ -125,6 +128,7 @@ TrackChecker::TrackEffReport::~TrackEffReport()
 
 #ifdef WITH_ROOT
 void TrackChecker::initHistos() {
+  // histos for efficiency
   for ( auto histoCat : m_histo_categories ) {
     const std::string category = histoCat.m_name;
     std::string name = category + "_Eta_reconstructible";
@@ -155,6 +159,10 @@ void TrackChecker::initHistos() {
     name = category + "_nPV_reconstructed";
     histos.h_reconstructed_nPV[name] = TH1D(name.c_str(), name.c_str(), 21, -0.5,20.5);
   }
+
+  // histos for ghost rate
+  histos.h_ghost_nPV = TH1D("nPV_Ghosts", "nPV_Ghosts", 21, -0.5,20.5);
+  histos.h_total_nPV = TH1D("nPV_Total", "nPV_Total", 21, -0.5,20.5);
 }
 
 void TrackChecker::fillReconstructibleHistos(
@@ -196,6 +204,14 @@ void TrackChecker::fillReconstructedHistos(
   histos.h_reconstructed_phi[phi_name].Fill(mcp.phi);
   histos.h_reconstructed_nPV[nPV_name].Fill(mcp.nPV);
 }
+
+void TrackChecker::fillTotalHistos( const MCParticle& mcp ) {
+  histos.h_total_nPV.Fill(mcp.nPV);
+}
+
+void TrackChecker::fillGhostHistos( const MCParticle& mcp ) {
+  histos.h_ghost_nPV.Fill(mcp.nPV);
+}
 #endif
 
 void TrackChecker::operator()(const trackChecker::Tracks& tracks,
@@ -213,17 +229,26 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
   const std::size_t ntracksperevt = tracks.size();
   std::size_t nghostsperevt = 0;
   for (auto track: tracks) {
+#ifdef WITH_ROOT
+    fillTotalHistos(mcps[0]);
+#endif
     // check LHCbIDs for MC association
     const auto& ids = track.ids();
     const auto assoc = mcassoc(ids.begin(), ids.end(), track.n_matched_total);
     if (!assoc) {
       ++nghostsperevt;
+#ifdef WITH_ROOT
+      fillGhostHistos(mcps[0]);
+#endif
 	  continue;
     }
     // have MC association, check weight
     const auto weight = assoc.front().second;
     if (weight < m_minweight) {
       ++nghostsperevt;
+#ifdef WITH_ROOT
+      fillGhostHistos(mcps[0]);
+#endif
       continue;
     }
     // okay, sufficient to proceed...
