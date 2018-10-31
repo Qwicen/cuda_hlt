@@ -225,14 +225,7 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
 
     // refine first candidate
     for (int i=first_candidate; i<last_candidate; ++i) {
-      if (is_valid_tol_refine(
-        i,
-        ut_hits,
-        velo_state,
-        normFact,
-        xTol,
-        dx_dy)
-      ) {
+      if (is_valid_tol_refine(i, ut_hits, velo_state, normFact, xTol, dx_dy)) {
         first_candidate = i;
         found = true;
         break;
@@ -242,35 +235,22 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
     if (!found) {
       first_candidate = -1;
       last_candidate = -1;      
+    } 
+    else {
+      bool last_found = false;
+
+      for (int i=last_candidate; i>first_candidate; --i) {
+        if (is_valid_tol_refine(i, ut_hits, velo_state, normFact, xTol,dx_dy)) {
+          last_candidate = i;
+          last_found = true;
+          break;
+        } 
+      }
+
+      if (!last_found) {
+        last_candidate = first_candidate + 1;
+      }      
     }
-
-    // if (found == true) {
-
-    //   bool last_found = false;
-
-    //   // refine last candidate
-    //   for (int i=last_candidate; i>first_candidate; --i) {
-    //     if (is_valid_tol_refine(
-    //       i,
-    //       ut_hits,
-    //       velo_state,
-    //       normFact,
-    //       xTol,
-    //       dx_dy)
-    //     ) {
-    //       last_candidate = i + 1;
-    //       last_found = true;
-    //       break;
-    //     }
-    //   }
-
-    //   if (!last_found) {
-    //     last_candidate = first_candidate - 1;
-    //   }
-    // } else {
-    //   first_candidate = -1;
-    //   last_candidate = -1;
-    // }
   }
 
   return {first_candidate, last_candidate};
