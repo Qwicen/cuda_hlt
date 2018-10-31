@@ -5,6 +5,7 @@
 
 #include "VeloDefinitions.cuh"
 #include "patPV_Definitions.cuh"
+#include "VeloEventModel.cuh"
 
 
 /** @class PVSeedTool PVSeedTool.h tmp/PVSeedTool.h

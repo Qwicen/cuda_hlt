@@ -30,12 +30,12 @@ struct vtxCluster final {
 
 };
 
-__device__ struct XYZPoint {
+ struct XYZPoint {
   double x = 0.;
   double y = 0.;
   double z = 0.;
-  __device__ XYZPoint(double m_x, double m_y, double m_z) : x(m_x), y(m_y), z(m_z) {};
-  __device__ XYZPoint() {};
+   __device__ __host__ XYZPoint(double m_x, double m_y, double m_z) : x(m_x), y(m_y), z(m_z) {};
+   __device__ __host__ XYZPoint() {};
 
 };
 
@@ -44,7 +44,7 @@ __device__ struct XYZPoint {
 
 
 
-__device__ struct Vector2 {
+struct Vector2 {
   double x;
   double y;
 
@@ -55,7 +55,7 @@ __device__ struct Vector2 {
 
 
 
-__device__ class Vertex {
+class Vertex {
   public:
     __device__ Vertex() {};
     double x = 0.;

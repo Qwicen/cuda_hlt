@@ -1,7 +1,7 @@
 #include "patPV.cuh"
 
 
-__device__ void reconstructMultiPVFromTracks(VeloState * tracks2use, Vertex * outvtxvec, int number_of_tracks,
+__device__ void reconstructMultiPVFromTracks(Velo::State * tracks2use, Vertex * outvtxvec, int number_of_tracks,
   uint * number_of_vertex,  bool * tracks2disable) 
 {
   /*
@@ -86,7 +86,7 @@ __device__ void reconstructMultiPVFromTracks(VeloState * tracks2use, Vertex * ou
 
 
 __global__ void patPV(
-  VeloState* dev_velo_states,
+  Velo::State* dev_velo_states,
   int * dev_atomics_storage,
   Vertex * dev_outvtxvec,
   uint * dev_number_of_vertex
@@ -99,11 +99,11 @@ __global__ void patPV(
    int number_of_tracks = dev_atomics_storage[number_of_events];
    int acc_tracks = (dev_atomics_storage + number_of_events)[number_of_events];
 
-   VeloState * state_base_pointer = dev_velo_states + 2 * acc_tracks;
+   Velo::State * state_base_pointer = dev_velo_states + 2 * acc_tracks;
 
   const int maxnumbertracks = 200;
     //vector with states from Kalman fit
-  VeloState  kalman_states[maxnumbertracks];
+  Velo::State  kalman_states[maxnumbertracks];
 
 
   bool  tracks2disable[maxnumbertracks];

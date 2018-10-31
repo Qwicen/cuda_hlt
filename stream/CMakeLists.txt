@@ -67,7 +67,7 @@ if ( ROOT_FOUND )
   Utils
   Velo
   PatPV
-  x86PatPV
+ # x86PatPV
   UT
   x86Forward
   SciFi
@@ -78,7 +78,7 @@ else()
   Utils
   Velo
   PatPV
-  x86PatPV
+  #x86PatPV
   UT
   x86Forward
   SciFi

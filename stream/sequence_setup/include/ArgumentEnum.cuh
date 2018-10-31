@@ -28,6 +28,7 @@ enum arg_enum_t {
   dev_prefix_sum_auxiliary_array_2,
   dev_velo_track_hits,
   dev_velo_states,
+  dev_kalmanvelo_states,
   dev_seeds,
   dev_number_seeds,
   dev_vertex,

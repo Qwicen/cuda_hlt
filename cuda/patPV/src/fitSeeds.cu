@@ -22,7 +22,7 @@ __global__ void fitSeeds(
   int * dev_number_vertex,
   XYZPoint * dev_seeds,
   uint * dev_number_seeds,
-  VeloState* dev_velo_states,
+  Velo::State* dev_velo_states,
   int * dev_atomics_storage)
 {
 
@@ -35,7 +35,7 @@ __global__ void fitSeeds(
 
   int acc_tracks = (dev_atomics_storage + number_of_events)[event_number];
 
-  VeloState * state_base_pointer = dev_velo_states + 2 * acc_tracks;
+  Velo::State * state_base_pointer = dev_velo_states + 2 * acc_tracks;
 
   Vertex vertex;
 
@@ -58,7 +58,7 @@ __global__ void fitSeeds(
 
 
 __device__ bool fitVertex( XYZPoint& seedPoint,
-              VeloState * host_velo_states,
+              Velo::State * host_velo_states,
              Vertex& vtx,
               int number_of_tracks) 
 {

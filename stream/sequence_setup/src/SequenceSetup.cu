@@ -152,12 +152,19 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_states
   };
 
-  sequence_dependencies[tuple_contains<patPV_t, sequence_t>::index] = {}
-    arg::dev_velo_states,
+  sequence_dependencies[tuple_contains<velo_fit_t, sequence_t>::index] = {
     arg::dev_atomics_storage,
-    arg::dev_outvtxvec,
-    arg::dev_number_of_vertex
+    arg::dev_tracks,
+    arg::dev_velo_track_hit_number,
+    arg::dev_velo_cluster_container,
+    arg::dev_estimated_input_size,
+    arg::dev_module_cluster_num,
+    arg::dev_velo_track_hits,
+    arg::dev_velo_states,
+    arg::dev_kalmanvelo_states
   };
+
+
 
   sequence_dependencies[tuple_contains<ut_calculate_number_of_hits_t, sequence_t>::index] = {
     arg::dev_ut_raw_input,
@@ -247,7 +254,7 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
   };
 
 
-  sequence_dependencies[seq::velo_fit] = {
+  sequence_dependencies[tuple_contains<velo_fit_t, sequence_t>::index] = {
     arg::dev_atomics_storage,
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,
@@ -255,21 +262,7 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_tracks
   };
 
-    sequence_dependencies[seq::getSeeds] = {
-    arg::dev_velo_states,
-    arg::dev_atomics_storage,
-    arg::dev_seeds,
-    arg::dev_number_seeds
-  };
 
-      sequence_dependencies[seq::fitSeeds] = {
-    arg::dev_vertex,
-    arg::dev_number_vertex,
-    arg::dev_seeds,
-    arg::dev_number_seeds,
-    arg::dev_velo_states,
-    arg::dev_atomics_storage
-  };
 
 
 
@@ -283,7 +276,7 @@ std::vector<int> get_sequence_output_arguments() {
     arg::dev_velo_track_hits,
     arg::dev_velo_states,
     arg::dev_outvtxvec,
-    arg::dev_number_of_vertex
+    arg::dev_number_of_vertex,
     arg::dev_atomics_veloUT,
     arg::dev_veloUT_tracks,
     arg::dev_scifi_tracks,

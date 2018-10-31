@@ -30,7 +30,7 @@ __constant__ double X0cu = 0.01;
 __constant__ double mcu_scatCons = 0.01;
 
 
-__device__ double zCloseBeam( VeloState track, const XYZPoint& beamspot) {
+__device__ double zCloseBeam( Velo::State track, const XYZPoint& beamspot) {
 
   XYZPoint tpoint(track.x, track.y, track.z);
   XYZPoint tdir(track.tx, track.ty, 1.);
@@ -77,7 +77,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
 
  __global__ void getSeeds(
-    VeloState* dev_velo_states,
+    Velo::State* dev_velo_states,
   int * dev_atomics_storage,
   XYZPoint * dev_seeds,
   uint * dev_number_seed) {
@@ -96,7 +96,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
   int acc_tracks = (dev_atomics_storage + number_of_events)[event_number];
 
-  VeloState * state_base_pointer = dev_velo_states + 2 * acc_tracks;
+  Velo::State * state_base_pointer = dev_velo_states + 2 * acc_tracks;
 
 
 

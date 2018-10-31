@@ -41,6 +41,7 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_prefix_sum_auxiliary_array_2, uint>,
   Argument<arg::dev_velo_track_hits, uint>,
   Argument<arg::dev_velo_states, uint>,
+  Argument<arg::dev_kalmanvelo_states, uint>,
   Argument<arg::dev_seeds, XYZPoint>,
   Argument<arg::dev_number_seeds, uint>,
   Argument<arg::dev_vertex, Vertex>,

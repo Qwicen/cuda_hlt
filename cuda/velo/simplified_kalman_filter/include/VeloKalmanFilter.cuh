@@ -5,6 +5,10 @@
 #include "Common.h"
 #include "Handler.cuh"
 
+
+#include "VeloConsolidated.cuh"
+
+
 __device__ float velo_kalman_filter_step(
   const float z,
   const float zhit,
@@ -22,14 +26,18 @@ __device__ float velo_kalman_filter_step(
  *        allowing for some scattering at every hit
  */
 template<bool upstream>
-__device__ void simplified_fit(
-  const VeloTracking::Hit<mc_check_enabled>* velo_track_hits,
-  const VeloState& stateAtBeamLine,
-  VeloState* velo_state,
-  const int& hitsNum
+__device__ Velo::State simplified_fit(
+  Velo::Consolidated::Hits& consolidated_hits,
+  const float* hit_Xs,
+  const float* hit_Ys,
+  const float* hit_Zs,
+  const uint* hit_IDs,
+  const Velo::TrackHits& track,
+  const int& hitsNum,
+  const Velo::State& stateAtBeamLine
 ) {
   // backward = state.z > track.hits[0].z;
-  const bool backward = stateAtBeamLine.z > velo_track_hits[0].z;
+  const bool backward = stateAtBeamLine.z > hit_Zs[0];
   const int direction = (backward ? 1 : -1) * (upstream ? 1 : -1);
   const float noise2PerLayer = 1e-8 + 7e-6 * (stateAtBeamLine.tx * stateAtBeamLine.tx + stateAtBeamLine.ty * stateAtBeamLine.ty);
 
@@ -38,7 +46,7 @@ __device__ void simplified_fit(
   int firsthit = 0;
   int lasthit = hitsNum - 1;
   int dhit = 1;
-  if ((velo_track_hits[lasthit].z - velo_track_hits[firsthit].z) * direction < 0) {
+  if ((hit_Zs[lasthit] - hit_Zs[firsthit]) * direction < 0) {
     const int temp = firsthit;
     firsthit = lasthit;
     lasthit = temp;
@@ -47,10 +55,10 @@ __device__ void simplified_fit(
 
   // We filter x and y simultaneously but take them uncorrelated.
   // filter first the first hit.
-  VeloState state;
-  state.x = velo_track_hits[firsthit].x;
-  state.y = velo_track_hits[firsthit].y;
-  state.z = velo_track_hits[firsthit].z;
+  Velo::State state;
+  state.x = hit_Xs[firsthit];
+  state.y = hit_Ys[firsthit];
+  state.z = hit_Zs[firsthit];
   state.tx = stateAtBeamLine.tx;
   state.ty = stateAtBeamLine.ty;
 
@@ -65,9 +73,9 @@ __device__ void simplified_fit(
   // add remaining hits
   state.chi2 = 0.0f;
   for (uint i=firsthit + dhit; i!=lasthit + dhit; i+=dhit) {
-    const auto hit_x = velo_track_hits[i].x;
-    const auto hit_y = velo_track_hits[i].y;
-    const auto hit_z = velo_track_hits[i].z;
+    const auto hit_x = hit_Xs[i];
+    const auto hit_y = hit_Ys[i];
+    const auto hit_z = hit_Zs[i];
 
     
     // add the noise
@@ -88,15 +96,20 @@ __device__ void simplified_fit(
   state.c33 += noise2PerLayer;
 
   // finally, store the state
-  *velo_state = state;
+  
+  return state;
 }
 
 __global__ void velo_fit(
   int* dev_atomics_storage,
+  const Velo::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,
-  VeloTracking::Hit<mc_check_enabled>* dev_velo_track_hits,
-  VeloState* dev_velo_states,
-  const VeloTracking::TrackHits* dev_tracks
+  uint* dev_velo_cluster_container,
+  uint* dev_module_cluster_start,
+  uint* dev_module_cluster_num,
+  uint* dev_velo_track_hits,
+  uint* dev_velo_kalmanstates,
+  uint* dev_velo_states
 );
 
 ALGORITHM(velo_fit, velo_fit_t)

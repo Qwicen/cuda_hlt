@@ -55,7 +55,7 @@ set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;
 add_subdirectory(cuda)
 add_subdirectory(stream)
 add_subdirectory(checker)
-add_subdirectory(PatPV)
+#add_subdirectory(PatPV)
 add_subdirectory(x86/UT/PrVeloUT)
 add_subdirectory(x86/SciFi)
 add_subdirectory(x86/velo/clustering)
@@ -94,7 +94,7 @@ if ( ROOT_FOUND )
     Utils
     Velo
     PatPV
-    x86PatPV
+    #x86PatPV
     UT
     SciFi
     x86VeloUT
@@ -110,7 +110,7 @@ else()
     Utils
     Velo
     PatPV
-    x86PatPV
+    #x86PatPV
     UT
     SciFi
     x86VeloUT

@@ -26,7 +26,7 @@ bool  multcomp( vtxCluster *first, vtxCluster *second ) {
 //=============================================================================
 // getSeeds
 //=============================================================================
-void getSeeds( VeloState * inputTracks,
+void getSeeds( Velo::State * inputTracks,
                      const XYZPoint& beamspot, int number_of_tracks, XYZPoint * seeds, uint * number_of_seeds,  int event_number, bool * tracks2disable)  {
   
   
@@ -216,10 +216,10 @@ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
 
 
-double zCloseBeam( VeloState track, const XYZPoint& beamspot) {
+double zCloseBeam( Velo::State track, const XYZPoint& beamspot) {
 
   XYZPoint tpoint(track.x, track.y, track.z);
-  XYZPoint tdir(track.tx, track.ty, 1.);
+  XYZPoint tdir(track.tx, track.ty, float(1.));
 
   double wx = ( 1. + tdir.x * tdir.x ) / track.c00;
   double wy = ( 1. + tdir.y * tdir.y ) / track.c11;
