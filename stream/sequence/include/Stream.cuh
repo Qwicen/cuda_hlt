@@ -29,7 +29,7 @@ struct Stream {
   using argument_manager_t = ArgumentManager<scheduler_t::arguments_tuple_t>;
 
   // Sequence and arguments
-  sequence_t sequence_tuple;
+  configured_sequence_t sequence_tuple;
 
   // Stream datatypes
   cudaStream_t cuda_stream;

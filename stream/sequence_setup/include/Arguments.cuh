@@ -1,6 +1,5 @@
 #pragma once
 
-#include <tuple>
 #include "Argument.cuh"
 #include "VeloEventModel.cuh"
 #include "VeloUTDefinitions.cuh"
