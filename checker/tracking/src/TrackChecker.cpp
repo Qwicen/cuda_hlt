@@ -128,7 +128,16 @@ void TrackChecker::initHistos() {
   for ( auto histoCat : m_histo_categories ) {
     const std::string category = histoCat.m_name;
     std::string name = category + "_Eta_reconstructible";
-    histos.h_reconstructible_eta[name] = TH1D(name.c_str(), name.c_str(), 50, 0., 7.);
+    if ( category.find("eta25") != std::string::npos) {
+      histos.h_reconstructible_eta[name] = TH1D(name.c_str(), name.c_str(), 50, 0., 7.);
+      name = category + "_Eta_reconstructed";
+      histos.h_reconstructed_eta[name] = TH1D(name.c_str(), name.c_str(), 50, 0., 7.);
+    }
+    else {
+      histos.h_reconstructible_eta[name] = TH1D(name.c_str(), name.c_str(), 100, -7., 7.);
+      name = category + "_Eta_reconstructed";
+      histos.h_reconstructed_eta[name] = TH1D(name.c_str(), name.c_str(), 100, -7., 7.);
+    }
     name = category + "_P_reconstructible";
     histos.h_reconstructible_p[name] = TH1D(name.c_str(), name.c_str(), 50, 0.,100000.);
     name = category + "_Pt_reconstructible";
@@ -137,9 +146,6 @@ void TrackChecker::initHistos() {
     histos.h_reconstructible_phi[name] = TH1D(name.c_str(), name.c_str(), 25, -3.142,3.142);
     name = category + "_nPV_reconstructible";
     histos.h_reconstructible_nPV[name] = TH1D(name.c_str(), name.c_str(), 21, -0.5,20.5);
-    
-    name = category + "_Eta_reconstructed";
-    histos.h_reconstructed_eta[name] = TH1D(name.c_str(), name.c_str(), 50, 0., 7.);
     name = category + "_P_reconstructed";
     histos.h_reconstructed_p[name] = TH1D(name.c_str(), name.c_str(), 50, 0., 100000.);
     name = category + "_Pt_reconstructed";
