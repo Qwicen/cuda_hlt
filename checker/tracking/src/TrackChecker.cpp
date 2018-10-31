@@ -91,7 +91,6 @@ void TrackChecker::TrackEffReport::operator()(
   m_hitpur *= float(m_nfound + m_nclones - 1) / float(m_nfound + m_nclones);
   m_hitpur += weight / float(m_nfound + m_nclones);
   // update hit efficiency
-  //auto hiteff = track.numHits * weight / float(mcp.numHits);
   auto hiteff = track.n_matched_total * weight / float(mcp.numHits);
   m_hiteff *= float(m_nfound + m_nclones - 1) / float(m_nfound + m_nclones);
   m_hiteff += hiteff / float(m_nfound + m_nclones);
@@ -124,6 +123,11 @@ TrackChecker::TrackEffReport::~TrackEffReport()
         100.f * clonerate,
         100.f * m_hiteff, 100.f * m_hitpur);
   }
+}
+
+void TrackChecker::HistoCategory::evtEnds()
+{
+  m_keysseen.clear();
 }
 
 #ifdef WITH_ROOT
@@ -267,6 +271,7 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
   // almost done, notify of end of event...
   ++m_nevents;
   for (auto& report: m_categories) report.evtEnds();
+  for (auto& histo_cat: m_histo_categories) histo_cat.evtEnds();
   m_ghostperevent *= float(m_nevents - 1) / float(m_nevents);
   if (ntracksperevt) {
     m_ghostperevent += (float(nghostsperevt) / float(ntracksperevt)) / float(m_nevents);

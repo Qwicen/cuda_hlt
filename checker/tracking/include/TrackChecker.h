@@ -94,6 +94,8 @@ class TrackChecker
           HistoCategory(std::string&& name, F&& accept) :
             m_name(std::move(name)), m_accept(std::move(accept))
           {}
+          /// notify of end of event
+          void evtEnds();
         };
                 
         std::vector<TrackEffReport> m_categories;
