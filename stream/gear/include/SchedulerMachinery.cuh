@@ -2,6 +2,7 @@
 #include <tuple>
 #include <functional>
 #include <type_traits>
+#include "Argument.cuh"
 
 namespace Sch {
 
@@ -188,6 +189,26 @@ template<typename ConfiguredSequence, typename AlgorithmsDeps>
 using in_dependencies = in_dependencies_impl<typename tuple_reverse<
     typename ActiveSequence<typename tuple_reverse<ConfiguredSequence>::t, AlgorithmsDeps>::t
   >::t>;
+
+// Fetches all arguments from ie. in_dependencies into a tuple
+template<typename in_deps>
+struct ArgumentsTuple;
+
+template<>
+struct ArgumentsTuple<std::tuple<>> {
+  using t = std::tuple<>;
+};
+
+template<typename Algorithm, typename... Algorithms>
+struct ArgumentsTuple<std::tuple<AlgorithmDependencies<Algorithm, std::tuple<>>, Algorithms...>> {
+  using t = typename ArgumentsTuple<std::tuple<Algorithms...>>::t;
+};
+
+template<typename Algorithm, typename Arg, typename... Args, typename... Algorithms>
+struct ArgumentsTuple<std::tuple<AlgorithmDependencies<Algorithm, std::tuple<Arg, Args...>>, Algorithms...>> {
+  using previous_t = typename ArgumentsTuple<std::tuple<AlgorithmDependencies<Algorithm, std::tuple<Args...>>, Algorithms...>>::t;
+  using t = typename tuple_append<previous_t, Arg>::t;
+};
 
 // Helper to just print the arguments
 template<typename Arguments>

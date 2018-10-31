@@ -10,16 +10,16 @@ struct MemoryManager {
   /**
    * @brief A memory segment is composed of a start
    *        and size, both referencing bytes.
-   *        The tag can either be -1 (free), or i \in {0-n},
-   *        which means it is occupied by argument i
+   *        The tag can either be "" (empty string - free), or any other name,
+   *        which means it is occupied by that argument name.
    */
   struct MemorySegment {
     uint start;
     size_t size;
-    int tag;
+    std::string tag;
   };
 
-  std::list<MemorySegment> memory_segments = {{0, max_available_memory, -1}};
+  std::list<MemorySegment> memory_segments = {{0, max_available_memory, ""}};
   size_t total_memory_required = 0;
 
   MemoryManager() = default;
@@ -35,37 +35,60 @@ struct MemoryManager {
   }
 
   /**
-   * @brief Reserves a memory request of size requested_size.
-   *        It can be overriden by other memory managers. The
-   *        base version finds the first available segment. If
-   *        there are no available segments of the requested size,
+   * @brief Recursive memory reserve definition.
+   */
+  template<typename ArgumentManagerType, typename Arguments>
+  void reserve(ArgumentManagerType& argument_manager);
+
+  /**
+   * @brief Recursive memory reserve, full specialization for empty tuple.
+   */
+  template<typename ArgumentManagerType>
+  void reserve<ArgumentManagerType, std::tuple<>>(ArgumentManagerType& argument_manager) {}
+
+  /**
+   * @brief Reserves a memory request of size requested_size, implementation.
+   *        Finds the first available segment.
+   *        If there are no available segments of the requested size,
    *        it throws an exception.
    */
-  uint reserve(int tag, size_t requested_size) {
+  template<typename ArgumentManagerType, typename Argument, typename... Arguments>
+  void reserve<ArgumentManagerType, std::tuple<Argument, Arguments...>>(ArgumentManagerType& argument_manager)
+  {
+    // Tag and requested size
+    const auto tag = Argument::name;
+    const size_t requested_size = argument_manager.size<Argument>();
+
+    // Size requested should be greater than zero
+    assert(requested_size > 0);
+
     // Aligned requested size
     const size_t aligned_request = requested_size + guarantee_alignment - 1
       - ((requested_size + guarantee_alignment - 1) % guarantee_alignment);
 
     if (logger::ll.verbosityLevel >= 4) {
-      debug_cout << "MemoryManager: Requested "
-        << requested_size << " B (" << aligned_request << " B aligned)" << std::endl;
+      debug_cout << "MemoryManager: Requested to reserve "
+        << requested_size << " B (" << aligned_request << " B aligned) for argument "
+        << Argument::name << std::endl;
     }
 
+    // Finds first free segment providing that space
     auto it = memory_segments.begin();
     for (; it!=memory_segments.end(); ++it) {
-      if (it->tag == -1 && it->size >= aligned_request) {
+      if (it->tag == "" && it->size >= aligned_request) {
         break;
       }
     }
 
+    // Complain if no space was available
     if (it == memory_segments.end()) {
       print();
-      throw StrException("Reserve: Requested size could not be met ("
-        + std::to_string(((float) aligned_request) / (1024*1024)) + " MiB)");
+      throw StrException("Reserve: Requested size for argument " + Argument::name
+        + " could not be met ("+ std::to_string(((float) aligned_request) / (1024*1024)) + " MiB)");
     }
 
     // Start of allocation
-    uint start = it->start;
+    argument_manager.set_offset<Argument>(it->start);
 
     // Update current segment
     it->start += aligned_request;
@@ -84,13 +107,29 @@ struct MemoryManager {
     total_memory_required = std::max(total_memory_required,
       max_available_memory - memory_segments.back().size);
 
-    return start;
+    // Reserve other requested segments
+    reserve<ArgumentManagerType, std::tuple<Arguments...>>(argument_manager);
   }
 
   /**
-   * @brief Frees the memory segment occupied by the tag.
+   * @brief Recursive free. Frees the memory segment occupied by the Arguments.
    */
-  void free(int tag) {
+  template<typename Arguments>
+  void free();
+
+  /**
+   * @brief Recursive free, base case.
+   */
+  template<>
+  void free<std::tuple<>>() {}
+
+  /**
+   * @brief Recursive free, implementation for Argument.
+   */
+  template<typename Argument, typename... Arguments>
+  void free<std::tuple<Argument, Arguments...>>() {
+    const auto tag = std::string(Argument::name);
+
     if (logger::ll.verbosityLevel >= 4) {
       debug_cout << "MemoryManager: Requested to free tag " << tag << std::endl;
     }
@@ -106,12 +145,12 @@ struct MemoryManager {
     }
 
     // Free found tag
-    it->tag = -1;
+    it->tag = "";
 
     // Check if previous segment is free, in which case, join
     if (it != memory_segments.begin()) {
       auto previous_it = std::prev(it);
-      if (previous_it->tag == -1) {
+      if (previous_it->tag == "") {
         previous_it->size += it->size;
         // Remove current element, and point to previous one
         it = memory_segments.erase(it);
@@ -122,12 +161,15 @@ struct MemoryManager {
     // Check if next segment is free, in which case, join
     if (std::next(it) != memory_segments.end()) {
       auto next_it = std::next(it);
-      if (next_it->tag == -1) {
+      if (next_it->tag == "") {
         it->size += next_it->size;
         // Remove next tag
         memory_segments.erase(next_it);
       }
     }
+
+    // Free other requested arguments
+    free<std::tuple<Arguments...>>();
   }
 
   /**
@@ -135,38 +177,20 @@ struct MemoryManager {
    *        available space.
    */
   void free_all() {
-    memory_segments = std::list<MemorySegment>{{0, max_available_memory, -1}};
+    memory_segments = std::list<MemorySegment>{{0, max_available_memory, ""}};
   }
 
   /**
    * @brief Prints the current state of the memory segments.
    */
-  template<typename T = std::tuple<>, typename R = std::tuple<>>
-  void print(
-    const std::array<std::string, std::tuple_size<T>::value>& sequence_names = {},
-    const std::array<std::string, std::tuple_size<R>::value>& argument_names = {},
-    const int step = -1
-  ) {
-    if (step!=-1) {
-      info_cout << "Sequence step " << step << " \""
-        << sequence_names[step] << "\" memory segments (MiB):" << std::endl;
-    } else {
-      info_cout << "Memory segments (MiB):" << std::endl;
-    }
+  void print() {
+    info_cout << "Memory segments (MiB):" << std::endl;
 
-    if (argument_names.empty()) {
-      for (auto& segment : memory_segments) {
-        std::string name = segment.tag==-1 ? "unused" : std::to_string(segment.tag);
-        info_cout << name << " (" << ((float) segment.size) / (1024 * 1024) << "), ";
-      }
-      info_cout << std::endl;
-    } else {
-      for (auto& segment : memory_segments) {
-        std::string name = segment.tag==-1 ? "unused" : argument_names[segment.tag];
-        info_cout << name << " (" << ((float) segment.size) / (1024 * 1024) << "), ";
-      }
-      info_cout << std::endl;
+    for (auto& segment : memory_segments) {
+      std::string name = segment.tag=="" ? "unused" : segment.tag;
+      info_cout << name << " (" << ((float) segment.size) / (1024 * 1024) << "), ";
     }
+    info_cout << std::endl;
 
     info_cout << "Max memory required: "
       << (((float) total_memory_required) / (1024 * 1024)) << " MiB" << std::endl << std::endl;

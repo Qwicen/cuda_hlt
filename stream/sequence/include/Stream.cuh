@@ -40,7 +40,7 @@ struct Stream {
   bool run_on_x86;
 
   // Dynamic scheduler
-  Scheduler<sequence_t, argument_tuple_t> scheduler;
+  Scheduler<configured_sequence_t, algorithms_dependencies_t, output_arguments_t> scheduler;
 
   // Host buffers
   HostBuffers host_buffers;

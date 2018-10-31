@@ -20,7 +20,7 @@
 #include "PrForward.cuh"
 
 #define SEQUENCE(...) \
-  typedef std::tuple<__VA_ARGS__> sequence_t;
+  typedef std::tuple<__VA_ARGS__> configured_sequence_t;
   // Prepared for C++17 variant
   // typedef std::variant<std::monostate, __VA_ARGS__> state_t;
 

@@ -2,6 +2,7 @@
 
 #include "MemoryManager.cuh"
 #include "SchedulerMachinery.cuh"
+#include "ArgumentManager.cuh"
 
 template<typename ConfiguredSequence, typename AlgorithmsDependencies, typename OutputArguments>
 struct Scheduler {
@@ -10,67 +11,77 @@ struct Scheduler {
   // at every iteration.
   using in_deps_t = typename Sch::in_dependencies<ConfiguredSequence, AlgorithmsDependencies>::t;
   using out_deps_t = typename Sch::out_dependencies<ConfiguredSequence, OutputArguments, AlgorithmsDependencies>::t;
+  using arguments_tuple_t = typename Sch::ArgumentsTuple<in_deps_t>::t;
 
   in_deps_t in_deps;
   out_deps_t out_deps;
-  bool do_print = false;
   MemoryManager memory_manager;
+  ArgumentManager<arguments_tuple_t> argument_manager;
+  bool do_print = false;
 
   Scheduler() = default;
 
-  Scheduler(const bool param_do_print, const size_t reserved_mb) : do_print(param_do_print) {
+  Scheduler(
+    const bool param_do_print,
+    const size_t reserved_mb,
+    const char* base_pointer)
+  : do_print(param_do_print) {
     // Set max mb to memory_manager
     memory_manager.set_reserved_memory(reserved_mb);
+    argument_manager.set_base_pointer(base_pointer);
   }
 
+  /**
+   * @brief Returns the argument manager of the scheduler.
+   */
+  ArgumentManager<arguments_tuple_t>& arguments() {
+    return argument_manager;
+  }
+
+  /**
+   * @brief Resets the memory manager.
+   */
   void reset() {
     memory_manager.free_all();
   }
 
   /**
    * @brief Runs a step of the scheduler and determines
-   *        the offset for each argument. The size
-   *        of the offset vector must be the same as the number
-   *        of input arguments for that step of the sequence.
+   *        the offset for each argument.
    *        
-   *        The parameter check_sequence_step can be used to assert
-   *        the sequence being setup is the one intended.
+   *        The sequence is asserted at compile time to run the
+   *        expected iteration and reserve the expected types.
    *        
    *        This function should always be invoked, even when it is
    *        known there are no tags to reserve or free on this step.
-   *        It performs a check on the current sequence item and 
-   *        increments the sequence step.
    */
   template<unsigned long I, typename T>
-  void setup {
+  void setup() {
+    // in dependencies: Dependencies to be malloc'd
+    // out dependencies: Dependencies to be free'd
+    const auto in_dependencies = std::get<I>(in_deps);
+    const auto out_dependencies = std::get<I>(out_deps);
+
     // in_deps and out_deps should be in order
     // and index I should contain algorithm type T
-    using in_algorithm = std::get<I>(in_deps)::Algorithm;
-    using out_algorithm = std::get<I>(out_deps)::Algorithm;
+    using in_algorithm = in_dependencies::Algorithm;
+    using in_arguments = in_dependencies::Arguments;
+    using out_algorithm = out_dependencies::Algorithm;
+    using out_arguments = out_dependencies::Arguments;
 
     static_assert(std::is_same<T, in_algorithm>::value, "Scheduler index mismatch (in_algorithm)");
     static_assert(std::is_same<T, out_algorithm>::value, "Scheduler index mismatch (out_algorithm)");
 
-    // Free all tags in previous step
-    if (current_sequence_step != 0) {
-      for (auto tag : tags_to_free[current_sequence_step-1]) {
-        memory_manager.free(tag);
-      }
-    }
+    // Free all arguments in out_dependencies    
+    memory_manager.free<out_arguments>();
 
-    // Reserve space for all tags
-    // that need to be initialized on this step
-    for (auto tag : tags_to_initialize[current_sequence_step]) {
-      const auto requested_size = arguments.size(tag);
-      arguments.set_offset(tag, memory_manager.reserve(tag, requested_size));
-    }
+    // Malloc all arguments in in_dependencies
+    memory_manager.malloc<arguments_tuple_t, in_arguments>(arguments_tuple);
 
     // Print memory manager state
     if (do_print) {
-      memory_manager.print<T, R>(sequence_names, argument_names, current_sequence_step);
+      info_cout << "Sequence step " << I << " \"" << T::name << "\":" << std::endl;
+      memory_manager.print();
     }
-
-    // Move to next step
-    ++current_sequence_step;
   }
 };

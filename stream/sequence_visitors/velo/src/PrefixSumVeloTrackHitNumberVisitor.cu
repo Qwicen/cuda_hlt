@@ -2,13 +2,23 @@
 #include "PrefixSum.cuh"
 
 template<>
-void SequenceVisitor::visit<prefix_sum_reduce_velo_track_hit_number_t>(
-  prefix_sum_reduce_velo_track_hit_number_t& state,
-  const int sequence_step,
+void SequenceVisitor::set_arguments_size<prefix_sum_reduce_velo_track_hit_number_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  ArgumentManager<argument_tuple_t>& arguments,
-  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
+  const HostBuffers& host_buffers,
+  argument_manager_t& arguments)
+{
+  const size_t prefix_sum_auxiliary_array_size =
+    (host_buffers.host_number_of_reconstructed_velo_tracks[0] + 511) / 512;
+  arguments.set_size<arg::dev_prefix_sum_auxiliary_array_2>(prefix_sum_auxiliary_array_size);
+}
+
+template<>
+void SequenceVisitor::visit<prefix_sum_reduce_velo_track_hit_number_t>(
+  prefix_sum_reduce_velo_track_hit_number_t& state,
+  const RuntimeOptions& runtime_options,
+  const Constants& constants,
+  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -16,8 +26,6 @@ void SequenceVisitor::visit<prefix_sum_reduce_velo_track_hit_number_t>(
   // Prefix sum: Reduce
   const size_t prefix_sum_auxiliary_array_size =
     (host_buffers.host_number_of_reconstructed_velo_tracks[0] + 511) / 512;
-  arguments.set_size<arg::dev_prefix_sum_auxiliary_array_2>(prefix_sum_auxiliary_array_size);
-  scheduler.setup_next(arguments, sequence_step);
 
   state.set_opts(dim3(prefix_sum_auxiliary_array_size), dim3(256), cuda_stream);
   state.set_arguments(
@@ -32,11 +40,9 @@ void SequenceVisitor::visit<prefix_sum_reduce_velo_track_hit_number_t>(
 template<>
 void SequenceVisitor::visit<prefix_sum_single_block_velo_track_hit_number_t>(
   prefix_sum_single_block_velo_track_hit_number_t& state,
-  const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  ArgumentManager<argument_tuple_t>& arguments,
-  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
+  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -45,8 +51,6 @@ void SequenceVisitor::visit<prefix_sum_single_block_velo_track_hit_number_t>(
     (host_buffers.host_number_of_reconstructed_velo_tracks[0] + 511) / 512;
 
   // Prefix sum: Single block
-  scheduler.setup_next(arguments, sequence_step);
-
   state.set_opts(dim3(1), dim3(1024), cuda_stream);
   state.set_arguments(
     arguments.offset<arg::dev_velo_track_hit_number>() + host_buffers.host_number_of_reconstructed_velo_tracks[0],
@@ -59,17 +63,14 @@ void SequenceVisitor::visit<prefix_sum_single_block_velo_track_hit_number_t>(
 template<>
 void SequenceVisitor::visit<prefix_sum_scan_velo_track_hit_number_t>(
   prefix_sum_scan_velo_track_hit_number_t& state,
-  const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  ArgumentManager<argument_tuple_t>& arguments,
-  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
+  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
   // Prefix sum: Scan
-  scheduler.setup_next(arguments, sequence_step);
   const size_t prefix_sum_auxiliary_array_size =
     (host_buffers.host_number_of_reconstructed_velo_tracks[0] + 511) / 512;
   const uint pss_velo_track_hit_number_opts =
