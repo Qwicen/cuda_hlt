@@ -57,13 +57,37 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
     scheduler.reset();
 
     // Visit all algorithms in configured sequence
-    Sch::run_sequence_tuple(
+    Sch::run_sequence_tuple<
+      scheduler_t,
+      SequenceVisitor,
+      sequence_t,
+      std::tuple<
+        RuntimeOptions,
+        Constants,
+        HostBuffers,
+        argument_manager_t
+      >,
+      std::tuple<
+        RuntimeOptions,
+        Constants,
+        argument_manager_t,
+        HostBuffers,
+        cudaStream_t,
+        cudaEvent_t
+      >
+    >(
+      scheduler,
       sequence_visitor,
       sequence_tuple,
+      // Arguments to set_arguments_size
+      runtime_options,
+      constants,
+      host_buffers,
+      scheduler.arguments(),
+      // Arguments to visit
       runtime_options,
       constants,
       scheduler.arguments(),
-      scheduler,
       host_buffers,
       cuda_stream,
       cuda_generic_event);

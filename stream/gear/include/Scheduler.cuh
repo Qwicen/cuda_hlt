@@ -7,16 +7,17 @@
 template<typename ConfiguredSequence, typename AlgorithmsDependencies, typename OutputArguments>
 struct Scheduler {
   // Dependencies calculated at compile time
-  // Determines what to free (out_deps) and malloc (in_deps)
+  // Determines what to free (out_deps) and reserve (in_deps)
   // at every iteration.
   using in_deps_t = typename Sch::in_dependencies<ConfiguredSequence, AlgorithmsDependencies>::t;
   using out_deps_t = typename Sch::out_dependencies<ConfiguredSequence, OutputArguments, AlgorithmsDependencies>::t;
   using arguments_tuple_t = typename Sch::ArgumentsTuple<in_deps_t>::t;
+  using argument_manager_t = ArgumentManager<arguments_tuple_t>;
 
   in_deps_t in_deps;
   out_deps_t out_deps;
   MemoryManager memory_manager;
-  ArgumentManager<arguments_tuple_t> argument_manager;
+  argument_manager_t argument_manager;
   bool do_print = false;
 
   Scheduler() = default;
@@ -34,7 +35,7 @@ struct Scheduler {
   /**
    * @brief Returns the argument manager of the scheduler.
    */
-  ArgumentManager<arguments_tuple_t>& arguments() {
+  argument_manager_t& arguments() {
     return argument_manager;
   }
 
@@ -57,7 +58,7 @@ struct Scheduler {
    */
   template<unsigned long I, typename T>
   void setup() {
-    // in dependencies: Dependencies to be malloc'd
+    // in dependencies: Dependencies to be reserved
     // out dependencies: Dependencies to be free'd
     const auto in_dependencies = std::get<I>(in_deps);
     const auto out_dependencies = std::get<I>(out_deps);
@@ -75,8 +76,8 @@ struct Scheduler {
     // Free all arguments in out_dependencies    
     memory_manager.free<out_arguments>();
 
-    // Malloc all arguments in in_dependencies
-    memory_manager.malloc<arguments_tuple_t, in_arguments>(arguments_tuple);
+    // Reserve all arguments in in_dependencies
+    memory_manager.reserve<argument_manager_t, in_arguments>(argument_manager);
 
     // Print memory manager state
     if (do_print) {

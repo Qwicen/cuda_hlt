@@ -250,31 +250,92 @@ struct print_algorithm_dependencies<std::tuple<AlgorithmDependencies<Algorithm, 
 };
 
 /**
- * @brief      Runs a sequence of algorithms (implementation).
- *
- * @param[in]  ftor       Functor containing the visit function for all types in the tuple.
- * @param[in]  tuple      Sequence of algorithms.
- * @param[in]  Is         Indices of all elements in the tuple.
- * @param[in]  args       Additional arguments to the visit function.
+ * @brief Runs the sequence tuple (implementation).
  */
-template <typename Ftor, typename Tuple, size_t... Is, typename... Args>
-void run_sequence_tuple_impl(Ftor&& ftor, Tuple&& tuple, std::index_sequence<Is...>, Args&&... args) {
-    auto _ = { (ftor.visit(std::get<Is>(std::forward<Tuple>(tuple)), Is, args...), void(), 0)... };
-}
+template<typename Scheduler,
+  typename Functor,
+  typename Tuple,
+  typename SetSizeArguments,
+  typename VisitArguments,
+  typename Indices>
+struct RunSequenceTupleImpl;
+
+template<typename Scheduler,
+  typename Functor,
+  typename Tuple,
+  typename... SetSizeArguments,
+  typename... VisitArguments>
+struct RunSequenceTupleImpl<Scheduler, Functor, Tuple, std::tuple<SetSizeArguments...>, std::tuple<VisitArguments...>, std::index_sequence<>> {
+  constexpr static void run(
+    Scheduler& scheduler,
+    Functor& functor,
+    Tuple& tuple,
+    SetSizeArguments&&... set_size_arguments,
+    VisitArguments&&... visit_arguments) {}
+};
+
+template<typename Scheduler,
+  typename Functor,
+  typename Tuple,
+  typename... SetSizeArguments,
+  typename... VisitArguments,
+  unsigned long I,
+  unsigned long... Is>
+struct RunSequenceTupleImpl<Scheduler, Functor, Tuple, std::tuple<SetSizeArguments...>, std::tuple<VisitArguments...>, std::index_sequence<I, Is...>> {
+  constexpr static void run(
+    Scheduler& scheduler,
+    Functor& functor,
+    Tuple& tuple,
+    SetSizeArguments&&... set_size_arguments,
+    VisitArguments&&... visit_arguments)
+  {
+    using t = typename std::tuple_element<I, Tuple>::type;
+
+    // Sets the arguments sizes, setups the scheduler and visits the algorithm.
+    functor.template set_arguments_size<t>(set_size_arguments...);
+    scheduler.template setup<I, t>();
+    functor.template visit<t>(std::get<I>(tuple), visit_arguments...);
+
+    RunSequenceTupleImpl<
+      Scheduler,
+      Functor,
+      Tuple,
+      std::tuple<SetSizeArguments...>,
+      std::tuple<Arguments2...>,
+      std::index_sequence<Is...>>::run(scheduler, functor, tuple, set_size_arguments..., visit_arguments...);
+  }
+};
+
 
 /**
- * @brief      Runs a sequence of algorithms.
- *
- * @param[in]  ftor       Functor containing the visit function for all types in the tuple.
- * @param[in]  tuple      Sequence of algorithms.
- * @param[in]  args       Additional arguments to the visit function.
+ * @brief Runs a sequence of algorithms.
+ * 
+ * @tparam Functor          Functor containing the visit function for all types in the tuple.
+ * @tparam Tuple            Sequence of algorithms
+ * @tparam SetSizeArguments Arguments to set_arguments_size
+ * @tparam VisitArguments   Arguments to visit
  */
-template <typename Ftor, typename Tuple, typename... Args>
-void run_sequence_tuple(Ftor&& ftor, Tuple&& tuple, Args&&... args) {
-    run_sequence_tuple_impl(std::forward<Ftor>(ftor),
-                     std::forward<Tuple>(tuple),
-                     std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value> {},
-                     args...);
-}
+template<typename Scheduler, typename Functor, typename Tuple, typename SetSizeArguments, typename VisitArguments>
+struct RunSequenceTuple;
+
+template<typename Scheduler, typename Functor, typename Tuple, typename... SetSizeArguments, typename... VisitArguments>
+struct RunSequenceTuple<Scheduler, Functor, Tuple, std::tuple<SetSizeArguments...>, std::tuple<VisitArguments...>> {
+  constexpr static void run(
+    Scheduler& scheduler,
+    Functor& functor,
+    Tuple& tuple,
+    SetSizeArguments&&... set_size_arguments,
+    VisitArguments&&... visit_arguments)
+  {
+    RunSequenceTupleImpl<
+      Scheduler,
+      Functor,
+      Tuple,
+      std::tuple<SetSizeArguments...>,
+      std::tuple<Arguments2...>,
+      std::make_index_sequence<std::tuple_size<Tuple>::value>
+    >::run(scheduler, functor, tuple, set_size_arguments..., visit_arguments...);
+  }
+};
 
 }

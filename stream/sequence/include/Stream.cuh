@@ -25,6 +25,9 @@
 class Timer;
 
 struct Stream {
+  using scheduler_t = Scheduler<configured_sequence_t, algorithms_dependencies_t, output_arguments_t>;
+  using argument_manager_t = ArgumentManager<scheduler_t::arguments_tuple_t>;
+
   // Sequence and arguments
   sequence_t sequence_tuple;
 
@@ -40,7 +43,7 @@ struct Stream {
   bool run_on_x86;
 
   // Dynamic scheduler
-  Scheduler<configured_sequence_t, algorithms_dependencies_t, output_arguments_t> scheduler;
+  scheduler_t scheduler;
 
   // Host buffers
   HostBuffers host_buffers;

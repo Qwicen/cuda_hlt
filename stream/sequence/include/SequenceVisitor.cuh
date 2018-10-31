@@ -7,10 +7,10 @@
 #include "HostBuffers.cuh"
 #include "Scheduler.cuh"
 
-using scheduler_t = Scheduler<configured_sequence_t, algorithms_dependencies_t, output_arguments_t>;
-using argument_manager_t = ArgumentManager<scheduler_t::arguments_tuple_t>;
-
 struct SequenceVisitor {
+  using scheduler_t = Scheduler<configured_sequence_t, algorithms_dependencies_t, output_arguments_t>;
+  using argument_manager_t = ArgumentManager<scheduler_t::arguments_tuple_t>;
+
   /**
    * @brief Sets the size of the required arguments.
    */
