@@ -2,6 +2,7 @@
 #include <tuple>
 #include <functional>
 #include <type_traits>
+#include "Handler.cuh"
 #include "Argument.cuh"
 
 namespace Sch {

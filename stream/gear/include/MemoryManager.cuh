@@ -41,136 +41,10 @@ struct MemoryManager {
   void reserve(ArgumentManagerType& argument_manager);
 
   /**
-   * @brief Recursive memory reserve, full specialization for empty tuple.
-   */
-  template<typename ArgumentManagerType>
-  void reserve<ArgumentManagerType, std::tuple<>>(ArgumentManagerType& argument_manager) {}
-
-  /**
-   * @brief Reserves a memory request of size requested_size, implementation.
-   *        Finds the first available segment.
-   *        If there are no available segments of the requested size,
-   *        it throws an exception.
-   */
-  template<typename ArgumentManagerType, typename Argument, typename... Arguments>
-  void reserve<ArgumentManagerType, std::tuple<Argument, Arguments...>>(ArgumentManagerType& argument_manager)
-  {
-    // Tag and requested size
-    const auto tag = Argument::name;
-    const size_t requested_size = argument_manager.size<Argument>();
-
-    // Size requested should be greater than zero
-    assert(requested_size > 0);
-
-    // Aligned requested size
-    const size_t aligned_request = requested_size + guarantee_alignment - 1
-      - ((requested_size + guarantee_alignment - 1) % guarantee_alignment);
-
-    if (logger::ll.verbosityLevel >= 4) {
-      debug_cout << "MemoryManager: Requested to reserve "
-        << requested_size << " B (" << aligned_request << " B aligned) for argument "
-        << Argument::name << std::endl;
-    }
-
-    // Finds first free segment providing that space
-    auto it = memory_segments.begin();
-    for (; it!=memory_segments.end(); ++it) {
-      if (it->tag == "" && it->size >= aligned_request) {
-        break;
-      }
-    }
-
-    // Complain if no space was available
-    if (it == memory_segments.end()) {
-      print();
-      throw StrException("Reserve: Requested size for argument " + Argument::name
-        + " could not be met ("+ std::to_string(((float) aligned_request) / (1024*1024)) + " MiB)");
-    }
-
-    // Start of allocation
-    argument_manager.set_offset<Argument>(it->start);
-
-    // Update current segment
-    it->start += aligned_request;
-    it->size -= aligned_request;
-    if (it->size == 0) {
-      it = memory_segments.erase(it);
-    }
-
-    // Insert an occupied segment
-    auto segment = MemorySegment{start, aligned_request, tag};
-    memory_segments.insert(it, segment);
-
-    // Update total memory required
-    // Note: This can be done accesing the last element in memory_segments
-    //       upon every reserve, and keeping the maximum used memory
-    total_memory_required = std::max(total_memory_required,
-      max_available_memory - memory_segments.back().size);
-
-    // Reserve other requested segments
-    reserve<ArgumentManagerType, std::tuple<Arguments...>>(argument_manager);
-  }
-
-  /**
    * @brief Recursive free. Frees the memory segment occupied by the Arguments.
    */
   template<typename Arguments>
   void free();
-
-  /**
-   * @brief Recursive free, base case.
-   */
-  template<>
-  void free<std::tuple<>>() {}
-
-  /**
-   * @brief Recursive free, implementation for Argument.
-   */
-  template<typename Argument, typename... Arguments>
-  void free<std::tuple<Argument, Arguments...>>() {
-    const auto tag = std::string(Argument::name);
-
-    if (logger::ll.verbosityLevel >= 4) {
-      debug_cout << "MemoryManager: Requested to free tag " << tag << std::endl;
-    }
-
-    auto it = std::find_if(memory_segments.begin(), memory_segments.end(),
-      [&tag] (const MemorySegment& segment) {
-        return segment.tag == tag;
-    });
-
-    if (it == memory_segments.end()) {
-      throw StrException("Free: Requested tag could not be found ("
-        + std::to_string(tag) + ")");
-    }
-
-    // Free found tag
-    it->tag = "";
-
-    // Check if previous segment is free, in which case, join
-    if (it != memory_segments.begin()) {
-      auto previous_it = std::prev(it);
-      if (previous_it->tag == "") {
-        previous_it->size += it->size;
-        // Remove current element, and point to previous one
-        it = memory_segments.erase(it);
-        it--;
-      }
-    }
-
-    // Check if next segment is free, in which case, join
-    if (std::next(it) != memory_segments.end()) {
-      auto next_it = std::next(it);
-      if (next_it->tag == "") {
-        it->size += next_it->size;
-        // Remove next tag
-        memory_segments.erase(next_it);
-      }
-    }
-
-    // Free other requested arguments
-    free<std::tuple<Arguments...>>();
-  }
 
   /**
    * @brief Frees all memory segments, effectively resetting the
@@ -196,3 +70,129 @@ struct MemoryManager {
       << (((float) total_memory_required) / (1024 * 1024)) << " MiB" << std::endl << std::endl;
   }
 };
+
+/**
+ * @brief Recursive memory reserve, full specialization for empty tuple.
+ */
+template<typename ArgumentManagerType>
+void MemoryManager::reserve<ArgumentManagerType, std::tuple<>>(ArgumentManagerType& argument_manager) {}
+
+/**
+ * @brief Reserves a memory request of size requested_size, implementation.
+ *        Finds the first available segment.
+ *        If there are no available segments of the requested size,
+ *        it throws an exception.
+ */
+template<typename ArgumentManagerType, typename Argument, typename... Arguments>
+void MemoryManager::reserve<ArgumentManagerType, std::tuple<Argument, Arguments...>>(ArgumentManagerType& argument_manager)
+{
+  // Tag and requested size
+  const auto tag = Argument::name;
+  const size_t requested_size = argument_manager.size<Argument>();
+
+  // Size requested should be greater than zero
+  assert(requested_size > 0);
+
+  // Aligned requested size
+  const size_t aligned_request = requested_size + guarantee_alignment - 1
+    - ((requested_size + guarantee_alignment - 1) % guarantee_alignment);
+
+  if (logger::ll.verbosityLevel >= 4) {
+    debug_cout << "MemoryManager: Requested to reserve "
+      << requested_size << " B (" << aligned_request << " B aligned) for argument "
+      << Argument::name << std::endl;
+  }
+
+  // Finds first free segment providing that space
+  auto it = memory_segments.begin();
+  for (; it!=memory_segments.end(); ++it) {
+    if (it->tag == "" && it->size >= aligned_request) {
+      break;
+    }
+  }
+
+  // Complain if no space was available
+  if (it == memory_segments.end()) {
+    print();
+    throw StrException("Reserve: Requested size for argument " + Argument::name
+      + " could not be met ("+ std::to_string(((float) aligned_request) / (1024*1024)) + " MiB)");
+  }
+
+  // Start of allocation
+  argument_manager.set_offset<Argument>(it->start);
+
+  // Update current segment
+  it->start += aligned_request;
+  it->size -= aligned_request;
+  if (it->size == 0) {
+    it = memory_segments.erase(it);
+  }
+
+  // Insert an occupied segment
+  auto segment = MemorySegment{start, aligned_request, tag};
+  memory_segments.insert(it, segment);
+
+  // Update total memory required
+  // Note: This can be done accesing the last element in memory_segments
+  //       upon every reserve, and keeping the maximum used memory
+  total_memory_required = std::max(total_memory_required,
+    max_available_memory - memory_segments.back().size);
+
+  // Reserve other requested segments
+  reserve<ArgumentManagerType, std::tuple<Arguments...>>(argument_manager);
+}
+
+/**
+ * @brief Recursive free, base case.
+ */
+template<>
+void MemoryManager::free<std::tuple<>>() {}
+
+/**
+ * @brief Recursive free, implementation for Argument.
+ */
+template<typename Argument, typename... Arguments>
+void MemoryManager::free<std::tuple<Argument, Arguments...>>() {
+  const auto tag = std::string(Argument::name);
+
+  if (logger::ll.verbosityLevel >= 4) {
+    debug_cout << "MemoryManager: Requested to free tag " << tag << std::endl;
+  }
+
+  auto it = std::find_if(memory_segments.begin(), memory_segments.end(),
+    [&tag] (const MemorySegment& segment) {
+      return segment.tag == tag;
+  });
+
+  if (it == memory_segments.end()) {
+    throw StrException("Free: Requested tag could not be found ("
+      + std::to_string(tag) + ")");
+  }
+
+  // Free found tag
+  it->tag = "";
+
+  // Check if previous segment is free, in which case, join
+  if (it != memory_segments.begin()) {
+    auto previous_it = std::prev(it);
+    if (previous_it->tag == "") {
+      previous_it->size += it->size;
+      // Remove current element, and point to previous one
+      it = memory_segments.erase(it);
+      it--;
+    }
+  }
+
+  // Check if next segment is free, in which case, join
+  if (std::next(it) != memory_segments.end()) {
+    auto next_it = std::next(it);
+    if (next_it->tag == "") {
+      it->size += next_it->size;
+      // Remove next tag
+      memory_segments.erase(next_it);
+    }
+  }
+
+  // Free other requested arguments
+  free<std::tuple<Arguments...>>();
+}
