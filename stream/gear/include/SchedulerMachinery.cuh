@@ -2,7 +2,6 @@
 #include <tuple>
 #include <functional>
 #include <type_traits>
-#include "Handler.cuh"
 #include "Argument.cuh"
 
 namespace Sch {
@@ -26,7 +25,7 @@ namespace Sch {
 // > output_t;
 
 // A dummy for last element in Out
-ALGORITHM(last_t)
+struct last_t {};
 
 // Checks whether an argument T is in any of the arguments specified in the Algorithms
 template<typename T, typename Algorithms>
