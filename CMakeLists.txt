@@ -10,7 +10,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 MESSAGE(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=native")
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
@@ -63,6 +64,7 @@ include_directories(main/include)
 include_directories(x86/velo/clustering/include)
 include_directories(cuda/UT/common/include)
 include_directories(cuda/UT/PrVeloUT/include)
+include_directories(cuda/UT/UTDecoding/include)
 include_directories(cuda/velo/common/include)
 include_directories(cuda/velo/calculate_phi_and_sort/include)
 include_directories(cuda/velo/consolidate_tracks/include)
@@ -94,8 +96,8 @@ if ( ROOT_FOUND )
     UT
     SciFi
     x86VeloUT
-    Stream
     x86Forward
+    Stream
     x86Clustering
     TrackChecking
     CheckClustering
@@ -108,8 +110,8 @@ else()
     UT
     SciFi
     x86VeloUT
-    Stream
     x86Forward
+    Stream
     x86Clustering
     TrackChecking
     CheckClustering)

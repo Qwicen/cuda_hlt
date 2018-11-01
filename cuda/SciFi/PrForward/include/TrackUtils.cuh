@@ -4,42 +4,13 @@
 
 #include "SciFiDefinitions.cuh"
 #include "PrForwardConstants.cuh"
-#include "PrVeloUT.cuh" 
+#include "PrVeloUT.cuh"
+#include "HitUtils.cuh"
+#include "ParabolaFitting.cuh"
 
 /**
    Helper functions related to track properties
  */
-
-namespace SciFi {
-  namespace Tracking {
-    // Formerly PrParameters
-    struct HitSearchCuts {
-    __host__ __device__ HitSearchCuts(unsigned int minXHits_, float maxXWindow_,
-                 float maxXWindowSlope_, float maxXGap_,
-                 unsigned int minStereoHits_)
-    : minXHits{minXHits_}, maxXWindow{maxXWindow_},
-        maxXWindowSlope{maxXWindowSlope_}, maxXGap{maxXGap_},
-        minStereoHits{minStereoHits_} {}
-      const unsigned int minXHits;
-      const float        maxXWindow;
-      const float        maxXWindowSlope;
-      const float        maxXGap;
-      unsigned int       minStereoHits;
-    };
-
-    struct LineFitterPars {
-      float   m_z0 = 0.; 
-      float   m_c0 = 0.; 
-      float   m_tc = 0.; 
-      
-      float m_s0 = 0.; 
-      float m_sz = 0.; 
-      float m_sz2 = 0.; 
-      float m_sc = 0.; 
-      float m_scz = 0.;   
-    };
-  } // Tracking
-} // SciFi
 
 // extrapolate x position from given state to z
 __host__ __device__ inline float xFromVelo( const float z, MiniState velo_state ) { 
@@ -51,8 +22,7 @@ __host__ __device__ inline float yFromVelo( const float z, MiniState velo_state 
   return velo_state.y + (z-velo_state.z) * velo_state.ty; 
 }
 
-// params[0] = x/y, params[1] = tx/ty
-__host__ __device__ inline float straightLineExtend(const float params[4], float z) {
+__host__ __device__ inline float evalCubicParameterization(const float params[4], float z) {
   float dz = z - SciFi::Tracking::zReference;
   return params[0] + (params[1]+(params[2] + params[3]*dz)*dz)*dz;
 }
@@ -81,7 +51,7 @@ __host__ __device__ float calcDxRef(float pt, MiniState velo_state);
 
 __host__ __device__ float trackToHitDistance(
   float trackParameters[SciFi::Tracking::nTrackParams],
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   int hit );
 
 __host__ __device__ static inline bool lowerByQuality(
@@ -92,5 +62,23 @@ __host__ __device__ static inline bool lowerByQuality(
 
 __host__ __device__ float chi2XHit(
   const float parsX[4],
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
   const int hit );
+
+__host__ __device__ bool quadraticFitX(
+  const SciFi::SciFiHits& scifi_hits,
+  float trackParameters[SciFi::Tracking::nTrackParams],
+  int coordToFit[SciFi::Tracking::max_coordToFit],
+  int& n_coordToFit,
+  PlaneCounter& planeCounter,
+  SciFi::Tracking::HitSearchCuts& pars_cur);
+
+__host__ __device__ bool fitYProjection(
+  const SciFi::SciFiHits& scifi_hits,  
+  SciFi::Tracking::Track& track,
+  int stereoHits[SciFi::Tracking::max_stereo_hits],
+  int& n_stereoHits,
+  PlaneCounter& planeCounter,
+  MiniState velo_state,
+  SciFi::Tracking::Arrays* constArrays,
+  SciFi::Tracking::HitSearchCuts& pars_cur); 

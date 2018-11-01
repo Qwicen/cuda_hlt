@@ -8,12 +8,14 @@ namespace Velo {
 struct Module {
   uint hitStart;
   uint hitNums;
+  float z;
 
   __device__ Module() {}
   __device__ Module(
     const uint _hitStart,
-    const uint _hitNums
-  ) : hitStart(_hitStart), hitNums(_hitNums) {}
+    const uint _hitNums,
+    const float _z
+  ) : hitStart(_hitStart), hitNums(_hitNums), z(_z) {}
 };
 
 struct HitBase { // 3 * 4 = 16 B

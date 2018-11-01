@@ -8,6 +8,7 @@
 #include "TrackForwarding.cuh"
 #include "TrackSeeding.cuh"
 #include "WeakTracksAdder.cuh"
+#include "Handler.cuh"
 
 __global__ void search_by_triplet(
   uint32_t* dev_velo_cluster_container,
@@ -21,5 +22,8 @@ __global__ void search_by_triplet(
   int* dev_atomics_storage,
   short* dev_h0_candidates,
   short* dev_h2_candidates,
-  unsigned short* dev_rel_indices
+  unsigned short* dev_rel_indices,
+  const float* dev_velo_module_zs
 );
+
+ALGORITHM(search_by_triplet, search_by_triplet_t)

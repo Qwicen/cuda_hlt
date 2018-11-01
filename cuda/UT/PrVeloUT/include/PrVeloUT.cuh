@@ -13,7 +13,6 @@
 #include "PrVeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "UTDefinitions.cuh"
-#include "SciFiDefinitions.cuh"
 #include "VeloConsolidated.cuh"
 #include "VeloEventModel.cuh"
 
@@ -64,16 +63,17 @@ __host__ __device__ bool veloTrackInUTAcceptance(
   const MiniState& state
 );
 
-__host__ __device__ bool getHits(
+__device__ bool getHits(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
-  const int posLayers[4][85],
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   const float* fudgeFactors, 
   const MiniState& trState,
-  const float* ut_dxDy); 
+  const float* ut_dxDy,
+  const float* dev_unique_sector_xs,
+  const uint* dev_unique_x_sector_layer_offsets); 
 
 __host__ __device__ bool formClusters(
   const int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
@@ -81,7 +81,7 @@ __host__ __device__ bool formClusters(
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int hitCandidateIndices[VeloUTTracking::n_layers],
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   TrackHelper& helper,
   MiniState& state,
   const float* ut_dxDy,
@@ -95,7 +95,7 @@ __host__ __device__ void prepareOutputTrack(
   int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   int n_hitCandidatesInLayers[VeloUTTracking::n_layers],
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   const float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer],
   const int hitCandidateIndices[VeloUTTracking::n_layers],
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
@@ -116,13 +116,14 @@ __host__ __device__ void fillArrayAt(
   
 __host__ __device__ void fillIterators(
   UTHits& ut_hits,
-  UTHitCount& ut_hit_count,
+  UTHitOffsets& ut_hit_offsets,
   int posLayers[4][85] );
 
 __host__ __device__ void findHits( 
-  const size_t posBeg,
-  const size_t posEnd,
+  const uint lowerBoundSectorGroup,
+  const uint upperBoundSectorGroup,
   UTHits& ut_hits,
+  UTHitOffsets& ut_hit_offsets,
   uint layer_offset,
   const int i_layer,
   const float* ut_dxDy,

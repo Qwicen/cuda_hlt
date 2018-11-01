@@ -3,10 +3,6 @@
 
 void StreamWrapper::initialize_streams(
   const uint n,
-  const std::vector<char>& velopix_geometry,
-  const std::vector<char>& ut_boards,
-  const std::vector<char>& ut_geometry,
-  const std::vector<char>& ut_magnet_tool,
   const uint number_of_events,
   const bool do_check,
   const bool do_simplified_kalman_filter,
@@ -23,10 +19,6 @@ void StreamWrapper::initialize_streams(
 
   for (int i=0; i<streams.size(); ++i) {
     streams[i]->initialize(
-      velopix_geometry,
-      ut_boards,
-      ut_geometry,
-      ut_magnet_tool,
       number_of_events,
       do_check,
       do_simplified_kalman_filter,
@@ -50,35 +42,14 @@ void StreamWrapper::initialize_streams(
   }
 }
 
-void StreamWrapper::run_stream(
-  const uint i,
-  char* host_velopix_events,
-  uint* host_velopix_event_offsets,
-  const size_t velopix_events_size,
-  const size_t velopix_event_offsets_size,
-  char* host_ut_events,
-  uint* host_ut_event_offsets,
-  const size_t ut_events_size,
-  const size_t ut_event_offsets_size,
-  SciFi::HitsSoA *hits_layers_events_scifi,
-  const uint number_of_events,
-  const uint number_of_repetitions
-) {
+void StreamWrapper::run_stream(const uint i, const RuntimeOptions& runtime_options) {
   auto& s = *(streams[i]);
-  s.run_sequence(
-    i,
-    host_velopix_events,
-    host_velopix_event_offsets,
-    velopix_events_size,
-    velopix_event_offsets_size,
-    host_ut_events,
-    host_ut_event_offsets,
-    ut_events_size,
-    ut_event_offsets_size,
-    hits_layers_events_scifi,
-    number_of_events,
-    number_of_repetitions
-  );
+  s.run_sequence(runtime_options);
+}
+
+void StreamWrapper::run_monte_carlo_test(const uint i, const uint number_of_events_requested) {
+  auto& s = *(streams[i]);
+  s.run_monte_carlo_test(number_of_events_requested);
 }
 
 StreamWrapper::~StreamWrapper() {

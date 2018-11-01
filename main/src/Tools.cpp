@@ -1,8 +1,8 @@
 #include "Tools.h"
 
 bool check_velopix_events(
-  const std::vector<char> events,
-  const std::vector<uint> event_offsets,
+  const std::vector<char>& events,
+  const std::vector<uint>& event_offsets,
   int n_events
 ) {
   int error_count = 0;
@@ -45,6 +45,7 @@ bool check_velopix_events(
   }
   return true;
 }
+
 void read_scifi_events_into_arrays( SciFi::HitsSoA *hits_layers_events,
                                  uint32_t n_hits_layers_events[][SciFi::Constants::n_zones],
                                  const std::vector<char> events,
@@ -304,50 +305,6 @@ std::map<std::string, float> calcResults(std::vector<float>& times){
     return results;
 }
 
-void check_roughly(
-  const trackChecker::Tracks& tracks,
-  const std::vector<uint32_t> hit_IDs,
-  const MCParticles mcps
-) {
-  int matched = 0;
-  for ( auto track : tracks ) {
-    std::vector< uint32_t > mcp_ids;
-    
-    for ( LHCbID id : track.ids() ) {
-      uint32_t id_int = uint32_t( id );
-      // find associated IDs from mcps
-      for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
-        MCParticle part = mcps[i_mcp];
-        auto it = std::find( part.hits.begin(), part.hits.end(), id_int );
-        if ( it != part.hits.end() ) {
-          mcp_ids.push_back( i_mcp );
-        }
-      }
-    }
-    
-    printf("# of hits on track = %u, # of MCP ids = %u \n", track.nIDs(), uint32_t( mcp_ids.size() ) );
-    
-    for ( int i_id = 0; i_id < mcp_ids.size(); ++i_id ) {
-      uint32_t mcp_id = mcp_ids[i_id];
-      printf("\t mcp id = %u \n", mcp_id);
-      // how many same mcp IDs are there?
-      int n_same = count( mcp_ids.begin(), mcp_ids.end(), mcp_id );
-      if ( float(n_same) / track.nIDs() >= 0.7 ) {
-          matched++;
-          break;
-      }
-    }
-  }
-
-  int long_tracks = 0;
-  for (auto& part : mcps) {
-    if (part.isLong)
-      long_tracks++;
-  }
-  
-  printf("efficiency = %f \n", float(matched) / long_tracks );
-}
-
 std::vector<trackChecker::Tracks> prepareTracks(
   uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number_pinned,
@@ -378,7 +335,6 @@ std::vector<trackChecker::Tracks> prepareTracks(
   
   return all_tracks;
 }
-
 
 trackChecker::Tracks prepareVeloUTTracksEvent(
   const VeloUTTracking::TrackUT* veloUT_tracks,
@@ -430,7 +386,7 @@ std::vector< trackChecker::Tracks > prepareForwardTracks(
 ) {
   std::vector< trackChecker::Tracks > checker_tracks;
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
-    //debug_cout << "found " << n_scifi_tracks[i_event] << " tracks on GPU " << std::endl;
+    debug_cout << "in event " << i_event << " found " << n_scifi_tracks[i_event] << " tracks " << std::endl;
     trackChecker::Tracks ch_tracks = prepareForwardTracksEvent(
       scifi_tracks + i_event * SciFi::max_tracks,
       n_scifi_tracks[i_event]);
@@ -447,7 +403,10 @@ trackChecker::Tracks prepareForwardTracksEvent(
   for ( int i_track = 0; i_track < n_forward_tracks; i_track++ ) {
     const SciFi::Track& forward_track = forward_tracks[i_track];
     trackChecker::Track checker_track;
-    //debug_cout << "at track " << std::dec << i_track << std::endl;
+    if ( forward_track.hitsNum >= SciFi::max_track_size )
+      debug_cout << "at track " << i_track << " forward track hits Num = " << forward_track.hitsNum << std::endl;
+    assert( forward_track.hitsNum < SciFi::max_track_size );
+    //debug_cout << "at track " << std::dec << i_track << " with " << forward_track.hitsNum << " hits " << std::endl;
     for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
       //debug_cout<<"\t LHCbIDs Forward["<<i_hit<<"] = " << std::hex << forward_track.LHCbIDs[i_hit]<< std::endl;
       LHCbID lhcb_id( forward_track.LHCbIDs[i_hit] );
@@ -455,8 +414,7 @@ trackChecker::Tracks prepareForwardTracksEvent(
     }
     checker_tracks.push_back( checker_track );
   }
-  //debug_cout<<"end prepareForwardTracks"<<std::endl;
-
+  
   return checker_tracks;
 } 
 
@@ -482,28 +440,28 @@ void call_pr_checker(
   const std::string& trackType
 ) {
   if ( trackType == "Velo" ) {
-    callPrChecker<TrackCheckerVelo> (
+    call_pr_checker_impl<TrackCheckerVelo> (
       all_tracks,
       folder_name_MC,
       start_event_offset,
       trackType);
   }
   else if ( trackType == "VeloUT" ) {
-    callPrChecker<TrackCheckerVeloUT> (
+    call_pr_checker_impl<TrackCheckerVeloUT> (
       all_tracks,
       folder_name_MC,
       start_event_offset,
       trackType);
   }
   else if ( trackType == "Forward" ) {
-    callPrChecker<TrackCheckerForward> (
+    call_pr_checker_impl<TrackCheckerForward> (
       all_tracks,
       folder_name_MC,
       start_event_offset,
       trackType);
   }
   else {
-    error_cout << "unknown track type: " << trackType << std::endl;
+    error_cout << "Unknown track type: " << trackType << std::endl;
   }
 }
 

@@ -171,34 +171,76 @@ __global__ void estimate_input_size(
               | (sp_inside_pixel << 7);
 
             const uint32_t working_cluster = mask & (~pixels);
-            const uint32_t candidates = (working_cluster >> 1)
+            const uint32_t candidates_temp = (working_cluster >> 1)
               & (working_cluster >> 5)
               & (working_cluster >> 6)
               & (working_cluster >> 7);
 
-            const uint8_t candidates_uint8 = ((candidates >> 2) & 0xF0) | (candidates & 0xF);
+            const uint32_t candidates = candidates_temp & pixels;
 
-            // Add candidates 0-3
+            const uint8_t candidates_uint8 = (candidates & 0x03) | ((candidates & 0xC0) >> 4)
+              | ((candidates & 0x0C) << 2) | ((candidates & 0x0300) >> 2);
+
+            // Add candidates 0, 1, 4, 5
+            // Only one of those candidates can be flagged at a time
             if (candidates_uint8 & 0xF) {
+              // if ((candidates_uint8 & 0xF) >= 9) {
+              //   auto print_candidates8 = [] (const uint8_t& candidates) {
+              //     printf("%i%i\n%i%i\n%i%i\n%i%i\n\n",
+              //       (candidates & 0x80) > 0, (candidates & 0x40) > 0,
+              //       (candidates & 0x20) > 0, (candidates & 0x10) > 0,
+              //       (candidates & 0x8) > 0, (candidates & 0x4) > 0,
+              //       (candidates & 0x2) > 0, candidates & 0x1
+              //     );
+              //   };
+              //   auto print_candidates = [] (const uint32_t& candidates) {
+              //     printf("%i%i%i\n%i%i%i\n%i%i%i\n%i%i%i\n%i%i%i\n %i%i\n\n",
+              //       (candidates & 0x10) > 0, (candidates & 0x0400) > 0, (candidates & 0x010000) > 0,
+              //       (candidates & 0x08) > 0, (candidates & 0x0200) > 0, (candidates & 0x8000) > 0,
+              //       (candidates & 0x04) > 0, (candidates & 0x0100) > 0, (candidates & 0x4000) > 0,
+              //       (candidates & 0x02) > 0, (candidates & 0x80) > 0, (candidates & 0x2000) > 0,
+              //       (candidates & 0x01) > 0, (candidates & 0x40) > 0, (candidates & 0x1000) > 0,
+              //                                (candidates & 0x20) > 0, (candidates & 0x0800) > 0
+              //     );
+              //   };
+              //   printf("pixels:\n");
+              //   print_candidates(pixels);
+              //   printf("sp_inside_pixel:\n");
+              //   print_candidates(sp_inside_pixel);
+              //   printf("mask:\n");
+              //   print_candidates(mask);
+              //   printf("working_cluster:\n");
+              //   print_candidates(working_cluster);
+              //   printf("candidates:\n");
+              //   print_candidates(candidates);
+              //   printf("candidates_uint8:\n");
+              //   print_candidates8(candidates_uint8);
+              // }
+
+              // Verify candidates are correctly created
+              assert((candidates_uint8 & 0xF) < 9);
+
               // Decode the candidate number (ie. find out the active bit)
               const uint8_t k = dev_velo_candidate_ks[candidates_uint8 & 0xF];
               auto current_cluster_candidate = atomicAdd(event_candidate_num, 1);
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)
                 | k;
-              assert( current_cluster_candidate < blockDim.x * VeloClustering::max_candidates_event );
+              assert(current_cluster_candidate < blockDim.x * VeloClustering::max_candidates_event);
               cluster_candidates[current_cluster_candidate] = candidate;
               ++found_cluster_candidates;
             }
 
-            // Add candidates 4-7
+            // Add candidates 2, 3, 6, 7
+            // Only one of those candidates can be flagged at a time
             if (candidates_uint8 & 0xF0) {
-              const uint8_t k = dev_velo_candidate_ks[(candidates_uint8 >> 4)] + 4;
+              assert(((candidates_uint8 >> 4) & 0xF) < 9);
+              const uint8_t k = dev_velo_candidate_ks[(candidates_uint8 >> 4)] + 2;
               auto current_cluster_candidate = atomicAdd(event_candidate_num, 1);
               const uint32_t candidate = (sp_index << 11)
                 | (raw_bank_number << 3)
                 | k;
-              assert( current_cluster_candidate < blockDim.x * VeloClustering::max_candidates_event );
+              assert(current_cluster_candidate < blockDim.x * VeloClustering::max_candidates_event);
               cluster_candidates[current_cluster_candidate] = candidate;
               ++found_cluster_candidates;
             }
@@ -206,7 +248,7 @@ __global__ void estimate_input_size(
             // Add the found cluster candidates
             if (found_cluster_candidates > 0) {
               uint current_estimated_module_size = atomicAdd(estimated_module_size, found_cluster_candidates);
-              assert( current_estimated_module_size < VeloTracking::max_numhits_in_module);
+              assert(current_estimated_module_size < VeloTracking::max_numhits_in_module);
             }
           }
         }

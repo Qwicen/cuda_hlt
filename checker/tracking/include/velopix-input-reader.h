@@ -17,9 +17,8 @@
 #include <cstdint>
 #include <vector>
 #include <algorithm>
-
+#include <tuple>
 #include "MCParticle.h"
-
 #include "Common.h"
 #include "Logger.h"
 #include "InputTools.h"
@@ -43,7 +42,7 @@ private:
 
 public:
     uint32_t size;
-  MCParticles mcps;
+    MCParticles mcps;
 
     // Constructor
     VelopixEvent() {};
@@ -54,7 +53,7 @@ public:
     MCParticles mcparticles() const;
 };
 
-std::vector<VelopixEvent> read_mc_folder(
+std::tuple<bool, std::vector<VelopixEvent>> read_mc_folder(
   const std::string& foldername,
   const std::string& trackType,
   uint number_of_files,
@@ -62,46 +61,47 @@ std::vector<VelopixEvent> read_mc_folder(
   const bool checkEvents = false
 );
  
-template< typename t_checker >
-void callPrChecker(
+template<typename t_checker>
+void call_pr_checker_impl(
   const std::vector< trackChecker::Tracks >& all_tracks,
   const std::string& folder_name_MC,
   const uint start_event_offset,
   const std::string& trackType
 ) {
-
    /* MC information */
   int n_events = all_tracks.size();
-  std::vector<VelopixEvent> events = read_mc_folder(folder_name_MC, trackType, n_events, start_event_offset, true );
+  const auto mc_folder_contents = read_mc_folder(folder_name_MC, trackType, n_events, start_event_offset, true );
 
-    
-  t_checker trackChecker {};
-  uint64_t evnum = 0; 
+  if (std::get<0>(mc_folder_contents)) {
+    const std::vector<VelopixEvent>& events = std::get<1>(mc_folder_contents);
+    t_checker trackChecker {};
+    uint64_t evnum = 0; 
 
-  for (const auto& ev: events) {
-    const auto& mcps = ev.mcparticles();
-    const std::vector<MCParticle>& mcps_vector = ev.mcps;
-    MCAssociator mcassoc(mcps);
+    for (const auto& ev: events) {
+      const auto& mcps = ev.mcparticles();
+      const std::vector<MCParticle>& mcps_vector = ev.mcps;
+      MCAssociator mcassoc(mcps);
 
-    trackChecker(all_tracks[evnum], mcassoc, mcps);
+      trackChecker(all_tracks[evnum], mcassoc, mcps);
 
-    // Check all tracks for duplicate LHCb IDs
-    uint i_track = 0;
-    for (auto& track : all_tracks[evnum]) {
-      auto ids = track.ids();
-      std::sort(std::begin(ids), std::end(ids));
-      bool containsDuplicates = (std::unique(std::begin(ids), std::end(ids))) != std::end(ids);
+      // Check all tracks for duplicate LHCb IDs
+      uint i_track = 0;
+      for (auto& track : all_tracks[evnum]) {
+        auto ids = track.ids();
+        std::sort(std::begin(ids), std::end(ids));
+        bool containsDuplicates = (std::unique(std::begin(ids), std::end(ids))) != std::end(ids);
 
-      if (containsDuplicates) {
-        warning_cout << "WARNING: Track #" << std::dec << i_track << " contains duplicate LHCb IDs" << std::endl;
-        for (auto id : ids) {
-          warning_cout << std::hex << id << ", ";
+        if (containsDuplicates) {
+          warning_cout << "WARNING: Track #" << std::dec << i_track << " contains duplicate LHCb IDs" << std::endl;
+          for (auto id : ids) {
+            warning_cout << std::hex << "0x" << id << ", ";
+          }
+          warning_cout << std::endl << std::endl << std::hex;
         }
-        warning_cout << std::endl << std::endl;
+        i_track++;
       }
-      i_track++;
+      
+      ++evnum;
     }
-    
-    ++evnum;
   }
 }

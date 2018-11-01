@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Handler.cuh"
+#include "TupleTools.cuh"
 
 template<typename T>
 struct TupleIndicesChecker {

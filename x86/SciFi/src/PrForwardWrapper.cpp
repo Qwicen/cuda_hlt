@@ -1,7 +1,8 @@
 #include "PrForwardWrapper.h"
 
 void PrForwardWrapper(
-  SciFi::HitsSoA *hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   const Velo::Consolidated::States& velo_states,
   const uint event_tracks_offset,
   const VeloUTTracking::TrackUT * veloUT_tracks,
@@ -12,7 +13,6 @@ void PrForwardWrapper(
   SciFi::Track outputTracks[SciFi::max_tracks],
   uint* n_forward_tracks)
 {
-  
   // Loop over the veloUT input tracks
   for ( int i_veloUT_track = 0; i_veloUT_track < n_veloUT_tracks; ++i_veloUT_track ) {
     const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks[i_veloUT_track];
@@ -21,7 +21,8 @@ void PrForwardWrapper(
     const MiniState velo_state {velo_states, velo_states_index};
     
     find_forward_tracks(
-      hits_layers,
+      scifi_hits,
+      scifi_hit_count,
       veloUTTr,
       outputTracks,
       n_forward_tracks,
@@ -31,5 +32,4 @@ void PrForwardWrapper(
       velo_state);
     
   }
-
 }

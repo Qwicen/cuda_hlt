@@ -40,16 +40,14 @@ __host__ __device__ inline void Transform_1( float iv[7], TMVA* tmva )
    return x*(x>0);
  }
  
- //TODO do we need exp here? can we live with pure x output?!
- __host__ __device__ inline float OutputActivationFnc(float x) {
+  __host__ __device__ inline float OutputActivationFnc(float x) {
    // sigmoid
    return 1.0/(1.0+exp(-x));
  }
  
 __host__ __device__ inline float GetMvaValue__( const float inputValues[7], TMVA* tmva )
  {
-   //TODO check auto vectorization here: 'not vectorized: unsupported use in stmt' , 'Unsupported pattern'
-   
+    
    float fWeights0[8]  = {};
    float fWeights1[11] = {};
    float fWeights2[10] = {};
