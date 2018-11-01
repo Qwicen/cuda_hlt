@@ -32,19 +32,13 @@ cudaError_t Stream::initialize(
   // Reserve host buffers
   host_buffers.reserve(max_number_of_events);
 
-  // Get dependencies for each algorithm
-  std::vector<std::vector<int>> sequence_dependencies = get_sequence_dependencies();
-
-  // Get output arguments from the sequence
-  std::vector<int> sequence_output_arguments = get_sequence_output_arguments();
-
   // Malloc a configurable reserved memory
   cudaCheck(cudaMalloc((void**)&dev_base_pointer, reserve_mb * 1024 * 1024));
 
   // Prepare scheduler
   scheduler = {
-    reserve_mb * 1024 * 1024,
     do_print_memory_manager,
+    reserve_mb * 1024 * 1024,
     dev_base_pointer
   };
 
@@ -57,25 +51,25 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
     scheduler.reset();
 
     // Visit all algorithms in configured sequence
-    Sch::run_sequence_tuple<
+    Sch::RunSequenceTuple<
       scheduler_t,
       SequenceVisitor,
-      sequence_t,
+      configured_sequence_t,
       std::tuple<
-        RuntimeOptions,
-        Constants,
-        HostBuffers,
-        argument_manager_t
+        const RuntimeOptions&,
+        const Constants&,
+        const HostBuffers&,
+        argument_manager_t&
       >,
       std::tuple<
-        RuntimeOptions,
-        Constants,
-        argument_manager_t,
-        HostBuffers,
-        cudaStream_t,
-        cudaEvent_t
+        const RuntimeOptions&,
+        const Constants&,
+        argument_manager_t&,
+        HostBuffers&,
+        cudaStream_t&,
+        cudaEvent_t&
       >
-    >(
+    >::run(
       scheduler,
       sequence_visitor,
       sequence_tuple,

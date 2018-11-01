@@ -20,9 +20,9 @@ struct ArgumentManager {
   }
 
   template<typename T>
-  T::type* offset() const {
+  auto offset() const {
     auto pointer = base_pointer + argument_offsets[tuple_contains<T, Tuple>::index];
-    return reinterpret_cast<T::type*>(pointer);
+    return reinterpret_cast<typename T::type*>(pointer);
   }
 
   template<typename T>
@@ -32,11 +32,11 @@ struct ArgumentManager {
 
   template<typename T>
   void set_offset(uint offset) {
-    argument_offsets[tuple_containts<T, Tuple>::index] = offset;
+    argument_offsets[tuple_contains<T, Tuple>::index] = offset;
   }
 
   template<typename T>
   void set_size(size_t size) {
-    argument_sizes[tuple_contains<T, Tuple>::index] = size * sizeof(T::type);
+    argument_sizes[tuple_contains<T, Tuple>::index] = size * sizeof(typename T::type);
   }
 };

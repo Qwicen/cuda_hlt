@@ -23,3 +23,13 @@ struct AlgorithmDependencies {
   using Algorithm = T;
   using Arguments = std::tuple<Args...>;
 };
+
+/**
+ * @brief Dependencies for an algorithm, after
+ *        being processed by the scheduler machinery.
+ */
+template<typename T, typename ArgumentsTuple>
+struct ScheduledDependencies {
+  using Algorithm = T;
+  using Arguments = ArgumentsTuple;
+};

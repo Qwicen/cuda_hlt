@@ -1,8 +1,11 @@
+#pragma once
+
 #include <iostream>
 #include <tuple>
 #include <functional>
 #include <type_traits>
 #include "Argument.cuh"
+#include "TupleTools.cuh"
 
 namespace Sch {
 
@@ -117,7 +120,7 @@ struct out_dependencies_impl;
 
 template<typename OutputArguments, typename Algorithm, typename... Arguments>
 struct out_dependencies_impl<OutputArguments, std::tuple<AlgorithmDependencies<Algorithm, Arguments...>, last_t>> {
-  using t = std::tuple<AlgorithmDependencies<last_t, std::tuple<Arguments...>>>;
+  using t = std::tuple<ScheduledDependencies<last_t, std::tuple<Arguments...>>>;
 };
 
 template<typename OutputArguments, typename Algorithm, typename... Arguments, typename NextAlgorithm, typename... NextAlgorithmArguments, typename... Algorithms>
@@ -126,7 +129,7 @@ struct out_dependencies_impl<OutputArguments, std::tuple<AlgorithmDependencies<A
 
   using previous_t = typename out_dependencies_impl<OutputArguments, std::tuple<AlgorithmDependencies<NextAlgorithm, NextAlgorithmArguments...>, Algorithms...>>::t;
   using t = typename tuple_append<previous_t,
-    AlgorithmDependencies<NextAlgorithm,
+    ScheduledDependencies<NextAlgorithm,
       typename tuple_elements_not_in<
         typename only_unused_types<AlgorithmDependencies<Algorithm, Arguments...>, std::tuple<AlgorithmDependencies<NextAlgorithm, NextAlgorithmArguments...>, Algorithms...>>::t,
         OutputArguments
@@ -159,14 +162,14 @@ struct out_dependencies<
             last_t
           >::t
         >::t,
-        AlgorithmDependencies<FirstAlgorithmInSequence, std::tuple<>>
+        ScheduledDependencies<FirstAlgorithmInSequence, std::tuple<>>
       >::t
     >::t;
 };
 
 template<typename ConfiguredSequence, typename OutputArguments>
 struct out_dependencies<ConfiguredSequence, OutputArguments, std::tuple<>> {
-  using t = std::tuple<AlgorithmDependencies<last_t, std::tuple<>>>;
+  using t = std::tuple<ScheduledDependencies<last_t, std::tuple<>>>;
 };
 
 // Consume the algorithms and put their dependencies one by one
@@ -182,13 +185,18 @@ template<typename Algorithm, typename... Arguments, typename... AlgorithmsDeps>
 struct in_dependencies_impl<std::tuple<AlgorithmDependencies<Algorithm, Arguments...>, AlgorithmsDeps...>> {
   using previous_t = typename in_dependencies_impl<std::tuple<AlgorithmsDeps...>>::t;
   using t = typename tuple_append<previous_t,
-    AlgorithmDependencies<Algorithm, typename only_unused_types<AlgorithmDependencies<Algorithm, Arguments...>, std::tuple<AlgorithmsDeps...>>::t>>::t;
+    ScheduledDependencies<Algorithm, typename only_unused_types<AlgorithmDependencies<Algorithm, Arguments...>, std::tuple<AlgorithmsDeps...>>::t>>::t;
 };
 
 template<typename ConfiguredSequence, typename AlgorithmsDeps>
-using in_dependencies = in_dependencies_impl<typename tuple_reverse<
-    typename ActiveSequence<typename tuple_reverse<ConfiguredSequence>::t, AlgorithmsDeps>::t
-  >::t>;
+using in_dependencies =
+  in_dependencies_impl<
+    typename tuple_reverse<
+      typename ActiveSequence<
+        typename tuple_reverse<ConfiguredSequence>::t, AlgorithmsDeps
+      >::t
+    >::t
+  >;
 
 // Fetches all arguments from ie. in_dependencies into a tuple
 template<typename in_deps>
@@ -200,13 +208,13 @@ struct ArgumentsTuple<std::tuple<>> {
 };
 
 template<typename Algorithm, typename... Algorithms>
-struct ArgumentsTuple<std::tuple<AlgorithmDependencies<Algorithm, std::tuple<>>, Algorithms...>> {
+struct ArgumentsTuple<std::tuple<ScheduledDependencies<Algorithm, std::tuple<>>, Algorithms...>> {
   using t = typename ArgumentsTuple<std::tuple<Algorithms...>>::t;
 };
 
 template<typename Algorithm, typename Arg, typename... Args, typename... Algorithms>
-struct ArgumentsTuple<std::tuple<AlgorithmDependencies<Algorithm, std::tuple<Arg, Args...>>, Algorithms...>> {
-  using previous_t = typename ArgumentsTuple<std::tuple<AlgorithmDependencies<Algorithm, std::tuple<Args...>>, Algorithms...>>::t;
+struct ArgumentsTuple<std::tuple<ScheduledDependencies<Algorithm, std::tuple<Arg, Args...>>, Algorithms...>> {
+  using previous_t = typename ArgumentsTuple<std::tuple<ScheduledDependencies<Algorithm, std::tuple<Args...>>, Algorithms...>>::t;
   using t = typename tuple_append<previous_t, Arg>::t;
 };
 
@@ -292,17 +300,17 @@ struct RunSequenceTupleImpl<Scheduler, Functor, Tuple, std::tuple<SetSizeArgumen
     using t = typename std::tuple_element<I, Tuple>::type;
 
     // Sets the arguments sizes, setups the scheduler and visits the algorithm.
-    functor.template set_arguments_size<t>(set_size_arguments...);
+    functor.template set_arguments_size<t>(std::forward<SetSizeArguments>(set_size_arguments)...);
     scheduler.template setup<I, t>();
-    functor.template visit<t>(std::get<I>(tuple), visit_arguments...);
+    functor.template visit<t>(std::get<I>(tuple), std::forward<VisitArguments>(visit_arguments)...);
 
     RunSequenceTupleImpl<
       Scheduler,
       Functor,
       Tuple,
       std::tuple<SetSizeArguments...>,
-      std::tuple<Arguments2...>,
-      std::index_sequence<Is...>>::run(scheduler, functor, tuple, set_size_arguments..., visit_arguments...);
+      std::tuple<VisitArguments...>,
+      std::index_sequence<Is...>>::run(scheduler, functor, tuple, std::forward<SetSizeArguments>(set_size_arguments)..., std::forward<VisitArguments>(visit_arguments)...);
   }
 };
 
@@ -332,9 +340,9 @@ struct RunSequenceTuple<Scheduler, Functor, Tuple, std::tuple<SetSizeArguments..
       Functor,
       Tuple,
       std::tuple<SetSizeArguments...>,
-      std::tuple<Arguments2...>,
+      std::tuple<VisitArguments...>,
       std::make_index_sequence<std::tuple_size<Tuple>::value>
-    >::run(scheduler, functor, tuple, set_size_arguments..., visit_arguments...);
+    >::run(scheduler, functor, tuple, std::forward<SetSizeArguments>(set_size_arguments)..., std::forward<VisitArguments>(visit_arguments)...);
   }
 };
 
