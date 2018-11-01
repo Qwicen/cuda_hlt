@@ -9,8 +9,8 @@ struct Scheduler {
   // Dependencies calculated at compile time
   // Determines what to free (out_deps) and reserve (in_deps)
   // at every iteration.
-  using in_deps_t = typename Sch::in_dependencies<ConfiguredSequence, AlgorithmsDependencies>::t;
-  using out_deps_t = typename Sch::out_dependencies<ConfiguredSequence, OutputArguments, AlgorithmsDependencies>::t;
+  using in_deps_t = typename Sch::InDependencies<ConfiguredSequence, AlgorithmsDependencies>::t;
+  using out_deps_t = typename Sch::OutDependencies<ConfiguredSequence, OutputArguments, AlgorithmsDependencies>::t;
   using arguments_tuple_t = typename Sch::ArgumentsTuple<in_deps_t>::t;
   using argument_manager_t = ArgumentManager<arguments_tuple_t>;
 
@@ -79,10 +79,10 @@ struct Scheduler {
     static_assert(std::is_same<T, in_algorithm>::value, "Scheduler index mismatch (in_algorithm)");
     static_assert(std::is_same<T, out_algorithm>::value, "Scheduler index mismatch (out_algorithm)");
 
-    // Free all arguments in out_dependencies    
+    // Free all arguments in OutDependencies    
     MemoryManagerFree<out_arguments>::free(memory_manager);
 
-    // Reserve all arguments in in_dependencies
+    // Reserve all arguments in InDependencies
     MemoryManagerReserve<argument_manager_t, in_arguments>::reserve(memory_manager, argument_manager);
 
     // Print memory manager state
