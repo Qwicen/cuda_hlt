@@ -41,11 +41,14 @@ __device__ float velo_kalman_filter_step(
 }
 
 __global__ void velo_fit(
-  const uint32_t* dev_velo_cluster_container,
-  const uint* dev_module_cluster_start,
-  const int* dev_atomics_storage,
-  const Velo::Track* dev_tracks,
-  Velo::State* dev_velo_states
+  int* dev_atomics_storage,
+  const Velo::TrackHits* dev_tracks,
+  uint* dev_velo_track_hit_number,
+  uint* dev_velo_cluster_container,
+  uint* dev_module_cluster_start,
+  uint* dev_module_cluster_num,
+  uint* dev_velo_track_hits,
+  uint* dev_velo_states
 ) {
   /* Data initialization */
   // Each event is treated with two blocks, one for each side.
