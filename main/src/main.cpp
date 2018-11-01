@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
   // Read all inputs
   info_cout << "Reading input datatypes" << std::endl;
 
-  std::string folder_name_velopix_raw = folder_name_raw_banks + "VP"; 
+  std::string folder_name_velopix_raw = folder_name_raw_banks + "VP";
   number_of_events_requested = get_number_of_events_requested(
     number_of_events_requested, folder_name_velopix_raw);
 
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
   read_folder( folder_name_muon_hits, number_of_events_requested,
                muon_events, muon_event_offsets, start_event_offset);
   std::vector<Muon::HitsSoA> muon_hits_events(number_of_events_requested);
-  read_muon_events_into_arrays(muon_hits_events.data(), muon_events, 
+  read_muon_events_into_arrays(muon_hits_events.data(), muon_events,
                                muon_event_offsets, number_of_events_requested);
 
   const int hits_to_out = 3;

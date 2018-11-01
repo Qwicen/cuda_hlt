@@ -101,19 +101,19 @@ void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
                                  const std::vector<char> events,
                                  const std::vector<unsigned int> event_offsets,
                                  const int n_events ) {
-  
+
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
 
-    const char* raw_input = events.data() + event_offsets[i_event];      
+    const char* raw_input = events.data() + event_offsets[i_event];
     std::copy_n((int*) raw_input, Muon::Constants::n_stations, muon_station_hits[i_event].m_number_of_hits_per_station);
     raw_input += sizeof(int) * Muon::Constants::n_stations;
 
     muon_station_hits[i_event].m_station_offsets[0] = 0;
     for(int i_station = 1; i_station < Muon::Constants::n_stations; ++i_station) {
-      muon_station_hits[i_event].m_station_offsets[i_station] = muon_station_hits[i_event].m_station_offsets[i_station - 1] 
+      muon_station_hits[i_event].m_station_offsets[i_station] = muon_station_hits[i_event].m_station_offsets[i_station - 1]
                                                               + muon_station_hits[i_event].m_number_of_hits_per_station[i_event - 1];
     }
-    
+
     for(int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station) {
       const int station_offset = muon_station_hits[i_event].m_station_offsets[i_station];
       const int number_of_hits = muon_station_hits[i_event].m_number_of_hits_per_station[i_station];
@@ -160,7 +160,7 @@ void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
 //   const int n_events
 // ) {
 //   float average_number_of_hits_per_event = 0;
-  
+
 //   for ( int i_event = 0; i_event < n_events; ++i_event ) {
 //     float number_of_hits = 0;
 //     const VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
@@ -183,7 +183,7 @@ void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
 //         hits_layers.dxDy( layer_offset + i_hit ) );
 //       }
 //     }
-    
+
 //     average_number_of_hits_per_event += number_of_hits;
 //     debug_cout << "# of UT hits = " << number_of_hits << std::endl;
 //   }
@@ -193,7 +193,7 @@ void check_scifi_events( const SciFi::HitsSoA *hits_layers_events,
 		      const int n_events ) {
 
   float average_number_of_hits_per_event = 0;
-  
+
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
     // sanity checks
     float number_of_hits = 0;
@@ -218,16 +218,16 @@ void check_scifi_events( const SciFi::HitsSoA *hits_layers_events,
       }
     }
 
-    
+
     average_number_of_hits_per_event += number_of_hits;
     debug_cout << "# of SciFi hits = " << number_of_hits << std::endl;
-    
+
   }
 
   average_number_of_hits_per_event = average_number_of_hits_per_event / n_events;
   debug_cout << "average # of SciFi hits / event = " << average_number_of_hits_per_event << std::endl;
-    
-  
+
+
 }
 
 void check_muon_events( const Muon::HitsSoA * muon_station_hits, const int hits_to_out, const int n_events) {
@@ -246,7 +246,7 @@ void check_muon_events( const Muon::HitsSoA * muon_station_hits, const int hits_
 
       debug_cout << "checks on station " << i_station << ", with" << number_of_hits << " hits" << std::endl;
       for ( int i_hit = 0; i_hit < hits_to_out; ++i_hit ) {
-        printf("\t at hit %u, tile = %i, x = %f, dx = %f, y = %f, dy = %f, z = %f, dz = %f, uncrossed = %i, time = %x, delta_time = %i, cluster_size = %i \n", 
+        printf("\t at hit %u, tile = %i, x = %f, dx = %f, y = %f, dy = %f, z = %f, dz = %f, uncrossed = %i, time = %x, delta_time = %i, cluster_size = %i \n",
           i_hit,
           muon_station_hits->tile[ station_offset + i_hit ],
           muon_station_hits->x[ station_offset + i_hit ],
@@ -314,24 +314,24 @@ std::vector<trackChecker::Tracks> prepareTracks(
   std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
   for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
     trackChecker::Tracks tracks; // all tracks within one event
-    
+
     const Velo::Consolidated::Tracks velo_tracks {host_velo_tracks_atomics, host_velo_track_hit_number_pinned, i_event, number_of_events};
     const uint number_of_tracks_event = velo_tracks.number_of_tracks(i_event);
 
     for ( uint i_track = 0; i_track < number_of_tracks_event; i_track++ ) {
       trackChecker::Track t;
-      
+
       const uint velo_track_number_of_hits = velo_tracks.number_of_hits(i_track);
       Velo::Consolidated::Hits velo_track_hits = velo_tracks.get_hits((uint*) host_velo_track_hits_pinned, i_track);
 
       for ( int i_hit = 0; i_hit < velo_track_number_of_hits; ++i_hit ) {
         t.addId(velo_track_hits.LHCbID[i_hit]);
-      } 
+      }
       tracks.push_back( t );
     } // tracks
     all_tracks.emplace_back( tracks );
   }
-  
+
   return all_tracks;
 }
 
@@ -413,9 +413,9 @@ trackChecker::Tracks prepareForwardTracksEvent(
     }
     checker_tracks.push_back( checker_track );
   }
-  
+
   return checker_tracks;
-} 
+}
 
 std::vector< trackChecker::Tracks > prepareVeloUTTracks(
   const VeloUTTracking::TrackUT* veloUT_tracks,

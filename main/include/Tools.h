@@ -52,7 +52,7 @@ std::vector< trackChecker::Tracks > prepareVeloUTTracks(
 
 trackChecker::Tracks prepareForwardTracksVeloUTOnly(
   std::vector< VeloUTTracking::TrackUT > forward_tracks
-); 
+);
 
 trackChecker::Tracks prepareForwardTracksEvent(
   SciFi::Track forward_tracks[SciFi::max_tracks],
@@ -72,10 +72,10 @@ void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
 void check_muon_events(const Muon::HitsSoA *muon_station_hits,
 		       const int hits_to_out,
                        const int n_events);
- 
+
 void call_pr_checker(
   const std::vector< trackChecker::Tracks >& all_tracks,
   const std::string& folder_name_MC,
-  const uint start_event_offset, 
+  const uint start_event_offset,
   const std::string& trackType
 );
