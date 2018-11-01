@@ -37,7 +37,7 @@ void printUsage(char* argv[]){
     << std::endl << " -f {folder containing directories with raw bank binaries for every sub-detector}"
     << std::endl << " -g {folder containing detector configuration}"
     << std::endl << " -d {folder containing .bin files with MC truth information}"
-    << std::endl << " -a {folder containnig bin files with Muon raw bank informatiom}"
+    << std::endl << " -a {folder containing bin files with Muon common hits informatiom}"
     << std::endl << " -n {number of events to process}=0 (all)"
     << std::endl << " -o {offset of events from which to start}=0 (beginning)"
     << std::endl << " -t {number of threads / streams}=1"
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
     << " folder containing directories with raw bank binaries for every sub-detector (-f): " << folder_name_raw_banks << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
-    << " folder with muon raw events (-a): " << folder_name_muon_hits << std::endl
+    << " folder with common muon hits (-a): " << folder_name_muon_hits << std::endl
     << " run checkers (-c): " << do_check << std::endl
     << " number of files (-n): " << number_of_events_requested << std::endl
     << " start event offset (-o): " << start_event_offset << std::endl
