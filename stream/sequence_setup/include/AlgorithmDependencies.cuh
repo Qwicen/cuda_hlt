@@ -1,23 +1,7 @@
 #pragma once
 
 #include <tuple>
-#include "CalculatePhiAndSort.cuh"
-#include "ConsolidateTracks.cuh"
-#include "MaskedVeloClustering.cuh"
-#include "EstimateInputSize.cuh"
-#include "PrefixSum.cuh"
-#include "SearchByTriplet.cuh"
-#include "VeloKalmanFilter.cuh"
-#include "VeloUT.cuh"
-#include "EstimateClusterCount.cuh"
-#include "RawBankDecoder.cuh"
-#include "SciFiSortByX.cuh"
-#include "VeloEventModel.cuh"
-#include "UTCalculateNumberOfHits.cuh"
-#include "UTDecodeRawBanksInOrder.cuh"
-#include "UTFindPermutation.cuh"
-#include "UTPreDecode.cuh"
-#include "PrForward.cuh"
+#include "ConfiguredSequence.cuh"
 #include "Arguments.cuh"
 
 /**
