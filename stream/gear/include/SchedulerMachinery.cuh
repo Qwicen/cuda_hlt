@@ -245,10 +245,10 @@ struct print_algorithm_dependencies<std::tuple<>> {
 };
 
 template<typename Algorithm, typename... Arguments, typename... Dependencies>
-struct print_algorithm_dependencies<std::tuple<AlgorithmDependencies<Algorithm, Arguments...>, Dependencies...>> {
+struct print_algorithm_dependencies<std::tuple<ScheduledDependencies<Algorithm, std::tuple<Arguments...>>, Dependencies...>> {
   static constexpr void print() {
     std::cout << "Algorithm " << Algorithm::name << ":" << std::endl
-      << std::tuple_size<Arguments...>::value << " dependencies" << std::endl;
+      << std::tuple_size<std::tuple<Arguments...>>::value << " dependencies" << std::endl;
 
     print_arguments<Arguments...>::print();
     std::cout << std::endl << std::endl;

@@ -1,6 +1,8 @@
 #include "SequenceVisitor.cuh"
 #include "UTDecodeRawBanksInOrder.cuh"
 
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(ut_decode_raw_banks_in_order_t)
+
 template<>
 void SequenceVisitor::visit<ut_decode_raw_banks_in_order_t>(
   ut_decode_raw_banks_in_order_t& state,
@@ -28,6 +30,3 @@ void SequenceVisitor::visit<ut_decode_raw_banks_in_order_t>(
 
   state.invoke();
 }
-
-
-

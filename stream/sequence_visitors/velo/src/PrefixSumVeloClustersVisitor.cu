@@ -11,6 +11,9 @@ void SequenceVisitor::set_arguments_size<prefix_sum_reduce_velo_clusters_t>(
   arguments.set_size<dev_cluster_offset>(runtime_options.number_of_events);
 }
 
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_single_block_velo_clusters_t)
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_scan_velo_clusters_t)
+
 template<>
 void SequenceVisitor::visit<prefix_sum_reduce_velo_clusters_t>(
   prefix_sum_reduce_velo_clusters_t& state,

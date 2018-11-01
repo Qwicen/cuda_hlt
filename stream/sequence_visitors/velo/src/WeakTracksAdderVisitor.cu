@@ -1,6 +1,8 @@
 #include "SequenceVisitor.cuh"
 #include "WeakTracksAdder.cuh"
 
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(weak_tracks_adder_t)
+
 template<>
 void SequenceVisitor::visit<weak_tracks_adder_t>(
   weak_tracks_adder_t& state,

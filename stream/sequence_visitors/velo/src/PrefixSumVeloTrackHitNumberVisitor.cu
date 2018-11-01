@@ -13,6 +13,9 @@ void SequenceVisitor::set_arguments_size<prefix_sum_reduce_velo_track_hit_number
   arguments.set_size<dev_prefix_sum_auxiliary_array_2>(prefix_sum_auxiliary_array_size);
 }
 
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_single_block_velo_track_hit_number_t)
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_scan_velo_track_hit_number_t)
+
 template<>
 void SequenceVisitor::visit<prefix_sum_reduce_velo_track_hit_number_t>(
   prefix_sum_reduce_velo_track_hit_number_t& state,

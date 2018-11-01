@@ -22,7 +22,7 @@ struct SequenceVisitor {
     const RuntimeOptions& runtime_options,
     const Constants& constants,
     const HostBuffers& host_buffers,
-    argument_manager_t& arguments) {}
+    argument_manager_t& arguments);
 
   /**
    * @brief   Invokes the algorithm specified in the state.
@@ -40,3 +40,14 @@ struct SequenceVisitor {
     cudaStream_t& cuda_stream,
     cudaEvent_t& cuda_generic_event);
 };
+
+/**
+ * @brief Macro for defining an empty set_arguments_size for type _TYPE.
+ */
+#define DEFINE_EMPTY_SET_ARGUMENTS_SIZE(_TYPE) \
+  template<>\
+  void SequenceVisitor::set_arguments_size<_TYPE>(\
+    const RuntimeOptions&,\
+    const Constants&,\
+    const HostBuffers&,\
+    argument_manager_t&) {}

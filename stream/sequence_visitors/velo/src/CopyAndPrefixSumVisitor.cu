@@ -1,6 +1,8 @@
 #include "SequenceVisitor.cuh"
 #include "PrefixSum.cuh"
 
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(copy_and_prefix_sum_single_block_t)
+
 template<>
 void SequenceVisitor::visit<copy_and_prefix_sum_single_block_t>(
   copy_and_prefix_sum_single_block_t& state,

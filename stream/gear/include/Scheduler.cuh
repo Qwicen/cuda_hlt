@@ -30,6 +30,12 @@ struct Scheduler {
     // Set max mb to memory_manager
     memory_manager.set_reserved_memory(reserved_mb);
     argument_manager.set_base_pointer(base_pointer);
+
+    // std::cout << "IN deps" << std::endl;
+    // Sch::print_algorithm_dependencies<in_deps_t>::print();
+
+    // std::cout << "OUT deps" << std::endl;
+    // Sch::print_algorithm_dependencies<out_deps_t>::print();
   }
 
   /**
