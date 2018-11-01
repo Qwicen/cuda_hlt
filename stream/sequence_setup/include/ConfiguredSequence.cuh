@@ -44,6 +44,7 @@ SEQUENCE(
   prefix_sum_single_block_velo_track_hit_number_t,
   prefix_sum_scan_velo_track_hit_number_t,
   consolidate_tracks_t,
+  velo_fit_t,
   ut_calculate_number_of_hits_t,
   prefix_sum_reduce_ut_hits_t,
   prefix_sum_single_block_ut_hits_t,
