@@ -1,6 +1,8 @@
 #include "SequenceVisitor.cuh"
 #include "UTDecodeRawBanksInOrder.cuh"
 
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(ut_decode_raw_banks_in_order_t)
+
 template<>
 void SequenceVisitor::visit<ut_decode_raw_banks_in_order_t>(
   ut_decode_raw_banks_in_order_t& state,
@@ -13,21 +15,18 @@ void SequenceVisitor::visit<ut_decode_raw_banks_in_order_t>(
 {
   state.set_opts(dim3(runtime_options.number_of_events, VeloUTTracking::n_layers), dim3(64), cuda_stream);
   state.set_arguments(
-    arguments.offset<arg::dev_ut_raw_input>(),
-    arguments.offset<arg::dev_ut_raw_input_offsets>(),
+    arguments.offset<dev_ut_raw_input>(),
+    arguments.offset<dev_ut_raw_input_offsets>(),
     constants.dev_ut_boards,
     constants.dev_ut_geometry,
     constants.dev_ut_region_offsets,
     constants.dev_unique_x_sector_layer_offsets,
     constants.dev_unique_x_sector_offsets,
-    arguments.offset<arg::dev_ut_hit_offsets>(),
-    arguments.offset<arg::dev_ut_hits>(),
-    arguments.offset<arg::dev_ut_hit_count>(),
-    arguments.offset<arg::dev_ut_hit_permutations>()
+    arguments.offset<dev_ut_hit_offsets>(),
+    arguments.offset<dev_ut_hits>(),
+    arguments.offset<dev_ut_hit_count>(),
+    arguments.offset<dev_ut_hit_permutations>()
   );
 
   state.invoke();
 }
-
-
-

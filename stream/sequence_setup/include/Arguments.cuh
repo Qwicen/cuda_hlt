@@ -1,6 +1,5 @@
 #pragma once
 
-#include <tuple>
 #include "Argument.cuh"
 #include "VeloEventModel.cuh"
 #include "VeloUTDefinitions.cuh"
@@ -45,7 +44,7 @@ ARGUMENT(dev_scifi_raw_input_offsets, uint)
 ARGUMENT(dev_scifi_hit_count, uint)
 ARGUMENT(dev_prefix_sum_auxiliary_array_4, uint)
 ARGUMENT(dev_scifi_hit_permutations, uint)
-ARGUMENT(dev_scifi_hits, char)
+ARGUMENT(dev_scifi_hits, uint)
 ARGUMENT(dev_scifi_raw_input, char)
-ARGUMENT(dev_scifi_tracks, Scifi::Track)
+ARGUMENT(dev_scifi_tracks, SciFi::Track)
 ARGUMENT(dev_n_scifi_tracks, uint)

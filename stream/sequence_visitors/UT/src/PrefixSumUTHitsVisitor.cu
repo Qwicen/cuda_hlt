@@ -13,6 +13,9 @@ void SequenceVisitor::set_arguments_size<prefix_sum_reduce_ut_hits_t>(
   arguments.set_size<dev_prefix_sum_auxiliary_array_3>(prefix_sum_auxiliary_array_size);
 }
 
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_single_block_ut_hits_t)
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_scan_ut_hits_t)
+
 template<>
 void SequenceVisitor::visit<prefix_sum_reduce_ut_hits_t>(
   prefix_sum_reduce_ut_hits_t& state,

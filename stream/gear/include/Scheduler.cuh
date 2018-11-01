@@ -9,8 +9,8 @@ struct Scheduler {
   // Dependencies calculated at compile time
   // Determines what to free (out_deps) and reserve (in_deps)
   // at every iteration.
-  using in_deps_t = typename Sch::in_dependencies<ConfiguredSequence, AlgorithmsDependencies>::t;
-  using out_deps_t = typename Sch::out_dependencies<ConfiguredSequence, OutputArguments, AlgorithmsDependencies>::t;
+  using in_deps_t = typename Sch::InDependencies<ConfiguredSequence, AlgorithmsDependencies>::t;
+  using out_deps_t = typename Sch::OutDependencies<ConfiguredSequence, OutputArguments, AlgorithmsDependencies>::t;
   using arguments_tuple_t = typename Sch::ArgumentsTuple<in_deps_t>::t;
   using argument_manager_t = ArgumentManager<arguments_tuple_t>;
 
@@ -25,11 +25,17 @@ struct Scheduler {
   Scheduler(
     const bool param_do_print,
     const size_t reserved_mb,
-    const char* base_pointer)
+    char* base_pointer)
   : do_print(param_do_print) {
     // Set max mb to memory_manager
     memory_manager.set_reserved_memory(reserved_mb);
     argument_manager.set_base_pointer(base_pointer);
+
+    // std::cout << "IN deps" << std::endl;
+    // Sch::print_algorithm_dependencies<in_deps_t>::print();
+
+    // std::cout << "OUT deps" << std::endl;
+    // Sch::print_algorithm_dependencies<out_deps_t>::print();
   }
 
   /**
@@ -60,24 +66,24 @@ struct Scheduler {
   void setup() {
     // in dependencies: Dependencies to be reserved
     // out dependencies: Dependencies to be free'd
-    const auto in_dependencies = std::get<I>(in_deps);
-    const auto out_dependencies = std::get<I>(out_deps);
-
+    // 
     // in_deps and out_deps should be in order
     // and index I should contain algorithm type T
-    using in_algorithm = in_dependencies::Algorithm;
-    using in_arguments = in_dependencies::Arguments;
-    using out_algorithm = out_dependencies::Algorithm;
-    using out_arguments = out_dependencies::Arguments;
+    using in_deps_I_t = typename std::tuple_element<I, in_deps_t>::type;
+    using out_deps_I_t = typename std::tuple_element<I, out_deps_t>::type;
+    using in_algorithm = typename in_deps_I_t::Algorithm;
+    using in_arguments = typename in_deps_I_t::Arguments;
+    using out_algorithm = typename out_deps_I_t::Algorithm;
+    using out_arguments = typename out_deps_I_t::Arguments;
 
     static_assert(std::is_same<T, in_algorithm>::value, "Scheduler index mismatch (in_algorithm)");
     static_assert(std::is_same<T, out_algorithm>::value, "Scheduler index mismatch (out_algorithm)");
 
-    // Free all arguments in out_dependencies    
-    memory_manager.free<out_arguments>();
+    // Free all arguments in OutDependencies    
+    MemoryManagerFree<out_arguments>::free(memory_manager);
 
-    // Reserve all arguments in in_dependencies
-    memory_manager.reserve<argument_manager_t, in_arguments>(argument_manager);
+    // Reserve all arguments in InDependencies
+    MemoryManagerReserve<argument_manager_t, in_arguments>::reserve(memory_manager, argument_manager);
 
     // Print memory manager state
     if (do_print) {

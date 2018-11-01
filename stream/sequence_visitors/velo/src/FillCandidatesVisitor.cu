@@ -2,7 +2,7 @@
 #include "FillCandidates.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<estimate_input_size_t>(
+void SequenceVisitor::set_arguments_size<fill_candidates_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -15,7 +15,6 @@ void SequenceVisitor::set_arguments_size<estimate_input_size_t>(
 template<>
 void SequenceVisitor::visit<fill_candidates_t>(
   fill_candidates_t& state,
-  const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
