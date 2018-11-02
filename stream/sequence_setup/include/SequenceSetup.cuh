@@ -43,6 +43,13 @@ using argument_tuple_t = std::tuple<
   Argument<arg::dev_velo_states, uint>,
   Argument<arg::dev_kalmanvelo_states, uint>,
 
+  Argument<arg::dev_seeds, XYZPoint>,
+  Argument<arg::dev_number_seeds, uint>,
+
+  Argument<arg::dev_vertex, Vertex>,
+  Argument<arg::dev_number_vertex, int>,
+
+
   // TODO: check and try to use char instead of uint for dev_ut_raw_input variable
   // Changing uint to char cause a strange error:
   // Error: Internal Compiler Error (codegen): "there was an error in verifying the lgenfe output!"

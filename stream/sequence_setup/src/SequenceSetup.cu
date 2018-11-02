@@ -163,6 +163,29 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_kalmanvelo_states
   };
 
+
+  sequence_dependencies[tuple_contains<getSeeds_t, sequence_t>::index] = {
+    arg::dev_kalmanvelo_states,
+    arg::dev_atomics_storage,
+    arg::dev_velo_track_hit_number,
+    arg::dev_seeds,
+    arg::dev_number_seeds
+  };
+
+
+  sequence_dependencies[tuple_contains<fitSeeds_t, sequence_t>::index] = {
+    arg::dev_vertex,
+    arg::dev_number_vertex,
+    arg::dev_seeds,
+    arg::dev_number_seeds,
+    arg::dev_kalmanvelo_states,
+    arg::dev_atomics_storage,
+    arg::dev_velo_track_hit_number
+  };
+
+
+
+
   sequence_dependencies[tuple_contains<ut_calculate_number_of_hits_t, sequence_t>::index] = {
     arg::dev_ut_raw_input,
     arg::dev_ut_raw_input_offsets,
