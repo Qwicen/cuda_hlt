@@ -68,8 +68,6 @@ static constexpr float param_w_inverted = 0.000252083f;
 // Max chi2
 static constexpr float max_chi2 = 20.0;
 
-  // number of VeloStates saved in VeloState array -> defines stride
-  static constexpr uint number_of_saved_velo_states = 2;
 
 }
 

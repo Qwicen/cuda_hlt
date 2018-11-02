@@ -23,7 +23,7 @@ void SequenceVisitor::visit<getSeeds_t>(
   arguments.set_size<arg::dev_number_seeds>(runtime_options.number_of_events );
   scheduler.setup_next(arguments, sequence_step);
 
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(256), cuda_stream);
+  state.set_opts(dim3(runtime_options.number_of_events), 1, cuda_stream);
   state.set_arguments(
     arguments.offset<arg::dev_kalmanvelo_states>(),
     arguments.offset<arg::dev_atomics_storage>(),
