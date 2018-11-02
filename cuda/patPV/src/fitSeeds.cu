@@ -18,30 +18,30 @@ __constant__ double m_maxDeltaZCache = 1.; //unit: mm
 
 
 __global__ void fitSeeds(
-    Vertex* dev_vertex,
+  Vertex* dev_vertex,
   int * dev_number_vertex,
   XYZPoint * dev_seeds,
   uint * dev_number_seeds,
-  Velo::State* dev_velo_states,
-  int * dev_atomics_storage)
+  uint* dev_kalmanvelo_states,
+  int * dev_atomics_storage,
+  uint* dev_velo_track_hit_number)
 {
 
-  int event_number = blockIdx.x;
-  int number_of_events = gridDim.x;
-   //int * number_of_tracks = dev_atomics_storage;
-   //int * acc_tracks = dev_atomics_storage + number_of_events;
+  const uint number_of_events = gridDim.x;
+  const uint event_number = blockIdx.x;
 
-  int number_of_tracks = dev_atomics_storage[event_number];
+  const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
+  const Velo::Consolidated::States velo_states {dev_kalmanvelo_states, velo_tracks.total_number_of_tracks};
+  const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
+  const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  int acc_tracks = (dev_atomics_storage + number_of_events)[event_number];
 
-  Velo::State * state_base_pointer = dev_velo_states + 2 * acc_tracks;
 
   Vertex vertex;
 
   int counter_vertex = 0;
   for(int i_seed = 0; i_seed < dev_number_seeds[event_number]; i_seed++) {
-    bool success = fitVertex(dev_seeds[event_number * PatPV::max_number_vertices + i_seed], state_base_pointer, vertex, number_of_tracks);
+    bool success = fitVertex(dev_seeds[event_number * PatPV::max_number_vertices + i_seed], velo_states, vertex, number_of_tracks_event, event_tracks_offset);
     if(success) {
       
       dev_vertex[PatPV::max_number_vertices * event_number + counter_vertex] = vertex;
@@ -58,9 +58,10 @@ __global__ void fitSeeds(
 
 
 __device__ bool fitVertex( XYZPoint& seedPoint,
-              Velo::State * host_velo_states,
+              Velo::Consolidated::States velo_states,
              Vertex& vtx,
-              int number_of_tracks) 
+              int number_of_tracks,
+              uint tracks_offset) 
 {
 
 
@@ -93,26 +94,27 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
 
   int pvTrack_counter = 0;
 
-  for(int i = 0; i < number_of_tracks; i++) {  
+  for(int index = 0; index < number_of_tracks; index++) {  
     //don't use disabled tracks
-    //have two states on velostates
-    int index = i * 2.;
 
+    
+
+    Velo::State trk = velo_states.get( index);
     double new_z = vtxpos.z;
 
-    double m_state_x = host_velo_states[index].x;
-    double m_state_y = host_velo_states[index].y;
-    double m_state_z = host_velo_states[index].z;
+    double m_state_x = trk.x;
+    double m_state_y = trk.y;
+    double m_state_z = trk.z;
 
-    double m_state_tx = host_velo_states[index].tx;
-    double m_state_ty = host_velo_states[index].ty;
+    double m_state_tx = trk.tx;
+    double m_state_ty = trk.ty;
 
-    double m_state_c00 = host_velo_states[index].c00;
-    double m_state_c11 = host_velo_states[index].c11;
-    double m_state_c20 = host_velo_states[index].c20;
-    double m_state_c22 = host_velo_states[index].c22;
-    double m_state_c31 = host_velo_states[index].c31;
-    double m_state_c33 = host_velo_states[index].c33;
+    double m_state_c00 = trk.c00;
+    double m_state_c11 = trk.c11;
+    double m_state_c20 = trk.c20;
+    double m_state_c22 = trk.c22;
+    double m_state_c31 = trk.c31;
+    double m_state_c33 = trk.c33;
 
     const double dz = new_z - m_state_z ;
     const double dz2 = dz*dz ;
@@ -344,20 +346,20 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
 
     double new_z = vtxpos.z;
 
+    Velo::State trk = velo_states.get( index);
+    double m_state_x = trk.x;
+    double m_state_y = trk.y;
+    double m_state_z = trk.z;
 
-    double m_state_x = host_velo_states[index].x;
-    double m_state_y = host_velo_states[index].y;
-    double m_state_z = host_velo_states[index].z;
+    double m_state_tx = trk.tx;
+    double m_state_ty = trk.ty;
 
-    double m_state_tx = host_velo_states[index].tx;
-    double m_state_ty = host_velo_states[index].ty;
-
-    double m_state_c00 = host_velo_states[index].c00;
-    double m_state_c11 = host_velo_states[index].c11;
-    double m_state_c20 = host_velo_states[index].c20;
-    double m_state_c22 = host_velo_states[index].c22;
-    double m_state_c31 = host_velo_states[index].c31;
-    double m_state_c33 = host_velo_states[index].c33;
+    double m_state_c00 = trk.c00;
+    double m_state_c11 = trk.c11;
+    double m_state_c20 = trk.c20;
+    double m_state_c22 = trk.c22;
+    double m_state_c31 = trk.c31;
+    double m_state_c33 = trk.c33;
 
     const double dz = new_z - m_state_z ;
     const double dz2 = dz*dz ;

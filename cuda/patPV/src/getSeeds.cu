@@ -77,8 +77,9 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
 
  __global__ void getSeeds(
-    Velo::State* dev_velo_states,
+  uint* dev_kalmanvelo_states,
   int * dev_atomics_storage,
+  uint* dev_velo_track_hit_number,
   XYZPoint * dev_seeds,
   uint * dev_number_seed) {
 
@@ -87,16 +88,15 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
   beamspot.y = 0;
   beamspot.z = 0;
 
-  int event_number = blockIdx.x;
-  int number_of_events = gridDim.x;
-   //int * number_of_tracks = dev_atomics_storage;
-   //int * acc_tracks = dev_atomics_storage + number_of_events;
+  const uint number_of_events = gridDim.x;
+  const uint event_number = blockIdx.x;
 
-  int number_of_tracks = dev_atomics_storage[event_number];
+  const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
+  const Velo::Consolidated::States velo_states {dev_kalmanvelo_states, velo_tracks.total_number_of_tracks};
+  const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
+  const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  int acc_tracks = (dev_atomics_storage + number_of_events)[event_number];
-
-  Velo::State * state_base_pointer = dev_velo_states + 2 * acc_tracks;
+  
 
 
 
@@ -107,13 +107,14 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
 
   int counter_number_of_clusters = 0;
-  for (int i = 0; i < number_of_tracks; i++) {
+  for (int i = 0; i < number_of_tracks_event; i++) {
 
     
     double sigsq;
     double zclu;
-    auto trk = state_base_pointer[2*i];
-   
+    Velo::State trk = velo_states.get(event_tracks_offset + i);
+
+
     zclu = zCloseBeam(trk,beamspot);
     errorForPVSeedFinding(trk.tx, trk.ty,sigsq);
 
