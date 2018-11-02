@@ -6,10 +6,6 @@
 #include "Handler.cuh"
 #include "VeloConsolidated.cuh"
 
-
-#include "VeloConsolidated.cuh"
-
-
 __device__ float velo_kalman_filter_step(
   const float z,
   const float zhit,
@@ -42,7 +38,7 @@ __device__ Velo::State simplified_fit(
   // assume the hits are sorted,
   // but don't assume anything on the direction of sorting
   int firsthit = 0;
-  int lasthit = hitsNum - 1;
+  int lasthit = track.hitsNum - 1;
   int dhit = 1;
   if ((hit_Zs[track.hits[lasthit]] - hit_Zs[track.hits[firsthit]]) * direction < 0) {
     const int temp = firsthit;
@@ -86,7 +82,6 @@ __device__ Velo::State simplified_fit(
     
     // update z (note done in the filter, since needed only once)
     state.z = hit_z;
-    
   }
 
   // add the noise at the last hit

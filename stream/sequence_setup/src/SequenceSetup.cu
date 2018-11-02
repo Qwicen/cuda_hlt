@@ -251,13 +251,7 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
   };
 
 
-  sequence_dependencies[tuple_contains<velo_fit_t, sequence_t>::index] = {
-    arg::dev_atomics_storage,
-    arg::dev_velo_track_hit_number,
-    arg::dev_velo_track_hits,
-    arg::dev_velo_states,
-    arg::dev_tracks
-  };
+  
 
 
 
@@ -272,8 +266,8 @@ std::vector<int> get_sequence_output_arguments() {
     arg::dev_velo_track_hit_number,
     arg::dev_velo_track_hits,
     arg::dev_velo_states,
-    arg::dev_outvtxvec,
-    arg::dev_number_of_vertex,
+    //arg::dev_outvtxvec,
+    //arg::dev_number_of_vertex,
     arg::dev_atomics_veloUT,
     arg::dev_veloUT_tracks,
     arg::dev_scifi_tracks,
