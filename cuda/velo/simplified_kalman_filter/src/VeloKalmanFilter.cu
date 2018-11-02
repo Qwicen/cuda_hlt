@@ -49,7 +49,7 @@ __global__ void velo_fit(
   uint* dev_module_cluster_num,
   uint* dev_velo_track_hits,
   uint* dev_velo_states,
-  const Velo::State& stateAtBeamLine
+  uint* dev_kalmanvelo_states
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
@@ -58,6 +58,7 @@ __global__ void velo_fit(
   // Consolidated datatypes
   const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
   Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
+  Velo::Consolidated::States kalmanvelo_states {dev_kalmanvelo_states, velo_tracks.total_number_of_tracks};
 
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
@@ -73,11 +74,9 @@ __global__ void velo_fit(
   const float* hit_Xs   = (float*) (dev_velo_cluster_container + 5 * number_of_hits + hit_offset);
   const uint32_t* hit_IDs = (uint32_t*) (dev_velo_cluster_container + 2 * number_of_hits + hit_offset);
 
-
   for (uint i=threadIdx.x; i<number_of_tracks_event; i+=blockDim.x) {
     Velo::Consolidated::Hits consolidated_hits = velo_tracks.get_hits(dev_velo_track_hits, i);
     const Velo::TrackHits track = event_tracks[i];
-
 
     auto populate = [&track] (uint32_t* __restrict__ a, uint32_t* __restrict__ b) {
       for (int i=0; i<track.hitsNum; ++i) {
@@ -92,17 +91,12 @@ __global__ void velo_fit(
     populate((uint32_t*) consolidated_hits.LHCbID, (uint32_t*) hit_IDs);
 
     // Calculate and store fit in consolidated container
-    Velo::State beam_state = simplified_fit<true>(
-      consolidated_hits,
-      hit_Xs,
-      hit_Ys,
-      hit_Zs,
-      hit_IDs,
-      track,
-      track.hitsNum,
-      stateAtBeamLine
-    );
 
-    velo_states.set(event_tracks_offset + i, beam_state);
+   Velo::State stateAtBeamline = velo_states.get(event_tracks_offset + i);
+
+   Velo::State kalmanbeam_state = simplified_fit<true>(hit_Xs,
+      hit_Ys,
+      hit_Zs, stateAtBeamline, track);
+   kalmanvelo_states.set(event_tracks_offset + i, kalmanbeam_state);
   }
 }

@@ -151,7 +151,6 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_track_hits,
     arg::dev_velo_states
   };
-
   sequence_dependencies[tuple_contains<velo_fit_t, sequence_t>::index] = {
     arg::dev_atomics_storage,
     arg::dev_tracks,
@@ -163,8 +162,6 @@ std::vector<std::vector<int>> get_sequence_dependencies() {
     arg::dev_velo_states,
     arg::dev_kalmanvelo_states
   };
-
-
 
   sequence_dependencies[tuple_contains<ut_calculate_number_of_hits_t, sequence_t>::index] = {
     arg::dev_ut_raw_input,
