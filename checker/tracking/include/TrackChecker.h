@@ -8,7 +8,7 @@
  * @date 2018-02-19
  *
  * 2018-07 Dorothea vom Bruch: updated to run over different track types, 
- * euse exact same categories as PrChecker2, 
+ * reuse exact same categories as PrChecker2, 
  * take input from Renato Quagliani's TrackerDumper
  */
 
@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 #include <functional>
-
+#include <cstdio>
 #include "Tracks.h"
 #include "MCAssociator.h"
 #include "Logger.h"
@@ -89,32 +89,26 @@ class TrackChecker
                 const MCParticles& mcps);
 };
 
-class TrackCheckerVelo : public TrackChecker
+struct TrackCheckerVelo : public TrackChecker
 {
-  public:
-      void SetCategories();
-      TrackCheckerVelo() {
-        SetCategories();
-      };
-  
+  void SetCategories();
+  TrackCheckerVelo() {
+    SetCategories();
+  };
 };
 
-class TrackCheckerVeloUT : public TrackChecker
+struct TrackCheckerVeloUT : public TrackChecker
 {
-  public:
-      void SetCategories();
-      TrackCheckerVeloUT() {
-        SetCategories();
-      };
-  
+  void SetCategories();
+  TrackCheckerVeloUT() {
+    SetCategories();
+  };
 };
 
-class TrackCheckerForward : public TrackChecker
+struct TrackCheckerForward : public TrackChecker
 {
-  public:
-      void SetCategories();
-      TrackCheckerForward() {
-        SetCategories();
-      };
-  
+  void SetCategories();
+  TrackCheckerForward() {
+    SetCategories();
+  };  
 }; 

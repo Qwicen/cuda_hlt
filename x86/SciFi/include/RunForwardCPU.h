@@ -4,9 +4,9 @@
 #include "VeloDefinitions.cuh"
 #include "TrackChecker.h"
 #include "PrForwardWrapper.h"
-#include "Tools.h"
 #include "VeloEventModel.cuh"
 #include "CpuHandler.cuh"
+#include "PrepareTracks.h"
 
 int run_forward_on_CPU (
   std::vector<trackChecker::Tracks>& ft_tracks_events,

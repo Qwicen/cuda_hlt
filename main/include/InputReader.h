@@ -20,7 +20,7 @@ struct GeometryReader : public Reader {
   /**
    * @brief Reads a geometry file from the specified folder.
    */
-  std::vector<char> read_geometry(const std::string& filename);
+  std::vector<char> read_geometry(const std::string& filename) const;
 };
 
 struct UTMagnetToolReader : public Reader {
@@ -29,7 +29,7 @@ struct UTMagnetToolReader : public Reader {
   /**
    * @brief Reads the UT magnet tool from the specified folder.
    */
-  std::vector<char> read_UT_magnet_tool();
+  std::vector<char> read_UT_magnet_tool() const;
 };
 
 struct EventReader : public Reader {

@@ -1,15 +1,16 @@
 #include "Stream.cuh"
 
+// Include the sequence checker specializations
+#include "VeloSequenceCheckers_impl.cuh"
+#include "UTSequenceCheckers_impl.cuh"
+#include "SciFiSequenceCheckers_impl.cuh"
+
 /**
  * @brief Sets up the chain that will be executed later.
  */
 cudaError_t Stream::initialize(
   const uint max_number_of_events,
-  const bool param_do_check,
-  const bool param_do_simplified_kalman_filter,
   const bool param_do_print_memory_manager,
-  const bool param_run_on_x86,
-  const std::string& param_folder_name_MC,
   const uint param_start_event_offset,
   const size_t reserve_mb,
   const uint param_stream_number,
@@ -21,11 +22,7 @@ cudaError_t Stream::initialize(
 
   // Set stream options
   stream_number = param_stream_number;
-  do_check = param_do_check;
-  do_simplified_kalman_filter = param_do_simplified_kalman_filter;
   do_print_memory_manager = param_do_print_memory_manager;
-  run_on_x86 = param_run_on_x86;
-  folder_name_MC = param_folder_name_MC;
   start_event_offset = param_start_event_offset;
   constants = param_constants;
 
@@ -94,48 +91,30 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
   return cudaSuccess;
 }
 
-void Stream::run_monte_carlo_test(const uint number_of_events_requested) {
-  std::cout << "Checking Velo tracks reconstructed on GPU" << std::endl;
-
-  const std::vector<trackChecker::Tracks> tracks_events = prepareTracks(
-    host_buffers.host_velo_tracks_atomics,
-    host_buffers.host_velo_track_hit_number,
-    host_buffers.host_velo_track_hits,
+void Stream::run_monte_carlo_test(
+  const std::string& mc_folder,
+  const uint number_of_events_requested)
+{
+  // Create the PrCheckerInvoker and read Monte Carlo validation information
+  const auto pr_checker_invoker = PrCheckerInvoker(
+    mc_folder,
+    start_event_offset,
     number_of_events_requested);
 
-  call_pr_checker(
-    tracks_events,
-    folder_name_MC,
+  Sch::RunPrChecker<
+    SequenceVisitor,
+    configured_sequence_t,
+    std::tuple<
+      const uint&,
+      const uint&,
+      const HostBuffers&,
+      const PrCheckerInvoker&
+    >
+  >::check(
+    sequence_visitor,
     start_event_offset,
-    "Velo"
+    number_of_events_requested,
+    host_buffers,
+    pr_checker_invoker
   );
-
-  /* CHECKING VeloUT TRACKS */
-  const std::vector<trackChecker::Tracks> veloUT_tracks = prepareVeloUTTracks(
-    host_buffers.host_veloUT_tracks,
-    host_buffers.host_atomics_veloUT,
-    number_of_events_requested
-  );
-
-  std::cout << "Checking VeloUT tracks reconstructed on GPU" << std::endl;
-  call_pr_checker(
-    veloUT_tracks,
-    folder_name_MC,
-    start_event_offset,
-    "VeloUT"
-  );
-
-  /* CHECKING Scifi TRACKS */
-  const std::vector<trackChecker::Tracks> scifi_tracks = prepareForwardTracks(
-    host_buffers.host_scifi_tracks,
-    host_buffers.host_n_scifi_tracks,
-    number_of_events_requested
-  );
-  
-  std::cout << "Checking SciFi tracks reconstructed on GPU" << std::endl;
-  call_pr_checker (
-    scifi_tracks,
-    folder_name_MC,
-    start_event_offset,
-    "Forward");
 }

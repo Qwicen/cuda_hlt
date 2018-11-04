@@ -115,10 +115,8 @@ int run_forward_on_CPU (
 #endif
     
     // save in format for track checker
-    trackChecker::Tracks checker_tracks = prepareForwardTracksEvent( forward_tracks, n_forward_tracks );
-    
+    trackChecker::Tracks checker_tracks = prepareTracksSingleEvent<TrackCheckerForward, SciFi::Track>( forward_tracks, n_forward_tracks );    
     forward_tracks_events.emplace_back( checker_tracks );
-
   }
   
 #ifdef WITH_ROOT

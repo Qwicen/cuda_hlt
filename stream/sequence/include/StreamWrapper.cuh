@@ -35,11 +35,7 @@ struct StreamWrapper {
   void initialize_streams(
     const uint n,
     const uint number_of_events,
-    const bool do_check,
-    const bool do_simplified_kalman_filter,
     const bool print_memory_usage,
-    const bool run_on_x86,
-    const std::string& folder_name_MC,
     const uint start_event_offset,
     const size_t reserve_mb,
     const Constants& constants
@@ -53,5 +49,8 @@ struct StreamWrapper {
   /**
    * @brief Runs Monte Carlo test. Stream must be run beforehand.
    */
-  void run_monte_carlo_test(const uint i, const uint number_of_events_requested);
+  void run_monte_carlo_test(
+    const uint i,
+    const std::string& mc_folder,
+    const uint number_of_events_requested);
 };

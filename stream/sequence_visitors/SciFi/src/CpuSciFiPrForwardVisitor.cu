@@ -19,7 +19,6 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
   cudaEventSynchronize(cuda_generic_event);
 
   // Run Forward on x86 architecture
-  std::vector<trackChecker::Tracks> forward_tracks_events;
   std::vector<uint> host_scifi_hits (host_buffers.scifi_hits_bytes());
   std::vector<uint> host_scifi_hit_count (2 * runtime_options.number_of_events * SciFi::Constants::n_zones + 1);
   
@@ -37,8 +36,9 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
     cudaMemcpyDeviceToHost,
     cuda_stream));
   
+  // TODO: Maybe use this rv somewhere?
   int rv = state.invoke(
-    forward_tracks_events,
+    host_buffers.forward_tracks_events,
     host_scifi_hits.data(),
     host_scifi_hit_count.data(),
     host_buffers.host_velo_tracks_atomics,
@@ -47,13 +47,4 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
     host_buffers.host_veloUT_tracks,
     host_buffers.host_atomics_veloUT,
     runtime_options.number_of_events);
-
-  // // TODO: Move this somewhere else
-  // info_cout << "Checking Forward tracks reconstructed on CPU" << std::endl;
-  // trackType = "Forward";
-  // call_pr_checker (
-  //   forward_tracks_events,
-  //   folder_name_MC,
-  //   start_event_offset,
-  //   trackType);
 }

@@ -29,6 +29,7 @@
 #include "Timer.h"
 #include "StreamWrapper.cuh"
 #include "Constants.cuh"
+#include "PrCheckerInvoker.h"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
@@ -41,12 +42,10 @@ void printUsage(char* argv[]){
     << std::endl << " -t {number of threads / streams}=1"
     << std::endl << " -r {number of repetitions per thread / stream}=1"
     << std::endl << " -c {run checkers}=0"
-    << std::endl << " -k {simplified kalman filter}=0"
     << std::endl << " -m {reserve Megabytes}=1024"
     << std::endl << " -v {verbosity}=3 (info)"
     << std::endl << " -p {print memory usage}=0"
     << std::endl << " -a {run only data preparation algorithms: decoding, clustering, sorting}=0"
-    << std::endl << " -x {run algorithms on x86 architecture if implementation is available}=0"
     << std::endl;
 }
 
@@ -63,12 +62,10 @@ int main(int argc, char *argv[])
   bool print_memory_usage = false;
   // By default, do_check will be true when mc_check is enabled
   bool do_check = true;
-  bool do_simplified_kalman_filter = false;
-  bool run_on_x86 = false;
   size_t reserve_mb = 1024;
 
   signed char c;
-  while ((c = getopt(argc, argv, "f:d:n:o:t:r:pha:b:d:v:c:k:m:g:x")) != -1) {
+  while ((c = getopt(argc, argv, "f:d:n:o:t:r:pha:b:d:v:c:m:g:")) != -1) {
     switch (c) {
     case 'f':
       folder_name_raw_banks = std::string(optarg);
@@ -96,12 +93,6 @@ int main(int argc, char *argv[])
       break;
     case 'c':
       do_check = atoi(optarg);
-      break;
-    case 'k':
-      do_simplified_kalman_filter = atoi(optarg);
-      break;
-    case 'x':
-      run_on_x86 = atoi(optarg);
       break;
     case 'v':
       verbosity = atoi(optarg);
@@ -148,9 +139,7 @@ int main(int argc, char *argv[])
     << " start event offset (-o): " << start_event_offset << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
-    << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
-    << " run algorithms on x86 architecture if implementation is available (-x): " << run_on_x86 << std::endl
     << " print memory usage (-p): " << print_memory_usage << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device: " << device_properties.name << std::endl
@@ -163,19 +152,19 @@ int main(int argc, char *argv[])
   number_of_events_requested = get_number_of_events_requested(
     number_of_events_requested, folder_name_velopix_raw);
 
-  std::string folder_name_UT_raw = folder_name_raw_banks + "UT";
-  std::string folder_name_SciFi_raw = folder_name_raw_banks + "FTCluster";
-  auto geometry_reader = GeometryReader(folder_name_detector_configuration);
-  auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
+  const auto folder_name_UT_raw = folder_name_raw_banks + "UT";
+  const auto folder_name_SciFi_raw = folder_name_raw_banks + "FTCluster";
+  const auto geometry_reader = GeometryReader(folder_name_detector_configuration);
+  const auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
   auto velo_reader = VeloReader(folder_name_velopix_raw);
   auto ut_reader = EventReader(folder_name_UT_raw);
   auto scifi_reader = EventReader(folder_name_SciFi_raw);
 
-  std::vector<char> velo_geometry = geometry_reader.read_geometry("velo_geometry.bin");
-  std::vector<char> ut_boards = geometry_reader.read_geometry("ut_boards.bin");
-  std::vector<char> ut_geometry = geometry_reader.read_geometry("ut_geometry.bin");
-  std::vector<char> ut_magnet_tool = ut_magnet_tool_reader.read_UT_magnet_tool();
-  std::vector<char> scifi_geometry = geometry_reader.read_geometry("scifi_geometry.bin");
+  const auto velo_geometry = geometry_reader.read_geometry("velo_geometry.bin");
+  const auto ut_boards = geometry_reader.read_geometry("ut_boards.bin");
+  const auto ut_geometry = geometry_reader.read_geometry("ut_geometry.bin");
+  const auto ut_magnet_tool = ut_magnet_tool_reader.read_UT_magnet_tool();
+  const auto scifi_geometry = geometry_reader.read_geometry("scifi_geometry.bin");
   velo_reader.read_events(number_of_events_requested, start_event_offset);
   ut_reader.read_events(number_of_events_requested, start_event_offset);
   scifi_reader.read_events(number_of_events_requested, start_event_offset);
@@ -198,15 +187,16 @@ int main(int argc, char *argv[])
   stream_wrapper.initialize_streams(
     tbb_threads,
     number_of_events_requested,
-    do_check,
-    do_simplified_kalman_filter,
     print_memory_usage,
-    run_on_x86,
-    folder_name_MC,
     start_event_offset,
     reserve_mb,
     constants
   );
+
+  // Notify used memory if requested verbose mode
+  if (logger::ll.verbosityLevel >= logger::verbose) {
+    print_gpu_memory_consumption();
+  }
 
   // Attempt to execute all in one go
   Timer t;
@@ -235,9 +225,9 @@ int main(int argc, char *argv[])
   );
   t.stop();
 
-  // Do optional Monte Carlo truth test
+  // Do optional Monte Carlo truth test on stream 0
   if (do_check) {
-    stream_wrapper.run_monte_carlo_test(0, number_of_events_requested);
+    stream_wrapper.run_monte_carlo_test(0, folder_name_MC, number_of_events_requested);
   }
 
   std::cout << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl

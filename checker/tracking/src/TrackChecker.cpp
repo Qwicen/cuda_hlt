@@ -12,8 +12,6 @@
  * take input from Renato Quagliani's TrackerDumper
  */
 
-#include <cstdio>
-
 #include "TrackChecker.h"
 
 void TrackCheckerVelo::SetCategories() {
