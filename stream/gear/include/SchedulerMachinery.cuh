@@ -120,7 +120,10 @@ struct OutDependenciesImpl;
 
 template<typename OutputArguments, typename Algorithm, typename... Arguments>
 struct OutDependenciesImpl<OutputArguments, std::tuple<AlgorithmDependencies<Algorithm, Arguments...>, last_t>> {
-  using t = std::tuple<ScheduledDependencies<last_t, std::tuple<Arguments...>>>;
+  using t = std::tuple<AlgorithmDependencies<last_t, typename TupleElementsNotIn<
+    std::tuple<Arguments...>,
+    OutputArguments>::t
+  >>;
 };
 
 template<typename OutputArguments, typename Algorithm, typename... Arguments, typename NextAlgorithm, typename... NextAlgorithmArguments, typename... Algorithms>
@@ -313,7 +316,6 @@ struct RunSequenceTupleImpl<Scheduler, Functor, Tuple, std::tuple<SetSizeArgumen
       std::index_sequence<Is...>>::run(scheduler, functor, tuple, std::forward<SetSizeArguments>(set_size_arguments)..., std::forward<VisitArguments>(visit_arguments)...);
   }
 };
-
 
 /**
  * @brief Runs a sequence of algorithms.

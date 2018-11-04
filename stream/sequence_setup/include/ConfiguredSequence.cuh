@@ -18,6 +18,7 @@
 #include "RawBankDecoder.cuh"
 #include "SciFiSortByX.cuh"
 #include "PrForward.cuh"
+#include "RunForwardCPU.h"
 
 #define SEQUENCE_T(...) typedef std::tuple<__VA_ARGS__> configured_sequence_t;
 
