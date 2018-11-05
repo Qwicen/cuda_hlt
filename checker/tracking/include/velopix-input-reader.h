@@ -75,9 +75,6 @@ void call_pr_checker_impl(
   if (std::get<0>(mc_folder_contents)) {
     const std::vector<VelopixEvent>& events = std::get<1>(mc_folder_contents);
     t_checker trackChecker {};
-#ifdef WITH_ROOT
-    trackChecker.initHistos();
-#endif
     uint64_t evnum = 0; 
 
     for (const auto& ev: events) {

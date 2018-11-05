@@ -22,6 +22,7 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const std::string& tr
   uint8_t* input = (uint8_t*) event.data();
 
   uint32_t number_mcp = *((uint32_t*)  input); input += sizeof(uint32_t);
+  //debug_cout << "num MCPs = " << number_mcp << std::endl;
   for (uint32_t i=0; i<number_mcp; ++i) {
     MCParticle p;
     p.key               = *((uint32_t*)  input); input += sizeof(uint32_t);
@@ -29,7 +30,6 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const std::string& tr
     p.p                 = *((float*)  input); input += sizeof(float);
     p.pt                = *((float*)  input); input += sizeof(float);
     p.eta               = *((float*)  input); input += sizeof(float);
-    p.phi               = *((float*)  input); input += sizeof(float);
     p.isLong            = (bool) *((int8_t*)  input); input += sizeof(int8_t);
     p.isDown            = (bool) *((int8_t*)  input); input += sizeof(int8_t);
     p.hasVelo           = (bool) *((int8_t*)  input); input += sizeof(int8_t);
@@ -38,14 +38,13 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const std::string& tr
     p.fromBeautyDecay   = (bool) *((int8_t*)  input); input += sizeof(int8_t);
     p.fromCharmDecay    = (bool) *((int8_t*)  input); input += sizeof(int8_t);
     p.fromStrangeDecay  = (bool) *((int8_t*)  input); input += sizeof(int8_t);
-    p.nPV               = *((uint32_t*) input); input += sizeof(uint32_t);
+
    
     int num_Velo_hits = *((uint32_t*)  input); input += sizeof(uint32_t);
     std::vector<uint32_t> velo_hits;
     std::copy_n((uint32_t*) input, num_Velo_hits, std::back_inserter(velo_hits));
     input += sizeof(uint32_t) * num_Velo_hits;
     int num_UT_hits = *((uint32_t*)  input); input += sizeof(uint32_t);
-    
     std::vector<uint32_t> UT_hits;
     std::copy_n((uint32_t*) input, num_UT_hits, std::back_inserter(UT_hits));
     input += sizeof(uint32_t) * num_UT_hits;
@@ -53,7 +52,11 @@ VelopixEvent::VelopixEvent(const std::vector<char>& event, const std::string& tr
     std::vector<uint32_t> SciFi_hits;
     std::copy_n((uint32_t*) input, num_SciFi_hits, std::back_inserter(SciFi_hits));
     input += sizeof(uint32_t) * num_SciFi_hits;
-    
+
+    // if ( trackType == "Velo" && !p.hasVelo ) continue;
+    // if ( trackType == "VeloUT" && !(p.hasVelo && p.hasUT) ) continue;
+    // if ( trackType == "Forward" && !(p.hasVelo && p.hasUT && p.hasSciFi) ) continue;
+   
     /* Only save the hits relevant for the track type we are checking
        -> get denominator of efficiency right
      */

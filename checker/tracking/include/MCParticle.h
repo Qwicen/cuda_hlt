@@ -29,7 +29,6 @@ struct MCParticle {
   bool fromCharmDecay;
   bool fromStrangeDecay;
   uint32_t numHits;
-  uint32_t nPV; // # of reconstructible primary vertices in event
   std::vector<uint32_t> hits;
 
   bool isElectron() const { return 11 == std::abs(pid); };
