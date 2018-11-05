@@ -234,7 +234,5 @@ void call_pr_checker(
   else {
     error_cout << "Unknown track type: " << trackType << std::endl;
   }
- 
-  
 }
 
