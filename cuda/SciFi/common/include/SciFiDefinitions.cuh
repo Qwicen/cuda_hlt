@@ -278,6 +278,7 @@ struct SciFiHitCount{
 struct SciFiHit {
   float x0;
   float z0;
+  float endPointY;
   uint32_t channel;
   uint32_t assembled_datatype;
 
@@ -314,6 +315,7 @@ struct SciFiHits {
 
   float* x0;
   float* z0;
+  float* m_endPointY;
   uint32_t* channel;
   uint32_t* assembled_datatype;
   uint32_t* cluster_reference;
@@ -325,13 +327,13 @@ struct SciFiHits {
   /**
    * @brief Gets a hit in the SciFiHit format from the global hit index.
    */
-  __device__ __host__
-  SciFiHit getHit(uint32_t index) const;
+  __device__ __host__ SciFiHit getHit(uint32_t index) const;
   __device__ __host__ float w(uint32_t index) const;
   __device__ __host__ float dxdy(uint32_t index) const;
   __device__ __host__ float dzdy(uint32_t index) const;
   __device__ __host__ float yMin(uint32_t index) const;
   __device__ __host__ float yMax(uint32_t index) const;
+  __device__ __host__ float endPointY(uint32_t index) const;
   __device__ __host__ uint32_t LHCbID(uint32_t index) const;
   __device__ __host__ uint32_t planeCode(uint32_t index) const;
   __device__ __host__ uint32_t mat(uint32_t index) const;

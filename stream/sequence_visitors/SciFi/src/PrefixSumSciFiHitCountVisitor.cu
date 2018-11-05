@@ -93,5 +93,5 @@ void SequenceVisitor::visit<prefix_sum_scan_scifi_hits_t>(
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
 
-  // info_cout << "Total SciFi cluster estimate: " << *host_accumulated_number_of_scifi_hits << std::endl;
+  // info_cout << "Total SciFi cluster count: " << *host_buffers.host_accumulated_number_of_scifi_hits << std::endl;
 }

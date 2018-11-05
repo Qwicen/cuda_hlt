@@ -200,4 +200,5 @@ void Constants::initialize_geometry_constants(
   // Populate FT geometry
   cudaCheck(cudaMalloc((void**)&dev_scifi_geometry, scifi_geometry.size()));
   cudaCheck(cudaMemcpy(dev_scifi_geometry, scifi_geometry.data(), scifi_geometry.size(), cudaMemcpyHostToDevice));
+  host_scifi_geometry = scifi_geometry.data(); //for debugging
 }

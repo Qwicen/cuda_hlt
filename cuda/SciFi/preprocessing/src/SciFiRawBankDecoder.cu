@@ -51,7 +51,9 @@ __device__ void make_cluster (
   hits.x0[hit_index] = x0;
   hits.z0[hit_index] = z0;
   hits.channel[hit_index] = chan;
-  hits.assembled_datatype[hit_index] = fraction << 19 | plane_code << 14 | pseudoSize << 10 | mat;
+  hits.m_endPointY[hit_index] = endPointY;
+  assert(fraction <= 0x1 && plane_code <= 0x1f && pseudoSize <= 0xf && mat <= 0x7ff);
+  hits.assembled_datatype[hit_index] = fraction << 20 | plane_code << 15 | pseudoSize << 11 | mat;
 
   // TODO: Make accessors for these datatypes
   // hits.x0[hit_index] = x0;

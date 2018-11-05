@@ -23,7 +23,7 @@
  *          Instead, global memory is preferred. Hence, this singleton
  *          should allocate the requested buffers on GPU and serve the
  *          pointers wherever needed.
- *          
+ *
  *          The pointers are hard-coded. Feel free to write more as needed.
  */
 struct Constants {
@@ -53,8 +53,9 @@ struct Constants {
   char* dev_ut_boards;
   char* dev_ut_geometry;
   char* dev_scifi_geometry;
+  const char* host_scifi_geometry; //for debugging
   PrUTMagnetTool* dev_ut_magnet_tool;
-  
+
   /**
    * @brief Reserves and initializes constants.
    */
