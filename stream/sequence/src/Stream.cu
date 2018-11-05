@@ -95,6 +95,11 @@ void Stream::run_monte_carlo_test(
   const std::string& mc_folder,
   const uint number_of_events_requested)
 {
+#ifdef WITH_ROOT
+  TFile *f = new TFile("../output/PrCheckerPlots.root", "RECREATE");
+  f->Close();
+#endif
+
   // Create the PrCheckerInvoker and read Monte Carlo validation information
   const auto pr_checker_invoker = PrCheckerInvoker(
     mc_folder,

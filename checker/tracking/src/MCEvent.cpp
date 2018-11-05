@@ -32,6 +32,8 @@ MCEvent::MCEvent(const std::vector<char>& event,
     input += sizeof(float);
     p.eta = *((float *)input);
     input += sizeof(float);
+    p.phi = *((float *)input);
+    input += sizeof(float);
     p.isLong = (bool)*((int8_t *)input);
     input += sizeof(int8_t);
     p.isDown = (bool)*((int8_t *)input);
@@ -48,6 +50,8 @@ MCEvent::MCEvent(const std::vector<char>& event,
     input += sizeof(int8_t);
     p.fromStrangeDecay = (bool)*((int8_t *)input);
     input += sizeof(int8_t);
+    p.nPV = *((uint32_t*) input);
+    input += sizeof(uint32_t);
 
     int num_Velo_hits = *((uint32_t *)input);
     input += sizeof(uint32_t);
