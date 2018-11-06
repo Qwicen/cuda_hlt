@@ -40,7 +40,7 @@ struct PrCheckerInvoker {
     if (is_mc_folder_populated) {
       T trackChecker {};
 #ifdef WITH_ROOT
-      trackChecker.initHistos();
+      trackChecker.histos.initHistos(trackChecker.histo_categories());
 #endif
 
       for (int evnum = 0; evnum < mc_events.size(); ++evnum) {
