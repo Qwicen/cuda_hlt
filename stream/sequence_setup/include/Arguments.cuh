@@ -4,6 +4,7 @@
 #include "VeloEventModel.cuh"
 #include "VeloUTDefinitions.cuh"
 #include "PrForward.cuh"
+#include "patPV_Definitions.cuh"
 
 /**
  * @brief Definition of arguments. All arguments should be defined here,
@@ -31,6 +32,11 @@ ARGUMENT(dev_velo_track_hit_number, uint)
 ARGUMENT(dev_prefix_sum_auxiliary_array_2, uint)
 ARGUMENT(dev_velo_track_hits, uint)
 ARGUMENT(dev_velo_states, uint)
+ARGUMENT(dev_kalmanvelo_states, uint)
+ARGUMENT(dev_seeds, XYZPoint)
+ARGUMENT(dev_number_seeds, uint)
+ARGUMENT(dev_vertex, Vertex)
+ARGUMENT(dev_number_vertex, int)
 ARGUMENT(dev_ut_raw_input, uint)
 ARGUMENT(dev_ut_raw_input_offsets, uint)
 ARGUMENT(dev_ut_hit_offsets, uint)
