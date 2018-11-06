@@ -29,4 +29,5 @@ if ( ROOT_FOUND )
   target_link_libraries(x86Forward
     ${ROOT_LIBRARIES}
   )
+  target_include_directories(x86Forward PUBLIC ${ROOT_INCLUDE_DIRS})
 endif()
