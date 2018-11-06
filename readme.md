@@ -28,9 +28,15 @@ Cuda compilation tools, release 9.2, V9.2.88
 
 You can check your compiler standard compatibility by scrolling to the `C++14 features` chart [here](https://en.cppreference.com/w/cpp/compiler_support).
 
-Optional: you can compile the project with ROOT. Then, trees will be filled with variables to check when running the UT tracking or SciFi tracking algorithms on x86 architecture.
+Optionally you can compile the project with ROOT. Then, trees will be filled with variables to check when running the UT tracking or SciFi tracking algorithms on x86 architecture.
 In addition, histograms of reconstructible and reconstructed tracks are then filled in the track checker, they are saved in the file output/PrCheckerPlots.root. 
-Plots of efficiencies versus various kinematic variables can be created by running efficiency_plots.py in the directory checker/tracking/python_scripts. 
+Plots of efficiencies versus various kinematic variables can be created by running `efficiency_plots.py` in the directory `checker/tracking/python_scripts`.
+
+You can setup ROOT in CVMFS as follows:
+
+```shell
+source /cvmfs/lhcb.cern.ch/lib/lcg/releases/ROOT/6.08.06-d7e12/x86_64-centos7-gcc62-opt/bin/thisroot.sh
+```
 
 [Building and running inside Docker](readme_docker.md)
 
