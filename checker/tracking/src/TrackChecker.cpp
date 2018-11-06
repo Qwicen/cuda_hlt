@@ -263,8 +263,8 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks,
 #ifdef WITH_ROOT
     for ( auto& histo_cat : m_histo_categories ) {
       fillReconstructedHistos(mcp, histo_cat);
-#endif
     }
+#endif
   }
   // almost done, notify of end of event...
   ++m_nevents;
