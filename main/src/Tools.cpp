@@ -211,7 +211,7 @@ void call_pr_checker(
   const std::string& trackType
 ) {
   if ( trackType == "Velo" ) {
-    call_pr_checker_impl<TrackCheckerVelo>(
+    call_pr_checker_impl<TrackCheckerVelo> (
       all_tracks,
       folder_name_MC,
       start_event_offset,
