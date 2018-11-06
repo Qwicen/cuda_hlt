@@ -120,8 +120,7 @@ protected:
     void fillTotalHistos(const MCParticle &mcp);
     void fillGhostHistos(const MCParticle &mcp);
   };
-
-  Histos histos;
+ 
 
   const float m_minweight = 0.7f;
   std::size_t m_nevents = 0;
@@ -140,6 +139,7 @@ public:
   const std::vector<HistoCategory>& histo_categories() {
     return m_histo_categories;
   }
+   Histos histos;
 };
 
 class TrackCheckerVelo : public TrackChecker {
