@@ -162,6 +162,7 @@ __global__ void veloUT(
         hitCandidateIndices,
         veloUT_tracks_event,
         n_veloUT_tracks_event,
+        i_track,
         bdlTable);
     }
     

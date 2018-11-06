@@ -10,6 +10,9 @@
 #include "ClusteringDefinitions.cuh"
 #include "ClusteringCommon.h"
 #include "VeloUTDefinitions.cuh"
+#include "PrForwardConstants.cuh"
+#include "TMVA_Forward_1.cuh"
+#include "TMVA_Forward_2.cuh"
 #include "UTDefinitions.cuh"
 #include "Logger.h"
 #include "PrVeloUTMagnetToolDefinitions.h"
@@ -37,6 +40,9 @@ struct Constants {
   float* dev_velo_sp_fx;
   float* dev_velo_sp_fy;
   float* dev_ut_dxDy;
+  SciFi::Tracking::TMVA* dev_scifi_tmva1;
+  SciFi::Tracking::TMVA* dev_scifi_tmva2;
+  SciFi::Tracking::Arrays* dev_scifi_constArrays;
   uint* dev_unique_x_sector_layer_offsets;
   uint* dev_unique_x_sector_offsets;
   uint* dev_ut_region_offsets;

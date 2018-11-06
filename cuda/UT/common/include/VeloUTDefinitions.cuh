@@ -1,8 +1,8 @@
 #pragma once
 
-// #include "cuda_runtime.h"
-// #include "device_launch_parameters.h"
-// #include "Common.h"
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include "Common.h"
 #include "VeloDefinitions.cuh"
 #include "VeloConsolidated.cuh"
 
@@ -41,7 +41,7 @@ struct TrackUT {
   unsigned int LHCbIDs[VeloUTTracking::max_track_size];
   float qop;
   unsigned short hitsNum = 0;
-  
+  unsigned short veloTrackIndex;
   
   __host__ __device__ void addLHCbID( unsigned int id ) {
     LHCbIDs[hitsNum++] = id;

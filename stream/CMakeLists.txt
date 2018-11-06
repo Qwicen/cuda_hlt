@@ -5,6 +5,7 @@ include_directories(memory_manager/include)
 include_directories(scheduler/include)
 include_directories(sequence/include)
 include_directories(sequence_setup/include)
+include_directories(sequence_checkers/include)
 include_directories(../main/include)
 include_directories(../cuda/utils/prefix_sum/include)
 include_directories(../cuda/utils/sorting/include)
@@ -24,10 +25,14 @@ include_directories(../cuda/velo/search_by_triplet/include)
 include_directories(../cuda/velo/simplified_kalman_filter/include)
 include_directories(../cuda/SciFi/preprocessing/include)
 include_directories(../cuda/SciFi/common/include)
-include_directories(../x86/velo/clustering/include)
-include_directories(../x86/veloUT/PrVeloUT/include)
 include_directories(../checker/tracking/include)
+include_directories(../cuda/SciFi/common/include)
+include_directories(../cuda/SciFi/PrForward/include)
 include_directories(../cuda/utils/include)
+include_directories(../cuda/veloUT/sorting/include)
+include_directories(../x86/velo/clustering/include)
+include_directories(../x86/UT/PrVeloUT/include)
+include_directories(../x86/SciFi/include)
 
 file(GLOB stream_gear "gear/src/*cu")
 file(GLOB stream_handlers "handlers/src/*cu")
@@ -53,21 +58,18 @@ cuda_add_library(Stream STATIC
   ${stream_sequence_visitors_SciFi}
   )
 
+target_link_libraries(Stream
+  Common
+  Utils
+  Velo
+  UT
+  x86Forward
+  SciFi
+  x86VeloUT)
+
 if ( ROOT_FOUND )
   target_compile_definitions(Stream PUBLIC WITH_ROOT)
   message("-- Found ROOT, setting WITH_ROOT to true")
   target_link_libraries(Stream
-  Utils
-  Velo
-  UT
-  SciFi
-  x86VeloUT
-  ${ROOT_LIBRARIES})
-else()
-  target_link_libraries(Stream
-  Utils
-  Velo
-  UT
-  SciFi
-  x86VeloUT)
+    ${ROOT_LIBRARIES})
 endif()

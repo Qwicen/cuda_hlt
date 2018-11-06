@@ -17,11 +17,6 @@ __global__ void saxpy(float *x, float *y, int n, float a) {
 }
 ```
 
-> Note: You may notice I changed the order of the parameters, and put first the pointers `float* x, float* y`. Putting them at the end leads to the following compiler error, which I still have to understand `
-Error: Internal Compiler Error (codegen): "there was an error in verifying the lgenfe output!"
-`.
-
-
 ### Adding the CUDA algorithm
 
 We want to add the algorithm to a specific folder inside the `cuda` folder:
@@ -114,19 +109,26 @@ Ready to move on.
 
 Some events from the input will be discarded throughout the execution, and only a fraction of them will be kept for further processing. That is conceptually the idea behind the _High Level Trigger 1_ stage of LHCb, and is what is intended to achieve with this project.
 
-Therefore, we need to add our algorithm to the sequence of algorithms. In order to do that, go to `stream/sequence_setup/include/ConfiguredSequence.cuh` and add the algorithm to the `SEQUENCE` line as follows:
-
-__Note: Don't forget the `#include` line__
+Therefore, we need to add our algorithm to the sequence of algorithms. First, make the folder visible to CMake by editing the file `stream/CMakeLists.txt` and adding:
 
 ```clike
-#include "../../../cuda/test/saxpy/include/Saxpy.cuh"
-...
+include_directories(../cuda/test/saxpy/include)
+```
 
+Then, add the following include to `stream/sequence_setup/include/ConfiguredSequence.cuh`:
+
+```clike
+#include "Saxpy.cuh"
+```
+
+Now, we are ready to add our algorithm to a sequence. All available sequences live in the folder `stream/sequence_setup/include/sequences/`. The sequence to execute can be chosen at compile time, by appending the name of the desired sequence to the cmake call: `cmake -DSEQUENCE=DefaultSequence ..`. For now, let's just edit the `DefaultSequence`. Add the algorithm to `stream/sequence_setup/include/sequences/DefaultSequence.cuh` as follows:
+
+```clike
 /**
- * Especify here the algorithms to be executed in the sequence,
+ * Specify here the algorithms to be executed in the sequence,
  * in the expected order of execution.
  */
-SEQUENCE(
+SEQUENCE_T(
   ...
   prefix_sum_reduce_velo_track_hit_number_t,
   prefix_sum_single_block_velo_track_hit_number_t,
@@ -143,77 +145,53 @@ Next, we need to define the arguments to be passed to our function. We need to d
 
 We will distinguish arguments just passed by value from pointers to device memory. We don't need to schedule those simply passed by value like `n` and `a`. We care however about `x` and `y`, since they require some reserving and freeing in memory.
 
-Let's give these arguments a name that won't collide, like `dev_x` and `dev_y`. Now, we need to add them in three places. First, `arg_enum_t` in `stream/sequence_setup/include/SequenceArgumentEnum.cuh`:
+Let's give these arguments a name that won't collide, like `dev_x` and `dev_y`. Now, we need to add them to `stream/sequence_setup/include/Arguments.cuh`:
 
 ```clike
 /**
- * arg_enum_t Arguments for all algorithms in the sequence.
+ * @brief Definition of arguments. All arguments should be defined here,
+ *        with their associated type.
  */
-enum arg_enum_t {
-  ...
+ARGUMENT(dev_x, float)
+ARGUMENT(dev_y, float)
+```
+
+Finally, we need to populate the _dependency tree_, ie. where are these arguments needed. For that, edit `stream/sequence_setup/include/AlgorithmDependencies.cuh`:
+
+```clike
+/**
+ * @brief Definition of the dependencies of each algorithm.
+ * @details All the dependencies for all defined algorithms
+ *          should be defined here, using the type
+ *          AlgorithmDependencies<Algorithm, Arguments...>.
+ */
+typedef std::tuple<
+...
+  AlgorithmDependencies<saxpy_t,
+    dev_x,
+    dev_y
+  >,
+...
+```
+
+Optionally, some types are required to live throughout the whole sequence since its creation. An argument can be specified to be persistent in memory by adding it to the `output_arguments_t` tuple, in `AlgorithmDependencies.cuh`:
+
+```clike
+/**
+ * @brief Output arguments, ie. that cannot be freed.
+ * @details The arguments specified in this type will
+ *          be kept allocated since their first appearance
+ *          until the end of the sequence.
+ */
+typedef std::tuple<
+  dev_atomics_storage,
   dev_velo_track_hit_number,
-  dev_prefix_sum_auxiliary_array_2,
   dev_velo_track_hits,
-  dev_velo_states,
-  dev_x,
-  dev_y
-};
-```
-
-Again, order matters. Next, we will populate the arguments and their types without the `*` in `argument_tuple_t` in `stream/sequence_setup/include/SequenceSetup.cuh`:
-
-```clike
-/**
- * @brief Argument tuple definition. All arguments and their types should
- *        be populated here. The order must be the same as arg_enum_t
- *        (checked at compile time).
- */
-using argument_tuple_t = std::tuple<
-  ...
-  Argument<arg::dev_velo_track_hit_number, uint>,
-  Argument<arg::dev_prefix_sum_auxiliary_array_2, uint>,
-  Argument<arg::dev_velo_track_hits, Hit>,
-  Argument<arg::dev_velo_states, VeloState>,
-  Argument<arg::dev_x, float>,
-  Argument<arg::dev_y, float>
->;
-```
-
-Finally, we populate the _dependency tree_, ie. where are these arguments needed. For that, go to the body of `get_sequence_dependencies`, in `stream/sequence_setup/src/SequenceSetup.cu`:
-
-```clike
-std::vector<std::vector<int>> get_sequence_dependencies() {
-  ...
-  sequence_dependencies[tuple_contains<saxpy_t, sequence_t>::index] = {
-    arg::dev_x,
-    arg::dev_y
-  };
-  
-  return sequence_dependencies;
-}
-```
-
-Optionally, we can give names to our arguments. This will help when debugging ie. the memory manager. `stream/sequence_setup/src/SequenceSetup.cu`:
-
-```clike
-std::array<std::string, std::tuple_size<argument_tuple_t>::value> get_argument_names() {
-  ...
-  a[arg::dev_x] = "dev_x";
-  a[arg::dev_y] = "dev_y";
-  return a;
-}
-```
-
-Optionally (2), some types are required to live throughout the whole sequence since its creation. An argument can be specified to be persistent in memory by adding it to `SequenceSetup.cu`, function `get_sequence_output_arguments`:
-
-```clike
-std::vector<int> get_sequence_output_arguments() {
-  return {
-    arg::dev_atomics_storage,
-    arg::dev_velo_track_hit_number,
-    arg::dev_velo_track_hits
-  };
-}
+  dev_atomics_veloUT,
+  dev_veloUT_tracks,
+  dev_scifi_tracks,
+  dev_n_scifi_tracks
+> output_arguments_t;
 ```
 
 ### Preparing and invoking the algorithms in the sequence
@@ -273,83 +251,86 @@ Finally, create a visitor for your newly created algorithm. Create a containing 
 #include "Saxpy.cuh"
 
 template<>
-void StreamVisitor::visit<saxpy_t>(
-  saxpy_t& state,
-  const int sequence_step,
+void SequenceVisitor::set_arguments_size<saxpy_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  ArgumentManager<argument_tuple_t>& arguments,
-  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
+  const HostBuffers& host_buffers,
+  argument_manager_t& arguments)
+{
+  // Set arguments size
+  int saxpy_N = 1<<20;
+  arguments.set_size<dev_x>(saxpy_N);
+  arguments.set_size<dev_y>(saxpy_N);
+}
+
+template<>
+void SequenceVisitor::visit<saxpy_t>(
+  saxpy_t& state,
+  const RuntimeOptions& runtime_options,
+  const Constants& constants,
+  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-    // Saxpy test
-    int saxpy_N = 1<<20;
-    for (int i = 0; i < saxpy_N; i++) {
-      host_buffers.host_x[i] = 1.0f;
-      host_buffers.host_y[i] = 2.0f;
-    }
+  // Saxpy test
+  int saxpy_N = 1<<20;
+  for (int i = 0; i < saxpy_N; i++) {
+    host_buffers.host_x[i] = 1.0f;
+    host_buffers.host_y[i] = 2.0f;
+  }
 
-    // Set arguments size
-    arguments.set_size<arg::dev_x>(saxpy_N);
-    arguments.set_size<arg::dev_y>(saxpy_N);
+  // Copy memory from host to device
+  cudaCheck(cudaMemcpyAsync(
+    arguments.offset<dev_x>(),
+    host_buffers.host_x,
+    saxpy_N * sizeof(float),
+    cudaMemcpyHostToDevice,
+    cuda_stream
+  ));
 
-    // Reserve required arguments for this algorithm in the sequence
-    scheduler.setup_next(arguments, sequence_step);
+  cudaCheck(cudaMemcpyAsync(
+    arguments.offset<dev_y>(),
+    host_buffers.host_y,
+    saxpy_N * sizeof(float),
+    cudaMemcpyHostToDevice,
+    cuda_stream
+  ));
 
-    // Copy memory from host to device
-    cudaCheck(cudaMemcpyAsync(
-      arguments.offset<arg::dev_x>(),
-      host_buffers.host_x,
-      saxpy_N * sizeof(float),
-      cudaMemcpyHostToDevice,
-      cuda_stream
-    ));
+  // Setup opts for kernel call
+  state.set_opts(dim3((saxpy_N+255)/256), dim3(256), cuda_stream);
+  
+  // Setup arguments for kernel call
+  state.set_arguments(
+    arguments.offset<dev_x>(),
+    arguments.offset<dev_y>(),
+    saxpy_N,
+    2.0f
+  );
 
-    cudaCheck(cudaMemcpyAsync(
-      arguments.offset<arg::dev_y>(),
-      host_buffers.host_y,
-      saxpy_N * sizeof(float),
-      cudaMemcpyHostToDevice,
-      cuda_stream
-    ));
+  // Kernel call
+  state.invoke();
 
-    // Setup opts for kernel call
-    state.set_opts(dim3((saxpy_N+255)/256), dim3(256), cuda_stream);
-    
-    // Setup arguments for kernel call
-    state.set_arguments(
-      arguments.offset<arg::dev_x>(),
-      arguments.offset<arg::dev_y>(),
-      saxpy_N,
-      2.0f
-    );
+  // Retrieve result
+  cudaCheck(cudaMemcpyAsync(
+    host_buffers.host_y,
+    arguments.offset<dev_y>(),
+    arguments.size<dev_y>(),
+    cudaMemcpyDeviceToHost,
+    cuda_stream
+  ));
 
-    // Kernel call
-    state.invoke();
+  // Wait to receive the result
+  cudaEventRecord(cuda_generic_event, cuda_stream);
+  cudaEventSynchronize(cuda_generic_event);
 
-    // Retrieve result
-    cudaCheck(cudaMemcpyAsync(
-      host_buffers.host_y,
-      arguments.offset<arg::dev_y>(),
-      arguments.size<arg::dev_y>(),
-      cudaMemcpyDeviceToHost,
-      cuda_stream
-    ));
-
-    // Wait to receive the result
-    cudaEventRecord(cuda_generic_event, cuda_stream);
-    cudaEventSynchronize(cuda_generic_event);
-
-    // Check the output
-    float maxError = 0.0f;
-    for (int i=0; i<saxpy_N; i++) {
-      maxError = std::max(maxError, abs(host_buffers.host_y[i]-4.0f));
-    }
-    info_cout << "Saxpy max error: " << maxError << std::endl << std::endl;
-    
-    ...
+  // Check the output
+  float maxError = 0.0f;
+  for (int i=0; i<saxpy_N; i++) {
+    maxError = std::max(maxError, abs(host_buffers.host_y[i]-4.0f));
+  }
+  info_cout << "Saxpy max error: " << maxError << std::endl << std::endl;
+}
 ```
 
 We can compile the code and run the program `./cu_hlt`. If everything went well, the following text should appear:

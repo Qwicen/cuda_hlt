@@ -4,7 +4,7 @@ file(GLOB UT_tracking "PrVeloUT/src/*cu")
 file(GLOB CompassUT_tracking "compassUT/src/*cu")
 
 include_directories(../../main/include)
-include_directories(../../stream/handlers/include)
+include_directories(../../stream/gear/include)
 include_directories(../velo/common/include)
 include_directories(../event_model/velo/include)
 include_directories(../event_model/common/include)

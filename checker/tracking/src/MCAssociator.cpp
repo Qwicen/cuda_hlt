@@ -8,8 +8,6 @@
  * @date 2018-02-18
  */
 
-#include <numeric>
-
 #include "MCAssociator.h"
 
 MCAssociator::MCAssociator(const MCParticles& mcps) :

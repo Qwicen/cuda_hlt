@@ -38,7 +38,8 @@ void appendFileToVector(
 );
 
 std::vector<std::string> list_folder(
-  const std::string& foldername
+  const std::string& foldername,
+  const std::string& extension = "bin"
 );
 
 uint get_number_of_events_requested(

@@ -6,7 +6,7 @@ a full HLT1 realization on GPU.
 
 Requisites
 ----------
-The project requires a graphics card with CUDA support, CUDA 9.2, Cmake 3.11.2 or higher and a compiler supporting C++14. It also requires the developer package of `tbb`.
+The project requires a graphics card with CUDA support, CUDA 10.0, Cmake 3.11.2 or higher and a compiler supporting C++14. It also requires the developer package of `tbb`.
 
 If you are working from a node with CVMFS and CentOS 7, we suggest the following setup:
 
@@ -28,7 +28,9 @@ Cuda compilation tools, release 9.2, V9.2.88
 
 You can check your compiler standard compatibility by scrolling to the `C++14 features` chart [here](https://en.cppreference.com/w/cpp/compiler_support).
 
-Optional: you can compile the project with ROOT. Then, trees will be filled with variables to check when running the VeloUT algorithm on x86 architecture.
+Optional: you can compile the project with ROOT. Then, trees will be filled with variables to check when running the UT tracking or SciFi tracking algorithms on x86 architecture.
+In addition, histograms of reconstructible and reconstructed tracks are then filled in the track checker, they are saved in the file output/PrCheckerPlots.root. 
+Plots of efficiencies versus various kinematic variables can be created by running efficiency_plots.py in the directory checker/tracking/python_scripts. 
 
 [Building and running inside Docker](readme_docker.md)
 
@@ -36,9 +38,9 @@ Where to find input
 -------------
 Input from 1k events can be found here: 
 
-minimum bias (for performance checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbias.tar.gz
+minimum bias (for performance checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbias_dump_phi_nPV.tar.gz
 
-Bs->PhiPhi (for efficiency checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi.tar.gz
+Bs->PhiPhi (for efficiency checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi_dump_phi_nPV.tar.gz
 
 How to run it
 -------------
@@ -52,9 +54,9 @@ The build process doesn't differ from standard cmake projects:
 
 There are some cmake options to configure the build process:
 
+   * The sequence can be configured by specifying `-DSEQUENCE=<name_of_sequence>`. For a complete list of sequences available, check `stream/sequence_setup/include/sequences/`. Sequence names should be specified without the `.cuh`, ie. `-DSEQUENCE=VeloUT`.
    * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
    * The option to run the validation, on by default, can be turned off with `-DMC_CHECK=Off`.
-
 
 The MC validation is a standalone version of the PrChecker, it was written by
 Manuel Schiller, Rainer Schwemmer and Daniel Cámpora.
@@ -63,9 +65,7 @@ Some binary input files are included with the project for testing.
 A run of the program with no arguments will let you know the basic options:
 
     Usage: ./cu_hlt
-    -f {folder containing bin files with VP raw bank information}
-    -u {folder containing bin files with UT raw bank information}
-    -i {folder containing bin files with SciFi raw bank information}
+    -f {folder containing directories with raw bank binaries for every sub-detector}
     -g {folder containing detector configuration}
     -d {folder containing bin files with MC truth information}
     -n {number of events to process}=0 (all)
@@ -85,6 +85,9 @@ Here are some example run options:
     # Run all input files once with the tracking validation
     ./cu_hlt
 
+    # Specify input files, run once over all of them with tracking validation
+    ./cu_hlt -f ../input/minbias/banks/ -d ../input/minbias/MC_info/
+
     # Run a total of 1000 events, round robin over the existing ones, without tracking validation
     ./cu_hlt -c 0 -n 1000
 
@@ -93,5 +96,6 @@ Here are some example run options:
 
     # Run one stream and print all memory allocations
     ./cu_hlt -n 5000 -p
+
 
 [This readme](contributing.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define global memory variables for this sequence and pass on the dependencies.

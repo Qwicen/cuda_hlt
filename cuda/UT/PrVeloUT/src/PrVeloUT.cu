@@ -15,9 +15,25 @@
 // -- These things are all hardcopied from the PrTableForFunction
 // -- and PrUTMagnetTool
 // -- If the granularity or whatever changes, this will give wrong results
-__host__ __device__ int masterIndex(const int index1, const int index2, const int index3){
-  return (index3*11 + index2)*31 + index1;
+
+  __host__ __device__ int masterIndex(const int index1, const int index2, const int index3){
+    return (index3*11 + index2)*31 + index1;
+  }
+
+
+//=====================================================================
+// Propagate to end of Velo z position (z=770mm)
+// only propagate x, y, z; covariance matrix is not needed
+//=====================================================================
+__host__ __device__ void propagate_state_to_end_velo(
+  Velo::State& velo_state
+) {
+  const float dz = VeloTracking::z_endVelo - velo_state.z;
+  velo_state.x += dz * velo_state.tx;
+  velo_state.y += dz * velo_state.ty;
+  velo_state.z = VeloTracking::z_endVelo;
 }
+
 
 //=============================================================================
 // Reject tracks outside of acceptance or pointing to the beam pipe
@@ -299,6 +315,7 @@ __host__ __device__ void prepareOutputTrack(
   const int hitCandidateIndices[VeloUTTracking::n_layers],
   VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks],
   int* n_veloUT_tracks,
+  const int i_velo_track,
   const float* bdlTable) {
 
   //== Handle states. copy Velo one, add UT.
@@ -365,6 +382,7 @@ __host__ __device__ void prepareOutputTrack(
     assert( track.hitsNum < VeloUTTracking::max_track_size);
   }
   track.set_qop( qop );
+  track.veloTrackIndex = i_velo_track;
   
   // Adding overlap hits
   for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
@@ -398,14 +416,6 @@ __host__ __device__ void prepareOutputTrack(
   }
   assert( n_tracks < VeloUTTracking::max_num_tracks );
   VeloUT_tracks[n_tracks] = track;
-
-  /*
-  outTr.x = state.x;
-  outTr.y = state.y;
-  outTr.z = state.z;
-  outTr.tx = state.tx;
-  outTr.ty = state.ty;
-  */
 }
 
 // ==============================================================================

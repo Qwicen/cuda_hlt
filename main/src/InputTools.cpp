@@ -1,4 +1,78 @@
+#include <regex>
 #include "InputTools.h"
+
+namespace {
+
+  // Factory for filename checking: a regex and a predicate on the its matches
+  using factory = std::tuple<std::reference_wrapper<const std::regex>,
+                             std::function<bool(const std::smatch&)>>;
+
+  // Check binary files: they should match the regex and have n non-zero sub-matches
+  const std::regex bin_format{"(\\d+)(?:_(\\d+))?\\.bin"};
+  auto check_bin = [] (size_t n) -> factory {
+                     return {std::cref(bin_format),
+                             [n] (const std::smatch& matches) {
+                               return std::accumulate(begin(matches) + 1, end(matches), 0ul,
+                                                      [] (const auto& v, const auto& m) {
+                                                        return v + (m.length() != 0);
+                                                      }) == n;
+                             }};
+                   };
+
+  // Check mdf files: they should match the regex and have not-empty filename
+  const std::regex mdf_format{"(.+)\\.mdf"};
+  auto check_mdf = [] () -> factory {
+                     return {std::cref(mdf_format),
+                             [] (const std::smatch& matches) {
+                               return matches.size() == 2 && matches.length(1) > 0;
+                             }};
+                   };
+
+  // Check geometry files: they should match the regex.
+  const std::regex geom_format{".*geometry.*"};
+  auto check_geom = [] () -> factory {
+                     return {std::cref(geom_format),
+                             [] (const std::smatch& matches) {
+                               return matches.size() == 1;
+                             }};
+                    };
+
+  // Check all filenames using the regex and its match predicate
+  // returned by calling the factory function
+  auto check_names = [] (const auto& names, const factory& fact) {
+                       // Check if all all names have the right format and the same format
+                       const std::regex& expr = std::get<0>(fact).get();
+                       const auto& pred = std::get<1>(fact);
+                       return std::all_of(begin(names), end(names),
+                                          [&expr, &pred] (const auto& t) {
+                                            std::smatch matches;
+                                            auto s = std::regex_match(t, matches, expr);
+                                            // Check the predicate we've been given
+                                            return s && pred(matches);
+                                          });
+                     };
+
+  // Convert "N.bin" to (0, N) and "N_M.bin" to (N, M)
+  auto name_to_number = [] (const std::string& arg) -> std::pair<int, long long>
+    {
+     std::smatch m;
+     if (!std::regex_match(arg, m, bin_format)) {
+       return {0, 0};
+     } else if (m.length(2) == 0) {
+       return {0, std::stol(std::string{m[1].first, m[1].second})};
+     } else {
+       return {std::stoi(std::string{m[1].first, m[1].second}),
+               std::stol(std::string{m[2].first, m[2].second})};
+     }
+    };
+
+  // Sort in natural order by converting the filename to a pair of (int, long long)
+  auto natural_order = [] (const std::string& lhs, const std::string& rhs) -> bool {
+                         return std::less<std::pair<int, long long>>{}(name_to_number(lhs),
+                                                                       name_to_number(rhs));
+                       };
+
+};
 
 /**
  * @brief Test to check existence of filename.
@@ -6,19 +80,6 @@
 bool exists_test(const std::string& name) {
   std::ifstream f(name.c_str());
   return f.good();
-}
-
-/**
- * @brief Natural ordering for strings.
- */
-bool naturalOrder(const std::string& s1, const std::string& s2 ) {
-  size_t lastindex1 = s1.find_last_of("."); 
-  std::string raw1 = s1.substr(0, lastindex1);
-  size_t lastindex2 = s2.find_last_of("."); 
-  std::string raw2 = s2.substr(0, lastindex2);
-  int int1 = stoi(raw1, nullptr, 0);
-  int int2 = stoi(raw2, nullptr, 0);
-  return int1 < int2;
 }
 
 /**
@@ -62,27 +123,39 @@ void appendFileToVector(
   event_sizes.push_back(dataSize);
   infile.close();
 }
- 
+
 
 std::vector<std::string> list_folder(
-  const std::string& foldername
+  const std::string& foldername,
+  const std::string& extension
 ) {
   std::vector<std::string> folderContents;
   DIR *dir;
   struct dirent *ent;
-
+  std::string suffix = std::string{"."} + extension;
   // Find out folder contents
   if ((dir = opendir(foldername.c_str())) != NULL) {
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
-      std::string filename = std::string(ent->d_name);
-      if (filename.find(".bin") != std::string::npos &&
-          filename.find("geometry") == std::string::npos) 
-        folderContents.push_back(filename);
+      std::string filename = ent->d_name;
+      if (filename != "." && filename != "..") {
+        folderContents.emplace_back(filename);
+      }
     }
     closedir(dir);
     if (folderContents.size() == 0) {
-      error_cout << "No binary files found in folder " << foldername << std::endl;
+      error_cout << "No " << extension << " files found in folder " << foldername << std::endl;
+      exit(-1);
+    } else if (!check_names(folderContents, check_geom())
+               && !check_names(folderContents, check_bin(1))
+               && !check_names(folderContents, check_bin(2))
+               && !check_names(folderContents, check_mdf())) {
+      error_cout << "Not all files in the folder have the correct and the same filename format." << std::endl;
+      if (extension == ".bin") {
+        error_cout << "All files should be named N.bin or all files should be named N_M.bin" << std::endl;
+      } else {
+        error_cout << "All files should end with .mdf" << std::endl;
+      }
       exit(-1);
     } else {
       verbose_cout << "Found " << folderContents.size() << " binary files" << std::endl;
@@ -93,7 +166,8 @@ std::vector<std::string> list_folder(
   }
 
   // Sort folder contents (file names)
-  std::sort(folderContents.begin(), folderContents.end(), naturalOrder);
+  std::sort(folderContents.begin(), folderContents.end(), natural_order);
+
   return folderContents;
 }
 
@@ -138,7 +212,7 @@ void read_folder(
 
     event_offsets.push_back(accumulated_size);
     accumulated_size += event_sizes.back();
-    
+
     readFiles++;
     if ((readFiles % 100) == 0) {
       info_cout << "." << std::flush;
@@ -190,7 +264,7 @@ void read_UT_magnet_tool(
       pr_ut_magnet_tool->dxLayTable[i++] = deflection;
     }
   }
-  
+
   std::ifstream bdlfile;
   filename = folder_name + "/bdl.txt";
   if (!exists_test(filename)) {

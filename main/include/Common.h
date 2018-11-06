@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <set>
+#include <type_traits>
 #include <iostream>
 #include <stdint.h>
 #include <stdio.h>

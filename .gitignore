@@ -18,3 +18,5 @@ CMakeFiles
 CMakeCache.txt
 run.sh
 setup.sh
+stream/sequence_setup/include/sequences/ConfiguredSequence.cuh
+*pyc
