@@ -14,5 +14,5 @@ build*
 .#*
 CMakeFiles
 CMakeCache.txt
-*pyc
 stream/sequence_setup/include/sequences/ConfiguredSequence.cuh
+*pyc
