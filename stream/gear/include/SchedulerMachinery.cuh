@@ -352,24 +352,24 @@ struct RunSequenceTuple<Scheduler, Functor, Tuple, std::tuple<SetSizeArguments..
  * @brief Runs the PrChecker for all configured algorithms in the sequence.
  */
 template<typename Functor, typename ConfiguredSequence, typename Arguments>
-struct RunPrChecker;
+struct RunChecker;
 
 template<typename Functor, typename... Arguments>
-struct RunPrChecker<Functor, std::tuple<>, std::tuple<Arguments...>> {
+struct RunChecker<Functor, std::tuple<>, std::tuple<Arguments...>> {
   constexpr static void check(
     const Functor& functor,
     Arguments&&... arguments) {}
 };
 
 template<typename Functor, typename Algorithm, typename... Algorithms, typename... Arguments>
-struct RunPrChecker<Functor, std::tuple<Algorithm, Algorithms...>, std::tuple<Arguments...>> {
+struct RunChecker<Functor, std::tuple<Algorithm, Algorithms...>, std::tuple<Arguments...>> {
   constexpr static void check(
     const Functor& functor,
     Arguments&&... arguments) 
   {
     functor.template check<Algorithm>(std::forward<Arguments>(arguments)...);
 
-    RunPrChecker<
+    RunChecker<
       Functor,
       std::tuple<Algorithms...>,
       std::tuple<Arguments...>

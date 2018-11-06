@@ -31,7 +31,6 @@
 #include "Timer.h"
 #include "StreamWrapper.cuh"
 #include "Constants.cuh"
-#include "PrCheckerInvoker.h"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "

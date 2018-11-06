@@ -9,7 +9,7 @@ void SequenceVisitor::check<veloUT_t>(
   const uint& start_event_offset,
   const uint& number_of_events_requested,
   const HostBuffers& host_buffers,
-  const PrCheckerInvoker& pr_checker_invoker) const
+  const CheckerInvoker& checker_invoker) const
 {
   info_cout << "Checking " << veloUT_t::name << " tracks" << std::endl;
 
@@ -18,7 +18,7 @@ void SequenceVisitor::check<veloUT_t>(
     host_buffers.host_atomics_veloUT,
     number_of_events_requested);
 
-  pr_checker_invoker.check<TrackCheckerVeloUT>(
+  checker_invoker.check<TrackCheckerVeloUT>(
     start_event_offset,
     tracks);
 }

@@ -6,7 +6,7 @@
 #include "MCEvent.h"
 #include "InputTools.h"
 
-struct PrCheckerInvoker {
+struct CheckerInvoker {
   std::string mc_folder;
   uint start_event_offset;
   uint number_of_events;
@@ -14,7 +14,7 @@ struct PrCheckerInvoker {
   bool is_mc_folder_populated;
   MCEvents mc_events;
 
-  PrCheckerInvoker (
+  CheckerInvoker (
     const std::string& param_mc_folder,
     const uint param_start_event_offset,
     const uint param_number_of_events,

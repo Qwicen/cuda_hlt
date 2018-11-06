@@ -1,6 +1,6 @@
-#include "PrCheckerInvoker.h"
+#include "CheckerInvoker.h"
 
-std::tuple<bool, MCEvents> PrCheckerInvoker::read_mc_folder() const
+std::tuple<bool, MCEvents> CheckerInvoker::read_mc_folder() const
 {
   const auto folder_file_list = list_folder(mc_folder);
 

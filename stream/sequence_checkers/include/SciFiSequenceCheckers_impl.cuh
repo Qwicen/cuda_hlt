@@ -10,7 +10,7 @@ void SequenceVisitor::check<scifi_pr_forward_t>(
   const uint& start_event_offset,
   const uint& number_of_events_requested,
   const HostBuffers& host_buffers,
-  const PrCheckerInvoker& pr_checker_invoker) const
+  const CheckerInvoker& checker_invoker) const
 {
   info_cout << "Checking " << scifi_pr_forward_t::name << " tracks" << std::endl;
 
@@ -20,7 +20,7 @@ void SequenceVisitor::check<scifi_pr_forward_t>(
     number_of_events_requested
   );
   
-  pr_checker_invoker.check<TrackCheckerForward>(
+  checker_invoker.check<TrackCheckerForward>(
     start_event_offset,
     tracks);
 }
@@ -34,11 +34,11 @@ void SequenceVisitor::check<cpu_scifi_pr_forward_t>(
   const uint& start_event_offset,
   const uint& number_of_events_requested,
   const HostBuffers& host_buffers,
-  const PrCheckerInvoker& pr_checker_invoker) const
+  const CheckerInvoker& checker_invoker) const
 {
   info_cout << "Checking " << cpu_scifi_pr_forward_t::name << " tracks" << std::endl;
   
-  pr_checker_invoker.check<TrackCheckerForward>(
+  checker_invoker.check<TrackCheckerForward>(
     start_event_offset,
     host_buffers.forward_tracks_events);
 }

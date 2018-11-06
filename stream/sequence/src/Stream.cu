@@ -100,26 +100,26 @@ void Stream::run_monte_carlo_test(
   f->Close();
 #endif
 
-  // Create the PrCheckerInvoker and read Monte Carlo validation information
-  const auto pr_checker_invoker = PrCheckerInvoker(
+  // Create the CheckerInvoker and read Monte Carlo validation information
+  const auto checker_invoker = CheckerInvoker(
     mc_folder,
     start_event_offset,
     number_of_events_requested);
 
-  Sch::RunPrChecker<
+  Sch::RunChecker<
     SequenceVisitor,
     configured_sequence_t,
     std::tuple<
       const uint&,
       const uint&,
       const HostBuffers&,
-      const PrCheckerInvoker&
+      const CheckerInvoker&
     >
   >::check(
     sequence_visitor,
     start_event_offset,
     number_of_events_requested,
     host_buffers,
-    pr_checker_invoker
+    checker_invoker
   );
 }

@@ -9,7 +9,7 @@
 #include "ConfiguredSequence.cuh"
 #include "AlgorithmDependencies.cuh"
 #include "Arguments.cuh"
-#include "PrCheckerInvoker.h"
+#include "CheckerInvoker.h"
 
 struct SequenceVisitor {
   using scheduler_t = Scheduler<configured_sequence_t, algorithms_dependencies_t, output_arguments_t>;
@@ -49,7 +49,7 @@ struct SequenceVisitor {
     const uint& start_event_offset,
     const uint& number_of_events_requested,
     const HostBuffers& host_buffers,
-    const PrCheckerInvoker& pr_checker_invoker) const {}
+    const CheckerInvoker& checker_invoker) const {}
 };
 
 /**

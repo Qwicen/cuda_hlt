@@ -9,7 +9,7 @@ void SequenceVisitor::check<consolidate_tracks_t>(
   const uint& start_event_offset,
   const uint& number_of_events_requested,
   const HostBuffers& host_buffers,
-  const PrCheckerInvoker& pr_checker_invoker) const
+  const CheckerInvoker& checker_invoker) const
 {
   info_cout << "Checking GPU Velo tracks" << std::endl;
 
@@ -19,7 +19,7 @@ void SequenceVisitor::check<consolidate_tracks_t>(
     host_buffers.host_velo_track_hits,
     number_of_events_requested);
 
-  pr_checker_invoker.check<TrackCheckerVelo>(
+  checker_invoker.check<TrackCheckerVelo>(
     start_event_offset,
     tracks);
 }
