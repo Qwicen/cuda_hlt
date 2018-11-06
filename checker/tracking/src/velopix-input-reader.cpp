@@ -139,7 +139,7 @@ std::tuple<bool, std::vector<VelopixEvent>> read_mc_folder (
   const bool checkEvents
 ) {
   std::vector<std::string> folderContents = list_folder(foldername);
-  
+
   uint requestedFiles = number_of_files==0 ? folderContents.size() : number_of_files;
   verbose_cout << "Requested " << requestedFiles << " files" << std::endl;
 
