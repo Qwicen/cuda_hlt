@@ -195,17 +195,19 @@ std::pair<size_t, std::string> set_device(int cuda_device) {
   cudaDeviceProp device_properties;
   cudaCheck(cudaGetDeviceCount(&n_devices));
 
-  info_cout << "There are " << n_devices << " CUDA devices available" << std::endl;
+  debug_cout << "There are " << n_devices << " CUDA devices available" << std::endl;
   for (int cd = 0; cd < n_devices; ++cd) {
      cudaDeviceProp device_properties;
      cudaCheck(cudaGetDeviceProperties(&device_properties, cd));
-     info_cout << std::setw(3) << cd << " " << device_properties.name << std::endl;
+     debug_cout << std::setw(3) << cd << " " << device_properties.name << std::endl;
   }
 
   if (cuda_device >= n_devices) {
      error_cout << "Chosen device (" << cuda_device << ") is not available." << std::endl;
      return {0, ""};
   }
+  debug_cout << std::endl;
+
   cudaCheck(cudaSetDevice(cuda_device));
   cudaCheck(cudaGetDeviceProperties(&device_properties, cuda_device));
   return {n_devices, device_properties.name};
