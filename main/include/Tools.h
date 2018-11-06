@@ -20,11 +20,12 @@
 #include "TrackChecker.h"
 #include "MCParticle.h"
 #include "VeloConsolidated.cuh"
+#include "CudaCommon.h"
 
 bool check_velopix_events(
   const std::vector<char>& events,
   const std::vector<uint>& event_offsets,
-  int n_events
+  size_t n_events
 );
 
 std::map<std::string, float> calcResults(
@@ -51,7 +52,7 @@ std::vector< trackChecker::Tracks > prepareVeloUTTracks(
 
 trackChecker::Tracks prepareForwardTracksVeloUTOnly(
   std::vector< VeloUTTracking::TrackUT > forward_tracks
-); 
+);
 
 trackChecker::Tracks prepareForwardTracksEvent(
   SciFi::Track forward_tracks[SciFi::max_tracks],
@@ -67,6 +68,10 @@ std::vector< trackChecker::Tracks > prepareForwardTracks(
 void call_pr_checker(
   const std::vector< trackChecker::Tracks >& all_tracks,
   const std::string& folder_name_MC,
-  const uint start_event_offset, 
+  const uint start_event_offset,
   const std::string& trackType
+);
+
+std::pair<size_t, std::string> set_device(
+  int cuda_device
 );
