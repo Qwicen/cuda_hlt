@@ -13,11 +13,11 @@ constexpr uint N_LAYERS = VeloUTTracking::n_layers;
 //=========================================================================
 struct LayerCandidates {
   int from0;
-  int to0;
+  int size0;
   int from1;
-  int to1;
+  int size1;
   int from2;
-  int to2;
+  int size2;
 };
 
 struct TrackCandidates {
@@ -30,7 +30,8 @@ struct WindowIndicator {
 
   __host__ __device__ const TrackCandidates* get_track_candidates(const int i_track)
   {
-    return reinterpret_cast<const TrackCandidates*>(m_base_pointer + (2 * N_LAYERS * i_track));
+    // return reinterpret_cast<const TrackCandidates*>(m_base_pointer + (6 * N_LAYERS * i_track));
+    return reinterpret_cast<const TrackCandidates*>(m_base_pointer + (24 * i_track));
   }
 };
 
@@ -42,13 +43,15 @@ struct BestParams {
   float chi2UT;
   float xUTFit; // TODO check we need this
   float xSlopeUTFit;
+  int n_hits;
 
   __host__ __device__ BestParams () 
   {
-    qp = 0.;
+    qp = 0.0f;
     chi2UT = PrVeloUTConst::maxPseudoChi2;
-    xUTFit = 0.;
-    xSlopeUTFit = 0.;
+    xUTFit = 0.0f;
+    xSlopeUTFit = 0.0f;
+    n_hits = 0;
   }
 };
 
