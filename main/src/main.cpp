@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <stdio.h>
 #include <unistd.h>
+#include <getopt.h>
+
 #include "tbb/tbb.h"
 #include "cuda_runtime.h"
 #include "CudaCommon.h"
@@ -26,6 +28,7 @@
 #include "Tools.h"
 #include "InputTools.h"
 #include "InputReader.h"
+#include "MDFReader.h"
 #include "Timer.h"
 #include "StreamWrapper.cuh"
 #include "Constants.cuh"
@@ -33,27 +36,28 @@
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
-    << std::endl << " -f {folder containing directories with raw bank binaries for every sub-detector}"
-    << std::endl << " -g {folder containing detector configuration}"
-    << std::endl << " -d {folder containing .bin files with MC truth information}"
-    << std::endl << " -j {folder containing .bin files with PV truth information}"
-    << std::endl << " -n {number of events to process}=0 (all)"
-    << std::endl << " -o {offset of events from which to start}=0 (beginning)"
-    << std::endl << " -t {number of threads / streams}=1"
-    << std::endl << " -r {number of repetitions per thread / stream}=1"
-    << std::endl << " -c {run checkers}=0"
-    << std::endl << " -k {simplified kalman filter}=0"
-    << std::endl << " -m {reserve Megabytes}=1024"
-    << std::endl << " -v {verbosity}=3 (info)"
-    << std::endl << " -p {print memory usage}=0"
-    << std::endl << " -a {run only data preparation algorithms: decoding, clustering, sorting}=0"
-    << std::endl << " -x {run algorithms on x86 architecture if implementation is available}=0"
+    << std::endl << "  -f   {folder containing directories with raw bank binaries for every sub-detector}"
+    << std::endl << " --mdf {use MDF files as input instead of binary files}"
+    << std::endl << "  -g   {folder containing detector configuration}"
+    << std::endl << "  -d   {folder containing .bin files with MC truth information}"
+    << std::endl << "  -i {folder containing .bin files with PV truth information}"
+    << std::endl << "  -n   {number of events to process}=0 (all)"
+    << std::endl << "  -o   {offset of events from which to start}=0 (beginning)"
+    << std::endl << "  -t   {number of threads / streams}=1"
+    << std::endl << "  -r   {number of repetitions per thread / stream}=1"
+    << std::endl << "  -c   {run checkers}=0"
+    << std::endl << "  -k   {simplified kalman filter}=0"
+    << std::endl << "  -m   {reserve Megabytes}=1024"
+    << std::endl << "  -v   {verbosity}=3 (info)"
+    << std::endl << "  -p   {print memory usage}=0"
+    << std::endl << "  -a   {run only data preparation algorithms: decoding, clustering, sorting}=0"
+    << std::endl << "  -x   {run algorithms on x86 architecture if implementation is available}=0"
     << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
-  std::string folder_name_raw_banks = "../input/minbias/banks/";
+  std::string folder_name_raw = "../input/minbias/banks/";
   std::string folder_name_MC = "../input/minbias/MC_info/";
   std::string folder_name_detector_configuration = "../input/detector_configuration/";
   std::string folder_name_pv = "";
@@ -69,11 +73,37 @@ int main(int argc, char *argv[])
   bool run_on_x86 = false;
   size_t reserve_mb = 1024;
 
+  int use_mdf = 0;
+  int cuda_device = 0;
+  struct option long_options[] =
+     {
+      /* These options set a flag. */
+      {"mdf", no_argument,       &use_mdf, 1},
+      {"device", required_argument, &cuda_device, 0},
+      /* These options don’t set a flag.
+         We distinguish them by their indices. */
+      {0, 0, 0, 0}
+     };
+  /* getopt_long stores the option index here. */
+  int option_index = 0;
+
+
+
   signed char c;
-  while ((c = getopt(argc, argv, "f:d:i:n:o:t:r:pha:b:d:v:c:k:m:g:x")) != -1) {
+  while ((c = getopt_long(argc, argv, "f:d:i:n:o:t:r:pha:b:d:v:c:k:m:g:x",
+                          long_options, &option_index)) != -1) {
     switch (c) {
+    case 0:
+      if (long_options[option_index].flag != 0) {
+         if (long_options[option_index].name == "device" && optarg) {
+            cuda_device = atoi(optarg);
+         }
+         break;
+      }
+      /* If this option set a flag, do nothing else now. */
+      break;
     case 'f':
-      folder_name_raw_banks = std::string(optarg);
+      folder_name_raw = std::string(optarg);
       break;
     case 'd':
       folder_name_MC = std::string(optarg);
@@ -122,10 +152,10 @@ int main(int argc, char *argv[])
   }
 
   // Options sanity check
-  if (folder_name_raw_banks.empty() || folder_name_detector_configuration.empty() || (folder_name_MC.empty() && do_check)) {
+  if (folder_name_raw.empty() || folder_name_detector_configuration.empty() || (folder_name_MC.empty() && do_check)) {
     std::string missing_folder = "";
 
-    if (folder_name_raw_banks.empty()) missing_folder = "raw banks";
+    if (folder_name_raw.empty()) missing_folder = "raw banks";
     else if (folder_name_detector_configuration.empty()) missing_folder = "detector geometry";
     else if (folder_name_MC.empty() && do_check) missing_folder = "Monte Carlo";
     else if (folder_name_pv.empty() && do_check) missing_folder = "PV truth";
@@ -139,13 +169,25 @@ int main(int argc, char *argv[])
   std::cout << std::fixed << std::setprecision(2);
   logger::ll.verbosityLevel = verbosity;
 
-  // Get device properties
-  cudaDeviceProp device_properties;
-  cudaCheck(cudaGetDeviceProperties(&device_properties, 0));
+  // Set device
+  size_t n_devices = 0;
+  std::string device_name;
+  try {
+    std::tie(n_devices, device_name) = set_device(cuda_device);
+    if (n_devices == 0) {
+      error_cout << "Failed to select device " << cuda_device << std::endl;
+      return -1;
+    }
+  } catch (const std::invalid_argument& e) {
+    error_cout << e.what() << std::endl;
+    error_cout << "Failed to select device " << cuda_device << std::endl;
+    return -1;
+  }
 
   // Show call options
   std::cout << "Requested options:" << std::endl
-    << " folder containing directories with raw bank binaries for every sub-detector (-f): " << folder_name_raw_banks << std::endl
+    << " folder containing directories with raw bank binaries for every sub-detector (-f): " << folder_name_raw << std::endl
+    << " using " << (use_mdf ? "MDF" : "binary") << " input" << (use_mdf ? " (--mdf)" : "") << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " folder with PV truth input (-j): " << folder_name_pv << std::endl
@@ -159,32 +201,39 @@ int main(int argc, char *argv[])
     << " run algorithms on x86 architecture if implementation is available (-x): " << run_on_x86 << std::endl
     << " print memory usage (-p): " << print_memory_usage << std::endl
     << " verbosity (-v): " << verbosity << std::endl
-    << " device: " << device_properties.name << std::endl
+    << " device (--device) " << cuda_device << ": " << device_name << std::endl
     << std::endl;
 
   // Read all inputs
   info_cout << "Reading input datatypes" << std::endl;
 
-  std::string folder_name_velopix_raw = folder_name_raw_banks + "VP"; 
+  std::string folder_name_velopix_raw = folder_name_raw + "VP";
   number_of_events_requested = get_number_of_events_requested(
     number_of_events_requested, folder_name_velopix_raw);
 
-  std::string folder_name_UT_raw = folder_name_raw_banks + "UT";
-  std::string folder_name_SciFi_raw = folder_name_raw_banks + "FTCluster";
+  std::string folder_name_UT_raw = folder_name_raw + "UT";
+  std::string folder_name_mdf = folder_name_raw + "mdf";
+  std::string folder_name_SciFi_raw = folder_name_raw + "FTCluster";
   auto geometry_reader = GeometryReader(folder_name_detector_configuration);
   auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
-  auto velo_reader = VeloReader(folder_name_velopix_raw);
-  auto ut_reader = EventReader(folder_name_UT_raw);
-  auto scifi_reader = EventReader(folder_name_SciFi_raw);
 
+  std::unique_ptr<EventReader> event_reader;
+  if (use_mdf) {
+     event_reader = std::make_unique<MDFReader>(FolderMap{{{BankTypes::VP, folder_name_mdf},
+                                                           {BankTypes::UT, folder_name_mdf},
+                                                           {BankTypes::FT, folder_name_mdf}}});
+  } else {
+     event_reader = std::make_unique<EventReader>(FolderMap{{{BankTypes::VP, folder_name_velopix_raw},
+                                                             {BankTypes::UT, folder_name_UT_raw},
+                                                             {BankTypes::FT, folder_name_SciFi_raw}}});
+  }
   std::vector<char> velo_geometry = geometry_reader.read_geometry("velo_geometry.bin");
   std::vector<char> ut_boards = geometry_reader.read_geometry("ut_boards.bin");
   std::vector<char> ut_geometry = geometry_reader.read_geometry("ut_geometry.bin");
   std::vector<char> ut_magnet_tool = ut_magnet_tool_reader.read_UT_magnet_tool();
   std::vector<char> scifi_geometry = geometry_reader.read_geometry("scifi_geometry.bin");
-  velo_reader.read_events(number_of_events_requested, start_event_offset);
-  ut_reader.read_events(number_of_events_requested, start_event_offset);
-  scifi_reader.read_events(number_of_events_requested, start_event_offset);
+
+  event_reader->read_events(number_of_events_requested, start_event_offset);
 
   info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
 
@@ -222,18 +271,18 @@ int main(int argc, char *argv[])
     static_cast<uint>(tbb_threads),
     [&] (uint i) {
       auto runtime_options = RuntimeOptions{
-        velo_reader.host_events,
-        velo_reader.host_event_offsets,
-        velo_reader.host_events_size,
-        velo_reader.host_event_offsets_size,
-        ut_reader.host_events,
-        ut_reader.host_event_offsets,
-        ut_reader.host_events_size,
-        ut_reader.host_event_offsets_size,
-        scifi_reader.host_events,
-        scifi_reader.host_event_offsets,
-        scifi_reader.host_events_size,
-        scifi_reader.host_event_offsets_size,
+        event_reader->events(BankTypes::VP).begin(),
+        event_reader->offsets(BankTypes::VP).begin(),
+        event_reader->events(BankTypes::VP).size(),
+        event_reader->offsets(BankTypes::VP).size(),
+        event_reader->events(BankTypes::UT).begin(),
+        event_reader->offsets(BankTypes::UT).begin(),
+        event_reader->events(BankTypes::UT).size(),
+        event_reader->offsets(BankTypes::UT).size(),
+        event_reader->events(BankTypes::FT).begin(),
+        event_reader->offsets(BankTypes::FT).begin(),
+        event_reader->events(BankTypes::FT).size(),
+        event_reader->offsets(BankTypes::FT).size(),
         number_of_events_requested,
         number_of_repetitions};
 

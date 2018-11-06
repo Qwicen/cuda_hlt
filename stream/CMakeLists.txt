@@ -62,21 +62,8 @@ cuda_add_library(Stream STATIC
   )
 
 
-if ( ROOT_FOUND )
-  target_compile_definitions(Stream PUBLIC WITH_ROOT)
-  message("-- Found ROOT, setting WITH_ROOT to true")
-  target_link_libraries(Stream
-  Utils
-  Velo
-  PatPV
- # x86PatPV
-  UT
-  x86Forward
-  SciFi
-  x86VeloUT
-  ${ROOT_LIBRARIES})
-else()
-  target_link_libraries(Stream
+target_link_libraries(Stream
+  Common
   Utils
   Velo
   PatPV
@@ -85,5 +72,11 @@ else()
   x86Forward
   SciFi
   x86VeloUT)
+
+if ( ROOT_FOUND )
+  target_compile_definitions(Stream PUBLIC WITH_ROOT)
+  message("-- Found ROOT, setting WITH_ROOT to true")
+  target_link_libraries(Stream
+    ${ROOT_LIBRARIES})
 endif()
 
