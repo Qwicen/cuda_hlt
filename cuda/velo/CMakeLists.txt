@@ -13,12 +13,12 @@ include_directories(calculate_phi_and_sort/include)
 include_directories(search_by_triplet/include)
 include_directories(simplified_kalman_filter/include) 
 include_directories(consolidate_tracks/include)
-include_directories(../../main/include)
-include_directories(../../stream/handlers/include)
 include_directories(../event_model/velo/include)
 include_directories(../event_model/common/include)
 include_directories(../utils/sorting/include)
 include_directories(../utils/prefix_sum/include)
+include_directories(../../main/include)
+include_directories(../../stream/gear/include)
 
 cuda_add_library(Velo STATIC
   ${velo_common}

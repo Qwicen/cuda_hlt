@@ -2,25 +2,30 @@
 #include "PrefixSum.cuh"
 
 template<>
-void SequenceVisitor::visit<copy_velo_track_hit_number_t>(
-  copy_velo_track_hit_number_t& state,
-  const int sequence_step,
+void SequenceVisitor::set_arguments_size<copy_velo_track_hit_number_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  ArgumentManager<argument_tuple_t>& arguments,
-  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
+  const HostBuffers& host_buffers,
+  argument_manager_t& arguments)
+{
+  arguments.set_size<dev_velo_track_hit_number>(host_buffers.velo_track_hit_number_size());
+}
+
+template<>
+void SequenceVisitor::visit<copy_velo_track_hit_number_t>(
+  copy_velo_track_hit_number_t& state,
+  const RuntimeOptions& runtime_options,
+  const Constants& constants,
+  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  arguments.set_size<arg::dev_velo_track_hit_number>(host_buffers.velo_track_hit_number_size());
-  scheduler.setup_next(arguments, sequence_step);
-
   state.set_opts(dim3(runtime_options.number_of_events), dim3(512), cuda_stream);
   state.set_arguments(
-    arguments.offset<arg::dev_tracks>(),
-    arguments.offset<arg::dev_atomics_storage>(),
-    arguments.offset<arg::dev_velo_track_hit_number>()
+    arguments.offset<dev_tracks>(),
+    arguments.offset<dev_atomics_storage>(),
+    arguments.offset<dev_velo_track_hit_number>()
   );
 
   state.invoke();

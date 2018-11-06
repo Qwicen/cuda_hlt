@@ -11,8 +11,6 @@
 #include "Logger.h"
 #include "Timer.h"
 #include "Tools.h"
-#include "DynamicScheduler.cuh"
-#include "SequenceSetup.cuh"
 #include "Constants.cuh"
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
@@ -20,12 +18,18 @@
 #include "EstimateInputSize.cuh"
 #include "HostBuffers.cuh"
 #include "SequenceVisitor.cuh"
+#include "SchedulerMachinery.cuh"
+#include "Scheduler.cuh"
+#include "AlgorithmDependencies.cuh"
 
 class Timer;
 
 struct Stream {
+  using scheduler_t = Scheduler<configured_sequence_t, algorithms_dependencies_t, output_arguments_t>;
+  using argument_manager_t = ArgumentManager<scheduler_t::arguments_tuple_t>;
+
   // Sequence and arguments
-  sequence_t sequence_tuple;
+  configured_sequence_t sequence_tuple;
 
   // Stream datatypes
   cudaStream_t cuda_stream;
@@ -39,7 +43,7 @@ struct Stream {
   bool run_on_x86;
 
   // Dynamic scheduler
-  DynamicScheduler<sequence_t, argument_tuple_t> scheduler;
+  scheduler_t scheduler;
 
   // Host buffers
   HostBuffers host_buffers;

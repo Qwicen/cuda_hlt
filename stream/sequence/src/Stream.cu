@@ -32,44 +32,61 @@ cudaError_t Stream::initialize(
   // Reserve host buffers
   host_buffers.reserve(max_number_of_events);
 
-  // Get dependencies for each algorithm
-  std::vector<std::vector<int>> sequence_dependencies = get_sequence_dependencies();
-
-  // Get output arguments from the sequence
-  std::vector<int> sequence_output_arguments = get_sequence_output_arguments();
-
-  // Prepare dynamic scheduler
-  scheduler = {
-    // get_sequence_names(),
-    get_argument_names(), sequence_dependencies, sequence_output_arguments,
-    reserve_mb * 1024 * 1024, do_print_memory_manager};
-
   // Malloc a configurable reserved memory
   cudaCheck(cudaMalloc((void**)&dev_base_pointer, reserve_mb * 1024 * 1024));
+
+  // Prepare scheduler
+  scheduler = {
+    do_print_memory_manager,
+    reserve_mb * 1024 * 1024,
+    dev_base_pointer
+  };
 
   return cudaSuccess;
 }
 
 cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
   for (uint repetition=0; repetition<runtime_options.number_of_repetitions; ++repetition) {
-    // Generate object for populating arguments
-    ArgumentManager<argument_tuple_t> arguments {dev_base_pointer};
-
     // Reset scheduler
     scheduler.reset();
 
     // Visit all algorithms in configured sequence
-    run_sequence_tuple(
+    Sch::RunSequenceTuple<
+      scheduler_t,
+      SequenceVisitor,
+      configured_sequence_t,
+      std::tuple<
+        const RuntimeOptions&,
+        const Constants&,
+        const HostBuffers&,
+        argument_manager_t&
+      >,
+      std::tuple<
+        const RuntimeOptions&,
+        const Constants&,
+        argument_manager_t&,
+        HostBuffers&,
+        cudaStream_t&,
+        cudaEvent_t&
+      >
+    >::run(
+      scheduler,
       sequence_visitor,
       sequence_tuple,
+      // Arguments to set_arguments_size
       runtime_options,
       constants,
-      arguments,
-      scheduler,
+      host_buffers,
+      scheduler.arguments(),
+      // Arguments to visit
+      runtime_options,
+      constants,
+      scheduler.arguments(),
       host_buffers,
       cuda_stream,
       cuda_generic_event);
 
+    // Synchronize CUDA device
     cudaEventRecord(cuda_generic_event, cuda_stream);
     cudaEventSynchronize(cuda_generic_event);
   }
