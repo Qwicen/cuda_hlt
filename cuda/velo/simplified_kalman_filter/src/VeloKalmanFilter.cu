@@ -44,9 +44,6 @@ __global__ void velo_fit(
   int* dev_atomics_storage,
   const Velo::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,
-  uint* dev_velo_cluster_container,
-  uint* dev_module_cluster_start,
-  uint* dev_module_cluster_num,
   uint* dev_velo_track_hits,
   uint* dev_velo_states,
   uint* dev_kalmanvelo_states
@@ -63,40 +60,23 @@ __global__ void velo_fit(
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  // Pointers to data within event
-  const uint number_of_hits = dev_module_cluster_start[VeloTracking::n_modules * number_of_events];
-  const uint* module_hitStarts = dev_module_cluster_start + event_number * VeloTracking::n_modules;
-  const uint hit_offset = module_hitStarts[0];
   
-  // Order has changed since SortByPhi
-  const float* hit_Ys   = (float*) (dev_velo_cluster_container + hit_offset);
-  const float* hit_Zs   = (float*) (dev_velo_cluster_container + number_of_hits + hit_offset);
-  const float* hit_Xs   = (float*) (dev_velo_cluster_container + 5 * number_of_hits + hit_offset);
-  const uint32_t* hit_IDs = (uint32_t*) (dev_velo_cluster_container + 2 * number_of_hits + hit_offset);
+  
+  
+ 
 
   for (uint i=threadIdx.x; i<number_of_tracks_event; i+=blockDim.x) {
-    Velo::Consolidated::Hits consolidated_hits = velo_tracks.get_hits(dev_velo_track_hits, i);
+    
     const Velo::TrackHits track = event_tracks[i];
-
-    auto populate = [&track] (uint32_t* __restrict__ a, uint32_t* __restrict__ b) {
-      for (int i=0; i<track.hitsNum; ++i) {
-        const auto hit_index = track.hits[i];
-        a[i] = b[hit_index];
-      }
-    };
-
-    populate((uint32_t*) consolidated_hits.x, (uint32_t*) hit_Xs);
-    populate((uint32_t*) consolidated_hits.y, (uint32_t*) hit_Ys);
-    populate((uint32_t*) consolidated_hits.z, (uint32_t*) hit_Zs);
-    populate((uint32_t*) consolidated_hits.LHCbID, (uint32_t*) hit_IDs);
+    Velo::Consolidated::Hits consolidated_hits = velo_tracks.get_hits(dev_velo_track_hits, i);
+    
+    
 
     // Calculate and store fit in consolidated container
 
    Velo::State stateAtBeamline = velo_states.get(event_tracks_offset + i);
 
-   Velo::State kalmanbeam_state = simplified_fit<true>(hit_Xs,
-      hit_Ys,
-      hit_Zs, stateAtBeamline, track);
+   Velo::State kalmanbeam_state = simplified_fit<true>(consolidated_hits, stateAtBeamline, track);
    kalmanvelo_states.set(event_tracks_offset + i, kalmanbeam_state);
   }
 }
