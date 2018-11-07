@@ -15,7 +15,7 @@
 #include "TrackUtils.cuh"
 #include "HitUtils.cuh"
 #include "LinearFitting.cuh"
-#include "HoughTransform.cuh"
+#include "ReferencePlaneProjection.cuh"
 #include "PrVeloUT.cuh"
 
 /**
@@ -24,7 +24,8 @@
  */
 
 __host__ __device__ void collectAllXHits(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   float coordX[SciFi::Tracking::max_x_hits],
@@ -35,11 +36,25 @@ __host__ __device__ void collectAllXHits(
   const float qop,
   int side);
 
+__host__ __device__ void improveXCluster(
+  int& it2,
+  const int it1,
+  const int itEnd,
+  const int n_x_hits,
+  const bool usedHits[SciFi::Tracking::max_x_hits],
+  const float coordX[SciFi::Tracking::max_x_hits],
+  const float xWindow,
+  const SciFi::Tracking::HitSearchCuts& pars,
+  PlaneCounter& planeCounter,
+  const int allXHits[SciFi::Tracking::max_x_hits],
+  const SciFi::SciFiHits& scifi_hits );
+
 __host__ __device__ void selectXCandidates(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
-  bool usedHits[SciFi::Constants::max_numhits_per_event],
+  bool usedHits[SciFi::Tracking::max_x_hits],
   float coordX[SciFi::Tracking::max_x_hits],
   const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Tracking::Track candidate_tracks[SciFi::max_tracks],
@@ -50,10 +65,12 @@ __host__ __device__ void selectXCandidates(
   const MiniState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars,
   SciFi::Tracking::Arrays* constArrays,
-  int side);
+  int side,
+  const bool secondLoop);
 
 __host__ __device__ bool addHitsOnEmptyXLayers(
-  SciFi::HitsSoA* hits_layers,
+  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::SciFiHitCount& scifi_hit_count,
   float trackParameters[SciFi::Tracking::nTrackParams],
   const float xParams_seed[4],
   const float yParams_seed[4],

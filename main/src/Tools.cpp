@@ -1,8 +1,8 @@
 #include "Tools.h"
 
 bool check_velopix_events(
-  const std::vector<char> events,
-  const std::vector<uint> event_offsets,
+  const std::vector<char>& events,
+  const std::vector<uint>& event_offsets,
   int n_events
 ) {
   int error_count = 0;
@@ -45,6 +45,7 @@ bool check_velopix_events(
   }
   return true;
 }
+
 void read_scifi_events_into_arrays( SciFi::HitsSoA *hits_layers_events,
                                  uint32_t n_hits_layers_events[][SciFi::Constants::n_zones],
                                  const std::vector<char> events,
@@ -100,18 +101,19 @@ void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
                                  const std::vector<char> events,
                                  const std::vector<unsigned int> event_offsets,
                                  const int n_events ) {
-  
+
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
 
-    const char* raw_input = events.data() + event_offsets[i_event];      
+    const char* raw_input = events.data() + event_offsets[i_event];
     std::copy_n((int*) raw_input, Muon::Constants::n_stations, muon_station_hits[i_event].m_number_of_hits_per_station);
     raw_input += sizeof(int) * Muon::Constants::n_stations;
 
     muon_station_hits[i_event].m_station_offsets[0] = 0;
     for(int i_station = 1; i_station < Muon::Constants::n_stations; ++i_station) {
-      muon_station_hits[i_event].m_station_offsets[i_station] = muon_station_hits[i_event].m_station_offsets[i_station - 1] + muon_station_hits[i_event].m_number_of_hits_per_station[i_event - 1];
+      muon_station_hits[i_event].m_station_offsets[i_station] = muon_station_hits[i_event].m_station_offsets[i_station - 1]
+                                                              + muon_station_hits[i_event].m_number_of_hits_per_station[i_event - 1];
     }
-    
+
     for(int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station) {
       const int station_offset = muon_station_hits[i_event].m_station_offsets[i_station];
       const int number_of_hits = muon_station_hits[i_event].m_number_of_hits_per_station[i_station];
@@ -141,7 +143,7 @@ void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
       raw_input += sizeof(int) * number_of_hits;
 
       std::copy_n((unsigned int*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_time[station_offset]) );
-      raw_input += sizeof(int) * number_of_hits;
+      raw_input += sizeof(unsigned int) * number_of_hits;
 
       std::copy_n((int*) raw_input, number_of_hits, &( muon_station_hits[i_event].m_delta_time[station_offset]) );
       raw_input += sizeof(int) * number_of_hits;
@@ -158,7 +160,7 @@ void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
 //   const int n_events
 // ) {
 //   float average_number_of_hits_per_event = 0;
-  
+
 //   for ( int i_event = 0; i_event < n_events; ++i_event ) {
 //     float number_of_hits = 0;
 //     const VeloUTTracking::HitsSoA hits_layers = hits_layers_events[i_event];
@@ -181,7 +183,7 @@ void read_muon_events_into_arrays( Muon::HitsSoA *muon_station_hits,
 //         hits_layers.dxDy( layer_offset + i_hit ) );
 //       }
 //     }
-    
+
 //     average_number_of_hits_per_event += number_of_hits;
 //     debug_cout << "# of UT hits = " << number_of_hits << std::endl;
 //   }
@@ -191,7 +193,7 @@ void check_scifi_events( const SciFi::HitsSoA *hits_layers_events,
 		      const int n_events ) {
 
   float average_number_of_hits_per_event = 0;
-  
+
   for ( int i_event = 0; i_event < n_events; ++i_event ) {
     // sanity checks
     float number_of_hits = 0;
@@ -216,21 +218,19 @@ void check_scifi_events( const SciFi::HitsSoA *hits_layers_events,
       }
     }
 
-    
+
     average_number_of_hits_per_event += number_of_hits;
     debug_cout << "# of SciFi hits = " << number_of_hits << std::endl;
-    
+
   }
 
   average_number_of_hits_per_event = average_number_of_hits_per_event / n_events;
   debug_cout << "average # of SciFi hits / event = " << average_number_of_hits_per_event << std::endl;
-    
-  
+
+
 }
 
-void check_muon_events( const Muon::HitsSoA * muon_station_hits,
-  const int hits_to_out,
-  const int n_events ){
+void check_muon_events( const Muon::HitsSoA * muon_station_hits, const int hits_to_out, const int n_events) {
 
   float average_number_of_hits_per_event = 0;
 
@@ -240,25 +240,25 @@ void check_muon_events( const Muon::HitsSoA * muon_station_hits,
 
     for ( int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station ) {
 
-      const int station_offset = muon_station_hits[i_event].m_station_offsets[i_station];
-      const int number_of_hits = muon_station_hits[i_event].m_number_of_hits_per_station[i_station];
+      const int station_offset = muon_station_hits[i_event].station_offsets[i_station];
+      const int number_of_hits = muon_station_hits[i_event].number_of_hits_per_station[i_station];
       number_of_hits_per_event += number_of_hits;
 
       debug_cout << "checks on station " << i_station << ", with" << number_of_hits << " hits" << std::endl;
       for ( int i_hit = 0; i_hit < hits_to_out; ++i_hit ) {
-        printf("\t at hit %u, tile = %i, x = %f, dx = %f, y = %f, dy = %f, z = %f, dz = %f, uncrossed = %i, time = %x, delta_time = %i, cluster_size = %i \n", 
+        printf("\t at hit %u, tile = %i, x = %f, dx = %f, y = %f, dy = %f, z = %f, dz = %f, uncrossed = %i, time = %x, delta_time = %i, cluster_size = %i \n",
           i_hit,
-          muon_station_hits->m_tile[ station_offset + i_hit ],
-          muon_station_hits->m_x[ station_offset + i_hit ],
-          muon_station_hits->m_dx[ station_offset + i_hit ],
-          muon_station_hits->m_y[ station_offset + i_hit ],
-          muon_station_hits->m_dy[ station_offset + i_hit ],
-          muon_station_hits->m_z[ station_offset + i_hit ],
-          muon_station_hits->m_dz[ station_offset + i_hit ],
-          muon_station_hits->m_uncrossed[ station_offset + i_hit ],
-          muon_station_hits->m_time[ station_offset + i_hit ],
-          muon_station_hits->m_delta_time[ station_offset + i_hit ],
-          muon_station_hits->m_cluster_size[ station_offset + i_hit ]
+          muon_station_hits->tile[ station_offset + i_hit ],
+          muon_station_hits->x[ station_offset + i_hit ],
+          muon_station_hits->dx[ station_offset + i_hit ],
+          muon_station_hits->y[ station_offset + i_hit ],
+          muon_station_hits->dy[ station_offset + i_hit ],
+          muon_station_hits->z[ station_offset + i_hit ],
+          muon_station_hits->dz[ station_offset + i_hit ],
+          muon_station_hits->uncrossed[ station_offset + i_hit ],
+          muon_station_hits->time[ station_offset + i_hit ],
+          muon_station_hits->delta_time[ station_offset + i_hit ],
+          muon_station_hits->cluster_size[ station_offset + i_hit ]
           );
       }
       fflush(stdout);
@@ -304,50 +304,6 @@ std::map<std::string, float> calcResults(std::vector<float>& times){
     return results;
 }
 
-void check_roughly(
-  const trackChecker::Tracks& tracks,
-  const std::vector<uint32_t> hit_IDs,
-  const MCParticles mcps
-) {
-  int matched = 0;
-  for ( auto track : tracks ) {
-    std::vector< uint32_t > mcp_ids;
-    
-    for ( LHCbID id : track.ids() ) {
-      uint32_t id_int = uint32_t( id );
-      // find associated IDs from mcps
-      for ( int i_mcp = 0; i_mcp < mcps.size(); ++i_mcp ) {
-        MCParticle part = mcps[i_mcp];
-        auto it = std::find( part.hits.begin(), part.hits.end(), id_int );
-        if ( it != part.hits.end() ) {
-          mcp_ids.push_back( i_mcp );
-        }
-      }
-    }
-    
-    printf("# of hits on track = %u, # of MCP ids = %u \n", track.nIDs(), uint32_t( mcp_ids.size() ) );
-    
-    for ( int i_id = 0; i_id < mcp_ids.size(); ++i_id ) {
-      uint32_t mcp_id = mcp_ids[i_id];
-      printf("\t mcp id = %u \n", mcp_id);
-      // how many same mcp IDs are there?
-      int n_same = count( mcp_ids.begin(), mcp_ids.end(), mcp_id );
-      if ( float(n_same) / track.nIDs() >= 0.7 ) {
-          matched++;
-          break;
-      }
-    }
-  }
-
-  int long_tracks = 0;
-  for (auto& part : mcps) {
-    if (part.isLong)
-      long_tracks++;
-  }
-  
-  printf("efficiency = %f \n", float(matched) / long_tracks );
-}
-
 std::vector<trackChecker::Tracks> prepareTracks(
   uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number_pinned,
@@ -358,27 +314,26 @@ std::vector<trackChecker::Tracks> prepareTracks(
   std::vector< trackChecker::Tracks > all_tracks; // all tracks from all events
   for ( uint i_event = 0; i_event < number_of_events; i_event++ ) {
     trackChecker::Tracks tracks; // all tracks within one event
-    
+
     const Velo::Consolidated::Tracks velo_tracks {host_velo_tracks_atomics, host_velo_track_hit_number_pinned, i_event, number_of_events};
     const uint number_of_tracks_event = velo_tracks.number_of_tracks(i_event);
 
     for ( uint i_track = 0; i_track < number_of_tracks_event; i_track++ ) {
       trackChecker::Track t;
-      
+
       const uint velo_track_number_of_hits = velo_tracks.number_of_hits(i_track);
       Velo::Consolidated::Hits velo_track_hits = velo_tracks.get_hits((uint*) host_velo_track_hits_pinned, i_track);
 
       for ( int i_hit = 0; i_hit < velo_track_number_of_hits; ++i_hit ) {
         t.addId(velo_track_hits.LHCbID[i_hit]);
-      } 
+      }
       tracks.push_back( t );
     } // tracks
     all_tracks.emplace_back( tracks );
   }
-  
+
   return all_tracks;
 }
-
 
 trackChecker::Tracks prepareVeloUTTracksEvent(
   const VeloUTTracking::TrackUT* veloUT_tracks,
@@ -430,7 +385,7 @@ std::vector< trackChecker::Tracks > prepareForwardTracks(
 ) {
   std::vector< trackChecker::Tracks > checker_tracks;
   for ( int i_event = 0; i_event < number_of_events; ++i_event ) {
-    //debug_cout << "found " << n_scifi_tracks[i_event] << " tracks on GPU " << std::endl;
+    debug_cout << "in event " << i_event << " found " << n_scifi_tracks[i_event] << " tracks " << std::endl;
     trackChecker::Tracks ch_tracks = prepareForwardTracksEvent(
       scifi_tracks + i_event * SciFi::max_tracks,
       n_scifi_tracks[i_event]);
@@ -447,7 +402,10 @@ trackChecker::Tracks prepareForwardTracksEvent(
   for ( int i_track = 0; i_track < n_forward_tracks; i_track++ ) {
     const SciFi::Track& forward_track = forward_tracks[i_track];
     trackChecker::Track checker_track;
-    //debug_cout << "at track " << std::dec << i_track << std::endl;
+    if ( forward_track.hitsNum >= SciFi::max_track_size )
+      debug_cout << "at track " << i_track << " forward track hits Num = " << forward_track.hitsNum << std::endl;
+    assert( forward_track.hitsNum < SciFi::max_track_size );
+    //debug_cout << "at track " << std::dec << i_track << " with " << forward_track.hitsNum << " hits " << std::endl;
     for ( int i_hit = 0; i_hit < forward_track.hitsNum; ++i_hit ) {
       //debug_cout<<"\t LHCbIDs Forward["<<i_hit<<"] = " << std::hex << forward_track.LHCbIDs[i_hit]<< std::endl;
       LHCbID lhcb_id( forward_track.LHCbIDs[i_hit] );
@@ -455,10 +413,9 @@ trackChecker::Tracks prepareForwardTracksEvent(
     }
     checker_tracks.push_back( checker_track );
   }
-  //debug_cout<<"end prepareForwardTracks"<<std::endl;
 
   return checker_tracks;
-} 
+}
 
 std::vector< trackChecker::Tracks > prepareVeloUTTracks(
   const VeloUTTracking::TrackUT* veloUT_tracks,
@@ -482,28 +439,28 @@ void call_pr_checker(
   const std::string& trackType
 ) {
   if ( trackType == "Velo" ) {
-    callPrChecker<TrackCheckerVelo> (
+    call_pr_checker_impl<TrackCheckerVelo> (
       all_tracks,
       folder_name_MC,
       start_event_offset,
       trackType);
   }
   else if ( trackType == "VeloUT" ) {
-    callPrChecker<TrackCheckerVeloUT> (
+    call_pr_checker_impl<TrackCheckerVeloUT> (
       all_tracks,
       folder_name_MC,
       start_event_offset,
       trackType);
   }
   else if ( trackType == "Forward" ) {
-    callPrChecker<TrackCheckerForward> (
+    call_pr_checker_impl<TrackCheckerForward> (
       all_tracks,
       folder_name_MC,
       start_event_offset,
       trackType);
   }
   else {
-    error_cout << "unknown track type: " << trackType << std::endl;
+    error_cout << "Unknown track type: " << trackType << std::endl;
   }
 }
 

@@ -18,7 +18,12 @@ static constexpr uint max_concurrent_h1_first_iteration = 8;
 // These parameters impact the found tracks
 // Maximum / minimum acceptable phi
 // This impacts enourmously the speed of track seeding
+// static constexpr float phi_extrapolation = 0.0436332f;
 static constexpr float phi_extrapolation = 0.062f;
+// static constexpr float phi_extrapolation = 0.0959931f;
+
+// Forward tolerance in phi
+constexpr float forward_phi_tolerance = 0.052f;
 
 // Tolerance angle for forming triplets
 static constexpr float max_slope = 0.4f;
@@ -43,7 +48,9 @@ static constexpr uint num_atomics = 5;
 // Constants for requested storage on device
 static constexpr uint max_tracks = 1200;
 static constexpr uint max_track_size = 26;
-static constexpr uint max_numhits_in_module = 350;
+
+// Constant for maximum number of hits in a module
+static constexpr uint max_numhits_in_module = 500;
 
 // Maximum number of tracks to follow at a time
 static constexpr uint ttf_modulo = 2000;

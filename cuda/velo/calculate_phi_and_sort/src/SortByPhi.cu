@@ -1,6 +1,6 @@
 #include "VeloDefinitions.cuh"
 #include "math_constants.h"
-#include "Sorting.cuh"
+#include "ApplyPermutation.cuh"
 
 /**
  * @brief Calculates phi for each hit

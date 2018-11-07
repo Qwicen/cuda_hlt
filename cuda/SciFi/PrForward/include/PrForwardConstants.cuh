@@ -20,84 +20,103 @@ namespace SciFi{
   
   namespace Tracking {
 
-    const int max_tracks_second_loop = 30;
-    const int max_x_hits = 500;
-    const int max_other_hits = 5;
-    const int max_stereo_hits = 25;
-    const int max_coordToFit = 15; 
-    const int max_scifi_hits = 15; 
+    constexpr int max_candidate_tracks = 5;   // max # of candidate tracks from x hits only
+    constexpr int max_tracks_second_loop = 5; // same as above, but for second loop
+    constexpr int max_selected_tracks = max_candidate_tracks + max_tracks_second_loop;
+    constexpr int max_x_hits = 500;     // max # of hits in all x layers
+    constexpr int max_other_hits = 5;   // max # of hits from x planes with more than 1 hit
+    constexpr int max_stereo_hits = 25; // max # of hits in all stereo layers
+    constexpr int max_coordToFit = 15;  // only for x layers
+    constexpr int max_scifi_hits = 20;  // for x and u/v layers
     
-    const int nTrackParams = 9;
+    constexpr int nTrackParams = 9;   
     
-    const int TMVA_Nvars = 7;
-    const int TMVA_Nlayers = 5;
+    constexpr int TMVA_Nvars = 7;
+    constexpr int TMVA_Nlayers = 5;
 
-        // dump a bunch of options here
-    const float        deltaQuality = 0.1; // Difference in quality btw two tracks which share hits when clone killing
-    const float        cloneFraction = 0.4; // The fraction of shared SciFi hits btw two tracks to trigger the clone killing
+    // Formerly PrParameters
+    struct HitSearchCuts {
+    __host__ __device__ HitSearchCuts(unsigned int minXHits_, float maxXWindow_,
+                 float maxXWindowSlope_, float maxXGap_,
+                 unsigned int minStereoHits_)
+    : minXHits{minXHits_}, maxXWindow{maxXWindow_},
+        maxXWindowSlope{maxXWindowSlope_}, maxXGap{maxXGap_},
+        minStereoHits{minStereoHits_} {}
+      const unsigned int minXHits;
+      const float        maxXWindow;
+      const float        maxXWindowSlope;
+      const float        maxXGap;
+      unsigned int       minStereoHits;
+    };
     
-    const float        yTolUVSearch           =   11.* Gaudi::Units::mm  ;
-    const float        tolY                   =    5.* Gaudi::Units::mm  ;
-    const float        tolYSlope              =0.002 * Gaudi::Units::mm  ;
-    const float        maxChi2LinearFit       =  100.                    ;   
-    const float        maxChi2XProjection     =   15.                    ;   
-    const float        maxChi2PerDoF          =    7.                    ;   
+    // dump a bunch of options here
+    constexpr float        deltaQuality = 0.1; // Difference in quality btw two tracks which share hits when clone killing
+    constexpr float        cloneFraction = 0.4; // The fraction of shared SciFi hits btw two tracks to trigger the clone killing
     
-    const float        tolYMag                =   10.* Gaudi::Units::mm  ;
-    const float        tolYMagSlope           =    0.015                 ;   
-    const float        minYGap                =  0.4 * Gaudi::Units::mm  ;
+    constexpr float        yTolUVSearch           =   11.* Gaudi::Units::mm  ;
+    constexpr float        tolY                   =    5.* Gaudi::Units::mm  ;
+    constexpr float        tolYSlope              =0.002 * Gaudi::Units::mm  ;
+    constexpr float        maxChi2LinearFit       =  100.                    ;   
+    constexpr float        maxChi2XProjection     =   15.                    ;   
+    constexpr float        maxChi2PerDoF          =    7.                    ;   
     
-    const unsigned int minTotalHits           =   10                     ;   
-    const float        maxChi2StereoLinear    =   60.                    ;   
-    const float        maxChi2Stereo          =    4.5                   ; 
+    constexpr float        tolYMag                =   10.* Gaudi::Units::mm  ;
+    constexpr float        tolYMagSlope           =    0.015                 ;   
+    constexpr float        minYGap                =  0.4 * Gaudi::Units::mm  ;
+    
+    constexpr unsigned int minTotalHits           =   10                     ;   
+    constexpr float        maxChi2StereoLinear    =   60.                    ;   
+    constexpr float        maxChi2Stereo          =    4.5                   ; 
     
     //first loop Hough Cluster search
-    const unsigned int minXHits               =    5                     ;   
-    const float        maxXWindow             =   1. * Gaudi::Units::mm  ;   //1.2 * Gaudi::Units::mm  ;
-    const float        maxXWindowSlope        =0.002 * Gaudi::Units::mm  ;
-    const float        maxXGap                =  1. * Gaudi::Units::mm  ;    //1.2 * Gaudi::Units::mm  ;
-    const unsigned int minSingleHits          =    2                     ; 
+    constexpr unsigned int minXHits               =    5                     ;   
+    constexpr float        maxXWindow             =   1. * Gaudi::Units::mm  ;   //1.2 * Gaudi::Units::mm  ;
+    constexpr float        maxXWindowSlope        =0.002 * Gaudi::Units::mm  ;
+    constexpr float        maxXGap                =  1. * Gaudi::Units::mm  ;    //1.2 * Gaudi::Units::mm  ;
+    constexpr unsigned int minSingleHits          =    2                     ; 
     
     //second loop Hough Cluster search
-    const bool         secondLoop             =  true                    ;   
-    const unsigned int minXHits_2nd           =    4                     ;   
-    const float        maxXWindow_2nd         =  1.5 * Gaudi::Units::mm  ;
-    const float        maxXWindowSlope_2nd    =0.002 * Gaudi::Units::mm  ;
-    const float        maxXGap_2nd            =  0.5 * Gaudi::Units::mm  ;
+    constexpr bool         secondLoop             =  true                    ;   
+    constexpr unsigned int minXHits_2nd           =    4                     ;   
+    constexpr float        maxXWindow_2nd         =  1.5 * Gaudi::Units::mm  ;
+    constexpr float        maxXWindowSlope_2nd    =0.002 * Gaudi::Units::mm  ;
+    constexpr float        maxXGap_2nd            =  0.5 * Gaudi::Units::mm  ;
     
     //collectX search
-    const float        minPt                  =  400 * Gaudi::Units::MeV ;    // 500 * Gaudi::Units::MeV ;
+    constexpr float        minPt                  =  400 * Gaudi::Units::MeV ;    // 500 * Gaudi::Units::MeV ;
     //stereo hit matching
-    const float        tolYCollectX           =   3.5 * Gaudi::Units::mm ;    //4.1* Gaudi::Units::mm ;
-    const float        tolYSlopeCollectX      = 0.001 * Gaudi::Units::mm ;    //0.0018 * Gaudi::Units::mm ;
-    const float        tolYTriangleSearch     =    20.f                  ;   
+    constexpr float        tolYCollectX           =   3.5 * Gaudi::Units::mm ;    //4.1* Gaudi::Units::mm ;
+    constexpr float        tolYSlopeCollectX      = 0.001 * Gaudi::Units::mm ;    //0.0018 * Gaudi::Units::mm ;
+    constexpr float        tolYTriangleSearch     =    20.f                  ;   
     //veloUT momentum estimate
-    const bool         useMomentumEstimate    = true                     ;   
-    const bool         useWrongSignWindow     = true                     ;   
-    const float        wrongSignPT            = 2000.* Gaudi::Units::MeV ; 
+    constexpr bool         useMomentumEstimate    = true                     ;   
+    constexpr bool         useWrongSignWindow     = true                     ;   
+    constexpr float        wrongSignPT            = 2000.* Gaudi::Units::MeV ; 
     //Track Quality NN
-    const float        maxQuality             =   0.9                    ;   
-    const float        deltaQuality_NN        =   0.1                    ; 
+    constexpr float        maxQuality             =   0.9                    ;   
+    constexpr float        deltaQuality_NN        =   0.1                    ; 
 
     // parameterizations
-    const float        byParams               = -0.667996;
-    const float        cyParams               = -3.68424e-05;
+    constexpr float        byParams               = -0.667996;
+    constexpr float        cyParams               = -3.68424e-05;
 
     // z Reference plane
-    const float        zReference             = 8520.; // in T2
+    constexpr float        zReference             = 8520.; // in T2
     
     // TODO: CHECK THESE VALUES USING FRAMEWORK
-    const float        xLim_Max               = 3300.;
-    const float        yLim_Max               = 2500.;
-    const float        xLim_Min               = -3300.;
-    const float        yLim_Min               = -25.;
+    constexpr float        xLim_Max               = 3300.;
+    constexpr float        yLim_Max               = 2500.;
+    constexpr float        xLim_Min               = -3300.;
+    constexpr float        yLim_Min               = -25.;
 
      // TO BE READ FROM XML EVENTUALLY
-    const float              magscalefactor         = -1;
+    constexpr float              magscalefactor         = -1;
 
     
     struct Arrays {
       // the Magnet Parametrization
+      // parameterized in offset [0], (slope difference due to kick)^2 [1],
+      // tx^2 [2], ty^2 [3]
       const float        zMagnetParams[4]       = {5212.38, 406.609, -1102.35, -498.039};
       
       // more Parametrizations
@@ -121,14 +140,23 @@ namespace SciFi{
       const float        uvZone_dxdy[12]        = {0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892, 0.0874892, -0.0874892};
       const float        Zone_dzdy[24]          = {0.0036010};
     };
-   
-    struct Track {
 
+    // Track object used for finding tracks, not the final container for storing the tracks
+    struct Track {
       int hit_indices[max_scifi_hits];
       float qop;
       int hitsNum = 0;
       float quality;
       float chi2;
+      // [0]: xRef
+      // [1]: (xRef-xMag)/(zRef-zMag)
+      // [2]: xParams[0] * dSlope
+      // [3]: xParams[1] * dSlope
+      // [4]:
+      // [5]:
+      // [6]:
+      // [7]: chi2
+      // [8]: nDoF
       float trackParams[SciFi::Tracking::nTrackParams];
       Velo::State state_endvelo;
      

@@ -10,7 +10,8 @@
 
 int run_forward_on_CPU (
   std::vector< trackChecker::Tracks >& ft_tracks_events,
-  SciFi::HitsSoA * hits_layers_events,
+  uint* host_scifi_hits,
+  uint* host_scifi_hit_count,
   uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number,
   uint* host_velo_states,

@@ -18,6 +18,7 @@ namespace VeloClustering {
   static constexpr uint32_t mask_ltr_top_right   = 0x7FFF0000;
   static constexpr uint32_t mask_rtl_bottom_left = 0x0000FFFE;
   static constexpr uint32_t max_clustering_iterations = 12;
+  static constexpr uint32_t lookup_table_size = 9;
 }
 
 namespace LHCb {

@@ -16,6 +16,7 @@ static constexpr int num_atomics = 2;
 */
 static constexpr uint n_layers           = 4;
 static constexpr uint n_ut_hit_variables = 8;
+static constexpr uint n_regions_in_layer = 3;
 
 /* For now, the planeCode is an attribute of every hit,
    -> check which information
