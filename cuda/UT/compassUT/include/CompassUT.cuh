@@ -4,56 +4,9 @@
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "VeloDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
+#include "CompassUTDefinitions.cuh"
+#include "FindBestHits.cuh"
 #include "Handler.cuh"
-#include <cfloat>
-
-constexpr uint N_LAYERS = VeloUTTracking::n_layers;
-
-//=========================================================================
-// Point to correct position for windows pointers
-//=========================================================================
-struct LayerCandidates {
-  int from0;
-  int size0;
-  int from1;
-  int size1;
-  int from2;
-  int size2;
-};
-
-struct TrackCandidates {
-  LayerCandidates layer[N_LAYERS];
-};
-
-struct WindowIndicator {
-  const int* m_base_pointer;
-  __host__ __device__ WindowIndicator(const int* base_pointer) : m_base_pointer(base_pointer) {}
-
-  __host__ __device__ const TrackCandidates* get_track_candidates(const int i_track)
-  {
-    return reinterpret_cast<const TrackCandidates*>(m_base_pointer + (6 * N_LAYERS * i_track));
-  }
-};
-
-//=========================================================================
-// Save the best parameters
-//=========================================================================
-struct BestParams {
-  float qp;
-  float chi2UT;
-  float xUTFit; // TODO check we need this
-  float xSlopeUTFit;
-  int n_hits;
-
-  __host__ __device__ BestParams () 
-  {
-    qp = 0.0f;
-    chi2UT = PrVeloUTConst::maxPseudoChi2;
-    xUTFit = 0.0f;
-    xSlopeUTFit = 0.0f;
-    n_hits = 0;
-  }
-};
 
 //=========================================================================
 // Functions definitions
@@ -101,36 +54,6 @@ __host__ __device__ __inline__ void fill_shared_windows(
 __device__ __inline__ bool found_active_windows(
   const int* windows_layers,
   const uint current_track_offset);
-
-__host__ __device__ __inline__ bool check_tol_refine(
-  const int hit_index,
-  const UTHits& ut_hits,
-  const MiniState& velo_state,
-  const float normFactNum,
-  const float xTol,
-  const float dxDy);
-
-__device__ __inline__ int set_index(
-  const int i, 
-  const LayerCandidates& layer_cand);
-
-__device__ void find_best_hits(
-  const int* win_size_shared,
-  const UTHits& ut_hits,
-  const UTHitOffsets& ut_hit_count,
-  const MiniState& velo_state,
-  const float* fudgeFactors,
-  const float* ut_dxDy,
-  const bool forward,
-  int* best_hits,
-  BestParams& best_params);
-
-__host__ __device__ BestParams pkick_fit(
-  const int best_hits[N_LAYERS],
-  const UTHits& ut_hits,
-  const MiniState& velo_state,
-  const float* ut_dxDy,
-  const float yyProto);
 
 __device__ void save_track(
   const int i_track,

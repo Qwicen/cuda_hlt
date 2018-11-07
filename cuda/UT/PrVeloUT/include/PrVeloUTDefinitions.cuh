@@ -47,5 +47,8 @@ namespace PrVeloUTConst {
   static constexpr bool  printVariables =    false;
   static constexpr bool  passTracks =        false;
   static constexpr bool  doTiming =          false;
+  // Scale the z-component, to not run into numerical problems with floats
+  // first add to sum values from hit at xMidField, zMidField hit
+  static constexpr float zDiff =             0.001f * (zKink - zMidUT);
 
 }
