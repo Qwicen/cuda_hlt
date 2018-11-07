@@ -18,7 +18,6 @@
 #include <set>
 #include <string>
 #include <vector>
-
 #include "Logger.h"
 #include "MCAssociator.h"
 #include "Tracks.h"
@@ -121,7 +120,6 @@ protected:
     void fillGhostHistos(const MCParticle &mcp);
   };
  
-
   const float m_minweight = 0.7f;
   std::size_t m_nevents = 0;
   std::size_t m_ntracks = 0;

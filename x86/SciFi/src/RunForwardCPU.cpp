@@ -1,4 +1,4 @@
-#include "run_Forward_CPU.h"
+#include "RunForwardCPU.h"
 
 #ifdef WITH_ROOT
 #include "TH1D.h"
@@ -15,7 +15,7 @@ int run_forward_on_CPU (
   uint* host_velo_states,
   VeloUTTracking::TrackUT * veloUT_tracks,
   const int * n_veloUT_tracks_events,
-  const uint &number_of_events
+  const uint number_of_events
 ) {
 
 #ifdef WITH_ROOT
@@ -115,10 +115,8 @@ int run_forward_on_CPU (
 #endif
     
     // save in format for track checker
-    trackChecker::Tracks checker_tracks = prepareForwardTracksEvent( forward_tracks, n_forward_tracks );
-    
+    trackChecker::Tracks checker_tracks = prepareTracksSingleEvent<TrackCheckerForward, SciFi::Track>( forward_tracks, n_forward_tracks );    
     forward_tracks_events.emplace_back( checker_tracks );
-
   }
   
 #ifdef WITH_ROOT

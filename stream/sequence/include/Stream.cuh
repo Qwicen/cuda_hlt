@@ -21,6 +21,7 @@
 #include "SchedulerMachinery.cuh"
 #include "Scheduler.cuh"
 #include "AlgorithmDependencies.cuh"
+#include "CheckerInvoker.h"
 
 
 class Timer;
@@ -38,10 +39,7 @@ struct Stream {
   uint stream_number;
 
   // Launch options
-  bool do_check;
-  bool do_simplified_kalman_filter;
   bool do_print_memory_manager;
-  bool run_on_x86;
 
   // Dynamic scheduler
   scheduler_t scheduler;
@@ -49,12 +47,7 @@ struct Stream {
   // Host buffers
   HostBuffers host_buffers;
 
-  // Monte Carlo folder name
-  std::string folder_name_MC;
-
-  //PV truth folder name
-  std::string folder_name_pv;
-
+  // Start event offset
   uint start_event_offset;
 
   // GPU Memory base pointer
@@ -68,12 +61,7 @@ struct Stream {
 
   cudaError_t initialize(
     const uint max_number_of_events,
-    const bool param_do_check,
-    const bool param_do_simplified_kalman_filter,
     const bool param_print_memory_usage,
-    const bool param_run_on_x86,
-    const std::string& param_folder_name_MC,
-    const std::string& param_folder_name_pv,
     const uint param_start_event_offset,
     const size_t param_reserve_mb,
     const uint param_stream_number,
@@ -81,9 +69,9 @@ struct Stream {
   );
 
   void run_monte_carlo_test(
+    const std::string& mc_folder,
     const uint number_of_events_requested
   );
-  
 
   cudaError_t run_sequence(
     const RuntimeOptions& runtime_options

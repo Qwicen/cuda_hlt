@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cassert>
-#include "cuda_runtime.h"
 #include "VeloEventModel.cuh"
 #include "ConsolidatedTypes.cuh"
 

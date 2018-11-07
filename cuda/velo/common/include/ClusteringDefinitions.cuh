@@ -1,7 +1,7 @@
 #pragma once
 
 #include "cuda_runtime.h"
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
 #include <iostream>
 #include "VeloDefinitions.cuh"

@@ -9,6 +9,7 @@
  * @details All the dependencies for all defined algorithms
  *          should be defined here, using the type
  *          AlgorithmDependencies<Algorithm, Arguments...>.
+ *          The types referred here are GPU buffers.
  */
 typedef std::tuple<
   AlgorithmDependencies<estimate_input_size_t, // Algorithm
@@ -221,6 +222,10 @@ typedef std::tuple<
     dev_atomics_veloUT,
     dev_scifi_tracks,
     dev_n_scifi_tracks
+  >,
+  AlgorithmDependencies<cpu_scifi_pr_forward_t,
+    dev_scifi_hits,
+    dev_scifi_hit_count
   >
 > algorithms_dependencies_t;
 

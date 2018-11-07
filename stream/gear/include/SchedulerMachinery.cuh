@@ -120,7 +120,10 @@ struct OutDependenciesImpl;
 
 template<typename OutputArguments, typename Algorithm, typename... Arguments>
 struct OutDependenciesImpl<OutputArguments, std::tuple<AlgorithmDependencies<Algorithm, Arguments...>, last_t>> {
-  using t = std::tuple<ScheduledDependencies<last_t, std::tuple<Arguments...>>>;
+  using t = std::tuple<AlgorithmDependencies<last_t, typename TupleElementsNotIn<
+    std::tuple<Arguments...>,
+    OutputArguments>::t
+  >>;
 };
 
 template<typename OutputArguments, typename Algorithm, typename... Arguments, typename NextAlgorithm, typename... NextAlgorithmArguments, typename... Algorithms>
@@ -314,7 +317,6 @@ struct RunSequenceTupleImpl<Scheduler, Functor, Tuple, std::tuple<SetSizeArgumen
   }
 };
 
-
 /**
  * @brief Runs a sequence of algorithms.
  * 
@@ -343,6 +345,35 @@ struct RunSequenceTuple<Scheduler, Functor, Tuple, std::tuple<SetSizeArguments..
       std::tuple<VisitArguments...>,
       std::make_index_sequence<std::tuple_size<Tuple>::value>
     >::run(scheduler, functor, tuple, std::forward<SetSizeArguments>(set_size_arguments)..., std::forward<VisitArguments>(visit_arguments)...);
+  }
+};
+
+/**
+ * @brief Runs the PrChecker for all configured algorithms in the sequence.
+ */
+template<typename Functor, typename ConfiguredSequence, typename Arguments>
+struct RunChecker;
+
+template<typename Functor, typename... Arguments>
+struct RunChecker<Functor, std::tuple<>, std::tuple<Arguments...>> {
+  constexpr static void check(
+    const Functor& functor,
+    Arguments&&... arguments) {}
+};
+
+template<typename Functor, typename Algorithm, typename... Algorithms, typename... Arguments>
+struct RunChecker<Functor, std::tuple<Algorithm, Algorithms...>, std::tuple<Arguments...>> {
+  constexpr static void check(
+    const Functor& functor,
+    Arguments&&... arguments) 
+  {
+    functor.template check<Algorithm>(std::forward<Arguments>(arguments)...);
+
+    RunChecker<
+      Functor,
+      std::tuple<Algorithms...>,
+      std::tuple<Arguments...>
+    >::check(functor, std::forward<Arguments>(arguments)...);
   }
 };
 

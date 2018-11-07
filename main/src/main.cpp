@@ -4,8 +4,7 @@
  *      author  -  GPU working group
  *      e-mail  -  lhcb-parallelization@cern.ch
  *
- *      Original development June, 2014
- *      Restarted development on February, 2018
+ *      Started development on February, 2018
  *      CERN
  */
 #include <iostream>
@@ -36,22 +35,19 @@
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
-    << std::endl << "  -f   {folder containing directories with raw bank binaries for every sub-detector}"
+    << std::endl << " -f {folder containing directories with raw bank binaries for every sub-detector}"
     << std::endl << " --mdf {use MDF files as input instead of binary files}"
-    << std::endl << "  -g   {folder containing detector configuration}"
-    << std::endl << "  -d   {folder containing .bin files with MC truth information}"
-    << std::endl << "  -i {folder containing .bin files with PV truth information}"
-    << std::endl << "  -n   {number of events to process}=0 (all)"
-    << std::endl << "  -o   {offset of events from which to start}=0 (beginning)"
-    << std::endl << "  -t   {number of threads / streams}=1"
-    << std::endl << "  -r   {number of repetitions per thread / stream}=1"
-    << std::endl << "  -c   {run checkers}=0"
-    << std::endl << "  -k   {simplified kalman filter}=0"
-    << std::endl << "  -m   {reserve Megabytes}=1024"
-    << std::endl << "  -v   {verbosity}=3 (info)"
-    << std::endl << "  -p   {print memory usage}=0"
-    << std::endl << "  -a   {run only data preparation algorithms: decoding, clustering, sorting}=0"
-    << std::endl << "  -x   {run algorithms on x86 architecture if implementation is available}=0"
+    << std::endl << " -g {folder containing detector configuration}"
+    << std::endl << " -d {folder containing .bin files with MC truth information}"
+    << std::endl << " -n {number of events to process}=0 (all)"
+    << std::endl << " -o {offset of events from which to start}=0 (beginning)"
+    << std::endl << " -t {number of threads / streams}=1"
+    << std::endl << " -r {number of repetitions per thread / stream}=1"
+    << std::endl << " -c {run checkers}=0"
+    << std::endl << " -m {reserve Megabytes}=1024"
+    << std::endl << " -v {verbosity}=3 (info)"
+    << std::endl << " -p {print memory usage}=0"
+    << std::endl << " -a {run only data preparation algorithms: decoding, clustering, sorting}=0"
     << std::endl;
 }
 
@@ -69,8 +65,6 @@ int main(int argc, char *argv[])
   bool print_memory_usage = false;
   // By default, do_check will be true when mc_check is enabled
   bool do_check = true;
-  bool do_simplified_kalman_filter = false;
-  bool run_on_x86 = false;
   size_t reserve_mb = 1024;
 
   int use_mdf = 0;
@@ -87,10 +81,8 @@ int main(int argc, char *argv[])
   /* getopt_long stores the option index here. */
   int option_index = 0;
 
-
-
   signed char c;
-  while ((c = getopt_long(argc, argv, "f:d:i:n:o:t:r:pha:b:d:v:c:k:m:g:x",
+  while ((c = getopt_long(argc, argv, "f:d:n:o:t:r:pha:b:d:v:c:m:g:",
                           long_options, &option_index)) != -1) {
     switch (c) {
     case 0:
@@ -130,12 +122,6 @@ int main(int argc, char *argv[])
       break;
     case 'c':
       do_check = atoi(optarg);
-      break;
-    case 'k':
-      do_simplified_kalman_filter = atoi(optarg);
-      break;
-    case 'x':
-      run_on_x86 = atoi(optarg);
       break;
     case 'v':
       verbosity = atoi(optarg);
@@ -196,9 +182,7 @@ int main(int argc, char *argv[])
     << " start event offset (-o): " << start_event_offset << std::endl
     << " tbb threads (-t): " << tbb_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
-    << " simplified kalman filter (-k): " << do_simplified_kalman_filter << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
-    << " run algorithms on x86 architecture if implementation is available (-x): " << run_on_x86 << std::endl
     << " print memory usage (-p): " << print_memory_usage << std::endl
     << " verbosity (-v): " << verbosity << std::endl
     << " device (--device) " << cuda_device << ": " << device_name << std::endl
@@ -211,11 +195,11 @@ int main(int argc, char *argv[])
   number_of_events_requested = get_number_of_events_requested(
     number_of_events_requested, folder_name_velopix_raw);
 
-  std::string folder_name_UT_raw = folder_name_raw + "UT";
-  std::string folder_name_mdf = folder_name_raw + "mdf";
-  std::string folder_name_SciFi_raw = folder_name_raw + "FTCluster";
-  auto geometry_reader = GeometryReader(folder_name_detector_configuration);
-  auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
+  const auto folder_name_UT_raw = folder_name_raw + "UT";
+  const auto folder_name_mdf = folder_name_raw + "mdf";
+  const auto folder_name_SciFi_raw = folder_name_raw + "FTCluster";
+  const auto geometry_reader = GeometryReader(folder_name_detector_configuration);
+  const auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
 
   std::unique_ptr<EventReader> event_reader;
   if (use_mdf) {
@@ -227,12 +211,12 @@ int main(int argc, char *argv[])
                                                              {BankTypes::UT, folder_name_UT_raw},
                                                              {BankTypes::FT, folder_name_SciFi_raw}}});
   }
-  std::vector<char> velo_geometry = geometry_reader.read_geometry("velo_geometry.bin");
-  std::vector<char> ut_boards = geometry_reader.read_geometry("ut_boards.bin");
-  std::vector<char> ut_geometry = geometry_reader.read_geometry("ut_geometry.bin");
-  std::vector<char> ut_magnet_tool = ut_magnet_tool_reader.read_UT_magnet_tool();
-  std::vector<char> scifi_geometry = geometry_reader.read_geometry("scifi_geometry.bin");
 
+  const auto velo_geometry = geometry_reader.read_geometry("velo_geometry.bin");
+  const auto ut_boards = geometry_reader.read_geometry("ut_boards.bin");
+  const auto ut_geometry = geometry_reader.read_geometry("ut_geometry.bin");
+  const auto ut_magnet_tool = ut_magnet_tool_reader.read_UT_magnet_tool();
+  const auto scifi_geometry = geometry_reader.read_geometry("scifi_geometry.bin");
   event_reader->read_events(number_of_events_requested, start_event_offset);
 
   info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
@@ -253,16 +237,16 @@ int main(int argc, char *argv[])
   stream_wrapper.initialize_streams(
     tbb_threads,
     number_of_events_requested,
-    do_check,
-    do_simplified_kalman_filter,
     print_memory_usage,
-    run_on_x86,
-    folder_name_MC,
-    folder_name_pv,
     start_event_offset,
     reserve_mb,
     constants
   );
+
+  // Notify used memory if requested verbose mode
+  if (logger::ll.verbosityLevel >= logger::verbose) {
+    print_gpu_memory_consumption();
+  }
 
   // Attempt to execute all in one go
   Timer t;
@@ -291,9 +275,9 @@ int main(int argc, char *argv[])
   );
   t.stop();
 
-  // Do optional Monte Carlo truth test
+  // Do optional Monte Carlo truth test on stream 0
   if (do_check) {
-    stream_wrapper.run_monte_carlo_test(0, number_of_events_requested);
+    stream_wrapper.run_monte_carlo_test(0, folder_name_MC, number_of_events_requested);
   }
 
   std::cout << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl

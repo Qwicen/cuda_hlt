@@ -10,13 +10,13 @@ Reader::Reader(const std::string& folder_name) : folder_name(folder_name) {
   }
 }
 
-std::vector<char> GeometryReader::read_geometry(const std::string& filename) {
+std::vector<char> GeometryReader::read_geometry(const std::string& filename) const {
   std::vector<char> geometry;
   ::read_geometry(folder_name + "/" + filename, geometry);
   return geometry;
 }
 
-std::vector<char> UTMagnetToolReader::read_UT_magnet_tool() {
+std::vector<char> UTMagnetToolReader::read_UT_magnet_tool() const {
   std::vector<char> ut_magnet_tool;
   ::read_UT_magnet_tool(folder_name, ut_magnet_tool);
   return ut_magnet_tool;

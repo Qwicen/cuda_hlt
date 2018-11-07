@@ -9,6 +9,7 @@
 #include "ConfiguredSequence.cuh"
 #include "AlgorithmDependencies.cuh"
 #include "Arguments.cuh"
+#include "CheckerInvoker.h"
 
 struct SequenceVisitor {
   using scheduler_t = Scheduler<configured_sequence_t, algorithms_dependencies_t, output_arguments_t>;
@@ -39,6 +40,16 @@ struct SequenceVisitor {
     HostBuffers& host_buffers,
     cudaStream_t& cuda_stream,
     cudaEvent_t& cuda_generic_event);
+
+  /**
+   * @brief Invokes the specific checker for the algorithm T.
+   */
+  template<typename T>
+  void check(
+    const uint& start_event_offset,
+    const uint& number_of_events_requested,
+    const HostBuffers& host_buffers,
+    const CheckerInvoker& checker_invoker) const {}
 };
 
 /**

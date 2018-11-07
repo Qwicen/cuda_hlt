@@ -28,9 +28,15 @@ Cuda compilation tools, release 9.2, V9.2.88
 
 You can check your compiler standard compatibility by scrolling to the `C++14 features` chart [here](https://en.cppreference.com/w/cpp/compiler_support).
 
-Optional: you can compile the project with ROOT. Then, trees will be filled with variables to check when running the UT tracking or SciFi tracking algorithms on x86 architecture.
-In addition, histograms of reconstructible and reconstructed tracks are then filled in the track checker, they are saved in the file output/PrCheckerPlots.root. 
-Plots of efficiencies versus various kinematic variables can be created by running efficiency_plots.py in the directory checker/tracking/python_scripts. 
+Optionally you can compile the project with ROOT. Then, trees will be filled with variables to check when running the UT tracking or SciFi tracking algorithms on x86 architecture.
+In addition, histograms of reconstructible and reconstructed tracks are then filled in the track checker, they are saved in the file `output/PrCheckerPlots.root`. 
+Plots of efficiencies versus various kinematic variables can be created by running `efficiency_plots.py` in the directory `checker/tracking/python_scripts`.
+
+You can setup ROOT in CVMFS as follows:
+
+```shell
+source /cvmfs/lhcb.cern.ch/lib/lcg/releases/ROOT/6.08.06-d7e12/x86_64-centos7-gcc62-opt/bin/thisroot.sh
+```
 
 [Building and running inside Docker](readme_docker.md)
 
@@ -38,9 +44,8 @@ Where to find input
 -------------
 Input from 1k events can be found here: 
 
-minimum bias (for performance checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbias_dump_phi_nPV.tar.gz
-
-Bs->PhiPhi (for efficiency checks): /afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi_dump_phi_nPV.tar.gz
+* minimum bias (for performance checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbias_dump_phi_nPV.tar.gz`
+* Bs->PhiPhi (for efficiency checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi_dump_phi_nPV.tar.gz`
 
 How to run it
 -------------
@@ -54,9 +59,9 @@ The build process doesn't differ from standard cmake projects:
 
 There are some cmake options to configure the build process:
 
-   * The sequence can be configured by specifying `-DSEQUENCE=<name_of_sequence>`. For a complete list of sequences available, check `stream/sequence_setup/include/sequences/`. Sequence names should be specified without the `.cuh`, ie. `-DSEQUENCE=VeloUT`.
-   * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
-   * The option to run the validation, on by default, can be turned off with `-DMC_CHECK=Off`.
+* The sequence can be configured by specifying `-DSEQUENCE=<name_of_sequence>`. For a complete list of sequences available, check `stream/sequence_setup/include/sequences/`. Sequence names should be specified without the `.cuh`, ie. `-DSEQUENCE=VeloUT`.
+* The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
+* The option to run the validation, on by default, can be turned off with `-DMC_CHECK=Off`.
 
 The MC validation is a standalone version of the PrChecker, it was written by
 Manuel Schiller, Rainer Schwemmer and Daniel Cámpora.
