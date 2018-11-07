@@ -170,6 +170,20 @@ __device__ void compass_ut_tracking(
     best_hits,
     best_params);
 
+  if (best_params.n_hits < N_LAYERS) {
+    find_best_hits(
+      win_size_shared,
+      ut_hits,
+      ut_hit_offsets,
+      velo_state,
+      fudgeFactors,
+      dev_ut_dxDy,
+      false,
+      best_hits,
+      best_params);  
+  }
+  
+
   // write the final track
   if (best_params.n_hits > 0) {
     save_track(
@@ -347,7 +361,7 @@ __device__ void find_best_hits(
 
   bool fourLayerSolution = false;
 
-  float best_fit = FLT_MAX;
+  float best_fit = PrVeloUTConst::maxPseudoChi2;
   int temp_best_hits[N_LAYERS] = {-1, -1, -1, -1};
 
   // loop over the 3 windows, putting the index in the windows
