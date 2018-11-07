@@ -166,6 +166,7 @@ __device__ void compass_ut_tracking(
     velo_state,
     fudgeFactors,
     dev_ut_dxDy,
+    true,
     best_hits,
     best_params);
 
@@ -286,15 +287,15 @@ __host__ __device__ __inline__ bool check_tol_refine(
 }
 
 __device__ __inline__ int set_index(
-  const int i, const int from0, const int from1, const int from2, const int num_cand_0, const int num_cand_1)
+  const int i, const LayerCandidates& layer_cand)
 {
   int hit = 0;
-  if (i < num_cand_0) {
-    hit = from0 + i;
-  } else if (i < num_cand_0 + num_cand_1) {
-    hit = from1 + i - num_cand_0;
+  if (i < layer_cand.size0) {
+    hit = layer_cand.from0 + i;
+  } else if (i < layer_cand.size0 + layer_cand.size1) {
+    hit = layer_cand.from1 + i - layer_cand.size0;
   } else {
-    hit = from2 + i - num_cand_0 - num_cand_1;
+    hit = layer_cand.from2 + i - layer_cand.size0- layer_cand.size1;
   }
   return hit;
 }
@@ -311,6 +312,7 @@ __device__ void find_best_hits(
   const MiniState& velo_state,
   const float* fudgeFactors,
   const float* ut_dxDy,
+  const bool forward,
   int* best_hits,
   BestParams& best_params)
 {
@@ -318,7 +320,7 @@ __device__ void find_best_hits(
   int layers[N_LAYERS];
   #pragma unroll
   for (int i_layer = 0; i_layer < N_LAYERS; ++i_layer) {
-    if (true)
+    if (forward)
       layers[i_layer] = i_layer;
     else
       layers[i_layer] = N_LAYERS - 1 - i_layer;
@@ -349,13 +351,7 @@ __device__ void find_best_hits(
   // loop over layer 0
   for (int i0=0; i0<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i0) {
 
-    int i_hit0 = set_index(
-      i0,
-      ranges->layer[layers[0]].from0,
-      ranges->layer[layers[0]].from1,
-      ranges->layer[layers[0]].from2,
-      ranges->layer[layers[0]].size0,
-      ranges->layer[layers[0]].size1);
+    int i_hit0 = set_index(i0, ranges->layer[layers[0]]);
 
     if (!check_tol_refine(
       i_hit0,
@@ -375,13 +371,7 @@ __device__ void find_best_hits(
     // loop over layer 2
     for (int i2=0; i2<ranges->layer[layers[2]].size0 + ranges->layer[layers[2]].size1 + ranges->layer[layers[2]].size2; ++i2) {
 
-      int i_hit2 = set_index(
-        i2,
-        ranges->layer[layers[2]].from0,
-        ranges->layer[layers[2]].from1,
-        ranges->layer[layers[2]].from2,
-        ranges->layer[layers[2]].size0,
-        ranges->layer[layers[2]].size1);
+      int i_hit2 = set_index(i2, ranges->layer[layers[2]]);
 
       if (!check_tol_refine(
         i_hit2,
@@ -407,13 +397,7 @@ __device__ void find_best_hits(
       // search for triplet in layer1
       for (int i1=0; i1<ranges->layer[layers[1]].size0 + ranges->layer[layers[1]].size1 + ranges->layer[layers[1]].size2; ++i1) {
 
-        int i_hit1 = set_index(
-          i1,
-          ranges->layer[layers[1]].from0,
-          ranges->layer[layers[1]].from1,
-          ranges->layer[layers[1]].from2,
-          ranges->layer[layers[1]].size0,
-          ranges->layer[layers[1]].size1);
+        int i_hit1 = set_index(i1, ranges->layer[layers[1]]);
 
         if (!check_tol_refine(
           i_hit1,
@@ -442,13 +426,7 @@ __device__ void find_best_hits(
       hitTol = PrVeloUTConst::hitTol2;
       for (int i3=0; i3<ranges->layer[layers[3]].size0 + ranges->layer[layers[3]].size1 + ranges->layer[layers[3]].size2; ++i3) {
 
-        int i_hit3 = set_index(
-          i3,
-          ranges->layer[layers[3]].from0,
-          ranges->layer[layers[3]].from1,
-          ranges->layer[layers[3]].from2,
-          ranges->layer[layers[3]].size0,
-          ranges->layer[layers[3]].size1);
+        int i_hit3 = set_index(i3, ranges->layer[layers[3]]);
 
         if (!check_tol_refine(
           i_hit3,

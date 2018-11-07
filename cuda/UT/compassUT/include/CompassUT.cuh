@@ -109,6 +109,10 @@ __host__ __device__ __inline__ bool check_tol_refine(
   const float xTol,
   const float dxDy);
 
+__device__ __inline__ int set_index(
+  const int i, 
+  const LayerCandidates& layer_cand);
+
 __device__ void find_best_hits(
   const int* win_size_shared,
   const UTHits& ut_hits,
@@ -116,6 +120,7 @@ __device__ void find_best_hits(
   const MiniState& velo_state,
   const float* fudgeFactors,
   const float* ut_dxDy,
+  const bool forward,
   int* best_hits,
   BestParams& best_params);
 
