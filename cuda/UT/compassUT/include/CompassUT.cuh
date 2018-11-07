@@ -5,6 +5,7 @@
 #include "VeloDefinitions.cuh"
 #include "VeloUTDefinitions.cuh"
 #include "Handler.cuh"
+#include <cfloat>
 
 constexpr uint N_LAYERS = VeloUTTracking::n_layers;
 

@@ -171,7 +171,7 @@ __device__ void compass_ut_tracking(
     best_params);
 
   // write the final track
-  if (best_params.n_hits >= (N_LAYERS - 1)) {
+  if (best_params.n_hits > 0) {
     save_track(
       i_track,
       bdl_table,
@@ -347,6 +347,9 @@ __device__ void find_best_hits(
 
   bool fourLayerSolution = false;
 
+  float best_fit = FLT_MAX;
+  int temp_best_hits[N_LAYERS] = {-1, -1, -1, -1};
+
   // loop over the 3 windows, putting the index in the windows
   // loop over layer 0
   for (int i0=0; i0<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i0) {
@@ -366,7 +369,7 @@ __device__ void find_best_hits(
     const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
     const float xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[layers[0]]);
     const float zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
-    best_hits[0] = i_hit0;
+    temp_best_hits[0] = i_hit0;
 
     // loop over layer 2
     for (int i2=0; i2<ranges->layer[layers[2]].size0 + ranges->layer[layers[2]].size1 + ranges->layer[layers[2]].size2; ++i2) {
@@ -386,13 +389,13 @@ __device__ void find_best_hits(
       const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
       const float xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[layers[2]]);
       const float zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
-      best_hits[2] = i_hit2;
+      temp_best_hits[2] = i_hit2;
 
       const float tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
       if (std::abs(tx - velo_state.tx) > PrVeloUTConst::deltaTx2) continue;
 
       float hitTol = PrVeloUTConst::hitTol2;
-      best_hits[1] = -1;
+      temp_best_hits[1] = -1;
 
       // search for triplet in layer1
       for (int i1=0; i1<ranges->layer[layers[1]].size0 + ranges->layer[layers[1]].size1 + ranges->layer[layers[1]].size2; ++i1) {
@@ -416,11 +419,11 @@ __device__ void find_best_hits(
 
         if (std::abs(xhitLayer1 - xextrapLayer1) < hitTol) {
           hitTol = std::abs(xhitLayer1 - xextrapLayer1);
-          best_hits[1] = i_hit1;
+          temp_best_hits[1] = i_hit1;
         }
       }
 
-      if( fourLayerSolution && best_hits[1] < 0 ) continue;
+      if( fourLayerSolution && temp_best_hits[1] < 0 ) continue;
 
       // search for quadruplet in layer3
       hitTol = PrVeloUTConst::hitTol2;
@@ -444,12 +447,19 @@ __device__ void find_best_hits(
         const float xextrapLayer3 = xhitLayer2 + tx * (zhitLayer3 - zhitLayer2);
         if (std::abs(xhitLayer3 - xextrapLayer3) < hitTol) {
           hitTol = std::abs(xhitLayer3 - xextrapLayer3);
-          best_hits[3] = i_hit3;
+          temp_best_hits[3] = i_hit3;
         }          
       }
 
       // Fit the hits to get q/p, chi2
-      best_params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
+      best_params = pkick_fit(temp_best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
+
+      if (best_params.chi2UT < best_fit) {
+        best_hits[0] = temp_best_hits[0];
+        best_hits[1] = temp_best_hits[1];
+        best_hits[2] = temp_best_hits[2];
+        best_hits[3] = temp_best_hits[3];
+      }
 
       if(!fourLayerSolution && best_params.n_hits > 0) {
         fourLayerSolution = true;
