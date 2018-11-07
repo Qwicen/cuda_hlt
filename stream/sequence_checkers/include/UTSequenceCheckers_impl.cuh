@@ -15,6 +15,9 @@ void SequenceVisitor::check<veloUT_t>(
   info_cout << "Checking " << veloUT_t::name << " tracks" << std::endl;
 
   const auto tracks = prepareTracks<TrackCheckerVeloUT>(
+    host_buffers.host_velo_tracks_atomics,
+    host_buffers.host_velo_track_hit_number,
+    host_buffers.host_velo_track_hits,
     host_buffers.host_veloUT_tracks,
     host_buffers.host_atomics_veloUT,
     number_of_events_requested);
@@ -38,6 +41,9 @@ void SequenceVisitor::check<compass_ut_t>(
   info_cout << "Checking " << compass_ut_t::name << " tracks" << std::endl;
 
   const auto tracks = prepareTracks<TrackCheckerVeloUT>(
+    host_buffers.host_velo_tracks_atomics,
+    host_buffers.host_velo_track_hit_number,
+    host_buffers.host_velo_track_hits,
     host_buffers.host_compassUT_tracks,
     host_buffers.host_atomics_compassUT,
     number_of_events_requested);

@@ -22,6 +22,19 @@ trackChecker::Tracks prepareTracksSingleEvent(
   const int event_number_of_tracks);
 
 /**
+ * @brief Prepares tracks for a single event
+ *        with semi-consolidated datatypes.
+ */
+template<typename T, typename R>
+std::vector<trackChecker::Tracks> prepareTracks(
+  const uint* track_atomics,
+  const uint* track_hit_number_pinned,
+  const char* track_hits_pinned,
+  const R* tracks,
+  const int* number_of_tracks,
+  const uint number_of_events);
+
+/**
  * @brief Prepares tracks for consolidated datatypes.
  */
 template<typename T>

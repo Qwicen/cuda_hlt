@@ -148,8 +148,8 @@ __host__ __device__ void find_forward_tracks(
         
         SciFi::Track tr = makeTrack( track );
         // add LHCbIDs from Velo and UT part of the track
-        for ( int i_hit = 0; i_hit < veloUTTrack.hitsNum; ++i_hit ) {
-          tr.addLHCbID( veloUTTrack.LHCbIDs[i_hit] );
+        for ( int i_hit = 0; i_hit < veloUTTrack.number_of_hits; ++i_hit ) {
+          tr.addLHCbID( veloUTTrack.lhcb_ids[i_hit] );
         }
         if ( tr.hitsNum >= VeloUTTracking::max_track_size )
           printf("veloUT track hits Num = %u \n", tr.hitsNum );

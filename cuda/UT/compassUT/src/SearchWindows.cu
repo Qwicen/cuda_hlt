@@ -71,7 +71,5 @@ __global__ void ut_search_windows(
     dev_windows_layers[6 * VeloUTTracking::n_layers * current_track_offset + 6 * layer + 3] = left_group_last_candidate;
     dev_windows_layers[6 * VeloUTTracking::n_layers * current_track_offset + 6 * layer + 4] = right_group_first_candidate;
     dev_windows_layers[6 * VeloUTTracking::n_layers * current_track_offset + 6 * layer + 5] = right_group_last_candidate;
-
-
   }
 }

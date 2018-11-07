@@ -44,6 +44,52 @@ std::vector<trackChecker::Tracks> prepareTracks<TrackCheckerVelo>(
 
 template<>
 std::vector<trackChecker::Tracks> prepareTracks<TrackCheckerVeloUT, VeloUTTracking::TrackUT> (
+  const uint* track_atomics,
+  const uint* track_hit_number_pinned,
+  const char* track_hits_pinned,
+  const VeloUTTracking::TrackUT* tracks,
+  const int* number_of_tracks,
+  const uint number_of_events)
+{
+  std::vector<trackChecker::Tracks> checker_tracks;
+  for (uint i_event = 0; i_event < number_of_events; ++i_event) {
+    const auto event_number_of_tracks = number_of_tracks[i_event];
+    const auto event_tracks_pointer = tracks + i_event * VeloUTTracking::max_num_tracks;
+
+    // Velo tracks
+    const Velo::Consolidated::Tracks velo_tracks {
+      (uint*) track_atomics, (uint*) track_hit_number_pinned, i_event, number_of_events};
+
+    //debug_cout << "event has " << event_number_of_tracks << " tracks" << std::endl;
+    trackChecker::Tracks event_tracks;
+    for ( int i_track = 0; i_track < event_number_of_tracks; ++i_track ) {
+      const auto& veloUT_track = event_tracks_pointer[i_track];
+      trackChecker::Track checker_track;
+      assert( veloUT_track.number_of_hits < VeloUTTracking::max_track_size);
+      //debug_cout << "at track " << std::dec << i_track << std::endl;
+
+      // Add Velo hits
+      const unsigned short velo_track_index = veloUT_track.velo_track_index;
+      const uint velo_track_number_of_hits = velo_tracks.number_of_hits(velo_track_index);
+      Velo::Consolidated::Hits velo_track_hits = velo_tracks.get_hits((uint*) track_hits_pinned, velo_track_index);
+      for (int i_hit = 0; i_hit < velo_track_number_of_hits; ++i_hit) {
+        checker_track.addId(velo_track_hits.LHCbID[i_hit]);
+      }
+
+      for ( int i_hit = 0; i_hit < veloUT_track.number_of_hits; ++i_hit ) {
+        //debug_cout<<"\t LHCbIDsVeloUT["<<i_hit<<"] = "<< std::hex << veloUT_track.LHCbIDs[i_hit] << std::endl;
+        LHCbID lhcb_id( veloUT_track.lhcb_ids[i_hit] );
+        checker_track.addId( lhcb_id );
+      }
+      event_tracks.push_back(checker_track);
+    }
+    checker_tracks.emplace_back(event_tracks);
+  }
+  return checker_tracks;
+}
+
+template<>
+std::vector<trackChecker::Tracks> prepareTracks<TrackCheckerVeloUT, VeloUTTracking::TrackUT> (
   const VeloUTTracking::TrackUT* tracks,
   const int* number_of_tracks,
   const uint number_of_events)
@@ -58,11 +104,11 @@ std::vector<trackChecker::Tracks> prepareTracks<TrackCheckerVeloUT, VeloUTTracki
     for ( int i_track = 0; i_track < event_number_of_tracks; ++i_track ) {
       const auto& veloUT_track = event_tracks_pointer[i_track];
       trackChecker::Track checker_track;
-      assert( veloUT_track.hitsNum < VeloUTTracking::max_track_size);
+      assert( veloUT_track.number_of_hits < VeloUTTracking::max_track_size);
       //debug_cout << "at track " << std::dec << i_track << std::endl;
-      for ( int i_hit = 0; i_hit < veloUT_track.hitsNum; ++i_hit ) {
+      for ( int i_hit = 0; i_hit < veloUT_track.number_of_hits; ++i_hit ) {
         //debug_cout<<"\t LHCbIDsVeloUT["<<i_hit<<"] = "<< std::hex << veloUT_track.LHCbIDs[i_hit] << std::endl;
-        LHCbID lhcb_id( veloUT_track.LHCbIDs[i_hit] );
+        LHCbID lhcb_id( veloUT_track.lhcb_ids[i_hit] );
         checker_track.addId( lhcb_id );
       }
       event_tracks.push_back(checker_track);

@@ -52,6 +52,8 @@ __global__ void compass_ut(
     *active_tracks         = 0;
   }
 
+  __syncthreads();
+
   // store the tracks with valid windows
   __shared__ int shared_active_tracks[2 * VeloUTTracking::num_threads - 1];
 
@@ -62,13 +64,18 @@ __global__ void compass_ut(
   const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
 
-  for (int i_track = threadIdx.x; i_track < number_of_tracks_event; i_track += blockDim.x) {
+  for (int i = 0; i < ((number_of_tracks_event + blockDim.x - 1) / blockDim.x) + 1; i += 1) {
+    const auto i_track = i * blockDim.x + threadIdx.x;
 
-    const uint current_track_offset = event_tracks_offset + i_track;
+    __syncthreads();
 
-    if ( found_active_windows(dev_windows_layers, current_track_offset) ) {
-      int current_track = atomicAdd(active_tracks, 1);
-      shared_active_tracks[current_track] = i_track;
+    if (i_track < number_of_tracks_event) {
+      const uint current_track_offset = event_tracks_offset + i_track;
+
+      if ( found_active_windows(dev_windows_layers, current_track_offset) ) {
+        int current_track = atomicAdd(active_tracks, 1);
+        shared_active_tracks[current_track] = i_track;
+      }
     }
 
     __syncthreads();
@@ -91,6 +98,8 @@ __global__ void compass_ut(
         n_veloUT_tracks_event,
         veloUT_tracks_event);
 
+      __syncthreads();
+
       const int j = blockDim.x + threadIdx.x;
       if (j < *active_tracks) {
         shared_active_tracks[threadIdx.x] = shared_active_tracks[j];
@@ -101,10 +110,10 @@ __global__ void compass_ut(
       if (threadIdx.x == 0) {
         *active_tracks -= blockDim.x;
       }
-
-      __syncthreads();
     }
   }
+
+  __syncthreads();
 
   // remaining tracks
   if (threadIdx.x < *active_tracks) {
@@ -183,7 +192,6 @@ __device__ void compass_ut_tracking(
       best_params);  
   }
   
-
   // write the final track
   if (best_params.n_hits > 0) {
     save_track(
@@ -339,34 +347,20 @@ __device__ void save_track(
   if (p < PrVeloUTConst::minMomentum || pt < PrVeloUTConst::minPT) return;
 
   // the track will be added
-  uint n_tracks = atomicAdd(n_veloUT_tracks, 1);
+  int n_tracks = atomicAdd(n_veloUT_tracks, 1);
 
-  // TODO change this to use the pointer to the hits
-  // TODO dev_velo_tracks_hits should be const
-  const uint velo_track_hit_number = velo_tracks.number_of_hits(i_track);
-  const Velo::Consolidated::Hits velo_track_hits = velo_tracks.get_hits(dev_velo_track_hits, i_track);
-
-  // TODO Maybe have a look and optimize this if possible
-  // add VELO hits to VeloUT track
   VeloUTTracking::TrackUT track;
-  track.hitsNum = 0;
-  for (int i=0; i<velo_track_hit_number; ++i) {
-    track.addLHCbID(velo_track_hits.LHCbID[i]);
-    assert( track.hitsNum < VeloUTTracking::max_track_size);
-  }
-  track.set_qop( qop );
-
+  track.velo_track_index = i_track;
+  track.qop = qop;
+  
   // Adding hits to track
-  #pragma unroll
-  for ( int i = 0; i < N_LAYERS; ++i ) {
-    int hit_index = best_hits[i];
+  for (int i = 0; i < N_LAYERS; ++i) {
+    const int hit_index = best_hits[i];
     if (hit_index >= 0) {
-      track.addLHCbID( ut_hits.LHCbID[hit_index] );
-      assert( track.hitsNum < VeloUTTracking::max_track_size);
-
-      // TODO add one overlap hit?
+      track.lhcb_ids[track.number_of_hits++] = ut_hits.LHCbID[hit_index];
     }
   }
-  assert( n_tracks < VeloUTTracking::max_num_tracks );
-  VeloUT_tracks[n_tracks] = track;  
+
+  assert(n_tracks < VeloUTTracking::max_num_tracks);
+  VeloUT_tracks[n_tracks] = track;
 }

@@ -36,20 +36,11 @@ static constexpr uint max_track_size = VeloTracking::max_track_size + 8; // TODO
 static constexpr uint window_search_num_threads = 512;
 static constexpr uint num_threads = 32;
 
-struct TrackUT {
-  
-  unsigned int LHCbIDs[VeloUTTracking::max_track_size];
+struct TrackUT { // 6 * 4 = 24 Bytes
+  uint lhcb_ids [4];
   float qop;
-  unsigned short hitsNum = 0;
-  unsigned short veloTrackIndex;
-  
-  __host__ __device__ void addLHCbID( unsigned int id ) {
-    LHCbIDs[hitsNum++] = id;
-  }
-
-  __host__ __device__ void set_qop( float _qop ) {
-    qop = _qop;
-  }
+  unsigned short velo_track_index;
+  unsigned short number_of_hits = 0;
 };
  
 /* Structure containing indices to hits within hit array */

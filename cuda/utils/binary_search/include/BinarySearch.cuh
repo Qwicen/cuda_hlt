@@ -6,7 +6,6 @@ __device__ int binary_search_leftmost(
   const uint array_size,
   const T& value) 
 {
-  bool found = false;
   int l = 0;
   int r = array_size - 1;
   while (l < r) {

@@ -42,15 +42,12 @@ __device__ void find_best_hits(
   WindowIndicator win_ranges(win_size_shared); 
   const auto* ranges = win_ranges.get_track_candidates(threadIdx.x);
 
-  bool fourLayerSolution = false;
-
-  float best_fit = PrVeloUTConst::maxPseudoChi2;
   int temp_best_hits[N_LAYERS] = {-1, -1, -1, -1};
 
   // loop over the 3 windows, putting the index in the windows
   // loop over layer 0
-  bool found_hits = false;
-  for (int i0=0; !found_hits && i0<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i0) {
+  bool found = false;
+  for (int i0=0; !found && i0<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i0) {
 
     int i_hit0 = set_index(i0, ranges->layer[layers[0]]);
 
@@ -61,7 +58,7 @@ __device__ void find_best_hits(
     temp_best_hits[0] = i_hit0;
 
     // loop over layer 2
-    for (int i2=0; !found_hits && i2<ranges->layer[layers[2]].size0 + ranges->layer[layers[2]].size1 + ranges->layer[layers[2]].size2; ++i2) {
+    for (int i2=0; !found && i2<ranges->layer[layers[2]].size0 + ranges->layer[layers[2]].size1 + ranges->layer[layers[2]].size2; ++i2) {
 
       int i_hit2 = set_index(i2, ranges->layer[layers[2]]);
 
@@ -111,23 +108,19 @@ __device__ void find_best_hits(
         }          
       }
 
-      int n_high_thres = 0;
-      for (int i = 0; i < N_LAYERS; ++i) {
-        if (temp_best_hits[i] >= 0) { n_high_thres += ut_hits.highThreshold[temp_best_hits[i]]; }
-      }
+      // Fit the hits to get q/p, chi2
+      const auto params = pkick_fit(temp_best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
 
-      // Veto hit combinations with no high threshold hit
-      // = likely spillover
-      if (n_high_thres >= PrVeloUTConst::minHighThres) {
-        best_hits = temp_best_hits;
-        found_hits = true;
+      if (params.chi2UT < PrVeloUTConst::maxPseudoChi2) {
+        best_hits[0] = temp_best_hits[0];
+        best_hits[1] = temp_best_hits[1];
+        best_hits[2] = temp_best_hits[2];
+        best_hits[3] = temp_best_hits[3];
+        best_params = params;
+        
+        found = true;
       }
     }
-  }
-  
-  // Fit the hits to get q/p, chi2
-  if (found_hits) {
-    best_params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
   }
 }
 
@@ -144,17 +137,6 @@ __device__ BestParams pkick_fit(
   const float yyProto)
 {
   BestParams best_params;
-
-  // // accumulate the high threshold
-  // int n_high_thres = 0;
-  // #pragma unroll
-  // for (int i = 0; i < N_LAYERS; ++i) {
-  //   if (best_hits[i] >= 0) { n_high_thres += ut_hits.highThreshold[best_hits[i]]; }
-  // }
-
-  // // Veto hit combinations with no high threshold hit
-  // // = likely spillover
-  // if (n_high_thres < PrVeloUTConst::minHighThres) return best_params;
 
   // Helper stuff from velo state
   const float xMidField = velo_state.x + velo_state.tx * (PrVeloUTConst::zKink - velo_state.z);
