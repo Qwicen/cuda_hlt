@@ -26,9 +26,6 @@ __device__ void find_best_hits(
       layers[i_layer] = N_LAYERS - 1 - i_layer;
   }
 
-  const float invTheta = std::min(500.0f, 1.0f / std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty));
-  const float minMom = std::max(PrVeloUTConst::minPT * invTheta, 1.5f * Gaudi::Units::GeV);
-  const float xTol = std::abs(1.0f / ( PrVeloUTConst::distToMomentum * minMom ));
   const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
 
   const float absSlopeY = std::abs( velo_state.ty );
@@ -52,18 +49,10 @@ __device__ void find_best_hits(
 
   // loop over the 3 windows, putting the index in the windows
   // loop over layer 0
-  for (int i0=0; i0<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i0) {
+  bool found_hits = false;
+  for (int i0=0; !found_hits && i0<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i0) {
 
     int i_hit0 = set_index(i0, ranges->layer[layers[0]]);
-
-    // if (!check_tol_refine(
-    //   i_hit0,
-    //   ut_hits,
-    //   velo_state,
-    //   normFact[ut_hits.planeCode[i_hit0]],
-    //   xTol,
-    //   ut_dxDy[ut_hits.planeCode[i_hit0]])
-    // ) continue;
 
     // Get the hit to check with next layer
     const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
@@ -72,18 +61,9 @@ __device__ void find_best_hits(
     temp_best_hits[0] = i_hit0;
 
     // loop over layer 2
-    for (int i2=0; i2<ranges->layer[layers[2]].size0 + ranges->layer[layers[2]].size1 + ranges->layer[layers[2]].size2; ++i2) {
+    for (int i2=0; !found_hits && i2<ranges->layer[layers[2]].size0 + ranges->layer[layers[2]].size1 + ranges->layer[layers[2]].size2; ++i2) {
 
       int i_hit2 = set_index(i2, ranges->layer[layers[2]]);
-
-      // if (!check_tol_refine(
-      //   i_hit2,
-      //   ut_hits,
-      //   velo_state,
-      //   normFact[ut_hits.planeCode[i_hit2]],
-      //   xTol,
-      //   ut_dxDy[ut_hits.planeCode[i_hit2]])
-      // ) continue;
 
       // Get the hit to check with next layer
       const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
@@ -102,15 +82,6 @@ __device__ void find_best_hits(
 
         int i_hit1 = set_index(i1, ranges->layer[layers[1]]);
 
-        // if (!check_tol_refine(
-        //   i_hit1,
-        //   ut_hits,
-        //   velo_state,
-        //   normFact[ut_hits.planeCode[i_hit1]],
-        //   xTol,
-        //   ut_dxDy[ut_hits.planeCode[i_hit1]])
-        // ) continue;
-
         // Get the hit to check with next layer
         const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
         const float xhitLayer1 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[1]]);
@@ -123,22 +94,11 @@ __device__ void find_best_hits(
         }
       }
 
-      if( fourLayerSolution && temp_best_hits[1] < 0 ) continue;
-
       // search for quadruplet in layer3
       hitTol = PrVeloUTConst::hitTol2;
       for (int i3=0; i3<ranges->layer[layers[3]].size0 + ranges->layer[layers[3]].size1 + ranges->layer[layers[3]].size2; ++i3) {
 
         int i_hit3 = set_index(i3, ranges->layer[layers[3]]);
-
-        // if (!check_tol_refine(
-        //   i_hit3,
-        //   ut_hits,
-        //   velo_state,
-        //   normFact[ut_hits.planeCode[i_hit3]],
-        //   xTol,
-        //   ut_dxDy[ut_hits.planeCode[i_hit3]])
-        // ) continue;
 
         // Get the hit to check
         const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
@@ -151,20 +111,23 @@ __device__ void find_best_hits(
         }          
       }
 
-      // Fit the hits to get q/p, chi2
-      best_params = pkick_fit(temp_best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
-
-      if (best_params.chi2UT < best_fit) {
-        best_hits[0] = temp_best_hits[0];
-        best_hits[1] = temp_best_hits[1];
-        best_hits[2] = temp_best_hits[2];
-        best_hits[3] = temp_best_hits[3];
+      int n_high_thres = 0;
+      for (int i = 0; i < N_LAYERS; ++i) {
+        if (temp_best_hits[i] >= 0) { n_high_thres += ut_hits.highThreshold[temp_best_hits[i]]; }
       }
 
-      if(!fourLayerSolution && best_params.n_hits > 0) {
-        fourLayerSolution = true;
-      } 
+      // Veto hit combinations with no high threshold hit
+      // = likely spillover
+      if (n_high_thres >= PrVeloUTConst::minHighThres) {
+        best_hits = temp_best_hits;
+        found_hits = true;
+      }
     }
+  }
+  
+  // Fit the hits to get q/p, chi2
+  if (found_hits) {
+    best_params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
   }
 }
 
@@ -182,16 +145,16 @@ __device__ BestParams pkick_fit(
 {
   BestParams best_params;
 
-  // accumulate the high threshold
-  int n_high_thres = 0;
-  #pragma unroll
-  for (int i = 0; i < N_LAYERS; ++i) {
-    if (best_hits[i] >= 0) { n_high_thres += ut_hits.highThreshold[best_hits[i]]; }
-  }
+  // // accumulate the high threshold
+  // int n_high_thres = 0;
+  // #pragma unroll
+  // for (int i = 0; i < N_LAYERS; ++i) {
+  //   if (best_hits[i] >= 0) { n_high_thres += ut_hits.highThreshold[best_hits[i]]; }
+  // }
 
-  // Veto hit combinations with no high threshold hit
-  // = likely spillover
-  if (n_high_thres < PrVeloUTConst::minHighThres) return best_params;
+  // // Veto hit combinations with no high threshold hit
+  // // = likely spillover
+  // if (n_high_thres < PrVeloUTConst::minHighThres) return best_params;
 
   // Helper stuff from velo state
   const float xMidField = velo_state.x + velo_state.tx * (PrVeloUTConst::zKink - velo_state.z);
