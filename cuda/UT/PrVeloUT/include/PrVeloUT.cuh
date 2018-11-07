@@ -35,6 +35,7 @@ struct TrackHelper{
   __host__ __device__ TrackHelper(
     const MiniState& state
   ) {
+    bestHitIndices[0] = bestHitIndices[1] = bestHitIndices[2] = bestHitIndices[3] = 0;
     bestParams[0] = bestParams[2] = bestParams[3] = 0.;
     bestParams[1] = PrVeloUTConst::maxPseudoChi2;
     xMidField = state.x + state.tx*(PrVeloUTConst::zKink-state.z);
