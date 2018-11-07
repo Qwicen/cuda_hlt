@@ -169,15 +169,8 @@ __device__ void compass_ut_tracking(
     best_hits,
     best_params);
 
-  // Count found hits
-  int total_num_hits = 0;
-  #pragma unroll
-  for (int i = 0; i < N_LAYERS; ++i) {
-    if (best_hits[i] >= 0) total_num_hits++;
-  }
-
   // write the final track
-  if (total_num_hits >= (N_LAYERS - 1)) {
+  if (best_params.n_hits >= (N_LAYERS - 1)) {
     save_track(
       i_track,
       bdl_table,
@@ -185,7 +178,7 @@ __device__ void compass_ut_tracking(
       best_params,
       dev_velo_track_hits,
       velo_tracks,
-      total_num_hits,
+      best_params.n_hits,
       best_hits,
       ut_hits,
       dev_ut_dxDy,
@@ -242,17 +235,24 @@ __device__ __inline__ void fill_shared_windows(
 //=========================================================================
 // Determine if there are valid windows for this track
 //=========================================================================
-__device__ __inline__ bool found_active_windows(
-  const int* windows_layers,
-  const uint current_track_offset)
+__device__ __inline__ bool found_active_windows(const int* windows_layers, const uint current_track_offset)
 {
   const int total_offset = 6 * N_LAYERS * current_track_offset;
 
-  for (int i=total_offset; i<=total_offset + 18 + 5; ++i) {
-    if (windows_layers[i] != -1) return true;
-  }
+  const bool first_win_found = windows_layers[total_offset] != -1 || 
+                               windows_layers[total_offset + 2] != -1 ||
+                               windows_layers[total_offset + 4] != -1;
+  const bool second_win_found = windows_layers[total_offset + 12] != -1 ||
+                                windows_layers[total_offset + 12 + 2] != -1 ||
+                                windows_layers[total_offset + 12 + 4] != -1;
+  const bool last_win_found = windows_layers[total_offset + 6] != -1 || 
+                              windows_layers[total_offset + 6 + 2] != -1 ||
+                              windows_layers[total_offset + 6 + 4] != -1 || 
+                              windows_layers[total_offset + 18] != -1 ||
+                              windows_layers[total_offset + 18 + 2] != -1 ||
+                              windows_layers[total_offset + 18 + 4] != -1;
 
-  return false;
+  return first_win_found && second_win_found && last_win_found;
 }
 
 //=========================================================================
@@ -340,23 +340,22 @@ __device__ void find_best_hits(
   };  
 
   // // Get windows of all layers
-  // WindowIndicator win_ranges(dev_windows_layers); 
-  // const auto* ranges = win_ranges.get_track_candidates(i_track);
-  const int idx = 24 * threadIdx.x;
+  WindowIndicator win_ranges(win_size_shared); 
+  const auto* ranges = win_ranges.get_track_candidates(threadIdx.x);
 
   bool fourLayerSolution = false;
 
   // loop over the 3 windows, putting the index in the windows
   // loop over layer 0
-  for (int i0=0; i0<win_size_shared[idx + 1] + win_size_shared[idx + 3] + win_size_shared[idx + 5]; ++i0) {
+  for (int i0=0; i0<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i0) {
 
     int i_hit0 = set_index(
       i0,
-      win_size_shared[idx],
-      win_size_shared[idx + 2],
-      win_size_shared[idx + 4],
-      win_size_shared[idx + 1],
-      win_size_shared[idx + 3]);
+      ranges->layer[layers[0]].from0,
+      ranges->layer[layers[0]].from1,
+      ranges->layer[layers[0]].from2,
+      ranges->layer[layers[0]].size0,
+      ranges->layer[layers[0]].size1);
 
     if (!check_tol_refine(
       i_hit0,
@@ -374,15 +373,15 @@ __device__ void find_best_hits(
     best_hits[0] = i_hit0;
 
     // loop over layer 2
-    for (int i2=0; i2<win_size_shared[idx + 12 + 1] + win_size_shared[idx + 12 + 3] + win_size_shared[idx + 12 + 5]; ++i2) {
+    for (int i2=0; i2<ranges->layer[layers[2]].size0 + ranges->layer[layers[2]].size1 + ranges->layer[layers[2]].size2; ++i2) {
 
       int i_hit2 = set_index(
         i2,
-        win_size_shared[idx + 12],
-        win_size_shared[idx + 12 + 2],
-        win_size_shared[idx + 12 + 4],
-        win_size_shared[idx + 12 + 1],
-        win_size_shared[idx + 12 + 3]);
+        ranges->layer[layers[2]].from0,
+        ranges->layer[layers[2]].from1,
+        ranges->layer[layers[2]].from2,
+        ranges->layer[layers[2]].size0,
+        ranges->layer[layers[2]].size1);
 
       if (!check_tol_refine(
         i_hit2,
@@ -406,15 +405,15 @@ __device__ void find_best_hits(
       best_hits[1] = -1;
 
       // search for triplet in layer1
-      for (int i1=0; i1<win_size_shared[idx + 6 + 1] + win_size_shared[idx + 6 + 3] + win_size_shared[idx + 6 + 5]; ++i1) {
+      for (int i1=0; i1<ranges->layer[layers[1]].size0 + ranges->layer[layers[1]].size1 + ranges->layer[layers[1]].size2; ++i1) {
 
         int i_hit1 = set_index(
           i1,
-          win_size_shared[idx + 6],
-          win_size_shared[idx + 6 + 2],
-          win_size_shared[idx + 6 + 4],
-          win_size_shared[idx + 6 + 1],
-          win_size_shared[idx + 6 + 3]);
+          ranges->layer[layers[1]].from0,
+          ranges->layer[layers[1]].from1,
+          ranges->layer[layers[1]].from2,
+          ranges->layer[layers[1]].size0,
+          ranges->layer[layers[1]].size1);
 
         if (!check_tol_refine(
           i_hit1,
@@ -441,15 +440,15 @@ __device__ void find_best_hits(
 
       // search for quadruplet in layer3
       hitTol = PrVeloUTConst::hitTol2;
-      for (int i3=0; i3<win_size_shared[idx + 18 + 1] + win_size_shared[idx + 18 + 3] + win_size_shared[idx + 18 + 5]; ++i3) {
+      for (int i3=0; i3<ranges->layer[layers[3]].size0 + ranges->layer[layers[3]].size1 + ranges->layer[layers[3]].size2; ++i3) {
 
         int i_hit3 = set_index(
           i3,
-          win_size_shared[idx + 18],
-          win_size_shared[idx + 18 + 2],
-          win_size_shared[idx + 18 + 4],
-          win_size_shared[idx + 18 + 1],
-          win_size_shared[idx + 18 + 3]);
+          ranges->layer[layers[3]].from0,
+          ranges->layer[layers[3]].from1,
+          ranges->layer[layers[3]].from2,
+          ranges->layer[layers[3]].size0,
+          ranges->layer[layers[3]].size1);
 
         if (!check_tol_refine(
           i_hit3,

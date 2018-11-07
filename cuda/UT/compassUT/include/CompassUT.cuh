@@ -30,8 +30,7 @@ struct WindowIndicator {
 
   __host__ __device__ const TrackCandidates* get_track_candidates(const int i_track)
   {
-    // return reinterpret_cast<const TrackCandidates*>(m_base_pointer + (6 * N_LAYERS * i_track));
-    return reinterpret_cast<const TrackCandidates*>(m_base_pointer + (24 * i_track));
+    return reinterpret_cast<const TrackCandidates*>(m_base_pointer + (6 * N_LAYERS * i_track));
   }
 };
 

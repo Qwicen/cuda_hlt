@@ -231,6 +231,8 @@ typedef std::tuple<
   dev_velo_track_hits,
   dev_atomics_veloUT,
   dev_veloUT_tracks,
+  dev_atomics_compassUT,
+  dev_compassUT_tracks,
   dev_scifi_tracks,
   dev_n_scifi_tracks
 > output_arguments_t;
