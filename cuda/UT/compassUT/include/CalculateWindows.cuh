@@ -32,3 +32,12 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
   const float invNormFact,
   const float xTol,
   const int sector_group);
+
+__host__ __device__ void tol_refine (
+  int& first_candidate,
+  int& last_candidate,
+  const UTHits& ut_hits,
+  const MiniState& velo_state,
+  const float invNormfact,
+  const float xTolNormFact,
+  const float dxDy);

@@ -26,31 +26,43 @@ __device__ bool velo_track_in_UTA_acceptance(const MiniState& state)
 //=========================================================================
 // Check if hit is inside tolerance and refine by Y
 //=========================================================================
-__host__ __device__ __inline__ bool is_valid_tol_refine (
-  const int hit_index,
+__host__ __device__ void tol_refine (
+  int& first_candidate,
+  int& last_candidate,
   const UTHits& ut_hits,
   const MiniState& velo_state,
-  const float normFactNum,
-  const float xTol,
+  const float invNormfact,
+  const float xTolNormFact,
   const float dxDy)
 {
-  const float xTolNormFact = xTol * (1.0f / normFactNum);
+  bool first_found = false;
+  for (int i=first_candidate; i<last_candidate; ++i) {
+    const auto zInit = ut_hits.zAtYEq0[i];
+    const auto yApprox = velo_state.y + velo_state.ty * (zInit - velo_state.z);
+    const auto xOnTrackProto = velo_state.x + velo_state.tx * (zInit - velo_state.z);
+    const auto xx = ut_hits.xAt(i, yApprox, dxDy);
+    const auto dx = xx - xOnTrackProto;
 
-  const float zInit = ut_hits.zAtYEq0[hit_index];
-  const float yApprox = velo_state.y + velo_state.ty * (zInit - velo_state.z);
-  const float xOnTrackProto = velo_state.x + velo_state.tx * (zInit - velo_state.z);
+    if (dx >= -xTolNormFact &&
+        dx <= xTolNormFact &&
+        !ut_hits.isNotYCompatible(i, yApprox,
+                                  PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx * invNormfact)))
+    {
+      // It is compatible
+      if (!first_found) {
+        first_found = true;
+        first_candidate = i;
+      }
+    } else if (first_found) {
+      last_candidate = i;
+      break;
+    }
+  }
 
-  const float xx = ut_hits.xAt(hit_index, yApprox, dxDy);
-  const float dx = xx - xOnTrackProto;
-
-  if (dx < -xTolNormFact || dx > xTolNormFact) return false;
-
-  // Now refine the tolerance in Y
-  if (ut_hits.isNotYCompatible(
-        hit_index, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx * (1.0f / normFactNum))))
-    return false;
-
-  return true;
+  if (!first_found) {
+    first_candidate = -1;
+    last_candidate = -1;
+  }
 }
 
 //=============================================================================
@@ -90,6 +102,7 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
   const float y_track     = velo_state.y + velo_state.ty * (z_at_layer - velo_state.z);
   const float x_track     = velo_state.x + velo_state.tx * (z_at_layer - velo_state.z);
   const float invNormFact = 1.0f / normFact[layer];
+  const float xTolNormFact = xTol * invNormFact;
 
   // Second sector group search
   // const float tolerance_in_x = xTol * invNormFact;
@@ -119,7 +132,7 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
       dx_dy,
       normFact[layer],
       invNormFact,
-      xTol,
+      xTolNormFact,
       sector_group
     );
 
@@ -141,7 +154,7 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
         dx_dy,
         normFact[layer],
         invNormFact,
-        xTol,
+        xTolNormFact,
         left_group
       );
 
@@ -164,7 +177,7 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
         dx_dy,
         normFact[layer],
         invNormFact,
-        xTol,
+        xTolNormFact,
         right_group
       );
 
@@ -189,7 +202,7 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
   const float dx_dy,
   const float normFact,
   const float invNormFact,
-  const float xTol,
+  const float xTolNormFact,
   const int sector_group)
 {
   const float x_at_left_sector  = dev_unique_sector_xs[sector_group];
@@ -220,36 +233,8 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
     first_candidate += sector_group_offset;
     last_candidate = last_candidate == 0 ? first_candidate + 1 : first_candidate + last_candidate;
 
-    // bool found = false;
-
-    // // refine first candidate
-    // for (int i=first_candidate; i<last_candidate; ++i) {
-    //   if (is_valid_tol_refine(i, ut_hits, velo_state, normFact, xTol, dx_dy)) {
-    //     first_candidate = i;
-    //     found = true;
-    //     break;
-    //   }
-    // }
-
-    // if (!found) {
-    //   first_candidate = -1;
-    //   last_candidate = -1;      
-    // } 
-    // else {
-    //   bool last_found = false;
-
-    //   for (int i=last_candidate; i>first_candidate; --i) {
-    //     if (is_valid_tol_refine(i, ut_hits, velo_state, normFact, xTol,dx_dy)) {
-    //       last_candidate = i;
-    //       last_found = true;
-    //       break;
-    //     } 
-    //   }
-
-    //   if (!last_found) {
-    //     last_candidate = first_candidate + 1;
-    //   }      
-    // }
+    // refine candidates
+    tol_refine(first_candidate, last_candidate, ut_hits, velo_state, invNormFact, xTolNormFact, dx_dy);
   }
 
   return {first_candidate, last_candidate};
