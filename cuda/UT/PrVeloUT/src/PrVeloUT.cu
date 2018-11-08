@@ -129,7 +129,7 @@ __device__ bool getHits(
         continue;
       }
 
-      for (int i=first_sector_group_in_layer + 2; i<last_sector_group_in_layer; ++i) {
+      for (int i=first_sector_group_in_layer + 1; i<last_sector_group_in_layer; ++i) {
         if (dev_unique_sector_xs[i] > lowerBoundX) {
           lowerBoundSectorGroup = i-1;
           break;
