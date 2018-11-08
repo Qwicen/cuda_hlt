@@ -7,9 +7,7 @@
 #endif
 
 
-void checkPVs(  const std::string& foldername,  const bool& fromNtuple, uint number_of_files, Vertex * rec_vertex, int* number_of_vertex)
-
-
+void checkPVs(  const std::string& foldername, uint number_of_files, Vertex * rec_vertex, int* number_of_vertex)
 {
    std::cout << "Checking PVs: " << std::endl;
    std::vector<std::string> folderContents = list_folder(foldername);

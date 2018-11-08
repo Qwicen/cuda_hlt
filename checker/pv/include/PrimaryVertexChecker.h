@@ -18,7 +18,7 @@
 int m_nTracksToBeRecble = 4;
 double m_dzIsolated = 10; //mm
 bool m_matchByTracks = false;
-
+void checkPVs(  const std::string& foldername, uint number_of_files, Vertex * rec_vertex, int* number_of_vertex);
 
 struct MCVertex {
   double x;

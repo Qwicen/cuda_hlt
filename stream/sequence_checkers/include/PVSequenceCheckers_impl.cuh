@@ -1,4 +1,4 @@
-#include "ConsolidateTracks.cuh"
+#include "PrimaryVertexChecker.h"
 
 /**
  * @brief Specialization for any Velo reconstruction algorithm invoking
@@ -12,6 +12,8 @@ void SequenceVisitor::check<fitSeeds_t>(
   const CheckerInvoker& checker_invoker) const
 {
   info_cout << "Checking GPU PVs" << std::endl;
-
+  const std::string foldername = ".";
+  uint number_of_files = 1;
+  checkPVs( "/home/freiss/lxplus_work/public/recept/BrunelDev_Wednesday/true_pvs",  number_of_events_requested, host_buffers.host_reconstructed_pvs, host_buffers.host_number_of_vertex);
   
 }

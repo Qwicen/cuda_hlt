@@ -137,6 +137,7 @@ target_link_libraries(cu_hlt
   Stream
   x86Clustering
   TrackChecking
+  PVChecking
   CheckClustering)
 
 if (ROOT_FOUND)
