@@ -162,7 +162,7 @@ __global__ void scifi_pr_forward(
     if ( i_veloUT_track < *n_veloUT_tracks_event ) {
       const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks_event[i_veloUT_track];
       
-      const uint velo_states_index = event_tracks_offset + veloUTTr.veloTrackIndex;
+      const uint velo_states_index = event_tracks_offset + veloUTTr.velo_track_index;
       const MiniState velo_state {velo_states, velo_states_index};
       
       find_forward_tracks(

@@ -371,50 +371,19 @@ __host__ __device__ void prepareOutputTrack(
   uint n_tracks = *n_veloUT_tracks - 1;
 #endif
 
-  
-  const float txUT = helper.bestParams[3];
-
-  // TODO: Maybe have a look and optimize this if possible
   VeloUTTracking::TrackUT track;
-  track.hitsNum = 0;
-  for (int i=0; i<velo_track_hit_number; ++i) {
-    track.addLHCbID(velo_track_hits.LHCbID[i]);
-    assert( track.hitsNum < VeloUTTracking::max_track_size);
-  }
-  track.set_qop( qop );
-  track.veloTrackIndex = i_velo_track;
+  track.velo_track_index = i_velo_track;
+  track.qop = qop;
   
-  // Adding overlap hits
+  // Adding hits to track
   for ( int i_hit = 0; i_hit < helper.n_hits; ++i_hit ) {
     const int hit_index = helper.bestHitIndices[i_hit];
-    
-    track.addLHCbID( ut_hits.LHCbID[hit_index] );
-    assert( track.hitsNum < VeloUTTracking::max_track_size);
-    
-    const int planeCode = ut_hits.planeCode[hit_index];
-    const float xhit = x_pos_layers[ planeCode ][ hitCandidateIndices[i_hit] ];
-    const float zhit = ut_hits.zAtYEq0[hit_index];
-
-    const int layer_offset = ut_hit_offsets.layer_offset(planeCode);
-    for ( int i_ohit = 0; i_ohit < n_hitCandidatesInLayers[planeCode]; ++i_ohit ) {
-      const int ohit_index = hitCandidatesInLayers[planeCode][i_ohit];
-      const float zohit  = ut_hits.zAtYEq0[ohit_index];
-      
-      if(zohit==zhit) continue;
-      
-      const float xohit = x_pos_layers[ planeCode ][ i_ohit];
-      const float xextrap = xhit + txUT*(zhit-zohit);
-      if( xohit-xextrap < -PrVeloUTConst::overlapTol) continue;
-      if( xohit-xextrap > PrVeloUTConst::overlapTol) break;
-      
-      track.addLHCbID(ut_hits.LHCbID[ohit_index]);
-      assert( track.hitsNum < VeloUTTracking::max_track_size);
-      
-      // -- only one overlap hit
-      break;
+    if (hit_index >= 0) {
+      track.lhcb_ids[track.number_of_hits++] = ut_hits.LHCbID[hit_index];
     }
   }
-  assert( n_tracks < VeloUTTracking::max_num_tracks );
+
+  assert(n_tracks < VeloUTTracking::max_num_tracks);
   VeloUT_tracks[n_tracks] = track;
 }
 
