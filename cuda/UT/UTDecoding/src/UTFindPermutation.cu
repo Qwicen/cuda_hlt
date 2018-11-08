@@ -39,10 +39,14 @@ __global__ void ut_find_permutation(
   const uint sector_group_offset = ut_hit_offsets.sector_group_offset(sector_group_number);
   const uint sector_group_number_of_hits = ut_hit_offsets.sector_group_number_of_hits(sector_group_number);
 
+  // Load yBegin into a shared memory container
+  // TODO: Find a proper maximum and cover corner cases
+  __shared__ float s_y_begin [UTDecoding::ut_max_hits_shared_sector_group];
+
   if (sector_group_number_of_hits > 0) {
-    // Load yBegin into a shared memory container
-    // TODO: Find a proper maximum and cover corner cases
-    __shared__ float s_y_begin [UTDecoding::ut_max_hits_shared_sector_group];
+  
+    __syncthreads();  
+    
     assert(sector_group_number_of_hits < UTDecoding::ut_max_hits_shared_sector_group);
 
     for (int i=threadIdx.x; i<sector_group_number_of_hits; i+=blockDim.x) {
