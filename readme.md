@@ -6,7 +6,7 @@ a full HLT1 realization on GPU.
 
 Requisites
 ----------
-The project requires a graphics card with CUDA support, CUDA 10.0, Cmake 3.11.2 or higher and a compiler supporting C++14. It also requires the developer package of `tbb`.
+The project requires a graphics card with CUDA support, CUDA 10.0 and a compiler supporting C++14. It also requires the developer package of `tbb`.
 
 If you are working from a node with CVMFS and CentOS 7, we suggest the following setup:
 
