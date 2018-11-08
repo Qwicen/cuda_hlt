@@ -156,37 +156,27 @@ __device__ void compass_ut_tracking(
   // select velo track to join with UT hits
   const MiniState velo_state{velo_states, current_track_offset};
 
-  int best_hits[N_LAYERS] = {-1, -1, -1, -1};
-  BestParams best_params;
-
   fill_shared_windows( 
     dev_windows_layers, 
     current_track_offset, 
     win_size_shared);
   
   // Find compatible hits in the windows for this VELO track
-  find_best_hits(
+  best_hits_and_params = find_best_hits(
     win_size_shared,
     ut_hits,
     ut_hit_offsets,
     velo_state,
-    dev_ut_dxDy,
-    true,
-    best_hits,
-    best_params);
+    dev_ut_dxDy);
 
-  if (best_params.n_hits < N_LAYERS) {
-    find_best_hits(
-      win_size_shared,
-      ut_hits,
-      ut_hit_offsets,
-      velo_state,
-      dev_ut_dxDy,
-      false,
-      best_hits,
-      best_params);  
-  }
-  
+  const int best_hits[N_LAYERS] = {
+    std::get<0>(best_hits_and_params),
+    std::get<1>(best_hits_and_params),
+    std::get<2>(best_hits_and_params),
+    std::get<3>(best_hits_and_params)
+  };
+  const BestParams best_params = std::get<4>(best_hits_and_params);
+
   // write the final track
   if (best_params.n_hits >= 3) {
     save_track(
