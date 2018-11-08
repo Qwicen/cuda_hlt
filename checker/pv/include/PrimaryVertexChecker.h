@@ -5,7 +5,7 @@
 
 #include "Tools.h"
 
-
+#include "InputTools.h"
 
 #include "patPV_Definitions.cuh"
 #include "TH1D.h"

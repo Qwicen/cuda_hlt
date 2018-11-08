@@ -4,6 +4,7 @@
 #include "VeloSequenceCheckers_impl.cuh"
 #include "UTSequenceCheckers_impl.cuh"
 #include "SciFiSequenceCheckers_impl.cuh"
+#include "PVSequenceCheckers_impl.cuh"
 
 /**
  * @brief Sets up the chain that will be executed later.
