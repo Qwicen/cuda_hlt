@@ -65,13 +65,16 @@ __global__ void ut_pre_decode(
       const uint32_t idx_offset = dev_ut_region_offsets[idx] + sector;
 
       const uint32_t firstStrip = geometry.firstStrip[idx_offset];
+      const float dp0diX = geometry.dp0diX[idx_offset];
       const float dp0diY = geometry.dp0diY[idx_offset];
+      const float p0X = geometry.p0X[idx_offset];
       const float p0Y = geometry.p0Y[idx_offset];
 
       const float numstrips = (fracStrip / 4.f) + strip - firstStrip;
 
-      // Calculate just Y value
+      // Calculate just Y value, add a tiny fraction of X to have deterministic sort
       const float yBegin = p0Y + numstrips * dp0diY;
+      const float correction = (numstrips * dp0diX) * 0.0001f;
 
       const uint base_sector_group_offset =
           dev_unique_x_sector_offsets[idx_offset];
@@ -83,7 +86,15 @@ __global__ void ut_pre_decode(
 
       const uint hit_index =
           hit_offsets[base_sector_group_offset] + current_hit_count;
-      ut_hits.yBegin[hit_index] = yBegin;
+      ut_hits.yBegin[hit_index] = yBegin + correction;
+
+      // Check the yBegin is actually changed by adding correction
+      assert(yBegin != (yBegin + correction) || correction == 0.f);
+
+      // TODO: This happens sometimes. Find a better solution
+      // if (std::abs(correction) > std::abs(yBegin / 2)) {
+      //   printf("Something bad could happen %f, %f\n", yBegin, correction);
+      // }
 
       // Raw bank hit index:
       // [raw bank 8 bits] [hit id inside raw bank 24 bits]
