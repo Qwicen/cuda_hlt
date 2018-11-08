@@ -36,7 +36,8 @@ __host__ __device__ void tol_refine (
   const float dxDy)
 {
   bool first_found = false;
-  for (int i=first_candidate; i<last_candidate; ++i) {
+  const auto const_last_candidate = last_candidate;
+  for (int i=first_candidate; i<const_last_candidate; ++i) {
     const auto zInit = ut_hits.zAtYEq0[i];
     const auto yApprox = velo_state.y + velo_state.ty * (zInit - velo_state.z);
     const auto xOnTrackProto = velo_state.x + velo_state.tx * (zInit - velo_state.z);
@@ -53,15 +54,15 @@ __host__ __device__ void tol_refine (
         first_found = true;
         first_candidate = i;
       }
-    } else if (first_found) {
       last_candidate = i;
-      break;
     }
   }
 
   if (!first_found) {
     first_candidate = -1;
     last_candidate = -1;
+  } else {
+    ++last_candidate;
   }
 }
 

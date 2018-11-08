@@ -67,7 +67,6 @@ __global__ void ut_pre_decode(
       const uint32_t firstStrip = geometry.firstStrip[idx_offset];
       const float dp0diX = geometry.dp0diX[idx_offset];
       const float dp0diY = geometry.dp0diY[idx_offset];
-      const float p0X = geometry.p0X[idx_offset];
       const float p0Y = geometry.p0Y[idx_offset];
 
       const float numstrips = (fracStrip / 4.f) + strip - firstStrip;

@@ -188,7 +188,7 @@ __device__ void compass_ut_tracking(
   }
   
   // write the final track
-  if (best_params.n_hits > 0) {
+  if (best_params.n_hits >= 3) {
     save_track(
       i_track,
       bdl_table,
