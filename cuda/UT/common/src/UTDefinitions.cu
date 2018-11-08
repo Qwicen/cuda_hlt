@@ -91,18 +91,14 @@ UTHit::UTHit(float    ut_yBegin,
              float    ut_zAtYEq0,
              float    ut_xAtYEq0,
              float    ut_weight,
-             uint32_t ut_highThreshold,
-             uint32_t ut_LHCbID,
-             uint32_t ut_planeCode
+             uint32_t ut_LHCbID
              ) {
   yBegin        = ut_yBegin       ;
   yEnd          = ut_yEnd         ;
   zAtYEq0       = ut_zAtYEq0      ;
   xAtYEq0       = ut_xAtYEq0      ;
   weight        = ut_weight       ;
-  highThreshold = ut_highThreshold;
   LHCbID        = ut_LHCbID       ;
-  planeCode     = ut_planeCode    ;
 }
 
 UTHits::UTHits(uint32_t* base_pointer, uint32_t total_number_of_hits) {
@@ -112,9 +108,7 @@ UTHits::UTHits(uint32_t* base_pointer, uint32_t total_number_of_hits) {
   zAtYEq0 = reinterpret_cast<float*>(base_pointer + 3*total_number_of_hits);
   xAtYEq0 = reinterpret_cast<float*>(base_pointer + 4*total_number_of_hits);
   weight = reinterpret_cast<float*>(base_pointer + 5*total_number_of_hits);
-  highThreshold = base_pointer + 6*total_number_of_hits;
-  LHCbID = base_pointer + 7*total_number_of_hits;
-  planeCode = base_pointer + 8*total_number_of_hits;
+  LHCbID = base_pointer + 6*total_number_of_hits;
 }
 
 UTHit UTHits::getHit(uint32_t index) const {
@@ -123,8 +117,6 @@ UTHit UTHits::getHit(uint32_t index) const {
    zAtYEq0[index],
    xAtYEq0[index],
    weight[index],
-   highThreshold[index],
-   LHCbID[index],
-   planeCode[index]
+   LHCbID[index]
  };
 }

@@ -106,11 +106,9 @@ __global__ void veloUT(
           ut_hit_offsets,
           fudgeFactors,
           velo_state,
-          i_track,
           dev_ut_dxDy,
           dev_unique_sector_xs,
-          dev_unique_x_sector_layer_offsets,
-          velo_tracks)
+          dev_unique_x_sector_layer_offsets)
         ) continue;
 
     TrackHelper helper {velo_state};
@@ -165,7 +163,5 @@ __global__ void veloUT(
         i_track,
         bdlTable);
     }
-    
-  } // velo tracks
- 
+  } // velo tracks 
 }

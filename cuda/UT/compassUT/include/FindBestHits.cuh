@@ -22,7 +22,8 @@ __device__ BestParams pkick_fit(
   const UTHits& ut_hits,
   const MiniState& velo_state,
   const float* ut_dxDy,
-  const float yyProto);
+  const float yyProto,
+  const bool forward);
 
 __device__ __inline__ int set_index(
   const int i, 

@@ -94,8 +94,6 @@ __global__ void ut_decode_raw_banks_in_order(
     ut_hits.zAtYEq0[hit_index] = zAtYEq0;
     ut_hits.xAtYEq0[hit_index] = xAtYEq0;
     ut_hits.weight[hit_index] = weight;
-    ut_hits.highThreshold[hit_index] = highThreshold;
     ut_hits.LHCbID[hit_index] = LHCbID;
-    ut_hits.planeCode[hit_index] = planeCode;
   }
 }

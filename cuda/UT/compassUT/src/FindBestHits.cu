@@ -109,7 +109,7 @@ __device__ void find_best_hits(
       }
 
       // Fit the hits to get q/p, chi2
-      const auto params = pkick_fit(temp_best_hits, ut_hits, velo_state, ut_dxDy, yyProto);
+      const auto params = pkick_fit(temp_best_hits, ut_hits, velo_state, ut_dxDy, yyProto, forward);
 
       if (params.chi2UT < PrVeloUTConst::maxPseudoChi2) {
         best_hits[0] = temp_best_hits[0];
@@ -134,7 +134,8 @@ __device__ BestParams pkick_fit(
   const UTHits& ut_hits,
   const MiniState& velo_state,
   const float* ut_dxDy,
-  const float yyProto)
+  const float yyProto,
+  const bool forward)
 {
   BestParams best_params;
 
@@ -151,9 +152,9 @@ __device__ BestParams pkick_fit(
   for (int i = 0; i < N_LAYERS; ++i) {
     int hit_index = best_hits[i];
     if (hit_index >= 0) {
-
       const float wi = ut_hits.weight[hit_index];
-      const float dxDy = ut_dxDy[ut_hits.planeCode[hit_index]];
+      const int plane_code = forward ? i : N_LAYERS - 1 - i;
+      const float dxDy = ut_dxDy[plane_code];
       const float ci = ut_hits.cosT(hit_index, dxDy);
       const float dz = 0.001f * (ut_hits.zAtYEq0[hit_index] - PrVeloUTConst::zMidUT);
       // x_pos_layer
@@ -189,7 +190,8 @@ __device__ BestParams pkick_fit(
       const float zd = ut_hits.zAtYEq0[hit_index];
       const float xd = xUTFit + xSlopeUTFit * (zd - PrVeloUTConst::zMidUT);
       // x_pos_layer
-      const float dxDy = ut_dxDy[ut_hits.planeCode[hit_index]];
+      const int plane_code = forward ? i : N_LAYERS - 1 - i;
+      const float dxDy = ut_dxDy[plane_code];
       const float yy = yyProto + (velo_state.ty * ut_hits.zAtYEq0[hit_index]);
       const float x = ut_hits.xAt(hit_index, yy, dxDy);
 

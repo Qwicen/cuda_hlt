@@ -144,9 +144,7 @@ struct UTHit {
   float zAtYEq0;
   float xAtYEq0;
   float weight;
-  uint32_t highThreshold;
   uint32_t LHCbID;
-  uint32_t planeCode;
 
   UTHit() = default;
 
@@ -155,9 +153,7 @@ struct UTHit {
         float zAtYEq0,
         float xAtYEq0,
         float weight,
-        uint32_t highThreshold,
-        uint32_t LHCbID,
-        uint32_t planeCode
+        uint32_t LHCbID
         );
 
   #define cmpf(a, b) (fabs((a) - (b)) > 0.000065f)
@@ -168,7 +164,6 @@ struct UTHit {
     if (cmpf(zAtYEq0,    h.zAtYEq0))      return true;
     if (cmpf(xAtYEq0,    h.xAtYEq0))      return true;
     if (cmpf(weight,     h.weight))       return true;
-    if (highThreshold != h.highThreshold) return true;
     if (LHCbID        != h.LHCbID)        return true;
     
     return false;
@@ -185,9 +180,7 @@ struct UTHit {
       << ut_hit.yEnd << ", "
       << ut_hit.zAtYEq0 << ", "
       << ut_hit.xAtYEq0 << ", "
-      << ut_hit.weight << ", "
-      << ut_hit.highThreshold << ", "
-      << ut_hit.planeCode << "}";
+      << ut_hit.weight << "}";
 
     return stream;
   }
@@ -200,15 +193,13 @@ struct UTHit {
    one Hits structure exists per event
 */
 struct UTHits {
-  constexpr static uint number_of_arrays = 9;
+  constexpr static uint number_of_arrays = 7;
   float* yBegin;
   float* yEnd;
   float* zAtYEq0;
   float* xAtYEq0;
   float* weight;
-  uint32_t* highThreshold;
   uint32_t* LHCbID;
-  uint32_t* planeCode;
   uint32_t* raw_bank_index;
 
   /**
