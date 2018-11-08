@@ -2,6 +2,12 @@
 
 constexpr uint N_LAYERS = VeloUTTracking::n_layers;
 
+namespace CompassUT {
+
+constexpr uint max_considered_before_found = 100;
+
+}
+
 //=========================================================================
 // Point to correct position for windows pointers
 //=========================================================================

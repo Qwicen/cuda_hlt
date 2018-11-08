@@ -10,7 +10,6 @@ __device__ void find_best_hits(
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
-  const float* fudgeFactors,
   const float* ut_dxDy,
   const bool forward,
   int* best_hits,
@@ -28,26 +27,20 @@ __device__ void find_best_hits(
 
   const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
 
-  const float absSlopeY = std::abs( velo_state.ty );
-  const int index = (int)(absSlopeY*100 + 0.5f);
-  assert( 3 + 4*index < PrUTMagnetTool::N_dxLay_vals );  
-  const std::array<float,4> normFact = { 
-    fudgeFactors[4*index], 
-    fudgeFactors[1 + 4*index], 
-    fudgeFactors[2 + 4*index], 
-    fudgeFactors[3 + 4*index] 
-  };  
-
   // // Get windows of all layers
   WindowIndicator win_ranges(win_size_shared); 
   const auto* ranges = win_ranges.get_track_candidates(threadIdx.x);
 
+  int best_number_of_hits = 3;
   int temp_best_hits[N_LAYERS] = {-1, -1, -1, -1};
+  bool found = false;
+  int considered = 0;
 
   // loop over the 3 windows, putting the index in the windows
   // loop over layer 0
-  bool found = false;
-  for (int i0=0; !found && i0<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i0) {
+  float best_fit = PrVeloUTConst::maxPseudoChi2;
+  for (int i0=0; (!found || considered < CompassUT::max_considered_before_found) &&
+       i0<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i0) {
 
     int i_hit0 = set_index(i0, ranges->layer[layers[0]]);
 
@@ -58,7 +51,8 @@ __device__ void find_best_hits(
     temp_best_hits[0] = i_hit0;
 
     // loop over layer 2
-    for (int i2=0; !found && i2<ranges->layer[layers[2]].size0 + ranges->layer[layers[2]].size1 + ranges->layer[layers[2]].size2; ++i2) {
+    for (int i2=0; (!found || considered < CompassUT::max_considered_before_found) &&
+         i2<ranges->layer[layers[2]].size0 + ranges->layer[layers[2]].size1 + ranges->layer[layers[2]].size2; ++i2) {
 
       int i_hit2 = set_index(i2, ranges->layer[layers[2]]);
 
@@ -92,6 +86,7 @@ __device__ void find_best_hits(
       }
 
       // search for quadruplet in layer3
+      temp_best_hits[3] = -1;
       hitTol = PrVeloUTConst::hitTol2;
       for (int i3=0; i3<ranges->layer[layers[3]].size0 + ranges->layer[layers[3]].size1 + ranges->layer[layers[3]].size2; ++i3) {
 
@@ -109,15 +104,19 @@ __device__ void find_best_hits(
       }
 
       // Fit the hits to get q/p, chi2
+      const auto temp_number_of_hits = 2 + (temp_best_hits[1] != -1) + (temp_best_hits[3] != -1);
       const auto params = pkick_fit(temp_best_hits, ut_hits, velo_state, ut_dxDy, yyProto, forward);
+      ++considered;
 
-      if (params.chi2UT < PrVeloUTConst::maxPseudoChi2) {
+      if (params.chi2UT < best_fit && temp_number_of_hits >= best_number_of_hits) {
         best_hits[0] = temp_best_hits[0];
         best_hits[1] = temp_best_hits[1];
         best_hits[2] = temp_best_hits[2];
         best_hits[3] = temp_best_hits[3];
+        best_number_of_hits = temp_number_of_hits;
         best_params = params;
-        
+        best_fit = params.chi2UT;
+
         found = true;
       }
     }

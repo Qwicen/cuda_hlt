@@ -36,7 +36,6 @@ __device__ void compass_ut_tracking(
   const Velo::Consolidated::Tracks& velo_tracks,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_offsets,
-  const float* fudgeFactors,
   const float* bdl_table,
   const float* dev_ut_dxDy,
   int* win_size_shared,

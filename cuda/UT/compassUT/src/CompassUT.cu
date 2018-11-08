@@ -61,7 +61,7 @@ __global__ void compass_ut(
   // 32 * 4 * 3(num_windows) * 2 (from, size) = 768 (3072 bytes)
   __shared__ int win_size_shared[VeloUTTracking::num_threads * N_LAYERS * 3 * 2];
 
-  const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
+  // const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
 
   for (int i = 0; i < ((number_of_tracks_event + blockDim.x - 1) / blockDim.x) + 1; i += 1) {
@@ -91,7 +91,6 @@ __global__ void compass_ut(
         velo_tracks,
         ut_hits,
         ut_hit_offsets,
-        fudgeFactors,
         bdl_table,
         dev_ut_dxDy,
         win_size_shared,
@@ -130,7 +129,6 @@ __global__ void compass_ut(
       velo_tracks,
       ut_hits,
       ut_hit_offsets,
-      fudgeFactors,
       bdl_table,
       dev_ut_dxDy,
       win_size_shared,
@@ -148,7 +146,6 @@ __device__ void compass_ut_tracking(
   const Velo::Consolidated::Tracks& velo_tracks,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_offsets,
-  const float* fudgeFactors,
   const float* bdl_table,
   const float* dev_ut_dxDy,
   int* win_size_shared,
@@ -173,7 +170,6 @@ __device__ void compass_ut_tracking(
     ut_hits,
     ut_hit_offsets,
     velo_state,
-    fudgeFactors,
     dev_ut_dxDy,
     true,
     best_hits,
@@ -185,7 +181,6 @@ __device__ void compass_ut_tracking(
       ut_hits,
       ut_hit_offsets,
       velo_state,
-      fudgeFactors,
       dev_ut_dxDy,
       false,
       best_hits,
