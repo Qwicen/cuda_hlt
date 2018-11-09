@@ -162,7 +162,7 @@ __device__ void compass_ut_tracking(
     win_size_shared);
   
   // Find compatible hits in the windows for this VELO track
-  best_hits_and_params = find_best_hits(
+  const auto best_hits_and_params = find_best_hits(
     win_size_shared,
     ut_hits,
     ut_hit_offsets,

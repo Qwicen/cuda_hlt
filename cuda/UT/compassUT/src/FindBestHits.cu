@@ -5,7 +5,7 @@
 // When iterating over a panel, 3 windows are given, we set the index
 // to be only in the windows
 //=========================================================================
-__device__ void find_best_hits(
+__device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   const int* win_size_shared,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
@@ -21,21 +21,25 @@ __device__ void find_best_hits(
     set_index(0, ranges->layer[1]),
     set_index(0, ranges->layer[2]),
     set_index(0, ranges->layer[3])
-  }
+  };
 
   bool found = false;
   bool forward;
 
   float xhitLayer0, xhitLayer2;
   float zhitLayer0, zhitLayer2;
+  float tx;
 
-  // Search forward
+  int best_number_of_hits = 0;
+  int best_fit = PrVeloUTConst::maxPseudoChi2;
+
+  // Find compatible doublet forward
   for (int i=0; !found && i<ranges->layer[0].size0 + ranges->layer[0].size1 + ranges->layer[0].size2; ++i) {
     const int i_hit0 = set_index(i, ranges->layer[0]);
 
     // Get the hit to check with next layer
     const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
-    xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[layers[0]]);
+    xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[0]);
     zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
 
     // loop over layer 2
@@ -44,10 +48,10 @@ __device__ void find_best_hits(
 
       // Get the hit to check with next layer
       const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
-      xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[layers[2]]);
+      xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[2]);
       zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
 
-      const float tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
+      tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
       if (std::abs(tx - velo_state.tx) <= PrVeloUTConst::deltaTx2) {
         found = true;
         forward = true;
@@ -58,25 +62,26 @@ __device__ void find_best_hits(
     }
   }
 
-  // Search backward
+  // TODO Should search first the layer3 then layer 1?
+  // Find compatible doublet backward (if no forward found)
   for (int i=0; !found && i<ranges->layer[1].size0 + ranges->layer[1].size1 + ranges->layer[1].size2; ++i) {
-    const int i_hit0 = set_index(i, ranges->layer[1]);
+    const int i_hit1 = set_index(i, ranges->layer[1]);
 
     // Get the hit to check with next layer
-    const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
-    xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[layers[1]]);
-    zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
+    const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
+    xhitLayer0 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[1]);
+    zhitLayer0 = ut_hits.zAtYEq0[i_hit1];
 
     // loop over layer 2
     for (int i=0; !found && i<ranges->layer[3].size0 + ranges->layer[3].size1 + ranges->layer[3].size2; ++i) {
-      const int i_hit2 = set_index(i, ranges->layer[3]);
+      const int i_hit3 = set_index(i, ranges->layer[3]);
 
       // Get the hit to check with next layer
-      const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
-      xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[layers[3]]);
-      zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
+      const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
+      xhitLayer2 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[3]);
+      zhitLayer2 = ut_hits.zAtYEq0[i_hit3];
 
-      const float tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
+      tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
       if (std::abs(tx - velo_state.tx) <= PrVeloUTConst::deltaTx2) {
         found = true;
         forward = false;
@@ -87,6 +92,7 @@ __device__ void find_best_hits(
     }
   }
 
+  // TODO if backwards we should search backwards (conceptually)
   if (found) {
     const int layers [2] = {
       forward ? 1 : 2,
@@ -132,15 +138,16 @@ __device__ void find_best_hits(
     // Fit the hits to get q/p, chi2
     const auto number_of_hits = 2 + (best_hits[1] != -1) + (best_hits[3] != -1);
     if (number_of_hits >= best_number_of_hits) {
+      best_number_of_hits = number_of_hits;
       const auto params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto, forward);
 
-      if (params.chi2UT < best_fit && ) {
+      if (params.chi2UT < best_fit) {
         return {best_hits[0], best_hits[1], best_hits[2], best_hits[3], params};
       }
     }
   }
 
-  return {-1, -1, -1, -1, {}};
+  return {-1, -1, -1, -1, BestParams{}};
 }
 
 //=========================================================================
@@ -256,7 +263,7 @@ __device__ __inline__ int set_index(
 //=========================================================================
 // Check if hit is inside tolerance and refine by Y
 //=========================================================================
-__host__ __device__ __inline__ bool check_tol_refine(
+__device__ __inline__ bool check_tol_refine(
   const int hit_index,
   const UTHits& ut_hits,
   const MiniState& velo_state,
