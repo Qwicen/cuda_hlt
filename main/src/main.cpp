@@ -31,6 +31,7 @@
 #include "Timer.h"
 #include "StreamWrapper.cuh"
 #include "Constants.cuh"
+#include "MuonDefinitions.cuh"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
@@ -193,6 +194,7 @@ int main(int argc, char *argv[])
   const auto folder_name_UT_raw = folder_name_raw + "UT";
   const auto folder_name_mdf = folder_name_raw + "mdf";
   const auto folder_name_SciFi_raw = folder_name_raw + "FTCluster";
+  const auto folder_name_Muon_raw = folder_name_raw + "Muon";
   const auto geometry_reader = GeometryReader(folder_name_detector_configuration);
   const auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
 
@@ -204,7 +206,8 @@ int main(int argc, char *argv[])
   } else {
      event_reader = std::make_unique<EventReader>(FolderMap{{{BankTypes::VP, folder_name_velopix_raw},
                                                              {BankTypes::UT, folder_name_UT_raw},
-                                                             {BankTypes::FT, folder_name_SciFi_raw}}});
+                                                             {BankTypes::FT, folder_name_SciFi_raw},
+                                                             {BankTypes::MUON, folder_name_Muon_raw}}});
   }
 
   const auto velo_geometry = geometry_reader.read_geometry("velo_geometry.bin");
@@ -213,6 +216,16 @@ int main(int argc, char *argv[])
   const auto ut_magnet_tool = ut_magnet_tool_reader.read_UT_magnet_tool();
   const auto scifi_geometry = geometry_reader.read_geometry("scifi_geometry.bin");
   event_reader->read_events(number_of_events_requested, start_event_offset);
+
+  std::vector<Muon::HitsSoA> muon_hits_events(number_of_events_requested);
+  read_muon_events_into_arrays(
+    muon_hits_events.data(),
+    event_reader->events(BankTypes::MUON).begin(),
+    event_reader->offsets(BankTypes::MUON).begin(),
+    number_of_events_requested
+  );
+  const int hits_to_out = 3;
+  check_muon_events(muon_hits_events.data(), hits_to_out, number_of_events_requested);
 
   info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
 
