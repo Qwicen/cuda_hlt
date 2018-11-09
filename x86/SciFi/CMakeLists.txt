@@ -10,6 +10,7 @@ include_directories(../../cuda/velo/common/include)
 include_directories(../../cuda/event_model/common/include)
 include_directories(../../cuda/event_model/velo/include)
 include_directories(../../cuda/utils/sorting)
+include_directories(../../stream/gear/include)
 
 file(GLOB x86Forward "src/*cpp" "../../cuda/SciFi/common/src/*cu")
 file(GLOB PrForwardTools "../../cuda/SciFi/PrForward/src/FindStereoHits.cu"
@@ -28,4 +29,5 @@ if ( ROOT_FOUND )
   target_link_libraries(x86Forward
     ${ROOT_LIBRARIES}
   )
+  target_include_directories(x86Forward PUBLIC ${ROOT_INCLUDE_DIRS})
 endif()

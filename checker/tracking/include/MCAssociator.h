@@ -14,12 +14,10 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
-
+#include <numeric>
 #include "LHCbID.h"
 #include "MCParticle.h"
-
 #include "Logger.h"
-
 
 /// simple MC associator
 class MCAssociator

@@ -4,6 +4,7 @@
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
 #include "SciFiDefinitions.cuh"
+#include "TrackChecker.h"
 
 struct HostBuffers {
   // Pinned host datatypes
@@ -25,6 +26,9 @@ struct HostBuffers {
   // SciFi Decoding
   uint* host_accumulated_number_of_scifi_hits;
 
+  // Non pinned datatypes: CPU algorithms
+  std::vector<trackChecker::Tracks> forward_tracks_events;
+
   /**
    * @brief Reserves all host buffers.
    */
@@ -33,10 +37,10 @@ struct HostBuffers {
   /**
    * @brief Returns total number of velo track hits.
    */
-  size_t velo_track_hit_number_size();
+  size_t velo_track_hit_number_size() const;
 
   /**
    * @brief Retrieve total number of hit uints.
    */
-  uint32_t scifi_hits_uints();
+  uint32_t scifi_hits_bytes() const;
 };

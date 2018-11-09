@@ -7,8 +7,7 @@ void SequenceVisitor::visit<scifi_pre_decode_t>(
   const int sequence_step,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  ArgumentManager<argument_tuple_t>& arguments,
-  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
+  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)

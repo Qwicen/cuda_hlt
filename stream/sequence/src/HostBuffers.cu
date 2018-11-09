@@ -17,7 +17,7 @@ void HostBuffers::reserve(const uint max_number_of_events) {
   cudaCheck(cudaMallocHost((void**)&host_n_scifi_tracks, max_number_of_events * sizeof(uint)));
 }
 
-size_t HostBuffers::velo_track_hit_number_size() {
+size_t HostBuffers::velo_track_hit_number_size() const {
   return host_number_of_reconstructed_velo_tracks[0] + 1;
 }
 
