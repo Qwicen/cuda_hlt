@@ -16,138 +16,172 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   WindowIndicator win_ranges(win_size_shared); 
   const auto* ranges = win_ranges.get_track_candidates(threadIdx.x);
 
-  int best_hits [4] = {
-    set_index(0, ranges->layer[0]),
-    set_index(0, ranges->layer[1]),
-    set_index(0, ranges->layer[2]),
-    set_index(0, ranges->layer[3])
-  };
+  int best_hits [4] = { -1, -1, -1, -1};
 
   bool found = false;
-  bool forward;
+  bool forward = false;
 
-  float xhitLayer0, xhitLayer2;
-  float zhitLayer0, zhitLayer2;
-  float tx;
+  // float xhitLayer0, xhitLayer2;
+  // float zhitLayer0, zhitLayer2;
+  // float tx;
 
-  int best_number_of_hits = 0;
+  int best_number_of_hits = 3;
   int best_fit = PrVeloUTConst::maxPseudoChi2;
+  BestParams best_params;
 
   // Find compatible doublet forward
-  for (int i=0; !found && i<ranges->layer[0].size0 + ranges->layer[0].size1 + ranges->layer[0].size2; ++i) {
-    const int i_hit0 = set_index(i, ranges->layer[0]);
+  const int total_hits_2layers_0 = ranges->layer[0].size0 + ranges->layer[0].size1 + ranges->layer[0].size2 +
+                                   ranges->layer[3].size0 + ranges->layer[3].size1 + ranges->layer[3].size2;
+
+  for (int i=0; !found && i<total_hits_2layers_0; ++i) {
+    const int i_hit0 = set_index(i, ranges->layer[0], ranges->layer[3]);
 
     // Get the hit to check with next layer
     const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
-    xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[0]);
-    zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
+    const auto xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[0]);
+    const auto zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
+
+    // set range for nested layer if forward or backward
+    LayerCandidates layer_2;
+    if (i < ranges->layer[0].size0 + ranges->layer[0].size1 + ranges->layer[0].size2) {
+      forward = true;
+      layer_2 = ranges->layer[2];
+    } else {
+      forward = false;
+      layer_2 = ranges->layer[1];
+    }
 
     // loop over layer 2
-    for (int i=0; !found && i<ranges->layer[2].size0 + ranges->layer[2].size1 + ranges->layer[2].size2; ++i) {
-      const int i_hit2 = set_index(i, ranges->layer[2]);
+    for (int j=0; !found && j<layer_2.size0 + layer_2.size1 + layer_2.size2 ; ++j) {
+      int i_hit2 = set_index(j, layer_2);
 
       // Get the hit to check with next layer
       const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
-      xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[2]);
-      zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
+      const auto xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[2]);
+      const auto zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
 
-      tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
+      const auto tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
       if (std::abs(tx - velo_state.tx) <= PrVeloUTConst::deltaTx2) {
-        found = true;
-        forward = true;
 
-        best_hits[0] = i_hit0;
-        best_hits[2] = i_hit2;
+        int temp_best_hits [4] = { i_hit0,-1 ,i_hit2, -1};
+
+        const int layers [2] = {
+          forward ? 1 : 2,
+          forward ? 3 : 0
+        };
+
+        float hitTol = PrVeloUTConst::hitTol2;
+
+        // search for triplet in layer1
+        for (int i1=0; i1<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i1) {
+
+          int i_hit1 = set_index(i1, ranges->layer[layers[0]]);
+
+          // Get the hit to check with next layer
+          const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
+          const float xhitLayer1 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[0]]);
+          const float zhitLayer1 = ut_hits.zAtYEq0[i_hit1];
+          const float xextrapLayer1 = xhitLayer0 + tx * (zhitLayer1 - zhitLayer0);
+
+          if (std::abs(xhitLayer1 - xextrapLayer1) < hitTol) {
+            hitTol = std::abs(xhitLayer1 - xextrapLayer1);
+            temp_best_hits[1] = i_hit1;
+          }
+        }
+
+        // search for quadruplet in layer3
+        hitTol = PrVeloUTConst::hitTol2;
+        for (int i3=0; i3<ranges->layer[layers[1]].size0 + ranges->layer[layers[1]].size1 + ranges->layer[layers[1]].size2; ++i3) {
+
+          int i_hit3 = set_index(i3, ranges->layer[layers[1]]);
+
+          // Get the hit to check
+          const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
+          const float xhitLayer3 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[1]]);
+          const float zhitLayer3 = ut_hits.zAtYEq0[i_hit3];
+          const float xextrapLayer3 = xhitLayer2 + tx * (zhitLayer3 - zhitLayer2);
+          if (std::abs(xhitLayer3 - xextrapLayer3) < hitTol) {
+            hitTol = std::abs(xhitLayer3 - xextrapLayer3);
+            temp_best_hits[3] = i_hit3;
+          }          
+        }
+
+
+
+        // Fit the hits to get q/p, chi2
+        const auto number_of_hits = 2 + (temp_best_hits[1] != -1) + (temp_best_hits[3] != -1);
+        if (number_of_hits >= best_number_of_hits) {
+          best_number_of_hits = number_of_hits;
+          const auto params = pkick_fit(temp_best_hits, ut_hits, velo_state, ut_dxDy, yyProto, forward);
+
+          if (params.chi2UT < best_fit) {
+            found = true;
+            best_hits[0] = temp_best_hits[0];
+            best_hits[1] = temp_best_hits[1];
+            best_hits[2] = temp_best_hits[2];
+            best_hits[3] = temp_best_hits[3];
+            best_params = params;
+          }
+        }
       }
     }
   }
 
-  // TODO Should search first the layer3 then layer 1?
-  // Find compatible doublet backward (if no forward found)
-  for (int i=0; !found && i<ranges->layer[1].size0 + ranges->layer[1].size1 + ranges->layer[1].size2; ++i) {
-    const int i_hit1 = set_index(i, ranges->layer[1]);
+  // if (found) {
+  //   const int layers [2] = {
+  //     forward ? 1 : 2,
+  //     forward ? 3 : 0
+  //   };
 
-    // Get the hit to check with next layer
-    const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
-    xhitLayer0 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[1]);
-    zhitLayer0 = ut_hits.zAtYEq0[i_hit1];
+  //   float hitTol = PrVeloUTConst::hitTol2;
 
-    // loop over layer 2
-    for (int i=0; !found && i<ranges->layer[3].size0 + ranges->layer[3].size1 + ranges->layer[3].size2; ++i) {
-      const int i_hit3 = set_index(i, ranges->layer[3]);
+  //   // search for triplet in layer1
+  //   for (int i1=0; i1<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i1) {
 
-      // Get the hit to check with next layer
-      const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
-      xhitLayer2 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[3]);
-      zhitLayer2 = ut_hits.zAtYEq0[i_hit3];
+  //     int i_hit1 = set_index(i1, ranges->layer[layers[0]]);
 
-      tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
-      if (std::abs(tx - velo_state.tx) <= PrVeloUTConst::deltaTx2) {
-        found = true;
-        forward = false;
-        
-        best_hits[0] = i_hit1;
-        best_hits[2] = i_hit3;
-      }
-    }
-  }
+  //     // Get the hit to check with next layer
+  //     const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
+  //     const float xhitLayer1 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[0]]);
+  //     const float zhitLayer1 = ut_hits.zAtYEq0[i_hit1];
+  //     const float xextrapLayer1 = xhitLayer0 + tx * (zhitLayer1 - zhitLayer0);
 
-  // TODO if backwards we should search backwards (conceptually)
-  if (found) {
-    const int layers [2] = {
-      forward ? 1 : 2,
-      forward ? 3 : 0
-    };
+  //     if (std::abs(xhitLayer1 - xextrapLayer1) < hitTol) {
+  //       hitTol = std::abs(xhitLayer1 - xextrapLayer1);
+  //       best_hits[1] = i_hit1;
+  //     }
+  //   }
 
-    float hitTol = PrVeloUTConst::hitTol2;
+  //   // search for quadruplet in layer3
+  //   hitTol = PrVeloUTConst::hitTol2;
+  //   for (int i3=0; i3<ranges->layer[layers[1]].size0 + ranges->layer[layers[1]].size1 + ranges->layer[layers[1]].size2; ++i3) {
 
-    // search for triplet in layer1
-    for (int i1=0; i1<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i1) {
+  //     int i_hit3 = set_index(i3, ranges->layer[layers[1]]);
 
-      int i_hit1 = set_index(i1, ranges->layer[layers[0]]);
+  //     // Get the hit to check
+  //     const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
+  //     const float xhitLayer3 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[1]]);
+  //     const float zhitLayer3 = ut_hits.zAtYEq0[i_hit3];
+  //     const float xextrapLayer3 = xhitLayer2 + tx * (zhitLayer3 - zhitLayer2);
+  //     if (std::abs(xhitLayer3 - xextrapLayer3) < hitTol) {
+  //       hitTol = std::abs(xhitLayer3 - xextrapLayer3);
+  //       best_hits[3] = i_hit3;
+  //     }          
+  //   }
 
-      // Get the hit to check with next layer
-      const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
-      const float xhitLayer1 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[0]]);
-      const float zhitLayer1 = ut_hits.zAtYEq0[i_hit1];
-      const float xextrapLayer1 = xhitLayer0 + tx * (zhitLayer1 - zhitLayer0);
+  //   // Fit the hits to get q/p, chi2
+  //   const auto number_of_hits = 2 + (best_hits[1] != -1) + (best_hits[3] != -1);
+  //   if (number_of_hits >= best_number_of_hits) {
+  //     best_number_of_hits = number_of_hits;
+  //     const auto params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto, forward);
 
-      if (std::abs(xhitLayer1 - xextrapLayer1) < hitTol) {
-        hitTol = std::abs(xhitLayer1 - xextrapLayer1);
-        best_hits[1] = i_hit1;
-      }
-    }
-
-    // search for quadruplet in layer3
-    hitTol = PrVeloUTConst::hitTol2;
-    for (int i3=0; i3<ranges->layer[layers[1]].size0 + ranges->layer[layers[1]].size1 + ranges->layer[layers[1]].size2; ++i3) {
-
-      int i_hit3 = set_index(i3, ranges->layer[layers[1]]);
-
-      // Get the hit to check
-      const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
-      const float xhitLayer3 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[1]]);
-      const float zhitLayer3 = ut_hits.zAtYEq0[i_hit3];
-      const float xextrapLayer3 = xhitLayer2 + tx * (zhitLayer3 - zhitLayer2);
-      if (std::abs(xhitLayer3 - xextrapLayer3) < hitTol) {
-        hitTol = std::abs(xhitLayer3 - xextrapLayer3);
-        best_hits[3] = i_hit3;
-      }          
-    }
-
-    // Fit the hits to get q/p, chi2
-    const auto number_of_hits = 2 + (best_hits[1] != -1) + (best_hits[3] != -1);
-    if (number_of_hits >= best_number_of_hits) {
-      best_number_of_hits = number_of_hits;
-      const auto params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto, forward);
-
-      if (params.chi2UT < best_fit) {
-        return {best_hits[0], best_hits[1], best_hits[2], best_hits[3], params};
-      }
-    }
-  }
-
-  return {-1, -1, -1, -1, BestParams{}};
+  //     if (params.chi2UT < best_fit) {
+  //       return {best_hits[0], best_hits[1], best_hits[2], best_hits[3], params};
+  //     }
+  //   }
+  // }
+  return {best_hits[0], best_hits[1], best_hits[2], best_hits[3], best_params};
+  // return {-1, -1, -1, -1, {}};
 }
 
 //=========================================================================
@@ -247,6 +281,29 @@ __device__ BestParams pkick_fit(
 
 __device__ __inline__ int set_index(
   const int i, 
+  const LayerCandidates& layer_cand0,
+  const LayerCandidates& layer_cand2)
+{
+  int hit = -1;
+  if (i < layer_cand0.size0) {
+    hit = layer_cand0.from0 + i;
+  } else if (i < layer_cand0.size0 + layer_cand0.size1) {
+    hit = layer_cand0.from1 + i - layer_cand0.size0;
+  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2) {
+    hit = layer_cand0.from2 + i - layer_cand0.size0 - layer_cand0.size1;
+  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand2.size0) {
+    hit = layer_cand2.from0 + i - (layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2) ;
+  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand2.size0 + layer_cand2.size1) {
+    hit = layer_cand2.from1 + i - layer_cand2.size0 - (layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2);
+  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2) {
+    hit = layer_cand2.from2 + i - layer_cand2.size0 - layer_cand2.size1 - (layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2);
+  }
+
+  return hit;
+}
+
+__device__ __inline__ int set_index(
+  const int i, 
   const LayerCandidates& layer_cand)
 {
   int hit = -1;
@@ -255,8 +312,9 @@ __device__ __inline__ int set_index(
   } else if (i < layer_cand.size0 + layer_cand.size1) {
     hit = layer_cand.from1 + i - layer_cand.size0;
   } else if (i < layer_cand.size0 + layer_cand.size1 + layer_cand.size2) {
-    hit = layer_cand.from2 + i - layer_cand.size0- layer_cand.size1;
-  }
+    hit = layer_cand.from2 + i - layer_cand.size0 - layer_cand.size1;
+  } 
+
   return hit;
 }
 
