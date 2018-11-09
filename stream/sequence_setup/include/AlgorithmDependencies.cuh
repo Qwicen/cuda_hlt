@@ -170,6 +170,12 @@ typedef std::tuple<
     dev_scifi_hit_count,
     dev_prefix_sum_auxiliary_array_4
   >,
+  AlgorithmDependencies<scifi_pre_decode_t,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_scifi_hit_count,
+    dev_scifi_hits
+  >,
   AlgorithmDependencies<scifi_raw_bank_decoder_t,
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,
