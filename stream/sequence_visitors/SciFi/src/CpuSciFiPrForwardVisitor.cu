@@ -19,9 +19,9 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
   cudaEventSynchronize(cuda_generic_event);
 
   // Run Forward on x86 architecture
-  std::vector<uint> host_scifi_hits (host_buffers.scifi_hits_bytes());
+  std::vector<uint> host_scifi_hits (host_buffers.scifi_hits_uints());
   std::vector<uint> host_scifi_hit_count (2 * runtime_options.number_of_events * SciFi::Constants::n_zones + 1);
-  
+
   cudaCheck(cudaMemcpyAsync(
     host_scifi_hits.data(),
     arguments.offset<dev_scifi_hits>(),
@@ -35,7 +35,7 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
     arguments.size<dev_scifi_hit_count>(),
     cudaMemcpyDeviceToHost,
     cuda_stream));
-  
+
   // TODO: Maybe use this rv somewhere?
   int rv = state.invoke(
     host_buffers.forward_tracks_events,

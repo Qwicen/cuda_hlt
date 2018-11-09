@@ -14,9 +14,9 @@
 #include "UTFindPermutation.cuh"
 #include "UTDecodeRawBanksInOrder.cuh"
 #include "VeloUT.cuh"
-#include "EstimateClusterCount.cuh"
-#include "RawBankDecoder.cuh"
-#include "SciFiSortByX.cuh"
+#include "SciFiCalculateClusterCount.cuh"
+#include "SciFiPreDecode.cuh"
+#include "SciFiRawBankDecoder.cuh"
 #include "PrForward.cuh"
 #include "RunForwardCPU.h"
 

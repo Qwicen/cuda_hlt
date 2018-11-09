@@ -35,7 +35,8 @@ void SequenceVisitor::visit<scifi_pr_forward_t>(
     arguments.offset<dev_n_scifi_tracks>(),
     constants.dev_scifi_tmva1,
     constants.dev_scifi_tmva2,
-    constants.dev_scifi_constArrays
+    constants.dev_scifi_constArrays,
+    constants.dev_scifi_geometry
   );
   state.invoke();
 

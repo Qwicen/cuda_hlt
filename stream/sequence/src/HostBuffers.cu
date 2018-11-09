@@ -21,6 +21,6 @@ size_t HostBuffers::velo_track_hit_number_size() const {
   return host_number_of_reconstructed_velo_tracks[0] + 1;
 }
 
-uint32_t HostBuffers::scifi_hits_uints() {
+uint32_t HostBuffers::scifi_hits_uints() const {
   return (sizeof(SciFi::SciFiHit)/sizeof(uint32_t) + 1) * host_accumulated_number_of_scifi_hits[0];
 }

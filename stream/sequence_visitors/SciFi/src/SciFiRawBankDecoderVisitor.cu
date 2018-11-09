@@ -2,26 +2,32 @@
 #include "SciFiRawBankDecoder.cuh"
 
 template<>
-void SequenceVisitor::visit<scifi_raw_bank_decoder_t>(
-  scifi_raw_bank_decoder_t& state,
-  const int sequence_step,
+void SequenceVisitor::set_arguments_size<scifi_raw_bank_decoder_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  ArgumentManager<argument_tuple_t>& arguments,
-  DynamicScheduler<sequence_t, argument_tuple_t>& scheduler,
+  const HostBuffers& host_buffers,
+  argument_manager_t& arguments)
+{
+  arguments.set_size<dev_scifi_hits>(host_buffers.scifi_hits_uints());
+}
+
+
+template<>
+void SequenceVisitor::visit<scifi_raw_bank_decoder_t>(
+  scifi_raw_bank_decoder_t& state,
+  const RuntimeOptions& runtime_options,
+  const Constants& constants,
+  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  arguments.set_size<arg::dev_scifi_hits>(host_buffers.scifi_hits_uints());
-  scheduler.setup_next(arguments, sequence_step);
-
   state.set_opts(dim3(runtime_options.number_of_events), dim3(256), cuda_stream);
   state.set_arguments(
-    arguments.offset<arg::dev_scifi_raw_input>(),
-    arguments.offset<arg::dev_scifi_raw_input_offsets>(),
-    arguments.offset<arg::dev_scifi_hit_count>(),
-    arguments.offset<arg::dev_scifi_hits>(),
+    arguments.offset<dev_scifi_raw_input>(),
+    arguments.offset<dev_scifi_raw_input_offsets>(),
+    arguments.offset<dev_scifi_hit_count>(),
+    arguments.offset<dev_scifi_hits>(),
     constants.dev_scifi_geometry
   );
 
@@ -31,8 +37,8 @@ void SequenceVisitor::visit<scifi_raw_bank_decoder_t>(
   const uint hit_count_uints = 2 * runtime_options.number_of_events * SciFi::number_of_mats + 1;
   uint host_scifi_hit_count[hit_count_uints];
   uint* host_scifi_hits = new uint[host_buffers.scifi_hits_uints()];
-  cudaCheck(cudaMemcpyAsync(&host_scifi_hit_count, arguments.offset<arg::dev_scifi_hit_count>(), hit_count_uints*sizeof(uint), cudaMemcpyDeviceToHost, cuda_stream));
-  cudaCheck(cudaMemcpyAsync(host_scifi_hits, arguments.offset<arg::dev_scifi_hits>(), arguments.size<arg::dev_scifi_hits>(), cudaMemcpyDeviceToHost, cuda_stream));
+  cudaCheck(cudaMemcpyAsync(&host_scifi_hit_count, arguments.offset<dev_scifi_hit_count>(), hit_count_uints*sizeof(uint), cudaMemcpyDeviceToHost, cuda_stream));
+  cudaCheck(cudaMemcpyAsync(host_scifi_hits, arguments.offset<dev_scifi_hits>(), arguments.size<dev_scifi_hits>(), cudaMemcpyDeviceToHost, cuda_stream));
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
 

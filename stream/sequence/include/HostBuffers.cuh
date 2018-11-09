@@ -42,5 +42,5 @@ struct HostBuffers {
   /**
    * @brief Retrieve total number of hit uints.
    */
-  uint32_t scifi_hits_bytes() const;
+  uint32_t scifi_hits_uints() const;
 };

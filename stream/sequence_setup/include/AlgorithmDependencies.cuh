@@ -153,7 +153,7 @@ typedef std::tuple<
     dev_veloUT_tracks,
     dev_atomics_veloUT
   >,
-  AlgorithmDependencies<estimate_cluster_count_t,
+  AlgorithmDependencies<scifi_calculate_cluster_count_t,
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,
     dev_scifi_hit_count
@@ -170,16 +170,11 @@ typedef std::tuple<
     dev_scifi_hit_count,
     dev_prefix_sum_auxiliary_array_4
   >,
-  AlgorithmDependencies<raw_bank_decoder_t,
+  AlgorithmDependencies<scifi_raw_bank_decoder_t,
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,
     dev_scifi_hit_count,
     dev_scifi_hits
-  >,
-  AlgorithmDependencies<scifi_sort_by_x_t,
-    dev_scifi_hits,
-    dev_scifi_hit_count,
-    dev_scifi_hit_permutations
   >,
   AlgorithmDependencies<scifi_pr_forward_t,
     dev_scifi_hits,
