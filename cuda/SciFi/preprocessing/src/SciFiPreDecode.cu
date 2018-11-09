@@ -52,13 +52,13 @@ __global__ void scifi_pre_decode(
   SciFiGeometry geom(scifi_geometry);
   const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
 
-  SciFiHits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::number_of_mats], &geom};
+  SciFiHits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mats], &geom};
   SciFiHitCount hit_count;
   hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
 
-  __shared__ uint32_t shared_mat_offsets[SciFi::number_of_mats];
+  __shared__ uint32_t shared_mat_offsets[SciFi::Constants::n_mats];
 
-  for (uint i = threadIdx.x; i < SciFi::number_of_mats; i += blockDim.x) {
+  for (uint i = threadIdx.x; i < SciFi::Constants::n_mats; i += blockDim.x) {
     shared_mat_offsets[i] = hit_count.mat_offsets[i];
     hit_count.n_hits_mats[i] = 0;
   }

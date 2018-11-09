@@ -187,7 +187,7 @@ void SciFiHitCount::typecast_before_prefix_sum(
   uint* base_pointer,
   const uint event_number
 ) {
-  n_hits_mats = base_pointer + event_number * SciFi::number_of_mats;
+  n_hits_mats = base_pointer + event_number * SciFi::Constants::n_mats;
 }
 
 __device__ __host__
@@ -196,8 +196,8 @@ void SciFiHitCount::typecast_after_prefix_sum(
   const uint event_number,
   const uint number_of_events
 ) {
-  mat_offsets = base_pointer + event_number * SciFi::number_of_mats;
-  n_hits_mats = base_pointer + number_of_events * SciFi::number_of_mats + 1 + event_number * SciFi::number_of_mats;
+  mat_offsets = base_pointer + event_number * SciFi::Constants::n_mats;
+  n_hits_mats = base_pointer + number_of_events * SciFi::Constants::n_mats + 1 + event_number * SciFi::Constants::n_mats;
 }
 
 SciFiHits::SciFiHits(uint32_t* base, const uint total_number_of_hits, const SciFiGeometry* dev_geom) {
@@ -208,11 +208,6 @@ SciFiHits::SciFiHits(uint32_t* base, const uint total_number_of_hits, const SciF
   channel = reinterpret_cast<uint32_t*>(base + 3 * total_number_of_hits);
   assembled_datatype = reinterpret_cast<uint32_t*>(base + 4 * total_number_of_hits);
   cluster_reference = reinterpret_cast<uint32_t*>(base + 5 * total_number_of_hits);
-}
-
-__device__ __host__
-SciFiHit SciFiHits::getHit(uint32_t index) const {
-  return {x0[index], z0[index], channel[index], assembled_datatype[index]};
 }
 
 __device__ __host__ float SciFiHits::w(uint32_t index) const {

@@ -23,11 +23,6 @@ struct FullState {
   };
 
 namespace SciFi {
-
-// Maybe these should not be hardcoded?
-constexpr uint32_t number_of_zones = 24;
-constexpr uint32_t number_of_mats = 1024;
-
 namespace Constants {
   /* Detector description
      There are three stations with four layers each
@@ -36,6 +31,7 @@ namespace Constants {
   static constexpr uint n_layers_per_station = 4;
   static constexpr uint n_zones              = 24;
   static constexpr uint n_layers             = 12;
+  static constexpr uint n_mats               = 1024;
 
   /* Cut-offs */
   static constexpr uint max_numhits_per_event = 10000;
@@ -237,7 +233,7 @@ struct SciFiHitCount{
 
   __device__ __host__
   uint event_number_of_hits() const {
-    return mat_offsets[SciFi::number_of_mats] - mat_offsets[0];
+    return mat_offsets[SciFi::Constants::n_mats] - mat_offsets[0];
   }
 
   __device__ __host__
@@ -298,7 +294,6 @@ struct SciFiHits {
   /**
    * @brief Gets a hit in the SciFiHit format from the global hit index.
    */
-  __device__ __host__ SciFiHit getHit(uint32_t index) const;
   __device__ __host__ float w(uint32_t index) const;
   __device__ __host__ float dxdy(uint32_t index) const;
   __device__ __host__ float dzdy(uint32_t index) const;
