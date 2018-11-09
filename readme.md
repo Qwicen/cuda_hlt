@@ -6,13 +6,11 @@ a full HLT1 realization on GPU.
 
 Requisites
 ----------
-The project requires a graphics card with CUDA support, CUDA 10.0 and a compiler supporting C++14. It also requires the developer package of `tbb`.
+The project requires a graphics card with CUDA support, CUDA 10.0 and a compiler supporting C++14.
 
 If you are working from a node with CVMFS and CentOS 7, we suggest the following setup:
 
 ```shell
-export CPATH=/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/include:$CPATH
-export LD_LIBRARY_PATH=/cvmfs/lhcb.cern.ch/lib/lcg/releases/tbb/44_20160413-f254c/x86_64-centos7-gcc7-opt/lib:$LD_LIBRARY_PATH
 source /cvmfs/lhcb.cern.ch/lib/lcg/releases/gcc/7.3.0/x86_64-centos7/setup.sh
 ```
 
