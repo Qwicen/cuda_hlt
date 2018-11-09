@@ -257,7 +257,7 @@ __device__ __host__ uint32_t SciFiHits::mat(uint32_t index) const {
 };
 
 __device__ __host__ uint32_t SciFiHits::pseudoSize(uint32_t index) const{
-  return (assembled_datatype[index] >> 11) & 0x7;
+  return (assembled_datatype[index] >> 11) & 0xf;
 };
 
 __device__ __host__ uint32_t SciFiHits::planeCode(uint32_t index) const {

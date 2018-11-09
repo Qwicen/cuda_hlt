@@ -28,35 +28,6 @@ namespace SciFi {
 constexpr uint32_t number_of_zones = 24;
 constexpr uint32_t number_of_mats = 1024;
 
-/*struct SciFiHit {
-  float x0;
-  float z0;
-  float w;
-  float dxdy;
-  float dzdy;
-  float yMin;
-  float yMax;
-  uint32_t LHCbID;
-  uint32_t planeCode;
-  uint32_t hitZone;
-
-  friend std::ostream& operator<<(std::ostream& stream, const SciFiHit& hit) {
-  stream << "SciFi hit {"
-    << hit.planeCode << ", "
-    << hit.hitZone << ", "
-    << hit.LHCbID << ", "
-    << hit.x0 << ", "
-    << hit.z0 << ", "
-    << hit.w<< ", "
-    << hit.dxdy << ", "
-    << hit.dzdy << ", "
-    << hit.yMin << ", "
-    << hit.yMax << "}";
-
-  return stream;
-}
-};*/
-
 namespace Constants {
   /* Detector description
      There are three stations with four layers each
