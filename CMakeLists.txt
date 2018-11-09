@@ -24,8 +24,6 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 
-find_package(TBB REQUIRED)
-
 find_package(ZLIB REQUIRED)
 
 option(USE_LZMA OFF)
@@ -120,10 +118,7 @@ target_link_libraries(Common mdf)
 # main executable
 cuda_add_executable(cu_hlt ${main_cpp_path})
 
-target_include_directories(cu_hlt PUBLIC ${TBB_INCLUDE_DIRS})
-
 target_link_libraries(cu_hlt
-  ${TBB_LIBRARIES}
   Common
   Utils
   Velo
