@@ -94,7 +94,8 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
 
   int pvTrack_counter = 0;
 
-  for(int index = 0; index < number_of_tracks; index++) {  
+  for(int i = 0; i < number_of_tracks; i++) {
+    int index = i + tracks_offset;
     //don't use disabled tracks
 
     
