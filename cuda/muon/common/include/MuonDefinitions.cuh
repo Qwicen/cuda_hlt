@@ -7,7 +7,7 @@ namespace Muon {
     */
     static constexpr uint n_stations            = 4;
      /* Cut-offs */
-    static constexpr uint max_numhits_per_event = 10000;
+    static constexpr uint max_numhits_per_event = 200 * n_stations;
   }
   /* SoA for hit variables
     The hits for every layer are written behind each other, the offsets
