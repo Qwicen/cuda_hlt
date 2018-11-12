@@ -33,4 +33,4 @@
 // "cmake -DSEQUENCE=Velo .." matches "sequences/Velo.cuh"
 // "cmake -DSEQUENCE=VeloUT .." matches "sequences/VeloUT.cuh"
 
-#include "sequences/ConfiguredSequence.cuh"
+#include "ConfiguredSequence.h"

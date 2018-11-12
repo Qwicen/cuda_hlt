@@ -115,13 +115,13 @@ Therefore, we need to add our algorithm to the sequence of algorithms. First, ma
 include_directories(../cuda/test/saxpy/include)
 ```
 
-Then, add the following include to `stream/sequence_setup/include/ConfiguredSequence.cuh`:
+Then, add the following include to `stream/setup/include/ConfiguredSequence.cuh`:
 
 ```clike
 #include "Saxpy.cuh"
 ```
 
-Now, we are ready to add our algorithm to a sequence. All available sequences live in the folder `stream/sequence_setup/include/sequences/`. The sequence to execute can be chosen at compile time, by appending the name of the desired sequence to the cmake call: `cmake -DSEQUENCE=DefaultSequence ..`. For now, let's just edit the `DefaultSequence`. Add the algorithm to `stream/sequence_setup/include/sequences/DefaultSequence.cuh` as follows:
+Now, we are ready to add our algorithm to a sequence. All available sequences live in the folder `configuration/sequences/`. The sequence to execute can be chosen at compile time, by appending the name of the desired sequence to the cmake call: `cmake -DSEQUENCE=DefaultSequence ..`. For now, let's just edit the `DefaultSequence`. Add the algorithm to `configuration/sequences/DefaultSequence.h` as follows:
 
 ```clike
 /**
@@ -145,7 +145,7 @@ Next, we need to define the arguments to be passed to our function. We need to d
 
 We will distinguish arguments just passed by value from pointers to device memory. We don't need to schedule those simply passed by value like `n` and `a`. We care however about `x` and `y`, since they require some reserving and freeing in memory.
 
-Let's give these arguments a name that won't collide, like `dev_x` and `dev_y`. Now, we need to add them to `stream/sequence_setup/include/Arguments.cuh`:
+Let's give these arguments a name that won't collide, like `dev_x` and `dev_y`. Now, we need to add them to `stream/setup/include/Arguments.cuh`:
 
 ```clike
 /**
@@ -156,7 +156,7 @@ ARGUMENT(dev_x, float)
 ARGUMENT(dev_y, float)
 ```
 
-Finally, we need to populate the _dependency tree_, ie. where are these arguments needed. For that, edit `stream/sequence_setup/include/AlgorithmDependencies.cuh`:
+Finally, we need to populate the _dependency tree_, ie. where are these arguments needed. For that, edit `stream/setup/include/AlgorithmDependencies.cuh`:
 
 ```clike
 /**
@@ -244,7 +244,7 @@ Reserve that host memory in `stream/sequence/src/HostBuffers.cu`:
   ...
 ```
 
-Finally, create a visitor for your newly created algorithm. Create a containing folder structure for it in `stream/sequence_visitors/test/src/`, and a new file inside named `SaxpyVisitor.cu`. Insert the following code inside:
+Finally, create a visitor for your newly created algorithm. Create a containing folder structure for it in `stream/visitors/test/src/`, and a new file inside named `SaxpyVisitor.cu`. Insert the following code inside:
 
 ```clike
 #include "StreamVisitor.cuh"
