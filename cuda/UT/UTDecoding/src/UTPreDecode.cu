@@ -71,9 +71,36 @@ __global__ void ut_pre_decode(
 
       const float numstrips = (fracStrip / 4.f) + strip - firstStrip;
 
-      // Calculate just Y value, add a tiny fraction of X to have deterministic sort
+      // Make a composed value made out of:
+      // (first 16 bits of yBegin) | (first 16 bits of xAtYEq0_local)
+      // 
+      // Rationale:
+      // Sorting in floats is done the same way as for ints,
+      // the bigger the binary number, the bigger the float (it's a designed property
+      // of the float format). Also, the format of a float is as follows:
+      // * 1 bit: sign
+      // * 8 bits: exponent
+      // * 23 bits: mantissa
+      // By using the first 16 bits of each, we get the sign, exponent and 7 bits
+      // of the mantissa, for both Y and X, which is enough to account for the
+      // cases where yBegin was repeated.
       const float yBegin = p0Y + numstrips * dp0diY;
-      const float correction = (numstrips * dp0diX) * 0.0001f;
+      const float xAtYEq0_local = numstrips * dp0diX;
+      const int* yBegin_p = reinterpret_cast<const int*>(&yBegin);
+      const int* xAtYEq0_local_p = reinterpret_cast<const int*>(&xAtYEq0_local);
+
+      // The second value needs to be changed its sign using the 2's complement logic (operator-),
+      // if the signs of both values differ.
+      const short composed_0 = (yBegin_p[0] & 0xFFFF0000) >> 16;
+      short composed_1 = (xAtYEq0_local_p[0] & 0xFFFF0000) >> 16;
+      const bool sign_0 = composed_0 & 0x8000;
+      const bool sign_1 = composed_1 & 0x8000;
+      if (sign_0 ^ sign_1) {
+        composed_1 = -composed_1;
+      }
+
+      const int composed_value = (composed_0 << 16) & 0xFFFF0000 | composed_1 & 0x0000FFFF;
+      const float* composed_value_float = reinterpret_cast<const float*>(&composed_value);
 
       const uint base_sector_group_offset =
           dev_unique_x_sector_offsets[idx_offset];
@@ -85,15 +112,7 @@ __global__ void ut_pre_decode(
 
       const uint hit_index =
           hit_offsets[base_sector_group_offset] + current_hit_count;
-      ut_hits.yBegin[hit_index] = yBegin + correction;
-
-      // Check the yBegin is actually changed by adding correction
-      assert(yBegin != (yBegin + correction) || correction == 0.f);
-
-      // TODO: This happens sometimes. Find a better solution
-      // if (std::abs(correction) > std::abs(yBegin / 2)) {
-      //   printf("Something bad could happen %f, %f\n", yBegin, correction);
-      // }
+      ut_hits.yBegin[hit_index] = composed_value_float[0];
 
       // Raw bank hit index:
       // [raw bank 8 bits] [hit id inside raw bank 24 bits]
