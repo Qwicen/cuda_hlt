@@ -20,6 +20,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 
   bool found = false;
   bool forward = false;
+  int considered = 0;
 
   // float xhitLayer0, xhitLayer2;
   // float zhitLayer0, zhitLayer2;
@@ -33,7 +34,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   const int total_hits_2layers_0 = ranges->layer[0].size0 + ranges->layer[0].size1 + ranges->layer[0].size2 +
                                    ranges->layer[3].size0 + ranges->layer[3].size1 + ranges->layer[3].size2;
 
-  for (int i=0; !found && i<total_hits_2layers_0; ++i) {
+  for (int i=0; (!found || considered < CompassUT::max_considered_before_found) && i<total_hits_2layers_0; ++i) {
     const int i_hit0 = set_index(i, ranges->layer[0], ranges->layer[3]);
 
     // Get the hit to check with next layer
@@ -52,7 +53,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
     }
 
     // loop over layer 2
-    for (int j=0; !found && j<layer_2.size0 + layer_2.size1 + layer_2.size2 ; ++j) {
+    for (int j=0; (!found || considered < CompassUT::max_considered_before_found) && j<layer_2.size0 + layer_2.size1 + layer_2.size2 ; ++j) {
       int i_hit2 = set_index(j, layer_2);
 
       // Get the hit to check with next layer
@@ -109,19 +110,20 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 
 
         // Fit the hits to get q/p, chi2
-        const auto number_of_hits = 2 + (temp_best_hits[1] != -1) + (temp_best_hits[3] != -1);
-        if (number_of_hits >= best_number_of_hits) {
-          best_number_of_hits = number_of_hits;
-          const auto params = pkick_fit(temp_best_hits, ut_hits, velo_state, ut_dxDy, yyProto, forward);
+        const auto temp_number_of_hits = 2 + (temp_best_hits[1] != -1) + (temp_best_hits[3] != -1);
+        const auto params = pkick_fit(temp_best_hits, ut_hits, velo_state, ut_dxDy, yyProto, forward);
+        ++considered;
 
-          if (params.chi2UT < best_fit) {
-            found = true;
-            best_hits[0] = temp_best_hits[0];
-            best_hits[1] = temp_best_hits[1];
-            best_hits[2] = temp_best_hits[2];
-            best_hits[3] = temp_best_hits[3];
-            best_params = params;
-          }
+        if (params.chi2UT < best_fit && temp_number_of_hits >= best_number_of_hits) {
+          best_hits[0] = temp_best_hits[0];
+          best_hits[1] = temp_best_hits[1];
+          best_hits[2] = temp_best_hits[2];
+          best_hits[3] = temp_best_hits[3];
+          best_number_of_hits = temp_number_of_hits;
+          best_params = params;
+          best_fit = params.chi2UT;
+
+          found = true;
         }
       }
     }
