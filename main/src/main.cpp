@@ -37,6 +37,7 @@ void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
     << std::endl << " -f {folder containing directories with raw bank binaries for every sub-detector}"
+    << std::endl << " -b {folder containing .bin files with muon common hits}"
     << std::endl << " --mdf {use MDF files as input instead of binary files}"
     << std::endl << " -g {folder containing detector configuration}"
     << std::endl << " -d {folder containing .bin files with MC truth information}"
@@ -57,6 +58,7 @@ int main(int argc, char *argv[])
   std::string folder_name_raw = "../input/minbias/banks/";
   std::string folder_name_MC = "../input/minbias/MC_info/";
   std::string folder_name_detector_configuration = "../input/detector_configuration/";
+  std::string folder_name_muon_common_hits = "../input/minbias/muon_common_hits/";
   uint number_of_events_requested = 0;
   uint start_event_offset = 0;
   uint tbb_threads = 1;
@@ -82,7 +84,7 @@ int main(int argc, char *argv[])
   int option_index = 0;
 
   signed char c;
-  while ((c = getopt_long(argc, argv, "f:d:n:o:t:r:pha:b:d:v:c:m:g:",
+  while ((c = getopt_long(argc, argv, "f:b:d:n:o:t:r:pha:b:d:v:c:m:g:",
                           long_options, &option_index)) != -1) {
     switch (c) {
     case 0:
@@ -96,6 +98,9 @@ int main(int argc, char *argv[])
       break;
     case 'f':
       folder_name_raw = std::string(optarg);
+      break;
+    case 'b':
+      folder_name_muon_common_hits = std::string(optarg);
       break;
     case 'd':
       folder_name_MC = std::string(optarg);
@@ -140,6 +145,7 @@ int main(int argc, char *argv[])
     std::string missing_folder = "";
 
     if (folder_name_raw.empty()) missing_folder = "raw banks";
+    else if (folder_name_muon_common_hits.empty()) missing_folder = "Muon common hits";
     else if (folder_name_detector_configuration.empty()) missing_folder = "detector geometry";
     else if (folder_name_MC.empty() && do_check) missing_folder = "Monte Carlo";
 
@@ -170,6 +176,7 @@ int main(int argc, char *argv[])
   // Show call options
   std::cout << "Requested options:" << std::endl
     << " folder containing directories with raw bank binaries for every sub-detector (-f): " << folder_name_raw << std::endl
+    << " folder containing .bin files with muon common hits (-b): " << folder_name_muon_common_hits << std::endl
     << " using " << (use_mdf ? "MDF" : "binary") << " input" << (use_mdf ? " (--mdf)" : "") << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
@@ -194,7 +201,6 @@ int main(int argc, char *argv[])
   const auto folder_name_UT_raw = folder_name_raw + "UT";
   const auto folder_name_mdf = folder_name_raw + "mdf";
   const auto folder_name_SciFi_raw = folder_name_raw + "FTCluster";
-  const auto folder_name_Muon_raw = folder_name_raw + "Muon";
   const auto geometry_reader = GeometryReader(folder_name_detector_configuration);
   const auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
 
@@ -206,8 +212,7 @@ int main(int argc, char *argv[])
   } else {
      event_reader = std::make_unique<EventReader>(FolderMap{{{BankTypes::VP, folder_name_velopix_raw},
                                                              {BankTypes::UT, folder_name_UT_raw},
-                                                             {BankTypes::FT, folder_name_SciFi_raw},
-                                                             {BankTypes::MUON, folder_name_Muon_raw}}});
+                                                             {BankTypes::FT, folder_name_SciFi_raw}}});
   }
 
   const auto velo_geometry = geometry_reader.read_geometry("velo_geometry.bin");
@@ -217,15 +222,28 @@ int main(int argc, char *argv[])
   const auto scifi_geometry = geometry_reader.read_geometry("scifi_geometry.bin");
   event_reader->read_events(number_of_events_requested, start_event_offset);
 
+  std::vector<char> events;
+  std::vector<uint> event_offsets;
   std::vector<Muon::HitsSoA> muon_hits_events(number_of_events_requested);
+  read_folder(
+    folder_name_muon_common_hits,
+    number_of_events_requested,
+    events,
+    event_offsets,
+    start_event_offset
+  );
   read_muon_events_into_arrays(
     muon_hits_events.data(),
-    event_reader->events(BankTypes::MUON).begin(),
-    event_reader->offsets(BankTypes::MUON).begin(),
+    events.data(),
+    event_offsets.data(),
     number_of_events_requested
   );
-  const int hits_to_out = 3;
-  check_muon_events(muon_hits_events.data(), hits_to_out, number_of_events_requested);
+  const int number_of_outputted_hits_per_event = 3;
+  check_muon_events(
+    muon_hits_events.data(),
+    number_of_outputted_hits_per_event,
+    number_of_events_requested
+  );
 
   info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
 
