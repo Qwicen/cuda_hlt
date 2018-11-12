@@ -37,28 +37,34 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   for (int i=0; (!found || considered < CompassUT::max_considered_before_found) && i<total_hits_2layers_0; ++i) {
     const int i_hit0 = set_index(i, ranges->layer[0], ranges->layer[3]);
 
-    // Get the hit to check with next layer
-    const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
-    const auto xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[0]);
-    const auto zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
-
     // set range for nested layer if forward or backward
     LayerCandidates layer_2;
+    int dxdy_layer = -1;
     if (i < ranges->layer[0].size0 + ranges->layer[0].size1 + ranges->layer[0].size2) {
       forward = true;
       layer_2 = ranges->layer[2];
+      dxdy_layer = 0;
     } else {
       forward = false;
       layer_2 = ranges->layer[1];
+      dxdy_layer = 3;
     }
+
+    // Get the hit to check with next layer
+    const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
+    const auto xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[dxdy_layer]);
+    const auto zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
 
     // loop over layer 2
     for (int j=0; (!found || considered < CompassUT::max_considered_before_found) && j<layer_2.size0 + layer_2.size1 + layer_2.size2 ; ++j) {
       int i_hit2 = set_index(j, layer_2);
 
       // Get the hit to check with next layer
+      int dxdy_layer_2 = -1;
+      if (dxdy_layer == 0) dxdy_layer_2 = 2;
+      if (dxdy_layer == 3) dxdy_layer_2 = 1;
       const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
-      const auto xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[2]);
+      const auto xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[dxdy_layer_2]);
       const auto zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
 
       const auto tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
