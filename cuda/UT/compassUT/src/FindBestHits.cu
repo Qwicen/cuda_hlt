@@ -16,7 +16,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   WindowIndicator win_ranges(win_size_shared); 
   const auto* ranges = win_ranges.get_track_candidates(threadIdx.x);
 
-  int best_hits [4] = { -1, -1, -1, -1};
+  int best_hits [4] = {-1, -1, -1, -1};
 
   bool found = false;
   bool forward = false;
@@ -56,13 +56,12 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
     const auto zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
 
     // loop over layer 2
-    for (int j=0; (!found || considered < CompassUT::max_considered_before_found) && j<layer_2.size0 + layer_2.size1 + layer_2.size2 ; ++j) {
+    for (int j=0; (!found || considered < CompassUT::max_considered_before_found) && 
+                  j<layer_2.size0 + layer_2.size1 + layer_2.size2; ++j) {
       int i_hit2 = set_index(j, layer_2);
 
       // Get the hit to check with next layer
-      int dxdy_layer_2 = -1;
-      if (dxdy_layer == 0) dxdy_layer_2 = 2;
-      if (dxdy_layer == 3) dxdy_layer_2 = 1;
+      const int dxdy_layer_2 = forward ? 2 : 1;
       const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
       const auto xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[dxdy_layer_2]);
       const auto zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
@@ -70,7 +69,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
       const auto tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
       if (std::abs(tx - velo_state.tx) <= PrVeloUTConst::deltaTx2) {
 
-        int temp_best_hits [4] = { i_hit0,-1 ,i_hit2, -1};
+        int temp_best_hits [4] = {i_hit0, -1, i_hit2, -1};
 
         const int layers [2] = {
           forward ? 1 : 2,
@@ -135,61 +134,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
     }
   }
 
-  // if (found) {
-  //   const int layers [2] = {
-  //     forward ? 1 : 2,
-  //     forward ? 3 : 0
-  //   };
-
-  //   float hitTol = PrVeloUTConst::hitTol2;
-
-  //   // search for triplet in layer1
-  //   for (int i1=0; i1<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i1) {
-
-  //     int i_hit1 = set_index(i1, ranges->layer[layers[0]]);
-
-  //     // Get the hit to check with next layer
-  //     const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
-  //     const float xhitLayer1 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[0]]);
-  //     const float zhitLayer1 = ut_hits.zAtYEq0[i_hit1];
-  //     const float xextrapLayer1 = xhitLayer0 + tx * (zhitLayer1 - zhitLayer0);
-
-  //     if (std::abs(xhitLayer1 - xextrapLayer1) < hitTol) {
-  //       hitTol = std::abs(xhitLayer1 - xextrapLayer1);
-  //       best_hits[1] = i_hit1;
-  //     }
-  //   }
-
-  //   // search for quadruplet in layer3
-  //   hitTol = PrVeloUTConst::hitTol2;
-  //   for (int i3=0; i3<ranges->layer[layers[1]].size0 + ranges->layer[layers[1]].size1 + ranges->layer[layers[1]].size2; ++i3) {
-
-  //     int i_hit3 = set_index(i3, ranges->layer[layers[1]]);
-
-  //     // Get the hit to check
-  //     const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
-  //     const float xhitLayer3 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[1]]);
-  //     const float zhitLayer3 = ut_hits.zAtYEq0[i_hit3];
-  //     const float xextrapLayer3 = xhitLayer2 + tx * (zhitLayer3 - zhitLayer2);
-  //     if (std::abs(xhitLayer3 - xextrapLayer3) < hitTol) {
-  //       hitTol = std::abs(xhitLayer3 - xextrapLayer3);
-  //       best_hits[3] = i_hit3;
-  //     }          
-  //   }
-
-  //   // Fit the hits to get q/p, chi2
-  //   const auto number_of_hits = 2 + (best_hits[1] != -1) + (best_hits[3] != -1);
-  //   if (number_of_hits >= best_number_of_hits) {
-  //     best_number_of_hits = number_of_hits;
-  //     const auto params = pkick_fit(best_hits, ut_hits, velo_state, ut_dxDy, yyProto, forward);
-
-  //     if (params.chi2UT < best_fit) {
-  //       return {best_hits[0], best_hits[1], best_hits[2], best_hits[3], params};
-  //     }
-  //   }
-  // }
   return {best_hits[0], best_hits[1], best_hits[2], best_hits[3], best_params};
-  // return {-1, -1, -1, -1, {}};
 }
 
 //=========================================================================
