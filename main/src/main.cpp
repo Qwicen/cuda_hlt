@@ -39,6 +39,7 @@ void printUsage(char* argv[]){
     << std::endl << " --mdf {use MDF files as input instead of binary files}"
     << std::endl << " -g {folder containing detector configuration}"
     << std::endl << " -d {folder containing .bin files with MC truth information}"
+    << std::endl << " -i {folder containing .bin files with PV MC truth information}"
     << std::endl << " -n {number of events to process}=0 (all)"
     << std::endl << " -o {offset of events from which to start}=0 (beginning)"
     << std::endl << " -t {number of threads / streams}=1"
@@ -82,7 +83,7 @@ int main(int argc, char *argv[])
   int option_index = 0;
 
   signed char c;
-  while ((c = getopt_long(argc, argv, "f:d:n:o:t:r:pha:b:d:v:c:m:g:",
+  while ((c = getopt_long(argc, argv, "f:d:i:n:o:t:r:pha:b:d:v:c:m:g:",
                           long_options, &option_index)) != -1) {
     switch (c) {
     case 0:
@@ -176,7 +177,7 @@ int main(int argc, char *argv[])
     << " using " << (use_mdf ? "MDF" : "binary") << " input" << (use_mdf ? " (--mdf)" : "") << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
-    << " folder with PV truth input (-j): " << folder_name_pv << std::endl
+    << " folder with PV truth input (-i): " << folder_name_pv << std::endl
     << " run checkers (-c): " << do_check << std::endl
     << " number of files (-n): " << number_of_events_requested << std::endl
     << " start event offset (-o): " << start_event_offset << std::endl
