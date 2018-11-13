@@ -1,26 +1,14 @@
 #include "fitSeeds.cuh"
 //simplification : don't disable/ remove tracks
 
-//configuration
-__constant__ size_t m_minTr = 4;
-__constant__ int    m_Iterations = 20;
-__constant__ int    m_minIter = 5;
-__constant__ double m_maxDeltaZ = 0.0005; // unit:: mm
-__constant__ double m_minTrackWeight = 0.00000001;
-__constant__ double m_TrackErrorScaleFactor = 1.0;
-__constant__ double m_maxChi2 = 400.0;
-__constant__ double m_trackMaxChi2 = 12.;
-//__constant__ double m_trackChi = std::sqrt(m_trackMaxChi2);     // sqrt of trackMaxChi2
-__constant__ double m_trackChi = 3.464;     // sqrt of trackMaxChi2
-__constant__ double m_trackMaxChi2Remove = 25.;
-__constant__ double m_maxDeltaZCache = 1.; //unit: mm
+
 
 
 
 __global__ void fitSeeds(
-  Vertex* dev_vertex,
+  PatPV::Vertex* dev_vertex,
   int * dev_number_vertex,
-  XYZPoint * dev_seeds,
+  PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seeds,
   uint* dev_kalmanvelo_states,
   int * dev_atomics_storage,
@@ -37,7 +25,7 @@ __global__ void fitSeeds(
 
 
 
-  Vertex vertex;
+  PatPV::Vertex vertex;
 
   int counter_vertex = 0;
   for(int i_seed = 0; i_seed < dev_number_seeds[event_number]; i_seed++) {
@@ -57,9 +45,9 @@ __global__ void fitSeeds(
 
 
 
-__device__ bool fitVertex( XYZPoint& seedPoint,
+__device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
               Velo::Consolidated::States velo_states,
-             Vertex& vtx,
+             PatPV::Vertex& vtx,
               int number_of_tracks,
               uint tracks_offset) 
 {
@@ -87,7 +75,7 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
 
   // position at which derivatives are evaluated
 
-  XYZPoint vtxpos = seedPoint ;
+  PatPV::XYZPoint vtxpos = seedPoint ;
 
   // prepare tracks
  
@@ -128,14 +116,14 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
     m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
     m_state_c31 += dz* m_state_c33 ;
 
-    Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
+    PatPV::Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
 
     double  tr_chi2 = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
       
 
 
-    if(tr_chi2 < m_maxChi2) {
+    if(tr_chi2 < PatPV::m_maxChi2) {
  // have to use updated values!!
       tr_state_x[pvTrack_counter] = m_state_x;
       tr_state_y[pvTrack_counter] = m_state_y;
@@ -158,7 +146,7 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
   }
     
 
-  if( pvTrack_counter < m_minTr ) {
+  if( pvTrack_counter < PatPV::m_minTr ) {
 
     return false;
   }
@@ -166,10 +154,10 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
 
   double vtxcov[6] ;
   bool converged = false;
-  double maxdz = m_maxDeltaZ;
+  double maxdz = PatPV::m_maxDeltaZ;
   int nbIter = 0;
   int tracks_in_vertex = 0;
-  while( (nbIter < m_minIter) || (!converged && nbIter < m_Iterations) ) {
+  while( (nbIter < PatPV::m_minIter) || (!converged && nbIter < PatPV::m_Iterations) ) {
     ++nbIter;
 
     double halfD2Chi2DX2_00 = 0.;
@@ -178,7 +166,7 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
     double halfD2Chi2DX2_20 = 0.;
     double halfD2Chi2DX2_21 = 0.;
     double halfD2Chi2DX2_22 = 0.;
-    XYZPoint halfDChi2DX(0.,0.,0.) ;
+    PatPV::XYZPoint halfDChi2DX(0.,0.,0.) ;
 
 
     
@@ -221,7 +209,7 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
       m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
       m_state_c31 += dz* m_state_c33 ;
 
-      Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
+      PatPV::Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
       double tr_halfD2Chi2DX2_00 = 1. / m_state_c00;
       double tr_halfD2Chi2DX2_10 = 0.;
@@ -239,7 +227,7 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
       double weight = getTukeyWeight(tr_chi2, nbIter) ;
 
       // add the track
-      if ( weight > m_minTrackWeight ) {
+      if ( weight > PatPV::m_minTrackWeight ) {
         ++ntrin;
         halfD2Chi2DX2_00 += weight * tr_halfD2Chi2DX2_00 ;
         halfD2Chi2DX2_10 += weight * tr_halfD2Chi2DX2_10 ;
@@ -261,7 +249,7 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
     }
     
     // check nr of tracks that entered the fit
-    if(ntrin < m_minTr) {
+    if(ntrin < PatPV::m_minTr) {
   
       return false;
     }
@@ -291,7 +279,7 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
     
 
     // compute the delta w.r.t. the reference
-    XYZPoint delta{0.,0.,0.};
+    PatPV::XYZPoint delta{0.,0.,0.};
     delta.x = -1.0 * (vtxcov[0] * halfDChi2DX.x + vtxcov[1] * halfDChi2DX.y + vtxcov[3] * halfDChi2DX.z );
     delta.y = -1.0 * (vtxcov[1] * halfDChi2DX.x + vtxcov[2] * halfDChi2DX.y + vtxcov[4] * halfDChi2DX.z );
     delta.z = -1.0 * (vtxcov[3] * halfDChi2DX.x + vtxcov[4] * halfDChi2DX.y + vtxcov[5] * halfDChi2DX.z );
@@ -310,7 +298,7 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
     vtx.setChi2AndDoF( chi2, 2*ntrin-3 ) ;
 
     // loose convergence criteria if close to end of iterations
-    if ( 1.*nbIter > 0.8*m_Iterations ) maxdz = 10.*m_maxDeltaZ;
+    if ( 1.*nbIter > 0.8*PatPV::m_Iterations ) maxdz = 10.*PatPV::m_maxDeltaZ;
     converged = std::abs(deltaz) < maxdz ;
     tracks_in_vertex = ntrin;
   } // end iteration loop
@@ -373,7 +361,7 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
     m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
     m_state_c31 += dz* m_state_c33 ;
 
-    Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
+    PatPV::Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
     double tr_chi2          = res.x*res.x / m_state_c00 + res.y*res.y / m_state_c11;
 
@@ -393,8 +381,8 @@ __device__ bool fitVertex( XYZPoint& seedPoint,
 __device__ double getTukeyWeight(double trchi2, int iter) 
 {
   if (iter<1 ) return 1.;
-  double ctrv = m_trackChi * std::max(m_minIter -  iter,1);
-  double cT2 = trchi2 / std::pow(ctrv*m_TrackErrorScaleFactor,2);
+  double ctrv = PatPV::m_trackChi * std::max(PatPV::m_minIter -  iter,1);
+  double cT2 = trchi2 / std::pow(ctrv*PatPV::m_TrackErrorScaleFactor,2);
   return cT2 < 1. ? std::pow(1.-cT2,2) : 0. ;
 }
 

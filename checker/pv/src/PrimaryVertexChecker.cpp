@@ -7,7 +7,7 @@
 #endif
 
 
-void checkPVs(  const std::string& foldername, uint number_of_files, Vertex * rec_vertex, int* number_of_vertex)
+void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vertex * rec_vertex, int* number_of_vertex)
 {
    std::cout << "Checking PVs: " << std::endl;
    std::vector<std::string> folderContents = list_folder(foldername);
@@ -88,7 +88,7 @@ void checkPVs(  const std::string& foldername, uint number_of_files, Vertex * re
 
   //try to implement nominal PV checker
 
-  std::vector<Vertex*> vecOfVertices;
+  std::vector<PatPV::Vertex*> vecOfVertices;
   //first fill vector with vertices
   for(uint i = 0; i < number_of_vertex[i_event]; i++) {
     int index = i_event  * PatPV::max_number_vertices + i;
@@ -96,10 +96,10 @@ void checkPVs(  const std::string& foldername, uint number_of_files, Vertex * re
   }
   // Fill reconstucted PV info
   std::vector<RecPVInfo> recpvvec;
-  std::vector<Vertex*>::iterator itRecV;
+  std::vector<PatPV::Vertex*>::iterator itRecV;
   for(itRecV = vecOfVertices.begin(); vecOfVertices.end() != itRecV;
                itRecV++) {
-    Vertex* pv;
+    PatPV::Vertex* pv;
     pv = *itRecV;
     RecPVInfo recinfo;
     recinfo.pRECPV= pv;
@@ -111,7 +111,7 @@ void checkPVs(  const std::string& foldername, uint number_of_files, Vertex * re
     double sigx = sqrt(pv->cov00);
     double sigy = sqrt(pv->cov11);
     double sigz = sqrt(pv->cov22);
-    XYZPoint a3d(sigx,sigy,sigz);
+    PatPV::XYZPoint a3d(sigx,sigy,sigz);
     recinfo.positionSigma = a3d;
     //recinfo.nTracks = pv->tracks.size();
     recinfo.nTracks = pv->nTracks;

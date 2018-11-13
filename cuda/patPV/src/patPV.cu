@@ -1,7 +1,7 @@
 #include "patPV.cuh"
 
 
-__device__ void reconstructMultiPVFromTracks(Velo::State * tracks2use, Vertex * outvtxvec, int number_of_tracks,
+__device__ void reconstructMultiPVFromTracks(Velo::State * tracks2use, PatPV::Vertex * outvtxvec, int number_of_tracks,
   uint * number_of_vertex,  bool * tracks2disable) 
 {
   /*
@@ -88,7 +88,7 @@ __device__ void reconstructMultiPVFromTracks(Velo::State * tracks2use, Vertex * 
 __global__ void patPV(
   Velo::State* dev_velo_states,
   int * dev_atomics_storage,
-  Vertex * dev_outvtxvec,
+  PatPV::Vertex * dev_outvtxvec,
   uint * dev_number_of_vertex
 ) {
 

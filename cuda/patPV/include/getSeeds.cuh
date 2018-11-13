@@ -13,10 +13,10 @@ __global__ void getSeeds(
   uint* dev_kalmanvelo_states,
   int * dev_atomics_storage,
   uint* dev_velo_track_hit_number,
-  XYZPoint * dev_seeds,
+  PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seeds);
 
- __device__ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters);
+ __device__ int findClusters(PatPV::vtxCluster * vclus, double * zclusters, int number_of_clusters);
 
 
  ALGORITHM(getSeeds, getSeeds_t)

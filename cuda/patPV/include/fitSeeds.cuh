@@ -8,17 +8,17 @@
 #include "VeloConsolidated.cuh"
 
 __global__ void fitSeeds(
-  Vertex* dev_vertex,
+  PatPV::Vertex* dev_vertex,
   int * dev_number_vertex,
-  XYZPoint * dev_seeds,
+  PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seeds,
   uint* dev_kalmanvelo_states,
   int * dev_atomics_storage,
   uint* dev_velo_track_hit_number);
 
-__device__ bool fitVertex( XYZPoint& seedPoint,
+__device__ bool fitVertex(PatPV::XYZPoint& seedPoint,
               Velo::Consolidated::States velo_states,
-             Vertex& vtx,
+              PatPV::Vertex& vtx,
               int number_of_tracks,
               uint tracks_offset) ;
 

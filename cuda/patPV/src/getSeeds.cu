@@ -1,39 +1,13 @@
 #include "getSeeds.cuh"
 //simplficiations: no tracks2disable
 
-// steering parameters for merging procedure
-__constant__ double mcu_maxChi2Merge = 25.;
-__constant__ double mcu_factorToIncreaseErrors = 15.;
-
-//try parameters from RecoUpgradeTracking.py
-__constant__ int    mcu_minClusterMult = 4;
-__constant__ int    mcu_minCloseTracksInCluster = 3;
 
 
-// steering parameters for final cluster selection
-// int    m_minClusterMult = 3;
-__constant__ double mcu_dzCloseTracksInCluster = 5.; // unit: mm
-// int    m_minCloseTracksInCluster = 3;
-__constant__ int    mcu_highMult = 10;
-__constant__ double mcu_ratioSig2HighMult = 1.0;
-__constant__ double mcu_ratioSig2LowMult = 0.9;
 
-__constant__ int mcu_max_clusters = 200; // maximmum number of clusters
+__device__ double zCloseBeam( Velo::State track, const PatPV::XYZPoint& beamspot) {
 
-__constant__ double mcu_x0MS = 0.01;// X0 (tunable) of MS to add for extrapolation of
-                                                       // track parameters to PV
-
-//don't forget to actually calculate this!!
-//double  m_scatCons = 0;     // calculated from m_x0MS
-__constant__ double X0cu = 0.01;
-//__constant__ double m_scatCons = (13.6*sqrt(X0)*(1.+0.038*log(X0)));
-__constant__ double mcu_scatCons = 0.01;
-
-
-__device__ double zCloseBeam( Velo::State track, const XYZPoint& beamspot) {
-
-  XYZPoint tpoint(track.x, track.y, track.z);
-  XYZPoint tdir(track.tx, track.ty, 1.);
+  PatPV::XYZPoint tpoint(track.x, track.y, track.z);
+  PatPV::XYZPoint tdir(track.tx, track.ty, 1.);
 
   double wx = ( 1. + tdir.x * tdir.x ) / track.c00;
   double wy = ( 1. + tdir.y * tdir.y ) / track.c11;
@@ -64,7 +38,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
     // assume that first hit in VD at 8 mm
     double distr        = 8.; // unit: mm
     double dist2        = distr*distr/sinTheta2;
-    double sigma_ms2    = mcu_scatCons * mcu_scatCons * dist2 / (pMean*pMean);
+    double sigma_ms2    = PatPV::mcu_scatCons * PatPV::mcu_scatCons * dist2 / (pMean*pMean);
     double fslope2      = 0.0005*0.0005;
     double sigma_slope2 = fslope2*dist2;
 
@@ -80,10 +54,10 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
   uint* dev_kalmanvelo_states,
   int * dev_atomics_storage,
   uint* dev_velo_track_hit_number,
-  XYZPoint * dev_seeds,
+  PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seed) {
 
-  XYZPoint beamspot;
+  PatPV::XYZPoint beamspot;
   beamspot.x = 0;
   beamspot.y = 0;
   beamspot.z = 0;
@@ -102,7 +76,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
   
 
-    vtxCluster  vclusters[VeloTracking::max_tracks];
+    PatPV::vtxCluster  vclusters[VeloTracking::max_tracks];
 
 
 
@@ -119,7 +93,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
     errorForPVSeedFinding(trk.tx, trk.ty,sigsq);
 
     if ( fabs(zclu)>2000.) continue;
-    vtxCluster clu;
+    PatPV::vtxCluster clu;
     clu.z = zclu;
     clu.sigsq = sigsq;
     clu.sigsqmin = clu.sigsq;
@@ -134,7 +108,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
   int number_final_clusters = findClusters(vclusters, zseeds, counter_number_of_clusters);
 
-  for(int i = 0; i < number_final_clusters; i++) dev_seeds[event_number * PatPV::max_number_vertices + i] = XYZPoint{ beamspot.x, beamspot.y, zseeds[i]};
+  for(int i = 0; i < number_final_clusters; i++) dev_seeds[event_number * PatPV::max_number_vertices + i] = PatPV::XYZPoint{ beamspot.x, beamspot.y, zseeds[i]};
   
 
   dev_number_seed[event_number] = number_final_clusters;
@@ -142,7 +116,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
  };
 
- __device__ int findClusters(vtxCluster * vclus, double * zclusters, int number_of_clusters)  {
+ __device__ int findClusters(PatPV::vtxCluster * vclus, double * zclusters, int number_of_clusters)  {
 
 
   
@@ -150,7 +124,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
   
   for(int i = 0; i < number_of_clusters; i++) {
-    vclus[i].sigsq *= mcu_factorToIncreaseErrors*mcu_factorToIncreaseErrors; // blow up errors
+    vclus[i].sigsq *= PatPV::mcu_factorToIncreaseErrors*PatPV::mcu_factorToIncreaseErrors; // blow up errors
     vclus[i].sigsqmin = vclus[i].sigsq;
   }
 
@@ -191,7 +165,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
         double zdist = z1 - z2;
         double chi2dist = zdist*zdist/(s1+s2);
         //merge if chi2dist is smaller than max
-        if (chi2dist<mcu_maxChi2Merge ) {
+        if (chi2dist<PatPV::mcu_maxChi2Merge ) {
           no_merges = false;
           double w_inv = (s1*s2/(s1+s2));
           double zmerge = w_inv*(z1/s1+z2/s2);
@@ -214,7 +188,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
 
   int return_number_of_clusters = 0;
   //count final number of clusters
-  vtxCluster pvclus[VeloTracking::max_tracks];
+  PatPV::vtxCluster pvclus[VeloTracking::max_tracks];
   for(int i = 0; i < number_of_clusters; i++) {
     if(vclus[i].ntracks != 0)     {pvclus[return_number_of_clusters] = vclus[i]; return_number_of_clusters++;}
   } 
@@ -229,7 +203,7 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
   for(int index = 0; index < return_number_of_clusters; index++) {
 
     int n_tracks_close = 0;
-    for(int i = 0; i < number_of_clusters; i++) if(fabs(vclus[i].z - pvclus[index].z ) < mcu_dzCloseTracksInCluster ) n_tracks_close++;
+    for(int i = 0; i < number_of_clusters; i++) if(fabs(vclus[i].z - pvclus[index].z ) < PatPV::mcu_dzCloseTracksInCluster ) n_tracks_close++;
   
 
     double dist_to_closest = 1000000.;
@@ -243,13 +217,13 @@ __device__ void errorForPVSeedFinding(double tx, double ty, double &sigz2)  {
     double rat = pvclus[index].sigsq/pvclus[index].sigsqmin;
     bool igood = false;
     int ntracks = pvclus[index].ntracks;
-    if( ntracks >= mcu_minClusterMult ) {
+    if( ntracks >= PatPV::mcu_minClusterMult ) {
       if( dist_to_closest>10. && rat<0.95) igood=true;
-      if( ntracks >= mcu_highMult && rat < mcu_ratioSig2HighMult)  igood=true;
-      if( ntracks <  mcu_highMult && rat < mcu_ratioSig2LowMult )  igood=true;
+      if( ntracks >= PatPV::mcu_highMult && rat < PatPV::mcu_ratioSig2HighMult)  igood=true;
+      if( ntracks <  PatPV::mcu_highMult && rat < PatPV::mcu_ratioSig2LowMult )  igood=true;
     }
     // veto
-    if( n_tracks_close < mcu_minCloseTracksInCluster ) igood = false;
+    if( n_tracks_close < PatPV::mcu_minCloseTracksInCluster ) igood = false;
     if(igood) {zclusters[number_good_clusters] = pvclus[index].z; number_good_clusters++;}
 
 

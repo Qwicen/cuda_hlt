@@ -1,5 +1,4 @@
-#ifndef PVCHECKER_H
-#define PVCHECKER_H
+#pragma once
 
 #include "Common.h"
 
@@ -18,7 +17,7 @@
 int m_nTracksToBeRecble = 4;
 double m_dzIsolated = 10; //mm
 bool m_matchByTracks = false;
-void checkPVs(  const std::string& foldername, uint number_of_files, Vertex * rec_vertex, int* number_of_vertex);
+void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vertex * rec_vertex, int* number_of_vertex);
 
 struct MCVertex {
   double x;
@@ -60,9 +59,9 @@ typedef struct {
   double x;
   double y;
   double z;
-  XYZPoint positionSigma;  // position sigmas
+  PatPV::XYZPoint positionSigma;  // position sigmas
   int indexMCPVInfo;              // index to MCPVInfo
-  Vertex* pRECPV;        // pointer to REC PV
+  PatPV::Vertex* pRECPV;        // pointer to REC PV
 } RecPVInfo;
 
 
@@ -132,5 +131,3 @@ std::vector<MCPVInfo>::iterator closestMCPV(std::vector<MCPVInfo>& rblemcpv,
 }
 
 
-
-#endif PVCHECKER_H
