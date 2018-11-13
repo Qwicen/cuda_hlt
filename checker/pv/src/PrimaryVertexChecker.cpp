@@ -1,10 +1,6 @@
 #include "PrimaryVertexChecker.h"
 
-#ifdef WITH_ROOT
-#include "TH1D.h"
-#include "TFile.h"
-#include "TTree.h"
-#endif
+
 
 
 void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vertex * rec_vertex, int* number_of_vertex)

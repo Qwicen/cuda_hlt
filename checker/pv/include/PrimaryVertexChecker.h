@@ -7,10 +7,13 @@
 #include "InputTools.h"
 
 #include "patPV_Definitions.cuh"
+#include <algorithm>
+
+#ifdef WITH_ROOT
 #include "TH1D.h"
 #include "TFile.h"
 #include "TTree.h"
-#include <algorithm>
+#endif
 
 
  //configuration for PV checker -> check values
