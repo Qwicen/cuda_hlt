@@ -18,19 +18,7 @@ SEQUENCE_T(
   prefix_sum_single_block_velo_track_hit_number_t,
   prefix_sum_scan_velo_track_hit_number_t,
   consolidate_tracks_t,
-  ut_calculate_number_of_hits_t,
-  prefix_sum_reduce_ut_hits_t,
-  prefix_sum_single_block_ut_hits_t,
-  prefix_sum_scan_ut_hits_t,
-  ut_pre_decode_t,
-  ut_find_permutation_t,
-  ut_decode_raw_banks_in_order_t,
-  veloUT_t,
-  estimate_cluster_count_t,
-  prefix_sum_reduce_scifi_hits_t,
-  prefix_sum_single_block_scifi_hits_t,
-  prefix_sum_scan_scifi_hits_t,
-  raw_bank_decoder_t,
-  scifi_sort_by_x_t,
-  scifi_pr_forward_t
+  velo_fit_t,
+  getSeeds_t,
+  fitSeeds_t
 )
