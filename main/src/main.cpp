@@ -15,11 +15,11 @@
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
+#include <thread>
 #include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
 
-#include "tbb/tbb.h"
 #include "cuda_runtime.h"
 #include "CudaCommon.h"
 #include "RuntimeOptions.h"
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
   std::string folder_name_muon_common_hits = "../input/minbias/muon_common_hits/";
   uint number_of_events_requested = 0;
   uint start_event_offset = 0;
-  uint tbb_threads = 1;
+  uint number_of_threads = 1;
   uint number_of_repetitions = 1;
   uint verbosity = 3;
   bool print_memory_usage = false;
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
       start_event_offset = atoi(optarg);
       break;
     case 't':
-      tbb_threads = atoi(optarg);
+      number_of_threads = atoi(optarg);
       break;
     case 'r':
       number_of_repetitions = atoi(optarg);
@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
     << " run checkers (-c): " << do_check << std::endl
     << " number of files (-n): " << number_of_events_requested << std::endl
     << " start event offset (-o): " << start_event_offset << std::endl
-    << " tbb threads (-t): " << tbb_threads << std::endl
+    << " threads / streams (-t): " << number_of_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
     << " print memory usage (-p): " << print_memory_usage << std::endl
@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
   // Create streams
   StreamWrapper stream_wrapper;
   stream_wrapper.initialize_streams(
-    tbb_threads,
+    number_of_threads,
     number_of_events_requested,
     print_memory_usage,
     start_event_offset,
@@ -274,31 +274,40 @@ int main(int argc, char *argv[])
     print_gpu_memory_consumption();
   }
 
-  // Attempt to execute all in one go
-  Timer t;
-  tbb::parallel_for(
-    static_cast<uint>(0),
-    static_cast<uint>(tbb_threads),
-    [&] (uint i) {
-      auto runtime_options = RuntimeOptions{
-        event_reader->events(BankTypes::VP).begin(),
-        event_reader->offsets(BankTypes::VP).begin(),
-        event_reader->events(BankTypes::VP).size(),
-        event_reader->offsets(BankTypes::VP).size(),
-        event_reader->events(BankTypes::UT).begin(),
-        event_reader->offsets(BankTypes::UT).begin(),
-        event_reader->events(BankTypes::UT).size(),
-        event_reader->offsets(BankTypes::UT).size(),
-        event_reader->events(BankTypes::FT).begin(),
-        event_reader->offsets(BankTypes::FT).begin(),
-        event_reader->events(BankTypes::FT).size(),
-        event_reader->offsets(BankTypes::FT).size(),
-        number_of_events_requested,
-        number_of_repetitions};
+  // Lambda with the execution of a thread / stream
+  const auto thread_execution = [&] (uint i) {
+    auto runtime_options = RuntimeOptions{
+      event_reader->events(BankTypes::VP).begin(),
+      event_reader->offsets(BankTypes::VP).begin(),
+      event_reader->events(BankTypes::VP).size(),
+      event_reader->offsets(BankTypes::VP).size(),
+      event_reader->events(BankTypes::UT).begin(),
+      event_reader->offsets(BankTypes::UT).begin(),
+      event_reader->events(BankTypes::UT).size(),
+      event_reader->offsets(BankTypes::UT).size(),
+      event_reader->events(BankTypes::FT).begin(),
+      event_reader->offsets(BankTypes::FT).begin(),
+      event_reader->events(BankTypes::FT).size(),
+      event_reader->offsets(BankTypes::FT).size(),
+      number_of_events_requested,
+      number_of_repetitions};
 
-      stream_wrapper.run_stream(i, runtime_options);
-    }
-  );
+    stream_wrapper.run_stream(i, runtime_options);
+  };
+
+  // Vector of threads
+  std::vector<std::thread> threads;
+
+  Timer t;
+  // Create and invoke all threads
+  for (uint i=0; i<number_of_threads; ++i) {
+    threads.emplace_back(thread_execution, i);
+  }
+
+  // Join all threads
+  for (auto& thread : threads) {
+    thread.join();
+  }
   t.stop();
 
   // Do optional Monte Carlo truth test on stream 0
@@ -306,7 +315,7 @@ int main(int argc, char *argv[])
     stream_wrapper.run_monte_carlo_test(0, folder_name_MC, number_of_events_requested);
   }
 
-  std::cout << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
+  std::cout << (number_of_events_requested * number_of_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
   // Reset device
