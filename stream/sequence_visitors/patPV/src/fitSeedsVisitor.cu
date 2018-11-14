@@ -46,7 +46,7 @@ void SequenceVisitor::visit<fitSeeds_t>(
 
 
   state.invoke();
-
+/*
     // Retrieve result
   cudaCheck(cudaMemcpyAsync(
     host_buffers.host_reconstructed_pvs,
@@ -64,8 +64,20 @@ void SequenceVisitor::visit<fitSeeds_t>(
     cuda_stream
   ));
 
+      // Wait to receive the result
+  cudaEventRecord(cuda_generic_event, cuda_stream);
+  cudaEventSynchronize(cuda_generic_event);
 
-    
+
+  for(int i_event = 0; i_event < runtime_options.number_of_events; i_event++) {
+    std::cout << "event " << i_event << " rec vtx: " << host_buffers.host_number_of_vertex[i_event] << std::endl;
+    for(int i_vtx = 0; i_vtx < host_buffers.host_number_of_vertex[i_event]; i_vtx++) {
+      int index = PatPV::max_number_vertices * i_event + i_vtx;
+      std::cout <<i_event<< " vtx " <<  host_buffers.host_reconstructed_pvs[index].x << " " <<host_buffers.host_reconstructed_pvs[index].y << " " << host_buffers.host_reconstructed_pvs[index].z << " " << host_buffers.host_reconstructed_pvs[index].cov22 << std::endl;
+    }
+  }
+
+    */
 }
 
 

@@ -17,8 +17,9 @@ struct HostBuffers {
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   char* host_velo_states;
   uint* host_kalmanvelo_states;
-  Vertex* host_reconstructed_pvs;
+  PatPV::Vertex* host_reconstructed_pvs;
   int* host_number_of_vertex;
+  int* host_number_of_seeds;
   uint* host_accumulated_number_of_ut_hits;
   SciFi::Track* host_scifi_tracks;
   uint* host_n_scifi_tracks;
