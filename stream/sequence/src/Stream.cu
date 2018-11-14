@@ -96,6 +96,7 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
 
 void Stream::run_monte_carlo_test(
   const std::string& mc_folder,
+  const std::string& mc_pv_folder,
   const uint number_of_events_requested)
 {
 #ifdef WITH_ROOT
@@ -106,6 +107,7 @@ void Stream::run_monte_carlo_test(
   // Create the CheckerInvoker and read Monte Carlo validation information
   const auto checker_invoker = CheckerInvoker(
     mc_folder,
+    mc_pv_folder,
     start_event_offset,
     number_of_events_requested);
 

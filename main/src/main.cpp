@@ -103,6 +103,7 @@ int main(int argc, char *argv[])
       break;
     case 'i':
       folder_name_pv = std::string(optarg);
+      break;
     case 'g':
       folder_name_detector_configuration = std::string(optarg);
       break;
@@ -287,7 +288,7 @@ int main(int argc, char *argv[])
 
   // Do optional Monte Carlo truth test on stream 0
   if (do_check) {
-    stream_wrapper.run_monte_carlo_test(0, folder_name_MC, number_of_events_requested);
+    stream_wrapper.run_monte_carlo_test(0, folder_name_MC, folder_name_pv, number_of_events_requested);
   }
 
   std::cout << (number_of_events_requested * number_of_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
