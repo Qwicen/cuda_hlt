@@ -15,11 +15,11 @@
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
+#include <thread>
 #include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
 
-#include "tbb/tbb.h"
 #include "cuda_runtime.h"
 #include "CudaCommon.h"
 #include "RuntimeOptions.h"
@@ -37,6 +37,7 @@ void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
     << std::endl << " -f {folder containing directories with raw bank binaries for every sub-detector}"
+    << std::endl << " -b {folder containing .bin files with muon common hits}"
     << std::endl << " --mdf {use MDF files as input instead of binary files}"
     << std::endl << " -g {folder containing detector configuration}"
     << std::endl << " -d {folder containing .bin files with MC truth information}"
@@ -57,9 +58,10 @@ int main(int argc, char *argv[])
   std::string folder_name_raw = "../input/minbias/banks/";
   std::string folder_name_MC = "../input/minbias/MC_info/";
   std::string folder_name_detector_configuration = "../input/detector_configuration/";
+  std::string folder_name_muon_common_hits = "../input/minbias/muon_common_hits/";
   uint number_of_events_requested = 0;
   uint start_event_offset = 0;
-  uint tbb_threads = 1;
+  uint number_of_threads = 1;
   uint number_of_repetitions = 1;
   uint verbosity = 3;
   bool print_memory_usage = false;
@@ -82,7 +84,7 @@ int main(int argc, char *argv[])
   int option_index = 0;
 
   signed char c;
-  while ((c = getopt_long(argc, argv, "f:d:n:o:t:r:pha:b:d:v:c:m:g:",
+  while ((c = getopt_long(argc, argv, "f:b:d:n:o:t:r:pha:b:d:v:c:m:g:",
                           long_options, &option_index)) != -1) {
     switch (c) {
     case 0:
@@ -96,6 +98,9 @@ int main(int argc, char *argv[])
       break;
     case 'f':
       folder_name_raw = std::string(optarg);
+      break;
+    case 'b':
+      folder_name_muon_common_hits = std::string(optarg);
       break;
     case 'd':
       folder_name_MC = std::string(optarg);
@@ -113,7 +118,7 @@ int main(int argc, char *argv[])
       start_event_offset = atoi(optarg);
       break;
     case 't':
-      tbb_threads = atoi(optarg);
+      number_of_threads = atoi(optarg);
       break;
     case 'r':
       number_of_repetitions = atoi(optarg);
@@ -140,6 +145,7 @@ int main(int argc, char *argv[])
     std::string missing_folder = "";
 
     if (folder_name_raw.empty()) missing_folder = "raw banks";
+    else if (folder_name_muon_common_hits.empty()) missing_folder = "Muon common hits";
     else if (folder_name_detector_configuration.empty()) missing_folder = "detector geometry";
     else if (folder_name_MC.empty() && do_check) missing_folder = "Monte Carlo";
 
@@ -170,13 +176,14 @@ int main(int argc, char *argv[])
   // Show call options
   std::cout << "Requested options:" << std::endl
     << " folder containing directories with raw bank binaries for every sub-detector (-f): " << folder_name_raw << std::endl
+    << " folder containing .bin files with muon common hits (-b): " << folder_name_muon_common_hits << std::endl
     << " using " << (use_mdf ? "MDF" : "binary") << " input" << (use_mdf ? " (--mdf)" : "") << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
     << " run checkers (-c): " << do_check << std::endl
     << " number of files (-n): " << number_of_events_requested << std::endl
     << " start event offset (-o): " << start_event_offset << std::endl
-    << " tbb threads (-t): " << tbb_threads << std::endl
+    << " threads / streams (-t): " << number_of_threads << std::endl
     << " number of repetitions (-r): " << number_of_repetitions << std::endl
     << " reserve MB (-m): " << reserve_mb << std::endl
     << " print memory usage (-p): " << print_memory_usage << std::endl
@@ -194,7 +201,6 @@ int main(int argc, char *argv[])
   const auto folder_name_UT_raw = folder_name_raw + "UT";
   const auto folder_name_mdf = folder_name_raw + "mdf";
   const auto folder_name_SciFi_raw = folder_name_raw + "FTCluster";
-  const auto folder_name_Muon_raw = folder_name_raw + "Muon";
   const auto geometry_reader = GeometryReader(folder_name_detector_configuration);
   const auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
 
@@ -206,8 +212,7 @@ int main(int argc, char *argv[])
   } else {
      event_reader = std::make_unique<EventReader>(FolderMap{{{BankTypes::VP, folder_name_velopix_raw},
                                                              {BankTypes::UT, folder_name_UT_raw},
-                                                             {BankTypes::FT, folder_name_SciFi_raw},
-                                                             {BankTypes::MUON, folder_name_Muon_raw}}});
+                                                             {BankTypes::FT, folder_name_SciFi_raw}}});
   }
 
   const auto velo_geometry = geometry_reader.read_geometry("velo_geometry.bin");
@@ -217,15 +222,28 @@ int main(int argc, char *argv[])
   const auto scifi_geometry = geometry_reader.read_geometry("scifi_geometry.bin");
   event_reader->read_events(number_of_events_requested, start_event_offset);
 
+  std::vector<char> events;
+  std::vector<uint> event_offsets;
   std::vector<Muon::HitsSoA> muon_hits_events(number_of_events_requested);
+  read_folder(
+    folder_name_muon_common_hits,
+    number_of_events_requested,
+    events,
+    event_offsets,
+    start_event_offset
+  );
   read_muon_events_into_arrays(
     muon_hits_events.data(),
-    event_reader->events(BankTypes::MUON).begin(),
-    event_reader->offsets(BankTypes::MUON).begin(),
+    events.data(),
+    event_offsets.data(),
     number_of_events_requested
   );
-  const int hits_to_out = 3;
-  check_muon_events(muon_hits_events.data(), hits_to_out, number_of_events_requested);
+  const int number_of_outputted_hits_per_event = 3;
+  check_muon_events(
+    muon_hits_events.data(),
+    number_of_outputted_hits_per_event,
+    number_of_events_requested
+  );
 
   info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
 
@@ -243,7 +261,7 @@ int main(int argc, char *argv[])
   // Create streams
   StreamWrapper stream_wrapper;
   stream_wrapper.initialize_streams(
-    tbb_threads,
+    number_of_threads,
     number_of_events_requested,
     print_memory_usage,
     start_event_offset,
@@ -256,32 +274,40 @@ int main(int argc, char *argv[])
     print_gpu_memory_consumption();
   }
 
-  // Attempt to execute all in one go
-  Timer t;
-  tbb::parallel_for(
-    static_cast<uint>(0),
-    static_cast<uint>(tbb_threads),
-    [&] (uint i) {
-      auto runtime_options = RuntimeOptions{
-        event_reader->events(BankTypes::VP).begin(),
-        event_reader->offsets(BankTypes::VP).begin(),
-        event_reader->events(BankTypes::VP).size(),
-        event_reader->offsets(BankTypes::VP).size(),
-        event_reader->events(BankTypes::UT).begin(),
-        event_reader->offsets(BankTypes::UT).begin(),
-        event_reader->events(BankTypes::UT).size(),
-        event_reader->offsets(BankTypes::UT).size(),
-        event_reader->events(BankTypes::FT).begin(),
-        event_reader->offsets(BankTypes::FT).begin(),
-        event_reader->events(BankTypes::FT).size(),
-        event_reader->offsets(BankTypes::FT).size(),
-        muon_hits_events,
-        number_of_events_requested,
-        number_of_repetitions};
+  // Lambda with the execution of a thread / stream
+  const auto thread_execution = [&] (uint i) {
+    auto runtime_options = RuntimeOptions{
+      event_reader->events(BankTypes::VP).begin(),
+      event_reader->offsets(BankTypes::VP).begin(),
+      event_reader->events(BankTypes::VP).size(),
+      event_reader->offsets(BankTypes::VP).size(),
+      event_reader->events(BankTypes::UT).begin(),
+      event_reader->offsets(BankTypes::UT).begin(),
+      event_reader->events(BankTypes::UT).size(),
+      event_reader->offsets(BankTypes::UT).size(),
+      event_reader->events(BankTypes::FT).begin(),
+      event_reader->offsets(BankTypes::FT).begin(),
+      event_reader->events(BankTypes::FT).size(),
+      event_reader->offsets(BankTypes::FT).size(),
+      number_of_events_requested,
+      number_of_repetitions};
 
-      stream_wrapper.run_stream(i, runtime_options);
-    }
-  );
+    stream_wrapper.run_stream(i, runtime_options);
+  };
+
+  // Vector of threads
+  std::vector<std::thread> threads;
+
+  Timer t;
+  // Create and invoke all threads
+  for (uint i=0; i<number_of_threads; ++i) {
+    threads.emplace_back(thread_execution, i);
+  }
+
+  // Join all threads
+  for (auto& thread : threads) {
+    thread.join();
+  }
   t.stop();
 
   // Do optional Monte Carlo truth test on stream 0
@@ -289,7 +315,7 @@ int main(int argc, char *argv[])
     stream_wrapper.run_monte_carlo_test(0, folder_name_MC, number_of_events_requested);
   }
 
-  std::cout << (number_of_events_requested * tbb_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
+  std::cout << (number_of_events_requested * number_of_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
     << "Ran test for " << t.get() << " seconds" << std::endl;
 
   // Reset device

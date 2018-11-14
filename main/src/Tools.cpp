@@ -111,38 +111,35 @@ void read_muon_events_into_arrays(
 }
  void check_muon_events(
    const Muon::HitsSoA * muon_station_hits,
-   const int hits_to_out,
+   const int n_output_hits_per_event,
    const int n_events
 ) {
-  float average_number_of_hits_per_event = 0;
+  int total_number_of_hits = 0;
   for (int i_event = 0; i_event < n_events; ++i_event) {
     float number_of_hits_per_event = 0;
     for (int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station) {
       const int station_offset = muon_station_hits[i_event].station_offsets[i_station];
       const int number_of_hits = muon_station_hits[i_event].number_of_hits_per_station[i_station];
       number_of_hits_per_event += number_of_hits;
-      debug_cout << "checks on station " << i_station << ", with" << number_of_hits << " hits" << std::endl;
-      for (int i_hit = 0; i_hit < hits_to_out; ++i_hit) {
-        printf("\t at hit %u, tile = %i, x = %f, dx = %f, y = %f, dy = %f, z = %f, dz = %f, uncrossed = %i, time = %x, delta_time = %i, cluster_size = %i \n",
-          i_hit,
-          muon_station_hits->tile[ station_offset + i_hit ],
-          muon_station_hits->x[ station_offset + i_hit ],
-          muon_station_hits->dx[ station_offset + i_hit ],
-          muon_station_hits->y[ station_offset + i_hit ],
-          muon_station_hits->dy[ station_offset + i_hit ],
-          muon_station_hits->z[ station_offset + i_hit ],
-          muon_station_hits->dz[ station_offset + i_hit ],
-          muon_station_hits->uncrossed[ station_offset + i_hit ],
-          muon_station_hits->time[ station_offset + i_hit ],
-          muon_station_hits->delta_time[ station_offset + i_hit ],
-          muon_station_hits->cluster_size[ station_offset + i_hit ]
-        );
+      debug_cout << "checks on station " << i_station << ", with " << number_of_hits << " hits" << std::endl;
+      for (int i_hit = 0; i_hit < n_output_hits_per_event; ++i_hit) {
+	debug_cout << "\t at hit " << i_hit << ", " <<
+          "tile = "         << muon_station_hits->tile[station_offset + i_hit]         << ", " <<
+          "x = "            << muon_station_hits->x[station_offset + i_hit]            << ", " <<
+          "dx = "           << muon_station_hits->dx[station_offset + i_hit]           << ", " <<
+          "y = "            << muon_station_hits->y[station_offset + i_hit]            << ", " <<
+          "dy = "           << muon_station_hits->dy[station_offset + i_hit]           << ", " <<
+          "z = "            << muon_station_hits->z[station_offset + i_hit]            << ", " <<
+          "dz = "           << muon_station_hits->dz[station_offset + i_hit]           << ", " <<
+          "uncrossed = "    << muon_station_hits->uncrossed[station_offset + i_hit]    << ", " <<
+          "time = "         << muon_station_hits->time[station_offset + i_hit]         << ", " <<
+          "delta_time = "   << muon_station_hits->delta_time[station_offset + i_hit]   << ", " <<
+          "cluster_size = " << muon_station_hits->cluster_size[station_offset + i_hit] << ", " <<
+	  std::endl;
       }
-      fflush(stdout);
     }
-    average_number_of_hits_per_event += number_of_hits_per_event;
+    total_number_of_hits += number_of_hits_per_event;
     debug_cout << "# of Muon hits = " << number_of_hits_per_event << std::endl;
   }
-  average_number_of_hits_per_event = average_number_of_hits_per_event / n_events;
-  debug_cout << "average # of Muon hits / event = " << average_number_of_hits_per_event << std::endl;
+  debug_cout << "average # of Muon hits / event = " << (float) total_number_of_hits / n_events<< std::endl;
 }
