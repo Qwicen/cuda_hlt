@@ -46,7 +46,7 @@ void SequenceVisitor::visit<fitSeeds_t>(
 
 
   state.invoke();
-/*
+
     // Retrieve result
   cudaCheck(cudaMemcpyAsync(
     host_buffers.host_reconstructed_pvs,
@@ -77,7 +77,7 @@ void SequenceVisitor::visit<fitSeeds_t>(
     }
   }
 
-    */
+    
 }
 
 
