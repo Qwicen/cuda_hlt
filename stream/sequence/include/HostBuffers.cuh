@@ -4,6 +4,7 @@
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
 #include "SciFiDefinitions.cuh"
+#include "MuonDefinitions"
 #include "TrackChecker.h"
 
 struct HostBuffers {
@@ -25,6 +26,10 @@ struct HostBuffers {
 
   // SciFi Decoding
   uint* host_accumulated_number_of_scifi_hits;
+
+  // Muon Features Extraction
+  auto muTrack = new Muon::State(0,0,1,1,1);
+  float* host_muon_catboost_features;
 
   // Non pinned datatypes: CPU algorithms
   std::vector<trackChecker::Tracks> forward_tracks_events;

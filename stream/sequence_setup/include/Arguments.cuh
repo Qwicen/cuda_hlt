@@ -4,6 +4,7 @@
 #include "VeloEventModel.cuh"
 #include "VeloUTDefinitions.cuh"
 #include "PrForward.cuh"
+#include "MuonDefinitions.cuh"
 
 /**
  * @brief Definition of arguments. All arguments should be defined here,
@@ -48,3 +49,6 @@ ARGUMENT(dev_scifi_hits, uint)
 ARGUMENT(dev_scifi_raw_input, char)
 ARGUMENT(dev_scifi_tracks, SciFi::Track)
 ARGUMENT(dev_n_scifi_tracks, uint)
+//ARGUMENT(dev_muon_track, Muon::State)
+//ARGUMENT(dev_muon_hits, Muon::HitsSoA)
+ARGUMENT(dev_muon_catboost_features, float)

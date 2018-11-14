@@ -195,6 +195,11 @@ typedef std::tuple<
   AlgorithmDependencies<cpu_scifi_pr_forward_t,
     dev_scifi_hits,
     dev_scifi_hit_count
+  >,
+  AlgorithmDependencies<muon_catboost_features_extraction_t,
+    //dev_muon_track,
+    //dev_muon_hits,
+    dev_muon_catboost_features
   >
 > algorithms_dependencies_t;
 

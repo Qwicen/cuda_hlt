@@ -275,6 +275,7 @@ int main(int argc, char *argv[])
         event_reader->offsets(BankTypes::FT).begin(),
         event_reader->events(BankTypes::FT).size(),
         event_reader->offsets(BankTypes::FT).size(),
+        muon_hits_events,
         number_of_events_requested,
         number_of_repetitions};
 

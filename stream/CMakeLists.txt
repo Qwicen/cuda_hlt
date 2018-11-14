@@ -26,6 +26,7 @@ include_directories(../cuda/SciFi/preprocessing/include)
 include_directories(../cuda/SciFi/common/include)
 include_directories(../checker/tracking/include)
 include_directories(../cuda/muon/common/include)
+include_directories(../cuda/muon/preprocessing/include)
 include_directories(../cuda/SciFi/PrForward/include)
 include_directories(../cuda/utils/include)
 include_directories(../cuda/veloUT/sorting/include)
@@ -43,6 +44,7 @@ file(GLOB stream_sequence_setup "sequence_setup/src/*cu")
 file(GLOB stream_sequence_visitors_velo "sequence_visitors/velo/src/*cu")
 file(GLOB stream_sequence_visitors_UT "sequence_visitors/UT/src/*cu")
 file(GLOB stream_sequence_visitors_SciFi "sequence_visitors/SciFi/src/*cu")
+file(GLOB stream_sequence_visitors_Muon "sequence_visitors/muon/src/*cu")
 
 cuda_add_library(Stream STATIC
   ${stream_gear}
@@ -55,6 +57,7 @@ cuda_add_library(Stream STATIC
   ${stream_sequence_visitors_velo}
   ${stream_sequence_visitors_UT}
   ${stream_sequence_visitors_SciFi}
+  ${stream_sequence_visitors_Muon}
   )
 
 target_link_libraries(Stream
@@ -64,7 +67,8 @@ target_link_libraries(Stream
   UT
   x86Forward
   SciFi
-  x86VeloUT)
+  x86VeloUT
+  Muon)
 
 if ( ROOT_FOUND )
   target_compile_definitions(Stream PUBLIC WITH_ROOT)

@@ -32,5 +32,6 @@ SEQUENCE_T(
   prefix_sum_scan_scifi_hits_t,
   raw_bank_decoder_t,
   scifi_sort_by_x_t,
-  scifi_pr_forward_t
+  scifi_pr_forward_t,
+  muon_catboost_features_extraction_t
 )

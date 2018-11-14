@@ -19,6 +19,7 @@
 #include "SciFiSortByX.cuh"
 #include "PrForward.cuh"
 #include "RunForwardCPU.h"
+#include "MuonFeaturesExtraction.cuh"
 
 #define SEQUENCE_T(...) typedef std::tuple<__VA_ARGS__> configured_sequence_t;
 
