@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
   std::string folder_name_raw = "../input/minbias/banks/";
   std::string folder_name_MC = "../input/minbias/MC_info/";
   std::string folder_name_detector_configuration = "../input/detector_configuration/";
-  std::string folder_name_pv = "";
+  std::string folder_name_pv = "../input/minbias/true_pvs/";
   uint number_of_events_requested = 0;
   uint start_event_offset = 0;
   uint number_of_threads = 1;
