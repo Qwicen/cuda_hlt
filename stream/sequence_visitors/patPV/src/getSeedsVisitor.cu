@@ -57,16 +57,6 @@ void SequenceVisitor::visit<getSeeds_t>(
 
 
 
-      // Wait to receive the result
-  cudaEventRecord(cuda_generic_event, cuda_stream);
-  cudaEventSynchronize(cuda_generic_event);
-
-  for(int i_event = 0; i_event < runtime_options.number_of_events; i_event++) {
-    std::cout << "event " << i_event << " number seeds: " << host_buffers.host_number_of_seeds[i_event] << std::endl;
-    for(int index = 0; index < host_buffers.host_number_of_seeds[i_event]; index++) {
-      //std::cout << "seed"
-    }
-  }
 
     
 }
