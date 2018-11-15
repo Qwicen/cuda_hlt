@@ -47,16 +47,6 @@ void SequenceVisitor::visit<velo_kalman_fit_t>(
     
 }
 
-
-
-    // Check the output
-
-
-
-  // TODO: Perhaps this shouldn't go here
-
-  // Transmission device to host
-  // Velo tracks
   
 
     
