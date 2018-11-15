@@ -279,7 +279,6 @@ struct SciFiHit {
 };
 
 struct SciFiHits {
-
   float* x0;
   float* z0;
   float* m_endPointY;
@@ -287,9 +286,13 @@ struct SciFiHits {
   uint32_t* assembled_datatype;
   uint32_t* cluster_reference;
   const SciFiGeometry* geom;
+  const float *dev_inv_clus_res;
 
   __device__ __host__
-  SciFiHits(uint* base, const uint32_t total_number_of_hits, const SciFiGeometry* geom);
+  SciFiHits(uint* base,
+    const uint32_t total_number_of_hits,
+    const SciFiGeometry* geom,
+    const float* param_dev_inv_clus_res);
 
   /**
    * @brief Gets a hit in the SciFiHit format from the global hit index.

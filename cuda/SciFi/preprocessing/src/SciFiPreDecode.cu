@@ -44,7 +44,8 @@ __global__ void scifi_pre_decode(
   uint *scifi_event_offsets,
   uint *scifi_hit_count,
   uint *scifi_hits,
-  char *scifi_geometry
+  char *scifi_geometry,
+  const float* dev_inv_clus_res
 ) {
   const int number_of_events = gridDim.x;
   const int event_number = blockIdx.x;
@@ -52,7 +53,7 @@ __global__ void scifi_pre_decode(
   SciFiGeometry geom(scifi_geometry);
   const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
 
-  SciFiHits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mats], &geom};
+  SciFiHits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mats], &geom, dev_inv_clus_res};
   SciFiHitCount hit_count;
   hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
 

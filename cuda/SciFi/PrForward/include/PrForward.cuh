@@ -29,6 +29,7 @@ __global__ void scifi_pr_forward(
   SciFi::Tracking::TMVA* dev_tmva1,
   SciFi::Tracking::TMVA* dev_tmva2,
   SciFi::Tracking::Arrays* dev_constArrays,
-  const char* dev_scifi_geometry);
+  const char* dev_scifi_geometry,
+  const float* dev_inv_clus_res);
 
 ALGORITHM(scifi_pr_forward, scifi_pr_forward_t)

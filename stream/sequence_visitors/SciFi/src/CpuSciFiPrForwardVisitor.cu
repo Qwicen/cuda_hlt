@@ -46,5 +46,6 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
     (uint*) host_buffers.host_velo_states,
     host_buffers.host_veloUT_tracks,
     host_buffers.host_atomics_veloUT,
-    runtime_options.number_of_events);
+    runtime_options.number_of_events,
+    constants.host_inv_clus_res);
 }

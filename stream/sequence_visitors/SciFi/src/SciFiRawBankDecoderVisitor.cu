@@ -28,7 +28,8 @@ void SequenceVisitor::visit<scifi_raw_bank_decoder_t>(
     arguments.offset<dev_scifi_raw_input_offsets>(),
     arguments.offset<dev_scifi_hit_count>(),
     arguments.offset<dev_scifi_hits>(),
-    constants.dev_scifi_geometry
+    constants.dev_scifi_geometry,
+    constants.dev_inv_clus_res
   );
 
   state.invoke();

@@ -16,7 +16,8 @@ int run_forward_on_CPU (
   uint* host_velo_states,
   VeloUTTracking::TrackUT * veloUT_tracks,
   const int * n_veloUT_tracks_events,
-  const uint number_of_events
+  const uint number_of_events,
+  const std::array<float, 9>& host_inv_clus_res
 ) {
 
 #ifdef WITH_ROOT
@@ -59,7 +60,10 @@ int run_forward_on_CPU (
 
     const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::Constants::n_zones];
     const SciFi::SciFiGeometry scifi_geometry(host_scifi_geometry);
-    SciFi::SciFiHits scifi_hits(host_scifi_hits, total_number_of_hits, &scifi_geometry);
+    SciFi::SciFiHits scifi_hits(host_scifi_hits,
+      total_number_of_hits,
+      &scifi_geometry, 
+      reinterpret_cast<const float*>(host_inv_clus_res.data()));
 
 #ifdef WITH_ROOT
     // store hit variables in tree

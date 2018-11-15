@@ -125,7 +125,8 @@ __global__ void scifi_pr_forward(
   SciFi::Tracking::TMVA* dev_tmva1,
   SciFi::Tracking::TMVA* dev_tmva2,
   SciFi::Tracking::Arrays* dev_constArrays,
-  const char* dev_scifi_geometry
+  const char* dev_scifi_geometry,
+  const float* dev_inv_clus_res
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
@@ -149,7 +150,7 @@ __global__ void scifi_pr_forward(
   SciFi::SciFiHitCount scifi_hit_count;
   scifi_hit_count.typecast_after_prefix_sum((uint*) dev_scifi_hit_count, event_number, number_of_events);
   const SciFi::SciFiGeometry scifi_geometry {dev_scifi_geometry};
-  SciFi::SciFiHits scifi_hits(dev_scifi_hits, total_number_of_hits, &scifi_geometry);
+  SciFi::SciFiHits scifi_hits(dev_scifi_hits, total_number_of_hits, &scifi_geometry, dev_inv_clus_res);
 
   // initialize atomic SciFi tracks counter
   if ( threadIdx.x == 0 ) {

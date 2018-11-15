@@ -200,7 +200,10 @@ void SciFiHitCount::typecast_after_prefix_sum(
   n_hits_mats = base_pointer + number_of_events * SciFi::Constants::n_mats + 1 + event_number * SciFi::Constants::n_mats;
 }
 
-SciFiHits::SciFiHits(uint32_t* base, const uint total_number_of_hits, const SciFiGeometry* dev_geom) {
+SciFiHits::SciFiHits(uint32_t* base,
+  const uint total_number_of_hits,
+  const SciFiGeometry* dev_geom,
+  const float* param_dev_inv_clus_res) {
   geom = dev_geom;
   x0 = reinterpret_cast<float*>(base);
   z0 = reinterpret_cast<float*>(base + total_number_of_hits);
@@ -208,13 +211,12 @@ SciFiHits::SciFiHits(uint32_t* base, const uint total_number_of_hits, const SciF
   channel = reinterpret_cast<uint32_t*>(base + 3 * total_number_of_hits);
   assembled_datatype = reinterpret_cast<uint32_t*>(base + 4 * total_number_of_hits);
   cluster_reference = reinterpret_cast<uint32_t*>(base + 5 * total_number_of_hits);
+  dev_inv_clus_res = param_dev_inv_clus_res;
 }
 
 __device__ __host__ float SciFiHits::w(uint32_t index) const {
-  // TODO: Move to constants
-  constexpr float invClusRes[] = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
   assert(pseudoSize(index) < 9 && "Wrong pseudo size.");
-  float werrX = invClusRes[pseudoSize(index)];
+  float werrX = dev_inv_clus_res[pseudoSize(index)];
   return werrX * werrX;
 };
 

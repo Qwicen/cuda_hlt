@@ -20,6 +20,7 @@ __global__ void scifi_pre_decode(
   uint *scifi_event_offsets,
   uint *scifi_hit_count,
   uint *scifi_hits,
-  char *scifi_geometry);
+  char *scifi_geometry,
+  const float* dev_inv_clus_res);
 
 ALGORITHM(scifi_pre_decode, scifi_pre_decode_t)

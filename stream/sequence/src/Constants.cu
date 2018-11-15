@@ -11,6 +11,7 @@ void Constants::reserve_constants() {
   cudaCheck(cudaMalloc((void**)&dev_scifi_tmva2, sizeof(SciFi::Tracking::TMVA)));
   cudaCheck(cudaMalloc((void**)&dev_scifi_constArrays, sizeof(SciFi::Tracking::Arrays)));
   cudaCheck(cudaMalloc((void**)&dev_ut_region_offsets, (VeloUTTracking::n_layers * VeloUTTracking::n_regions_in_layer + 1) * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_inv_clus_res, host_inv_clus_res.size() * sizeof(float)));
 }
 
 void Constants::initialize_constants() {
@@ -55,6 +56,9 @@ void Constants::initialize_constants() {
   cudaCheck(cudaMemcpy(dev_scifi_tmva1, &host_tmva1, sizeof(SciFi::Tracking::TMVA), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_scifi_tmva2, &host_tmva2, sizeof(SciFi::Tracking::TMVA), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_scifi_constArrays, &host_constArrays, sizeof(SciFi::Tracking::Arrays), cudaMemcpyHostToDevice));
+
+  host_inv_clus_res = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
+  cudaCheck(cudaMemcpy(dev_inv_clus_res, &host_inv_clus_res, host_inv_clus_res.size() * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 void Constants::initialize_ut_decoding_constants(

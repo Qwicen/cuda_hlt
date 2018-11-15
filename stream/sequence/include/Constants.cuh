@@ -33,6 +33,7 @@ struct Constants {
   std::vector<float> host_unique_sector_xs;
   std::array<uint, VeloUTTracking::n_layers * VeloUTTracking::n_regions_in_layer + 1> host_ut_region_offsets;
   std::array<uint8_t, VeloClustering::lookup_table_size> host_candidate_ks;
+  std::array<float, 9> host_inv_clus_res;
 
   float* dev_velo_module_zs;
   uint8_t* dev_velo_candidate_ks;
@@ -47,6 +48,7 @@ struct Constants {
   uint* dev_unique_x_sector_offsets;
   uint* dev_ut_region_offsets;
   float* dev_unique_sector_xs;
+  float* dev_inv_clus_res;
 
   // Geometry constants
   char* dev_velo_geometry;
