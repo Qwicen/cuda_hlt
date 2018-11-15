@@ -312,65 +312,6 @@ __device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
   // Set tracks. Compute final chi2.
 
  vtx.nTracks = tracks_in_vertex;
-
-
-
-/*
-  //radial cut against fakes?
-      double m_beamSpotRCut  = 0.6;
-    double m_beamSpotRCutHMC = 0.4;
-    int m_beamSpotRMT =  10;
-    std::cout << "tracks_in_vertex: " << tracks_in_vertex << std::endl;
-    double r2 = std::pow(vtxpos.x- 0.,2) + std::pow( vtxpos.y- 0.,2);
-       double r  = (  tracks_in_vertex <  m_beamSpotRMT ? m_beamSpotRCut : m_beamSpotRCutHMC );
-        if ( r2 > r*r ) return false;
-        */
-
-
-
-  //disable tracks added to this vertex
-  for(int index = 0; index < number_of_tracks; index++) {
-    //don't use disabled tracks
-  
-
-    double new_z = vtxpos.z;
-
-    Velo::State trk = velo_states.get( index);
-    double m_state_x = trk.x;
-    double m_state_y = trk.y;
-    double m_state_z = trk.z;
-
-    double m_state_tx = trk.tx;
-    double m_state_ty = trk.ty;
-
-    double m_state_c00 = trk.c00;
-    double m_state_c11 = trk.c11;
-    double m_state_c20 = trk.c20;
-    double m_state_c22 = trk.c22;
-    double m_state_c31 = trk.c31;
-    double m_state_c33 = trk.c33;
-
-    const double dz = new_z - m_state_z ;
-    const double dz2 = dz*dz ;
-
-    m_state_x += dz * m_state_tx ;
-    m_state_y += dz * m_state_ty ;
-    m_state_z = new_z;
-    m_state_c00 += dz2 * m_state_c22 + 2*dz* m_state_c20 ;
-    m_state_c20 += dz* m_state_c22 ;
-    m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
-    m_state_c31 += dz* m_state_c33 ;
-
-    PatPV::Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
-
-    double tr_chi2          = res.x*res.x / m_state_c00 + res.y*res.y / m_state_c11;
-
-
- 
-   
-  }
-  
-
   
   return true;
 }
