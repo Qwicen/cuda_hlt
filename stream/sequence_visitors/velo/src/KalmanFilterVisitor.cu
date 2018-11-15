@@ -33,7 +33,6 @@ void SequenceVisitor::visit<velo_kalman_fit_t>(
 
   state.set_arguments(
     arguments.offset<dev_atomics_storage>(),
-    arguments.offset<dev_tracks>(),
     arguments.offset<dev_velo_track_hit_number>(),
     arguments.offset<dev_velo_track_hits>(),
     arguments.offset<dev_velo_states>(),

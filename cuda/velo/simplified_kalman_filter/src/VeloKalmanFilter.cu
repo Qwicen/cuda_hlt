@@ -42,7 +42,6 @@ __device__ float velo_kalman_filter_step(
 
 __global__ void velo_kalman_fit(
   int* dev_atomics_storage,
-  const Velo::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_track_hits,
   uint* dev_velo_states,
@@ -50,7 +49,6 @@ __global__ void velo_kalman_fit(
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
-  const Velo::TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
 
   // Consolidated datatypes
   const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
@@ -67,16 +65,13 @@ __global__ void velo_kalman_fit(
 
   for (uint i=threadIdx.x; i<number_of_tracks_event; i+=blockDim.x) {
     
-    const Velo::TrackHits track = event_tracks[i];
     Velo::Consolidated::Hits consolidated_hits = velo_tracks.get_hits(dev_velo_track_hits, i);
-    
-    
-
+    const uint n_hits = velo_tracks.number_of_hits(i);
     // Calculate and store fit in consolidated container
 
-   Velo::State stateAtBeamline = velo_states.get(event_tracks_offset + i);
+    Velo::State stateAtBeamline = velo_states.get(event_tracks_offset + i);
 
-   Velo::State kalmanbeam_state = simplified_fit<true>(consolidated_hits, stateAtBeamline, track);
-   kalmanvelo_states.set(event_tracks_offset + i, kalmanbeam_state);
+    Velo::State kalmanbeam_state = simplified_fit<true>(consolidated_hits, stateAtBeamline, n_hits);
+    kalmanvelo_states.set(event_tracks_offset + i, kalmanbeam_state);
   }
 }

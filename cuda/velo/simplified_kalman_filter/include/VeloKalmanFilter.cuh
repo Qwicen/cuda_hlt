@@ -26,7 +26,7 @@ template<bool upstream>
 __device__ Velo::State simplified_fit(
   const Velo::Consolidated::Hits consolidated_hits,
   const Velo::State& stateAtBeamLine,
-  const Velo::TrackHits& track
+  const uint nhits
 ) {
   // backward = state.z > track.hits[0].z;
   const bool backward = stateAtBeamLine.z > consolidated_hits.z[0];
@@ -36,7 +36,7 @@ __device__ Velo::State simplified_fit(
   // assume the hits are sorted,
   // but don't assume anything on the direction of sorting
   int firsthit = 0;
-  int lasthit = track.hitsNum - 1;
+  int lasthit = nhits - 1;
   int dhit = 1;
   if ((consolidated_hits.z[lasthit] - consolidated_hits.z[firsthit]) * direction < 0) {
     const int temp = firsthit;
@@ -92,7 +92,6 @@ __device__ Velo::State simplified_fit(
 
 __global__ void velo_kalman_fit(
   int* dev_atomics_storage,
-  const Velo::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_track_hits,
   uint* dev_velo_states,
