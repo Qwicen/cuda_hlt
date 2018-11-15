@@ -84,9 +84,6 @@ __device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
 
   for(int i = 0; i < number_of_tracks; i++) {
     int index = i + tracks_offset;
-    //don't use disabled tracks
-
-    
 
     Velo::State trk = velo_states.get( index);
     double new_z = vtxpos.z;
@@ -176,14 +173,8 @@ __device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
     double chi2(0) ;
     size_t ntrin(0) ;
     for( int index = 0; index < pvTrack_counter; index++) {
-      //update cache
-      //have two states in velostates
       
-
       double new_z = vtxpos.z;
-
-      
-
       double m_state_x = tr_state_x[index];
       double m_state_y = tr_state_y[index];
       double m_state_z = tr_state_z[index];
@@ -257,7 +248,7 @@ __device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
     // compute the new vertex covariance
 
 
-    //repalce Cholesky inverter by analytical solution
+    //replace Cholesky inverter by analytical solution
     double a00 = halfD2Chi2DX2_00;
     double a10 = halfD2Chi2DX2_10;
     double a11 = halfD2Chi2DX2_11;
@@ -278,7 +269,7 @@ __device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
 
     
 
-    // compute the delta w.r.t. the reference
+    // compute the delta
     PatPV::XYZPoint delta{0.,0.,0.};
     delta.x = -1.0 * (vtxcov[0] * halfDChi2DX.x + vtxcov[1] * halfDChi2DX.y + vtxcov[3] * halfDChi2DX.z );
     delta.y = -1.0 * (vtxcov[1] * halfDChi2DX.x + vtxcov[2] * halfDChi2DX.y + vtxcov[4] * halfDChi2DX.z );
