@@ -2,7 +2,7 @@
 #include "VeloKalmanFilter.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<velo_fit_t>(
+void SequenceVisitor::set_arguments_size<velo_kalman_fit_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -17,8 +17,8 @@ void SequenceVisitor::set_arguments_size<velo_fit_t>(
 
 
 template<>
-void SequenceVisitor::visit<velo_fit_t>(
-  velo_fit_t& state,
+void SequenceVisitor::visit<velo_kalman_fit_t>(
+  velo_kalman_fit_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,

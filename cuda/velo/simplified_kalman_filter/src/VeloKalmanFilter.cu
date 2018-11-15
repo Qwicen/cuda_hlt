@@ -40,7 +40,7 @@ __device__ float velo_kalman_filter_step(
   return r * r * R;
 }
 
-__global__ void velo_fit(
+__global__ void velo_kalman_fit(
   int* dev_atomics_storage,
   const Velo::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,

@@ -108,7 +108,7 @@ typedef std::tuple<
   >,
 
 
-  AlgorithmDependencies<velo_fit_t,
+  AlgorithmDependencies<velo_kalman_fit_t,
     dev_atomics_storage,
     dev_tracks,
     dev_velo_track_hit_number,

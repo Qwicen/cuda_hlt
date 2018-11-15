@@ -18,7 +18,7 @@ SEQUENCE_T(
   prefix_sum_single_block_velo_track_hit_number_t,
   prefix_sum_scan_velo_track_hit_number_t,
   consolidate_tracks_t,
-  velo_fit_t,
+  velo_kalman_fit_t,
   getSeeds_t,
   fitSeeds_t
 )

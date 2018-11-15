@@ -90,7 +90,7 @@ __device__ Velo::State simplified_fit(
   return state;
 }
 
-__global__ void velo_fit(
+__global__ void velo_kalman_fit(
   int* dev_atomics_storage,
   const Velo::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,
@@ -99,4 +99,4 @@ __global__ void velo_fit(
   uint* dev_kalmanvelo_states
 );
 
-ALGORITHM(velo_fit, velo_fit_t)
+ALGORITHM(velo_kalman_fit, velo_kalman_fit_t)
