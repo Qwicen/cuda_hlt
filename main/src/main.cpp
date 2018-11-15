@@ -31,11 +31,13 @@
 #include "Timer.h"
 #include "StreamWrapper.cuh"
 #include "Constants.cuh"
+#include "MuonDefinitions.cuh"
 
 void printUsage(char* argv[]){
   std::cerr << "Usage: "
     << argv[0]
     << std::endl << " -f {folder containing directories with raw bank binaries for every sub-detector}"
+    << std::endl << " -b {folder containing .bin files with muon common hits}"
     << std::endl << " --mdf {use MDF files as input instead of binary files}"
     << std::endl << " -g {folder containing detector configuration}"
     << std::endl << " -d {folder containing .bin files with MC truth information}"
@@ -58,6 +60,7 @@ int main(int argc, char *argv[])
   std::string folder_name_MC = "../input/minbias/MC_info/";
   std::string folder_name_detector_configuration = "../input/detector_configuration/";
   std::string folder_name_pv = "../input/minbias/true_pvs/";
+  std::string folder_name_muon_common_hits = "../input/minbias/muon_common_hits/";
   uint number_of_events_requested = 0;
   uint start_event_offset = 0;
   uint number_of_threads = 1;
@@ -83,7 +86,7 @@ int main(int argc, char *argv[])
   int option_index = 0;
 
   signed char c;
-  while ((c = getopt_long(argc, argv, "f:d:i:n:o:t:r:pha:b:d:v:c:m:g:",
+  while ((c = getopt_long(argc, argv, "f:b:d:i:n:o:t:r:pha:b:d:v:c:m:g:",
                           long_options, &option_index)) != -1) {
     switch (c) {
     case 0:
@@ -97,6 +100,9 @@ int main(int argc, char *argv[])
       break;
     case 'f':
       folder_name_raw = std::string(optarg);
+      break;
+    case 'b':
+      folder_name_muon_common_hits = std::string(optarg);
       break;
     case 'd':
       folder_name_MC = std::string(optarg);
@@ -144,6 +150,7 @@ int main(int argc, char *argv[])
     std::string missing_folder = "";
 
     if (folder_name_raw.empty()) missing_folder = "raw banks";
+    else if (folder_name_muon_common_hits.empty()) missing_folder = "Muon common hits";
     else if (folder_name_detector_configuration.empty()) missing_folder = "detector geometry";
     else if (folder_name_MC.empty() && do_check) missing_folder = "Monte Carlo";
     else if (folder_name_pv.empty() && do_check) missing_folder = "PV Monte Carlo truth";
@@ -175,6 +182,7 @@ int main(int argc, char *argv[])
   // Show call options
   std::cout << "Requested options:" << std::endl
     << " folder containing directories with raw bank binaries for every sub-detector (-f): " << folder_name_raw << std::endl
+    << " folder containing .bin files with muon common hits (-b): " << folder_name_muon_common_hits << std::endl
     << " using " << (use_mdf ? "MDF" : "binary") << " input" << (use_mdf ? " (--mdf)" : "") << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
@@ -220,6 +228,29 @@ int main(int argc, char *argv[])
   const auto ut_magnet_tool = ut_magnet_tool_reader.read_UT_magnet_tool();
   const auto scifi_geometry = geometry_reader.read_geometry("scifi_geometry.bin");
   event_reader->read_events(number_of_events_requested, start_event_offset);
+
+  std::vector<char> events;
+  std::vector<uint> event_offsets;
+  std::vector<Muon::HitsSoA> muon_hits_events(number_of_events_requested);
+  read_folder(
+    folder_name_muon_common_hits,
+    number_of_events_requested,
+    events,
+    event_offsets,
+    start_event_offset
+  );
+  read_muon_events_into_arrays(
+    muon_hits_events.data(),
+    events.data(),
+    event_offsets.data(),
+    number_of_events_requested
+  );
+  const int number_of_outputted_hits_per_event = 3;
+  check_muon_events(
+    muon_hits_events.data(),
+    number_of_outputted_hits_per_event,
+    number_of_events_requested
+  );
 
   info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
 

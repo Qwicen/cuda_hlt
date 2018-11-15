@@ -1,11 +1,7 @@
 #pragma once
 
 #include "Common.h"
-
-#include "Tools.h"
-
 #include "InputTools.h"
-
 #include "patPV_Definitions.cuh"
 #include <algorithm>
 
