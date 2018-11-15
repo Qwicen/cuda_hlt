@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
     if (folder_name_raw.empty()) missing_folder = "raw banks";
     else if (folder_name_detector_configuration.empty()) missing_folder = "detector geometry";
     else if (folder_name_MC.empty() && do_check) missing_folder = "Monte Carlo";
-    else if (folder_name_pv.empty() && do_check) missing_folder = "PV truth";
+    else if (folder_name_pv.empty() && do_check) missing_folder = "PV Monte Carlo truth";
 
     error_cout << "No folder for " << missing_folder << " specified" << std::endl;
     printUsage(argv);
