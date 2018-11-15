@@ -55,19 +55,19 @@ __device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
 
 
 
-  double tr_state_x[VeloTracking::max_tracks] ;
-  double tr_state_y[VeloTracking::max_tracks] ;
-  double tr_state_z[VeloTracking::max_tracks] ;
+  float tr_state_x[VeloTracking::max_tracks] ;
+  float tr_state_y[VeloTracking::max_tracks] ;
+  float tr_state_z[VeloTracking::max_tracks] ;
 
-  double tr_state_tx[VeloTracking::max_tracks];
-  double tr_state_ty[VeloTracking::max_tracks] ;
+  float tr_state_tx[VeloTracking::max_tracks];
+  float tr_state_ty[VeloTracking::max_tracks] ;
 
-  double tr_state_c00[VeloTracking::max_tracks] ;
-  double tr_state_c11[VeloTracking::max_tracks] ;
-  double tr_state_c20[VeloTracking::max_tracks] ;
-  double tr_state_c22[VeloTracking::max_tracks] ;
-  double tr_state_c31[VeloTracking::max_tracks] ;
-  double tr_state_c33[VeloTracking::max_tracks] ;
+  float tr_state_c00[VeloTracking::max_tracks] ;
+  float tr_state_c11[VeloTracking::max_tracks] ;
+  float tr_state_c20[VeloTracking::max_tracks] ;
+  float tr_state_c22[VeloTracking::max_tracks] ;
+  float tr_state_c31[VeloTracking::max_tracks] ;
+  float tr_state_c33[VeloTracking::max_tracks] ;
 
 
  
