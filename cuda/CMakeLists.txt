@@ -1,5 +1,5 @@
 add_subdirectory(utils)
 add_subdirectory(velo)
-add_subdirectory(patPV)
+add_subdirectory(PV/patPV)
 add_subdirectory(UT)
 add_subdirectory(SciFi)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../velo/common/include/VeloDefinitions.cuh"
+#include "VeloDefinitions.cuh"
 #include "patPV_Definitions.cuh"
 #include <stdint.h>
 #include "VeloEventModel.cuh"
