@@ -104,7 +104,7 @@ void printRat(std::string mes, int a, int b) {
   }
   pmes+= " : ";
 
-  std::cout << pmes << " " << rat << "( " << a << " / " << b << " )" << std::endl;
+  info_cout << pmes << " " << rat << "( " << a << " / " << b << " )" << std::endl;
 
 }
 

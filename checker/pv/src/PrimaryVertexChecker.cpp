@@ -336,23 +336,23 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
 
 
 
-  std::cout.precision(4);
-  std::cout << " ============================================" << std::endl;
-  std::cout << " Efficiencies for reconstructible MC vertices: " << std::endl;
-  std::cout << " ============================================" << std::endl;
-  std::cout << " " << std::endl;
+  info_cout.precision(4);
+  info_cout << " ============================================" << std::endl;
+  info_cout << " Efficiencies for reconstructible MC vertices: " << std::endl;
+  info_cout << " ============================================" << std::endl;
+  info_cout << " " << std::endl;
 
-  std::cout << " MC PV is reconstructible if at least " << m_nTracksToBeRecble
+  info_cout << " MC PV is reconstructible if at least " << m_nTracksToBeRecble
          << "  tracks are reconstructed" << std::endl;
-  std::cout << " MC PV is isolated if dz to closest reconstructible MC PV >  "
+  info_cout << " MC PV is isolated if dz to closest reconstructible MC PV >  "
          << m_dzIsolated << " mm" << std::endl;
   std::string ff = "by counting tracks";
   if ( !m_matchByTracks ) ff = "by dz distance";
-  std::cout << " REC and MC vertices matched:  "
+  info_cout << " REC and MC vertices matched:  "
          <<  ff << std::endl;
 
 
-  std::cout << " " << std::endl;
+  info_cout << " " << std::endl;
 
 
             printRat("All",       m_nRecMCPV ,       m_nMCPV );
@@ -363,8 +363,8 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
 
           printRat("Real false rate", m_nFalsePV_real , m_nRecMCPV+m_nFalsePV_real);
 
-   std::cout <<   "new found: " <<     m_nRecMCPV << " / " << m_nMCPV  << std::endl;
-   std::cout << "new fakes: " << m_nFalsePV << std::endl;
+   info_cout <<   "new found: " <<     m_nRecMCPV << " / " << m_nMCPV  << std::endl;
+   info_cout << "new fakes: " << m_nFalsePV << std::endl;
 
           
     
