@@ -22,6 +22,6 @@ __device__ bool fitVertex(PatPV::XYZPoint& seedPoint,
               int number_of_tracks,
               uint tracks_offset) ;
 
-__device__ double getTukeyWeight(double trchi2, int iter) ;
+__device__ PatPV::myfloat getTukeyWeight(PatPV::myfloat trchi2, int iter) ;
 
  ALGORITHM(fitSeeds, fitSeeds_t)

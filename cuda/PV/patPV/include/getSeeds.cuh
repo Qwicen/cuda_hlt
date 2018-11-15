@@ -16,7 +16,7 @@ __global__ void getSeeds(
   PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seeds);
 
- __device__ int findClusters(PatPV::vtxCluster * vclus, double * zclusters, int number_of_clusters);
+ __device__ int findClusters(PatPV::vtxCluster * vclus, PatPV::myfloat * zclusters, int number_of_clusters);
 
 
  ALGORITHM(getSeeds, getSeeds_t)
