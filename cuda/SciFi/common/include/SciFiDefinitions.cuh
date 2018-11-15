@@ -247,31 +247,21 @@ struct SciFiHit {
   float z0;
   float endPointY;
   uint32_t channel;
-  uint32_t assembled_datatype;
 
-  // float w;
-  // float dxdy;
-  // float dzdy;
-  // float yMin;
-  // float yMax;
-  // uint32_t LHCbID;
-  // uint32_t planeCode;
-  // uint32_t hitZone;
+  // Cluster reference:
+  //   raw bank: 8 bits
+  //   element (it): 8 bits
+  //   Condition 1-2-3: 2 bits
+  //   Condition 2.1-2.2: 1 bit
+  //   Condition 2.1: log2(n+1) - 8 bits
+  uint32_t assembled_datatype;
 
   friend std::ostream& operator<<(std::ostream& stream, const SciFiHit& hit) {
   stream << "SciFi hit {"
-    // << hit.planeCode << ", "
-    // << hit.hitZone << ", "
-    // << hit.LHCbID << ", "
     << hit.x0 << ", "
     << hit.z0 << ", "
     << hit.channel << ", "
     << hit.assembled_datatype
-    // << hit.w<< ", "
-    // << hit.dxdy << ", "
-    // << hit.dzdy << ", "
-    // << hit.yMin << ", "
-    // << hit.yMax <<
     << "}";
 
   return stream;
@@ -283,6 +273,13 @@ struct SciFiHits {
   float* z0;
   float* m_endPointY;
   uint32_t* channel;
+  
+  // Cluster reference:
+  //   raw bank: 8 bits
+  //   element (it): 8 bits
+  //   Condition 1-2-3: 2 bits
+  //   Condition 2.1-2.2: 1 bit
+  //   Condition 2.1: log2(n+1) - 8 bits
   uint32_t* assembled_datatype;
   uint32_t* cluster_reference;
   const SciFiGeometry* geom;
