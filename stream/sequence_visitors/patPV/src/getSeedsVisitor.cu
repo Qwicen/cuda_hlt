@@ -25,13 +25,6 @@ void SequenceVisitor::visit<getSeeds_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  // Consolidate tracks
-  // TODO: The size specified (sizeof(Hits) / sizeof(uint)) is due to the
-  //       lgenfe error from the nvcc compiler, present in Cuda 9.2. Once it
-  //       is gone, we can switch all pointers to char*.
- // arguments.set_size<arg::dev_velo_track_hits>(host_buffers.host_accumulated_number_of_hits_in_velo_tracks[0] * sizeof(Velo::Hit) / sizeof(uint));
- // arguments.set_size<arg::dev_velo_states>(host_buffers.host_number_of_reconstructed_velo_tracks[0] * sizeof(Velo::State) / sizeof(uint));
-
 
   state.set_opts(dim3(runtime_options.number_of_events), 1, cuda_stream);
   state.set_arguments(
