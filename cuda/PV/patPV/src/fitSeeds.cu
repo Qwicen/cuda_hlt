@@ -284,11 +284,7 @@ __device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
     delta.y = -1.0 * (vtxcov[1] * halfDChi2DX.x + vtxcov[2] * halfDChi2DX.y + vtxcov[4] * halfDChi2DX.z );
     delta.z = -1.0 * (vtxcov[3] * halfDChi2DX.x + vtxcov[4] * halfDChi2DX.y + vtxcov[5] * halfDChi2DX.z );
 
-    // note: this is only correct if chi2 was chi2 of reference!
     chi2  += delta.x * halfDChi2DX.x + delta.y * halfDChi2DX.y + delta.z * halfDChi2DX.z;
-
-    // deltaz needed for convergence
-    const double deltaz = vtxpos.z + delta.z - vtxpos.z ;
 
     // update the position
     vtxpos.x = ( vtxpos.x + delta.x ) ;
@@ -299,7 +295,7 @@ __device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
 
     // loose convergence criteria if close to end of iterations
     if ( 1.*nbIter > 0.8*PatPV::m_Iterations ) maxdz = 10.*PatPV::m_maxDeltaZ;
-    converged = std::abs(deltaz) < maxdz ;
+    converged = std::abs(delta.z) < maxdz ;
     tracks_in_vertex = ntrin;
   } // end iteration loop
 
