@@ -100,6 +100,7 @@ include_directories(cuda/utils/prefix_sum/include)
 include_directories(cuda/event_model/velo/include)
 include_directories(cuda/event_model/common/include)
 include_directories(checker/tracking/include)
+include_directories(checker/pv/include)
 include_directories(stream/sequence/include)
 include_directories(x86/SciFi/include)
 include_directories(cuda/SciFi/PrForward/include)
@@ -123,16 +124,20 @@ target_link_libraries(cu_hlt
   Common
   Utils
   Velo
+  PatPV
   UT
   SciFi
+  #x86PatPV
   x86VeloUT
   x86Forward
   Stream
   x86Clustering
   TrackChecking
+  PVChecking
   CheckClustering)
 
 if (ROOT_FOUND)
   target_compile_definitions(cu_hlt PUBLIC WITH_ROOT)
   target_link_libraries(cu_hlt ${ROOT_LIBRARIES})
 endif()
+

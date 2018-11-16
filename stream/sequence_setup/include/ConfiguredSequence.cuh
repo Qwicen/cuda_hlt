@@ -18,7 +18,11 @@
 #include "RawBankDecoder.cuh"
 #include "SciFiSortByX.cuh"
 #include "PrForward.cuh"
+#include "VeloKalmanFilter.cuh"
+#include "getSeeds.cuh"
+#include "fitSeeds.cuh"
 #include "RunForwardCPU.h"
+
 
 #define SEQUENCE_T(...) typedef std::tuple<__VA_ARGS__> configured_sequence_t;
 
@@ -33,4 +37,6 @@
 // "cmake -DSEQUENCE=Velo .." matches "sequences/Velo.cuh"
 // "cmake -DSEQUENCE=VeloUT .." matches "sequences/VeloUT.cuh"
 
+
 #include "sequences/ConfiguredSequence.cuh"
+
