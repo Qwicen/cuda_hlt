@@ -22,22 +22,17 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   bool forward = false;
   int considered = 0;
 
-  // float xhitLayer0, xhitLayer2;
-  // float zhitLayer0, zhitLayer2;
-  // float tx;
-
   int best_number_of_hits = 3;
-  int best_fit = PrVeloUTConst::maxPseudoChi2;
+  int best_fit = VeloUTConst::maxPseudoChi2;
   BestParams best_params;
 
-  // Find compatible doublet forward
+  // Get total number of hits for forward + backward in first layer (0 for fwd, 3 for bwd)
   const int total_hits_2layers_0 = ranges->layer[0].size0 + ranges->layer[0].size1 + ranges->layer[0].size2 +
                                    ranges->layer[3].size0 + ranges->layer[3].size1 + ranges->layer[3].size2;
-
   for (int i=0; (!found || considered < CompassUT::max_considered_before_found) && i<total_hits_2layers_0; ++i) {
     const int i_hit0 = set_index(i, ranges->layer[0], ranges->layer[3]);
 
-    // set range for nested layer if forward or backward
+    // set range for next layer if forward or backward
     LayerCandidates layer_2;
     int dxdy_layer = -1;
     if (i < ranges->layer[0].size0 + ranges->layer[0].size1 + ranges->layer[0].size2) {
@@ -50,24 +45,25 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
       dxdy_layer = 3;
     }
 
-    // Get the hit to check with next layer
+    // Get info to calculate slope
     const float yy0 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit0]);
     const auto xhitLayer0 = ut_hits.xAt(i_hit0, yy0, ut_dxDy[dxdy_layer]);
     const auto zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
 
-    // loop over layer 2
+    // 2nd layer
     for (int j=0; (!found || considered < CompassUT::max_considered_before_found) && 
                   j<layer_2.size0 + layer_2.size1 + layer_2.size2; ++j) {
       int i_hit2 = set_index(j, layer_2);
 
-      // Get the hit to check with next layer
+      // Get info to calculate slope
       const int dxdy_layer_2 = forward ? 2 : 1;
       const float yy2 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit2]);
       const auto xhitLayer2 = ut_hits.xAt(i_hit2, yy2, ut_dxDy[dxdy_layer_2]);
       const auto zhitLayer2 = ut_hits.zAtYEq0[i_hit2];
 
+      // if slope is out of delta range, don't look for triplet/quadruplet
       const auto tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
-      if (std::abs(tx - velo_state.tx) <= PrVeloUTConst::deltaTx2) {
+      if (std::abs(tx - velo_state.tx) <= VeloUTConst::deltaTx2) {
 
         int temp_best_hits [4] = {i_hit0, -1, i_hit2, -1};
 
@@ -76,14 +72,14 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
           forward ? 3 : 0
         };
 
-        float hitTol = PrVeloUTConst::hitTol2;
+        float hitTol = VeloUTConst::hitTol2;
 
-        // search for triplet in layer1
+        // search for a triplet in 3rd layer
         for (int i1=0; i1<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i1) {
 
           int i_hit1 = set_index(i1, ranges->layer[layers[0]]);
 
-          // Get the hit to check with next layer
+          // Get info to check tolerance
           const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
           const float xhitLayer1 = ut_hits.xAt(i_hit1, yy1, ut_dxDy[layers[0]]);
           const float zhitLayer1 = ut_hits.zAtYEq0[i_hit1];
@@ -95,13 +91,13 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
           }
         }
 
-        // search for quadruplet in layer3
-        hitTol = PrVeloUTConst::hitTol2;
+        // search for triplet/quadruplet in 4th layer
+        hitTol = VeloUTConst::hitTol2;
         for (int i3=0; i3<ranges->layer[layers[1]].size0 + ranges->layer[layers[1]].size1 + ranges->layer[layers[1]].size2; ++i3) {
 
           int i_hit3 = set_index(i3, ranges->layer[layers[1]]);
 
-          // Get the hit to check
+          // Get info to check tolerance
           const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
           const float xhitLayer3 = ut_hits.xAt(i_hit3, yy3, ut_dxDy[layers[1]]);
           const float zhitLayer3 = ut_hits.zAtYEq0[i_hit3];
@@ -112,13 +108,12 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
           }          
         }
 
-
-
         // Fit the hits to get q/p, chi2
         const auto temp_number_of_hits = 2 + (temp_best_hits[1] != -1) + (temp_best_hits[3] != -1);
         const auto params = pkick_fit(temp_best_hits, ut_hits, velo_state, ut_dxDy, yyProto, forward);
         ++considered;
 
+        // Save the best chi2 and number of hits triplet/quadruplet
         if (params.chi2UT < best_fit && temp_number_of_hits >= best_number_of_hits) {
           best_hits[0] = temp_best_hits[0];
           best_hits[1] = temp_best_hits[1];
@@ -138,9 +133,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 }
 
 //=========================================================================
-// apply the p-kick method to the triplet/quadruplet
-// TODO return the chi2?
-// TODO precalculate zDiff (its always the same)
+// Apply the p-kick method to the triplet/quadruplet
 //=========================================================================
 __device__ BestParams pkick_fit(
   const int best_hits[N_LAYERS],
@@ -153,12 +146,12 @@ __device__ BestParams pkick_fit(
   BestParams best_params;
 
   // Helper stuff from velo state
-  const float xMidField = velo_state.x + velo_state.tx * (PrVeloUTConst::zKink - velo_state.z);
-  const float a = PrVeloUTConst::sigmaVeloSlope * (PrVeloUTConst::zKink - velo_state.z);
+  const float xMidField = velo_state.x + velo_state.tx * (VeloUTConst::zKink - velo_state.z);
+  const float a = VeloUTConst::sigmaVeloSlope * (VeloUTConst::zKink - velo_state.z);
   const float wb = 1.0f / (a * a);
 
-  float mat[3] = {wb, wb * PrVeloUTConst::zDiff, wb * PrVeloUTConst::zDiff * PrVeloUTConst::zDiff};
-  float rhs[2] = {wb * xMidField, wb * xMidField * PrVeloUTConst::zDiff};
+  float mat[3] = {wb, wb * VeloUTConst::zDiff, wb * VeloUTConst::zDiff * VeloUTConst::zDiff};
+  float rhs[2] = {wb * xMidField, wb * xMidField * VeloUTConst::zDiff};
 
   // add hits
   #pragma unroll
@@ -169,7 +162,7 @@ __device__ BestParams pkick_fit(
       const int plane_code = forward ? i : N_LAYERS - 1 - i;
       const float dxDy = ut_dxDy[plane_code];
       const float ci = ut_hits.cosT(hit_index, dxDy);
-      const float dz = 0.001f * (ut_hits.zAtYEq0[hit_index] - PrVeloUTConst::zMidUT);
+      const float dz = 0.001f * (ut_hits.zAtYEq0[hit_index] - VeloUTConst::zMidUT);
       // x_pos_layer
       const float yy = yyProto + (velo_state.ty * ut_hits.zAtYEq0[hit_index]);
       const float ui = ut_hits.xAt(hit_index, yy, dxDy);
@@ -187,10 +180,10 @@ __device__ BestParams pkick_fit(
   const float xUTFit = (mat[2] * rhs[0] - mat[1] * rhs[1]) * denom;
 
   // new VELO slope x
-  const float xb = xUTFit + xSlopeUTFit * (PrVeloUTConst::zKink - PrVeloUTConst::zMidUT);
-  const float invKinkVeloDist = 1 / (PrVeloUTConst::zKink - velo_state.z);
+  const float xb = xUTFit + xSlopeUTFit * (VeloUTConst::zKink - VeloUTConst::zMidUT);
+  const float invKinkVeloDist = 1 / (VeloUTConst::zKink - velo_state.z);
   const float xSlopeVeloFit = (xb - velo_state.x) * invKinkVeloDist;
-  const float chi2VeloSlope = (velo_state.tx - xSlopeVeloFit) * PrVeloUTConst::invSigmaVeloSlope;
+  const float chi2VeloSlope = (velo_state.tx - xSlopeVeloFit) * VeloUTConst::invSigmaVeloSlope;
 
   // chi2 takes chi2 from velo fit + chi2 from UT fit
   float chi2UT = chi2VeloSlope * chi2VeloSlope;
@@ -201,7 +194,7 @@ __device__ BestParams pkick_fit(
     int hit_index = best_hits[i];
     if (hit_index >= 0) {
       const float zd = ut_hits.zAtYEq0[hit_index];
-      const float xd = xUTFit + xSlopeUTFit * (zd - PrVeloUTConst::zMidUT);
+      const float xd = xUTFit + xSlopeUTFit * (zd - VeloUTConst::zMidUT);
       // x_pos_layer
       const int plane_code = forward ? i : N_LAYERS - 1 - i;
       const float dxDy = ut_dxDy[plane_code];
@@ -219,7 +212,7 @@ __device__ BestParams pkick_fit(
   chi2UT /= (total_num_hits - 1);
 
   // Save the best parameters if chi2 is good
-  if (chi2UT < PrVeloUTConst::maxPseudoChi2) {
+  if (chi2UT < VeloUTConst::maxPseudoChi2) {
     // calculate q/p
     const float sinInX = xSlopeVeloFit * std::sqrt(1.0f + xSlopeVeloFit * xSlopeVeloFit);
     const float sinOutX = xSlopeUTFit * std::sqrt(1.0f + xSlopeUTFit * xSlopeUTFit);
@@ -232,6 +225,10 @@ __device__ BestParams pkick_fit(
   return best_params;
 }
 
+//=========================================================================
+// Given 2 windows, 
+// set the index in the correct place depending on the iteration
+//=========================================================================
 __device__ __inline__ int set_index(
   const int i, 
   const LayerCandidates& layer_cand0,
@@ -255,6 +252,10 @@ __device__ __inline__ int set_index(
   return hit;
 }
 
+//=========================================================================
+// Given a window, 
+// set the index in the correct place depending on the iteration
+//=========================================================================
 __device__ __inline__ int set_index(
   const int i, 
   const LayerCandidates& layer_cand)
@@ -295,7 +296,7 @@ __device__ __inline__ bool check_tol_refine(
 
   // Now refine the tolerance in Y
   if (ut_hits.isNotYCompatible(
-        hit_index, yApprox, PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx * (1.0f / normFactNum))))
+        hit_index, yApprox, VeloUTConst::yTol + VeloUTConst::yTolSlope * std::abs(dx * (1.0f / normFactNum))))
     return false;
 
   return true;

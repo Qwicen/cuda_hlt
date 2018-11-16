@@ -265,7 +265,7 @@ __device__ __inline__ bool found_active_windows(const int* windows_layers, const
 
 // These things are all hardcopied from the PrTableForFunction and PrUTMagnetTool
 // If the granularity or whatever changes, this will give wrong results
-__host__ __device__ int master_index(const int index1, const int index2, const int index3)
+__host__ __device__ __inline__ int master_index(const int index1, const int index2, const int index3)
 {
   return (index3 * 11 + index2) * 31 + index1;
 }
@@ -329,7 +329,7 @@ __device__ void save_track(
   const float p = 1.3f * std::abs(1 / qop);
   const float pt = p * std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty);
 
-  if (p < PrVeloUTConst::minMomentum || pt < PrVeloUTConst::minPT) return;
+  if (p < VeloUTConst::minMomentum || pt < VeloUTConst::minPT) return;
 
   // the track will be added
   int n_tracks = atomicAdd(n_veloUT_tracks, 1);

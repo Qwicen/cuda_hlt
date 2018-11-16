@@ -16,8 +16,6 @@ static constexpr int num_atomics = 2;
    There are two stations with two layers each 
 */
 static constexpr uint n_layers           = 4;
-static constexpr uint n_ut_hit_variables = 8;
-static constexpr uint n_iterations_pos   = 85;
 static constexpr uint n_regions_in_layer = 3;
 
 /* For now, the planeCode is an attribute of every hit,
