@@ -208,8 +208,8 @@ typedef std::tuple<
     dev_atomics_storage,
     dev_velo_track_hit_number,
     dev_velo_states,
-    dev_veloUT_tracks,
-    dev_atomics_veloUT,
+    dev_compassUT_tracks,
+    dev_atomics_compassUT,
     dev_scifi_tracks,
     dev_n_scifi_tracks
   >,

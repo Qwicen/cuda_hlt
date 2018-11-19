@@ -115,10 +115,17 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 
         // Save the best chi2 and number of hits triplet/quadruplet
         if (params.chi2UT < best_fit && temp_number_of_hits >= best_number_of_hits) {
-          best_hits[0] = temp_best_hits[0];
-          best_hits[1] = temp_best_hits[1];
-          best_hits[2] = temp_best_hits[2];
-          best_hits[3] = temp_best_hits[3];
+          if (forward) {
+            best_hits[0] = temp_best_hits[0];
+            best_hits[1] = temp_best_hits[1];
+            best_hits[2] = temp_best_hits[2];
+            best_hits[3] = temp_best_hits[3];
+          } else {
+            best_hits[0] = temp_best_hits[3];
+            best_hits[1] = temp_best_hits[2];
+            best_hits[2] = temp_best_hits[1];
+            best_hits[3] = temp_best_hits[0];
+          }
           best_number_of_hits = temp_number_of_hits;
           best_params = params;
           best_fit = params.chi2UT;
