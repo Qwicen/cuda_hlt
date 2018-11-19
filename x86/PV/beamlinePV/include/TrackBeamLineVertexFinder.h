@@ -1,3 +1,9 @@
+#pragma once
+
+#include "patPV_Definitions.cuh"
+#include "VeloConsolidated.cuh"
+
+
 unsigned int m_minNumTracksPerVertex = 5;
 float        m_zmin = - 300.; //unit: mm Min z position of vertex seed
 float        m_zmax = 300; //unit: mm Max z position of vertex seed
