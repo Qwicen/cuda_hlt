@@ -198,7 +198,7 @@ typedef std::tuple<
   >,
   AlgorithmDependencies<muon_catboost_features_extraction_t,
     //dev_muon_track,
-    //dev_muon_hits,
+    dev_muon_hits,
     dev_muon_catboost_features
   >
 > algorithms_dependencies_t;

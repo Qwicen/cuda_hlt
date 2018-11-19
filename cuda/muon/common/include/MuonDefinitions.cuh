@@ -1,6 +1,5 @@
 #pragma once
 
-using MuonTrackExtrapolation = std::vector<std::pair<float, float>>;
 //using LHCbID = int;
 
 namespace Muon {

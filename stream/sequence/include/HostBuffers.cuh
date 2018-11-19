@@ -4,7 +4,7 @@
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
 #include "SciFiDefinitions.cuh"
-#include "MuonDefinitions"
+#include "MuonDefinitions.cuh"
 #include "TrackChecker.h"
 
 struct HostBuffers {
@@ -28,7 +28,7 @@ struct HostBuffers {
   uint* host_accumulated_number_of_scifi_hits;
 
   // Muon Features Extraction
-  auto muTrack = new Muon::State(0,0,1,1,1);
+  Muon::State* host_muon_track;
   float* host_muon_catboost_features;
 
   // Non pinned datatypes: CPU algorithms

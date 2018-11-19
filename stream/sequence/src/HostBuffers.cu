@@ -17,6 +17,7 @@ void HostBuffers::reserve(const uint max_number_of_events) {
 
   // Muon features
   cudaCheck(cudaMallocHost((void**)&host_muon_catboost_features, 20 * sizeof(float)));
+  host_muon_track = new Muon::State(0,0,1,1,1);
   //cudaCheck(cudaMallocHost((void**)&host_y, saxpy_N * sizeof(float)));
 }
 

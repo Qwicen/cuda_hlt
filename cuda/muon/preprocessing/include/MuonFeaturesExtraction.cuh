@@ -4,8 +4,8 @@
 #include "MuonDefinitions.cuh"
 
 __global__ void muon_catboost_features_extraction(
-  Muon::State& muTrack,
-  Muon::HitsSoA& muon_hits,
+  const Muon::State* muTrack,
+  const Muon::HitsSoA* muon_hits,
   float* dev_muon_catboost_features
 );
 
