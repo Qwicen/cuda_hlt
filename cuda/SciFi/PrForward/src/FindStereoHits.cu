@@ -15,7 +15,7 @@ __host__ __device__ void collectStereoHits(
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits)
 {
-  
+
   for ( int zone = 0; zone < SciFi::Constants::n_layers; ++zone ) {
     // get yZone and xPred: x and y values at z of layer based on candidate track parameters
     const float parsX[4] = {track.trackParams[0],
@@ -47,9 +47,9 @@ __host__ __device__ void collectStereoHits(
     // from the candidate track
     // This takes the y value (max, min) into account
     const float lower_bound_at = -dxTol - yZone * constArrays->uvZone_dxdy[zone] + xPred;
-    int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]];
-    int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[zone]];
-    
+    int uv_zone_offset_begin = scifi_hit_count.zone_offset(constArrays->uvZones[zone]);
+    int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.zone_number_of_hits(constArrays->uvZones[zone]);
+
     int itBegin = getLowerBound(scifi_hits.x0, lower_bound_at, uv_zone_offset_begin, uv_zone_offset_end);
     int itEnd   = uv_zone_offset_end;
 
@@ -65,7 +65,7 @@ __host__ __device__ void collectStereoHits(
       n_stereoHits,
       stereoCoords,
       stereoHits);
-    
+
     if ( n_stereoHits >= SciFi::Tracking::max_stereo_hits )
       break;
   }
@@ -75,7 +75,7 @@ __host__ __device__ void collectStereoHits(
   //thrust::sort_by_key(thrust::seq, stereoCoords, stereoCoords + n_stereoHits, stereoHits);
   sortHitsByKey<SciFi::Tracking::max_stereo_hits>( stereoCoords, n_stereoHits, stereoHits );
 }
- 
+
 //=========================================================================
 //  Fit the stereo hits
 //=========================================================================
@@ -87,7 +87,7 @@ __host__ __device__ bool selectStereoHits(
   float stereoCoords[SciFi::Tracking::max_stereo_hits],
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits,
-  MiniState velo_state, 
+  MiniState velo_state,
   SciFi::Tracking::HitSearchCuts& pars)
 {
   int bestStereoHits[SciFi::Tracking::max_stereo_hits];
@@ -98,14 +98,14 @@ __host__ __device__ bool selectStereoHits(
   float bestYParams[3];
   float bestMeanDy = 1e9f;
 
-  if(pars.minStereoHits > n_stereoHits) return false; 
+  if(pars.minStereoHits > n_stereoHits) return false;
   int endLoop = n_stereoHits - pars.minStereoHits;
-  
+
   PlaneCounter planeCounter;
   for ( int beginRange = 0; beginRange < endLoop; ++beginRange ) {
     planeCounter.clear();
     int endRange = beginRange;
-    
+
     float sumCoord = 0.;
     // bad hack to reproduce itereator behavior from before: *(-1) = 0
     int first_hit;
@@ -133,37 +133,37 @@ __host__ __device__ bool selectStereoHits(
       stereoCoords,
       sumCoord,
       planeCounter,
-      scifi_hits ); 
-        
+      scifi_hits );
+
     //Now we have a candidate, lets fit him
     // track = original; //only yparams are changed
     track.trackParams[4] = originalYParams[0];
     track.trackParams[5] = originalYParams[1];
     track.trackParams[6] = originalYParams[2];
-   
+
     int trackStereoHits[SciFi::Tracking::max_stereo_hits];
     int n_trackStereoHits = 0;
     assert( endRange < n_stereoHits );
     for ( int range = beginRange; range < endRange; ++range ) {
       trackStereoHits[n_trackStereoHits++] = stereoHits[range];
     }
-    
+
     //fit Y Projection of track using stereo hits
     if(!fitYProjection(
       scifi_hits, track, trackStereoHits,
       n_trackStereoHits, planeCounter,
       velo_state, constArrays, pars)) continue;
-   
+
     if(!addHitsOnEmptyStereoLayers(scifi_hits, scifi_hit_count, track, trackStereoHits, n_trackStereoHits, constArrays, planeCounter, velo_state, pars))continue;
-    
+
     if(n_trackStereoHits < n_bestStereoHits) continue; //number of hits most important selection criteria!
- 
+
     //== Calculate  dy chi2 /ndf
     float meanDy = 0.;
     assert( n_trackStereoHits < n_stereoHits );
     for ( int i_hit = 0; i_hit < n_trackStereoHits; ++i_hit ) {
       const int hit = trackStereoHits[i_hit];
-      const float d = trackToHitDistance(track.trackParams, scifi_hits, hit) / scifi_hits.dxdy[hit];
+      const float d = trackToHitDistance(track.trackParams, scifi_hits, hit) / scifi_hits.dxdy(hit);
       meanDy += d*d;
     }
     meanDy /=  float(n_trackStereoHits-1);
@@ -200,7 +200,7 @@ __host__ __device__ bool selectStereoHits(
   }
   return false;
 }
- 
+
 
 //=========================================================================
 //  Add hits on empty stereo layers, and refit if something was added
@@ -249,11 +249,11 @@ __host__ __device__ bool addHitsOnEmptyStereoLayers(
     // -- Use a binary search to find the lower bound of the range of x values
     // -- This takes the y value into account
     const float lower_bound_at = -dxTol - yZone * constArrays->uvZone_dxdy[zone] + xPred;
-    int uv_zone_offset_begin = scifi_hit_count.layer_offsets[constArrays->uvZones[zone]];
-    int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.n_hits_layers[constArrays->uvZones[zone]];
+    int uv_zone_offset_begin = scifi_hit_count.zone_offset(constArrays->uvZones[zone]);
+    int uv_zone_offset_end   = uv_zone_offset_begin + scifi_hit_count.zone_number_of_hits(constArrays->uvZones[zone]);
     int itBegin = getLowerBound(scifi_hits.x0,lower_bound_at,uv_zone_offset_begin,uv_zone_offset_end);
     int itEnd   = uv_zone_offset_end;
-    
+
     int best = findBestStereoHitOnEmptyLayer(
       itBegin,
       itEnd,
@@ -262,11 +262,11 @@ __host__ __device__ bool addHitsOnEmptyStereoLayers(
       xPred,
       dxTol,
       triangleSearch);
-                          
+
     if ( -1 != best ) {
       assert( n_stereoHits < SciFi::Tracking::max_stereo_hits);
       stereoHits[n_stereoHits++] = best;
-      planeCounter.addHit( scifi_hits.planeCode[best]/2 );
+      planeCounter.addHit( scifi_hits.planeCode(best)/2 );
       added = true;
     }
   }
@@ -276,4 +276,3 @@ __host__ __device__ bool addHitsOnEmptyStereoLayers(
     n_stereoHits, planeCounter,
     velo_state, constArrays, pars );
 }
- 

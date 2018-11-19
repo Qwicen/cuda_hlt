@@ -1,4 +1,6 @@
 add_subdirectory(utils)
 add_subdirectory(velo)
+add_subdirectory(PV)
 add_subdirectory(UT)
 add_subdirectory(SciFi)
+add_subdirectory(muon)

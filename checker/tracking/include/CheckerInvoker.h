@@ -8,6 +8,7 @@
 
 struct CheckerInvoker {
   std::string mc_folder;
+  std::string mc_pv_folder;
   uint start_event_offset;
   uint number_of_events;
   bool check_events;
@@ -16,10 +17,12 @@ struct CheckerInvoker {
 
   CheckerInvoker (
     const std::string& param_mc_folder,
+    const std::string& param_mc_pv_folder,
     const uint param_start_event_offset,
     const uint param_number_of_events,
     const bool param_check_events = false) :
     mc_folder(param_mc_folder),
+    mc_pv_folder(param_mc_pv_folder),
     start_event_offset(param_start_event_offset),
     number_of_events(param_number_of_events),
     check_events(param_check_events)

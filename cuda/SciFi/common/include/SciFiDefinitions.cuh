@@ -15,7 +15,7 @@
 
 #include "assert.h"
 
-struct FullState { 
+struct FullState {
     float x, y, tx, ty, qOverP = 0.;
     float c00, c11, c22, c33, c44, c10, c20, c30, c40, c21, c31, c41, c32, c42, c43 = 0.;
     float chi2 = 0.;
@@ -23,76 +23,46 @@ struct FullState {
   };
 
 namespace SciFi {
-
-struct SciFiHit {
-  float x0;
-  float z0;
-  float w;
-  float dxdy;
-  float dzdy;
-  float yMin;
-  float yMax;
-  uint32_t LHCbID;
-  uint32_t planeCode;
-  uint32_t hitZone;
-
-  friend std::ostream& operator<<(std::ostream& stream, const SciFiHit& hit) {
-  stream << "SciFi hit {"
-    << hit.planeCode << ", "
-    << hit.hitZone << ", "
-    << hit.LHCbID << ", "
-    << hit.x0 << ", "
-    << hit.z0 << ", "
-    << hit.w<< ", "
-    << hit.dxdy << ", "
-    << hit.dzdy << ", "
-    << hit.yMin << ", "
-    << hit.yMax << "}";
-
-  return stream;
-}
-};
-
 namespace Constants {
   /* Detector description
-     There are three stations with four layers each 
+     There are three stations with four layers each
   */
   static constexpr uint n_stations           = 3;
   static constexpr uint n_layers_per_station = 4;
   static constexpr uint n_zones              = 24;
   static constexpr uint n_layers             = 12;
-      
+  static constexpr uint n_mats               = 1024;
+
   /* Cut-offs */
-  static constexpr uint max_numhits_per_event = 10000; 
+  static constexpr uint max_numhits_per_event = 10000;
   static constexpr uint max_hit_candidates_per_layer = 200;
 
 } // Constants
 
-const int max_tracks = 200; 
+const int max_tracks = 200;
 const int max_track_size = Tracking::max_scifi_hits + VeloUTTracking::max_track_size;
 
 // Track object used for storing tracks
 struct Track {
-  
+
   unsigned int LHCbIDs[max_track_size];
   float qop;
   unsigned short hitsNum = 0;
   float chi2;
-  
+
   __host__  __device__ void addLHCbID( unsigned int id ) {
     assert( hitsNum < max_track_size );
     LHCbIDs[hitsNum++] =  id;
 }
-  
+
   __host__ __device__ void set_qop( float _qop ) {
     qop = _qop;
   }
 };
-  
+
 /**
  * @brief SciFi geometry description typecast.
  */
-
 struct SciFiGeometry {
   size_t size;
   uint32_t number_of_stations;
@@ -172,14 +142,15 @@ namespace SciFiRawBankParams { //from SciFi/SciFiDAQ/src/SciFiRawBankParams.h
   static constexpr uint16_t clusterMaxWidth = 4;
 }
 
-
 struct SciFiChannelID {
   uint32_t channelID;
   __device__ __host__ uint32_t channel() const;
   __device__ __host__ uint32_t sipm() const;
   __device__ __host__ uint32_t mat() const;
   __device__ __host__ uint32_t uniqueMat() const;
+  __device__ __host__ uint32_t correctedUniqueMat() const;
   __device__ __host__ uint32_t module() const;
+  __device__ __host__ uint32_t correctedModule() const;
   __device__ __host__ uint32_t uniqueModule() const;
   __device__ __host__ uint32_t quarter() const;
   __device__ __host__ uint32_t uniqueQuarter() const;
@@ -188,6 +159,7 @@ struct SciFiChannelID {
   __device__ __host__ uint32_t station() const;
   __device__ __host__ uint32_t die() const;
   __device__ __host__ bool isBottom() const;
+  __device__ __host__ bool reversedZone() const;
   __device__ __host__ SciFiChannelID operator+=(const uint32_t& other);
   __host__ std::string toString();
   __device__ __host__ SciFiChannelID(const uint32_t channelID);
@@ -199,11 +171,11 @@ struct SciFiChannelID {
                       quarterMask       = 0xc000L,
                       layerMask         = 0x30000L,
                       stationMask       = 0xc0000L,
-                      uniqueLayerMask   = layerMask + stationMask,
-                      uniqueQuarterMask = quarterMask + layerMask + stationMask,
-                      uniqueModuleMask  = moduleMask + quarterMask + layerMask + stationMask,
-                      uniqueMatMask     = matMask + moduleMask + quarterMask + layerMask + stationMask,
-                      uniqueSiPMMask    = sipmMask + matMask + moduleMask + quarterMask + layerMask + stationMask
+                      uniqueLayerMask   = layerMask | stationMask,
+                      uniqueQuarterMask = quarterMask | layerMask | stationMask,
+                      uniqueModuleMask  = moduleMask | quarterMask | layerMask | stationMask,
+                      uniqueMatMask     = matMask | moduleMask | quarterMask | layerMask | stationMask,
+                      uniqueSiPMMask    = sipmMask | matMask | moduleMask | quarterMask | layerMask | stationMask
 };
   enum channelIDBits{channelBits       = 0,
                      sipmBits          = 7,
@@ -217,9 +189,9 @@ struct SciFiChannelID {
 /**
 * @brief Offset and number of hits of each layer.
 */
-struct SciFiHitCount {
-  uint* layer_offsets;
-  uint* n_hits_layers;
+struct SciFiHitCount{
+  uint* mat_offsets;
+  uint* n_hits_mats;
 
   __device__ __host__
   void typecast_before_prefix_sum(
@@ -235,45 +207,109 @@ struct SciFiHitCount {
   );
 
   __device__ __host__
-  uint layer_offset(const uint layer_number) const {
-    assert(layer_number < SciFi::Constants::n_zones);
-    return layer_offsets[layer_number];
+  uint mat_offset(const uint mat_number) const {
+    return mat_offsets[mat_number];
+  }
+
+  __device__ __host__
+  uint mat_number_of_hits(const uint mat_number) const {
+    return mat_offsets[mat_number+1] - mat_offsets[mat_number];
+  }
+
+  __device__ __host__
+  uint zone_offset(const uint zone_number) const {
+    // TODO: Make this a constant
+    constexpr uint32_t first_corrected_unique_mat_in_zone[] = {
+      0, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640,
+      688, 736, 784, 832, 880, 928, 976, 1024};
+    return mat_offsets[first_corrected_unique_mat_in_zone[zone_number]];
+  }
+
+  __device__ __host__
+  uint zone_number_of_hits(const uint zone_number) const {
+    return zone_offset(zone_number + 1) - zone_offset(zone_number);
+  }
+
+  __device__ __host__
+  uint event_number_of_hits() const {
+    return mat_offsets[SciFi::Constants::n_mats] - mat_offsets[0];
+  }
+
+  __device__ __host__
+  uint event_offset() const {
+    return mat_offsets[0];
   }
 };
 
-struct SciFiHits {
+struct SciFiHit {
+  float x0;
+  float z0;
+  float endPointY;
+  uint32_t channel;
 
+  // Cluster reference:
+  //   raw bank: 8 bits
+  //   element (it): 8 bits
+  //   Condition 1-2-3: 2 bits
+  //   Condition 2.1-2.2: 1 bit
+  //   Condition 2.1: log2(n+1) - 8 bits
+  uint32_t assembled_datatype;
+
+  friend std::ostream& operator<<(std::ostream& stream, const SciFiHit& hit) {
+  stream << "SciFi hit {"
+    << hit.x0 << ", "
+    << hit.z0 << ", "
+    << hit.channel << ", "
+    << hit.assembled_datatype
+    << "}";
+
+  return stream;
+}
+};
+
+struct SciFiHits {
   float* x0;
   float* z0;
-  float* w;
-  float* dxdy;
-  float* dzdy;
-  float* yMin;
-  float* yMax;
-  uint32_t* LHCbID;
-  uint32_t* planeCode;
-  uint32_t* hitZone;
-  uint32_t* temp;
+  float* m_endPointY;
+  uint32_t* channel;
+  
+  // Cluster reference:
+  //   raw bank: 8 bits
+  //   element (it): 8 bits
+  //   Condition 1-2-3: 2 bits
+  //   Condition 2.1-2.2: 1 bit
+  //   Condition 2.1: log2(n+1) - 8 bits
+  uint32_t* assembled_datatype;
+  uint32_t* cluster_reference;
+  const SciFiGeometry* geom;
+  const float *dev_inv_clus_res;
 
-  SciFiHits() = default;
-
-  /**
-   * @brief Populates the SciFiHits object pointers from an unsorted array of data
-   *        pointed by base_pointer.
-   */
-  __host__ __device__
-  void typecast_unsorted(uint32_t* base_pointer, uint32_t total_number_of_hits);
-
-  /**
-   * @brief Populates the SciFiHits object pointers from a sorted array of data
-   *        pointed by base_pointer.
-   */
-  __host__ __device__
-  void typecast_sorted(uint32_t* base_pointer, uint32_t total_number_of_hits);
+  __device__ __host__
+  SciFiHits(uint* base,
+    const uint32_t total_number_of_hits,
+    const SciFiGeometry* geom,
+    const float* param_dev_inv_clus_res);
 
   /**
    * @brief Gets a hit in the SciFiHit format from the global hit index.
    */
-  SciFiHit getHit(uint32_t index) const;
+  __device__ __host__ float w(uint32_t index) const;
+  __device__ __host__ float dxdy(uint32_t index) const;
+  __device__ __host__ float dzdy(uint32_t index) const;
+  __device__ __host__ float yMin(uint32_t index) const;
+  __device__ __host__ float yMax(uint32_t index) const;
+  __device__ __host__ float endPointY(uint32_t index) const;
+  __device__ __host__ uint32_t LHCbID(uint32_t index) const;
+  __device__ __host__ uint32_t planeCode(uint32_t index) const;
+  __device__ __host__ uint32_t mat(uint32_t index) const;
+  __device__ __host__ uint32_t fraction(uint32_t index) const;
+  __device__ __host__ uint32_t pseudoSize(uint32_t index) const;
 };
+
+__device__ uint32_t channelInBank(uint32_t c);
+__device__ uint16_t getLinkInBank(uint16_t c);
+__device__ int cell(uint16_t c);
+__device__ int fraction(uint16_t c);
+__device__ bool cSize(uint16_t c);
+
 }

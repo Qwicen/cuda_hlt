@@ -1,4 +1,3 @@
-
 include_directories(gear/include)
 include_directories(handlers/include)
 include_directories(memory_manager/include)
@@ -25,14 +24,17 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/search_by_triplet/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/simplified_kalman_filter/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/preprocessing/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/common/include)
-include_directories(${CMAKE_SOURCE_DIR}/checker/tracking/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/include)
-include_directories(${CMAKE_SOURCE_DIR}/cuda/veloUT/sorting/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/PV/patPV/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/PV/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/x86/velo/clustering/include)
 include_directories(${CMAKE_SOURCE_DIR}/x86/UT/PrVeloUT/include)
 include_directories(${CMAKE_SOURCE_DIR}/x86/SciFi/include)
+include_directories(${CMAKE_SOURCE_DIR}/checker/tracking/include)
+include_directories(${CMAKE_SOURCE_DIR}/checker/pv/include)
 
 file(GLOB stream_gear "gear/src/*cu")
 file(GLOB stream_handlers "handlers/src/*cu")
@@ -42,6 +44,7 @@ file(GLOB stream_sequence "sequence/src/*cu")
 file(GLOB stream_sequence_cpp "sequence/src/*cpp")
 file(GLOB stream_setup "setup/src/*cu")
 file(GLOB stream_visitors_velo "visitors/velo/src/*cu")
+file(GLOB stream_visitors_pv "visitors/PV/src/*cu")
 file(GLOB stream_visitors_UT "visitors/UT/src/*cu")
 file(GLOB stream_visitors_SciFi "visitors/SciFi/src/*cu")
 
@@ -54,14 +57,16 @@ cuda_add_library(Stream STATIC
   ${stream_sequence_cpp}
   ${stream_setup}
   ${stream_visitors_velo}
+  ${stream_visitors_pv}
   ${stream_visitors_UT}
   ${stream_visitors_SciFi}
-  )
+)
 
 target_link_libraries(Stream
   Common
   Utils
   Velo
+  PV
   UT
   x86Forward
   SciFi
