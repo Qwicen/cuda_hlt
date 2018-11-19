@@ -113,7 +113,7 @@
 // Kernel to call Forward tracking on GPU
 // Loop over veloUT input tracks using threadIdx.x
 __global__ void scifi_pr_forward(
-  const uint* dev_scifi_hits,
+  uint32_t* dev_scifi_hits,
   const uint32_t* dev_scifi_hit_count,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
@@ -124,11 +124,13 @@ __global__ void scifi_pr_forward(
   uint* dev_n_scifi_tracks ,
   SciFi::Tracking::TMVA* dev_tmva1,
   SciFi::Tracking::TMVA* dev_tmva2,
-  SciFi::Tracking::Arrays* dev_constArrays  
+  SciFi::Tracking::Arrays* dev_constArrays,
+  const char* dev_scifi_geometry,
+  const float* dev_inv_clus_res
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
-  
+
   // Velo consolidated types
   const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
   const Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
@@ -144,11 +146,11 @@ __global__ void scifi_pr_forward(
   uint* n_scifi_tracks_event = dev_n_scifi_tracks + event_number;
 
   // SciFi hits
-  const uint total_number_of_hits = dev_scifi_hit_count[number_of_events * SciFi::Constants::n_zones];
+  const uint total_number_of_hits = dev_scifi_hit_count[number_of_events * SciFi::Constants::n_mats];
   SciFi::SciFiHitCount scifi_hit_count;
   scifi_hit_count.typecast_after_prefix_sum((uint*) dev_scifi_hit_count, event_number, number_of_events);
-  SciFi::SciFiHits scifi_hits;
-  scifi_hits.typecast_sorted((uint*)dev_scifi_hits, total_number_of_hits);
+  const SciFi::SciFiGeometry scifi_geometry {dev_scifi_geometry};
+  SciFi::SciFiHits scifi_hits(dev_scifi_hits, total_number_of_hits, &scifi_geometry, dev_inv_clus_res);
 
   // initialize atomic SciFi tracks counter
   if ( threadIdx.x == 0 ) {
@@ -161,10 +163,10 @@ __global__ void scifi_pr_forward(
     const int i_veloUT_track = i * blockDim.x + threadIdx.x;
     if ( i_veloUT_track < *n_veloUT_tracks_event ) {
       const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks_event[i_veloUT_track];
-      
+
       const uint velo_states_index = event_tracks_offset + veloUTTr.veloTrackIndex;
       const MiniState velo_state {velo_states, velo_states_index};
-      
+
       find_forward_tracks(
         scifi_hits,
         scifi_hit_count,
@@ -177,6 +179,5 @@ __global__ void scifi_pr_forward(
         velo_state);
     }
   }
-  
-}
 
+}

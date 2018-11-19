@@ -6,7 +6,7 @@ __host__ __device__ void getTrackParameters (
   SciFi::Tracking::Arrays* constArrays,
   float trackParams[SciFi::Tracking::nTrackParams])
 {
-  
+
   float dSlope  = ( xFromVelo(SciFi::Tracking::zReference,velo_state) - xAtRef ) / ( SciFi::Tracking::zReference - constArrays->zMagnetParams[0]);
   const float zMagSlope = constArrays->zMagnetParams[2] * velo_state.tx*velo_state.tx +  constArrays->zMagnetParams[3] * velo_state.ty*velo_state.ty;
   const float zMag    = constArrays->zMagnetParams[0] + constArrays->zMagnetParams[1] *  dSlope * dSlope  + zMagSlope;
@@ -14,7 +14,7 @@ __host__ __device__ void getTrackParameters (
   const float slopeT  = ( xAtRef - xMag ) / ( SciFi::Tracking::zReference - zMag );
   dSlope        = slopeT - velo_state.tx;
   const float dyCoef  = dSlope * dSlope * velo_state.ty;
-  
+
   trackParams[0] = xAtRef;
   trackParams[1] = slopeT;
   trackParams[2] = 1.e-6f * constArrays->xParams[0] * dSlope;
@@ -23,7 +23,7 @@ __host__ __device__ void getTrackParameters (
   trackParams[5] = velo_state.ty + dyCoef * SciFi::Tracking::byParams;
   trackParams[6] = dyCoef * SciFi::Tracking::cyParams;
   trackParams[7] = 0.0f;
-  trackParams[8] = 0.0f; // last elements are chi2 and ndof, as float 
+  trackParams[8] = 0.0f; // last elements are chi2 and ndof, as float
 }
 
 __host__ __device__ float calcqOverP (
@@ -31,7 +31,7 @@ __host__ __device__ float calcqOverP (
   SciFi::Tracking::Arrays* constArrays,
   MiniState velo_state )
 {
-  
+
   float qop(1.0f/Gaudi::Units::GeV) ;
   const float bx2  = bx * bx;
   const float ty2 = velo_state.ty*velo_state.ty;
@@ -43,10 +43,10 @@ __host__ __device__ float calcqOverP (
                  constArrays->momentumParams[5] * ty2 * ty2 );
   const float tx2 = velo_state.tx*velo_state.tx;
   float m_slope2 = tx2 + ty2;
-  float proj = sqrtf( ( 1.f + m_slope2 ) / ( 1.f + tx2 ) ); 
+  float proj = sqrtf( ( 1.f + m_slope2 ) / ( 1.f + tx2 ) );
   qop = ( velo_state.tx - bx ) / ( coef * Gaudi::Units::GeV * proj * SciFi::Tracking::magscalefactor) ;
   return qop ;
-  
+
 }
 
 // Find z zMag position within the magnet at which the bending ("kick") occurs
@@ -58,7 +58,7 @@ __host__ __device__ float zMagnet(
   MiniState velo_state,
   SciFi::Tracking::Arrays* constArrays)
 {
-    
+
   return ( constArrays->zMagnetParams[0] +
            constArrays->zMagnetParams[2] * velo_state.tx*velo_state.tx +
            constArrays->zMagnetParams[3] * velo_state.ty*velo_state.ty );
@@ -69,7 +69,7 @@ __host__ __device__ void covariance (
   SciFi::Tracking::Arrays* constArrays,
   const float qOverP )
 {
-     
+
   state.c00 = constArrays->covarianceValues[0];
   state.c11 = constArrays->covarianceValues[1];
   state.c22 = constArrays->covarianceValues[2];
@@ -98,12 +98,12 @@ __host__ __device__ float trackToHitDistance(
   const float parsY[4] = {trackParameters[4],
                           trackParameters[5],
                           trackParameters[6],
-                          0.f}; 
-  float z_Hit = scifi_hits.z0[hit] + 
-    scifi_hits.dzdy[hit]*evalCubicParameterization(parsY, scifi_hits.z0[hit]);
+                          0.f};
+  float z_Hit = scifi_hits.z0[hit] +
+    scifi_hits.dzdy(hit)*evalCubicParameterization(parsY, scifi_hits.z0[hit]);
   float x_track = evalCubicParameterization(parsX,z_Hit);
   float y_track = evalCubicParameterization(parsY,z_Hit);
-  return scifi_hits.x0[hit] + y_track*scifi_hits.dxdy[hit] - x_track; 
+  return scifi_hits.x0[hit] + y_track*scifi_hits.dxdy(hit) - x_track;
 }
 
 __host__ __device__ float chi2XHit(
@@ -111,8 +111,8 @@ __host__ __device__ float chi2XHit(
   const SciFi::SciFiHits& scifi_hits,
   const int hit ) {
   float track_x_at_zHit = evalCubicParameterization(parsX,scifi_hits.z0[hit]);
-   float hitdist = scifi_hits.x0[hit] - track_x_at_zHit; 
-   return hitdist*hitdist*scifi_hits.w[hit];
+   float hitdist = scifi_hits.x0[hit] - track_x_at_zHit;
+   return hitdist*hitdist*scifi_hits.w(hit);
 }
 
 // the track parameterization is cubic in (z-zRef),
@@ -132,9 +132,9 @@ __host__ __device__ bool quadraticFitX(
   while ( doFit ) {
 
     fitParabola( coordToFit, n_coordToFit, scifi_hits, trackParameters, true );
-    
-    float maxChi2 = 0.f; 
-    float totChi2 = 0.f;  
+
+    float maxChi2 = 0.f;
+    float totChi2 = 0.f;
     int   nDoF = -3; // fitted 3 parameters
     const bool notMultiple = planeCounter.nbDifferent == n_coordToFit;
 
@@ -142,32 +142,32 @@ __host__ __device__ bool quadraticFitX(
     for ( int i_hit = 0; i_hit < n_coordToFit; ++i_hit ) {
       int hit = coordToFit[i_hit];
       float d = trackToHitDistance(trackParameters, scifi_hits, hit);
-      float chi2 = d*d*scifi_hits.w[hit];
+      float chi2 = d*d*scifi_hits.w(hit);
       totChi2 += chi2;
       ++nDoF;
-      if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( scifi_hits.planeCode[hit]/2 ) > 1 ) ) {
+      if ( chi2 > maxChi2 && ( notMultiple || planeCounter.nbInPlane( scifi_hits.planeCode(hit)/2 ) > 1 ) ) {
         maxChi2 = chi2;
-        worst   = i_hit; 
-      }    
-    }    
+        worst   = i_hit;
+      }
+    }
     if ( nDoF < 1 )return false;
     trackParameters[7] = totChi2;
     trackParameters[8] = (float) nDoF;
 
     if ( worst == n_coordToFit ) {
       return true;
-    }    
+    }
     doFit = false;
     if ( totChi2/nDoF > SciFi::Tracking::maxChi2PerDoF  ||
          maxChi2 > SciFi::Tracking::maxChi2XProjection ) {
       removeOutlier( scifi_hits, planeCounter, coordToFit, n_coordToFit, coordToFit[worst]);
       if (planeCounter.nbDifferent < pars.minXHits + pars.minStereoHits) return false;
       doFit = true;
-    }    
+    }
   }
   return true;
 }
- 
+
 
 __host__ __device__ bool fitYProjection(
   const SciFi::SciFiHits& scifi_hits,
@@ -179,12 +179,12 @@ __host__ __device__ bool fitYProjection(
   SciFi::Tracking::Arrays* constArrays,
   SciFi::Tracking::HitSearchCuts& pars)
 {
-  
+
   float maxChi2 = 1.e9f;
   bool parabola = false; //first linear than parabola
   //== Fit a line
   const float txs  = track.trackParams[0]; // simplify overgeneral c++ calculation
-  const float tsxz = velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx; 
+  const float tsxz = velo_state.x + (SciFi::Tracking::zReference - velo_state.z) * velo_state.tx;
   const float tolYMag = SciFi::Tracking::tolYMag + SciFi::Tracking::tolYMagSlope * fabsf(txs-tsxz);
   const float wMag   = 1.f/(tolYMag * tolYMag );
 
@@ -202,28 +202,28 @@ __host__ __device__ bool fitYProjection(
     float sz2  = wMag * zMag * zMag;
     float sd   = wMag * dyMag;
     float sdz  = wMag * dyMag * zMag;
-   
+
     if ( parabola ) {
 
       // position in magnet not used for parabola fit, hardly any influence on efficiency
       fitParabola( stereoHits, n_stereoHits, scifi_hits, track.trackParams, false );
-      
+
     } else { // straight line fit
 
       for ( int i_hit = 0; i_hit < n_stereoHits; ++i_hit ) {
         int hit = stereoHits[i_hit];
-        const float d = - trackToHitDistance(track.trackParams, scifi_hits, hit) / 
-                          scifi_hits.dxdy[hit];//TODO multiplication much faster than division!
-        const float w = scifi_hits.w[hit];
+        const float d = - trackToHitDistance(track.trackParams, scifi_hits, hit) /
+                          scifi_hits.dxdy(hit);//TODO multiplication much faster than division!
+        const float w = scifi_hits.w(hit);
         const float z = scifi_hits.z0[hit] - SciFi::Tracking::zReference;
 	s0   += w;
-        sz   += w * z; 
+        sz   += w * z;
         sz2  += w * z * z;
         sd   += w * d;
         sdz  += w * d * z;
       }
       const float den = (s0 * sz2 - sz * sz );
-      if(!(fabsf(den) > 1e-5)) { 
+      if(!(fabsf(den) > 1e-5)) {
         return false;
       }
       const float da  = (sd * sz2 - sdz * sz ) / den;
@@ -237,7 +237,7 @@ __host__ __device__ bool fitYProjection(
     for ( int i_hit = 0; i_hit < n_stereoHits; ++i_hit ) {
       int hit = stereoHits[i_hit];
       float d = trackToHitDistance(track.trackParams, scifi_hits, hit);
-      float chi2 = d*d*scifi_hits.w[hit];
+      float chi2 = d*d*scifi_hits.w(hit);
       if ( chi2 > maxChi2 ) {
         maxChi2 = chi2;
         worst   = i_hit;
@@ -260,5 +260,4 @@ __host__ __device__ bool fitYProjection(
     break;
   }
   return true;
-} 
- 
+}

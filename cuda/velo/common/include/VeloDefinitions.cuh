@@ -1,5 +1,6 @@
 #pragma once
 
+
 namespace VeloTracking {
 
 // Detector constants
@@ -67,4 +68,6 @@ static constexpr float param_w_inverted = 0.000252083f;
 // Max chi2
 static constexpr float max_chi2 = 20.0;
 
+
 }
+

@@ -106,6 +106,36 @@ typedef std::tuple<
     dev_velo_track_hits,
     dev_velo_states
   >,
+
+
+  AlgorithmDependencies<velo_kalman_fit_t,
+    dev_atomics_storage,
+    dev_velo_track_hit_number,
+    dev_velo_track_hits,
+    dev_velo_states,
+    dev_kalmanvelo_states
+  >,
+
+  AlgorithmDependencies<getSeeds_t,
+    dev_kalmanvelo_states,
+    dev_atomics_storage,
+    dev_velo_track_hit_number,
+    dev_seeds,
+    dev_number_seeds
+  >,
+
+
+  AlgorithmDependencies<fitSeeds_t,
+    dev_vertex,
+    dev_number_vertex,
+    dev_seeds,
+    dev_number_seeds,
+    dev_kalmanvelo_states,
+    dev_atomics_storage,
+    dev_velo_track_hit_number
+  >,
+
+
   AlgorithmDependencies<ut_calculate_number_of_hits_t,
     dev_ut_raw_input,
     dev_ut_raw_input_offsets,
@@ -153,7 +183,7 @@ typedef std::tuple<
     dev_veloUT_tracks,
     dev_atomics_veloUT
   >,
-  AlgorithmDependencies<estimate_cluster_count_t,
+  AlgorithmDependencies<scifi_calculate_cluster_count_t,
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,
     dev_scifi_hit_count
@@ -170,16 +200,17 @@ typedef std::tuple<
     dev_scifi_hit_count,
     dev_prefix_sum_auxiliary_array_4
   >,
-  AlgorithmDependencies<raw_bank_decoder_t,
+  AlgorithmDependencies<scifi_pre_decode_t,
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,
     dev_scifi_hit_count,
     dev_scifi_hits
   >,
-  AlgorithmDependencies<scifi_sort_by_x_t,
-    dev_scifi_hits,
+  AlgorithmDependencies<scifi_raw_bank_decoder_t,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
     dev_scifi_hit_count,
-    dev_scifi_hit_permutations
+    dev_scifi_hits
   >,
   AlgorithmDependencies<scifi_pr_forward_t,
     dev_scifi_hits,

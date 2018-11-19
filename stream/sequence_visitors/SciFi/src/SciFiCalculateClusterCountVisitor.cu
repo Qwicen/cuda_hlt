@@ -1,8 +1,8 @@
 #include "SequenceVisitor.cuh"
-#include "EstimateClusterCount.cuh"
+#include "SciFiCalculateClusterCount.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<estimate_cluster_count_t>(
+void SequenceVisitor::set_arguments_size<scifi_calculate_cluster_count_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -10,12 +10,12 @@ void SequenceVisitor::set_arguments_size<estimate_cluster_count_t>(
 {
   arguments.set_size<dev_scifi_raw_input>(runtime_options.host_scifi_events_size);
   arguments.set_size<dev_scifi_raw_input_offsets>(runtime_options.host_scifi_event_offsets_size);
-  arguments.set_size<dev_scifi_hit_count>(2 * runtime_options.number_of_events * SciFi::Constants::n_zones + 1);
+  arguments.set_size<dev_scifi_hit_count>(2 * runtime_options.number_of_events * SciFi::Constants::n_mats + 1);
 }
 
 template<>
-void SequenceVisitor::visit<estimate_cluster_count_t>(
-  estimate_cluster_count_t& state,
+void SequenceVisitor::visit<scifi_calculate_cluster_count_t>(
+  scifi_calculate_cluster_count_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
@@ -50,6 +50,6 @@ void SequenceVisitor::visit<estimate_cluster_count_t>(
     arguments.offset<dev_scifi_hit_count>(),
     constants.dev_scifi_geometry
   );
-  
+
   state.invoke();
 }

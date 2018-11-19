@@ -17,7 +17,7 @@
    */
 
 __global__ void scifi_pr_forward(
-  const uint* dev_scifi_hits,
+  uint32_t* dev_scifi_hits,
   const uint32_t* dev_scifi_hit_count,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
@@ -28,6 +28,8 @@ __global__ void scifi_pr_forward(
   uint* dev_n_scifi_tracks ,
   SciFi::Tracking::TMVA* dev_tmva1,
   SciFi::Tracking::TMVA* dev_tmva2,
-  SciFi::Tracking::Arrays* dev_constArrays);
+  SciFi::Tracking::Arrays* dev_constArrays,
+  const char* dev_scifi_geometry,
+  const float* dev_inv_clus_res);
 
 ALGORITHM(scifi_pr_forward, scifi_pr_forward_t)
