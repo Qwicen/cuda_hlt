@@ -24,52 +24,11 @@
  *  @author Wouter Hulsbergen (Nikhef, 2018)
  **/
 
-class TrackBeamLineVertexFinder
-  : public Gaudi::Functional::Transformer<std::vector<LHCb::RecVertex>(const std::vector<LHCb::Track>&)>
-{
- public:
-  /// Standard constructor
-  TrackBeamLineVertexFinder(const std::string& name, ISvcLocator* pSvcLocator);
+//class TrackBeamLineVertexFinder
+//  : public Gaudi::Functional::Transformer<std::vector<LHCb::RecVertex>(const std::vector<LHCb::Track>&)>
+
   /// Execution
-  std::vector<LHCb::RecVertex> operator()(const std::vector<LHCb::Track>&) const override;
-  /// Initialization
-  StatusCode initialize() override ;
-private:
-
-#ifdef TIMINGHISTOGRAMMING
-  AIDA::IProfile1D* m_timeperstepPr{nullptr} ;
-  AIDA::IProfile1D* m_timevsntrksPr{nullptr} ;
-  AIDA::IProfile1D* m_timevsnvtxPr{nullptr} ;
-#endif
-} ;
-
-
-DECLARE_COMPONENT( TrackBeamLineVertexFinder )
-
-//=============================================================================
-// Standard constructor, initializes variables
-//=============================================================================
-TrackBeamLineVertexFinder::TrackBeamLineVertexFinder(const std::string& name,
-                 ISvcLocator* pSvcLocator) :
-Transformer(name , pSvcLocator,
-            KeyValue{"InputTracks", LHCb::TrackLocation::Default},
-            KeyValue("OutputVertices", LHCb::RecVertexLocation::Primary)) {}
-
-//=============================================================================
-// ::initialize()
-//=============================================================================
-StatusCode TrackBeamLineVertexFinder::initialize()
-{
-  auto sc = Transformer::initialize();
-  m_velodet = getDet<DeVelo>( DeVeloLocation::Default ) ;
-#ifdef TIMINGHISTOGRAMMING
-  auto hsvc = service<IHistogramSvc>( "HistogramDataSvc", true ) ;
-  m_timeperstepPr = hsvc->bookProf(name()+"/timeperstep","time per step",20,-0.5,19.5) ;
-  m_timevsntrksPr = hsvc->bookProf(name()+"/timevsntrks","time vs number of tracks",50,-0.5,249.5) ;
-  m_timevsnvtxPr = hsvc->bookProf(name()+"/timevsnvtx","time vs number of vertices",12,-0.5,11.5) ;
-#endif  
-  return sc ;
-}
+  //  std::vector<LHCb::RecVertex> operator()(const std::vector<LHCb::Track>&) const override;
 
 //=============================================================================
 // ::execute()
@@ -257,40 +216,7 @@ namespace {
     return vertex ;
   }
 
-  // Temporary: class to time the different steps
-#ifdef TIMINGHISTOGRAMMING
-  class Timer
-  {
-    typedef std::chrono::high_resolution_clock high_resolution_clock;
-    typedef std::chrono::milliseconds nanoseconds;
-  public:
-    explicit Timer()
-      : m_total(0), m_max(0),m_numcalls(0),m_start(high_resolution_clock::now()) {}
-    void start() {
-      m_start = high_resolution_clock::now();
-    }
-    double stop()
-    {
-      auto diff = high_resolution_clock::now() - m_start ;
-      double elapsed = std::chrono::duration <double, std::nano> (diff).count()  ;
-      m_total += elapsed;
-      if( elapsed > m_max) m_max = elapsed ;
-      ++m_numcalls ;
-      return m_total ;
-    }
-    double total() const { return m_total ; }
-    double average() const { return m_numcalls>0 ? m_total/m_numcalls : 0 ; }
-    double maximum() const { return m_max ; }
-    size_t numcalls() const { return m_numcalls ; }
-  private:
-    double m_total ;
-    double m_max ;
-    size_t m_numcalls ;
-    high_resolution_clock::time_point m_start;
-  };
-#endif
 }
-
 
 std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::vector<LHCb::Track>& tracks) const
 {
@@ -302,11 +228,7 @@ std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::ve
            Gaudi::XYZVector{m_velodet->halfBoxOffset( DeVelo::RightHalf)} ) ;
   
   // get the tracks
-#ifdef TIMINGHISTOGRAMMING
-  Timer timer[20] ;
-  timer[9].start() ;
-  timer[1].start() ;
-#endif
+
   // Step 1: select tracks with velo info, compute the poca to the
   // beamline. cache the covariance matrix at this position. I'd
   // rather us a combination of copy_if and transform, but don't know
@@ -333,12 +255,7 @@ std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::ve
     pvtracks.erase(it,pvtracks.end()) ;
   }
   
-#ifdef TIMINGHISTOGRAMMING
-  timer[1].stop() ;
-  timer[2].start() ;
-#endif
-  
-    // Step 2: fill a histogram with the z position of the poca. Use the
+  // Step 2: fill a histogram with the z position of the poca. Use the
   // projected vertex error on that position as the width of a
   // gauss. Divide the gauss properly over the bins. This is quite
   // slow: some simplification may help here.
@@ -382,11 +299,6 @@ std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::ve
       }
     }
   }
-
-#ifdef TIMINGHISTOGRAMMING  
-  timer[2].stop() ;
-  timer[3].start() ;
-#endif
   
   // Step 3: perform a peak search in the histogram. This used to be
   // very simple but the logic needed to find 'significant dips' made
@@ -505,11 +417,6 @@ std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::ve
       }
     }
   }
-
-#ifdef TIMINGHISTOGRAMMING  
-  timer[3].stop() ;
-  timer[4].start() ;
-#endif
   
   // Step 4: partition the set of tracks by vertex seed: just
   // choose the closest one. The easiest is to loop over tracks and
@@ -567,11 +474,6 @@ std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::ve
     }
   }
 
-#ifdef TIMINGHISTOGRAMMING
-  timer[4].stop() ;
-  timer[5].start() ;
-#endif
-  
   // Step 5: perform the adaptive vertex fit for each seed.
   std::vector<Vertex> vertices ;
   std::vector<unsigned short> unusedtracks ;
@@ -584,10 +486,6 @@ std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::ve
               unusedtracks,m_maxFitIter,m_maxDeltaChi2) ;
      } ) ;
 
-#ifdef TIMINGHISTOGRAMMING  
-  timer[5].stop() ;
-  timer[6].start() ;
-#endif
   
   // Steps that we could still take:
   // * remove vertices with too little tracks
@@ -611,13 +509,6 @@ std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::ve
   recvertex.addToTracks( &(tracks[ dau.first ]), dau.second ) ;
     }
   }
-#ifdef TIMINGHISTOGRAMMING    
-  timer[6].stop() ;
-  timer[9].stop() ;
-  for(int i=0; i<20; ++i)
-    m_timeperstepPr->fill(float(i),timer[i].total()) ;
-  m_timevsntrksPr->fill(pvtracks.size(), timer[9].total()) ;
-  m_timevsnvtxPr->fill(vertices.size(), timer[9].total()) ;
-#endif
+
   return recvertexcontainer ;
 }
