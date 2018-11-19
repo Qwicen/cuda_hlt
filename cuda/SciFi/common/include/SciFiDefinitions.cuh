@@ -63,7 +63,6 @@ struct Track {
 /**
  * @brief SciFi geometry description typecast.
  */
-
 struct SciFiGeometry {
   size_t size;
   uint32_t number_of_stations;
@@ -312,4 +311,5 @@ __device__ uint16_t getLinkInBank(uint16_t c);
 __device__ int cell(uint16_t c);
 __device__ int fraction(uint16_t c);
 __device__ bool cSize(uint16_t c);
+
 }

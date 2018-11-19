@@ -26,7 +26,7 @@ int run_forward_on_CPU (
   TTree *t_Forward_tracks = new TTree("Forward_tracks", "Forward_tracks");
   TTree *t_statistics = new TTree("statistics", "statistics");
   TTree *t_scifi_hits = new TTree("scifi_hits","scifi_hits");
-  uint planeCode, hitZone, LHCbID;
+  uint planeCode, LHCbID;
   float x0, z0, w, dxdy, dzdy, yMin, yMax;
   float qop;
   int n_tracks;
@@ -34,7 +34,6 @@ int run_forward_on_CPU (
   t_Forward_tracks->Branch("qop", &qop);
   t_statistics->Branch("n_tracks", &n_tracks);
   t_scifi_hits->Branch("planeCode", &planeCode);
-  t_scifi_hits->Branch("hitZone", &hitZone);
   t_scifi_hits->Branch("LHCbID", &LHCbID);
   t_scifi_hits->Branch("x0", &x0);
   t_scifi_hits->Branch("z0", &z0);
@@ -67,20 +66,21 @@ int run_forward_on_CPU (
 
 #ifdef WITH_ROOT
     // store hit variables in tree
-    for(size_t zone = 0; zone < SciFi::Constants::n_zones; zone++) {
-      const auto zone_offset = scifi_hit_count.layer_offsets[zone];
-      for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
-        auto h = scifi_hits.getHit(zone_offset + hit);
-        planeCode = h.planeCode;
-        hitZone = h.hitZone;
-        LHCbID = h.LHCbID;
-        x0 = h.x0;
-        z0 = h.z0;
-        w  = h.w;
-        dxdy = h.dxdy;
-        dzdy = h.dzdy;
-        yMin = h.yMin;
-        yMax = h.yMax;
+    for(size_t mat = 0; mat < SciFi::Constants::n_mats; mat++) {
+      const auto zone_offset = scifi_hit_count.mat_offsets[mat];
+      for(size_t hit = 0; hit < scifi_hit_count.n_hits_mats[mat]; hit++) {
+        const auto hit_offset = zone_offset + hit;
+
+        planeCode = scifi_hits.planeCode(hit_offset);
+        // hitZone = scifi_hits.planeCode(hit_offset);
+        LHCbID = scifi_hits.LHCbID(hit_offset);
+        x0 = scifi_hits.x0[hit_offset];
+        z0 = scifi_hits.z0[hit_offset];
+        w  = scifi_hits.w(hit_offset);
+        dxdy = scifi_hits.dxdy(hit_offset);
+        dzdy = scifi_hits.dzdy(hit_offset);
+        yMin = scifi_hits.yMin(hit_offset);
+        yMax = scifi_hits.yMax(hit_offset);
         t_scifi_hits->Fill();
       }
     }

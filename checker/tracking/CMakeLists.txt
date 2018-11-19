@@ -8,8 +8,7 @@ include_directories(../../cuda/event_model/velo/include)
 include_directories(../../cuda/event_model/common/include)
 include_directories(../../cuda/SciFi/common/include)
 include_directories(../../cuda/SciFi/PrForward/include)
-
-
+include_directories(${ROOT_INCLUDE_DIRS})
 
 file(GLOB tracking_checker_sources "src/*cpp")
 
