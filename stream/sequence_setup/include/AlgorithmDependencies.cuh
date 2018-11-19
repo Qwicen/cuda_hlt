@@ -197,7 +197,7 @@ typedef std::tuple<
     dev_scifi_hit_count
   >,
   AlgorithmDependencies<muon_catboost_features_extraction_t,
-    //dev_muon_track,
+    dev_muon_track,
     dev_muon_hits,
     dev_muon_catboost_features
   >
