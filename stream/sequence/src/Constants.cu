@@ -206,3 +206,75 @@ void Constants::initialize_geometry_constants(
   cudaCheck(cudaMemcpy(dev_scifi_geometry, scifi_geometry.data(), scifi_geometry.size(), cudaMemcpyHostToDevice));
   host_scifi_geometry = scifi_geometry.data(); //for debugging
 }
+
+void Constants::initialize_muon_catboost_model_constants(
+  const CatboostModel* model
+) {
+  host_muon_catboost_float_feature_num = model->GetFloatFeatureCount();
+  host_muon_catboost_bin_feature_num = model->GetBinFeatureCount();
+  host_muon_catboost_tree_num = model->GetTreeCount();
+  const int* host_tree_splits_flat = model->GetTreeSplits();
+  const int* host_tree_sizes = model->GetTreeSizes();
+  const double* tree_leaves_flat = model->GetTreeLeaves();
+  const NCatBoostFbs::TObliviousTrees* ObliviousTrees = model->GetObliviousTrees();
+
+  int** host_tree_splits = (int**)malloc(host_muon_catboost_tree_num * sizeof(int*));
+  int* host_feature_map = (int*)malloc(host_muon_catboost_bin_feature_num * sizeof(int));
+  int* host_border_map = (int*)malloc(host_muon_catboost_bin_feature_num * sizeof(int));
+  double** host_leaf_values = (double**)malloc(host_muon_catboost_tree_num * sizeof(double*));
+
+  int index = 0;
+  int cumulative_border_num = 0;
+  int* border_count = (int*)malloc((host_muon_catboost_float_feature_num + 1) * sizeof(int));
+  float** borders = (float**)malloc(host_muon_catboost_float_feature_num * sizeof(float*));
+  for (const auto& ff : *ObliviousTrees->FloatFeatures()) {
+    int border_num = ff->Borders()->size();
+    border_count[index] = cumulative_border_num;
+    cumulative_border_num += border_num;
+    cudaCheck(cudaMalloc((void**)&borders[index], border_num*sizeof(float)));
+    cudaMemcpy(borders[index], ff->Borders()+1, border_num*sizeof(float), cudaMemcpyHostToDevice);
+    index++;
+  }
+  border_count[index] = cumulative_border_num;
+
+  for (int i = 0; i < host_muon_catboost_tree_num; i++) {
+    int depth = host_tree_sizes[i];
+    cudaCheck(cudaMalloc((void**)&host_tree_splits[i], depth*sizeof(int)));
+    cudaCheck(cudaMalloc((void**)&host_leaf_values[i], (1 << depth)*sizeof(double)));
+    cudaCheck(cudaMemcpy(host_tree_splits[i], host_tree_splits_flat, depth*sizeof(int), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(host_leaf_values[i], tree_leaves_flat, (1 << depth)*sizeof(double), cudaMemcpyHostToDevice));
+    host_tree_splits_flat += depth;
+    tree_leaves_flat += (1 << depth);
+  }
+
+  int feature_index = 0;
+  int border_index = -1;
+  for (int i = 0; i < host_muon_catboost_bin_feature_num; i++) {
+    if(i < border_count[feature_index + 1]) {
+      border_index++;
+    }
+    else {
+      feature_index++;
+      border_index = 0;
+    }
+    host_feature_map[i] = feature_index;
+    host_border_map[i] = border_index;
+  }
+  
+  cudaCheck(cudaMalloc((void***)&dev_muon_catboost_tree_splits, host_muon_catboost_tree_num * sizeof(int*)));
+  cudaCheck(cudaMalloc((void**)&dev_muon_catboost_feature_map, host_muon_catboost_bin_feature_num * sizeof(int)));
+  cudaCheck(cudaMalloc((void**)&dev_muon_catboost_border_map, host_muon_catboost_bin_feature_num * sizeof(int)));
+  cudaCheck(cudaMalloc((void***)&dev_muon_catboost_leaf_values, host_muon_catboost_tree_num * sizeof(double*)));
+  cudaCheck(cudaMalloc((void**)&dev_muon_catboost_tree_sizes, host_muon_catboost_tree_num * sizeof(int)));
+  cudaCheck(cudaMalloc((void***)&dev_muon_catboost_borders, host_muon_catboost_float_feature_num * sizeof(float*)));
+  cudaCheck(cudaMalloc((void**)&dev_muon_catboost_border_nums, (host_muon_catboost_float_feature_num + 1) * sizeof(int)));
+
+  cudaCheck(cudaMemcpy(dev_muon_catboost_tree_splits, host_tree_splits, host_muon_catboost_tree_num * sizeof(int*), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_muon_catboost_feature_map, host_feature_map, host_muon_catboost_bin_feature_num * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_muon_catboost_border_map, host_border_map, host_muon_catboost_bin_feature_num * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_muon_catboost_leaf_values, host_leaf_values, host_muon_catboost_tree_num * sizeof(double*), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_muon_catboost_tree_sizes, host_tree_sizes, host_muon_catboost_tree_num * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_muon_catboost_borders, borders, host_muon_catboost_float_feature_num * sizeof(float*), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_muon_catboost_border_nums, border_count, (host_muon_catboost_float_feature_num + 1)* sizeof(int), cudaMemcpyHostToDevice));
+}
+

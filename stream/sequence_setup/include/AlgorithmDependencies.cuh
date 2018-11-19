@@ -231,6 +231,21 @@ typedef std::tuple<
     dev_muon_track,
     dev_muon_hits,
     dev_muon_catboost_features
+  >,
+  AlgorithmDependencies<muon_catboost_evaluator_t,
+    dev_muon_catboost_borders,
+    dev_muon_catboost_features,
+    dev_muon_catboost_border_nums,
+    dev_muon_catboost_tree_splits,
+    dev_muon_catboost_feature_map,
+    dev_muon_catboost_border_map,
+    dev_muon_catboost_leaf_values,
+    dev_muon_catboost_tree_sizes,
+    dev_muon_catboost_output,
+    dev_muon_catboost_tree_num,
+    dev_muon_catboost_object_num,
+    dev_muon_catboost_bin_feature_num,
+    dev_muon_catboost_float_feature_num
   >
 > algorithms_dependencies_t;
 

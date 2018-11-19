@@ -1,4 +1,5 @@
 #include "Tools.h"
+#include "json.hpp"
 
 /**
  * @brief Obtains results statistics.
@@ -142,4 +143,12 @@ void read_muon_events_into_arrays(
     debug_cout << "# of Muon hits = " << number_of_hits_per_event << std::endl;
   }
   debug_cout << "average # of Muon hits / event = " << (float) total_number_of_hits / n_events<< std::endl;
+}
+
+
+void read_catboost_model_to_arrays(std::string filename) {
+    std::ifstream i(filename);
+    nlohmann::json j; 
+    i >> j;
+    info_cout << j.dump(4) << std::endl;
 }

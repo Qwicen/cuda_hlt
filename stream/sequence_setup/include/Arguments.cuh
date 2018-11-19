@@ -58,3 +58,4 @@ ARGUMENT(dev_n_scifi_tracks, uint)
 ARGUMENT(dev_muon_track, Muon::State)
 ARGUMENT(dev_muon_hits, Muon::HitsSoA)
 ARGUMENT(dev_muon_catboost_features, float)
+

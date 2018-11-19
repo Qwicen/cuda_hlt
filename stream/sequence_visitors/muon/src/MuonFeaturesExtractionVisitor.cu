@@ -73,3 +73,5 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
   }
   info_cout << std::endl << std::endl;
 }
+
+

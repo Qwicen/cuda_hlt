@@ -16,6 +16,7 @@
 #include "UTDefinitions.cuh"
 #include "Logger.h"
 #include "PrVeloUTMagnetToolDefinitions.h"
+#include "json.h"
 
 /**
  * @brief Struct intended as a singleton with constants defined on GPU.
@@ -57,6 +58,19 @@ struct Constants {
   char* dev_scifi_geometry;
   const char* host_scifi_geometry; //for debugging
   PrUTMagnetTool* dev_ut_magnet_tool;
+  
+  // Muon classification model constatns
+  int host_muon_catboost_tree_num;
+  int host_muon_catboost_float_feature_num;
+  int host_muon_catboost_bin_feature_num;
+  int* dev_muon_catboost_tree_sizes;
+  int* dev_muon_catboost_border_nums;
+  int** dev_muon_catboost_tree_splits;
+  int* dev_muon_catboost_feature_map;
+  int* dev_muon_catboost_border_map;
+  float** dev_muon_catboost_borders;
+  double** dev_muon_catboost_leaf_values;
+
 
   /**
    * @brief Reserves and initializes constants.
@@ -90,4 +104,7 @@ struct Constants {
     const std::vector<char>& ut_geometry,
     const std::vector<char>& ut_magnet_tool,
     const std::vector<char>& scifi_geometry);
+
+  void initialize_muon_catboost_model_constants(const nlohmann::json& model);
+
 };
