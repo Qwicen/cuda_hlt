@@ -10,12 +10,14 @@ int run_forward_on_CPU (
   std::vector< trackChecker::Tracks >& forward_tracks_events,
   uint* host_scifi_hits,
   uint* host_scifi_hit_count,
+  char* host_scifi_geometry,
   uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number,
   uint* host_velo_states,
   VeloUTTracking::TrackUT * veloUT_tracks,
   const int * n_veloUT_tracks_events,
-  const uint number_of_events
+  const uint number_of_events,
+  const std::array<float, 9>& host_inv_clus_res
 ) {
 
 #ifdef WITH_ROOT
@@ -24,15 +26,14 @@ int run_forward_on_CPU (
   TTree *t_Forward_tracks = new TTree("Forward_tracks", "Forward_tracks");
   TTree *t_statistics = new TTree("statistics", "statistics");
   TTree *t_scifi_hits = new TTree("scifi_hits","scifi_hits");
-  uint planeCode, hitZone, LHCbID;
+  uint planeCode, LHCbID;
   float x0, z0, w, dxdy, dzdy, yMin, yMax;
   float qop;
   int n_tracks;
-    
+
   t_Forward_tracks->Branch("qop", &qop);
   t_statistics->Branch("n_tracks", &n_tracks);
   t_scifi_hits->Branch("planeCode", &planeCode);
-  t_scifi_hits->Branch("hitZone", &hitZone);
   t_scifi_hits->Branch("LHCbID", &LHCbID);
   t_scifi_hits->Branch("x0", &x0);
   t_scifi_hits->Branch("z0", &z0);
@@ -57,31 +58,35 @@ int run_forward_on_CPU (
     scifi_hit_count.typecast_after_prefix_sum(host_scifi_hit_count, i_event, number_of_events);
 
     const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::Constants::n_zones];
-    SciFi::SciFiHits scifi_hits; 
-    scifi_hits.typecast_sorted((uint*) host_scifi_hits, total_number_of_hits);
+    const SciFi::SciFiGeometry scifi_geometry(host_scifi_geometry);
+    SciFi::SciFiHits scifi_hits(host_scifi_hits,
+      total_number_of_hits,
+      &scifi_geometry, 
+      reinterpret_cast<const float*>(host_inv_clus_res.data()));
 
 #ifdef WITH_ROOT
     // store hit variables in tree
-    for(size_t zone = 0; zone < SciFi::Constants::n_zones; zone++) {
-      const auto zone_offset = scifi_hit_count.layer_offsets[zone];
-      for(size_t hit = 0; hit < scifi_hit_count.n_hits_layers[zone]; hit++) {
-        auto h = scifi_hits.getHit(zone_offset + hit);
-        planeCode = h.planeCode;
-        hitZone = h.hitZone;
-        LHCbID = h.LHCbID;
-        x0 = h.x0;
-        z0 = h.z0;
-        w  = h.w;
-        dxdy = h.dxdy;
-        dzdy = h.dzdy;
-        yMin = h.yMin;
-        yMax = h.yMax;
+    for(size_t mat = 0; mat < SciFi::Constants::n_mats; mat++) {
+      const auto zone_offset = scifi_hit_count.mat_offsets[mat];
+      for(size_t hit = 0; hit < scifi_hit_count.n_hits_mats[mat]; hit++) {
+        const auto hit_offset = zone_offset + hit;
+
+        planeCode = scifi_hits.planeCode(hit_offset);
+        // hitZone = scifi_hits.planeCode(hit_offset);
+        LHCbID = scifi_hits.LHCbID(hit_offset);
+        x0 = scifi_hits.x0[hit_offset];
+        z0 = scifi_hits.z0[hit_offset];
+        w  = scifi_hits.w(hit_offset);
+        dxdy = scifi_hits.dxdy(hit_offset);
+        dzdy = scifi_hits.dzdy(hit_offset);
+        yMin = scifi_hits.yMin(hit_offset);
+        yMax = scifi_hits.yMax(hit_offset);
         t_scifi_hits->Fill();
       }
     }
 #endif
-    
-    
+
+
     // initialize TMVA vars
     SciFi::Tracking::TMVA tmva1;
     SciFi::Tracking::TMVA1_Init( tmva1 );
@@ -89,7 +94,7 @@ int run_forward_on_CPU (
     SciFi::Tracking::TMVA2_Init( tmva2 );
 
     SciFi::Tracking::Arrays constArrays;
- 
+
     PrForwardWrapper(
       scifi_hits,
       scifi_hit_count,
@@ -103,7 +108,7 @@ int run_forward_on_CPU (
       forward_tracks,
       &n_forward_tracks);
 
-       
+
 #ifdef WITH_ROOT
     // store qop in tree
     for ( int i_track = 0; i_track < n_forward_tracks; ++i_track ) {
@@ -113,16 +118,16 @@ int run_forward_on_CPU (
     n_tracks = n_forward_tracks;
     t_statistics->Fill();
 #endif
-    
+
     // save in format for track checker
-    trackChecker::Tracks checker_tracks = prepareTracksSingleEvent<TrackCheckerForward, SciFi::Track>( forward_tracks, n_forward_tracks );    
+    trackChecker::Tracks checker_tracks = prepareTracksSingleEvent<TrackCheckerForward, SciFi::Track>( forward_tracks, n_forward_tracks );
     forward_tracks_events.emplace_back( checker_tracks );
   }
-  
+
 #ifdef WITH_ROOT
   f->Write();
   f->Close();
 #endif
-  
+
   return 0;
 }

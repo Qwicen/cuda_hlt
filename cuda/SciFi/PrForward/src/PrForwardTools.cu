@@ -35,12 +35,12 @@ __host__ __device__ void find_forward_tracks(
   int allXHits[2][SciFi::Tracking::max_x_hits];
   int n_x_hits[2] = {0};
   float coordX[2][SciFi::Tracking::max_x_hits];
-  
+
   if(yAtRef>-5.f)
     collectAllXHits(
       scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
       coordX[1], xParams_seed, yParams_seed, constArrays,
-      velo_state, veloUTTrack.qop, 1); 
+      velo_state, veloUTTrack.qop, 1);
   if(yAtRef< 5.f)
     collectAllXHits(
       scifi_hits, scifi_hit_count, allXHits[0], n_x_hits[0],
@@ -50,7 +50,7 @@ __host__ __device__ void find_forward_tracks(
   SciFi::Tracking::Track candidate_tracks[SciFi::Tracking::max_candidate_tracks];
   int n_candidate_tracks = 0;
   bool usedHits[2][SciFi::Tracking::max_x_hits] = {false};
-  
+
   if(yAtRef>-5.f)selectXCandidates(
     scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
     usedHits[1], coordX[1], veloUTTrack,
@@ -62,11 +62,11 @@ __host__ __device__ void find_forward_tracks(
     usedHits[0], coordX[0], veloUTTrack,
     candidate_tracks, n_candidate_tracks,
     zRef_track, xParams_seed, yParams_seed,
-    velo_state, pars_first, constArrays, -1, false); 
-  
+    velo_state, pars_first, constArrays, -1, false);
+
   SciFi::Tracking::Track selected_tracks[SciFi::Tracking::max_selected_tracks];
   int n_selected_tracks = 0;
-    
+
   selectFullCandidates(
     scifi_hits, scifi_hit_count,
     candidate_tracks,
@@ -76,7 +76,7 @@ __host__ __device__ void find_forward_tracks(
     xParams_seed, yParams_seed,
     velo_state, veloUTTrack.qop,
     pars_first, tmva1, tmva2, constArrays, false);
- 
+
   bool ok = false;
   for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
     if ( selected_tracks[i_track].hitsNum > 10 )
@@ -99,11 +99,11 @@ __host__ __device__ void find_forward_tracks(
       usedHits[0], coordX[0], veloUTTrack,
       candidate_tracks2, n_candidate_tracks2,
       zRef_track, xParams_seed, yParams_seed,
-      velo_state, pars_second, constArrays, -1, true);  
+      velo_state, pars_second, constArrays, -1, true);
 
     SciFi::Tracking::Track selected_tracks2[SciFi::Tracking::max_tracks_second_loop];
     int n_selected_tracks2 = 0;
-    
+
     selectFullCandidates(
       scifi_hits, scifi_hit_count,
       candidate_tracks2,
@@ -113,22 +113,22 @@ __host__ __device__ void find_forward_tracks(
       xParams_seed, yParams_seed,
       velo_state, veloUTTrack.qop,
       pars_second, tmva1, tmva2, constArrays, true);
- 
+
     for ( int i_track = 0; i_track < n_selected_tracks2; ++i_track ) {
       assert( n_selected_tracks < SciFi::Tracking::max_selected_tracks );
       selected_tracks[n_selected_tracks++] = selected_tracks2[i_track];
     }
-   
+
     ok = (n_selected_tracks > 0);
   }
- 
+
   if(ok || !SciFi::Tracking::secondLoop){
 
     if ( n_selected_tracks > 1 ) {
       // not using thrust::sort due to temporary_buffer::allocate:: get_temporary_buffer failed" error
       //thrust::sort( thrust::seq, selected_tracks, selected_tracks + n_selected_tracks, lowerByQuality);
-      sort_tracks( 
-        selected_tracks, 
+      sort_tracks(
+        selected_tracks,
         n_selected_tracks,
         [] (SciFi::Tracking::Track t1, SciFi::Tracking::Track t2) {
           if ( t1.quality < t2.quality ) return -1;
@@ -136,7 +136,7 @@ __host__ __device__ void find_forward_tracks(
           return 1;
         }
       );
-      
+
     }
 
     float minQuality = SciFi::Tracking::maxQuality;
@@ -145,7 +145,7 @@ __host__ __device__ void find_forward_tracks(
       if(track.quality + SciFi::Tracking::deltaQuality < minQuality)
         minQuality = track.quality + SciFi::Tracking::deltaQuality;
       if(!(track.quality > minQuality)) {
-        
+
         SciFi::Track tr = makeTrack( track );
         // add LHCbIDs from Velo and UT part of the track
         for ( int i_hit = 0; i_hit < veloUTTrack.hitsNum; ++i_hit ) {
@@ -154,10 +154,10 @@ __host__ __device__ void find_forward_tracks(
         if ( tr.hitsNum >= VeloUTTracking::max_track_size )
           printf("veloUT track hits Num = %u \n", tr.hitsNum );
         assert( tr.hitsNum < VeloUTTracking::max_track_size );
-        
+
         // add LHCbIDs from SciFi part of the track
         for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
-          tr.addLHCbID( scifi_hits.LHCbID[ track.hit_indices[i_hit] ] );
+          tr.addLHCbID( scifi_hits.LHCbID( track.hit_indices[i_hit] ) );
         }
         assert( tr.hitsNum < SciFi::max_track_size );
 
@@ -173,8 +173,8 @@ __host__ __device__ void find_forward_tracks(
 #endif
       }
     }
-  }  
-    
+  }
+
 }
 
 // Turn SciFi::Tracking::Track into a SciFi::Track
@@ -213,27 +213,27 @@ __host__ __device__ void selectFullCandidates(
   PlaneCounter planeCounter;
   planeCounter.clear();
   float mlpInput[7] = {0};
-  
+
   for ( int i_track = 0; i_track < n_candidate_tracks; ++i_track ) {
     SciFi::Tracking::Track* cand = candidate_tracks + i_track;
-    
+
     pars.minStereoHits = 4;
 
     if(cand->hitsNum + pars.minStereoHits < SciFi::Tracking::minTotalHits) {
       pars.minStereoHits = SciFi::Tracking::minTotalHits - cand->hitsNum;
     }
-    
+
     int stereoHits[SciFi::Tracking::max_stereo_hits];
     int n_stereoHits = 0;
     float stereoCoords[SciFi::Tracking::max_stereo_hits];
     collectStereoHits(
       scifi_hits, scifi_hit_count,
       *cand, velo_state,
-      pars, constArrays, stereoCoords, 
+      pars, constArrays, stereoCoords,
       stereoHits, n_stereoHits);
 
     if(n_stereoHits < pars.minStereoHits) continue;
-    
+
     if ( !selectStereoHits(
       scifi_hits, scifi_hit_count,
       *cand, constArrays,
@@ -243,12 +243,12 @@ __host__ __device__ void selectFullCandidates(
     planeCounter.clear();
     for ( int i_hit = 0; i_hit < cand->hitsNum; ++i_hit ) {
       int hit = cand->hit_indices[i_hit];
-      planeCounter.addHit( scifi_hits.planeCode[hit]/2 );
+      planeCounter.addHit( scifi_hits.planeCode(hit)/2 );
     }
-    
+
     //make a fit of ALL hits using their x coordinate
     if(!quadraticFitX(scifi_hits, cand->trackParams, cand->hit_indices, cand->hitsNum, planeCounter, pars))continue;
- 
+
     //track has enough hits, calcualte quality and save if good enough
     if(planeCounter.nbDifferent >= SciFi::Tracking::minTotalHits){
 
@@ -291,7 +291,7 @@ __host__ __device__ void selectFullCandidates(
       if(quality < SciFi::Tracking::maxQuality){
         cand->quality = quality;
         cand->set_qop( qOverP );
-        if (!secondLoop) 
+        if (!secondLoop)
           assert (n_selected_tracks < SciFi::Tracking::max_selected_tracks );
         else if (secondLoop)
           assert (n_selected_tracks < SciFi::Tracking::max_tracks_second_loop );
@@ -302,8 +302,8 @@ __host__ __device__ void selectFullCandidates(
         else if ( secondLoop ) {
           if ( n_selected_tracks >= SciFi::Tracking::max_tracks_second_loop ) break;
         }
-          
-      }  
+
+      }
     }
   }
 }
