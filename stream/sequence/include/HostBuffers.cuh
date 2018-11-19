@@ -45,7 +45,7 @@ struct HostBuffers {
   size_t velo_track_hit_number_size() const;
 
   /**
-   * @brief Retrieve total number of hit bytes.
+   * @brief Retrieve total number of hit uints.
    */
-  uint32_t scifi_hits_bytes() const;
+  uint32_t scifi_hits_uints() const;
 };

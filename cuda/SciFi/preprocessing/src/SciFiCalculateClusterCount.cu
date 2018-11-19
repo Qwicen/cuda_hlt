@@ -1,9 +1,8 @@
-#include "EstimateClusterCount.cuh"
-#include "RawBankDecoder.cuh"
+#include "SciFiCalculateClusterCount.cuh"
 
 using namespace SciFi;
 
-__global__ void estimate_cluster_count(
+__global__ void scifi_calculate_cluster_count(
   char* scifi_raw_input,
   uint* scifi_raw_input_offsets,
   uint* scifi_hit_count,
@@ -20,7 +19,7 @@ __global__ void estimate_cluster_count(
 
   for(uint i = threadIdx.x; i < event.number_of_raw_banks; i += blockDim.x)
   {
-    uint32_t cluster_count = 0;
+    uint32_t* hits_module;
     const auto rawbank = event.getSciFiRawBank(i);
     uint16_t* it = rawbank.data + 2;
     uint16_t* last = rawbank.last;
@@ -29,22 +28,26 @@ __global__ void estimate_cluster_count(
     if (*(last-1) == 0) --last; //Remove phadding at the end
     for( ;  it < last; ++it ){ // loop over the clusters
       uint16_t c = *it;
+      uint32_t ch = geom.bank_first_channel[rawbank.sourceID] + channelInBank(c);
+      hits_module = hit_count.n_hits_mats + SciFiChannelID(ch).correctedUniqueMat();
       if( !cSize(c) || it+1 == last ) { //No size flag or last cluster
-        cluster_count++;
+        atomicAdd(hits_module, 1);
+        //(*hits_module)++;
       } else { //Flagged or not the last one.
         unsigned c2 = *(it+1);
         if( cSize(c2) && getLinkInBank(c) == getLinkInBank(c2) ) {
           unsigned int delta = (cell(c2) - cell(c));
-          cluster_count += 1 + (delta - 1) / SciFiRawBankParams::clusterMaxWidth;
+          atomicAdd(hits_module, 1 + (delta - 1) / SciFiRawBankParams::clusterMaxWidth);
+          //(*hits_module) += 1 + (delta - 1) / SciFiRawBankParams::clusterMaxWidth;
           ++it;
         } else {
-          cluster_count++;
+          atomicAdd(hits_module, 1);
+          //(*hits_module)++;
         }
       }
     }
 
-    const SciFi::SciFiChannelID id(geom.bank_first_channel[rawbank.sourceID]);
-    uint32_t* const hits_layer = hit_count.n_hits_layers + ((id.uniqueQuarter() - 16) >> 1);
-    atomicAdd(hits_layer, cluster_count);
+    //uint32_t* const hits_layer = hit_count.n_hits_layers + i;
+    //atomicAdd(hits_layer, cluster_count);
   }
 }

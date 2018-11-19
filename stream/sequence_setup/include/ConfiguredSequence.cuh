@@ -14,9 +14,9 @@
 #include "UTFindPermutation.cuh"
 #include "UTDecodeRawBanksInOrder.cuh"
 #include "VeloUT.cuh"
-#include "EstimateClusterCount.cuh"
-#include "RawBankDecoder.cuh"
-#include "SciFiSortByX.cuh"
+#include "SciFiCalculateClusterCount.cuh"
+#include "SciFiPreDecode.cuh"
+#include "SciFiRawBankDecoder.cuh"
 #include "PrForward.cuh"
 #include "VeloKalmanFilter.cuh"
 #include "getSeeds.cuh"
@@ -31,7 +31,7 @@
 // the name of the file in "sequences/<filename>.cuh":
 //
 // "cmake -DSEQUENCE=<sequence_name> .." matches "sequences/<sequence_name>.cuh"
-// 
+//
 // eg.
 // "cmake -DSEQUENCE=DefaultSequence .." (or just "cmake ..") matches "sequences/DefaultSequence.cuh"
 // "cmake -DSEQUENCE=Velo .." matches "sequences/Velo.cuh"
