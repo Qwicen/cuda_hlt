@@ -83,6 +83,7 @@ __global__ void scifi_pre_decode(
         const uint32_t correctedMat = chid.correctedUniqueMat();
 
         // Condition 1: "00"
+        // Reconstructs a single cluster
         if (!cSize(c) || it+1 == last) {
           const int condition_1 = 0x00;
 
@@ -101,6 +102,7 @@ __global__ void scifi_pre_decode(
           const unsigned c2 = *(it+1);
           if (cSize(c2) && getLinkInBank(c) == getLinkInBank(c2)) {
             // Condition 1: "01"
+            // Reconstructs a big cluster, composed of two fragments
             const int condition_1 = 0x01;
 
             const auto delta = (cell(c2) - cell(c));
@@ -159,6 +161,7 @@ __global__ void scifi_pre_decode(
             ++it_number;
           } else {
             // Condition 1: "10"
+            // Reconstructs a single cluster
             const int condition_1 = 0x02;
 
             store_sorted_cluster_reference (
