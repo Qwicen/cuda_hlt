@@ -24,8 +24,6 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  info_cout << "PRINT FROM VISITOR" << std::endl;
-  info_cout << host_buffers.host_muon_track->tx << std::endl;
   // Copy memory from host to device
   cudaCheck(cudaMemcpyAsync(
     arguments.offset<dev_muon_track>(),

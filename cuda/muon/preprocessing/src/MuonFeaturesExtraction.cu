@@ -23,6 +23,7 @@ __global__ void muon_catboost_features_extraction(
   for (int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station) {
     const int station_offset = muon_hits->station_offsets[i_station];
     stationZ[i_station] = muon_hits->z[station_offset];
+    minDist[i_station] = 1e10;
     extrapolation_x[i_station] = muTrack->x + muTrack->tx * stationZ[i_station];
     extrapolation_y[i_station] = muTrack->y + muTrack->ty * stationZ[i_station];
   }
@@ -42,26 +43,27 @@ __global__ void muon_catboost_features_extraction(
     }
   }
   
-  float commonFactor = Muon::Constants::MSFACTOR/muTrack->p;
+  const float commonFactor = Muon::Constants::MSFACTOR/muTrack->p;
   for( unsigned int st = 0; st != Muon::Constants::n_stations; ++st ) {
-    int idFromTrack = closestHits[st];
+    const int idFromTrack = closestHits[st];
     for (int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station) {
       const int station_offset = muon_hits->station_offsets[i_station];
       const int number_of_hits = muon_hits->number_of_hits_per_station[i_station];
       for(int i_hit = 0; i_hit < number_of_hits; ++i_hit) {
         const int idx = station_offset + i_hit;
-        int idFromHit = muon_hits->tile[idx];
+        const int idFromHit = muon_hits->tile[idx];
         if (idFromHit == idFromTrack) {
+          printf("st = %d, idFromTrack = %d, i_station = %d, i_hit = %d, idFromHit = %d\n", st, idFromTrack, i_station, i_hit, idFromHit);
           dev_muon_catboost_features[Muon::Constants::n_stations + i_station] = muon_hits->time[idx];
           dev_muon_catboost_features[i_station] = muon_hits->delta_time[idx];
           float cross;
           (muon_hits->uncrossed[idx]==0) ? cross = 2. : cross = muon_hits->uncrossed[idx];
           dev_muon_catboost_features[2 * Muon::Constants::n_stations + i_station] = cross;
 
-          float travDist = sqrt((stationZ[i_station]-stationZ[0]) * (stationZ[i_station]-stationZ[0]) +
+          const float travDist = sqrt((stationZ[i_station]-stationZ[0]) * (stationZ[i_station]-stationZ[0]) +
                         (extrapolation_x[i_station]-extrapolation_x[0]) * (extrapolation_x[i_station]-extrapolation_x[0]) +
                         (extrapolation_y[i_station]-extrapolation_y[0]) * (extrapolation_y[i_station]-extrapolation_y[0]));
-          float errMS = commonFactor*travDist*sqrt(travDist)*0.23850119787527452;
+          const float errMS = commonFactor*travDist*sqrt(travDist)*0.23850119787527452;
           if(std::abs(extrapolation_x[i_station]-muon_hits->x[idx]) != 2000) {
             dev_muon_catboost_features[3 * Muon::Constants::n_stations + i_station] = (extrapolation_x[i_station]-muon_hits->x[idx]) / 
               sqrt((muon_hits->dx[idx] * Muon::Constants::INVSQRT3) * (muon_hits->dx[idx] * Muon::Constants::INVSQRT3) + errMS * errMS);
