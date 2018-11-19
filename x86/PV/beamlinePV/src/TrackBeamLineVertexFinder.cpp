@@ -10,6 +10,8 @@
 \*****************************************************************************/
 
 #include "TrackBeamLineVertexFinder.h"
+#include <vector>
+#include <cmath>
 
 
 /** @class TrackBeamLineVertexFinder TrackBeamLineVertexFinder.cpp
@@ -24,11 +26,7 @@
  *  @author Wouter Hulsbergen (Nikhef, 2018)
  **/
 
-//class TrackBeamLineVertexFinder
-//  : public Gaudi::Functional::Transformer<std::vector<LHCb::RecVertex>(const std::vector<LHCb::Track>&)>
 
-  /// Execution
-  //  std::vector<LHCb::RecVertex> operator()(const std::vector<LHCb::Track>&) const override;
 
 //=============================================================================
 // ::execute()
@@ -54,24 +52,46 @@ namespace {
   struct PVTrack
   {
     PVTrack() {}
-    PVTrack( const LHCb::State& state, double dz, unsigned short _index )
-      : z{float(state.z()+dz)},
-  x{float(state.x()+dz*state.tx()),float(state.y()+dz*state.ty())},
-  tx{float(state.tx()),float(state.ty())},index{_index}
+    PVTrack( const Velo::State& state, double dz, unsigned short _index )
+      : z{float(state.z+dz)},
+  x{float(state.x+dz*state.tx),float(state.y+dz*state.ty)},
+  tx{float(state.tx),float(state.ty)},index{_index}
     {
       // perhaps we should invert it /before/ switching to single FPP?
       // it doesn't seem to make much difference.
-      const auto& V = state.covariance() ;
-      auto dz2 = dz*dz ;
-      W(0,0) = V(0,0) + 2*dz*V(2,0)        + dz2*V(2,2) ;
-      W(1,0) = V(1,0) + dz*(V(3,0)+V(2,1)) + dz2*V(3,2) ;
-      W(1,1) = V(1,1) + 2*dz*V(3,1)        + dz2*V(3,3) ;
-      W.Invert();
+      PatPV::myfloat new_z = state.z+dz;
+
+      PatPV::myfloat m_state_x = state.x;
+      PatPV::myfloat m_state_y = state.y;
+      PatPV::myfloat m_state_z = state.z;
+
+      PatPV::myfloat m_state_tx = state.tx;
+      PatPV::myfloat m_state_ty = state.ty;
+
+    PatPV::myfloat m_state_c00 = state.c00;
+    PatPV::myfloat m_state_c11 = state.c11;
+    PatPV::myfloat m_state_c20 = state.c20;
+    PatPV::myfloat m_state_c22 = state.c22;
+    PatPV::myfloat m_state_c31 = state.c31;
+    PatPV::myfloat m_state_c33 = state.c33;
+
+    double dz2 = dz*dz ;
+
+    m_state_x += dz * m_state_tx ;
+    m_state_y += dz * m_state_ty ;
+    m_state_z = new_z;
+    m_state_c00 += dz2 * m_state_c22 + 2*dz* m_state_c20 ;
+    m_state_c20 += dz* m_state_c22 ;
+    m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
+    m_state_c31 += dz* m_state_c33 ;
+    W_00 = 1. / m_state_c00;
+    W_11 = 1. / m_state_c11;
     }
     float z{0} ;
-    Gaudi::Vector2F x ;      /// position (x,y)
-    Gaudi::Vector2F tx ;     /// direction (tx,ty)
-    Gaudi::SymMatrix2x2F W ; /// weightmatrix
+    PatPV::Vector2 x ;      /// position (x,y)
+    PatPV::Vector2 tx ;     /// direction (tx,ty)
+    double W_00 ; /// weightmatrix
+    double W_11 ;
     unsigned short index{0} ;/// index in the list with tracks
   } ;
   
@@ -110,33 +130,48 @@ namespace {
   // though.
   struct PVTrackInVertex : PVTrack
   {
-    PVTrackInVertex( const PVTrack& trk )
+    PVTrackInVertex( const Velo::State& trk )
       : PVTrack{trk}
     {
-      ROOT::Math::SMatrix<float,3,2> H;
-      H(0,0) = H(1,1) = 1 ;
-      H(2,0) = - trk.tx(0) ;
-      H(2,1) = - trk.tx(1) ;
-      HW  = H*W ;
-      HWH = ROOT::Math::Similarity(H,W) ;
+      //H matrix is symmetric and has four non-zero entries
+      H_00 = 1. ;
+      H_11 = 1. ;
+      H_20 = - trk.tx ;
+      H_21 = - trk.ty ;
+      //HW: product of H and W matrices, symmetric with four non-zero entries
+      HW_00 = W_00;
+      HW_11 = W_11;
+      HW_20 = H_20 * W_00;
+      HW_21 = H_21 * W_11;
+      HWH_00 = W_00;
+      HWH_20 = H_20 * W_00;
+      HWH_11 = W_11;
+      HWH_21 = H_21 * W_11;
+      HWH_22 = H_20*H_20*W_00 + H_21*H_21*W_11;
     }
-    ROOT::Math::SMatrix<float,3,2> HW ;
-    Gaudi::SymMatrix3x3F HWH ;
+    double H_00 ;
+    double H_11 ;
+    double H_20 ;
+    double H_21 ;
+    //HW: product of H and W matrices, symmetric with four non-zero entries
+    double HW_00 ;
+    double HW_11 ;
+    double HW_20 ;
+    double HW_21 ;
+    double HWH_00 ;
+    double HWH_20 ;
+    double HWH_11 ;
+    double HWH_21 ;
+    double HWH_22 ;
     float weight{1} ;
   } ;
 
-  struct Vertex
-  {
-    Gaudi::XYZPoint position ;
-    Gaudi::SymMatrix3x3 poscov ;
-    std::vector<std::pair<unsigned,float> > tracks ; // index to track + weight in vertex fit
-    double chi2 ;
-  } ;
+
   
   // This implements the adapative vertex fit with Tukey's weights.
-  Vertex fitAdaptive( const std::vector<PVTrack>::iterator& tracksbegin,
+  PatPV::Vertex fitAdaptive( const std::vector<PVTrack>::iterator& tracksbegin,
           const std::vector<PVTrack>::iterator& tracksend,
-          const Gaudi::XYZPoint& seedposition,
+          const PatPV::XYZPoint& seedposition,
           std::vector<unsigned short>& unusedtracks,
           unsigned short maxNumIter=5,
           float chi2max=9)
@@ -144,25 +179,42 @@ namespace {
     // make vector of TrackInVertex objects
     std::vector<PVTrackInVertex> tracks(tracksbegin,tracksend) ;
     bool converged = false ;
-    Vertex vertex ;
-    auto& vtxpos = vertex.position ;
-    auto& vtxcov = vertex.poscov ;
+
+    PatPV::XYZPoint vtxpos = seedposition;
+
+    PatPV::Vertex vertex;
+    float vtxcov[6];
+    vtxcov[0] = 0.;
+    vtxcov[1] = 0.;
+    vtxcov[2] = 0.;
+    vtxcov[3] = 0.;
+    vtxcov[4] = 0.;
+    vtxcov[5] = 0.;
+
     vtxpos = seedposition;
     const float maxDeltaZConverged{0.001} ;
     double chi2tot{0} ;
     unsigned short nselectedtracks{0} ;
     unsigned short iter{0} ;
     for(; iter<maxNumIter && !converged;++iter) {
-      Gaudi::SymMatrix3x3 halfD2Chi2DX2 ;
-      Gaudi::Vector3 halfDChi2DX ;
+      PatPV::myfloat halfD2Chi2DX2_00 = 0.;
+      PatPV::myfloat halfD2Chi2DX2_10 = 0.;
+      PatPV::myfloat halfD2Chi2DX2_11 = 0.;
+      PatPV::myfloat halfD2Chi2DX2_20 = 0.;
+      PatPV::myfloat halfD2Chi2DX2_21 = 0.;
+      PatPV::myfloat halfD2Chi2DX2_22 = 0.;
+      PatPV::XYZPoint halfDChi2DX(0.,0.,0.) ;
       chi2tot = 0 ;
       nselectedtracks = 0 ;
-      Gaudi::Vector2F vtxposvec{float(vtxpos.x()),float(vtxpos.y())} ;
+      PatPV::Vector2 vtxposvec{float(vtxpos.x),float(vtxpos.y)} ;
       for( auto& trk : tracks ) {
   // compute the chi2
-  const float dz = vtxpos.z() - trk.z ;
-  const Gaudi::Vector2F res = vtxposvec - (trk.x + dz*trk.tx) ;
-  float chi2 = ROOT::Math::Similarity(res,trk.W) ;
+  const float dz = vtxpos.z - trk.z ;
+  PatPV::Vector2 res(0.,0.);
+  res.x = vtxposvec.x - (trk.x.x + dz*trk.tx.x);
+  res.y = vtxposvec.y - (trk.x.y + dz*trk.tx.y);
+  
+  float chi2 = res.x*res.x * trk.W_00 + res.y*res.y*trk.W_11 ;
   // compute the weight.
   trk.weight = 0 ;
   if( chi2 < chi2max ) { // to branch or not, that is the question!
@@ -175,57 +227,82 @@ namespace {
     //halfDChi2DX   += trk.weight * trk.HW * res ;
     // if I use expressions, it crashes!
     //const Gaudi::SymMatrix3x3F thisHalfD2Chi2DX2 = weight * ROOT::Math::Similarity(H, trk.W ) ;
-    const Gaudi::Vector3F HWr = trk.HW * res ;
-    for(int irow=0; irow<3; ++irow) {
-      halfDChi2DX(irow) += trk.weight * HWr(irow) ;
-      for(int icol=0; icol<=irow; ++icol) 
-        halfD2Chi2DX2(irow,icol) += trk.weight * trk.HWH(irow,icol) ;
-    }
+    PatPV::XYZPoint HWr;
+    HWr.x = res.x * trk.W_00;
+    HWr.y = res.y * trk.W_11;
+    HWr.z = -trk.tx.x*res.x*trk.W_00 - trk.tx.y*res.y*trk.W_11;
+
+    halfDChi2DX.x += trk.weight * HWr.x ;
+    halfDChi2DX.y += trk.weight * HWr.y ;
+    halfDChi2DX.z += trk.weight * HWr.z ;
+
+    halfD2Chi2DX2_00 += trk.weight * trk.HWH_00 ;
+    halfD2Chi2DX2_10 += trk.weight * trk.HWH_11 ;
+    halfD2Chi2DX2_11 += trk.weight * trk.HWH_11 ;
+    halfD2Chi2DX2_20 += trk.weight * trk.HWH_20 ;
+    halfD2Chi2DX2_21 += trk.weight * trk.HWH_21 ;
+    halfD2Chi2DX2_22 += trk.weight * trk.HWH_22 ;
+
+
     chi2tot += trk.weight * chi2 ;
   }
       }
       if(nselectedtracks>=2) {
-  // compute the new vertex covariance
-  vtxcov = halfD2Chi2DX2 ;
-  /*int OK =*/ vtxcov.InvertChol() ;
+  // compute the new vertex covariance using analytical inversion
+    PatPV::myfloat a00 = halfD2Chi2DX2_00;
+    PatPV::myfloat a10 = halfD2Chi2DX2_10;
+    PatPV::myfloat a11 = halfD2Chi2DX2_11;
+    PatPV::myfloat a20 = halfD2Chi2DX2_20;
+    PatPV::myfloat a21 = halfD2Chi2DX2_21;
+    PatPV::myfloat a22 = halfD2Chi2DX2_22;
+
+    PatPV::myfloat det = a00 * (a22 * a11 - a21 * a21) - a10 * (a22 * a10 - a21 * a20) + a20 * (a21*a10 - a11*a20);
+   // if (det == 0) return false;
+
+
+   vtxcov[0] = (a22*a11 - a21*a21) / det;
+   vtxcov[1] = -(a22*a10-a20*a21) / det;
+   vtxcov[2] = (a22*a00-a20*a20) / det;
+   vtxcov[3] = (a21*a10-a20*a11) / det;
+   vtxcov[4] = -(a21*a00-a20*a10) / det;
+   vtxcov[5] = (a11*a00-a10*a10) / det;
 
   // compute the delta w.r.t. the reference
-  Gaudi::Vector3 delta = -1.0 * vtxcov * halfDChi2DX ;
+  PatPV::XYZPoint delta{0.,0.,0.};
+    delta.x = -1.0 * (vtxcov[0] * halfDChi2DX.x + vtxcov[1] * halfDChi2DX.y + vtxcov[3] * halfDChi2DX.z );
+    delta.y = -1.0 * (vtxcov[1] * halfDChi2DX.x + vtxcov[2] * halfDChi2DX.y + vtxcov[4] * halfDChi2DX.z );
+    delta.z = -1.0 * (vtxcov[3] * halfDChi2DX.x + vtxcov[4] * halfDChi2DX.y + vtxcov[5] * halfDChi2DX.z );
   
   // note: this is only correct if chi2 was chi2 of reference!
-  chi2tot  += ROOT::Math::Dot(delta,halfDChi2DX) ;
+  chi2tot  += delta.x * halfDChi2DX.x + delta.y * halfDChi2DX.y + delta.z * halfDChi2DX.z;
 
   // update the position
-  vtxpos.SetX( vtxpos.x() + delta(0) ) ;
-  vtxpos.SetY( vtxpos.y() + delta(1) ) ;
-  vtxpos.SetZ( vtxpos.z() + delta(2) ) ;
-  converged = std::abs(delta(2)) < maxDeltaZConverged ;
+  vtxpos.x = ( vtxpos.x + delta.x ) ;
+  vtxpos.y = ( vtxpos.y + delta.y ) ;
+  vtxpos.z = ( vtxpos.z + delta.z ) ;
+  converged = std::abs(delta.z) < maxDeltaZConverged ;
       } else {
   break ;
       }
     } // end iteration loop
     //std::cout << "Number of iterations: " << iter << " " << nselectedtracks << std::endl ;
     vertex.chi2 = chi2tot ;
-    vertex.tracks.reserve( tracks.size() ) ;
-    for( const auto& trk : tracks ) {
-      if( trk.weight > 0 )
-  vertex.tracks.emplace_back( trk.index, trk.weight ) ;
-      else
-  unusedtracks.push_back( trk.index ) ;
-    }
+    vertex.setPosition(vtxpos);
+    vertex.setCovMatrix(vtxcov);    
     return vertex ;
   }
 
 }
 
-std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::vector<LHCb::Track>& tracks) const
+std::vector<PatPV::Vertex> findPVs(const std::vector<Velo::State>& tracks)
 {
   // Get the beamline. this only accounts for position, not
   // rotation. that's something to improve! I have considered caching
   // this (with a handle for changes in the geometry, but the
   // computation is so fast that it isn't worth it.)
-  const auto beamline = 0.5*(Gaudi::XYZVector{m_velodet->halfBoxOffset( DeVelo::LeftHalf)} +
-           Gaudi::XYZVector{m_velodet->halfBoxOffset( DeVelo::RightHalf)} ) ;
+
+  // set this to (0,0) for now
+  const auto beamline = PatPV::Vector2(0.f, 0.f) ;
   
   // get the tracks
 
@@ -239,22 +316,22 @@ std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::ve
     auto it = pvtracks.begin() ;
     for(short unsigned int index{0}; index<Ntrk; ++index) {
       const auto& trk = tracks[index] ;
-      if( trk.hasVelo() ) {
   // compute the (chance in) z of the poca to the beam axis
-  const LHCb::State& s = trk.firstState() ;
-  const auto tx = s.tx() ;
-  const auto ty = s.ty() ;
-  const double dz = ( tx * ( beamline.x() - s.x() ) + ty * ( beamline.y() - s.y() ) ) / (tx*tx+ty*ty) ;
-  const double newz = s.z() + dz ;
+  const Velo::State& s = trk ;
+  const auto tx = s.tx ;
+  const auto ty = s.ty ;
+  const double dz = ( tx * ( beamline.x - s.x ) + ty * ( beamline.y - s.y ) ) / (tx*tx+ty*ty) ;
+  const double newz = s.z + dz ;
   if( m_zmin < newz  && newz < m_zmax ) {
     *it = PVTrack{s,dz,index} ;
     ++it ;
   }
-      }
+      
     }
     pvtracks.erase(it,pvtracks.end()) ;
   }
   
+
   // Step 2: fill a histogram with the z position of the poca. Use the
   // projected vertex error on that position as the width of a
   // gauss. Divide the gauss properly over the bins. This is quite
@@ -429,50 +506,8 @@ std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::ve
   // tracks. I checked it by comparing to the 'slow' method.
   
 
-  // I found that this funny weighted 'maximum' is better than most other inexpensive solutions.
-  auto zClusterMean = [this,zhisto](auto izmax) -> float {
-    const float *b = zhisto.data() + izmax ;
-    float d1 = *b - *(b-1) ;
-    float d2 = *b - *(b+1) ;
-    float idz =  d1+d2>0 ? 0.5f*(d1-d2)/(d1+d2) : 0.0f ;
-    return m_zmin + m_dz * (izmax + idz + 0.5f) ;
-  } ;
-  
-  std::vector<SeedZWithIteratorPair> seedsZWithIteratorPair ;
-  seedsZWithIteratorPair.reserve( clusters.size() ) ;
-  
-  if(!clusters.empty()) {
-    std::vector< PVTrack >::iterator it = pvtracks.begin() ;
-    int iprev=0 ;
-    for( int i=0; i<int(clusters.size())-1; ++i ) {
-      //const float zmid = 0.5f*(zseeds[i+1].z+zseeds[i].z) ;
-      const float zmid = m_zmin + m_dz * 0.5f* (clusters[i].izlast + clusters[i+1].izfirst + 1.f ) ;
-      std::vector< PVTrack >::iterator newit = std::partition( it, pvtracks.end(), [zmid](const auto& trk) { return trk.z < zmid ; } ) ;
-      // complicated logic to get rid of partitions that are too small, doign the least amount of work
-      if( std::distance( it, newit ) >= m_minNumTracksPerVertex ) {
-  seedsZWithIteratorPair.emplace_back( zClusterMean(clusters[i].izmax), it, newit ) ;
-  iprev = i ;
-      } else {
-  // if the partition is too small, then repartition the stuff we
-  // have just isolated and assign to the previous and next. You
-  // could also 'skip' this partition, but then you do too much
-  // work for the next.
-  if( !seedsZWithIteratorPair.empty() && newit != it ) {
-    const float zmid = m_zmin + m_dz * (clusters[iprev].izlast + clusters[i+1].izfirst+0.5f ) ;
-    newit = std::partition( it, newit, [zmid](const auto& trk) { return trk.z < zmid ; } ) ;
-    // update the last one
-    seedsZWithIteratorPair.back().end = newit ;
-  }
-      }
-      it = newit ;
-    }
-    // Make sure to add the last partition
-    if( std::distance( it, pvtracks.end() ) >= m_minNumTracksPerVertex ) {
-      seedsZWithIteratorPair.emplace_back(zClusterMean(clusters.back().izmax) , it, pvtracks.end() ) ;
-    } else if( !seedsZWithIteratorPair.empty() ) {
-      seedsZWithIteratorPair.back().end = pvtracks.end() ;
-    }
-  }
+
+
 
   // Step 5: perform the adaptive vertex fit for each seed.
   std::vector<Vertex> vertices ;
@@ -511,4 +546,5 @@ std::vector<LHCb::RecVertex> TrackBeamLineVertexFinder::operator()(const std::ve
   }
 
   return recvertexcontainer ;
+
 }

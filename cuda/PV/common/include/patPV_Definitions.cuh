@@ -92,7 +92,7 @@ struct Vector2 {
   myfloat x;
   myfloat y;
 
-  __device__ Vector2(myfloat m_x, myfloat m_y) : x(m_x), y(m_y){}
+  __device__ __host__ Vector2(myfloat m_x, myfloat m_y) : x(m_x), y(m_y){}
 };
 
  
