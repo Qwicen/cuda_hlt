@@ -28,9 +28,6 @@
 
 
 
-
-
-
 //=============================================================================
 // ::execute()
 //=============================================================================
@@ -295,8 +292,7 @@ namespace {
     return vertex ;
   }
 
-
-
+}
 
 std::vector<PatPV::Vertex> findPVs(const std::vector<Velo::State>& tracks)
 {
@@ -336,11 +332,219 @@ std::vector<PatPV::Vertex> findPVs(const std::vector<Velo::State>& tracks)
   }
   
 
-}
+  // Step 2: fill a histogram with the z position of the poca. Use the
+  // projected vertex error on that position as the width of a
+  // gauss. Divide the gauss properly over the bins. This is quite
+  // slow: some simplification may help here.
+
+  // we need to define what a bin is: integral between
+  //   zmin + ibin*dz and zmin + (ibin+1)*dz
+  // we'll have lot's of '0.5' in the code below. at some point we may
+  // just want to shift the bins.
+
+  // this can be changed into an std::accumulate
+  const int Nbins = (m_zmax-m_zmin)/m_dz ;
+  std::vector<float> zhisto(Nbins,0.0f) ;
+  {
+    for( const auto& trk : pvtracks ) {
+      // bin in which z0 is, in floating point
+      const float zbin = (trk.z - m_zmin)/m_dz ;
+      
+      // to compute the size of the window, we use the track
+      // errors. eventually we can just parametrize this as function of
+      // track slope.
+      const float zweight = ROOT::Math::Similarity( trk.W, trk.tx ) ;
+      const float zerr = 1/std::sqrt( zweight ) ;
+      // get rid of useless tracks. must be a bit carefull with this.
+      if( zerr < m_maxTrackZ0Err) { //m_nsigma < 10*m_dz ) {
+  const float halfwindow = GaussApprox::a*zerr / m_dz ;
+  // this looks a bit funny, but we need the first and last bin of the histogram to remain empty.
+  const int minbin = std::max(int( zbin - halfwindow ),1) ;
+  const int maxbin = std::min(int( zbin + halfwindow ),Nbins-2) ;
+  // we can get rid of this if statement if we make a selection of seeds earlier
+  if( maxbin >= minbin ) {
+    double integral = 0 ;
+    for( auto i=minbin; i<maxbin; ++i) {
+      const float relz = ( m_zmin + (i+1)*m_dz - trk.z ) /zerr  ;
+      const float thisintegral = GaussApprox::integral( relz ) ;
+      zhisto[i] += thisintegral - integral ;
+      integral = thisintegral ;
+    }
+    // deal with the last bin
+    zhisto[maxbin] += 1-integral ;
+  }
+      }
+    }
+  }
+  
+  // Step 3: perform a peak search in the histogram. This used to be
+  // very simple but the logic needed to find 'significant dips' made
+  // it a bit more complicated. In the end it doesn't matter so much
+  // because it takes relatively little time.
+
+  //FIXME: the logic is a bit too complicated here. need to see if we
+  //simplify something without loosing efficiency.
+  std::vector<Cluster> clusters ;
+  {
+    // step A: make 'ProtoClusters'
+    // Step B: for each such ProtoClusters
+    //    - find the significant extrema (an odd number, start with a minimum. you can always achieve this by adding a zero bin at the beginning)
+    //      an extremum is a bin-index, plus the integral till that point, plus the content of the bin
+    //    - find the highest extremum and
+    //       - try and partition at the lowest minimum besides it
+    //       - if that doesn't work, try the other extremum
+    //       - if that doesn't work, accept as cluster
+
+    // Step A: make 'proto-clusters': these are subsequent bins with non-zero content and an integral above the threshold.
+    using BinIndex = unsigned short ;
+    std::vector<BinIndex> clusteredges ;
+    {
+      const float threshold = m_dz / (10*m_maxTrackZ0Err) ; // need something sensible that depends on binsize
+      bool prevempty = true ;
+      float integral = zhisto[0] ;
+      for(BinIndex i=1; i<Nbins; ++i) {
+  integral += zhisto[i] ;
+  bool empty = zhisto[i] < threshold ;
+  if( empty != prevempty ) {
+    if( prevempty || integral > m_minTracksInSeed )
+      clusteredges.emplace_back( i ) ; // may want to store 'i-1'
+    else
+      clusteredges.pop_back() ;
+    prevempty = empty ;
+    integral=0 ;
+    //std::cout << "creating cluster edge: "
+    //      << i << " " << zhisto[i] << " " << integral << std::endl ;
+  }
+      }
+    }
+    // Step B: turn these into clusters. There can be more than one cluster per proto-cluster.
+    const size_t Nproto = clusteredges.size()/2 ;
+    for(unsigned short i = 0; i< Nproto; ++i) {
+      const BinIndex ibegin = clusteredges[i*2] ;
+      const BinIndex iend = clusteredges[i*2+1] ;
+      //std::cout << "Trying cluster: " << ibegin << " " << iend << std::endl ;
+      
+      // find the extrema
+      const float mindip = m_minDipDensity * m_dz  ; // need to invent something
+      const float minpeak = m_minDensity * m_dz  ;
+
+      std::vector<Extremum> extrema ;
+      {
+  bool rising = true ;
+  float integral = zhisto[ibegin] ;
+  extrema.emplace_back( ibegin, zhisto[ibegin], integral ) ;
+  for(unsigned short i=ibegin; i<iend; ++i) {
+    const auto value = zhisto[i] ;
+    bool stillrising = zhisto[i+1] > value ;
+    if( rising && !stillrising && value >= minpeak ) {
+      const auto n = extrema.size() ;
+      if( n>=2 ) {
+        // check that the previous mimimum was significant. we
+        // can still simplify this logic a bit.
+        const auto dv1 = extrema[n-2].value - extrema[n-1].value ;
+        //const auto di1 = extrema[n-1].index - extrema[n-2].index ;
+        const auto dv2 = value - extrema[n-1].value ;
+        if( dv1 > mindip && dv2 > mindip )
+    extrema.emplace_back( i, value, integral + 0.5f*value ) ;
+        else if( dv1 > dv2 )
+    extrema.pop_back() ;
+        else {
+    extrema.pop_back() ;
+    extrema.pop_back() ;
+    extrema.emplace_back( i, value, integral + 0.5f*value ) ;
+        }
+      } else {
+        extrema.emplace_back( i, value, integral + 0.5f*value ) ;
+      }
+    } else if( rising != stillrising ) extrema.emplace_back( i, value, integral + 0.5f*value ) ;
+    rising = stillrising ;
+    integral += value ;
+  }
+  assert(rising==false) ;
+  extrema.emplace_back( iend, zhisto[iend], integral ) ;
+      }
+
+      // if( extrema.size() < 3 ) {
+      //  warning() << "ERROR: too little extrema found." << extrema.size() << endmsg ;
+      //  assert(0) ;
+      // }
+      // if( extrema.size()%2==0 ) {
+      //  warning() << "ERROR: even number of extrema found." << extrema.size() << endmsg ;
+      // }
+      
+      // now partition on  extrema
+      const auto N = extrema.size() ;
+      std::vector<Cluster> subclusters ;
+      if(N>3) {
+  for(unsigned int i=1; i<N/2+1; ++i ) {
+    if( extrema[2*i].integral - extrema[2*i-2].integral > m_minTracksInSeed ) {
+      subclusters.emplace_back( extrema[2*i-2].index, extrema[2*i].index, extrema[2*i-1].index) ;
+    }
+  }
+      }
+      if( subclusters.empty() ) {
+  //FIXME: still need to get the largest maximum!
+  if( extrema[1].value >= minpeak ) 
+    clusters.emplace_back( extrema.front().index, extrema.back().index, extrema[1].index ) ;
+      } else {
+  // adjust the limit of the first and last to extend to the entire protocluster
+  subclusters.front().izfirst = ibegin ;
+  subclusters.back().izlast = iend ;
+  clusters.insert(std::end(clusters),std::begin(subclusters),std::end(subclusters) ) ;
+      }
+    }
+  }
+  
+  // Step 4: partition the set of tracks by vertex seed: just
+  // choose the closest one. The easiest is to loop over tracks and
+  // assign to closest vertex by looping over all vertices. However,
+  // that becomes very slow as time is proportional to both tracks and
+  // vertices. A better method is to rely on the fact that vertices
+  // are sorted in z, and then use std::partition, to partition the
+  // track list on the midpoint between two vertices. The logic is
+  // slightly complicated to deal with partitions that have too few
+  // tracks. I checked it by comparing to the 'slow' method.
+  
 
 
 
 
+  // Step 5: perform the adaptive vertex fit for each seed.
+  std::vector<Vertex> vertices ;
+  std::vector<unsigned short> unusedtracks ;
+  unusedtracks.reserve(pvtracks.size()) ;
+  std::transform(seedsZWithIteratorPair.begin(),seedsZWithIteratorPair.end(),
+     std::back_inserter(vertices),
+     [&]( const auto& seed ) {
+       return fitAdaptive(seed.begin,seed.end,
+              Gaudi::XYZPoint{beamline.x(),beamline.y(),seed.z},
+              unusedtracks,m_maxFitIter,m_maxDeltaChi2) ;
+     } ) ;
 
+  
+  // Steps that we could still take:
+  // * remove vertices with too little tracks
+  // * assign unused tracks to other vertices
+  // * merge vertices that are close
+
+  // create the output container
+  std::vector<LHCb::RecVertex> recvertexcontainer ;
+  recvertexcontainer.reserve(vertices.size()) ;
+  const auto maxVertexRho2 = sqr(m_maxVertexRho) ;
+  for( const auto& vertex : vertices ) {
+    const auto beamlinedx = vertex.position.x() - beamline.x() ;
+    const auto beamlinedy = vertex.position.y() - beamline.y() ;
+    const auto beamlinerho2 = sqr(beamlinedx) + sqr(beamlinedy) ;
+    if( vertex.tracks.size()>=m_minNumTracksPerVertex && beamlinerho2 < maxVertexRho2 ) {
+      auto& recvertex = recvertexcontainer.emplace_back( vertex.position ) ;
+      recvertex.setCovMatrix( vertex.poscov ) ;
+      recvertex.setChi2AndDoF( vertex.chi2, 2*vertex.tracks.size()-3 ) ;
+      recvertex.setTechnique( LHCb::RecVertex::RecVertexType::Primary ) ;
+      for( const auto& dau : vertex.tracks )
+  recvertex.addToTracks( &(tracks[ dau.first ]), dau.second ) ;
+    }
+  }
+
+  return recvertexcontainer ;
 
 }

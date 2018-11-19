@@ -35,10 +35,12 @@ void SequenceVisitor::visit<scifi_pr_forward_t>(
     arguments.offset<dev_n_scifi_tracks>(),
     constants.dev_scifi_tmva1,
     constants.dev_scifi_tmva2,
-    constants.dev_scifi_constArrays
+    constants.dev_scifi_constArrays,
+    constants.dev_scifi_geometry,
+    constants.dev_inv_clus_res
   );
-  state.invoke(); 
-  
+  state.invoke();
+
   // Transmission device to host
   // SciFi tracks
   cudaCheck(cudaMemcpyAsync(host_buffers.host_n_scifi_tracks,

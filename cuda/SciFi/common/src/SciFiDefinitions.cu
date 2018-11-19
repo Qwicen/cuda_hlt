@@ -119,6 +119,19 @@ __device__ __host__ uint32_t SciFiChannelID::module() const {
   return ((channelID & moduleMask) >> moduleBits);
 }
 
+__device__ __host__ uint SciFiChannelID::correctedModule() const {
+  // Returns local module ID in ascending x order.
+  // There may be a faster way to do this.
+  uint uQuarter = uniqueQuarter() - 16;
+  uint module_count = uQuarter >= 32? 6:5;
+  uint q = uQuarter % 4;
+  if(q == 0 || q == 2)
+    return module_count - 1 - module();
+  if(q == 1 || q == 3)
+    return module();
+  return 0;
+};
+
 __device__ __host__ uint32_t SciFiChannelID::quarter() const {
   return ((channelID & quarterMask) >> quarterBits);
 }
@@ -126,21 +139,36 @@ __device__ __host__ uint32_t SciFiChannelID::quarter() const {
 __device__ __host__ uint32_t SciFiChannelID::layer() const {
   return ((channelID & layerMask) >> layerBits);
 }
+
 __device__ __host__ uint32_t SciFiChannelID::station() const {
   return ((channelID & stationMask) >> stationBits);
 }
+
 __device__ __host__ uint32_t SciFiChannelID::uniqueLayer() const {
   return ((channelID & uniqueLayerMask) >> layerBits);
 }
+
 __device__ __host__ uint32_t SciFiChannelID::uniqueMat() const {
   return ((channelID & uniqueMatMask) >> matBits);
 }
+
+__device__ __host__ uint32_t SciFiChannelID::correctedUniqueMat() const {
+  // Returns global mat ID in ascending x order without any gaps.
+  // Geometry dependent. No idea how to not hardcode this.
+  uint32_t quarter = uniqueQuarter() - 16;
+  return (quarter < 32? quarter : 32) * 5 * 4 +
+         (quarter >= 32? quarter - 32 : 0) * 6 * 4 + 4 * correctedModule()
+         + (reversedZone()? 3 - mat() : mat());
+}
+
 __device__ __host__ uint32_t SciFiChannelID::uniqueModule() const {
   return ((channelID & uniqueModuleMask) >> moduleBits);
 }
+
 __device__ __host__ uint32_t SciFiChannelID::uniqueQuarter() const {
   return ((channelID & uniqueQuarterMask) >> quarterBits);
 }
+
 __device__ __host__ uint32_t SciFiChannelID::die() const {
   return ((channelID & 0x40) >> 6);
 }
@@ -149,12 +177,17 @@ __device__ __host__ bool SciFiChannelID::isBottom() const {
  return (quarter() == 0 || quarter() == 1);
 }
 
-__device__ __host__
+__device__ __host__ bool SciFiChannelID::reversedZone() const{
+  uint zone = ((uniqueQuarter() - 16) >> 1) % 4;
+  return zone == 1 || zone == 2;
+};
+
+
 void SciFiHitCount::typecast_before_prefix_sum(
   uint* base_pointer,
   const uint event_number
 ) {
-  n_hits_layers = base_pointer + event_number * SciFi::Constants::n_zones;
+  n_hits_mats = base_pointer + event_number * SciFi::Constants::n_mats;
 }
 
 __device__ __host__
@@ -163,41 +196,95 @@ void SciFiHitCount::typecast_after_prefix_sum(
   const uint event_number,
   const uint number_of_events
 ) {
-  layer_offsets = base_pointer + event_number *  SciFi::Constants::n_zones;
-  n_hits_layers = base_pointer + number_of_events * SciFi::Constants::n_zones + 1 + event_number * SciFi::Constants::n_zones;
+  mat_offsets = base_pointer + event_number * SciFi::Constants::n_mats;
+  n_hits_mats = base_pointer + number_of_events * SciFi::Constants::n_mats + 1 + event_number * SciFi::Constants::n_mats;
 }
 
-void SciFiHits::typecast_unsorted(uint32_t* base, uint32_t total_number_of_hits) {
-  x0    =     reinterpret_cast<float*>(base);
-  z0    =     reinterpret_cast<float*>(base + total_number_of_hits);
-  w     =     reinterpret_cast<float*>(base + 2*total_number_of_hits); 
-  dxdy  =     reinterpret_cast<float*>(base + 3*total_number_of_hits); 
-  dzdy  =     reinterpret_cast<float*>(base + 4*total_number_of_hits); 
-  yMin  =     reinterpret_cast<float*>(base + 5*total_number_of_hits); 
-  yMax  =     reinterpret_cast<float*>(base + 6*total_number_of_hits); 
-  LHCbID =    base + 7*total_number_of_hits; 
-  planeCode = base + 8*total_number_of_hits; 
-  hitZone =   base + 9*total_number_of_hits; 
-  temp  =     base + 10*total_number_of_hits; 
+SciFiHits::SciFiHits(uint32_t* base,
+  const uint total_number_of_hits,
+  const SciFiGeometry* dev_geom,
+  const float* param_dev_inv_clus_res) {
+  geom = dev_geom;
+  x0 = reinterpret_cast<float*>(base);
+  z0 = reinterpret_cast<float*>(base + total_number_of_hits);
+  m_endPointY = reinterpret_cast<float*>(base + 2 * total_number_of_hits);
+  channel = reinterpret_cast<uint32_t*>(base + 3 * total_number_of_hits);
+  assembled_datatype = reinterpret_cast<uint32_t*>(base + 4 * total_number_of_hits);
+  cluster_reference = reinterpret_cast<uint32_t*>(base + 5 * total_number_of_hits);
+  dev_inv_clus_res = param_dev_inv_clus_res;
 }
 
-void SciFiHits::typecast_sorted(uint32_t* base, uint32_t total_number_of_hits) {
-  temp  =     base; 
-  x0    =     reinterpret_cast<float*>(base + total_number_of_hits); 
-  z0    =     reinterpret_cast<float*>(base + 2*total_number_of_hits); 
-  w     =     reinterpret_cast<float*>(base + 3*total_number_of_hits); 
-  dxdy  =     reinterpret_cast<float*>(base + 4*total_number_of_hits); 
-  dzdy  =     reinterpret_cast<float*>(base + 5*total_number_of_hits);
-  yMin  =     reinterpret_cast<float*>(base + 6*total_number_of_hits); 
-  yMax  =     reinterpret_cast<float*>(base + 7*total_number_of_hits); 
-  LHCbID =    base + 8*total_number_of_hits; 
-  planeCode = base + 9*total_number_of_hits; 
-  hitZone =   base + 10*total_number_of_hits; 
+__device__ __host__ float SciFiHits::w(uint32_t index) const {
+  assert(pseudoSize(index) < 9 && "Wrong pseudo size.");
+  float werrX = dev_inv_clus_res[pseudoSize(index)];
+  return werrX * werrX;
+};
+
+__device__ __host__ float SciFiHits::dxdy(uint32_t index) const {
+  return geom->dxdy[mat(index)];
+};
+
+__device__ __host__ float SciFiHits::dzdy(uint32_t index) const {
+  return geom->dzdy[mat(index)];
+};
+
+__device__ __host__ float SciFiHits::endPointY(uint32_t index) const {
+  const SciFiChannelID id(channel[index]);
+  float uFromChannel = geom->uBegin[mat(index)] + (2 * id.channel() + 1 + fraction(index)) * geom->halfChannelPitch[mat(index)];
+  if( id.die() ) uFromChannel += geom->dieGap[mat(index)];
+  return geom->mirrorPointY[mat(index)] + geom->ddxY[mat(index)] * uFromChannel;
 }
 
-SciFiHit SciFiHits::getHit(uint32_t index) const {
-  return {x0[index], z0[index], w[index], dxdy[index], dzdy[index], yMin[index],
-          yMax[index], LHCbID[index], planeCode[index], hitZone[index]};
+__device__ __host__ float SciFiHits::yMin(uint32_t index) const {
+  const SciFiChannelID id(channel[index]);
+  return m_endPointY[index] + id.isBottom() * geom->globaldy[mat(index)];
+};
+
+__device__ __host__ float SciFiHits::yMax(uint32_t index) const {
+  const SciFiChannelID id(channel[index]);
+  return m_endPointY[index] + !id.isBottom() * geom->globaldy[mat(index)];
+};
+
+__device__ __host__ uint32_t SciFiHits::LHCbID(uint32_t index) const {
+  return (10u << 28) + channel[index];
+};
+
+__device__ __host__ uint32_t SciFiHits::mat(uint32_t index) const {
+  return assembled_datatype[index] & 0x7ff;
+};
+
+__device__ __host__ uint32_t SciFiHits::pseudoSize(uint32_t index) const{
+  return (assembled_datatype[index] >> 11) & 0xf;
+};
+
+__device__ __host__ uint32_t SciFiHits::planeCode(uint32_t index) const {
+  return (assembled_datatype[index] >> 15) & 0x1f;
+};
+
+__device__ __host__ uint32_t SciFiHits::fraction(uint32_t index) const{
+  return (assembled_datatype[index] >> 20) & 0x1;
+};
+
+
+
+__device__ uint32_t channelInBank(uint32_t c) {
+  return (c >> SciFiRawBankParams::cellShift);
+}
+
+__device__ uint16_t getLinkInBank(uint16_t c) {
+  return (c >> SciFiRawBankParams::linkShift);
+}
+
+__device__ int cell(uint16_t c) {
+  return (c >> SciFiRawBankParams::cellShift     ) & SciFiRawBankParams::cellMaximum;
+}
+
+__device__ int fraction(uint16_t c) {
+  return (c >> SciFiRawBankParams::fractionShift ) & SciFiRawBankParams::fractionMaximum;
+}
+
+__device__ bool cSize(uint16_t c) {
+  return (c >> SciFiRawBankParams::sizeShift     ) & SciFiRawBankParams::sizeMaximum;
 }
 
 };
