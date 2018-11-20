@@ -20,4 +20,4 @@ int run_forward_on_CPU (
   const uint number_of_events,
   const std::array<float, 9>& host_inv_clus_res);
 
-CPU_ALGORITHM(run_forward_on_CPU, cpu_scifi_pr_forward_t)
+CPU_ALGORITHM(run_forward_on_CPU, cpu_scifi_pr_forward_t) 

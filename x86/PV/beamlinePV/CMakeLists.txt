@@ -3,8 +3,9 @@ include_directories(../../../cuda/velo/common/include)
 include_directories(../../../cuda/PV/common/include)
 include_directories(../../../cuda/event_model/velo/include)
 include_directories(../../../cuda/event_model/common/include)
-include_directories(../../../cuda/PV/beamlinePV/include)
-include_directories(../../../main/include)        
+include_directories(${CMAKE_SOURCE_DIR}/cuda/PV/beamlinePV/include)
+include_directories(../../../main/include)
+include_directories(../../../stream/gear/include)
 
 file(GLOB x86beamlinePV "src/*cpp")
 

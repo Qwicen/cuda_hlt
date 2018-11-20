@@ -1,34 +1,20 @@
-#pragma once
+#pragma once 
 
 #include "Common.h"
 #include "VeloConsolidated.cuh" 
 #include "PV_Definitions.cuh"
-#include "VeloConsolidated.cuh"
+#include "float_operations.h"
+
 #include <math.h>
-#include "float.h"
 #include <algorithm>
-
-
-unsigned int m_minNumTracksPerVertex = 5;
-float        m_zmin = - 300.; //unit: mm Min z position of vertex seed
-float        m_zmax = 300; //unit: mm Max z position of vertex seed
-float        m_dz = 0.25; //unit: mm Z histogram bin size
-float        m_maxTrackZ0Err = 1.5; // unit: mm "Maximum z0-error for adding track to histo"
-float        m_minDensity = 1.0; // unit: 1./mm "Minimal density at cluster peak  (inverse resolution)"
-float        m_minDipDensity = 2.0; // unit: 1./mm,"Minimal depth of a dip to split cluster (inverse resolution)"
-float        m_minTracksInSeed = 2.5; // "MinTrackIntegralInSeed"
-float        m_maxVertexRho = 0.3; // unit:: mm "Maximum distance of vertex to beam line" 
-unsigned int m_maxFitIter = 5; // "Maximum number of iterations for vertex fit"
-float        m_maxDeltaChi2 = 9; //"Maximum chi2 contribution of track to vertex fit"
-
 
 
 // structure with minimal track info needed for PV search
 struct PVTrack
 {
-  PVTrack() {}
-PVTrack( const Velo::State& state, double dz, unsigned short _index )
-: z{float(state.z+dz)},
+  __host__ __device__ PVTrack() {}
+__host__ __device__ PVTrack( const Velo::State& state, double dz, unsigned short _index )
+  : z{float(state.z+dz)},
     x{float(state.x+dz*state.tx),float(state.y+dz*state.ty)},
     tx{float(state.tx),float(state.ty)},index{_index}
   {
@@ -54,11 +40,12 @@ PVTrack( const Velo::State& state, double dz, unsigned short _index )
   unsigned short index{0} ;/// index in the list with tracks
 } ;
 
-template<typename FTYPE> FTYPE sqr( FTYPE x ) { return x*x ;} 
+template<typename FTYPE> 
+__host__ __device__ FTYPE sqr( FTYPE x ) { return x*x ;} 
 
 struct Extremum
 {
-Extremum( unsigned short _index, float _value, float _integral ) :
+__host__ __device__ Extremum( unsigned short _index, float _value, float _integral ) :
   index{_index}, value{_value}, integral{_integral} {}
   unsigned short index;
   float value ;
@@ -67,7 +54,7 @@ Extremum( unsigned short _index, float _value, float _integral ) :
 
 struct Cluster
 {
-Cluster( unsigned short _izfirst, unsigned short _izlast,  unsigned short _izmax ) :
+__host__ __device__ Cluster( unsigned short _izfirst, unsigned short _izlast,  unsigned short _izmax ) :
   izfirst{_izfirst}, izlast{_izlast}, izmax{_izmax} {}
   unsigned short izfirst ;
   unsigned short izlast ;
@@ -80,7 +67,7 @@ struct SeedZWithIteratorPair
   float z ;
   iterator begin ;
   iterator end ;
-SeedZWithIteratorPair( float _z, iterator _begin, iterator _end) :
+__host__ __device__ SeedZWithIteratorPair( float _z, iterator _begin, iterator _end) :
   z{_z},begin{_begin},end{_end} {}
 } ;
 
@@ -89,7 +76,7 @@ SeedZWithIteratorPair( float _z, iterator _begin, iterator _end) :
 // though.
 struct PVTrackInVertex : PVTrack
 {
- PVTrackInVertex( const PVTrack& trk )
+__host__ __device__  PVTrackInVertex( const PVTrack& trk )
    : PVTrack{trk}
   {
     //H matrix is symmetric and has four non-zero entries
@@ -125,4 +112,11 @@ struct PVTrackInVertex : PVTrack
   double HWH_22 ;
   float weight{1} ;
 } ;
+
+std::vector<PV::Vertex> findPVs(
+  uint* kalmanvelo_states,
+  int * velo_atomics,
+  uint* velo_track_hit_number,
+  const uint number_of_events 
+); 
 

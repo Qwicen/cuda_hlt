@@ -37,6 +37,8 @@ include_directories(../cuda/veloUT/sorting/include)
 include_directories(../x86/velo/clustering/include)
 include_directories(../x86/UT/PrVeloUT/include)
 include_directories(../x86/SciFi/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/PV/beamlinePV/include)
+include_directories(${CMAKE_SOURCE_DIR}/x86/PV/beamlinePV/include)
 
 file(GLOB stream_gear "gear/src/*cu")
 file(GLOB stream_handlers "handlers/src/*cu")
@@ -47,6 +49,7 @@ file(GLOB stream_sequence_cpp "sequence/src/*cpp")
 file(GLOB stream_sequence_setup "sequence_setup/src/*cu")
 file(GLOB stream_sequence_visitors_velo "sequence_visitors/velo/src/*cu")
 file(GLOB stream_sequence_visitors_patPV "sequence_visitors/patPV/src/*cu")
+file(GLOB stream_sequence_visitors_beamlinePV "sequence_visitors/beamlinePV/src/*cu") 
 file(GLOB stream_sequence_visitors_UT "sequence_visitors/UT/src/*cu")
 file(GLOB stream_sequence_visitors_SciFi "sequence_visitors/SciFi/src/*cu")
 
@@ -60,6 +63,7 @@ cuda_add_library(Stream STATIC
   ${stream_sequence_setup}
   ${stream_sequence_visitors_velo}
   ${stream_sequence_visitors_patPV}
+  ${stream_sequence_visitors_beamlinePV}
   ${stream_sequence_visitors_UT}
   ${stream_sequence_visitors_SciFi}
   )
@@ -71,6 +75,7 @@ target_link_libraries(Stream
   Velo
   PatPV
   #x86PatPV
+  x86beamlinePV
   UT
   x86Forward
   SciFi

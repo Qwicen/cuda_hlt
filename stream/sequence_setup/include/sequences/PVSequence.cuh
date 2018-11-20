@@ -19,6 +19,7 @@ SEQUENCE_T(
   prefix_sum_scan_velo_track_hit_number_t,
   consolidate_tracks_t,
   velo_kalman_fit_t,
-  getSeeds_t,
-  fitSeeds_t
+  //getSeeds_t,
+  //fitSeeds_t
+  cpu_beamlinePV_t
 )

@@ -53,7 +53,7 @@ __device__ void errorForPVSeedFinding(PatPV::myfloat tx, PatPV::myfloat ty, PatP
  __global__ void getSeeds(
   uint* dev_kalmanvelo_states,
   int * dev_atomics_storage,
-  uint* dev_velo_track_hit_number,
+  uint* dev_velo_track_hit_number, 
   PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seed) {
 
@@ -69,16 +69,8 @@ __device__ void errorForPVSeedFinding(PatPV::myfloat tx, PatPV::myfloat ty, PatP
   const Velo::Consolidated::States velo_states {dev_kalmanvelo_states, velo_tracks.total_number_of_tracks};
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
-
   
-
-
-
-  
-
-    PatPV::vtxCluster  vclusters[VeloTracking::max_tracks];
-
-
+  PatPV::vtxCluster  vclusters[VeloTracking::max_tracks];
 
   int counter_number_of_clusters = 0;
   for (int i = 0; i < number_of_tracks_event; i++) {

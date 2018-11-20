@@ -22,7 +22,7 @@
 #include "getSeeds.cuh"
 #include "fitSeeds.cuh"
 #include "RunForwardCPU.h"
-
+#include "RunBeamlinePVonCPU.h"
 
 #define SEQUENCE_T(...) typedef std::tuple<__VA_ARGS__> configured_sequence_t;
 
