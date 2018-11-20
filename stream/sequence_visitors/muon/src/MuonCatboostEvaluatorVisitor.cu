@@ -24,10 +24,13 @@ void SequenceVisitor::visit<muon_catboost_evaluator_t>(
   cudaEvent_t& cuda_generic_event)
 {
   int event_N = 12;
-  state.set_opts(dim3((event_N+255)/256), dim3(256), cuda_stream);
+  const int dev_muon_catboost_float_feature_num = 20;
+  state.set_opts(dim3(12), dim3(256), cuda_stream);
   state.set_arguments(
+    arguments.offset<dev_muon_catboost_features>(),
     arguments.offset<dev_muon_catboost_output>(),
-    event_N
+    event_N,
+    dev_muon_catboost_float_feature_num
   );
   state.invoke();
   std::vector<float> output(event_N);
