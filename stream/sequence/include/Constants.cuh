@@ -16,7 +16,6 @@
 #include "UTDefinitions.cuh"
 #include "Logger.h"
 #include "PrVeloUTMagnetToolDefinitions.h"
-#include "json.h"
 
 /**
  * @brief Struct intended as a singleton with constants defined on GPU.
@@ -105,6 +104,6 @@ struct Constants {
     const std::vector<char>& ut_magnet_tool,
     const std::vector<char>& scifi_geometry);
 
-  void initialize_muon_catboost_model_constants(const nlohmann::json& model);
+  // void initialize_muon_catboost_model_constants(const nlohmann::json& model);
 
 };

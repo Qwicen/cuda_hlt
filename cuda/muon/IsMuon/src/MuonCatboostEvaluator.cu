@@ -12,25 +12,25 @@ across an entire level of a tree.
 * http://learningsys.org/nips17/assets/papers/paper_11.pdf
 */
 __global__ void muon_catboost_evaluator(
-  const float* const* dev_muon_catboost_borders,
-  const float* dev_muon_catboost_features,
-  const int* dev_muon_catboost_border_nums,
-  const int* const* dev_muon_catboost_tree_splits,
-  const int* dev_muon_catboost_feature_map,
-  const int* dev_muon_catboost_border_map,
-  const double* const* dev_muon_catboost_leaf_values,
-  const int* dev_muon_catboost_tree_sizes,
+//  const float* const* dev_muon_catboost_borders,
+//  const float* dev_muon_catboost_features,
+//  const int* dev_muon_catboost_border_nums,
+//  const int* const* dev_muon_catboost_tree_splits,
+//  const int* dev_muon_catboost_feature_map,
+//  const int* dev_muon_catboost_border_map,
+//  const double* const* dev_muon_catboost_leaf_values,
+//  const int* dev_muon_catboost_tree_sizes,
   float* dev_muon_catboost_output,
-  const int dev_muon_catboost_tree_num,
-  const int dev_muon_catboost_object_num,
-  const int dev_muon_catboost_bin_feature_num,
-  const int dev_muon_catboost_float_feature_num
+//  const int dev_muon_catboost_tree_num,
+  const int dev_muon_catboost_object_num//,
+//  const int dev_muon_catboost_bin_feature_num,
+//  const int dev_muon_catboost_float_feature_num
 ) {
   const int object_id = blockIdx.x;
   const int block_size = blockDim.x;
   if (object_id >= dev_muon_catboost_object_num)
     return;
-  int tree_id = threadIdx.x;
+/*  int tree_id = threadIdx.x;
   float sum = 0;
   const int object_offset = object_id * dev_muon_catboost_float_feature_num;
   while(tree_id < dev_muon_catboost_tree_num) {
@@ -57,10 +57,12 @@ __global__ void muon_catboost_evaluator(
       values[tid] += values[tid + s];
     __syncthreads();
   }
-  if (tid < 32) warp_reduce(values, tid);
+  if (tid < 32) warp_reduce(values, tid);*/
   
   if (threadIdx.x == 0)
-    dev_muon_catboost_output[object_id] = values[0];
+    // dev_muon_catboost_output[object_id] = values[0];
+    dev_muon_catboost_output[object_id] = 0.3;
+    
 }
 
 __device__ void warp_reduce(

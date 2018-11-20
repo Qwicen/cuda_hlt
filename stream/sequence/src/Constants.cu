@@ -207,7 +207,7 @@ void Constants::initialize_geometry_constants(
   host_scifi_geometry = scifi_geometry.data(); //for debugging
 }
 
-void Constants::initialize_muon_catboost_model_constants(
+/*void Constants::initialize_muon_catboost_model_constants(
   const CatboostModel* model
 ) {
   host_muon_catboost_float_feature_num = model->GetFloatFeatureCount();
@@ -276,5 +276,5 @@ void Constants::initialize_muon_catboost_model_constants(
   cudaCheck(cudaMemcpy(dev_muon_catboost_tree_sizes, host_tree_sizes, host_muon_catboost_tree_num * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_muon_catboost_borders, borders, host_muon_catboost_float_feature_num * sizeof(float*), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_muon_catboost_border_nums, border_count, (host_muon_catboost_float_feature_num + 1)* sizeof(int), cudaMemcpyHostToDevice));
-}
+}*/
 

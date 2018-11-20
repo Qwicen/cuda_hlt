@@ -33,5 +33,6 @@ SEQUENCE_T(
   scifi_pre_decode_t,
   scifi_raw_bank_decoder_t,
   scifi_pr_forward_t,
-  muon_catboost_features_extraction_t
+  muon_catboost_features_extraction_t,
+  muon_catboost_evaluator_t
 )
