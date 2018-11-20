@@ -73,28 +73,28 @@ struct vtxCluster final {
   
 class Vertex {
 public:
-  __device__ Vertex() {};
+  __host__ __device__ Vertex() {};
   float3 position;
   myfloat chi2;
   int ndof;
-  std::vector<std::pair<unsigned,float> > tracks ;
+  uint n_tracks = 0;
   
   myfloat cov00 = 0.;
-    myfloat cov10 = 0.;
+  myfloat cov10 = 0.;
   myfloat cov11 = 0.;
   myfloat cov20 = 0.;
   myfloat cov21 = 0.;
   myfloat cov22 = 0.;
   
   
-  __device__ void setChi2AndDoF(myfloat m_chi2, int m_ndof) {
+  __host__ __device__ void setChi2AndDoF(myfloat m_chi2, int m_ndof) {
     chi2 = m_chi2;
     ndof = m_ndof;
   }
-  __device__ void setPosition(float3& point) {
+  __host__ __device__ void setPosition(float3& point) {
       position = point;
     }
-  __device__ void setCovMatrix(myfloat * m_cov) {
+  __host__ __device__ void setCovMatrix(myfloat * m_cov) {
     cov00 = m_cov[0];
     cov10 = m_cov[1];
     cov11 = m_cov[2];

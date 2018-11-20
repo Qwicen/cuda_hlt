@@ -6,6 +6,7 @@
 #include "SciFiDefinitions.cuh"
 #include "TrackChecker.h"
 #include "patPV_Definitions.cuh"
+#include "PV_Definitions.cuh"
 
 struct HostBuffers {
   // Pinned host datatypes
@@ -17,7 +18,7 @@ struct HostBuffers {
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   char* host_velo_states;
   uint* host_kalmanvelo_states;
-  PatPV::Vertex* host_reconstructed_pvs;
+  PV::Vertex* host_reconstructed_pvs;
   int* host_number_of_vertex;
   int* host_number_of_seeds;
   uint* host_accumulated_number_of_ut_hits;

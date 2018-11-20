@@ -164,10 +164,9 @@ namespace {
     vertex.chi2 = chi2tot ;
     vertex.setPosition(vtxpos);
     vertex.setCovMatrix(vtxcov);    
-    vertex.tracks.reserve( tracks.size() ) ;     
     for( const auto& trk : tracks ) {       
       if( trk.weight > 0 ) 
-        vertex.tracks.emplace_back( trk.index, trk.weight ) ;  
+        vertex.n_tracks++;
       else unusedtracks.push_back( trk.index ) ;     }
     return vertex ;
   }
@@ -178,11 +177,16 @@ std::vector<PV::Vertex> findPVs(
   uint* kalmanvelo_states,
   int * velo_atomics,
   uint* velo_track_hit_number,
+  PV::Vertex* reconstructed_pvs,
+  int* number_of_pvs,
   const uint number_of_events 
 ) 
 {
   
   for ( uint event_number = 0; event_number < number_of_events; event_number++ ) {
+    int &n_pvs = number_of_pvs[event_number];
+    n_pvs = 0;
+
     // get consolidated states
     const Velo::Consolidated::Tracks velo_tracks {(uint*) velo_atomics, velo_track_hit_number, event_number, number_of_events};
     const Velo::Consolidated::States velo_states {kalmanvelo_states, velo_tracks.total_number_of_tracks};
@@ -460,8 +464,9 @@ std::vector<PV::Vertex> findPVs(
       const auto beamlinedx = vertex.position.x - beamline.x ;
       const auto beamlinedy = vertex.position.y - beamline.y ;
       const auto beamlinerho2 = sqr(beamlinedx) + sqr(beamlinedy) ;
-      if( vertex.tracks.size()>=m_minNumTracksPerVertex && beamlinerho2 < maxVertexRho2 ) {
-        recvertexcontainer.emplace_back( vertex );
+      if( vertex.n_tracks >= m_minNumTracksPerVertex && beamlinerho2 < maxVertexRho2 ) {
+        //recvertexcontainer.emplace_back( vertex );
+        reconstructed_pvs[ n_pvs++ ] = vertex;
       }
     }
     return recvertexcontainer ;

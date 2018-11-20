@@ -3,6 +3,8 @@
 #include "Common.h"
 #include "InputTools.h"
 #include "patPV_Definitions.cuh"
+#include "PV_Definitions.cuh"
+
 #include <algorithm>
 
 #ifdef WITH_ROOT
@@ -16,7 +18,11 @@
 int m_nTracksToBeRecble = 4;
 double m_dzIsolated = 10; //mm
 bool m_matchByTracks = false;
-void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vertex * rec_vertex, int* number_of_vertex);
+void checkPVs(  
+  const std::string& foldername, 
+  uint number_of_files, 
+  PV::Vertex * rec_vertex, 
+  int* number_of_vertex);
 
 struct MCVertex {
   double x;
@@ -60,7 +66,7 @@ typedef struct {
   double z;
   PatPV::XYZPoint positionSigma;  // position sigmas
   int indexMCPVInfo;              // index to MCPVInfo
-  PatPV::Vertex* pRECPV;        // pointer to REC PV
+  PV::Vertex* pRECPV;             // pointer to REC PV
 } RecPVInfo;
 
 

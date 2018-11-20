@@ -6,9 +6,10 @@
 #include "patPV_Definitions.cuh"
 #include "VeloEventModel.cuh"
 #include "VeloConsolidated.cuh"
+#include "PV_Definitions.cuh"
 
 __global__ void fitSeeds(
-  PatPV::Vertex* dev_vertex,
+  PV::Vertex* dev_vertex,
   int * dev_number_vertex,
   PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seeds,
@@ -18,7 +19,7 @@ __global__ void fitSeeds(
 
 __device__ bool fitVertex(PatPV::XYZPoint& seedPoint,
               Velo::Consolidated::States velo_states,
-              PatPV::Vertex& vtx,
+              PV::Vertex& vtx,
               int number_of_tracks,
               uint tracks_offset) ;
 

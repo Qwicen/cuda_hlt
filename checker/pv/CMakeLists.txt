@@ -5,7 +5,7 @@ include_directories(../../cuda/PV/common/include)
 include_directories(../../cuda/event_model/velo/include)
 include_directories(../../cuda/event_model/common/include)
 include_directories(../../cuda/UT/PrVeloUT/include)
-
+include_directories(../../cuda/PV/beamlinePV/include) 
 
 
 

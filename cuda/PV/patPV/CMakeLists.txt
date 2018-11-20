@@ -10,6 +10,7 @@ include_directories(../../event_model/velo/include)
 include_directories(../../event_model/common/include)
 include_directories(../../utils/sorting/include)
 include_directories(../../utils/prefix_sum/include)
+include_directories(../beamlinePV/include)
 
 cuda_add_library(PatPV STATIC
   ${patPV} src/getSeeds.cu src/fitSeeds.cu

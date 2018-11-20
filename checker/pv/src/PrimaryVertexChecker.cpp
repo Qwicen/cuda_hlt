@@ -1,9 +1,11 @@
 #include "PrimaryVertexChecker.h"
 
 
-
-
-void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vertex * rec_vertex, int* number_of_vertex)
+void checkPVs(  
+  const std::string& foldername, 
+  uint number_of_files, 
+  PV::Vertex * rec_vertex, 
+  int* number_of_vertex)
 {
    std::vector<std::string> folderContents = list_folder(foldername);
   
@@ -83,7 +85,7 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
 
   //try to implement nominal PV checker
 
-  std::vector<PatPV::Vertex*> vecOfVertices;
+  std::vector<PV::Vertex*> vecOfVertices;
   //first fill vector with vertices
   for(uint i = 0; i < number_of_vertex[i_event]; i++) {
     int index = i_event  * PatPV::max_number_vertices + i;
@@ -91,32 +93,27 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
   }
   // Fill reconstucted PV info
   std::vector<RecPVInfo> recpvvec;
-  std::vector<PatPV::Vertex*>::iterator itRecV;
+  std::vector<PV::Vertex*>::iterator itRecV;
   for(itRecV = vecOfVertices.begin(); vecOfVertices.end() != itRecV;
                itRecV++) {
-    PatPV::Vertex* pv;
+    PV::Vertex* pv;
     pv = *itRecV;
     RecPVInfo recinfo;
     recinfo.pRECPV= pv;
-    recinfo.x = pv->x;
-    recinfo.y = pv->y;
-    recinfo.z = pv->z;
-
+    recinfo.x = pv->position.x;
+    recinfo.y = pv->position.y;
+    recinfo.z = pv->position.z;
     
     double sigx = sqrt(pv->cov00);
     double sigy = sqrt(pv->cov11);
     double sigz = sqrt(pv->cov22);
     PatPV::XYZPoint a3d(sigx,sigy,sigz);
     recinfo.positionSigma = a3d;
-    //recinfo.nTracks = pv->tracks.size();
     recinfo.nTracks = pv->nTracks;
     double minRD = 99999.;
     double maxRD = -99999.;
     double chi2 = pv->chi2;
     double nDoF = pv->ndof;
-
-
-    
 
     int mother = 0;
     int velo = 0;
@@ -126,11 +123,6 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
     double maxd0 = -99999.0;
     double trackChi2 = 0.0;
     int tr = 0;
-
-    
-
-   
-
 
     recinfo.minTrackRD = minRD;
     recinfo.maxTrackRD = maxRD;
@@ -161,8 +153,6 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
   for(std::vector<MCVertex>::iterator itMCV = MC_vertices.begin();
       MC_vertices.end() != itMCV; itMCV++) {
     
-    
-      
         MCPVInfo mcprimvert;
         mcprimvert.pMCPV = &(*itMCV);
         //mcprimvert.nRecTracks = 0;
@@ -177,16 +167,12 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
         mcprimvert.decayCharm  = 0;
         
         mcpvvec.push_back(mcprimvert);
-      
-    
   }
- 
-
+  
   std::vector<MCPVInfo> rblemcpv;
   std::vector<MCPVInfo> not_rble_but_visible;
   std::vector<MCPVInfo> not_rble;
   int nmrc = 0;
-
 
   //count not reconstructible MC PVs
   std::vector<MCPVInfo>::iterator itmc;
@@ -207,14 +193,14 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
       }
 
   }
-
-     //match by distance
-      for(int ipv = 0; ipv < (int) recpvvec.size(); ipv++) {
-      match_mc_vertex_by_distance(ipv, recpvvec, rblemcpv);
-    };
-
-
-    // find nr of false PV
+  
+  //match by distance
+  for(int ipv = 0; ipv < (int) recpvvec.size(); ipv++) {
+    match_mc_vertex_by_distance(ipv, recpvvec, rblemcpv);
+  };
+  
+  
+  // find nr of false PV
 
   int nFalsePV = 0;
   int nFalsePV_real = 0;
@@ -240,8 +226,8 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
     double maxd0 = recpvvec[ipv].maxd0;
     double chi2 = recpvvec[ipv].chi2;
     double nDoF = recpvvec[ipv].nDoF;
-
-
+    
+    
     if (recpvvec[ipv].indexMCPVInfo < 0 ) {
       nFalsePV++; 
       fake = 1;
@@ -253,12 +239,11 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
           vis_found = true;
     not_rble_but_visible[imc].indexRecPVInfo = 10;
           break;
-  }
+        }
       } // imc
       if ( !vis_found ) nFalsePV_real++;
     }
- }
-
+  }
 
   // Fill distance to closest recble MC PV and its multiplicity
   std::vector<MCPVInfo>::iterator itmcl;
@@ -286,8 +271,6 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
   int nMCPV_close           = 0;
   int nRecMCPV_close        = 0;
 
-
-
   for(itmc = rblemcpv.begin(); rblemcpv.end() != itmc; itmc++) {
     if(itmc->distToClosestMCPV > m_dzIsolated) nMCPV_isol++;
     if(itmc->distToClosestMCPV < m_dzIsolated) nMCPV_close++;
@@ -297,8 +280,8 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
       if(itmc->distToClosestMCPV < m_dzIsolated) nRecMCPV_close++;
     }
   }
-
-    m_nMCPV                 +=  nMCPV;
+  
+  m_nMCPV                 +=  nMCPV;
   m_nRecMCPV              +=  nRecMCPV;
   m_nMCPV_isol            +=  nMCPV_isol;
   m_nRecMCPV_isol         +=  nRecMCPV_isol;
@@ -306,8 +289,7 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
   m_nRecMCPV_close        +=  nRecMCPV_close;
   m_nFalsePV              +=  nFalsePV;
   m_nFalsePV_real         +=  nFalsePV_real;
-
-
+  
   //loop over matched MC PVs and get pull and errors
   for(auto mc_vertex_info : rblemcpv) {
     int rec_index = mc_vertex_info.indexRecPVInfo;
@@ -333,9 +315,7 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
   MC_vertices.clear();
   } //end loop over files/events
   
-
-
-
+  
   info_cout.precision(4);
   info_cout << " ============================================" << std::endl;
   info_cout << " Efficiencies for reconstructible MC vertices: " << std::endl;
@@ -351,26 +331,21 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
   info_cout << " REC and MC vertices matched:  "
          <<  ff << std::endl;
 
-
+  
   info_cout << " " << std::endl;
+  
+  
+  printRat("All",       m_nRecMCPV ,       m_nMCPV );
+  printRat("Isolated",  m_nRecMCPV_isol,   m_nMCPV_isol );
+  printRat("Close",     m_nRecMCPV_close,  m_nMCPV_close );
+  printRat("False rate",m_nFalsePV ,       m_nRecMCPV+m_nFalsePV );
+  printRat("Real false rate", m_nFalsePV_real , m_nRecMCPV+m_nFalsePV_real);
 
-
-            printRat("All",       m_nRecMCPV ,       m_nMCPV );
-            printRat("Isolated",  m_nRecMCPV_isol,   m_nMCPV_isol );
-            printRat("Close",     m_nRecMCPV_close,  m_nMCPV_close );
-            printRat("False rate",m_nFalsePV ,       m_nRecMCPV+m_nFalsePV );
-
-
-          printRat("Real false rate", m_nFalsePV_real , m_nRecMCPV+m_nFalsePV_real);
-
-   info_cout <<   "new found: " <<     m_nRecMCPV << " / " << m_nMCPV  << std::endl;
-   info_cout << "new fakes: " << m_nFalsePV << std::endl;
-
-          
-    
-
+  info_cout <<   "new found: " <<     m_nRecMCPV << " / " << m_nMCPV  << std::endl;
+  info_cout << "new fakes: " << m_nFalsePV << std::endl;
+  
   //save information about matched reconstructed PVs for pulls distributions
-  #ifdef WITH_ROOT
+#ifdef WITH_ROOT
   TFile * out_fille = new TFile("PV.root", "RECREATE");
   TTree * tree = new TTree("PV_tree","PV_tree");
   //double x_true, y_true, z_true;
@@ -402,13 +377,7 @@ void checkPVs(  const std::string& foldername, uint number_of_files, PatPV::Vert
 
 
   }
-
-
   tree->Write();
   out_fille->Close();
-   #endif
-    
-    
- 
-
+#endif
 }
