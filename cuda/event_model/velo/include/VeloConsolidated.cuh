@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <cassert>
 #include "VeloEventModel.cuh"
 #include "ConsolidatedTypes.cuh"

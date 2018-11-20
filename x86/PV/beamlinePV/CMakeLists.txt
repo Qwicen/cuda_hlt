@@ -9,14 +9,11 @@ include_directories(../../../cuda/veloUT/common/include)
 include_directories(../../../stream/gear/include)
 include_directories(../../../main/include)
 
-
-
-
+        
 file(GLOB x86beamlinePV "src/*cpp")
 
-cuda_add_library(x86beamlinePV SHARED
+cuda_add_library(x86beamlinePV STATIC
   ${x86beamlinePV}
-  
   )
 
 if ( ROOT_FOUND )
@@ -24,5 +21,4 @@ if ( ROOT_FOUND )
   target_link_libraries(x86beamlinePV
     ${ROOT_LIBRARIES}
   )
-  target_include_directories(x86beamlinePV PUBLIC ${ROOT_INCLUDE_DIRS})
 endif()
