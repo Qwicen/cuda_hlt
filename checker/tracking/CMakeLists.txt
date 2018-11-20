@@ -18,4 +18,5 @@ cuda_add_library(TrackChecking SHARED
 
 if ( ROOT_FOUND )
   target_compile_definitions(TrackChecking PUBLIC WITH_ROOT)
+  target_include_directories(TrackChecking PUBLIC ${ROOT_INCLUDE_DIRS}) 
 endif()

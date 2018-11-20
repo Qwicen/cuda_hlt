@@ -12,6 +12,12 @@
 #include "TrackBeamLineVertexFinder.h"
 #include "BeamlinePVConstants.cuh"
 
+#ifdef WITH_ROOT
+#include "TH1D.h"
+#include "TFile.h"
+#include "TTree.h"
+#endif
+ 
 /** @class TrackBeamLineVertexFinder TrackBeamLineVertexFinder.cpp
  * 
  * PV finding strategy:
@@ -183,6 +189,20 @@ void findPVs(
 ) 
 {
   
+  const int Nbins = (m_zmax-m_zmin)/m_dz ; 
+#ifdef WITH_ROOT
+  // Histograms only for checking and debugging
+  TFile *f = new TFile("../output/PVs.root", "RECREATE");
+  //TTree *t_velo_states = new TTree("velo_states", "velo_states");
+  //float z0[number_of_events];
+  TH1F* h_z0[number_of_events];
+  for ( int i = 0; i < number_of_events; ++i ) {
+    h_z0[i] = new TH1F("z0", "", Nbins, 0, Nbins-1);
+  }
+  //t_z0->Branch("z0", &z0, "z0[number_of_events]/F");
+#endif
+ 
+
   for ( uint event_number = 0; event_number < number_of_events; event_number++ ) {
     debug_cout << "AT EVENT " << event_number << std::endl;
     int &n_pvs = number_of_pvs[event_number];
@@ -234,7 +254,7 @@ void findPVs(
     // just want to shift the bins.
     
      // this can be changed into an std::accumulate
-    const int Nbins = (m_zmax-m_zmin)/m_dz ;
+  
     std::vector<float> zhisto(Nbins,0.0f) ;
     {
       for( const auto& trk : pvtracks ) {
@@ -267,7 +287,12 @@ void findPVs(
         }
       }
     }
-  
+#ifdef WITH_ROOT
+    for ( int i = 0; i < Nbins; ++i ) {
+      h_z0[event_number]->SetBinContent( i, zhisto[i] );
+    }
+#endif  
+
     // Step 3: perform a peak search in the histogram. This used to be
     // very simple but the logic needed to find 'significant dips' made
     // it a bit more complicated. In the end it doesn't matter so much
@@ -474,4 +499,10 @@ void findPVs(
     }
     
   } // event loop 
+
+#ifdef WITH_ROOT
+  f->Write();
+  f->Close();
+#endif
+ 
 }

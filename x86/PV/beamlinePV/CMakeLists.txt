@@ -7,6 +7,7 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/PV/beamlinePV/include)
 include_directories(../../../main/include)
 include_directories(../../../stream/gear/include)
 
+
 file(GLOB x86beamlinePV "src/*cpp")
 
 cuda_add_library(x86beamlinePV STATIC
@@ -15,6 +16,7 @@ cuda_add_library(x86beamlinePV STATIC
 
 if ( ROOT_FOUND )
   target_compile_definitions(x86beamlinePV PUBLIC WITH_ROOT)
+  target_include_directories(x86beamlinePV PUBLIC ${ROOT_INCLUDE_DIRS}) 
   target_link_libraries(x86beamlinePV
     ${ROOT_LIBRARIES}
   )

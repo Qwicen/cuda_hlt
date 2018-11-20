@@ -16,5 +16,6 @@ cuda_add_library(PVChecking SHARED
 )
 
 if ( ROOT_FOUND )
+  target_include_directories(PVChecking PUBLIC ${ROOT_INCLUDE_DIRS}) 
   target_compile_definitions(PVChecking PUBLIC WITH_ROOT)
 endif()
