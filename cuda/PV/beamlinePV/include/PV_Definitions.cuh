@@ -70,56 +70,40 @@ struct vtxCluster final {
   vtxCluster() = default;
 
 };
-
- struct XYZPoint {
-  myfloat x = 0.;
-  myfloat y = 0.;
-  myfloat z = 0.;
-   __device__ __host__ XYZPoint(myfloat m_x, myfloat m_y, myfloat m_z) : x(m_x), y(m_y), z(m_z) {};
-   __device__ __host__ XYZPoint() {};
-
-};
-
-struct Vector2 {
-  myfloat x;
-  myfloat y;
-
-  __device__ __host__ Vector2(myfloat m_x, myfloat m_y) : x(m_x), y(m_y){}
-};
   
-  class Vertex {
-  public:
-    __device__ Vertex() {};
-    float3 position;
-    myfloat chi2;
-    int ndof;
-    std::vector<std::pair<unsigned,float> > tracks ;
-
-    myfloat cov00 = 0.;
+class Vertex {
+public:
+  __device__ Vertex() {};
+  float3 position;
+  myfloat chi2;
+  int ndof;
+  std::vector<std::pair<unsigned,float> > tracks ;
+  
+  myfloat cov00 = 0.;
     myfloat cov10 = 0.;
-    myfloat cov11 = 0.;
-    myfloat cov20 = 0.;
-    myfloat cov21 = 0.;
-    myfloat cov22 = 0.;
-
-
-    __device__ void setChi2AndDoF(myfloat m_chi2, int m_ndof) {
-      chi2 = m_chi2;
-      ndof = m_ndof;
-    }
-    __device__ void setPosition(float3& point) {
+  myfloat cov11 = 0.;
+  myfloat cov20 = 0.;
+  myfloat cov21 = 0.;
+  myfloat cov22 = 0.;
+  
+  
+  __device__ void setChi2AndDoF(myfloat m_chi2, int m_ndof) {
+    chi2 = m_chi2;
+    ndof = m_ndof;
+  }
+  __device__ void setPosition(float3& point) {
       position = point;
     }
-    __device__ void setCovMatrix(myfloat * m_cov) {
-      cov00 = m_cov[0];
-      cov10 = m_cov[1];
-      cov11 = m_cov[2];
-      cov20 = m_cov[3];
-      cov21 = m_cov[4];
-      cov22 = m_cov[5];
-    }
-   int nTracks = 0.;
-
+  __device__ void setCovMatrix(myfloat * m_cov) {
+    cov00 = m_cov[0];
+    cov10 = m_cov[1];
+    cov11 = m_cov[2];
+    cov20 = m_cov[3];
+    cov21 = m_cov[4];
+    cov22 = m_cov[5];
+  }
+  int nTracks = 0.;
+  
 };
-
+  
 }
