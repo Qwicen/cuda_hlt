@@ -10,7 +10,7 @@ void run_BeamlinePV_on_CPU(
 ) 
 {
 
-  std::vector<PV::Vertex> vertices = findPVs(
+  findPVs(
     kalmanvelo_states,
     (int*)velo_atomics,
     velo_track_hit_number,

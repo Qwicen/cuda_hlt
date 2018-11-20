@@ -173,7 +173,7 @@ namespace {
   
 }
  
-std::vector<PV::Vertex> findPVs(
+void findPVs(
   uint* kalmanvelo_states,
   int * velo_atomics,
   uint* velo_track_hit_number,
@@ -184,10 +184,11 @@ std::vector<PV::Vertex> findPVs(
 {
   
   for ( uint event_number = 0; event_number < number_of_events; event_number++ ) {
+    debug_cout << "AT EVENT " << event_number << std::endl;
     int &n_pvs = number_of_pvs[event_number];
     n_pvs = 0;
 
-    // get consolidated states
+     // get consolidated states
     const Velo::Consolidated::Tracks velo_tracks {(uint*) velo_atomics, velo_track_hit_number, event_number, number_of_events};
     const Velo::Consolidated::States velo_states {kalmanvelo_states, velo_tracks.total_number_of_tracks};
     const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
@@ -198,6 +199,7 @@ std::vector<PV::Vertex> findPVs(
     // rather us a combination of copy_if and transform, but don't know
     // how to do that efficiently.
     const auto Ntrk = number_of_tracks_event; //tracks.size() ;
+    debug_cout << "# of input velo states: " << Ntrk << std::endl;
     std::vector< PVTrack > pvtracks(Ntrk) ; // allocate everything upfront. don't use push_back/emplace_back
     {
       auto it = pvtracks.begin() ;
@@ -218,7 +220,9 @@ std::vector<PV::Vertex> findPVs(
       }
       pvtracks.erase(it,pvtracks.end()) ;
     }
-    
+  
+    debug_cout << "Selected " << (float)(pvtracks.size() ) / Ntrk << " states for PV seeds " << std::endl;
+     
     // Step 2: fill a histogram with the z position of the poca. Use the
     // projected vertex error on that position as the width of a
     // gauss. Divide the gauss properly over the bins. This is quite
@@ -229,7 +233,7 @@ std::vector<PV::Vertex> findPVs(
     // we'll have lot's of '0.5' in the code below. at some point we may
     // just want to shift the bins.
     
-    // this can be changed into an std::accumulate
+     // this can be changed into an std::accumulate
     const int Nbins = (m_zmax-m_zmin)/m_dz ;
     std::vector<float> zhisto(Nbins,0.0f) ;
     {
@@ -240,9 +244,7 @@ std::vector<PV::Vertex> findPVs(
         // to compute the size of the window, we use the track
         // errors. eventually we can just parametrize this as function of
         // track slope.
-        // TO DO: remove ROOT::Math::Similarity
-        //const float zweight = ROOT::Math::Similarity( trk.W, trk.tx );
-        const float zweight = 1.f;
+        const float zweight = trk.tx.x*trk.tx.x*trk.W_00 + trk.tx.y*trk.tx.y*trk.W_11;
         const float zerr = 1/std::sqrt( zweight );
         // get rid of useless tracks. must be a bit carefull with this.
         if( zerr < m_maxTrackZ0Err) { //m_nsigma < 10*m_dz ) {
@@ -306,6 +308,8 @@ std::vector<PV::Vertex> findPVs(
           }
         }
       }
+      debug_cout << "Found " << clusteredges.size()/2 << " proto clusters" << std::endl;
+    
       // Step B: turn these into clusters. There can be more than one cluster per proto-cluster.
       const size_t Nproto = clusteredges.size()/2 ;
       for(unsigned short i = 0; i< Nproto; ++i) {
@@ -353,14 +357,6 @@ std::vector<PV::Vertex> findPVs(
           extrema.emplace_back( iend, zhisto[iend], integral ) ;
         }
       
-        // if( extrema.size() < 3 ) {
-        //  warning() << "ERROR: too little extrema found." << extrema.size() << endmsg ;
-        //  assert(0) ;
-        // }
-        // if( extrema.size()%2==0 ) {
-        //  warning() << "ERROR: even number of extrema found." << extrema.size() << endmsg ;
-        // }
-      
         // now partition on  extrema
         const auto N = extrema.size() ;
         std::vector<Cluster> subclusters ;
@@ -383,7 +379,8 @@ std::vector<PV::Vertex> findPVs(
         }
       }
     }
-  
+    debug_cout << "Found " << clusters.size() << " clusters" << std::endl;
+   
     // Step 4: partition the set of tracks by vertex seed: just
     // choose the closest one. The easiest is to loop over tracks and
     // assign to closest vertex by looping over all vertices. However,
@@ -395,7 +392,7 @@ std::vector<PV::Vertex> findPVs(
     // tracks. I checked it by comparing to the 'slow' method.
   
     // I found that this funny weighted 'maximum' is better than most other inexpensive solutions.
-    auto zClusterMean = [zhisto](auto izmax) -> float {
+     auto zClusterMean = [zhisto](auto izmax) -> float {
       const float *b = zhisto.data() + izmax ;
       float d1 = *b - *(b-1) ;
       float d2 = *b - *(b+1) ;
@@ -439,16 +436,25 @@ std::vector<PV::Vertex> findPVs(
       }
     }
     
+    for ( auto seed : seedsZWithIteratorPair ) {
+      debug_cout << "Associated " << seed.end - seed.begin << " tracks to seed " << std::endl;
+    }
+
     // Step 5: perform the adaptive vertex fit for each seed.
     std::vector<PV::Vertex> vertices ;
     std::vector<unsigned short> unusedtracks ;
     unusedtracks.reserve(pvtracks.size()) ;
-
+ 
     for ( const auto seed : seedsZWithIteratorPair ) {
       PV::Vertex vertex = fitAdaptive(seed.begin,seed.end,
                                       float3{beamline.x,beamline.y,seed.z},
                                       unusedtracks,m_maxFitIter,m_maxDeltaChi2) ; 
       vertices.push_back(vertex);
+    }
+
+    debug_cout << "Vertices remaining after fitter: " << vertices.size() << std::endl;
+    for ( auto vertex : vertices ) {
+      debug_cout << "   vertex has " << vertex.n_tracks << " tracks, x = " << vertex.position.x << ", y = " << vertex.position.y << ", z = " << vertex.position.z << std::endl;
     }
 
     // Steps that we could still take:
@@ -457,18 +463,15 @@ std::vector<PV::Vertex> findPVs(
     // * merge vertices that are close
 
     // create the output container
-    std::vector<PV::Vertex> recvertexcontainer ;
-    recvertexcontainer.reserve(vertices.size()) ;
     const auto maxVertexRho2 = sqr(m_maxVertexRho) ;
     for( const auto& vertex : vertices ) {
       const auto beamlinedx = vertex.position.x - beamline.x ;
       const auto beamlinedy = vertex.position.y - beamline.y ;
       const auto beamlinerho2 = sqr(beamlinedx) + sqr(beamlinedy) ;
       if( vertex.n_tracks >= m_minNumTracksPerVertex && beamlinerho2 < maxVertexRho2 ) {
-        //recvertexcontainer.emplace_back( vertex );
         reconstructed_pvs[ n_pvs++ ] = vertex;
       }
     }
-    return recvertexcontainer ;
-  }
+    
+  } // event loop 
 }

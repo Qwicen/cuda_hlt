@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "Common.h"
+#include "Logger.h"
 #include "VeloConsolidated.cuh" 
 #include "PV_Definitions.cuh"
 #include "float_operations.h"
@@ -113,7 +114,7 @@ __host__ __device__  PVTrackInVertex( const PVTrack& trk )
   float weight{1} ;
 } ;
 
-std::vector<PV::Vertex> findPVs(
+void findPVs(
   uint* kalmanvelo_states,
   int * velo_atomics,
   uint* velo_track_hit_number,
