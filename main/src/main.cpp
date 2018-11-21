@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
   std::string folder_name_detector_configuration = "../input/detector_configuration/";
   std::string folder_name_pv = "../input/minbias/true_pvs/";
   std::string folder_name_muon_common_hits = "../input/minbias/muon_common_hits/";
+  std::string file_name_muon_catboost_model = "../input/muon/muon_catboost_model.json";
   uint number_of_events_requested = 0;
   uint start_event_offset = 0;
   uint number_of_threads = 1;
@@ -210,6 +211,7 @@ int main(int argc, char *argv[])
   const auto folder_name_SciFi_raw = folder_name_raw + "FTCluster";
   const auto geometry_reader = GeometryReader(folder_name_detector_configuration);
   const auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
+  const auto muon_catboost_model = CatboostModelReader(file_name_muon_catboost_model);
 
   std::unique_ptr<EventReader> event_reader;
   if (use_mdf) {
@@ -264,6 +266,10 @@ int main(int argc, char *argv[])
     ut_geometry,
     ut_magnet_tool,
     scifi_geometry);
+  /*constants.initialize_muon_catboost_model_constants(
+    muon_catboost_model->tree_splits.begin(),
+    muon_catboost_model->tree_splits.size(),
+  );*/
 
   // Create streams
   StreamWrapper stream_wrapper;

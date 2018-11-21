@@ -68,3 +68,10 @@ bool EventReader::check_events(BankTypes type,
       return events.size() == event_offsets.back();
    }
 }
+
+void CatboostModelReader::CatboostModelReader(const std::string& file_name) {
+   std::ifstream i(file_name);
+   nlohmann::json j; 
+   i >> j;
+   info_cout << j.dump(4) << std::endl;
+}

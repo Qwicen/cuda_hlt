@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <gsl-lite.hpp>
+#include "json.hpp"
 
 struct Reader {
   std::string folder_name;
@@ -105,6 +106,12 @@ protected:
 private:
    std::map<BankTypes, std::pair<gsl::span<char>, gsl::span<uint>>> m_events;
    std::map<BankTypes, std::string> m_folders;
+};
+
+struct CatboostModelReader {
+  CatboostModelReader(const std::string& file_name);
+private:
+  std::vector<float> tree_splits;
 };
 
 #endif
