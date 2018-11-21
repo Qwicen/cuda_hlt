@@ -1,4 +1,5 @@
 #include "MuonCatboostEvaluator.cuh"
+#include <stdio.h>
 /**
 * Computes probability of being a muon.
 * CatBoost uses oblivious trees as base predictors. In such trees same splitting criterion is used
@@ -12,45 +13,43 @@ across an entire level of a tree.
 * http://learningsys.org/nips17/assets/papers/paper_11.pdf
 */
 __global__ void muon_catboost_evaluator(
-  const float* const* dev_muon_catboost_borders,
-  const float* dev_muon_catboost_features,
-  const int* dev_muon_catboost_border_nums,
-  const int* const* dev_muon_catboost_tree_splits,
-  const int* dev_muon_catboost_feature_map,
-  const int* dev_muon_catboost_border_map,
-  const double* const* dev_muon_catboost_leaf_values,
-  const int* dev_muon_catboost_tree_sizes,
-  float* dev_muon_catboost_output,
-  const int dev_muon_catboost_tree_num,
-  const int dev_muon_catboost_object_num,
-  const int dev_muon_catboost_float_feature_num
+  const float* dev_catboost_features,
+  const float* dev_leaf_values,
+  const int* dev_leaf_offsets,
+  const float* dev_split_borders,
+  const int* dev_split_features,
+  const int* dev_tree_sizes,
+  const int* dev_tree_offsets,
+  const int n_trees,
+  const int n_features,
+  const int n_objects,
+  float* dev_output
 ) {
   const int object_id = blockIdx.x;
   const int block_size = blockDim.x;
-  if (object_id >= dev_muon_catboost_object_num)
+  if (object_id >= n_objects)
     return;
   int tree_id = threadIdx.x;
   float sum = 0;
-  const int object_offset = object_id * dev_muon_catboost_float_feature_num;
-  sum += dev_muon_catboost_features[object_offset];
+  
+  const int object_offset = object_id * n_features;
 
-  while(tree_id < dev_muon_catboost_tree_num) {
+  while(tree_id < n_trees) {
     int index = 0;
-    for (int depth = 0; depth < dev_muon_catboost_tree_sizes[tree_id]; ++depth) {
-      const int split_num = dev_muon_catboost_tree_splits[tree_id][depth];
-      const int feature_id = dev_muon_catboost_feature_map[split_num];
-      const int border_id = dev_muon_catboost_border_map[split_num];
-      const float feature_value = dev_muon_catboost_features[object_offset + feature_id];
-      const float border = dev_muon_catboost_borders[feature_id][border_id];
+    const int tree_offset = dev_tree_offsets[tree_id];
+    for (int depth = 0; depth < dev_tree_sizes[tree_id]; ++depth) {
+      const int feature_id = dev_split_features[tree_offset + depth];
+      const float feature_value = dev_catboost_features[object_offset + feature_id];
+      const float border = dev_split_borders[tree_offset + depth];
       const int bin_feature = (int)(feature_value > border);
       index |= (bin_feature << depth);
     }
-    sum += dev_muon_catboost_leaf_values[tree_id][index];
+    sum += dev_leaf_values[dev_leaf_offsets[tree_id] + index];
     tree_id += block_size;
   }
   __shared__ float values[256];
  
-  int tid = threadIdx.x; 
+  int tid = threadIdx.x;
   values[tid] = sum;
    __syncthreads();
   for (unsigned int s=block_size/2; s>=32; s>>=1) {
@@ -61,7 +60,7 @@ __global__ void muon_catboost_evaluator(
   if (tid < 32) warp_reduce(values, tid);
   
   if (threadIdx.x == 0)
-     dev_muon_catboost_output[object_id] = values[0];
+     dev_output[object_id] = values[0];
     
 }
 

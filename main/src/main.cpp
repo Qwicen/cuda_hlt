@@ -211,9 +211,9 @@ int main(int argc, char *argv[])
   const auto folder_name_SciFi_raw = folder_name_raw + "FTCluster";
   const auto geometry_reader = GeometryReader(folder_name_detector_configuration);
   const auto ut_magnet_tool_reader = UTMagnetToolReader(folder_name_detector_configuration);
-  const auto muon_catboost_model = CatboostModelReader(file_name_muon_catboost_model);
 
   std::unique_ptr<EventReader> event_reader;
+  std::unique_ptr<CatboostModelReader> muon_catboost_model_reader;
   if (use_mdf) {
      event_reader = std::make_unique<MDFReader>(FolderMap{{{BankTypes::VP, folder_name_mdf},
                                                            {BankTypes::UT, folder_name_mdf},
@@ -253,6 +253,7 @@ int main(int argc, char *argv[])
     number_of_outputted_hits_per_event,
     number_of_events_requested
   );
+  muon_catboost_model_reader = std::make_unique<CatboostModelReader>(file_name_muon_catboost_model);
 
   info_cout << std::endl << "All input datatypes successfully read" << std::endl << std::endl;
 
@@ -266,10 +267,16 @@ int main(int argc, char *argv[])
     ut_geometry,
     ut_magnet_tool,
     scifi_geometry);
-  /*constants.initialize_muon_catboost_model_constants(
-    muon_catboost_model->tree_splits.begin(),
-    muon_catboost_model->tree_splits.size(),
-  );*/
+  constants.initialize_muon_catboost_model_constants(
+    muon_catboost_model_reader->n_features(),
+    muon_catboost_model_reader->n_trees(),
+    muon_catboost_model_reader->tree_depths(),
+    muon_catboost_model_reader->tree_offsets(),
+    muon_catboost_model_reader->leaf_values(),
+    muon_catboost_model_reader->leaf_offsets(),
+    muon_catboost_model_reader->split_border(),
+    muon_catboost_model_reader->split_feature()
+  );
 
   // Create streams
   StreamWrapper stream_wrapper;

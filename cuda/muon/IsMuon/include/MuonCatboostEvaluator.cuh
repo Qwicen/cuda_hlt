@@ -3,19 +3,17 @@
 #include "Handler.cuh"
 
 __global__ void muon_catboost_evaluator(
-//  const float* const* dev_muon_catboost_borders,
-  const float* dev_muon_catboost_features,
-//  const int* dev_muon_catboost_border_nums,
-//  const int* const* dev_muon_catboost_tree_splits,
-//  const int* dev_muon_catboost_feature_map,
-//  const int* dev_muon_catboost_border_map,
-//  const double* const* dev_muon_catboost_leaf_values,
-//  const int* dev_muon_catboost_tree_sizes,
-  float* dev_muon_catboost_output,
-//  const int dev_muon_catboost_tree_num,
-  const int dev_muon_catboost_object_num,
-//  const int dev_muon_catboost_bin_feature_num,
-  const int dev_muon_catboost_float_feature_num
+  const float* dev_catboost_features,
+  const float* dev_leaf_values,
+  const int* dev_leaf_offsets,
+  const float* dev_split_borders,
+  const int* dev_split_features,
+  const int* dev_tree_sizes,
+  const int* dev_tree_offsets,
+  const int n_trees,
+  const int n_features,
+  const int n_objects,
+  float* dev_output
 );
 
 __device__ void warp_reduce(
