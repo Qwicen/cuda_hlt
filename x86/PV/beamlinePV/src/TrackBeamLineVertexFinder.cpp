@@ -76,11 +76,11 @@ namespace {
     vtxcov[4] = 0.;
     vtxcov[5] = 0.;
 
-    vtxpos = seedposition;
     const float maxDeltaZConverged{0.001} ;
     float chi2tot = 0;
     unsigned short nselectedtracks = 0;
     unsigned short iter = 0;
+    debug_cout << "next vertex " << std::endl;
     for(; iter<maxNumIter && !converged;++iter) {
       PV::myfloat halfD2Chi2DX2_00 = 0.;
       PV::myfloat halfD2Chi2DX2_10 = 0.;
@@ -89,17 +89,18 @@ namespace {
       PV::myfloat halfD2Chi2DX2_21 = 0.;
       PV::myfloat halfD2Chi2DX2_22 = 0.;
       float3 halfDChi2DX{0.f,0.f,0.f} ;
-      chi2tot = 0 ;
+      chi2tot = 0.f ;
       nselectedtracks = 0 ;
       float2 vtxposvec{vtxpos.x,vtxpos.y};
+      debug_cout << "next track" << std::endl;
       for( auto& trk : tracks ) {
         // compute the chi2
         const float dz = vtxpos.z - trk.z;
         float2 res{0.f,0.f};
-        res.x = vtxposvec.x - (trk.x.x + dz*trk.tx.x);
-        res.y = vtxposvec.y - (trk.x.y + dz*trk.tx.y);
+        res = vtxposvec - (trk.x + trk.tx*dz);
         
         float chi2 = res.x*res.x * trk.W_00 + res.y*res.y*trk.W_11 ;
+        debug_cout << "chi2 = " << chi2 << ", max = " << chi2max << std::endl;
         // compute the weight.
         trk.weight = 0 ;
         if( chi2 < chi2max ) { // to branch or not, that is the question!
@@ -115,14 +116,12 @@ namespace {
           float3 HWr;
           HWr.x = res.x * trk.W_00;
           HWr.y = res.y * trk.W_11;
-          HWr.z = -trk.tx.x*res.x*trk.W_00 - trk.tx.y*res.y*trk.W_11;
-          
-          halfDChi2DX.x += trk.weight * HWr.x ;
-          halfDChi2DX.y += trk.weight * HWr.y ;
-          halfDChi2DX.z += trk.weight * HWr.z ;
+          HWr.z = -trk.tx.x*res.x*trk.W_00 - trk.tx.y*res.y*trk.W_11;  
+                
+          halfDChi2DX = halfDChi2DX + HWr * trk.weight;
           
           halfD2Chi2DX2_00 += trk.weight * trk.HWH_00 ;
-          halfD2Chi2DX2_10 += trk.weight * trk.HWH_11 ;
+          halfD2Chi2DX2_10 += 0.f; 
           halfD2Chi2DX2_11 += trk.weight * trk.HWH_11 ;
           halfD2Chi2DX2_20 += trk.weight * trk.HWH_20 ;
           halfD2Chi2DX2_21 += trk.weight * trk.HWH_21 ;
@@ -151,10 +150,11 @@ namespace {
         vtxcov[5] = (a11*a00-a10*a10) / det;
         
         // compute the delta w.r.t. the reference
-        float3 delta{0.,0.,0.};
-        delta.x = -1.0 * (vtxcov[0] * halfDChi2DX.x + vtxcov[1] * halfDChi2DX.y + vtxcov[3] * halfDChi2DX.z );
-        delta.y = -1.0 * (vtxcov[1] * halfDChi2DX.x + vtxcov[2] * halfDChi2DX.y + vtxcov[4] * halfDChi2DX.z );
-        delta.z = -1.0 * (vtxcov[3] * halfDChi2DX.x + vtxcov[4] * halfDChi2DX.y + vtxcov[5] * halfDChi2DX.z );
+        float3 delta{0.f,0.f,0.f};
+        // CHECK this
+        delta.x = -1.f * (vtxcov[0] * halfDChi2DX.x + vtxcov[1] * halfDChi2DX.y + vtxcov[3] * halfDChi2DX.z );
+        delta.y = -1.f * (vtxcov[1] * halfDChi2DX.x + vtxcov[2] * halfDChi2DX.y + vtxcov[4] * halfDChi2DX.z );
+        delta.z = -1.f * (vtxcov[3] * halfDChi2DX.x + vtxcov[4] * halfDChi2DX.y + vtxcov[5] * halfDChi2DX.z );
         
         // note: this is only correct if chi2 was chi2 of reference!
         chi2tot  += delta.x * halfDChi2DX.x + delta.y * halfDChi2DX.y + delta.z * halfDChi2DX.z;
@@ -194,15 +194,23 @@ void findPVs(
   // Histograms only for checking and debugging
   TFile *f = new TFile("../output/PVs.root", "RECREATE");
   //TTree *t_velo_states = new TTree("velo_states", "velo_states");
-  //float z0[number_of_events];
   TH1F* h_z0[number_of_events];
+  TH1F* h_vx[number_of_events];
+  TH1F* h_vy[number_of_events];
+  TH1F* h_vz[number_of_events];
   for ( int i = 0; i < number_of_events; ++i ) {
-    h_z0[i] = new TH1F("z0", "", Nbins, 0, Nbins-1);
+    std::string name = "z0_" + std::to_string(i);
+    h_z0[i] = new TH1F(name.c_str(), "", Nbins, 0, Nbins-1);
+    name = "vx_" + std::to_string(i);
+    h_vx[i] = new TH1F(name.c_str(), "", 100, -1, 1);
+    name = "vy_" + std::to_string(i);
+    h_vy[i] = new TH1F(name.c_str(), "", 100, -1, 1);
+    name = "vz_" + std::to_string(i);
+    h_vz[i] = new TH1F(name.c_str(), "", 100, -300, 300);
   }
   //t_z0->Branch("z0", &z0, "z0[number_of_events]/F");
 #endif
  
-
   for ( uint event_number = 0; event_number < number_of_events; event_number++ ) {
     debug_cout << "AT EVENT " << event_number << std::endl;
     int &n_pvs = number_of_pvs[event_number];
@@ -225,9 +233,7 @@ void findPVs(
       auto it = pvtracks.begin() ;
       for(short unsigned int index = 0; index < Ntrk; ++index) {
         const Velo::State s = velo_states.get(event_tracks_offset + index); 
-        //const auto& trk = tracks[index] ;
         // compute the (chance in) z of the poca to the beam axis
-        //const Velo::State& s = trk ;
         const auto tx = s.tx ;
         const auto ty = s.ty ;
         const double dz = ( tx * ( beamline.x - s.x ) + ty * ( beamline.y - s.y ) ) / (tx*tx+ty*ty) ;
@@ -493,6 +499,11 @@ void findPVs(
       const auto beamlinedx = vertex.position.x - beamline.x ;
       const auto beamlinedy = vertex.position.y - beamline.y ;
       const auto beamlinerho2 = sqr(beamlinedx) + sqr(beamlinedy) ;
+#ifdef WITH_ROOT
+      h_vx[event_number]->Fill(vertex.position.x);
+      h_vy[event_number]->Fill(vertex.position.y);
+      h_vz[event_number]->Fill(vertex.position.z);
+#endif
       if( vertex.n_tracks >= m_minNumTracksPerVertex && beamlinerho2 < maxVertexRho2 ) {
         reconstructed_pvs[ n_pvs++ ] = vertex;
       }

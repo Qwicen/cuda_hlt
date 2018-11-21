@@ -29,8 +29,8 @@ __host__ __device__ PVTrack( const Velo::State& state, double dz, unsigned short
     
     state_tmp_c00 += dz2 * state.c22 + 2*dz* state.c20 ;
     state_tmp_c11 += dz2* state.c33 + 2* dz*state.c31 ;
-    W_00 = 1. / state_tmp_c00;
-    W_11 = 1. / state_tmp_c11;
+    W_00 = 1.f / state_tmp_c00;
+    W_11 = 1.f / state_tmp_c11;
   }
   float z{0} ;
   float2 x ;      /// position (x,y)
@@ -81,8 +81,8 @@ __host__ __device__  PVTrackInVertex( const PVTrack& trk )
    : PVTrack{trk}
   {
     //H matrix is symmetric and has four non-zero entries
-    H_00 = 1. ;
-    H_11 = 1. ;
+    H_00 = 1.f ;
+    H_11 = 1.f ;
     H_20 = - trk.tx.x ;
     H_21 = - trk.tx.y ;
     //HW: product of H and W matrices, symmetric with four non-zero entries
@@ -90,6 +90,7 @@ __host__ __device__  PVTrackInVertex( const PVTrack& trk )
     HW_11 = W_11;
     HW_20 = H_20 * W_00;
     HW_21 = H_21 * W_11;
+    // HWH: ROOT::Math::Similarity(H,W) 
     HWH_00 = W_00;
     HWH_20 = H_20 * W_00;
     HWH_11 = W_11;
@@ -111,7 +112,7 @@ __host__ __device__  PVTrackInVertex( const PVTrack& trk )
   double HWH_11 ;
   double HWH_21 ;
   double HWH_22 ;
-  float weight{1} ;
+  float weight = 1.f ;
 } ;
 
 void findPVs(
