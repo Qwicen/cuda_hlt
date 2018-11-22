@@ -51,7 +51,8 @@ void SequenceVisitor::visit<muon_catboost_evaluator_t>(
 
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
+  debug_cout << "IsMuon" << std::endl;
   for(int i = 0; i < event_N; ++i) {
-    info_cout << output[i] << std::endl;
+    debug_cout << output[i] << std::endl;
   }
 }

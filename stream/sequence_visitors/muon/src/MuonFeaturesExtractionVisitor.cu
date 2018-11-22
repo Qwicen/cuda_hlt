@@ -67,11 +67,11 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
   cudaEventSynchronize(cuda_generic_event);
 
   // Check the output
-  info_cout << "MUON FEATURES: " << std::endl;
+  debug_cout << "MUON FEATURES: " << std::endl;
   for (int i = 0; i < 20; i++) {
-    info_cout << host_buffers.host_muon_catboost_features[i] << " ";
+    debug_cout << host_buffers.host_muon_catboost_features[i] << " ";
   }
-  info_cout << std::endl << std::endl;
+  debug_cout << std::endl << std::endl;
 }
 
 

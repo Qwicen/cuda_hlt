@@ -53,7 +53,6 @@ __global__ void muon_catboost_features_extraction(
         const int idx = station_offset + i_hit;
         const int idFromHit = muon_hits->tile[idx];
         if (idFromHit == idFromTrack) {
-          printf("st = %d, idFromTrack = %d, i_station = %d, i_hit = %d, idFromHit = %d\n", st, idFromTrack, i_station, i_hit, idFromHit);
           dev_muon_catboost_features[Muon::Constants::n_stations + i_station] = muon_hits->time[idx];
           dev_muon_catboost_features[i_station] = muon_hits->delta_time[idx];
           float cross;
