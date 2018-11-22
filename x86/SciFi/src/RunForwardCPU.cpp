@@ -10,7 +10,7 @@ int run_forward_on_CPU (
   std::vector< trackChecker::Tracks >& forward_tracks_events,
   uint* host_scifi_hits,
   uint* host_scifi_hit_count,
-  char* host_scifi_geometry,
+  const char* host_scifi_geometry,
   uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number,
   uint* host_velo_states,
@@ -57,7 +57,7 @@ int run_forward_on_CPU (
     SciFi::SciFiHitCount scifi_hit_count;
     scifi_hit_count.typecast_after_prefix_sum(host_scifi_hit_count, i_event, number_of_events);
 
-    const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::Constants::n_zones];
+    const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::Constants::n_mats];
     const SciFi::SciFiGeometry scifi_geometry(host_scifi_geometry);
     SciFi::SciFiHits scifi_hits(host_scifi_hits,
       total_number_of_hits,

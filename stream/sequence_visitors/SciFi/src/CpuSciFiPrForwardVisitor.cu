@@ -41,6 +41,7 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
     host_buffers.forward_tracks_events,
     host_scifi_hits.data(),
     host_scifi_hit_count.data(),
+    constants.host_scifi_geometry,
     host_buffers.host_velo_tracks_atomics,
     host_buffers.host_velo_track_hit_number,
     (uint*) host_buffers.host_velo_states,
