@@ -505,7 +505,7 @@ void findPVs(
       h_vz[event_number]->Fill(vertex.position.z);
 #endif
       if( vertex.n_tracks >= m_minNumTracksPerVertex && beamlinerho2 < maxVertexRho2 ) {
-        reconstructed_pvs[ n_pvs++ ] = vertex;
+        reconstructed_pvs[PV::max_number_vertices*event_number +  n_pvs++ ] = vertex;
       }
     }
     
