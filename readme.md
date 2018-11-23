@@ -57,7 +57,7 @@ The build process doesn't differ from standard cmake projects:
 
 There are some cmake options to configure the build process:
 
-* The sequence can be configured by specifying `-DSEQUENCE=<name_of_sequence>`. For a complete list of sequences available, check `stream/sequence_setup/include/sequences/`. Sequence names should be specified without the `.cuh`, ie. `-DSEQUENCE=VeloUT`.
+* The sequence can be configured by specifying `-DSEQUENCE=<name_of_sequence>`. For a complete list of sequences available, check `configuration/sequences/`. Sequence names should be specified without the `.h`, ie. `-DSEQUENCE=VeloUT`.
 * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
 * If ROOT is available, it can be enabled to generate graphs by `-DUSE_ROOT=ON`
 
