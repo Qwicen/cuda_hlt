@@ -3,6 +3,7 @@
 #include "MemoryManager.cuh"
 #include "SchedulerMachinery.cuh"
 #include "ArgumentManager.cuh"
+#include "Logger.h"
 
 template<typename ConfiguredSequence, typename AlgorithmsDependencies, typename OutputArguments>
 struct Scheduler {
@@ -31,11 +32,13 @@ struct Scheduler {
     memory_manager.set_reserved_memory(reserved_mb);
     argument_manager.set_base_pointer(base_pointer);
 
-    // std::cout << "IN deps" << std::endl;
-    // Sch::print_algorithm_dependencies<in_deps_t>::print();
+    if (logger::ll.verbosityLevel >= logger::verbose) {
+      verbose_cout << "IN deps" << std::endl;
+      Sch::PrintAlgorithmDependencies<in_deps_t>::print();
 
-    // std::cout << "OUT deps" << std::endl;
-    // Sch::print_algorithm_dependencies<out_deps_t>::print();
+      // verbose_cout << "OUT deps" << std::endl;
+      // Sch::PrintAlgorithmDependencies<out_deps_t>::print();
+    }
   }
 
   /**

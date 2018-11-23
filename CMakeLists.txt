@@ -15,7 +15,7 @@ MESSAGE(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 if(NOT SEQUENCE)
   set(SEQUENCE DefaultSequence)
 endif(NOT SEQUENCE)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/stream/sequence_setup/include/sequences/${SEQUENCE}.cuh" "${CMAKE_CURRENT_SOURCE_DIR}/stream/sequence_setup/include/sequences/ConfiguredSequence.cuh" COPYONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/configuration/sequences/${SEQUENCE}.h" "${CMAKE_CURRENT_SOURCE_DIR}/configuration/sequences/ConfiguredSequence.h" COPYONLY)
 message(STATUS "Configured sequence: " ${SEQUENCE})
 
 set(CMAKE_CXX_STANDARD 14)
@@ -124,10 +124,9 @@ target_link_libraries(cu_hlt
   Common
   Utils
   Velo
-  PatPV
+  PV
   UT
   SciFi
-  #x86PatPV
   x86VeloUT
   x86Forward
   Stream
@@ -140,4 +139,3 @@ if (ROOT_FOUND)
   target_compile_definitions(cu_hlt PUBLIC WITH_ROOT)
   target_link_libraries(cu_hlt ${ROOT_LIBRARIES})
 endif()
-

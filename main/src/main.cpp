@@ -181,8 +181,7 @@ int main(int argc, char *argv[])
 
   // Show call options
   std::cout << "Requested options:" << std::endl
-    << " folder containing directories with raw bank binaries for every sub-detector (-f): " << folder_name_raw << std::endl
-    << " folder containing .bin files with muon common hits (-b): " << folder_name_muon_common_hits << std::endl
+    << " folder containing directories with raw bank files for every sub-detector (-f): " << folder_name_raw << std::endl
     << " using " << (use_mdf ? "MDF" : "binary") << " input" << (use_mdf ? " (--mdf)" : "") << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
@@ -197,6 +196,9 @@ int main(int argc, char *argv[])
     << " verbosity (-v): " << verbosity << std::endl
     << " device (--device) " << cuda_device << ": " << device_name << std::endl
     << std::endl;
+
+  // Print configured sequence
+  print_configured_sequence();
 
   // Read all inputs
   info_cout << "Reading input datatypes" << std::endl;

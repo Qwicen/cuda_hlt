@@ -1,5 +1,5 @@
-include_directories(../../../main/include)
-include_directories(../../../cuda/velo/common/include)
+include_directories(${CMAKE_SOURCE_DIR}/main/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/common/include)
 
 file(GLOB x86_clustering "src/*cpp")
 
