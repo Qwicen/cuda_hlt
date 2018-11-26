@@ -316,7 +316,10 @@ void findPVs(
 
     //FIXME: the logic is a bit too complicated here. need to see if we
     //simplify something without loosing efficiency.
-    std::vector<Cluster> clusters ;
+    //std::vector<Cluster> clusters ;
+    Cluster clusters[PV::max_number_of_clusters];
+    uint number_of_clusters = 0;
+
     {
       // step A: make 'ProtoClusters'
       // Step B: for each such ProtoClusters
@@ -410,17 +413,22 @@ void findPVs(
         }
         if( subclusters.empty() ) {
           //FIXME: still need to get the largest maximum!
-          if( extrema[1].value >= minpeak ) 
-            clusters.emplace_back( extrema.front().index, extrema.back().index, extrema[1].index ) ;
+          if( extrema[1].value >= minpeak ) {
+            clusters[number_of_clusters] = Cluster(extrema.front().index, extrema.back().index, extrema[1].index);
+            number_of_clusters++;
+          }
         } else {
           // adjust the limit of the first and last to extend to the entire protocluster
           subclusters.front().izfirst = ibegin ;
           subclusters.back().izlast = iend ;
-          clusters.insert(std::end(clusters),std::begin(subclusters),std::end(subclusters) ) ;
+          for(Cluster subcluster : subclusters) {
+            clusters[number_of_clusters] = subcluster;
+            number_of_clusters++;
+          }
         }
       }
     }
-    debug_cout << "Found " << clusters.size() << " clusters" << std::endl;
+    debug_cout << "Found " <<  number_of_clusters << " clusters" << std::endl;
    
     // Step 4: partition the set of tracks by vertex seed: just
     // choose the closest one. The easiest is to loop over tracks and
@@ -442,12 +450,12 @@ void findPVs(
     };
   
     std::vector<SeedZWithIteratorPair> seedsZWithIteratorPair ;
-    seedsZWithIteratorPair.reserve( clusters.size() ) ;
+    seedsZWithIteratorPair.reserve( number_of_clusters ) ;
   
-    if(!clusters.empty()) {
+    if(number_of_clusters != 0) {
       std::vector< PVTrack >::iterator it = pvtracks_old.begin() ;
       int iprev=0 ;
-      for( int i=0; i<int(clusters.size())-1; ++i ) {
+      for( int i=0; i<int(number_of_clusters)-1; ++i ) {
         //const float zmid = 0.5f*(zseeds[i+1].z+zseeds[i].z) ;
         const float zmid = m_zmin + m_dz * 0.5f* (clusters[i].izlast + clusters[i+1].izfirst + 1.f ) ;
         std::vector< PVTrack >::iterator newit = std::partition( it, pvtracks_old.end(), [zmid](const auto& trk) { return trk.z < zmid ; } ) ;
@@ -471,7 +479,7 @@ void findPVs(
       }
       // Make sure to add the last partition
       if( std::distance( it, pvtracks_old.end() ) >= m_minNumTracksPerVertex ) {
-        seedsZWithIteratorPair.emplace_back(zClusterMean(clusters.back().izmax) , it, pvtracks_old.end() ) ;
+        seedsZWithIteratorPair.emplace_back(zClusterMean(clusters[number_of_clusters - 1].izmax) , it, pvtracks_old.end() ) ;
       } else if( !seedsZWithIteratorPair.empty() ) {
         seedsZWithIteratorPair.back().end = pvtracks_old.end() ;
       }

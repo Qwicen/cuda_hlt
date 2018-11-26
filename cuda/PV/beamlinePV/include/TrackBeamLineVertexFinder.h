@@ -60,6 +60,7 @@ __host__ __device__ Cluster( unsigned short _izfirst, unsigned short _izlast,  u
   unsigned short izfirst ;
   unsigned short izlast ;
   unsigned short izmax ;
+  __host__ __device__ Cluster(  ) {};
 } ;
 
 struct SeedZWithIteratorPair
