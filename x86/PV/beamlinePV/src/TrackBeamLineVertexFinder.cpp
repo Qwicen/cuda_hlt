@@ -490,7 +490,8 @@ void findPVs(
     }
 
     // Step 5: perform the adaptive vertex fit for each seed.
-    std::vector<PV::Vertex> vertices ;
+    PV::Vertex preselected_vertices[PV::max_number_vertices];
+    uint number_preselected_vertices = 0;
     std::vector<unsigned short> unusedtracks ;
     unusedtracks.reserve(pvtracks_old.size()) ;
  
@@ -498,11 +499,13 @@ void findPVs(
       PV::Vertex vertex = fitAdaptive(seed.get_array(),seed.get_size(),
                                       float3{beamline.x,beamline.y,seed.z},
                                       unusedtracks,m_maxFitIter,m_maxDeltaChi2) ; 
-      vertices.push_back(vertex);
+      preselected_vertices[number_preselected_vertices] = vertex;
+      number_preselected_vertices++;
     }
 
-    debug_cout << "Vertices remaining after fitter: " << vertices.size() << std::endl;
-    for ( auto vertex : vertices ) {
+    debug_cout << "Vertices remaining after fitter: " << number_preselected_vertices << std::endl;
+    for ( int i = 0; i < number_preselected_vertices; i++ ) {
+      PV::Vertex vertex = preselected_vertices[i];
       debug_cout << "   vertex has " << vertex.n_tracks << " tracks, x = " << vertex.position.x << ", y = " << vertex.position.y << ", z = " << vertex.position.z << std::endl;
     }
 
@@ -513,7 +516,8 @@ void findPVs(
 
     // create the output container
     const auto maxVertexRho2 = sqr(m_maxVertexRho) ;
-    for( const auto& vertex : vertices ) {
+    for( int i = 0; i < number_preselected_vertices; i++ ) {
+      PV::Vertex vertex = preselected_vertices[i];
       const auto beamlinedx = vertex.position.x - beamline.x ;
       const auto beamlinedy = vertex.position.y - beamline.y ;
       const auto beamlinerho2 = sqr(beamlinedx) + sqr(beamlinedy) ;
