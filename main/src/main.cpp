@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
   int option_index = 0;
 
   signed char c;
-  while ((c = getopt_long(argc, argv, "f:b:d:i:n:o:t:r:pha:b:d:v:c:m:g:",
+  while ((c = getopt_long(argc, argv, "f:b:d:i:n:o:t:r:pha:d:v:c:m:g:",
                           long_options, &option_index)) != -1) {
     switch (c) {
     case 0:
