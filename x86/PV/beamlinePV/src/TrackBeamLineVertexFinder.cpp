@@ -229,9 +229,13 @@ void findPVs(
     // how to do that efficiently.
     const auto Ntrk = number_of_tracks_event; //tracks.size() ;
     debug_cout << "# of input velo states: " << Ntrk << std::endl;
-    std::vector< PVTrack > pvtracks(Ntrk) ; // allocate everything upfront. don't use push_back/emplace_back
+    std::vector< PVTrack > pvtracks_old(Ntrk) ; // allocate everything upfront. don't use push_back/emplace_back
+    PVTrack pvtracks[Ntrk];
+    //only use tracks within a certain z-range
+    uint number_of_tracks_in_zrange = 0;
+
     {
-      auto it = pvtracks.begin() ;
+      auto it = pvtracks_old.begin() ;
       for(short unsigned int index = 0; index < Ntrk; ++index) {
         const Velo::State s = velo_states.get(event_tracks_offset + index); 
         // compute the (chance in) z of the poca to the beam axis
@@ -240,15 +244,18 @@ void findPVs(
         const double dz = ( tx * ( beamline.x - s.x ) + ty * ( beamline.y - s.y ) ) / (tx*tx+ty*ty) ;
         const double newz = s.z + dz ;
         if( m_zmin < newz  && newz < m_zmax ) {
+          pvtracks[number_of_tracks_in_zrange] = PVTrack{s,dz,index} ;
+          number_of_tracks_in_zrange++;
           *it = PVTrack{s,dz,index} ;
           ++it ;
+
         }
         
       }
-      pvtracks.erase(it,pvtracks.end()) ;
+
     }
   
-    debug_cout << "Selected " << (float)(pvtracks.size() ) / Ntrk << " states for PV seeds " << std::endl;
+    debug_cout << "Selected " << (float)(number_of_tracks_in_zrange ) / Ntrk << " states for PV seeds " << std::endl;
      
     // Step 2: fill a histogram with the z position of the poca. Use the
     // projected vertex error on that position as the width of a
@@ -265,7 +272,8 @@ void findPVs(
     //std::vector<float> zhisto(Nbins,0.0f) ;
    float  zhisto[Nbins] = { 0.f };
     {
-      for( const auto& trk : pvtracks ) {
+      for( int i = 0; i < number_of_tracks_in_zrange; i++ ) {
+        PVTrack trk = pvtracks[i];
         // bin in which z0 is, in floating point
         const float zbin = (trk.z - m_zmin)/m_dz ;
       
@@ -437,12 +445,12 @@ void findPVs(
     seedsZWithIteratorPair.reserve( clusters.size() ) ;
   
     if(!clusters.empty()) {
-      std::vector< PVTrack >::iterator it = pvtracks.begin() ;
+      std::vector< PVTrack >::iterator it = pvtracks_old.begin() ;
       int iprev=0 ;
       for( int i=0; i<int(clusters.size())-1; ++i ) {
         //const float zmid = 0.5f*(zseeds[i+1].z+zseeds[i].z) ;
         const float zmid = m_zmin + m_dz * 0.5f* (clusters[i].izlast + clusters[i+1].izfirst + 1.f ) ;
-        std::vector< PVTrack >::iterator newit = std::partition( it, pvtracks.end(), [zmid](const auto& trk) { return trk.z < zmid ; } ) ;
+        std::vector< PVTrack >::iterator newit = std::partition( it, pvtracks_old.end(), [zmid](const auto& trk) { return trk.z < zmid ; } ) ;
         // complicated logic to get rid of partitions that are too small, doign the least amount of work
         if( std::distance( it, newit ) >= m_minNumTracksPerVertex ) {
           seedsZWithIteratorPair.emplace_back( zClusterMean(clusters[i].izmax), it, newit ) ;
@@ -462,10 +470,10 @@ void findPVs(
         it = newit ;
       }
       // Make sure to add the last partition
-      if( std::distance( it, pvtracks.end() ) >= m_minNumTracksPerVertex ) {
-        seedsZWithIteratorPair.emplace_back(zClusterMean(clusters.back().izmax) , it, pvtracks.end() ) ;
+      if( std::distance( it, pvtracks_old.end() ) >= m_minNumTracksPerVertex ) {
+        seedsZWithIteratorPair.emplace_back(zClusterMean(clusters.back().izmax) , it, pvtracks_old.end() ) ;
       } else if( !seedsZWithIteratorPair.empty() ) {
-        seedsZWithIteratorPair.back().end = pvtracks.end() ;
+        seedsZWithIteratorPair.back().end = pvtracks_old.end() ;
       }
     }
     
@@ -476,7 +484,7 @@ void findPVs(
     // Step 5: perform the adaptive vertex fit for each seed.
     std::vector<PV::Vertex> vertices ;
     std::vector<unsigned short> unusedtracks ;
-    unusedtracks.reserve(pvtracks.size()) ;
+    unusedtracks.reserve(pvtracks_old.size()) ;
  
     for ( const auto seed : seedsZWithIteratorPair ) {
       PV::Vertex vertex = fitAdaptive(seed.get_array(),seed.get_size(),
