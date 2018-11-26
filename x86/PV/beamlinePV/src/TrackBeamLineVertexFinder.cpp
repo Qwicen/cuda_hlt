@@ -54,15 +54,14 @@ namespace {
    
   
   // This implements the adapative vertex fit with Tukey's weights.
-  PV::Vertex fitAdaptive( const std::vector<PVTrack>::iterator& tracksbegin,
-          const std::vector<PVTrack>::iterator& tracksend,
+  PV::Vertex fitAdaptive( const PVTrack * tracks,
+          uint number_of_tracks,
           const float3& seedposition,
           std::vector<unsigned short>& unusedtracks,
           unsigned short maxNumIter=5,
           float chi2max=9)
   {
     // make vector of TrackInVertex objects
-    std::vector<PVTrackInVertex> tracks(tracksbegin,tracksend) ;
     bool converged = false ;
 
     float3 vtxpos = seedposition;
@@ -93,8 +92,9 @@ namespace {
       nselectedtracks = 0 ;
       float2 vtxposvec{vtxpos.x,vtxpos.y};
       debug_cout << "next track" << std::endl;
-      for( auto& trk : tracks ) {
+      for( int i = 0; i < number_of_tracks; i++ ) {
         // compute the chi2
+        PVTrackInVertex trk = tracks[i];
         const float dz = vtxpos.z - trk.z;
         float2 res{0.f,0.f};
         res = vtxposvec - (trk.x + trk.tx*dz);
@@ -170,7 +170,8 @@ namespace {
     vertex.chi2 = chi2tot ;
     vertex.setPosition(vtxpos);
     vertex.setCovMatrix(vtxcov);    
-    for( const auto& trk : tracks ) {       
+    for( int i = 0; i < number_of_tracks; i++) {
+      PVTrackInVertex trk = tracks[i];
       if( trk.weight > 0 ) 
         vertex.n_tracks++;
       else unusedtracks.push_back( trk.index ) ;     }
@@ -261,7 +262,8 @@ void findPVs(
     
      // this can be changed into an std::accumulate
   
-    std::vector<float> zhisto(Nbins,0.0f) ;
+    //std::vector<float> zhisto(Nbins,0.0f) ;
+   float  zhisto[Nbins] = { 0.f };
     {
       for( const auto& trk : pvtracks ) {
         // bin in which z0 is, in floating point
@@ -423,8 +425,8 @@ void findPVs(
     // tracks. I checked it by comparing to the 'slow' method.
   
     // I found that this funny weighted 'maximum' is better than most other inexpensive solutions.
-     auto zClusterMean = [zhisto](auto izmax) -> float {
-      const float *b = zhisto.data() + izmax ;
+     auto zClusterMean = [&zhisto](auto izmax) -> float {
+      const float *b = zhisto + izmax ;
       float d1 = *b - *(b-1) ;
       float d2 = *b - *(b+1) ;
       float idz =  d1+d2>0 ? 0.5f*(d1-d2)/(d1+d2) : 0.0f ;
@@ -477,7 +479,7 @@ void findPVs(
     unusedtracks.reserve(pvtracks.size()) ;
  
     for ( const auto seed : seedsZWithIteratorPair ) {
-      PV::Vertex vertex = fitAdaptive(seed.begin,seed.end,
+      PV::Vertex vertex = fitAdaptive(seed.get_array(),seed.get_size(),
                                       float3{beamline.x,beamline.y,seed.z},
                                       unusedtracks,m_maxFitIter,m_maxDeltaChi2) ; 
       vertices.push_back(vertex);
