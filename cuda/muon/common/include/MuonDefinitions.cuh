@@ -1,7 +1,5 @@
 #pragma once
 
-//using LHCbID = int;
-
 namespace Muon {
   namespace Constants {
     /* Detector description
@@ -43,6 +41,5 @@ namespace Muon {
     float tx;
     float ty;
     float p;
-    //float z;
   };
 }

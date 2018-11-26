@@ -32,8 +32,7 @@ struct HostBuffers {
   // SciFi Decoding
   uint* host_accumulated_number_of_scifi_hits;
 
-  // Muon Features Extraction
-  Muon::State* host_muon_track;
+  // Muon Features
   float* host_muon_catboost_features;
 
   // Non pinned datatypes: CPU algorithms
