@@ -8,6 +8,15 @@ dev_muon_catboost_features =
     resX1,  resX2,  resX3,  resX4,
     resY1,  resY2,  resY3,  resY4,
 */
+
+enum offset {
+  dts   = 0,
+  times = 1 * Muon::Constants::n_stations,
+  cross = 2 * Muon::Constants::n_stations,
+  resX  = 3 * Muon::Constants::n_stations,
+  resY  = 4 * Muon::Constants::n_stations
+};
+
 __global__ void muon_catboost_features_extraction(
   const Muon::State* muTrack,
   const Muon::HitsSoA* muon_hits,
@@ -44,33 +53,31 @@ __global__ void muon_catboost_features_extraction(
   }
   
   const float commonFactor = Muon::Constants::MSFACTOR/muTrack->p;
-  for( unsigned int st = 0; st != Muon::Constants::n_stations; ++st ) {
-    const int idFromTrack = closestHits[st];
-    for (int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station) {
-      const int station_offset = muon_hits->station_offsets[i_station];
-      const int number_of_hits = muon_hits->number_of_hits_per_station[i_station];
-      for(int i_hit = 0; i_hit < number_of_hits; ++i_hit) {
-        const int idx = station_offset + i_hit;
-        const int idFromHit = muon_hits->tile[idx];
-        if (idFromHit == idFromTrack) {
-          dev_muon_catboost_features[Muon::Constants::n_stations + i_station] = muon_hits->time[idx];
-          dev_muon_catboost_features[i_station] = muon_hits->delta_time[idx];
-          float cross;
-          (muon_hits->uncrossed[idx]==0) ? cross = 2. : cross = muon_hits->uncrossed[idx];
-          dev_muon_catboost_features[2 * Muon::Constants::n_stations + i_station] = cross;
+  for (int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station) {
+    const int idFromTrack = closestHits[i_station];
+    const int station_offset = muon_hits->station_offsets[i_station];
+    const int number_of_hits = muon_hits->number_of_hits_per_station[i_station];
+    for(int i_hit = 0; i_hit < number_of_hits; ++i_hit) {
+      const int idx = station_offset + i_hit;
+      const int idFromHit = muon_hits->tile[idx];
+      if (idFromHit == idFromTrack) {
+        
+        dev_muon_catboost_features[offset::times + i_station] = muon_hits->time[idx];
+        dev_muon_catboost_features[offset::dts + i_station] = muon_hits->delta_time[idx];
+        const float cross = (muon_hits->uncrossed[idx]==0) ? 2. : muon_hits->uncrossed[idx];
+        dev_muon_catboost_features[offset::cross + i_station] = cross;
 
-          const float travDist = sqrt((stationZ[i_station]-stationZ[0]) * (stationZ[i_station]-stationZ[0]) +
-                        (extrapolation_x[i_station]-extrapolation_x[0]) * (extrapolation_x[i_station]-extrapolation_x[0]) +
-                        (extrapolation_y[i_station]-extrapolation_y[0]) * (extrapolation_y[i_station]-extrapolation_y[0]));
-          const float errMS = commonFactor*travDist*sqrt(travDist)*0.23850119787527452;
-          if(std::abs(extrapolation_x[i_station]-muon_hits->x[idx]) != 2000) {
-            dev_muon_catboost_features[3 * Muon::Constants::n_stations + i_station] = (extrapolation_x[i_station]-muon_hits->x[idx]) / 
-              sqrt((muon_hits->dx[idx] * Muon::Constants::INVSQRT3) * (muon_hits->dx[idx] * Muon::Constants::INVSQRT3) + errMS * errMS);
-          }
-          if(std::abs(extrapolation_y[i_station]-muon_hits->y[idx]) != 2000) {
-            dev_muon_catboost_features[4 * Muon::Constants::n_stations + i_station] = (extrapolation_y[i_station]-muon_hits->y[idx]) / 
-              sqrt((muon_hits->dy[idx] * Muon::Constants::INVSQRT3) * (muon_hits->dy[idx] * Muon::Constants::INVSQRT3) + errMS * errMS);
-          }
+        const float travDist = sqrt((stationZ[i_station]-stationZ[0]) * (stationZ[i_station]-stationZ[0]) +
+                      (extrapolation_x[i_station]-extrapolation_x[0]) * (extrapolation_x[i_station]-extrapolation_x[0]) +
+                      (extrapolation_y[i_station]-extrapolation_y[0]) * (extrapolation_y[i_station]-extrapolation_y[0]));
+        const float errMS = commonFactor*travDist*sqrt(travDist)*0.23850119787527452;
+        if(std::abs(extrapolation_x[i_station]-muon_hits->x[idx]) != 2000) {
+          dev_muon_catboost_features[offset::resX + i_station] = (extrapolation_x[i_station]-muon_hits->x[idx]) / 
+            sqrt((muon_hits->dx[idx] * Muon::Constants::INVSQRT3) * (muon_hits->dx[idx] * Muon::Constants::INVSQRT3) + errMS * errMS);
+        }
+        if(std::abs(extrapolation_y[i_station]-muon_hits->y[idx]) != 2000) {
+          dev_muon_catboost_features[offset::resY + i_station] = (extrapolation_y[i_station]-muon_hits->y[idx]) / 
+            sqrt((muon_hits->dy[idx] * Muon::Constants::INVSQRT3) * (muon_hits->dy[idx] * Muon::Constants::INVSQRT3) + errMS * errMS);
         }
       }
     }

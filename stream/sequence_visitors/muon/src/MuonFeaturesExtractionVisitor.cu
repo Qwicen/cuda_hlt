@@ -11,7 +11,7 @@ void SequenceVisitor::set_arguments_size<muon_catboost_features_extraction_t>(
   // Set arguments size
   arguments.set_size<dev_muon_track>(1);
   arguments.set_size<dev_muon_hits>(1);
-  arguments.set_size<dev_muon_catboost_features>(20);
+  arguments.set_size<dev_muon_catboost_features>(constants.muon_catboost_n_features);
 }
 
 template<>
@@ -68,7 +68,7 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
 
   // Check the output
   debug_cout << "MUON FEATURES: " << std::endl;
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < constants.muon_catboost_n_features; i++) {
     debug_cout << host_buffers.host_muon_catboost_features[i] << " ";
   }
   debug_cout << std::endl << std::endl;
