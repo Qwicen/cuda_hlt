@@ -49,7 +49,7 @@ file(GLOB stream_visitors_velo "visitors/velo/src/*cu")
 file(GLOB stream_visitors_pv "visitors/PV/src/*cu")
 file(GLOB stream_visitors_UT "visitors/UT/src/*cu")
 file(GLOB stream_visitors_SciFi "visitors/SciFi/src/*cu")
-file(GLOB stream_visitors_Muon "visitors/Muon/src/*cu")
+file(GLOB stream_visitors_Muon "visitors/muon/src/*cu")
 
 cuda_add_library(Stream STATIC
   ${stream_gear}
