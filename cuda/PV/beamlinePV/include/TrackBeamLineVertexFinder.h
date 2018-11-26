@@ -47,7 +47,8 @@ __host__ __device__ FTYPE sqr( FTYPE x ) { return x*x ;}
 struct Extremum
 {
 __host__ __device__ Extremum( unsigned short _index, float _value, float _integral ) :
-  index{_index}, value{_value}, integral{_integral} {}
+  index{_index}, value{_value}, integral{_integral} {};
+__host__ __device__ Extremum( ) {};
   unsigned short index;
   float value ;
   float integral ;

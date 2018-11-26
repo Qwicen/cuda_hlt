@@ -369,44 +369,55 @@ void findPVs(
         const float mindip = m_minDipDensity * m_dz  ; // need to invent something
         const float minpeak = m_minDensity * m_dz  ;
 
-        std::vector<Extremum> extrema ;
+        //std::vector<Extremum> extrema ;
+        Extremum extrema[PV::max_number_extrema];
+        uint number_of_extrema = 0;
         {
           bool rising = true ;
           float integral = zhisto[ibegin] ;
-          extrema.emplace_back( ibegin, zhisto[ibegin], integral ) ;
+          extrema[number_of_extrema] = Extremum( ibegin, zhisto[ibegin], integral ) ;
+          number_of_extrema++;
           for(unsigned short i=ibegin; i<iend; ++i) {
             const auto value = zhisto[i] ;
             bool stillrising = zhisto[i+1] > value ;
             if( rising && !stillrising && value >= minpeak ) {
-              const auto n = extrema.size() ;
+              const auto n = number_of_extrema ;
               if( n>=2 ) {
                 // check that the previous mimimum was significant. we
                 // can still simplify this logic a bit.
                 const auto dv1 = extrema[n-2].value - extrema[n-1].value ;
                 //const auto di1 = extrema[n-1].index - extrema[n-2].index ;
                 const auto dv2 = value - extrema[n-1].value ;
-                if( dv1 > mindip && dv2 > mindip )
-                  extrema.emplace_back( i, value, integral + 0.5f*value ) ;
+                if( dv1 > mindip && dv2 > mindip ) {
+                  extrema[number_of_extrema] = Extremum( i, value, integral + 0.5f*value ) ;
+                  number_of_extrema++;
+                }
                 else if( dv1 > dv2 )
-                  extrema.pop_back() ;
+                  number_of_extrema--;
                 else {
-                  extrema.pop_back() ;
-                  extrema.pop_back() ;
-                  extrema.emplace_back( i, value, integral + 0.5f*value ) ;
+                  number_of_extrema--;
+                  number_of_extrema--;
+                  extrema[number_of_extrema] = Extremum( i, value, integral + 0.5f*value ) ;
+                  number_of_extrema++;
                 }
               } else {
-                extrema.emplace_back( i, value, integral + 0.5f*value ) ;
+                extrema[number_of_extrema] = Extremum( i, value, integral + 0.5f*value ) ;
+                number_of_extrema++;
               }
-            } else if( rising != stillrising ) extrema.emplace_back( i, value, integral + 0.5f*value ) ;
+            } else if( rising != stillrising ) {
+                extrema[number_of_extrema] = Extremum( i, value, integral + 0.5f*value ) ;
+                number_of_extrema++;
+              }
             rising = stillrising ;
             integral += value ;
           }
           assert(rising==false) ;
-          extrema.emplace_back( iend, zhisto[iend], integral ) ;
+          extrema[number_of_extrema] = Extremum( iend, zhisto[iend], integral ) ;
+          number_of_extrema++;
         }
       
         // now partition on  extrema
-        const auto N = extrema.size() ;
+        const auto N = number_of_extrema ;
         std::vector<Cluster> subclusters ;
         if(N>3) {
           for(unsigned int i=1; i<N/2+1; ++i ) {
@@ -418,7 +429,7 @@ void findPVs(
         if( subclusters.empty() ) {
           //FIXME: still need to get the largest maximum!
           if( extrema[1].value >= minpeak ) {
-            clusters[number_of_clusters] = Cluster(extrema.front().index, extrema.back().index, extrema[1].index);
+            clusters[number_of_clusters] =  Cluster(extrema[0].index, extrema[number_of_extrema].index, extrema[1].index);
             number_of_clusters++;
           }
         } else {
