@@ -332,7 +332,8 @@ void findPVs(
 
       // Step A: make 'proto-clusters': these are subsequent bins with non-zero content and an integral above the threshold.
       using BinIndex = unsigned short ;
-      std::vector<BinIndex> clusteredges ;
+      BinIndex clusteredges[PV::max_number_clusteredges];
+      uint number_of_clusteredges = 0;
       {
         const float threshold = m_dz / (10.f * m_maxTrackZ0Err) ; // need something sensible that depends on binsize
         bool prevempty = true ;
@@ -342,9 +343,12 @@ void findPVs(
           bool empty = zhisto[i] < threshold ;
           if( empty != prevempty ) {
             if( prevempty || integral > m_minTracksInSeed )
-              clusteredges.emplace_back( i ) ; // may want to store 'i-1'
+              {
+              clusteredges[number_of_clusteredges] = i;
+              number_of_clusteredges++;
+              }
             else
-              clusteredges.pop_back() ;
+              number_of_clusteredges-- ;
             prevempty = empty ;
             integral=0 ;
             //std::cout << "creating cluster edge: "
@@ -352,10 +356,10 @@ void findPVs(
           }
         }
       }
-      debug_cout << "Found " << clusteredges.size()/2 << " proto clusters" << std::endl;
+      debug_cout << "Found " << number_of_clusteredges/2 << " proto clusters" << std::endl;
     
       // Step B: turn these into clusters. There can be more than one cluster per proto-cluster.
-      const size_t Nproto = clusteredges.size()/2 ;
+      const size_t Nproto = number_of_clusteredges/2 ;
       for(unsigned short i = 0; i< Nproto; ++i) {
         const BinIndex ibegin = clusteredges[i*2] ;
         const BinIndex iend = clusteredges[i*2+1] ;
