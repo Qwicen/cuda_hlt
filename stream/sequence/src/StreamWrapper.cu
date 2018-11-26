@@ -1,5 +1,6 @@
 #include "StreamWrapper.cuh"
 #include "Stream.cuh"
+#include "SchedulerMachinery.cuh"
 
 void StreamWrapper::initialize_streams(
   const uint n,
@@ -44,4 +45,10 @@ StreamWrapper::~StreamWrapper() {
   for (auto& stream : streams) {
     delete stream;
   }
+}
+
+void print_configured_sequence() {
+  info_cout << "Configured sequence of algorithms:" << std::endl;
+  Sch::PrintAlgorithmSequence<configured_sequence_t>::print();
+  info_cout << std::endl;
 }

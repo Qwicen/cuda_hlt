@@ -25,7 +25,6 @@
 #include "MuonFeaturesExtraction.cuh"
 #include "MuonCatboostEvaluator.cuh"
 
-
 #define SEQUENCE_T(...) typedef std::tuple<__VA_ARGS__> configured_sequence_t;
 
 // SEQUENCE must be defined at compile time.
@@ -39,6 +38,4 @@
 // "cmake -DSEQUENCE=Velo .." matches "sequences/Velo.cuh"
 // "cmake -DSEQUENCE=VeloUT .." matches "sequences/VeloUT.cuh"
 
-
-#include "sequences/ConfiguredSequence.cuh"
-
+#include "ConfiguredSequence.h"

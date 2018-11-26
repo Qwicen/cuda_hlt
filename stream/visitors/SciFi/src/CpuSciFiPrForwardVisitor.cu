@@ -20,7 +20,7 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
 
   // Run Forward on x86 architecture
   std::vector<uint> host_scifi_hits (host_buffers.scifi_hits_uints());
-  std::vector<uint> host_scifi_hit_count (2 * runtime_options.number_of_events * SciFi::Constants::n_zones + 1);
+  std::vector<uint> host_scifi_hit_count (2 * runtime_options.number_of_events * SciFi::Constants::n_mats + 1);
 
   cudaCheck(cudaMemcpyAsync(
     host_scifi_hits.data(),
@@ -41,6 +41,7 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
     host_buffers.forward_tracks_events,
     host_scifi_hits.data(),
     host_scifi_hit_count.data(),
+    constants.host_scifi_geometry,
     host_buffers.host_velo_tracks_atomics,
     host_buffers.host_velo_track_hit_number,
     (uint*) host_buffers.host_velo_states,

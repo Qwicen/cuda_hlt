@@ -12,6 +12,7 @@ int run_forward_on_CPU (
   std::vector<trackChecker::Tracks>& ft_tracks_events,
   uint* host_scifi_hits,
   uint* host_scifi_hit_count,
+  const char* host_scifi_geometry,
   uint* host_velo_tracks_atomics,
   uint* host_velo_track_hit_number,
   uint* host_velo_states,

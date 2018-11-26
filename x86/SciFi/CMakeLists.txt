@@ -1,23 +1,26 @@
 include_directories(include)
-include_directories(../../checker/tracking/include)
-include_directories(../../main/include)
-include_directories(../../cuda/SciFi/PrForward/include)
-include_directories(../../cuda/UT/common/include)
-include_directories(../../cuda/UT/PrVeloUT/include)
-include_directories(../../cuda/UT/UTDecoding/include)
-include_directories(../../cuda/SciFi/common/include)
-include_directories(../../cuda/velo/common/include)
-include_directories(../../cuda/event_model/common/include)
-include_directories(../../cuda/event_model/velo/include)
-include_directories(../../cuda/utils/sorting)
-include_directories(../../stream/gear/include)
+include_directories(${CMAKE_SOURCE_DIR}/checker/tracking/include)
+include_directories(${CMAKE_SOURCE_DIR}/main/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/common/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/PrVeloUT/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/UTDecoding/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/common/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/common/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/common/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/velo/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/sorting)
+include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
 
-file(GLOB x86Forward "src/*cpp" "../../cuda/SciFi/common/src/*cu")
-file(GLOB PrForwardTools "../../cuda/SciFi/PrForward/src/FindStereoHits.cu"
-  "../../cuda/SciFi/PrForward/src/FindXHits.cu" "../../cuda/SciFi/PrForward/src/HitUtils.cu"
-  "../../cuda/SciFi/PrForward/src/LinearFitting.cu" "../../cuda/SciFi/PrForward/src/ParabolaFitting.cu"
-  "../../cuda/SciFi/PrForward/src/PrForwardTools.cu" "../../cuda/SciFi/PrForward/src/ReferencePlaneProjection.cu"
-  "../../cuda/SciFi/PrForward/src/TrackUtils.cu")
+file(GLOB x86Forward "src/*cpp" "${CMAKE_SOURCE_DIR}/cuda/SciFi/common/src/*cu")
+file(GLOB PrForwardTools "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/FindStereoHits.cu"
+  "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/FindXHits.cu"
+  "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/HitUtils.cu"
+  "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/LinearFitting.cu"
+  "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/ParabolaFitting.cu"
+  "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/PrForwardTools.cu"
+  "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/ReferencePlaneProjection.cu"
+  "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/TrackUtils.cu")
 
 cuda_add_library(x86Forward STATIC
   ${x86Forward}
