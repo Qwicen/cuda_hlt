@@ -443,15 +443,18 @@ void findPVs(
       
         // now partition on  extrema
         const auto N = number_of_extrema ;
-        std::vector<Cluster> subclusters ;
+        //std::vector<Cluster> subclusters ;
+        Cluster subclusters[PV::max_number_subclusters];
+        uint number_of_subclusters = 0;
         if(N>3) {
           for(unsigned int i=1; i<N/2+1; ++i ) {
             if( extrema[2*i].integral - extrema[2*i-2].integral > m_minTracksInSeed ) {
-              subclusters.emplace_back( extrema[2*i-2].index, extrema[2*i].index, extrema[2*i-1].index) ;
+              subclusters[number_of_subclusters] = Cluster( extrema[2*i-2].index, extrema[2*i].index, extrema[2*i-1].index);
+              number_of_subclusters++;
             }
           }
         }
-        if( subclusters.empty() ) {
+        if( number_of_subclusters == 0 ) {
           //FIXME: still need to get the largest maximum!
           if( extrema[1].value >= minpeak ) {
             clusters[number_of_clusters] =  Cluster(extrema[0].index, extrema[number_of_extrema].index, extrema[1].index);
@@ -459,9 +462,10 @@ void findPVs(
           }
         } else {
           // adjust the limit of the first and last to extend to the entire protocluster
-          subclusters.front().izfirst = ibegin ;
-          subclusters.back().izlast = iend ;
-          for(Cluster subcluster : subclusters) {
+          subclusters[0].izfirst = ibegin ;
+          subclusters[number_of_subclusters].izlast = iend ;
+          for(int i = 0; i < number_of_subclusters; i++) {
+            Cluster subcluster = subclusters[i];
             clusters[number_of_clusters] = subcluster;
             number_of_clusters++;
           }
