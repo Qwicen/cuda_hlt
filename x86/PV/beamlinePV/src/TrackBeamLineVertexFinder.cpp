@@ -195,6 +195,18 @@ void findPVs(
   // Histograms only for checking and debugging
   TFile *f = new TFile("../output/PVs.root", "RECREATE");
   //TTree *t_velo_states = new TTree("velo_states", "velo_states");
+  TTree *t_velo_states = new TTree("velo_states", "velo_states");
+  double cov_x, cov_y, cov_z;
+  float  tx, ty, x, y, z, old_z;
+  t_velo_states->Branch("cov_x",&cov_x);
+  t_velo_states->Branch("cov_y",&cov_y);
+  t_velo_states->Branch("cov_z",&cov_z);
+  t_velo_states->Branch("x",&x);
+  t_velo_states->Branch("y",&y);
+  t_velo_states->Branch("z",&z);
+  t_velo_states->Branch("old_z",&old_z);
+  t_velo_states->Branch("tx",&tx);
+  t_velo_states->Branch("ty",&ty);
   TH1F* h_z0[number_of_events];
   TH1F* h_vx[number_of_events];
   TH1F* h_vy[number_of_events];
@@ -274,6 +286,16 @@ void findPVs(
     {
       for( int i = 0; i < number_of_tracks_in_zrange; i++ ) {
         PVTrack trk = pvtracks[i];
+        cov_x = trk.W_00;
+        cov_y = trk.W_11;
+        cov_z = 1.;
+        x = trk.x.x;
+        y = trk.x.y;
+        z = trk.z;
+        old_z = trk.old_z;
+        tx = trk.tx.x;
+        ty = trk.tx.y;
+        t_velo_states->Fill();
         // bin in which z0 is, in floating point
         const float zbin = (trk.z - m_zmin)/m_dz ;
       
@@ -370,7 +392,7 @@ void findPVs(
         const float minpeak = m_minDensity * m_dz  ;
 
         //std::vector<Extremum> extrema ;
-        Extremum extrema[PV::max_number_extrema];
+        Extremum extrema[PV::max_number_vertices];
         uint number_of_extrema = 0;
         {
           bool rising = true ;
@@ -392,11 +414,14 @@ void findPVs(
                   extrema[number_of_extrema] = Extremum( i, value, integral + 0.5f*value ) ;
                   number_of_extrema++;
                 }
-                else if( dv1 > dv2 )
+                else if( dv1 > dv2 ) {
                   number_of_extrema--;
+                  if(number_of_extrema < 0) number_of_extrema = 0;
+                }
                 else {
                   number_of_extrema--;
                   number_of_extrema--;
+                  if(number_of_extrema < 0) number_of_extrema = 0;
                   extrema[number_of_extrema] = Extremum( i, value, integral + 0.5f*value ) ;
                   number_of_extrema++;
                 }

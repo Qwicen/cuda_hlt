@@ -10,8 +10,6 @@ typedef float myfloat;
 //maximum number of vertices in a event
 static constexpr uint max_number_vertices = 30;
 
-//STUDY THIS
-static constexpr uint max_number_extrema = 100;
 
 //STUDY THIS NUMBER
 static constexpr uint max_number_of_clusters = 200;

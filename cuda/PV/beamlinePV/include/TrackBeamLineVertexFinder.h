@@ -17,7 +17,7 @@ struct PVTrack
 __host__ __device__ PVTrack( const Velo::State& state, double dz, unsigned short _index )
   : z{float(state.z+dz)},
     x{float(state.x+dz*state.tx),float(state.y+dz*state.ty)},
-    tx{float(state.tx),float(state.ty)},index{_index}
+    tx{float(state.tx),float(state.ty)},index{_index}, old_z{float(state.z)}
   {
     // perhaps we should invert it /before/ switching to single FPP?
     // it doesn't seem to make much difference.
@@ -33,6 +33,7 @@ __host__ __device__ PVTrack( const Velo::State& state, double dz, unsigned short
     W_11 = 1.f / state_tmp_c11;
   }
   float z{0} ;
+  float old_z;
   float2 x ;      /// position (x,y)
   float2 tx ;     /// direction (tx,ty)
   // to do: check whether this needs to be a double
