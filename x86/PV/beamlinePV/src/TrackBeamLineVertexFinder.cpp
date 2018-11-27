@@ -493,8 +493,9 @@ void findPVs(
       return m_zmin + m_dz * (izmax + idz + 0.5f) ;
     };
   
-    std::vector<SeedZWithIteratorPair> seedsZWithIteratorPair ;
-    seedsZWithIteratorPair.reserve( number_of_clusters ) ;
+    //std::vector<SeedZWithIteratorPair> seedsZWithIteratorPair ;
+    SeedZWithIteratorPair seedsZWithIteratorPair[number_of_clusters];
+    uint number_of_seedsZWIP = 0;
   
     if(number_of_clusters != 0) {
       std::vector< PVTrack >::iterator it = pvtracks_old.begin() ;
@@ -505,31 +506,34 @@ void findPVs(
         std::vector< PVTrack >::iterator newit = std::partition( it, pvtracks_old.end(), [zmid](const auto& trk) { return trk.z < zmid ; } ) ;
         // complicated logic to get rid of partitions that are too small, doign the least amount of work
         if( std::distance( it, newit ) >= m_minNumTracksPerVertex ) {
-          seedsZWithIteratorPair.emplace_back( zClusterMean(clusters[i].izmax), it, newit ) ;
+          seedsZWithIteratorPair[number_of_seedsZWIP] = SeedZWithIteratorPair( zClusterMean(clusters[i].izmax), it, newit ) ;
+          number_of_seedsZWIP++;
           iprev = i ;
         } else {
           // if the partition is too small, then repartition the stuff we
           // have just isolated and assign to the previous and next. You
           // could also 'skip' this partition, but then you do too much
           // work for the next.
-          if( !seedsZWithIteratorPair.empty() && newit != it ) {
+          if( number_of_seedsZWIP != 0 && newit != it ) {
             const float zmid = m_zmin + m_dz * (clusters[iprev].izlast + clusters[i+1].izfirst+0.5f ) ;
             newit = std::partition( it, newit, [zmid](const auto& trk) { return trk.z < zmid ; } ) ;
             // update the last one
-            seedsZWithIteratorPair.back().end = newit ;
+            seedsZWithIteratorPair[number_of_seedsZWIP - 1].end = newit ;
           }
         }
         it = newit ;
       }
       // Make sure to add the last partition
       if( std::distance( it, pvtracks_old.end() ) >= m_minNumTracksPerVertex ) {
-        seedsZWithIteratorPair.emplace_back(zClusterMean(clusters[number_of_clusters - 1].izmax) , it, pvtracks_old.end() ) ;
-      } else if( !seedsZWithIteratorPair.empty() ) {
-        seedsZWithIteratorPair.back().end = pvtracks_old.end() ;
+        seedsZWithIteratorPair[number_of_seedsZWIP] = SeedZWithIteratorPair(zClusterMean(clusters[number_of_clusters - 1].izmax) , it, pvtracks_old.end() ) ;
+        number_of_seedsZWIP++;
+      } else if( number_of_seedsZWIP != 0 ) {
+        seedsZWithIteratorPair[number_of_seedsZWIP - 1].end = pvtracks_old.end() ;
       }
     }
     
-    for ( auto seed : seedsZWithIteratorPair ) {
+    for ( int i = 0; i < number_of_seedsZWIP; i++ ) {
+      SeedZWithIteratorPair seed = seedsZWithIteratorPair[i];
       debug_cout << "Associated " << seed.end - seed.begin << " tracks to seed " << std::endl;
     }
 
@@ -539,7 +543,8 @@ void findPVs(
     std::vector<unsigned short> unusedtracks ;
     unusedtracks.reserve(pvtracks_old.size()) ;
  
-    for ( const auto seed : seedsZWithIteratorPair ) {
+    for ( int i = 0; i < number_of_seedsZWIP; i++ ) {
+      SeedZWithIteratorPair seed = seedsZWithIteratorPair[i];
       PV::Vertex vertex = fitAdaptive(seed.get_array(),seed.get_size(),
                                       float3{beamline.x,beamline.y,seed.z},
                                       unusedtracks,m_maxFitIter,m_maxDeltaChi2) ; 

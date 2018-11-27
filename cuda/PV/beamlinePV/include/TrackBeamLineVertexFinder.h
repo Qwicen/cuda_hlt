@@ -73,6 +73,7 @@ struct SeedZWithIteratorPair
   iterator end ;
 __host__ __device__ SeedZWithIteratorPair( float _z, iterator _begin, iterator _end) :
   z{_z},begin{_begin},end{_end} {} ;
+__host__ __device__ SeedZWithIteratorPair(){};
 
   PVTrack * get_array() const {
     std::vector<PVTrack> track_vec(begin, end);
