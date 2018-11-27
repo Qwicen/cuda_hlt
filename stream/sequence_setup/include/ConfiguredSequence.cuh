@@ -21,6 +21,8 @@
 #include "VeloKalmanFilter.cuh"
 #include "getSeeds.cuh"
 #include "fitSeeds.cuh"
+#include "blpv_extrapolate.cuh"
+#include "blpv_histo.cuh"
 #include "RunForwardCPU.h"
 #include "RunBeamlinePVonCPU.h"
 

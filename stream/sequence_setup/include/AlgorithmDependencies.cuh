@@ -133,6 +133,18 @@ typedef std::tuple<
     dev_kalmanvelo_states,
     dev_atomics_storage,
     dev_velo_track_hit_number
+  >,
+    AlgorithmDependencies<blpv_extrapolate_t,
+   dev_kalmanvelo_states,
+  dev_atomics_storage,
+  dev_velo_track_hit_number,
+  dev_pvtracks
+  >,
+    AlgorithmDependencies<blpv_histo_t,
+   dev_atomics_storage,
+  dev_velo_track_hit_number,
+  dev_pvtracks,
+  dev_zhisto
   >, 
   AlgorithmDependencies<ut_calculate_number_of_hits_t,
     dev_ut_raw_input,

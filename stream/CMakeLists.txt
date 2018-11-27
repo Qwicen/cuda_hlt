@@ -23,6 +23,7 @@ include_directories(../cuda/velo/prefix_sum/include)
 include_directories(../cuda/velo/search_by_triplet/include)
 include_directories(../cuda/velo/simplified_kalman_filter/include)
 include_directories(../cuda/PV/patPV/include)
+include_directories(../cuda/PV/beamlinePV/include)
 include_directories(../cuda/PV/common/include)
 include_directories(../cuda/SciFi/preprocessing/include)
 include_directories(../cuda/SciFi/common/include)
@@ -74,6 +75,7 @@ target_link_libraries(Stream
   Utils
   Velo
   PatPV
+  BLPV
   #x86PatPV
   x86beamlinePV
   UT

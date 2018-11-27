@@ -8,17 +8,20 @@
 #include "Handler.cuh"
 #include "VeloConsolidated.cuh"
 #include "TrackBeamLineVertexFinder.h"
+#include "BeamlinePVConstants.cuh"
 
 
+    
+
+  
 
 
-
-__global__ void blpv_extrapolate(uint* dev_kalmanvelo_states,
-  int * dev_atomics_storage,
+__global__ void blpv_histo(int * dev_atomics_storage,
   uint* dev_velo_track_hit_number,
-  PVTrack* dev_pvtracks);
+  PVTrack* dev_pvtracks,
+  float* dev_zhisto);
 
 
 
 
- ALGORITHM(blpv_extrapolate, blpv_extrapolate_t)
+ ALGORITHM(blpv_histo, blpv_histo_t)
