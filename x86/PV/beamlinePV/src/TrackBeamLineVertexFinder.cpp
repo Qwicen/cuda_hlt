@@ -57,7 +57,6 @@ namespace {
   PV::Vertex fitAdaptive( const PVTrack * tracks,
           uint number_of_tracks,
           const float3& seedposition,
-          std::vector<unsigned short>& unusedtracks,
           unsigned short maxNumIter=5,
           float chi2max=9)
   {
@@ -173,8 +172,7 @@ namespace {
     for( int i = 0; i < number_of_tracks; i++) {
       PVTrackInVertex trk = tracks[i];
       if( trk.weight > 0 ) 
-        vertex.n_tracks++;
-      else unusedtracks.push_back( trk.index ) ;     }
+        vertex.n_tracks++;   }
     return vertex ;
   }
   
@@ -540,14 +538,13 @@ void findPVs(
     // Step 5: perform the adaptive vertex fit for each seed.
     PV::Vertex preselected_vertices[PV::max_number_vertices];
     uint number_preselected_vertices = 0;
-    std::vector<unsigned short> unusedtracks ;
-    unusedtracks.reserve(pvtracks_old.size()) ;
+
  
     for ( int i = 0; i < number_of_seedsZWIP; i++ ) {
       SeedZWithIteratorPair seed = seedsZWithIteratorPair[i];
       PV::Vertex vertex = fitAdaptive(seed.get_array(),seed.get_size(),
                                       float3{beamline.x,beamline.y,seed.z},
-                                      unusedtracks,m_maxFitIter,m_maxDeltaChi2) ; 
+                                      m_maxFitIter,m_maxDeltaChi2) ;
       preselected_vertices[number_preselected_vertices] = vertex;
       number_preselected_vertices++;
     }
