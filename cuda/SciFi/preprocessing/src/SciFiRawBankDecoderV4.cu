@@ -1,10 +1,10 @@
-#include "SciFiRawBankDecoder.cuh"
+#include "SciFiRawBankDecoderV4.cuh"
 #include "assert.h"
 
 using namespace SciFi;
 
 // Merge of PrStoreFTHit and RawBankDecoder.
-__device__ void make_cluster (
+__device__ void make_cluster_v4 (
   const int hit_index,
   const SciFiHitCount& hit_count,
   const SciFiGeometry& geom,
@@ -24,7 +24,7 @@ __device__ void make_cluster (
   if( id.die() ) uFromChannel += geom.dieGap[mat];
   uFromChannel += id.sipm() * geom.sipmPitch[mat];
   const float endPointX = geom.mirrorPointX[mat] + geom.ddxX[mat] * uFromChannel;
-  const float endPointY = geom.mirrorPointY[mat] + geom.ddxY[mat] * uFromChannel;
+  const float endPointY = geom.mirrorPointY[mat] + geom.ddxY[mat] * uFromChannel;;;
   const float endPointZ = geom.mirrorPointZ[mat] + geom.ddxZ[mat] * uFromChannel;
   const float x0 = endPointX - dxdy * endPointY;
   const float z0 = endPointZ - dzdy * endPointY;
@@ -43,7 +43,7 @@ __device__ void make_cluster (
   hits.assembled_datatype[hit_index] = fraction << 20 | plane_code << 15 | pseudoSize << 11 | mat;
 };
 
-__global__ void scifi_raw_bank_decoder(
+__global__ void scifi_raw_bank_decoder_v4(
   char *scifi_events,
   uint *scifi_event_offsets,
   uint *scifi_hit_count,
@@ -65,8 +65,17 @@ __global__ void scifi_raw_bank_decoder(
   for (int i=threadIdx.x; i<number_of_hits_in_event; i+=blockDim.x) {
     const uint32_t cluster_reference = hits.cluster_reference[hit_count.event_offset() + i];
 
-    const int raw_bank_number = (cluster_reference >> 8) & 0xFF;
-    const int it_number = (cluster_reference) & 0xFF;
+    // Cluster reference:
+    //   raw bank: 8 bits
+    //   element (it): 8 bits
+    //   Condition 1-2-3: 2 bits
+    //   Condition 2.1-2.2: 1 bit
+    //   Condition 2.1: log2(n+1) - 8 bits
+    const int raw_bank_number = (cluster_reference >> 24) & 0xFF;
+    const int it_number = (cluster_reference >> 16) & 0xFF;
+    const int condition_1 = (cluster_reference >> 14) & 0x03;
+    const int condition_2 = (cluster_reference >> 13) & 0x01;
+    const int delta_parameter = cluster_reference & 0xFF;
 
     const auto rawbank = event.getSciFiRawBank(raw_bank_number);
     const uint16_t* it = rawbank.data + 2;
@@ -76,12 +85,34 @@ __global__ void scifi_raw_bank_decoder(
     const uint32_t ch = geom.bank_first_channel[rawbank.sourceID] + channelInBank(c);
     const auto chid = SciFiChannelID(ch);
 
-    // Call parameters for make_cluster
+    // Call parameters for make_cluster_v4
     uint32_t cluster_chan = ch;
     uint8_t cluster_fraction = fraction(c);
-    uint8_t pseudoSize = cSize(c)? 0 : 4;
+    uint8_t pseudoSize = 4;
 
-    make_cluster(
+    if (condition_1 == 0x01) {
+      const auto c2 = *(it+1);
+      const auto delta = cell(c2) - cell(c);
+
+      if (condition_2 == 0x00) {
+        pseudoSize = 0;
+
+        if (delta_parameter == 0) {
+          // add the last edge
+          cluster_chan += delta;
+          cluster_fraction = fraction(c2);
+        } else {
+          cluster_chan += delta_parameter * SciFiRawBankParams::clusterMaxWidth;
+        }
+      } else { // (condition_2 == 0x01)
+        const auto widthClus = 2*delta - 1 + fraction(c2);
+        cluster_chan += (widthClus-1)/2 - (SciFiRawBankParams::clusterMaxWidth - 1)/2;
+        cluster_fraction = (widthClus-1)%2;
+        pseudoSize = widthClus;
+      }
+    }
+
+    make_cluster_v4(
       hit_count.event_offset() + i,
       hit_count,
       geom,
