@@ -1,5 +1,6 @@
 #include "HostBuffers.cuh"
 #include "SciFiDefinitions.cuh"
+#include "BeamlinePVConstants.cuh"
 
 void HostBuffers::reserve(const uint max_number_of_events) {
   cudaCheck(cudaMallocHost((void**)&host_velo_tracks_atomics, (2 * max_number_of_events + 1) * sizeof(int)));
@@ -20,6 +21,8 @@ void HostBuffers::reserve(const uint max_number_of_events) {
   cudaCheck(cudaMallocHost((void**)&host_number_of_vertex, max_number_of_events * sizeof(int)));
 
   cudaCheck(cudaMallocHost((void**)&host_number_of_seeds, max_number_of_events * sizeof(int)));
+  cudaCheck(cudaMallocHost((void**)&host_zhisto, max_number_of_events * sizeof(float) * (m_zmax-m_zmin)/m_dz ) );
+
 }
 
 

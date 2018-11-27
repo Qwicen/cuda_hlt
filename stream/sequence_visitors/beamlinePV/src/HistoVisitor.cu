@@ -1,5 +1,6 @@
 #include "SequenceVisitor.cuh"
 #include "blpv_histo.cuh"
+#include "TTree.h"
 
 template<>
 void SequenceVisitor::set_arguments_size<blpv_histo_t>(
@@ -35,6 +36,46 @@ void SequenceVisitor::visit<blpv_histo_t>(
 
 
   state.invoke();
+
+
+    // Retrieve result
+  cudaCheck(cudaMemcpyAsync(
+    host_buffers.host_zhisto,
+    arguments.offset<dev_zhisto>(),
+    arguments.size<dev_zhisto>(),
+    cudaMemcpyDeviceToHost,
+    cuda_stream
+  ));
+
+  // Wait to receive the result
+  cudaEventRecord(cuda_generic_event, cuda_stream);
+  cudaEventSynchronize(cuda_generic_event);
+
+  // Check the output
+  TFile * outfile = new TFile("testt.root","RECREATE");
+  TTree * outtree = new TTree("PV","PV");
+  int i_event = 0;
+  outtree->Branch("event",&i_event);
+  float z_histo;
+  outtree->Branch("z_histo",&z_histo);
+  int mindex;
+  outtree->Branch("index",&mindex);
+  for(i_event = 0; i_event < runtime_options.number_of_events; i_event++) {
+    info_cout << "number event " << i_event << std::endl;
+    int Nbins = (m_zmax-m_zmin)/m_dz;
+    for (int i=0; i<Nbins; i++) {
+    int index = Nbins * i_event + i;
+    mindex = i;
+    info_cout << "zhisto: " << host_buffers.host_zhisto[index] << std::endl << std::endl;
+    z_histo = host_buffers.host_zhisto[index];
+    outtree->Fill();
+   }
+  }
+  outtree->Write();
+  outfile->Close();
+  
+  
+
 
 
     

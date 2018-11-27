@@ -28,7 +28,15 @@ __global__ void blpv_histo(  int * dev_atomics_storage,
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  float* histo_base_pointer = dev_zhisto + Nbins * number_of_events;
+  float* histo_base_pointer = dev_zhisto + Nbins * event_number;
+
+  //find better wy to intialize histogram bins to zero
+  if(threadIdx.x==0) {
+    for(int i = 0; i < Nbins; i++) {
+      *(histo_base_pointer + i) = 0.f;
+    }
+  }
+    __syncthreads();
 
     for(int i = 0; i < number_of_tracks_event/blockDim.x + 1; i++) {
     int index = blockDim.x * i + threadIdx.x;
@@ -63,6 +71,7 @@ __global__ void blpv_histo(  int * dev_atomics_storage,
               const float relz = ( m_zmin + (i+1)*m_dz - trk.z ) /zerr;
               const float thisintegral = gauss_integral( relz );
               atomicAdd(histo_base_pointer + i, thisintegral - integral);
+              integral = thisintegral;
             }
             // deal with the last bin
             atomicAdd(histo_base_pointer + maxbin, 1.f - integral);

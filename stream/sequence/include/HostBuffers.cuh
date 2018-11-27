@@ -24,6 +24,7 @@ struct HostBuffers {
   uint* host_accumulated_number_of_ut_hits;
   SciFi::Track* host_scifi_tracks;
   uint* host_n_scifi_tracks;
+  float* host_zhisto;
 
   // UT tracking
   int* host_atomics_veloUT;
