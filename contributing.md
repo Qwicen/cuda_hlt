@@ -94,6 +94,7 @@ __global__ void saxpy(float *x, float *y, int n, float a) {
 ```
 
 The line with `ALGORITHM` encapsulates our algorithm `saxpy` into a class with name `saxpy_t`. We will use this class from now on to be able to refer to our algorithm.
+Therefore, when developing algorithms for the HLT1 chain, please add the sub-detector that your algorithm belongs to in the name so that it can be easily identified within a sequence. For example: `velo_masked_clustering_t` or `ut_pre_decode_t`.
 
 Lastly, edit `stream/CMakeLists.txt` and modify `target_link_libraries`:
 
@@ -206,11 +207,11 @@ First go to `stream/sequence/include/HostBuffers.cuh` and add the saxpy host mem
   // Pinned host datatypes
   uint* host_velo_tracks_atomics;
   uint* host_velo_track_hit_number;
-  char* host_velo_track_hits;
+  uint* host_velo_track_hits;
   uint* host_total_number_of_velo_clusters;
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
-  char* host_velo_states;
+  uint* host_velo_states;
   uint* host_accumulated_number_of_ut_hits;
 
   // Saxpy
@@ -347,6 +348,23 @@ dev_velo_track_hit_number (0.01), unused (0.05), dev_atomics_storage (0.00), unu
 Max memory required: 9.61 MiB
 ```
 
-Now you are ready to take over.
+
+Before placing a merge request
+==============================
+Before starting to edit files, please ensure that your editor produces spaces, not tabs!
+
+Before placing a merge request, please go through the following list and check that BOTH compilation and running work after your changes:
+   * Release and debug mode `cmake -DCMAKE_BUILD_TYPE=release ..` and `cmake -DCMAKE_BUILD_TYPE=debug ..`
+   * Different sequences:
+      * Default sequence: `cmake -DSEQUENCE=DefaultSequence ..`
+      * CPU SciFi tracking sequence: `cmake -DSEQUENCE=CPUSciFi ..`
+      * PV finding sequence: `cmake -DSEQUENCE=PVSequence ..`
+  * Compilation with ROOT (if you have a ROOT installation available): `cmake -DUSE_ROOT=TRUE ..` If you don't have ROOT available, please mention this in the merge request, then we will test it.
+  
+
+Check that you can run `./cu_hlt` after every compilation. 
+  
+
+Now you are ready to take over!
 
 Good luck!

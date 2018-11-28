@@ -2,6 +2,7 @@
 
 #include "VeloEventModel.cuh"
 #include "Handler.cuh"
+#include "States.cuh"
 
 __device__ void weak_tracks_adder_impl(
   uint* weaktracks_insert_pointer,
@@ -20,7 +21,7 @@ __global__ void weak_tracks_adder(
   Velo::TrackHits* dev_tracks,
   Velo::TrackletHits* dev_weak_tracks,
   bool* dev_hit_used,
-  int* dev_atomics_storage
+  int* dev_atomics_velo
 );
 
-ALGORITHM(weak_tracks_adder, weak_tracks_adder_t)
+ALGORITHM(weak_tracks_adder, velo_weak_tracks_adder_t)

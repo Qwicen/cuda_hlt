@@ -1,7 +1,7 @@
 #include "UTDecodeRawBanksInOrder.cuh"
 
 __global__ void ut_decode_raw_banks_in_order(
-  const uint32_t *dev_ut_raw_input,
+  const char *dev_ut_raw_input,
   const uint32_t *dev_ut_raw_input_offsets,
   const char *ut_boards, const char *ut_geometry,
   const uint *dev_ut_region_offsets,
@@ -15,13 +15,12 @@ __global__ void ut_decode_raw_banks_in_order(
   const uint32_t number_of_events = gridDim.x;
   const uint32_t event_number = blockIdx.x;
   const uint layer_number = blockIdx.y;
-  const uint32_t event_offset =
-      dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
+  const uint32_t event_offset = dev_ut_raw_input_offsets[event_number];
 
-  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[VeloUTTracking::n_layers];
+  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[UT::Constants::n_layers];
 
-  const UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
-  UTHits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};
+  const UT::HitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  UT::Hits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};
 
   const UTRawEvent raw_event(dev_ut_raw_input + event_offset);
   const UTBoards boards(ut_boards);
@@ -46,16 +45,16 @@ __global__ void ut_decode_raw_banks_in_order(
         boards.stripsPerHybrids[raw_bank.sourceID];
 
     // Extract values from raw_data
-    const uint32_t fracStrip = (value & UTDecoding::frac_mask) >> UTDecoding::frac_offset;
-    const uint32_t channelID = (value & UTDecoding::chan_mask) >> UTDecoding::chan_offset;
-    const uint32_t threshold = (value & UTDecoding::thre_mask) >> UTDecoding::thre_offset;
+    const uint32_t fracStrip = (value & UT::Decoding::frac_mask) >> UT::Decoding::frac_offset;
+    const uint32_t channelID = (value & UT::Decoding::chan_mask) >> UT::Decoding::chan_offset;
+    const uint32_t threshold = (value & UT::Decoding::thre_mask) >> UT::Decoding::thre_offset;
 
     // Calculate the relative index of the corresponding board
     const uint32_t index = channelID / nStripsPerHybrid;
     const uint32_t strip = channelID - (index * nStripsPerHybrid) + 1;
 
     const uint32_t fullChanIndex =
-        raw_bank.sourceID * UTDecoding::ut_number_of_sectors_per_board + index;
+        raw_bank.sourceID * UT::Decoding::ut_number_of_sectors_per_board + index;
     const uint32_t station = boards.stations[fullChanIndex] - 1;
     const uint32_t layer = boards.layers[fullChanIndex] - 1;
     const uint32_t detRegion = boards.detRegions[fullChanIndex] - 1;
@@ -64,7 +63,7 @@ __global__ void ut_decode_raw_banks_in_order(
 
     // Calculate the index to get the geometry of the board
     const uint32_t idx =
-        station * UTDecoding::ut_number_of_sectors_per_board + layer * 3 + detRegion;
+        station * UT::Decoding::ut_number_of_sectors_per_board + layer * 3 + detRegion;
     const uint32_t idx_offset = dev_ut_region_offsets[idx] + sector;
 
     const uint32_t m_firstStrip = geometry.firstStrip[idx_offset];
@@ -94,8 +93,6 @@ __global__ void ut_decode_raw_banks_in_order(
     ut_hits.zAtYEq0[hit_index] = zAtYEq0;
     ut_hits.xAtYEq0[hit_index] = xAtYEq0;
     ut_hits.weight[hit_index] = weight;
-    ut_hits.highThreshold[hit_index] = highThreshold;
     ut_hits.LHCbID[hit_index] = LHCbID;
-    ut_hits.planeCode[hit_index] = planeCode;
   }
 }

@@ -106,7 +106,7 @@ namespace Gaudi
     //
     constexpr float radian      = 1.;
     constexpr float milliradian = 1.e-3 * radian;
-    constexpr float degree      = ( 3.14159265358979323846 / 180.0 ) * radian;
+    constexpr float degree      = ( 3.14159265358979323846f / 180.0f ) * radian;
 
     constexpr float steradian = 1.;
 

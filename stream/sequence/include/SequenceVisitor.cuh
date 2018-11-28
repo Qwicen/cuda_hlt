@@ -5,6 +5,7 @@
 #include "Constants.cuh"
 #include "Argument.cuh"
 #include "HostBuffers.cuh"
+#include "Constants.cuh"
 #include "Scheduler.cuh"
 #include "ConfiguredSequence.cuh"
 #include "AlgorithmDependencies.cuh"
@@ -49,6 +50,7 @@ struct SequenceVisitor {
     const uint& start_event_offset,
     const uint& number_of_events_requested,
     const HostBuffers& host_buffers,
+    const Constants& constants,
     const CheckerInvoker& checker_invoker) const {}
 };
 

@@ -15,14 +15,14 @@
 //=========================================================================
 //
 __host__ __device__ void collectAllXHits(
-  const SciFi::SciFiHits& scifi_hits,
-  const SciFi::SciFiHitCount& scifi_hit_count,
+  const SciFi::Hits& scifi_hits,
+  const SciFi::HitCount& scifi_hit_count,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   float coordX[SciFi::Tracking::max_x_hits],
   const float xParams_seed[4],
   const float yParams_seed[4],
-  SciFi::Tracking::Arrays* constArrays,
+  const SciFi::Tracking::Arrays* constArrays,
   const MiniState& velo_state,
   const float qOverP,
   int side)
@@ -41,7 +41,7 @@ __host__ __device__ void collectAllXHits(
 
   float dxRefWS = 0.0;
   if( wSignTreatment ){
-    // DvB: what happens if we use the acual momentum from VeloUT here instead of a constant?
+    // DvB: what happens if we use the actual momentum from VeloUT here instead of a constant?
     dxRefWS = 0.9f * calcDxRef(SciFi::Tracking::wrongSignPT, velo_state); //make windows a bit too small - FIXME check effect of this, seems wrong
   }
 
@@ -125,8 +125,8 @@ __host__ __device__ void collectAllXHits(
     const int triangle_zone_offset_begin = scifi_hit_count.zone_offset(constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]);
     assert( constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset] < SciFi::Constants::n_zones );
     const int triangle_zone_offset_end   = triangle_zone_offset_begin + scifi_hit_count.zone_number_of_hits(constArrays->uvZones[iZone + constArrays->zoneoffsetpar*triangleOffset]);
-    int itUV1                = getLowerBound(scifi_hits.x0,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);
-    int itUV2                = getLowerBound(scifi_hits.x0,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
+    int itUV1 = getLowerBound(scifi_hits.x0,xMinUV,uv_zone_offset_begin,uv_zone_offset_end);
+    int itUV2 = getLowerBound(scifi_hits.x0,xMinUV,triangle_zone_offset_begin,triangle_zone_offset_end);
 
     const float xPredUVProto =  xInUv - xInZone * zRatio - dx;
     const float maxDxProto   =  SciFi::Tracking::tolYCollectX + fabsf( yInZone ) * SciFi::Tracking::tolYSlopeCollectX;
@@ -187,7 +187,7 @@ __host__ __device__ void improveXCluster(
   const SciFi::Tracking::HitSearchCuts& pars,
   PlaneCounter& planeCounter,
   const int allXHits[SciFi::Tracking::max_x_hits],
-  const SciFi::SciFiHits& scifi_hits ) {
+  const SciFi::Hits& scifi_hits ) {
 
    int itLast = it2 - 1;
     while (it2 < itEnd) {
@@ -224,13 +224,12 @@ __host__ __device__ void improveXCluster(
 //  Select the zones in the allXHits array where we can have a track
 //=========================================================================
 __host__ __device__ void selectXCandidates(
-  const SciFi::SciFiHits& scifi_hits,
-  const SciFi::SciFiHitCount& scifi_hit_count,
+  const SciFi::Hits& scifi_hits,
+  const SciFi::HitCount& scifi_hit_count,
   int allXHits[SciFi::Tracking::max_x_hits],
   int& n_x_hits,
   bool usedHits[SciFi::Tracking::max_x_hits],
   float coordX[SciFi::Tracking::max_x_hits],
-  const VeloUTTracking::TrackUT& veloUTTrack,
   SciFi::Tracking::Track candidate_tracks[SciFi::Tracking::max_candidate_tracks],
   int& n_candidate_tracks,
   const float zRef_track,
@@ -238,7 +237,7 @@ __host__ __device__ void selectXCandidates(
   const float yParams_seed[4],
   const MiniState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars,
-  SciFi::Tracking::Arrays* constArrays,
+  const SciFi::Tracking::Arrays* constArrays,
   int side,
   const bool secondLoop)
 {
@@ -430,11 +429,6 @@ __host__ __device__ void selectXCandidates(
     if (ok) {
       // save track properties in track object
       SciFi::Tracking::Track track;
-      track.state_endvelo.x = velo_state.x;
-      track.state_endvelo.y = velo_state.y;
-      track.state_endvelo.z = velo_state.z;
-      track.state_endvelo.tx = velo_state.tx;
-      track.state_endvelo.ty = velo_state.ty;
       track.chi2 = trackParameters[7];
       for (int k=0;k<7;++k){
         track.trackParams[k] = trackParameters[k];
@@ -470,15 +464,15 @@ __host__ __device__ void selectXCandidates(
 
 
 __host__ __device__ bool addHitsOnEmptyXLayers(
-  const SciFi::SciFiHits& scifi_hits,
-  const SciFi::SciFiHitCount& scifi_hit_count,
+  const SciFi::Hits& scifi_hits,
+  const SciFi::HitCount& scifi_hit_count,
   float trackParameters[SciFi::Tracking::nTrackParams],
   const float xParams_seed[4],
   const float yParams_seed[4],
   bool fullFit,
   int coordToFit[SciFi::Tracking::max_coordToFit],
   int& n_coordToFit,
-  SciFi::Tracking::Arrays* constArrays,
+  const SciFi::Tracking::Arrays* constArrays,
   PlaneCounter& planeCounter,
   SciFi::Tracking::HitSearchCuts& pars,
   int side)

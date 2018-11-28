@@ -46,7 +46,7 @@ __device__ std::tuple<int, int> find_forward_candidates(
     hit_Phis + module.hitStart,
     module.hitNums,
     track_extrapolation_phi,
-    VeloTracking::forward_phi_tolerance
+    Velo::Tracking::forward_phi_tolerance
   );
 
   if (first_candidate != -1) {
@@ -55,7 +55,7 @@ __device__ std::tuple<int, int> find_forward_candidates(
       hit_Phis + module.hitStart + first_candidate,
       module.hitNums - first_candidate,
       track_extrapolation_phi,
-      VeloTracking::forward_phi_tolerance
+      Velo::Tracking::forward_phi_tolerance
     );
     first_candidate += module.hitStart;
     last_candidate = last_candidate==0 ? first_candidate+1 : first_candidate+last_candidate;

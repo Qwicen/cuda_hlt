@@ -9,16 +9,19 @@
 #include "PrepareTracks.h"
 
 int run_forward_on_CPU (
-  std::vector<trackChecker::Tracks>& ft_tracks_events,
-  uint* host_scifi_hits,
-  uint* host_scifi_hit_count,
-  const char* host_scifi_geometry,
-  uint* host_velo_tracks_atomics,
-  uint* host_velo_track_hit_number,
-  uint* host_velo_states,
-  VeloUTTracking::TrackUT * veloUT_tracks,
-  const int * n_veloUT_tracks_events,
-  const uint number_of_events,
-  const std::array<float, 9>& host_inv_clus_res);
+  SciFi::TrackHits* host_scifi_tracks_events,
+  int* host_scifi_n_tracks,
+  const uint* host_scifi_hits,
+  const uint* host_scifi_hit_count,
+  const char* host_scifi_geometry, 
+  const std::array<float, 9>& host_inv_clus_res,
+  const uint* host_velo_tracks_atomics,
+  const uint* host_velo_track_hit_number,
+  const char* host_velo_states,
+  const int * host_atomics_ut,
+  const uint* host_ut_track_hit_number,
+  const float* host_ut_qop,
+  const uint* host_ut_track_velo_indices,
+  const uint number_of_events);
 
 CPU_ALGORITHM(run_forward_on_CPU, cpu_scifi_pr_forward_t)

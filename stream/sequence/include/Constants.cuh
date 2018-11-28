@@ -4,12 +4,10 @@
 #include <cstdint>
 #include <algorithm>
 #include <numeric>
-
 #include "CudaCommon.h"
 #include "VeloDefinitions.cuh"
 #include "ClusteringDefinitions.cuh"
 #include "ClusteringCommon.h"
-#include "VeloUTDefinitions.cuh"
 #include "PrForwardConstants.cuh"
 #include "TMVA_Forward_1.cuh"
 #include "TMVA_Forward_2.cuh"
@@ -27,11 +25,11 @@
  *          The pointers are hard-coded. Feel free to write more as needed.
  */
 struct Constants {
-  std::array<float, VeloUTTracking::n_layers> host_ut_dxDy;
-  std::array<uint, VeloUTTracking::n_layers + 1> host_unique_x_sector_layer_offsets;
+  std::array<float, UT::Constants::n_layers> host_ut_dxDy;
+  std::array<uint, UT::Constants::n_layers + 1> host_unique_x_sector_layer_offsets;
   std::vector<uint> host_unique_x_sector_offsets;
   std::vector<float> host_unique_sector_xs;
-  std::array<uint, VeloUTTracking::n_layers * VeloUTTracking::n_regions_in_layer + 1> host_ut_region_offsets;
+  std::array<uint, UT::Constants::n_layers * UT::Constants::n_regions_in_layer + 1> host_ut_region_offsets;
   std::array<uint8_t, VeloClustering::lookup_table_size> host_candidate_ks;
   std::array<float, 9> host_inv_clus_res;
 
@@ -55,7 +53,7 @@ struct Constants {
   char* dev_ut_boards;
   char* dev_ut_geometry;
   char* dev_scifi_geometry;
-  const char* host_scifi_geometry; //for debugging
+  const char* host_scifi_geometry; 
   PrUTMagnetTool* dev_ut_magnet_tool;
 
   /**
