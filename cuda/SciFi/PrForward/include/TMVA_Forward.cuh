@@ -23,7 +23,7 @@ struct TMVA {
 
 };
   
-__host__ __device__ inline void Transform_1( float iv[7], TMVA* tmva ) 
+__host__ __device__ inline void Transform_1( float iv[7], const TMVA* tmva ) 
  {
    const int cls = 2; //what are the other???
    const int nVar = 7;
@@ -45,7 +45,7 @@ __host__ __device__ inline void Transform_1( float iv[7], TMVA* tmva )
    return 1.0/(1.0+exp(-x));
  }
  
-__host__ __device__ inline float GetMvaValue__( const float inputValues[7], TMVA* tmva )
+__host__ __device__ inline float GetMvaValue__( const float inputValues[7], const TMVA* tmva )
  {
     
    float fWeights0[8]  = {};
@@ -101,7 +101,7 @@ __host__ __device__ inline float GetMvaValue__( const float inputValues[7], TMVA
  // "inputValues" is an array of input values in the same order as the
  // variables given to the constructor
  // WARNING: inputVariables will be modified
- __host__ __device__ inline float GetMvaValue( float iV[7], TMVA* tmva )
+ __host__ __device__ inline float GetMvaValue( float iV[7], const TMVA* tmva )
  {
    //Normalize input
    Transform_1( iV, tmva );

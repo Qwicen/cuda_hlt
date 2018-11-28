@@ -9,10 +9,15 @@ mcdata/*.dat
 mcdata_old
 build
 build*
+debug
+debug*
 *~
 #~
 .#*
 CMakeFiles
 CMakeCache.txt
 configuration/sequences/ConfiguredSequence.h
+run.sh
+setup.sh
 *pyc
+*.root

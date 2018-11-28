@@ -2,7 +2,7 @@
 #include "fitSeeds.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<fitSeeds_t>(
+void SequenceVisitor::set_arguments_size<pv_fit_seeds_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -16,8 +16,8 @@ void SequenceVisitor::set_arguments_size<fitSeeds_t>(
 
 
 template<>
-void SequenceVisitor::visit<fitSeeds_t>(
-  fitSeeds_t& state,
+void SequenceVisitor::visit<pv_fit_seeds_t>(
+  pv_fit_seeds_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
@@ -34,7 +34,7 @@ void SequenceVisitor::visit<fitSeeds_t>(
     arguments.offset<dev_seeds>(),
     arguments.offset<dev_number_seeds>(),
     arguments.offset<dev_kalmanvelo_states>(),
-    arguments.offset<dev_atomics_storage>(),
+    arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>()
   );
 

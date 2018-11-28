@@ -182,109 +182,25 @@ __device__ __host__ bool SciFiChannelID::reversedZone() const{
   return zone == 1 || zone == 2;
 };
 
-
-void SciFiHitCount::typecast_before_prefix_sum(
-  uint* base_pointer,
-  const uint event_number
-) {
-  n_hits_mats = base_pointer + event_number * SciFi::Constants::n_mats;
-}
-
-__device__ __host__
-void SciFiHitCount::typecast_after_prefix_sum(
-  uint* base_pointer,
-  const uint event_number,
-  const uint number_of_events
-) {
-  mat_offsets = base_pointer + event_number * SciFi::Constants::n_mats;
-  n_hits_mats = base_pointer + number_of_events * SciFi::Constants::n_mats + 1 + event_number * SciFi::Constants::n_mats;
-}
-
-SciFiHits::SciFiHits(uint32_t* base,
-  const uint total_number_of_hits,
-  const SciFiGeometry* dev_geom,
-  const float* param_dev_inv_clus_res) {
-  geom = dev_geom;
-  x0 = reinterpret_cast<float*>(base);
-  z0 = reinterpret_cast<float*>(base + total_number_of_hits);
-  m_endPointY = reinterpret_cast<float*>(base + 2 * total_number_of_hits);
-  channel = reinterpret_cast<uint32_t*>(base + 3 * total_number_of_hits);
-  assembled_datatype = reinterpret_cast<uint32_t*>(base + 4 * total_number_of_hits);
-  cluster_reference = reinterpret_cast<uint32_t*>(base + 5 * total_number_of_hits);
-  dev_inv_clus_res = param_dev_inv_clus_res;
-}
-
-__device__ __host__ float SciFiHits::w(uint32_t index) const {
-  assert(pseudoSize(index) < 9 && "Wrong pseudo size.");
-  float werrX = dev_inv_clus_res[pseudoSize(index)];
-  return werrX * werrX;
-};
-
-__device__ __host__ float SciFiHits::dxdy(uint32_t index) const {
-  return geom->dxdy[mat(index)];
-};
-
-__device__ __host__ float SciFiHits::dzdy(uint32_t index) const {
-  return geom->dzdy[mat(index)];
-};
-
-__device__ __host__ float SciFiHits::endPointY(uint32_t index) const {
-  const SciFiChannelID id(channel[index]);
-  float uFromChannel = geom->uBegin[mat(index)] + (2 * id.channel() + 1 + fraction(index)) * geom->halfChannelPitch[mat(index)];
-  if( id.die() ) uFromChannel += geom->dieGap[mat(index)];
-  return geom->mirrorPointY[mat(index)] + geom->ddxY[mat(index)] * uFromChannel;
-}
-
-__device__ __host__ float SciFiHits::yMin(uint32_t index) const {
-  const SciFiChannelID id(channel[index]);
-  return m_endPointY[index] + id.isBottom() * geom->globaldy[mat(index)];
-};
-
-__device__ __host__ float SciFiHits::yMax(uint32_t index) const {
-  const SciFiChannelID id(channel[index]);
-  return m_endPointY[index] + !id.isBottom() * geom->globaldy[mat(index)];
-};
-
-__device__ __host__ uint32_t SciFiHits::LHCbID(uint32_t index) const {
-  return (10u << 28) + channel[index];
-};
-
-__device__ __host__ uint32_t SciFiHits::mat(uint32_t index) const {
-  return assembled_datatype[index] & 0x7ff;
-};
-
-__device__ __host__ uint32_t SciFiHits::pseudoSize(uint32_t index) const{
-  return (assembled_datatype[index] >> 11) & 0xf;
-};
-
-__device__ __host__ uint32_t SciFiHits::planeCode(uint32_t index) const {
-  return (assembled_datatype[index] >> 15) & 0x1f;
-};
-
-__device__ __host__ uint32_t SciFiHits::fraction(uint32_t index) const{
-  return (assembled_datatype[index] >> 20) & 0x1;
-};
-
-
-
-__device__ uint32_t channelInBank(uint32_t c) {
-  return (c >> SciFiRawBankParams::cellShift);
-}
-
-__device__ uint16_t getLinkInBank(uint16_t c) {
-  return (c >> SciFiRawBankParams::linkShift);
-}
-
-__device__ int cell(uint16_t c) {
-  return (c >> SciFiRawBankParams::cellShift     ) & SciFiRawBankParams::cellMaximum;
-}
-
-__device__ int fraction(uint16_t c) {
-  return (c >> SciFiRawBankParams::fractionShift ) & SciFiRawBankParams::fractionMaximum;
-}
-
-__device__ bool cSize(uint16_t c) {
-  return (c >> SciFiRawBankParams::sizeShift     ) & SciFiRawBankParams::sizeMaximum;
-}
+  __device__ uint32_t channelInBank(uint32_t c) {
+    return (c >> SciFiRawBankParams::cellShift);
+  }
+  
+  __device__ uint16_t getLinkInBank(uint16_t c) {
+    return (c >> SciFiRawBankParams::linkShift);
+  }
+  
+  __device__ int cell(uint16_t c) {
+    return (c >> SciFiRawBankParams::cellShift) & SciFiRawBankParams::cellMaximum;
+  }
+  
+  __device__ int fraction(uint16_t c) {
+    return (c >> SciFiRawBankParams::fractionShift) & SciFiRawBankParams::fractionMaximum;
+  }
+  
+  __device__ bool cSize(uint16_t c) {
+    return (c >> SciFiRawBankParams::sizeShift) & SciFiRawBankParams::sizeMaximum;
+  } 
+  
 
 };

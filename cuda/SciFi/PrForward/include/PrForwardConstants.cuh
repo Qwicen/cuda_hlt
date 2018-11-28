@@ -15,6 +15,8 @@
  */
 
 #include "VeloEventModel.cuh"
+#include "SystemOfUnits.h"
+#include <cassert>
 
 namespace SciFi{
   
@@ -147,7 +149,7 @@ namespace SciFi{
       float qop;
       int hitsNum = 0;
       float quality;
-      float chi2;
+      float chi2; 
       // [0]: xRef
       // [1]: (xRef-xMag)/(zRef-zMag)
       // [2]: xParams[0] * dSlope
@@ -158,9 +160,8 @@ namespace SciFi{
       // [7]: chi2
       // [8]: nDoF
       float trackParams[SciFi::Tracking::nTrackParams];
-      Velo::State state_endvelo;
-     
-      __host__  __device__ void addHit( unsigned int hit ) {
+               
+      __host__  __device__ void addHit( int hit ) {
         assert( hitsNum < max_scifi_hits - 1 );
         hit_indices[hitsNum++] = hit;
       }

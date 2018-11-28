@@ -13,7 +13,7 @@ void SequenceVisitor::visit<ut_decode_raw_banks_in_order_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events, VeloUTTracking::n_layers), dim3(64), cuda_stream);
+  state.set_opts(dim3(runtime_options.number_of_events, UT::Constants::n_layers), dim3(64), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_ut_raw_input>(),
     arguments.offset<dev_ut_raw_input_offsets>(),

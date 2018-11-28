@@ -2,7 +2,7 @@
 #include "EstimateInputSize.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<estimate_input_size_t>(
+void SequenceVisitor::set_arguments_size<velo_estimate_input_size_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -10,15 +10,15 @@ void SequenceVisitor::set_arguments_size<estimate_input_size_t>(
 {
   arguments.set_size<dev_raw_input>(runtime_options.host_velopix_events_size);
   arguments.set_size<dev_raw_input_offsets>(runtime_options.host_velopix_event_offsets_size);
-  arguments.set_size<dev_estimated_input_size>(runtime_options.number_of_events * VeloTracking::n_modules + 1);
-  arguments.set_size<dev_module_cluster_num>(runtime_options.number_of_events * VeloTracking::n_modules);
+  arguments.set_size<dev_estimated_input_size>(runtime_options.number_of_events * Velo::Constants::n_modules + 1);
+  arguments.set_size<dev_module_cluster_num>(runtime_options.number_of_events * Velo::Constants::n_modules);
   arguments.set_size<dev_module_candidate_num>(runtime_options.number_of_events);
   arguments.set_size<dev_cluster_candidates>(runtime_options.number_of_events * VeloClustering::max_candidates_event);
 }
 
 template<>
-void SequenceVisitor::visit<estimate_input_size_t>(
-  estimate_input_size_t& state,
+void SequenceVisitor::visit<velo_estimate_input_size_t>(
+  velo_estimate_input_size_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,

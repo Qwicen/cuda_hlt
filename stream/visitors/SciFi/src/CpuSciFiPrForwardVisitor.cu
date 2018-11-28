@@ -2,7 +2,16 @@
 #include "RunForwardCPU.h"
 #include "Tools.h"
 
-DEFINE_EMPTY_SET_ARGUMENTS_SIZE(cpu_scifi_pr_forward_t)
+template<> 
+void SequenceVisitor::set_arguments_size<cpu_scifi_pr_forward_t>(
+  const RuntimeOptions& runtime_options,
+  const Constants& constants,
+  const HostBuffers& host_buffers,
+  argument_manager_t& arguments)
+{
+  arguments.set_size<dev_scifi_tracks>(runtime_options.number_of_events * SciFi::Constants::max_tracks);
+  arguments.set_size<dev_atomics_scifi>(runtime_options.number_of_events * SciFi::num_atomics);
+}
 
 template<>
 void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
@@ -21,6 +30,8 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
   // Run Forward on x86 architecture
   std::vector<uint> host_scifi_hits (host_buffers.scifi_hits_uints());
   std::vector<uint> host_scifi_hit_count (2 * runtime_options.number_of_events * SciFi::Constants::n_mats + 1);
+    
+  host_buffers.scifi_tracks_events.reserve(runtime_options.number_of_events * SciFi::Constants::max_tracks);
 
   cudaCheck(cudaMemcpyAsync(
     host_scifi_hits.data(),
@@ -38,15 +49,37 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
 
   // TODO: Maybe use this rv somewhere?
   int rv = state.invoke(
-    host_buffers.forward_tracks_events,
+    host_buffers.scifi_tracks_events.data(),
+    host_buffers.host_atomics_scifi,
     host_scifi_hits.data(),
     host_scifi_hit_count.data(),
     constants.host_scifi_geometry,
-    host_buffers.host_velo_tracks_atomics,
+    constants.host_inv_clus_res, 
+    host_buffers.host_atomics_velo,
     host_buffers.host_velo_track_hit_number,
-    (uint*) host_buffers.host_velo_states,
-    host_buffers.host_veloUT_tracks,
-    host_buffers.host_atomics_veloUT,
-    runtime_options.number_of_events,
-    constants.host_inv_clus_res);
+    host_buffers.host_velo_states,
+    host_buffers.host_atomics_ut,
+    host_buffers.host_ut_track_hit_number,
+    host_buffers.host_ut_qop,
+    host_buffers.host_ut_track_velo_indices,
+    runtime_options.number_of_events);
+ 
+  // copy SciFi track to device for consolidation
+  cudaCheck(cudaMemcpyAsync(
+    arguments.offset<dev_atomics_scifi>(), 
+    host_buffers.host_atomics_scifi,
+    arguments.size<dev_atomics_scifi>(),
+    cudaMemcpyHostToDevice, 
+    cuda_stream));
+
+  cudaCheck(cudaMemcpyAsync(
+    arguments.offset<dev_scifi_tracks>(),
+    host_buffers.scifi_tracks_events.data(),
+    arguments.size<dev_scifi_tracks>(),
+    cudaMemcpyHostToDevice,
+    cuda_stream));
+  
+  cudaEventRecord(cuda_generic_event, cuda_stream);
+  cudaEventSynchronize(cuda_generic_event);
+  
 }

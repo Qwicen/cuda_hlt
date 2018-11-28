@@ -24,7 +24,7 @@ void SequenceVisitor::visit<copy_velo_track_hit_number_t>(
   state.set_opts(dim3(runtime_options.number_of_events), dim3(512), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_tracks>(),
-    arguments.offset<dev_atomics_storage>(),
+    arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>()
   );
 

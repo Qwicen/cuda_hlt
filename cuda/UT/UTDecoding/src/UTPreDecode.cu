@@ -7,7 +7,7 @@
  * Let's refer to this array as raw_bank_hits.
  */
 __global__ void ut_pre_decode(
-  const uint32_t *dev_ut_raw_input,
+  const char *dev_ut_raw_input,
   const uint32_t *dev_ut_raw_input_offsets,
   const char *ut_boards, const char *ut_geometry,
   const uint *dev_ut_region_offsets,
@@ -19,8 +19,7 @@ __global__ void ut_pre_decode(
 {
   const uint32_t number_of_events = gridDim.x;
   const uint32_t event_number = blockIdx.x;
-  const uint32_t event_offset =
-      dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
+  const uint32_t event_offset = dev_ut_raw_input_offsets[event_number];
 
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
   const uint32_t *hit_offsets =
@@ -28,7 +27,7 @@ __global__ void ut_pre_decode(
   uint32_t *hit_count =
       dev_ut_hit_count + event_number * number_of_unique_x_sectors;
 
-  UTHits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};
+  UT::Hits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};
 
   const UTRawEvent raw_event(dev_ut_raw_input + event_offset);
   const UTBoards boards(ut_boards);
@@ -45,15 +44,15 @@ __global__ void ut_pre_decode(
          i += blockDim.y) {
       // Extract values from raw_data
       const uint16_t value = raw_bank.data[i];
-      const uint32_t fracStrip = (value & UTDecoding::frac_mask) >> UTDecoding::frac_offset;
-      const uint32_t channelID = (value & UTDecoding::chan_mask) >> UTDecoding::chan_offset;
+      const uint32_t fracStrip = (value & UT::Decoding::frac_mask) >> UT::Decoding::frac_offset;
+      const uint32_t channelID = (value & UT::Decoding::chan_mask) >> UT::Decoding::chan_offset;
 
       // Calculate the relative index of the corresponding board
       const uint32_t index = channelID / m_nStripsPerHybrid;
       const uint32_t strip = channelID - (index * m_nStripsPerHybrid) + 1;
 
       const uint32_t fullChanIndex =
-          raw_bank.sourceID * UTDecoding::ut_number_of_sectors_per_board + index;
+          raw_bank.sourceID * UT::Decoding::ut_number_of_sectors_per_board + index;
       const uint32_t station = boards.stations[fullChanIndex] - 1;
       const uint32_t layer = boards.layers[fullChanIndex] - 1;
       const uint32_t detRegion = boards.detRegions[fullChanIndex] - 1;
@@ -61,17 +60,46 @@ __global__ void ut_pre_decode(
 
       // Calculate the index to get the geometry of the board
       const uint32_t idx =
-          station * UTDecoding::ut_number_of_sectors_per_board + layer * 3 + detRegion;
+          station * UT::Decoding::ut_number_of_sectors_per_board + layer * 3 + detRegion;
       const uint32_t idx_offset = dev_ut_region_offsets[idx] + sector;
 
       const uint32_t firstStrip = geometry.firstStrip[idx_offset];
+      const float dp0diX = geometry.dp0diX[idx_offset];
       const float dp0diY = geometry.dp0diY[idx_offset];
       const float p0Y = geometry.p0Y[idx_offset];
 
       const float numstrips = (fracStrip / 4.f) + strip - firstStrip;
 
-      // Calculate just Y value
+      // Make a composed value made out of:
+      // (first 16 bits of yBegin) | (first 16 bits of xAtYEq0_local)
+      // 
+      // Rationale:
+      // Sorting in floats is done the same way as for ints,
+      // the bigger the binary number, the bigger the float (it's a designed property
+      // of the float format). Also, the format of a float is as follows:
+      // * 1 bit: sign
+      // * 8 bits: exponent
+      // * 23 bits: mantissa
+      // By using the first 16 bits of each, we get the sign, exponent and 7 bits
+      // of the mantissa, for both Y and X, which is enough to account for the
+      // cases where yBegin was repeated.
       const float yBegin = p0Y + numstrips * dp0diY;
+      const float xAtYEq0_local = numstrips * dp0diX;
+      const int* yBegin_p = reinterpret_cast<const int*>(&yBegin);
+      const int* xAtYEq0_local_p = reinterpret_cast<const int*>(&xAtYEq0_local);
+
+      // The second value needs to be changed its sign using the 2's complement logic (operator-),
+      // if the signs of both values differ.
+      const short composed_0 = (yBegin_p[0] & 0xFFFF0000) >> 16;
+      short composed_1 = (xAtYEq0_local_p[0] & 0xFFFF0000) >> 16;
+      const bool sign_0 = composed_0 & 0x8000;
+      const bool sign_1 = composed_1 & 0x8000;
+      if (sign_0 ^ sign_1) {
+        composed_1 = -composed_1;
+      }
+
+      const int composed_value = (composed_0 << 16) & 0xFFFF0000 | composed_1 & 0x0000FFFF;
+      const float* composed_value_float = reinterpret_cast<const float*>(&composed_value);
 
       const uint base_sector_group_offset =
           dev_unique_x_sector_offsets[idx_offset];
@@ -83,7 +111,7 @@ __global__ void ut_pre_decode(
 
       const uint hit_index =
           hit_offsets[base_sector_group_offset] + current_hit_count;
-      ut_hits.yBegin[hit_index] = yBegin;
+      ut_hits.yBegin[hit_index] = composed_value_float[0];
 
       // Raw bank hit index:
       // [raw bank 8 bits] [hit id inside raw bank 24 bits]

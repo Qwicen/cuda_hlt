@@ -1,10 +1,10 @@
-#include "../include/ConsolidateTracks.cuh"
+#include "../include/ConsolidateVelo.cuh"
 
 
 /**
  * @brief Calculates the parameters according to a root means square fit
  */
- __device__ Velo::State means_square_fit(
+ __device__ VeloState means_square_fit(
   Velo::Consolidated::Hits& consolidated_hits,
   const float* hit_Xs,
   const float* hit_Ys,
@@ -12,7 +12,7 @@
   const uint* hit_IDs,
   const Velo::TrackHits& track
 ) {
-  Velo::State state;
+  VeloState state;
 
   // Fit parameters
   float s0, sx, sz, sxz, sz2;
@@ -27,7 +27,7 @@
     const auto y = hit_Ys[hit_index];
     const auto z = hit_Zs[hit_index];
     
-    const auto wx = VeloTracking::param_w;
+    const auto wx = Velo::Tracking::param_w;
     const auto wx_t_x = wx * x;
     const auto wx_t_z = wx * z;
     s0 += wx;
@@ -36,7 +36,7 @@
     sxz += wx_t_x * z;
     sz2 += wx_t_z * z;
 
-    const auto wy = VeloTracking::param_w;
+    const auto wy = Velo::Tracking::param_w;
     const auto wy_t_y = wy * y;
     const auto wy_t_z = wy * z;
     u0 += wy;
@@ -95,12 +95,12 @@
       const auto dx = x - consolidated_hits.x[h];
       const auto dy = y - consolidated_hits.y[h];
       
-      ch += dx * dx * VeloTracking::param_w + dy * dy * VeloTracking::param_w;
+      ch += dx * dx * Velo::Tracking::param_w + dy * dy * Velo::Tracking::param_w;
 
       // Nice :)
       // TODO: We can get rid of the X and Y read here
-      // float sum_w_xzi_2 = CL_VeloTracking::param_w * x; // for each hit
-      // float sum_w_xi_2 = CL_VeloTracking::param_w * hit_Xs[hitno]; // for each hit
+      // float sum_w_xzi_2 = CL_Velo::Tracking::param_w * x; // for each hit
+      // float sum_w_xi_2 = CL_Velo::Tracking::param_w * hit_Xs[hitno]; // for each hit
       // ch = (sum_w_xzi_2 - sum_w_xi_2) + (sum_w_yzi_2 - sum_w_yi_2);
 
       nDoF += 2;
@@ -114,30 +114,30 @@
   return state;
 }
 
-__global__ void consolidate_tracks(
-  int* dev_atomics_storage,
+__global__ void consolidate_velo_tracks(
+  int* dev_atomics_velo,
   const Velo::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
-  uint* dev_velo_track_hits,
-  uint* dev_velo_states
+  char* dev_velo_track_hits,
+  char* dev_velo_states
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
-  const Velo::TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
-
+  const Velo::TrackHits* event_tracks = dev_tracks + event_number * Velo::Constants::max_tracks;
+  
   // Consolidated datatypes
-  const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
+  const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_velo, dev_velo_track_hit_number, event_number, number_of_events};
   Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
 
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
   // Pointers to data within event
-  const uint number_of_hits = dev_module_cluster_start[VeloTracking::n_modules * number_of_events];
-  const uint* module_hitStarts = dev_module_cluster_start + event_number * VeloTracking::n_modules;
+  const uint number_of_hits = dev_module_cluster_start[Velo::Constants::n_modules * number_of_events];
+  const uint* module_hitStarts = dev_module_cluster_start + event_number * Velo::Constants::n_modules;
   const uint hit_offset = module_hitStarts[0];
   
   // Order has changed since SortByPhi
@@ -150,8 +150,7 @@ __global__ void consolidate_tracks(
   for (uint i=threadIdx.x; i<number_of_tracks_event; i+=blockDim.x) {
     Velo::Consolidated::Hits consolidated_hits = velo_tracks.get_hits(dev_velo_track_hits, i);
     const Velo::TrackHits track = event_tracks[i];
-
-
+      
     auto populate = [&track] (uint32_t* __restrict__ a, uint32_t* __restrict__ b) {
       for (int i=0; i<track.hitsNum; ++i) {
         const auto hit_index = track.hits[i];
@@ -165,7 +164,7 @@ __global__ void consolidate_tracks(
     populate((uint32_t*) consolidated_hits.LHCbID, (uint32_t*) hit_IDs);
 
     // Calculate and store fit in consolidated container
-    Velo::State beam_state = means_square_fit(
+    VeloState beam_state = means_square_fit(
       consolidated_hits,
       hit_Xs,
       hit_Ys,

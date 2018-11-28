@@ -2,6 +2,7 @@
 
 #include "SciFiDefinitions.cuh"
 #include "PrForwardConstants.cuh"
+#include "SciFiEventModel.cuh"
 
 /**
    Helper functions related to properties of hits on planes
@@ -52,7 +53,7 @@ __host__ __device__ void countPlanesOfXHits(
   const int n_x_hits,
   const int allXHits[SciFi::Tracking::max_x_hits],
   const bool usedHits[SciFi::Tracking::max_x_hits],
-  const SciFi::SciFiHits& scifi_hits );
+  const SciFi::Hits& scifi_hits );
 
 __host__ __device__ void countUnusedXHitsOnPlanes(
   PlaneCounter& lplaneCounter,
@@ -61,7 +62,7 @@ __host__ __device__ void countUnusedXHitsOnPlanes(
   const int n_x_hits,
   const int allXHits[SciFi::Tracking::max_x_hits],
   const bool usedHits[SciFi::Tracking::max_x_hits],
-  const SciFi::SciFiHits& scifi_hits);
+  const SciFi::Hits& scifi_hits);
 
 __host__ __device__ void addXHitsForCandidateWithTooFewPlanes(
   int& itWindowStart,
@@ -77,7 +78,7 @@ __host__ __device__ void addXHitsForCandidateWithTooFewPlanes(
   const bool usedHits[SciFi::Tracking::max_x_hits],
   const int n_x_hits,
   const int allXHits[SciFi::Tracking::max_x_hits],
-  const SciFi::SciFiHits& scifi_hits);
+  const SciFi::Hits& scifi_hits);
 
 __host__ __device__ void collectXHitsToFit(
   const int it1,
@@ -93,7 +94,7 @@ __host__ __device__ void collectXHitsToFit(
 __host__ __device__ int findBestXHitOnEmptyLayer(
   const int itEnd,
   const int itH,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const float maxX,
   const float xPred);
 
@@ -147,7 +148,7 @@ __host__ __device__ inline int getLowerBound(float range[],float value,int start
 __host__ __device__ bool matchStereoHit(
   const int itUV1,
   const int uv_zone_offset_end,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const int xMinUV,
   const int xMaxUV );
 
@@ -155,13 +156,13 @@ __host__ __device__ bool matchStereoHitWithTriangle(
   const int itUV2,
   const int triangle_zone_offset_end,
   const float yInZone,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const int xMinUV,
   const int xMaxUV,
   const int side );
 
 __host__ __device__ void removeOutlier(
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   PlaneCounter& planeCounter,
   int* coordToFit,
   int& n_coordToFit,
@@ -170,7 +171,7 @@ __host__ __device__ void removeOutlier(
 __host__ __device__ void findStereoHitsWithinXTol(
   const int itBegin,
   const int itEnd,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const float yZone,
   const float xPred,
   const float dxTol,
@@ -187,7 +188,7 @@ __host__ __device__ void findStereoHitClusterByDx(
   float stereoCoords[SciFi::Tracking::max_stereo_hits],
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   const int n_stereoHits,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   float& sumCoord,
   int& first_hit);
 
@@ -199,12 +200,12 @@ __host__ __device__ void cleanStereoHitCluster(
   const float stereoCoords[SciFi::Tracking::max_stereo_hits],
   float& sumCoord,
   PlaneCounter& planeCounter,
-  const SciFi::SciFiHits& scifi_hits);
+  const SciFi::Hits& scifi_hits);
 
 __host__ __device__ int findBestStereoHitOnEmptyLayer(
   const int itBegin,
   const int itEnd,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const float yZone,
   const float xPred,
   const float dxTol,

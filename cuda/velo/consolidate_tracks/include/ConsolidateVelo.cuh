@@ -6,7 +6,7 @@
 #include "Handler.cuh"
 #include <cstdint>
 
-__device__ Velo::State means_square_fit(
+__device__ VeloState means_square_fit(
   Velo::Consolidated::Hits& consolidated_hits,
   const float* hit_Xs,
   const float* hit_Ys,
@@ -15,15 +15,15 @@ __device__ Velo::State means_square_fit(
   const Velo::TrackHits& track
 );
 
-__global__ void consolidate_tracks(
-  int* dev_atomics_storage,
+__global__ void consolidate_velo_tracks(
+  int* dev_atomics_velo,
   const Velo::TrackHits* dev_tracks,
   uint* dev_velo_track_hit_number,
   uint* dev_velo_cluster_container,
   uint* dev_module_cluster_start,
   uint* dev_module_cluster_num,
-  uint* dev_velo_track_hits,
-  uint* dev_velo_states
+  char* dev_velo_track_hits,
+  char* dev_velo_states
 );
 
-ALGORITHM(consolidate_tracks, consolidate_tracks_t)
+ALGORITHM(consolidate_velo_tracks, consolidate_velo_tracks_t)

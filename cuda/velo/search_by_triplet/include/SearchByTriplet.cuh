@@ -19,11 +19,11 @@ __global__ void search_by_triplet(
   uint* dev_tracks_to_follow,
   Velo::TrackletHits* dev_weak_tracks,
   bool* dev_hit_used,
-  int* dev_atomics_storage,
+  int* dev_atomics_velo,
   short* dev_h0_candidates,
   short* dev_h2_candidates,
   unsigned short* dev_rel_indices,
   const float* dev_velo_module_zs
 );
 
-ALGORITHM(search_by_triplet, search_by_triplet_t)
+ALGORITHM(search_by_triplet, velo_search_by_triplet_t)

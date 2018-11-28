@@ -12,7 +12,7 @@ __global__ void scifi_calculate_cluster_count(
 
   const SciFiRawEvent event(scifi_raw_input + scifi_raw_input_offsets[event_number]);
   const SciFiGeometry geom(scifi_geometry);
-  SciFiHitCount hit_count;
+  SciFi::HitCount hit_count;
   hit_count.typecast_before_prefix_sum(scifi_hit_count, event_number);
 
   // NO version checking. Be careful, as v5 is assumed.

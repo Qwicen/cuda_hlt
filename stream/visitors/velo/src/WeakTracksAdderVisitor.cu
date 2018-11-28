@@ -1,11 +1,11 @@
 #include "SequenceVisitor.cuh"
 #include "WeakTracksAdder.cuh"
 
-DEFINE_EMPTY_SET_ARGUMENTS_SIZE(weak_tracks_adder_t)
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(velo_weak_tracks_adder_t)
 
 template<>
-void SequenceVisitor::visit<weak_tracks_adder_t>(
-  weak_tracks_adder_t& state,
+void SequenceVisitor::visit<velo_weak_tracks_adder_t>(
+  velo_weak_tracks_adder_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
@@ -21,7 +21,7 @@ void SequenceVisitor::visit<weak_tracks_adder_t>(
     arguments.offset<dev_tracks>(),
     arguments.offset<dev_weak_tracks>(),
     arguments.offset<dev_hit_used>(),
-    arguments.offset<dev_atomics_storage>()
+    arguments.offset<dev_atomics_velo>()
   );
   
   state.invoke();

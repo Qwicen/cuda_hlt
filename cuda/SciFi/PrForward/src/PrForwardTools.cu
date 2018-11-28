@@ -5,14 +5,15 @@
    do global 1D Hough transform
    use TMVAs to obtain track quality */
 __host__ __device__ void find_forward_tracks(
-  const SciFi::SciFiHits& scifi_hits,
-  const SciFi::SciFiHitCount& scifi_hit_count,
-  const VeloUTTracking::TrackUT& veloUTTrack,
-  SciFi::Track* outputTracks,
+  const SciFi::Hits& scifi_hits,
+  const SciFi::HitCount& scifi_hit_count,
+  const float qop_ut,
+  const int i_veloUT_track,
+  SciFi::TrackHits* outputTracks,
   uint* n_forward_tracks,
-  SciFi::Tracking::TMVA* tmva1,
-  SciFi::Tracking::TMVA* tmva2,
-  SciFi::Tracking::Arrays* constArrays,
+  const SciFi::Tracking::TMVA* tmva1,
+  const SciFi::Tracking::TMVA* tmva2,
+  const SciFi::Tracking::Arrays* constArrays,
   const MiniState& velo_state
 ) {
 
@@ -20,8 +21,6 @@ __host__ __device__ void find_forward_tracks(
   // here, which I am removing because this should be done explicitly through
   // track selectors if we do it at all, not hacked inside the tracking code
 
-  // Some values related to the forward track which were stored in a dedicated
-  // forward track class, let's see if I can get rid of that here
   const float zRef_track    = SciFi::Tracking::zReference;
   const float xAtRef = xFromVelo( zRef_track, velo_state );
   const float xParams_seed[4] = {xAtRef, velo_state.tx, 0.f, 0.f};
@@ -40,12 +39,12 @@ __host__ __device__ void find_forward_tracks(
     collectAllXHits(
       scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
       coordX[1], xParams_seed, yParams_seed, constArrays,
-      velo_state, veloUTTrack.qop, 1);
+      velo_state, qop_ut, 1); 
   if(yAtRef< 5.f)
     collectAllXHits(
       scifi_hits, scifi_hit_count, allXHits[0], n_x_hits[0],
       coordX[0], xParams_seed, yParams_seed, constArrays,
-      velo_state, veloUTTrack.qop, -1);
+      velo_state, qop_ut, -1);
 
   SciFi::Tracking::Track candidate_tracks[SciFi::Tracking::max_candidate_tracks];
   int n_candidate_tracks = 0;
@@ -53,13 +52,13 @@ __host__ __device__ void find_forward_tracks(
 
   if(yAtRef>-5.f)selectXCandidates(
     scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
-    usedHits[1], coordX[1], veloUTTrack,
+    usedHits[1], coordX[1],
     candidate_tracks, n_candidate_tracks,
     zRef_track, xParams_seed, yParams_seed,
     velo_state, pars_first,  constArrays, 1, false);
   if(yAtRef< 5.f)selectXCandidates(
     scifi_hits, scifi_hit_count, allXHits[0], n_x_hits[0],
-    usedHits[0], coordX[0], veloUTTrack,
+    usedHits[0], coordX[0],
     candidate_tracks, n_candidate_tracks,
     zRef_track, xParams_seed, yParams_seed,
     velo_state, pars_first, constArrays, -1, false);
@@ -74,7 +73,7 @@ __host__ __device__ void find_forward_tracks(
     selected_tracks,
     n_selected_tracks,
     xParams_seed, yParams_seed,
-    velo_state, veloUTTrack.qop,
+    velo_state, qop_ut,
     pars_first, tmva1, tmva2, constArrays, false);
 
   bool ok = false;
@@ -90,13 +89,13 @@ __host__ __device__ void find_forward_tracks(
   if (!ok && SciFi::Tracking::secondLoop) { // If you found nothing begin the 2nd loop
     if(yAtRef>-5.f)selectXCandidates(
       scifi_hits, scifi_hit_count, allXHits[1], n_x_hits[1],
-      usedHits[1], coordX[1], veloUTTrack,
+      usedHits[1], coordX[1],
       candidate_tracks2, n_candidate_tracks2,
       zRef_track, xParams_seed, yParams_seed,
       velo_state, pars_second, constArrays, 1, true);
     if(yAtRef< 5.f)selectXCandidates(
       scifi_hits, scifi_hit_count, allXHits[0], n_x_hits[0],
-      usedHits[0], coordX[0], veloUTTrack,
+      usedHits[0], coordX[0],
       candidate_tracks2, n_candidate_tracks2,
       zRef_track, xParams_seed, yParams_seed,
       velo_state, pars_second, constArrays, -1, true);
@@ -111,7 +110,7 @@ __host__ __device__ void find_forward_tracks(
       selected_tracks2,
       n_selected_tracks2,
       xParams_seed, yParams_seed,
-      velo_state, veloUTTrack.qop,
+      velo_state, qop_ut,
       pars_second, tmva1, tmva2, constArrays, true);
 
     for ( int i_track = 0; i_track < n_selected_tracks2; ++i_track ) {
@@ -139,47 +138,42 @@ __host__ __device__ void find_forward_tracks(
 
     }
 
+    const uint event_hit_offset = scifi_hit_count.mat_offsets[0]; 
     float minQuality = SciFi::Tracking::maxQuality;
     for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
       SciFi::Tracking::Track& track = selected_tracks[i_track];
       if(track.quality + SciFi::Tracking::deltaQuality < minQuality)
         minQuality = track.quality + SciFi::Tracking::deltaQuality;
       if(!(track.quality > minQuality)) {
-
-        SciFi::Track tr = makeTrack( track );
-        // add LHCbIDs from Velo and UT part of the track
-        for ( int i_hit = 0; i_hit < veloUTTrack.hitsNum; ++i_hit ) {
-          tr.addLHCbID( veloUTTrack.LHCbIDs[i_hit] );
-        }
-        if ( tr.hitsNum >= VeloUTTracking::max_track_size )
-          printf("veloUT track hits Num = %u \n", tr.hitsNum );
-        assert( tr.hitsNum < VeloUTTracking::max_track_size );
-
+        
+        SciFi::TrackHits tr = makeTrack( track );
+        tr.UTTrackIndex = i_veloUT_track;
         // add LHCbIDs from SciFi part of the track
         for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
-          tr.addLHCbID( scifi_hits.LHCbID( track.hit_indices[i_hit] ) );
+          // save local hit index within event to be able to use short
+          const int local_hit_index = track.hit_indices[i_hit] - event_hit_offset; 
+          tr.addHit(local_hit_index);
         }
-        assert( tr.hitsNum < SciFi::max_track_size );
+        assert( tr.hitsNum < SciFi::Constants::max_track_size );
 
-        if ( *n_forward_tracks >= SciFi::max_tracks )
+        if ( *n_forward_tracks >= SciFi::Constants::max_tracks )
           printf("n_forward_tracks = %u \n", *n_forward_tracks);
-        assert(*n_forward_tracks < SciFi::max_tracks );
+        assert(*n_forward_tracks < SciFi::Constants::max_tracks );
 #ifndef __CUDA_ARCH__
         outputTracks[(*n_forward_tracks)++] = tr;
 #else
         uint n_tracks = atomicAdd(n_forward_tracks, 1);
-        assert( n_tracks < SciFi::max_tracks );
+        assert( n_tracks < SciFi::Constants::max_tracks );
         outputTracks[n_tracks] = tr;
 #endif
       }
     }
   }
-
 }
 
 // Turn SciFi::Tracking::Track into a SciFi::Track
-__host__ __device__ SciFi::Track makeTrack( SciFi::Tracking::Track track ) {
-  SciFi::Track tr;
+__host__ __device__ SciFi::TrackHits makeTrack( SciFi::Tracking::Track track ) {
+  SciFi::TrackHits tr;
   tr.qop     = track.qop;
   tr.chi2    = track.chi2;
 
@@ -193,8 +187,8 @@ __host__ __device__ SciFi::Track makeTrack( SciFi::Tracking::Track track ) {
 //  save everything in track candidate folder
 //=========================================================================
 __host__ __device__ void selectFullCandidates(
-  const SciFi::SciFiHits& scifi_hits,
-  const SciFi::SciFiHitCount& scifi_hit_count,
+  const SciFi::Hits& scifi_hits,
+  const SciFi::HitCount& scifi_hit_count,
   SciFi::Tracking::Track* candidate_tracks,
   int& n_candidate_tracks,
   SciFi::Tracking::Track* selected_tracks,
@@ -204,10 +198,10 @@ __host__ __device__ void selectFullCandidates(
   MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars,
-  SciFi::Tracking::TMVA* tmva1,
-  SciFi::Tracking::TMVA* tmva2,
-  SciFi::Tracking::Arrays* constArrays,
-  bool secondLoop)
+  const SciFi::Tracking::TMVA* tmva1,
+  const SciFi::Tracking::TMVA* tmva2,
+  const SciFi::Tracking::Arrays* constArrays,
+  const bool secondLoop)
 {
 
   PlaneCounter planeCounter;
@@ -290,8 +284,8 @@ __host__ __device__ void selectFullCandidates(
 
       if(quality < SciFi::Tracking::maxQuality){
         cand->quality = quality;
-        cand->set_qop( qOverP );
-        if (!secondLoop)
+        cand->qop = qOverP;
+        if (!secondLoop) 
           assert (n_selected_tracks < SciFi::Tracking::max_selected_tracks );
         else if (secondLoop)
           assert (n_selected_tracks < SciFi::Tracking::max_tracks_second_loop );

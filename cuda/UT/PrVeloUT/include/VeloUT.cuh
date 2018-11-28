@@ -1,20 +1,21 @@
 #pragma once
 
 #include "VeloDefinitions.cuh"
-#include "VeloUTDefinitions.cuh"
+#include "UTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "PrVeloUT.cuh"
 #include "Handler.cuh"
+#include "UTEventModel.cuh"
 
 __global__ void veloUT(
   uint* dev_ut_hits,
   uint* dev_ut_hit_offsets,
-  int* dev_atomics_storage,
+  int* dev_atomics_velo,
   uint* dev_velo_track_hit_number,
-  uint* dev_velo_track_hits,
-  uint* dev_velo_states,
-  VeloUTTracking::TrackUT* dev_veloUT_tracks,
-  int* dev_atomics_veloUT,
+  char* dev_velo_track_hits,
+  char* dev_velo_states,
+  UT::TrackHits* dev_veloUT_tracks,
+  int* dev_atomics_ut,
   PrUTMagnetTool* dev_ut_magnet_tool,
   float* dev_ut_dxDy,
   const uint* dev_unique_x_sector_layer_offsets,

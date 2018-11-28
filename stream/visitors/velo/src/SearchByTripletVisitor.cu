@@ -2,24 +2,24 @@
 #include "SearchByTriplet.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<search_by_triplet_t>(
+void SequenceVisitor::set_arguments_size<velo_search_by_triplet_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 {
-  arguments.set_size<dev_tracks>(runtime_options.number_of_events * VeloTracking::max_tracks);
-  arguments.set_size<dev_tracklets>(runtime_options.number_of_events * VeloTracking::ttf_modulo);
-  arguments.set_size<dev_tracks_to_follow>(runtime_options.number_of_events * VeloTracking::ttf_modulo);
-  arguments.set_size<dev_weak_tracks>(runtime_options.number_of_events * VeloTracking::max_weak_tracks);
+  arguments.set_size<dev_tracks>(runtime_options.number_of_events * Velo::Constants::max_tracks);
+  arguments.set_size<dev_tracklets>(runtime_options.number_of_events * Velo::Tracking::ttf_modulo);
+  arguments.set_size<dev_tracks_to_follow>(runtime_options.number_of_events * Velo::Tracking::ttf_modulo);
+  arguments.set_size<dev_weak_tracks>(runtime_options.number_of_events * Velo::Tracking::max_weak_tracks);
   arguments.set_size<dev_hit_used>(host_buffers.host_total_number_of_velo_clusters[0]);
-  arguments.set_size<dev_atomics_storage>(runtime_options.number_of_events * VeloTracking::num_atomics);
-  arguments.set_size<dev_rel_indices>(runtime_options.number_of_events * 2 * VeloTracking::max_numhits_in_module);
+  arguments.set_size<dev_atomics_velo>(runtime_options.number_of_events * Velo::num_atomics);
+  arguments.set_size<dev_rel_indices>(runtime_options.number_of_events * 2 * Velo::Constants::max_numhits_in_module);
 }
 
 template<>
-void SequenceVisitor::visit<search_by_triplet_t>(
-  search_by_triplet_t& state,
+void SequenceVisitor::visit<velo_search_by_triplet_t>(
+  velo_search_by_triplet_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
@@ -38,7 +38,7 @@ void SequenceVisitor::visit<search_by_triplet_t>(
     arguments.offset<dev_tracks_to_follow>(),
     arguments.offset<dev_weak_tracks>(),
     arguments.offset<dev_hit_used>(),
-    arguments.offset<dev_atomics_storage>(),
+    arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_h0_candidates>(),
     arguments.offset<dev_h2_candidates>(),
     arguments.offset<dev_rel_indices>(),

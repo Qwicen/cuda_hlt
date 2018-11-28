@@ -2,7 +2,7 @@
 #include "CalculatePhiAndSort.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<calculate_phi_and_sort_t>(
+void SequenceVisitor::set_arguments_size<velo_calculate_phi_and_sort_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -12,8 +12,8 @@ void SequenceVisitor::set_arguments_size<calculate_phi_and_sort_t>(
 }
 
 template<>
-void SequenceVisitor::visit<calculate_phi_and_sort_t>(
-  calculate_phi_and_sort_t& state,
+void SequenceVisitor::visit<velo_calculate_phi_and_sort_t>(
+  velo_calculate_phi_and_sort_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
