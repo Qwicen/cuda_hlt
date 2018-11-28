@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SciFiDefinitions.cuh"
+#include "SciFiEventModel.cuh"
 #include "Handler.cuh"
 
 __global__ void scifi_calculate_cluster_count_v4(

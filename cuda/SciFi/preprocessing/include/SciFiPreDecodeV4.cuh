@@ -1,10 +1,11 @@
 #pragma once
 
 #include "SciFiDefinitions.cuh"
+#include "SciFiEventModel.cuh"
 #include "Handler.cuh"
 
 __device__ void store_sorted_cluster_reference_v4 (
-  const SciFi::SciFiHitCount& hit_count,
+  const SciFi::HitCount& hit_count,
   const uint32_t uniqueMat,
   const uint32_t chan,
   const uint32_t* shared_mat_offsets,
@@ -13,7 +14,7 @@ __device__ void store_sorted_cluster_reference_v4 (
   const int condition_1,
   const int condition_2,
   const int delta,
-  SciFi::SciFiHits& hits);
+  SciFi::Hits& hits);
 
 __global__ void scifi_pre_decode_v4(
   char *scifi_events,

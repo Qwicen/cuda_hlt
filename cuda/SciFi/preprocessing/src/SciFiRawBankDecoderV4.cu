@@ -6,12 +6,12 @@ using namespace SciFi;
 // Merge of PrStoreFTHit and RawBankDecoder.
 __device__ void make_cluster_v4 (
   const int hit_index,
-  const SciFiHitCount& hit_count,
+  const SciFi::HitCount& hit_count,
   const SciFiGeometry& geom,
   uint32_t chan,
   uint8_t fraction,
   uint8_t pseudoSize,
-  SciFiHits& hits)
+  SciFi::Hits& hits)
 {
   const SciFi::SciFiChannelID id {chan};
 
@@ -57,8 +57,8 @@ __global__ void scifi_raw_bank_decoder_v4(
   const SciFiGeometry geom {scifi_geometry};
   const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
 
-  SciFiHits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mats], &geom, dev_inv_clus_res};
-  SciFiHitCount hit_count;
+  SciFi::Hits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mats], &geom, dev_inv_clus_res};
+  SciFi::HitCount hit_count;
   hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
   const uint number_of_hits_in_event = hit_count.event_number_of_hits();
 

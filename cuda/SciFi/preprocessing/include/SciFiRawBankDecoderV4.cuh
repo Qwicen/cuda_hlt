@@ -1,17 +1,18 @@
 #pragma once
 
 #include "SciFiDefinitions.cuh"
+#include "SciFiEventModel.cuh"
 #include "Handler.cuh"
 
 __device__ void make_cluster_v4 (
   const int hit_index,
-  const SciFi::SciFiHitCount& hit_count,
+  const SciFi::HitCount& hit_count,
   const SciFi::SciFiGeometry& geom,
   uint32_t chan,
   uint8_t fraction,
   uint8_t pseudoSize,
   uint32_t uniqueMat,
-  SciFi::SciFiHits& hits);
+  SciFi::Hits& hits);
 
 __global__ void scifi_raw_bank_decoder_v4(
   char *scifi_events,
