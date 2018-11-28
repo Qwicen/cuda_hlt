@@ -455,7 +455,7 @@ void findPVs(
         if( number_of_subclusters == 0 ) {
           //FIXME: still need to get the largest maximum!
           if( extrema[1].value >= minpeak ) {
-            clusters[number_of_clusters] =  Cluster(extrema[0].index, extrema[number_of_extrema].index, extrema[1].index);
+            clusters[number_of_clusters] =  Cluster(extrema[0].index, extrema[number_of_extrema-1].index, extrema[1].index);
             number_of_clusters++;
           }
         } else {
