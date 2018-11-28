@@ -7,6 +7,7 @@
 #include "PrVeloUT.cuh"
 #include "HitUtils.cuh"
 #include "ParabolaFitting.cuh"
+#include "SciFiEventModel.cuh"
 
 /**
    Helper functions related to track properties
@@ -30,28 +31,23 @@ __host__ __device__ inline float evalCubicParameterization(const float params[4]
 __host__ __device__ void getTrackParameters (
   float xAtRef,
   MiniState velo_state,
-  SciFi::Tracking::Arrays* constArrays,
+  const SciFi::Tracking::Arrays* constArrays,
   float trackParams[SciFi::Tracking::nTrackParams]);
 
 __host__ __device__ float calcqOverP (
   float bx,
-  SciFi::Tracking::Arrays* constArrays,
+  const SciFi::Tracking::Arrays* constArrays,
   MiniState velo_state );
 
 __host__ __device__ float zMagnet(
   MiniState velo_state,
-  SciFi::Tracking::Arrays* constArrays);
-
-__host__ __device__ void covariance (
-  FullState& state,
-  SciFi::Tracking::Arrays* constArrays,
-  const float qOverP );
+  const SciFi::Tracking::Arrays* constArrays);
 
 __host__ __device__ float calcDxRef(float pt, MiniState velo_state);
 
 __host__ __device__ float trackToHitDistance(
   float trackParameters[SciFi::Tracking::nTrackParams],
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   int hit );
 
 __host__ __device__ static inline bool lowerByQuality(
@@ -62,11 +58,11 @@ __host__ __device__ static inline bool lowerByQuality(
 
 __host__ __device__ float chi2XHit(
   const float parsX[4],
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const int hit );
 
 __host__ __device__ bool quadraticFitX(
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams],
   int coordToFit[SciFi::Tracking::max_coordToFit],
   int& n_coordToFit,
@@ -74,11 +70,11 @@ __host__ __device__ bool quadraticFitX(
   SciFi::Tracking::HitSearchCuts& pars_cur);
 
 __host__ __device__ bool fitYProjection(
-  const SciFi::SciFiHits& scifi_hits,  
+  const SciFi::Hits& scifi_hits,  
   SciFi::Tracking::Track& track,
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits,
   PlaneCounter& planeCounter,
   MiniState velo_state,
-  SciFi::Tracking::Arrays* constArrays,
+  const SciFi::Tracking::Arrays* constArrays,
   SciFi::Tracking::HitSearchCuts& pars_cur); 

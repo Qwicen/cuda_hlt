@@ -17,7 +17,7 @@
 #include "TMVA_Forward_2.cuh"
 #include "SciFiDefinitions.cuh"
 #include "VeloDefinitions.cuh"
-#include "VeloUTDefinitions.cuh"
+#include "UTDefinitions.cuh"
 #include "PrVeloUT.cuh"
 #include "PrForwardConstants.cuh"
 #include "TrackUtils.cuh"
@@ -27,21 +27,24 @@
 #include "FindStereoHits.cuh"
 #include "VeloEventModel.cuh"
 #include "VeloConsolidated.cuh"
+#include "UTConsolidated.cuh"
+#include "SciFiEventModel.cuh"
 
 __host__ __device__ void find_forward_tracks(
-  const SciFi::SciFiHits& scifi_hits,
-  const SciFi::SciFiHitCount& scifi_hit_count,
-  const VeloUTTracking::TrackUT& veloUTTrack,
-  SciFi::Track* outputTracks,
+  const SciFi::Hits& scifi_hits,
+  const SciFi::HitCount& scifi_hit_count,
+  const float qop_ut,
+  const int i_veloUT_track,
+  SciFi::TrackHits* outputTracks,
   uint* n_forward_tracks,
-  SciFi::Tracking::TMVA* tmva1,
-  SciFi::Tracking::TMVA* tmva2,
-  SciFi::Tracking::Arrays* constArrays,
+  const SciFi::Tracking::TMVA* tmva1,
+  const SciFi::Tracking::TMVA* tmva2,
+  const SciFi::Tracking::Arrays* constArrays,
   const MiniState& velo_state);
 
 __host__ __device__ void selectFullCandidates(
-  const SciFi::SciFiHits& scifi_hits,
-  const SciFi::SciFiHitCount& scifi_hit_count,
+  const SciFi::Hits& scifi_hits,
+  const SciFi::HitCount& scifi_hit_count,
   SciFi::Tracking::Track* candidate_tracks,
   int& n_candidate_tracks,
   SciFi::Tracking::Track* selected_tracks,
@@ -51,12 +54,12 @@ __host__ __device__ void selectFullCandidates(
   MiniState velo_state,
   const float VeloUT_qOverP,
   SciFi::Tracking::HitSearchCuts& pars_cur,
-  SciFi::Tracking::TMVA* tmva1,
-  SciFi::Tracking::TMVA* tmva2,
-  SciFi::Tracking::Arrays* constArrays,
-  bool secondLoop);
+  const SciFi::Tracking::TMVA* tmva1,
+  const SciFi::Tracking::TMVA* tmva2,
+  const SciFi::Tracking::Arrays* constArrays,
+  const bool secondLoop);
 
-__host__ __device__ SciFi::Track makeTrack( SciFi::Tracking::Track track ); 
+__host__ __device__ SciFi::TrackHits makeTrack( SciFi::Tracking::Track track ); 
 
 template<class T>
 __host__ __device__ void sort_tracks( 

@@ -89,7 +89,8 @@ void SequenceVisitor::visit<prefix_sum_scan_velo_track_hit_number_t>(
   state.invoke();
 
   // Fetch total number of hits accumulated with all tracks
-  cudaCheck(cudaMemcpyAsync(host_buffers.host_accumulated_number_of_hits_in_velo_tracks,
+  cudaCheck(cudaMemcpyAsync(
+    host_buffers.host_accumulated_number_of_hits_in_velo_tracks,
     arguments.offset<dev_velo_track_hit_number>() + host_buffers.host_number_of_reconstructed_velo_tracks[0],
     sizeof(uint),
     cudaMemcpyDeviceToHost,

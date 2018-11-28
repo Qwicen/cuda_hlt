@@ -2,7 +2,7 @@
 #include "getSeeds.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<getSeeds_t>(
+void SequenceVisitor::set_arguments_size<pv_get_seeds_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -16,8 +16,8 @@ void SequenceVisitor::set_arguments_size<getSeeds_t>(
 
 
 template<>
-void SequenceVisitor::visit<getSeeds_t>(
-  getSeeds_t& state,
+void SequenceVisitor::visit<pv_get_seeds_t>(
+  pv_get_seeds_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
@@ -29,7 +29,7 @@ void SequenceVisitor::visit<getSeeds_t>(
   state.set_opts(dim3(runtime_options.number_of_events), 1, cuda_stream);
   state.set_arguments(
     arguments.offset<dev_kalmanvelo_states>(),
-    arguments.offset<dev_atomics_storage>(),
+    arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>(),
     arguments.offset<dev_seeds>(),
     arguments.offset<dev_number_seeds>()

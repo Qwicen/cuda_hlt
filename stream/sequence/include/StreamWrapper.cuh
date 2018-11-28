@@ -4,7 +4,7 @@
 #include <string>
 #include <stdint.h>
 
-#include "VeloUTDefinitions.cuh"
+#include "UTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "SciFiDefinitions.cuh"
 #include "Logger.h"

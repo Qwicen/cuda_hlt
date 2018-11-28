@@ -150,7 +150,7 @@ __device__ void process_modules(
     const auto ttf_element = blockDim.x * i + threadIdx.x;
 
     if (ttf_element < diff_ttf) {
-      const int fulltrackno = tracks_to_follow[(prev_ttf + ttf_element) % VeloTracking::ttf_modulo];
+      const int fulltrackno = tracks_to_follow[(prev_ttf + ttf_element) % Velo::Tracking::ttf_modulo];
       const bool track_flag = (fulltrackno & 0x80000000) == 0x80000000;
       const int trackno = fulltrackno & 0x0FFFFFFF;
 

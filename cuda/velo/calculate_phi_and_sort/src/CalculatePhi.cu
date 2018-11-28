@@ -18,11 +18,11 @@ __device__ void calculate_phi_side(
   const unsigned int starting_module,
   T calculate_hit_phi
 ) {
-  for (unsigned int module=starting_module; module<VeloTracking::n_modules; module += 2) {
+  for (unsigned int module=starting_module; module<Velo::Constants::n_modules; module += 2) {
     const auto hit_start = module_hitStarts[module];
     const auto hit_num = module_hitNums[module];
 
-    assert(hit_num < VeloTracking::max_numhits_in_module);
+    assert(hit_num < Velo::Constants::max_numhits_in_module);
 
     // Calculate phis
     for (unsigned int i=0; i<(hit_num + blockDim.x - 1) / blockDim.x; ++i) {
@@ -51,7 +51,7 @@ __device__ void calculate_phi_side(
           // Stable sorting
           position += phi>other_phi || (phi==other_phi && hit_rel_id>j);
         }
-        assert(position < VeloTracking::max_numhits_in_module);
+        assert(position < Velo::Constants::max_numhits_in_module);
 
         // Store it in hit permutations and in hit_Phis, already ordered
         const auto global_position = hit_start + position;
@@ -76,7 +76,7 @@ __device__ void calculate_phi(
   float* hit_Phis,
   uint* hit_permutations
 ) {
-  __shared__ float shared_hit_phis [VeloTracking::max_numhits_in_module];
+  __shared__ float shared_hit_phis [Velo::Constants::max_numhits_in_module];
 
   // Odd modules
   calculate_phi_side(

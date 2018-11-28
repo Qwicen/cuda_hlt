@@ -4,11 +4,11 @@
  */
 SEQUENCE_T(
   // Velo data preparation
-  estimate_input_size_t,
+  velo_estimate_input_size_t,
   prefix_sum_reduce_velo_clusters_t,
   prefix_sum_single_block_velo_clusters_t,
   prefix_sum_scan_velo_clusters_t,
-  masked_velo_clustering_t,
+  velo_masked_clustering_t,
 
   // UT data preparation
   ut_calculate_number_of_hits_t,

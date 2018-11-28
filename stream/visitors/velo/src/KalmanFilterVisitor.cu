@@ -9,7 +9,7 @@ void SequenceVisitor::set_arguments_size<velo_kalman_fit_t>(
   argument_manager_t& arguments)
 {
   // Set arguments size
-  arguments.set_size<dev_kalmanvelo_states>(host_buffers.host_number_of_reconstructed_velo_tracks[0] * sizeof(Velo::State) / sizeof(uint));
+  arguments.set_size<dev_kalmanvelo_states>(host_buffers.host_number_of_reconstructed_velo_tracks[0] * sizeof(VeloState));
 }
 
 
@@ -32,7 +32,7 @@ void SequenceVisitor::visit<velo_kalman_fit_t>(
 
 
   state.set_arguments(
-    arguments.offset<dev_atomics_storage>(),
+    arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>(),
     arguments.offset<dev_velo_track_hits>(),
     arguments.offset<dev_velo_states>(),

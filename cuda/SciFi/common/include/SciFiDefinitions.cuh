@@ -9,20 +9,18 @@
 #include "Common.h"
 #include "Logger.h"
 #include "VeloDefinitions.cuh"
-#include "VeloEventModel.cuh"
-#include "VeloUTDefinitions.cuh"
+#include "UTDefinitions.cuh"
 #include "PrForwardConstants.cuh"
+#include "States.cuh"
 
 #include "assert.h"
 
-struct FullState {
-    float x, y, tx, ty, qOverP = 0.;
-    float c00, c11, c22, c33, c44, c10, c20, c30, c40, c21, c31, c41, c32, c42, c43 = 0.;
-    float chi2 = 0.;
-    float z = 0.;
-  };
 
 namespace SciFi {
+
+// need 3 arrays (size: number_of_events) for copy_and_prefix_sum_scifi_t
+static constexpr int num_atomics = 3;
+
 namespace Constants {
   /* Detector description
      There are three stations with four layers each
@@ -37,28 +35,9 @@ namespace Constants {
   static constexpr uint max_numhits_per_event = 10000;
   static constexpr uint max_hit_candidates_per_layer = 200;
 
+  const int max_tracks = 200; 
+  const int max_track_size = Tracking::max_scifi_hits;
 } // Constants
-
-const int max_tracks = 200;
-const int max_track_size = Tracking::max_scifi_hits + VeloUTTracking::max_track_size;
-
-// Track object used for storing tracks
-struct Track {
-
-  unsigned int LHCbIDs[max_track_size];
-  float qop;
-  unsigned short hitsNum = 0;
-  float chi2;
-
-  __host__  __device__ void addLHCbID( unsigned int id ) {
-    assert( hitsNum < max_track_size );
-    LHCbIDs[hitsNum++] =  id;
-}
-
-  __host__ __device__ void set_qop( float _qop ) {
-    qop = _qop;
-  }
-};
 
 /**
  * @brief SciFi geometry description typecast.
@@ -186,130 +165,11 @@ struct SciFiChannelID {
                      stationBits       = 18};
 };
 
-/**
-* @brief Offset and number of hits of each layer.
-*/
-struct SciFiHitCount{
-  uint* mat_offsets;
-  uint* n_hits_mats;
-
-  __device__ __host__
-  void typecast_before_prefix_sum(
-    uint* base_pointer,
-    const uint event_number
-  );
-
-  __device__ __host__
-  void typecast_after_prefix_sum(
-    uint* base_pointer,
-    const uint event_number,
-    const uint number_of_events
-  );
-
-  __device__ __host__
-  uint mat_offset(const uint mat_number) const {
-    return mat_offsets[mat_number];
-  }
-
-  __device__ __host__
-  uint mat_number_of_hits(const uint mat_number) const {
-    return mat_offsets[mat_number+1] - mat_offsets[mat_number];
-  }
-
-  __device__ __host__
-  uint zone_offset(const uint zone_number) const {
-    // TODO: Make this a constant
-    constexpr uint32_t first_corrected_unique_mat_in_zone[] = {
-      0, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640,
-      688, 736, 784, 832, 880, 928, 976, 1024};
-    return mat_offsets[first_corrected_unique_mat_in_zone[zone_number]];
-  }
-
-  __device__ __host__
-  uint zone_number_of_hits(const uint zone_number) const {
-    return zone_offset(zone_number + 1) - zone_offset(zone_number);
-  }
-
-  __device__ __host__
-  uint event_number_of_hits() const {
-    return mat_offsets[SciFi::Constants::n_mats] - mat_offsets[0];
-  }
-
-  __device__ __host__
-  uint event_offset() const {
-    return mat_offsets[0];
-  }
-};
-
-struct SciFiHit {
-  float x0;
-  float z0;
-  float endPointY;
-  uint32_t channel;
-
-  // Cluster reference:
-  //   raw bank: 8 bits
-  //   element (it): 8 bits
-  //   Condition 1-2-3: 2 bits
-  //   Condition 2.1-2.2: 1 bit
-  //   Condition 2.1: log2(n+1) - 8 bits
-  uint32_t assembled_datatype;
-
-  friend std::ostream& operator<<(std::ostream& stream, const SciFiHit& hit) {
-  stream << "SciFi hit {"
-    << hit.x0 << ", "
-    << hit.z0 << ", "
-    << hit.channel << ", "
-    << hit.assembled_datatype
-    << "}";
-
-  return stream;
-}
-};
-
-struct SciFiHits {
-  float* x0;
-  float* z0;
-  float* m_endPointY;
-  uint32_t* channel;
   
-  // Cluster reference:
-  //   raw bank: 8 bits
-  //   element (it): 8 bits
-  //   Condition 1-2-3: 2 bits
-  //   Condition 2.1-2.2: 1 bit
-  //   Condition 2.1: log2(n+1) - 8 bits
-  uint32_t* assembled_datatype;
-  uint32_t* cluster_reference;
-  const SciFiGeometry* geom;
-  const float *dev_inv_clus_res;
-
-  __device__ __host__
-  SciFiHits(uint* base,
-    const uint32_t total_number_of_hits,
-    const SciFiGeometry* geom,
-    const float* param_dev_inv_clus_res);
-
-  /**
-   * @brief Gets a hit in the SciFiHit format from the global hit index.
-   */
-  __device__ __host__ float w(uint32_t index) const;
-  __device__ __host__ float dxdy(uint32_t index) const;
-  __device__ __host__ float dzdy(uint32_t index) const;
-  __device__ __host__ float yMin(uint32_t index) const;
-  __device__ __host__ float yMax(uint32_t index) const;
-  __device__ __host__ float endPointY(uint32_t index) const;
-  __device__ __host__ uint32_t LHCbID(uint32_t index) const;
-  __device__ __host__ uint32_t planeCode(uint32_t index) const;
-  __device__ __host__ uint32_t mat(uint32_t index) const;
-  __device__ __host__ uint32_t fraction(uint32_t index) const;
-  __device__ __host__ uint32_t pseudoSize(uint32_t index) const;
-};
-
-__device__ uint32_t channelInBank(uint32_t c);
-__device__ uint16_t getLinkInBank(uint16_t c);
-__device__ int cell(uint16_t c);
-__device__ int fraction(uint16_t c);
-__device__ bool cSize(uint16_t c);
+  __device__ uint32_t channelInBank(uint32_t c);
+  __device__ uint16_t getLinkInBank(uint16_t c);
+  __device__ int cell(uint16_t c);
+  __device__ int fraction(uint16_t c);
+  __device__ bool cSize(uint16_t c);
 
 }
