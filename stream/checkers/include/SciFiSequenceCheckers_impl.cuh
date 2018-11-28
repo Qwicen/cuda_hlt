@@ -12,7 +12,7 @@ void SequenceVisitor::check<consolidate_scifi_tracks_t>(
   const Constants& constants,
   const CheckerInvoker& checker_invoker) const
 {
-  info_cout << "Checking Velo+UT+SciFi tracks" << std::endl;
+  info_cout << "Checking SciFi tracks" << std::endl;
 
   const auto tracks = prepareSciFiTracks(
     host_buffers.host_atomics_velo,

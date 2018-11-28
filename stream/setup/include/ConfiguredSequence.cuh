@@ -4,6 +4,7 @@
 
 // All includes of all algorithms
 #include "PrefixSum.cuh"
+#include "PrefixSumHandler.cuh"
 #include "EstimateInputSize.cuh"
 #include "MaskedVeloClustering.cuh"
 #include "CalculatePhiAndSort.cuh"

@@ -1,24 +1,20 @@
 #include "SequenceVisitor.cuh"
-#include "PrefixSum.cuh"
+#include "PrefixSumHandler.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<prefix_sum_reduce_velo_track_hit_number_t>(
+void SequenceVisitor::set_arguments_size<prefix_sum_velo_track_hit_number_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 {
-  const size_t prefix_sum_auxiliary_array_size =
-    (host_buffers.host_number_of_reconstructed_velo_tracks[0] + 511) / 512;
-  arguments.set_size<dev_prefix_sum_auxiliary_array_2>(prefix_sum_auxiliary_array_size);
+  arguments.set_size<dev_prefix_sum_auxiliary_array_2>(
+    prefix_sum_velo_track_hit_number_t::aux_array_size(host_buffers.host_number_of_reconstructed_velo_tracks[0]));
 }
 
-DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_single_block_velo_track_hit_number_t)
-DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_scan_velo_track_hit_number_t)
-
 template<>
-void SequenceVisitor::visit<prefix_sum_reduce_velo_track_hit_number_t>(
-  prefix_sum_reduce_velo_track_hit_number_t& state,
+void SequenceVisitor::visit<prefix_sum_velo_track_hit_number_t>(
+  prefix_sum_velo_track_hit_number_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
@@ -26,66 +22,19 @@ void SequenceVisitor::visit<prefix_sum_reduce_velo_track_hit_number_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  // Prefix sum: Reduce
-  const size_t prefix_sum_auxiliary_array_size =
-    (host_buffers.host_number_of_reconstructed_velo_tracks[0] + 511) / 512;
+  // Set size of the main array to be prefix summed
+  state.set_size(host_buffers.host_number_of_reconstructed_velo_tracks[0]);
 
-  state.set_opts(dim3(prefix_sum_auxiliary_array_size), dim3(256), cuda_stream);
+  // Set the cuda_stream
+  state.set_opts(cuda_stream);
+
+  // Set arguments: Array to prefix sum and auxiliary array
   state.set_arguments(
     arguments.offset<dev_velo_track_hit_number>(),
-    arguments.offset<dev_prefix_sum_auxiliary_array_2>(),
-    host_buffers.host_number_of_reconstructed_velo_tracks[0]
+    arguments.offset<dev_prefix_sum_auxiliary_array_2>()
   );
 
-  state.invoke();
-}
-
-template<>
-void SequenceVisitor::visit<prefix_sum_single_block_velo_track_hit_number_t>(
-  prefix_sum_single_block_velo_track_hit_number_t& state,
-  const RuntimeOptions& runtime_options,
-  const Constants& constants,
-  argument_manager_t& arguments,
-  HostBuffers& host_buffers,
-  cudaStream_t& cuda_stream,
-  cudaEvent_t& cuda_generic_event)
-{
-  const size_t prefix_sum_auxiliary_array_size =
-    (host_buffers.host_number_of_reconstructed_velo_tracks[0] + 511) / 512;
-
-  // Prefix sum: Single block
-  state.set_opts(dim3(1), dim3(1024), cuda_stream);
-  state.set_arguments(
-    arguments.offset<dev_velo_track_hit_number>() + host_buffers.host_number_of_reconstructed_velo_tracks[0],
-    arguments.offset<dev_prefix_sum_auxiliary_array_2>(),
-    prefix_sum_auxiliary_array_size
-  );
-  state.invoke();
-}
-
-template<>
-void SequenceVisitor::visit<prefix_sum_scan_velo_track_hit_number_t>(
-  prefix_sum_scan_velo_track_hit_number_t& state,
-  const RuntimeOptions& runtime_options,
-  const Constants& constants,
-  argument_manager_t& arguments,
-  HostBuffers& host_buffers,
-  cudaStream_t& cuda_stream,
-  cudaEvent_t& cuda_generic_event)
-{
-  // Prefix sum: Scan
-  const size_t prefix_sum_auxiliary_array_size =
-    (host_buffers.host_number_of_reconstructed_velo_tracks[0] + 511) / 512;
-  const uint pss_velo_track_hit_number_opts =
-    prefix_sum_auxiliary_array_size==1 ? 1 : (prefix_sum_auxiliary_array_size-1);
-
-  state.set_opts(dim3(pss_velo_track_hit_number_opts), dim3(512), cuda_stream);
-  state.set_arguments(
-    arguments.offset<dev_velo_track_hit_number>(),
-    arguments.offset<dev_prefix_sum_auxiliary_array_2>(),
-    host_buffers.host_number_of_reconstructed_velo_tracks[0]
-  );
-
+  // Invoke all steps of prefix sum
   state.invoke();
 
   // Fetch total number of hits accumulated with all tracks

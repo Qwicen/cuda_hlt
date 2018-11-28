@@ -1,24 +1,20 @@
 #include "SequenceVisitor.cuh"
-#include "PrefixSum.cuh"
+#include "PrefixSumHandler.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<prefix_sum_reduce_ut_hits_t>(
+void SequenceVisitor::set_arguments_size<prefix_sum_ut_hits_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 {
-  const uint total_number_of_sectors = runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4];
-  const size_t prefix_sum_auxiliary_array_size = (total_number_of_sectors + 511) / 512;
-  arguments.set_size<dev_prefix_sum_auxiliary_array_3>(prefix_sum_auxiliary_array_size);
+  arguments.set_size<dev_prefix_sum_auxiliary_array_3>(
+    prefix_sum_ut_hits_t::aux_array_size(runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4]));
 }
 
-DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_single_block_ut_hits_t)
-DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_scan_ut_hits_t)
-
 template<>
-void SequenceVisitor::visit<prefix_sum_reduce_ut_hits_t>(
-  prefix_sum_reduce_ut_hits_t& state,
+void SequenceVisitor::visit<prefix_sum_ut_hits_t>(
+  prefix_sum_ut_hits_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
@@ -26,70 +22,24 @@ void SequenceVisitor::visit<prefix_sum_reduce_ut_hits_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  // Prefix sum: Reduce
-  const uint total_number_of_sectors = runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4];
-  const size_t prefix_sum_auxiliary_array_size = (total_number_of_sectors + 511) / 512;
+  // Set size of the main array to be prefix summed
+  state.set_size(runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
 
-  state.set_opts(dim3(prefix_sum_auxiliary_array_size), dim3(256), cuda_stream);
+  // Set the cuda_stream
+  state.set_opts(cuda_stream);
+
+  // Set arguments: Array to prefix sum and auxiliary array
   state.set_arguments(
     arguments.offset<dev_ut_hit_offsets>(),
-    arguments.offset<dev_prefix_sum_auxiliary_array_3>(),
-    total_number_of_sectors
+    arguments.offset<dev_prefix_sum_auxiliary_array_3>()
   );
 
-  state.invoke();
-}
-
-template<>
-void SequenceVisitor::visit<prefix_sum_single_block_ut_hits_t>(
-  prefix_sum_single_block_ut_hits_t& state,
-  const RuntimeOptions& runtime_options,
-  const Constants& constants,
-  argument_manager_t& arguments,
-  HostBuffers& host_buffers,
-  cudaStream_t& cuda_stream,
-  cudaEvent_t& cuda_generic_event)
-{
-  // Prefix sum: Single block
-
-  const uint total_number_of_sectors = runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4];
-  const size_t prefix_sum_auxiliary_array_size = (total_number_of_sectors + 511) / 512;
-  state.set_opts(dim3(1), dim3(1024), cuda_stream);
-  state.set_arguments(
-    arguments.offset<dev_ut_hit_offsets>() + total_number_of_sectors,
-    arguments.offset<dev_prefix_sum_auxiliary_array_3>(),
-    prefix_sum_auxiliary_array_size
-  );
-
-  state.invoke();
-}
-
-template<>
-void SequenceVisitor::visit<prefix_sum_scan_ut_hits_t>(
-  prefix_sum_scan_ut_hits_t& state,
-  const RuntimeOptions& runtime_options,
-  const Constants& constants,
-  argument_manager_t& arguments,
-  HostBuffers& host_buffers,
-  cudaStream_t& cuda_stream,
-  cudaEvent_t& cuda_generic_event)
-{
-  // Prefix sum: Scan
-
-  const uint total_number_of_sectors = runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4];
-  const size_t prefix_sum_auxiliary_array_size = (total_number_of_sectors + 511) / 512;
-  const uint pss_ut_hits_blocks = prefix_sum_auxiliary_array_size==1 ? 1 : (prefix_sum_auxiliary_array_size-1);
-  state.set_opts(dim3(pss_ut_hits_blocks), dim3(512), cuda_stream);
-  state.set_arguments(
-    arguments.offset<dev_ut_hit_offsets>(),
-    arguments.offset<dev_prefix_sum_auxiliary_array_3>(),
-    total_number_of_sectors
-  );
+  // Invoke all steps of prefix sum
   state.invoke();
 
   // Fetch total number of hits accumulated with all tracks
   cudaCheck(cudaMemcpyAsync(host_buffers.host_accumulated_number_of_ut_hits,
-    arguments.offset<dev_ut_hit_offsets>() + total_number_of_sectors,
+    arguments.offset<dev_ut_hit_offsets>() + runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4],
     sizeof(uint),
     cudaMemcpyDeviceToHost,
     cuda_stream));
