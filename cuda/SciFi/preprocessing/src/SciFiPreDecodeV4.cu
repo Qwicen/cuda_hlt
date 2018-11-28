@@ -26,9 +26,6 @@ __device__ void store_sorted_cluster_reference_v4 (
   // Cluster reference:
   //   raw bank: 8 bits
   //   element (it): 8 bits
-  //   Condition 1-2-3: 2 bits
-  //   Condition 2.1-2.2: 1 bit
-  //   Condition 2.1: log2(n+1) - 8 bits
   hits.cluster_reference[hitIndex] = (raw_bank & 0xFF) << 8 | (it & 0xFF);
 };
 
