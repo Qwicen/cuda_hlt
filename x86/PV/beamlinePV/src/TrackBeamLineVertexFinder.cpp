@@ -51,6 +51,9 @@ namespace {
       return 0.5f + xi * ( p[0] + eta * (p[1] + eta * p[2] ) )  ;
     }
   }
+ 
+
+
    
   
   // This implements the adapative vertex fit with Tukey's weights.
@@ -337,9 +340,20 @@ void findPVs(
     //FIXME: the logic is a bit too complicated here. need to see if we
     //simplify something without loosing efficiency.
     //std::vector<Cluster> clusters ;
+    //&&( zhisto[i] > zhisto[i-2] || zhisto[i] > zhisto[i+2])
     Cluster clusters[PV::max_number_of_clusters];
     uint number_of_clusters = 0;
+    std::cout << "--------" << std::endl;
 
+    //try to find a simpler peak finding, the numbers here could be optimized
+    for(uint i = 2; i < Nbins-2; i++) {
+      if(zhisto[i] > zhisto[i -1] && zhisto[i] > zhisto[i+1] && (zhisto[i] + zhisto[i-1] + zhisto[i+1]+ zhisto[i-2] + zhisto[i+2] > 2.5 ) && zhisto[i] > 1.5 ) {
+        clusters[number_of_clusters] = Cluster(i-1, i,i+1);
+        std::cout << "cluster " << i << " " << zhisto[i-1] << " " << zhisto[i] << " " << zhisto[i+1] << std::endl;
+        number_of_clusters++;
+      }
+    }
+/*
     {
       // step A: make 'ProtoClusters'
       // Step B: for each such ProtoClusters
@@ -351,6 +365,7 @@ void findPVs(
       //       - if that doesn't work, accept as cluster
 
       // Step A: make 'proto-clusters': these are subsequent bins with non-zero content and an integral above the threshold.
+      
       using BinIndex = unsigned short ;
       BinIndex clusteredges[PV::max_number_clusteredges];
       uint number_of_clusteredges = 0;
@@ -470,6 +485,7 @@ void findPVs(
         }
       }
     }
+    */
     debug_cout << "Found " <<  number_of_clusters << " clusters" << std::endl;
    
     // Step 4: partition the set of tracks by vertex seed: just
