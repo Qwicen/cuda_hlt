@@ -25,6 +25,7 @@ SEQUENCE_T(
   ut_pre_decode_t,
   ut_find_permutation_t,
   ut_decode_raw_banks_in_order_t,
+  ut_search_windows_t,
   compass_ut_t,
   copy_and_prefix_sum_single_block_ut_t,
   copy_ut_track_hit_number_t,

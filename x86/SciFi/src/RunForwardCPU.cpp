@@ -33,8 +33,14 @@ int run_forward_on_CPU (
   float x0, z0, w, dxdy, dzdy, yMin, yMax;
   float qop;
   int n_tracks;
+  float state_x, state_y, state_z, state_tx, state_ty;
 
   t_Forward_tracks->Branch("qop", &qop);
+  t_Forward_tracks->Branch("state_x", &state_x);
+  t_Forward_tracks->Branch("state_y", &state_y);
+  t_Forward_tracks->Branch("state_z", &state_z);
+  t_Forward_tracks->Branch("state_tx", &state_tx);
+  t_Forward_tracks->Branch("state_ty", &state_ty);
   t_statistics->Branch("n_tracks", &n_tracks);
   t_scifi_hits->Branch("planeCode", &planeCode);
   t_scifi_hits->Branch("LHCbID", &LHCbID);
@@ -126,7 +132,12 @@ int run_forward_on_CPU (
 #ifdef WITH_ROOT
     // store qop in tree
     for ( int i_track = 0; i_track < *n_forward_tracks; ++i_track ) {
-      qop = forward_tracks[i_track].qop;
+      qop = scifi_tracks_event[i_track].qop;
+      state_x  = scifi_tracks_event[i_track].state.x;
+      state_y  = scifi_tracks_event[i_track].state.y;
+      state_z  = scifi_tracks_event[i_track].state.z;
+      state_tx = scifi_tracks_event[i_track].state.tx;
+      state_ty = scifi_tracks_event[i_track].state.ty;
       t_Forward_tracks->Fill();
     }
     n_tracks = n_forward_tracks[i_event];

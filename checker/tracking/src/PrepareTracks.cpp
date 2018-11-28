@@ -104,6 +104,7 @@ std::vector<trackChecker::Tracks> prepareSciFiTracks(
   const char* scifi_track_hits,
   const uint* scifi_track_ut_indices,
   const float* scifi_qop,
+  const MiniState* scifi_states,
   const char* scifi_geometry,
   const std::array<float, 9>& inv_clus_res,
   const uint number_of_events)
@@ -125,6 +126,7 @@ std::vector<trackChecker::Tracks> prepareSciFiTracks(
     SciFi::Consolidated::Tracks scifi_tracks {(uint*) scifi_track_atomics,
                                               (uint*) scifi_track_hit_number,
                                               (float*) scifi_qop,
+                                              (MiniState*) scifi_states,
                                               (uint*) scifi_track_ut_indices,
                                               i_event,
                                               number_of_events};

@@ -44,6 +44,7 @@ struct HostBuffers {
   uint* host_scifi_track_hit_number;
   char* host_scifi_track_hits;
   float* host_scifi_qop;
+  MiniState* host_scifi_states;
   uint* host_scifi_track_ut_indices;
 
   // Non pinned datatypes: CPU algorithms

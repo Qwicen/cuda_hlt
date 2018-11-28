@@ -46,13 +46,14 @@ struct Tracks : public ::Consolidated::Tracks {
   // Indices of associated UT tracks.
   uint* ut_track;
 
-  // Array of q/p.
   float* qop;
-
+  MiniState* states;
+  
   __device__ __host__ Tracks(
     uint* atomics_base_pointer,
     uint* track_hit_number_base_pointer,
     float* qop_base_pointer,
+    MiniState* states_base_pointer,
     uint* ut_track_base_pointer,
     const uint current_event_number,
     const uint number_of_events) :
@@ -60,6 +61,7 @@ struct Tracks : public ::Consolidated::Tracks {
   {
     ut_track = ut_track_base_pointer + tracks_offset(current_event_number);
     qop = qop_base_pointer + tracks_offset(current_event_number);
+    states = states_base_pointer + tracks_offset(current_event_number);
   }
 
   __device__ __host__ Hits get_hits(

@@ -103,7 +103,7 @@ namespace SciFi{
     constexpr float        cyParams               = -3.68424e-05;
 
     // z Reference plane
-    constexpr float        zReference             = 8520.; // in T2
+    constexpr float        zReference             = 8520. * Gaudi::Units::mm ; // in T2
     
     // TODO: CHECK THESE VALUES USING FRAMEWORK
     constexpr float        xLim_Max               = 3300.;
@@ -154,9 +154,9 @@ namespace SciFi{
       // [1]: (xRef-xMag)/(zRef-zMag)
       // [2]: xParams[0] * dSlope
       // [3]: xParams[1] * dSlope
-      // [4]:
-      // [5]:
-      // [6]:
+      // [4]: y param
+      // [5]: y param
+      // [6]: y param
       // [7]: chi2
       // [8]: nDoF
       float trackParams[SciFi::Tracking::nTrackParams];
@@ -169,6 +169,27 @@ namespace SciFi{
       __host__ __device__ void set_qop( float _qop ) {
         qop = _qop;
       }
+      
+      __host__ __device__ float x( const float z ) const {
+        float dz = z - zReference; 
+        return trackParams[0] + dz*( trackParams[1] + dz*( trackParams[2] + dz*trackParams[3] ) );
+      } 
+
+      __host__ __device__ float xSlope( const float z ) const {
+        float dz = z - zReference; 
+        return trackParams[1] + dz*( 2.f * trackParams[2] + 3.f * dz * trackParams[3] );
+      }  
+
+      __host__ __device__ float y( const float z ) const {
+        float dz = z - zReference; 
+        return trackParams[4] + dz*( trackParams[5] + dz * trackParams[6]);
+      } 
+
+      __host__ __device__ float ySlope( const float z ) const {
+        float dz = z - zReference; 
+        return trackParams[5] + dz* 2.f * trackParams[6];
+      }  
+
     };
     
   } // Tracking

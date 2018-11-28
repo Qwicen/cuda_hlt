@@ -77,18 +77,6 @@ static constexpr float zDiff =             0.001f * (zKink - zMidUT);
 } // namespace Constants
 } // namespace UT
 
-struct MiniState {
-  float x, y, tx, ty, z;
-
-  __host__ __device__ MiniState(const Velo::Consolidated::States& velo_states, const uint index) :
-    x(velo_states.x[index]),
-    y(velo_states.y[index]),
-    tx(velo_states.tx[index]),
-    ty(velo_states.ty[index]),
-    z(velo_states.z[index])
-  {}
-};
-
 struct UTBoards {
   uint32_t number_of_boards;
   uint32_t number_of_channels;

@@ -29,6 +29,7 @@
 #include "VeloConsolidated.cuh"
 #include "UTConsolidated.cuh"
 #include "SciFiEventModel.cuh"
+#include "MiniState.cuh"
 
 __host__ __device__ void find_forward_tracks(
   const SciFi::Hits& scifi_hits,
