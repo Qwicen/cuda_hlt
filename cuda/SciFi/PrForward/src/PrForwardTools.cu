@@ -148,6 +148,7 @@ __host__ __device__ void find_forward_tracks(
         
         SciFi::TrackHits tr = makeTrack( track );
         tr.UTTrackIndex = i_veloUT_track;
+
         // add LHCbIDs from SciFi part of the track
         for ( int i_hit = 0; i_hit < track.hitsNum; ++i_hit ) {
           // save local hit index within event to be able to use short
@@ -176,7 +177,18 @@ __host__ __device__ SciFi::TrackHits makeTrack( SciFi::Tracking::Track track ) {
   SciFi::TrackHits tr;
   tr.qop     = track.qop;
   tr.chi2    = track.chi2;
-
+   
+  // add state at zEndT
+  const float z = SciFi::Constants::ZEndT;
+  MiniState state( 
+    track.x( z ), 
+    track.y( z ), 
+    z, 
+    track.xSlope( z ), 
+    track.ySlope( z ) );
+  
+  tr.state = state;
+  
   return tr;
 }
 

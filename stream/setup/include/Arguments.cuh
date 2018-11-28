@@ -5,6 +5,7 @@
 #include "UTDefinitions.cuh"
 #include "PrForward.cuh"
 #include "patPV_Definitions.cuh"
+#include "MiniState.cuh"
 
 /**
  * @brief Definition of arguments. All arguments should be defined here,
@@ -69,4 +70,5 @@ ARGUMENT(dev_prefix_sum_auxiliary_array_6, uint)
 ARGUMENT(dev_scifi_track_hit_number, uint)
 ARGUMENT(dev_scifi_track_hits, char)
 ARGUMENT(dev_scifi_qop, float)
+ARGUMENT(dev_scifi_states, MiniState)
 ARGUMENT(dev_scifi_track_ut_indices, uint)

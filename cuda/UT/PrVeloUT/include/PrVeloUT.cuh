@@ -14,6 +14,7 @@
 #include "VeloConsolidated.cuh"
 #include "VeloDefinitions.cuh"
 #include "VeloEventModel.cuh"
+#include "MiniState.cuh"
 
 /** PrVeloUT
  *
@@ -241,7 +242,6 @@ __host__ __device__ void simpleFit(
     helper.bestParams[1] = chi2UT;
     helper.bestParams[2] = xUTFit;
     helper.bestParams[3] = xSlopeUTFit;
-
     helper.bestHitIndices[3] = -1;
     for (int i_hit = 0; i_hit < N; ++i_hit) {
       helper.bestHitIndices[i_hit] = hitIndices[i_hit];

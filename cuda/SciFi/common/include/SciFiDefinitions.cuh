@@ -31,6 +31,8 @@ namespace Constants {
   static constexpr uint n_layers             = 12;
   static constexpr uint n_mats               = 1024;
 
+  static constexpr float ZEndT               = 9410. * Gaudi::Units::mm;
+
   /* Cut-offs */
   static constexpr uint max_numhits_per_event = 10000;
   static constexpr uint max_hit_candidates_per_layer = 200;
