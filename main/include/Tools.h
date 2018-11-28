@@ -40,5 +40,3 @@ void check_muon_events(
   const int hits_to_out,
   const int n_events
 );
-
-void read_catboost_model_to_arrays(std::string filename);
