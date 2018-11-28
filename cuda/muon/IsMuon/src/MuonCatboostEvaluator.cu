@@ -13,17 +13,17 @@ across an entire level of a tree.
 * http://learningsys.org/nips17/assets/papers/paper_11.pdf
 */
 __global__ void muon_catboost_evaluator(
-  const float* dev_catboost_features,
-  const float* dev_leaf_values,
-  const int* dev_leaf_offsets,
-  const float* dev_split_borders,
-  const int* dev_split_features,
-  const int* dev_tree_sizes,
-  const int* dev_tree_offsets,
+  const float* dev_muon_catboost_features,
+  const float* dev_muon_catboost_leaf_values,
+  const int* dev_muon_catboost_leaf_offsets,
+  const float* dev_muon_catbost_split_borders,
+  const int* dev_muon_catboost_split_features,
+  const int* dev_muon_catboost_tree_sizes,
+  const int* dev_muon_catboost_tree_offsets,
   const int n_trees,
   const int n_features,
   const int n_objects,
-  float* dev_output
+  float* dev_muon_catboost_output
 ) {
   const int object_id = blockIdx.x;
   const int block_size = blockDim.x;
@@ -36,15 +36,15 @@ __global__ void muon_catboost_evaluator(
 
   while(tree_id < n_trees) {
     int index = 0;
-    const int tree_offset = dev_tree_offsets[tree_id];
-    for (int depth = 0; depth < dev_tree_sizes[tree_id]; ++depth) {
-      const int feature_id = dev_split_features[tree_offset + depth];
-      const float feature_value = dev_catboost_features[object_offset + feature_id];
-      const float border = dev_split_borders[tree_offset + depth];
+    const int tree_offset = dev_muon_catboost_tree_offsets[tree_id];
+    for (int depth = 0; depth < dev_muon_catboost_tree_sizes[tree_id]; ++depth) {
+      const int feature_id = dev_muon_catboost_split_features[tree_offset + depth];
+      const float feature_value = dev_muon_catboost_features[object_offset + feature_id];
+      const float border = dev_muon_catboost_split_borders[tree_offset + depth];
       const int bin_feature = (int)(feature_value > border);
       index |= (bin_feature << depth);
     }
-    sum += dev_leaf_values[dev_leaf_offsets[tree_id] + index];
+    sum += dev_muon_catboost_leaf_values[dev_muon_catboost_leaf_offsets[tree_id] + index];
     tree_id += block_size;
   }
   __shared__ float values[256];
