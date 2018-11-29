@@ -36,12 +36,24 @@ void SequenceVisitor::visit<blpv_peak_t>(
 
   state.invoke();
 
-/*
+  //debugging
+  /*
+
     // Retrieve result
   cudaCheck(cudaMemcpyAsync(
-    host_buffers.host_zhisto,
-    arguments.offset<dev_zhisto>(),
-    arguments.size<dev_zhisto>(),
+    host_buffers.host_peaks,
+    arguments.offset<dev_zpeaks>(),
+    arguments.size<dev_zpeaks>(),
+    cudaMemcpyDeviceToHost,
+    cuda_stream
+  ));
+
+
+    // Retrieve result
+  cudaCheck(cudaMemcpyAsync(
+    host_buffers.host_number_of_peaks,
+    arguments.offset<dev_number_of_zpeaks>(),
+    arguments.size<dev_number_of_zpeaks>(),
     cudaMemcpyDeviceToHost,
     cuda_stream
   ));
@@ -51,30 +63,16 @@ void SequenceVisitor::visit<blpv_peak_t>(
   cudaEventSynchronize(cuda_generic_event);
 
   // Check the output
-  TFile * outfile = new TFile("testt.root","RECREATE");
-  TTree * outtree = new TTree("PV","PV");
-  int i_event = 0;
-  outtree->Branch("event",&i_event);
-  float z_histo;
-  outtree->Branch("z_histo",&z_histo);
-  int mindex;
-  outtree->Branch("index",&mindex);
-  for(i_event = 0; i_event < runtime_options.number_of_events; i_event++) {
-    info_cout << "number event " << i_event << std::endl;
-    int Nbins = (m_zmax-m_zmin)/m_dz;
-    for (int i=0; i<Nbins; i++) {
-    int index = Nbins * i_event + i;
-    mindex = i;
-    info_cout << "zhisto: " << host_buffers.host_zhisto[index] << std::endl << std::endl;
-    z_histo = host_buffers.host_zhisto[index];
-    outtree->Fill();
-   }
+  for(int i_event = 0; i_event < runtime_options.number_of_events; i_event++) {
+    std::cout << "event " << i_event << std::endl;
+    for(int i = 0; i < host_buffers.host_number_of_peaks[i_event]; i++) {
+      std::cout << "peak " << i << " " << host_buffers.host_peaks[i] << std::endl;
+    }
   }
-  outtree->Write();
-  outfile->Close();
+  */
   
   
-*/
+
 
 
     

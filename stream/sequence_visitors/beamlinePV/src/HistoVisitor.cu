@@ -38,6 +38,8 @@ void SequenceVisitor::visit<blpv_histo_t>(
   state.invoke();
 
 
+//debugging 
+  /*
     // Retrieve result
   cudaCheck(cudaMemcpyAsync(
     host_buffers.host_zhisto,
@@ -57,24 +59,28 @@ void SequenceVisitor::visit<blpv_histo_t>(
   int i_event = 0;
   outtree->Branch("event",&i_event);
   float z_histo;
+  float z_bin;
   outtree->Branch("z_histo",&z_histo);
+  outtree->Branch("z_bin",&z_bin);
   int mindex;
   outtree->Branch("index",&mindex);
   for(i_event = 0; i_event < runtime_options.number_of_events; i_event++) {
     info_cout << "number event " << i_event << std::endl;
     int Nbins = (m_zmax-m_zmin)/m_dz;
     for (int i=0; i<Nbins; i++) {
-    int index = Nbins * i_event + i;
-    mindex = i;
-    info_cout << "zhisto: " << host_buffers.host_zhisto[index] << std::endl << std::endl;
-    z_histo = host_buffers.host_zhisto[index];
-    outtree->Fill();
+      int index = Nbins * i_event + i;
+      mindex = i;
+      
+      z_histo = host_buffers.host_zhisto[index];
+      z_bin = m_zmin + i * m_dz;
+      if(host_buffers.host_zhisto[index]> 5.) info_cout << "zhisto: " << i << " " << z_bin << " " << host_buffers.host_zhisto[index] << std::endl << std::endl;
+      outtree->Fill();
    }
   }
   outtree->Write();
   outfile->Close();
   
-  
+  */
 
 
 

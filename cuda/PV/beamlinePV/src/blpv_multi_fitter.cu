@@ -1,5 +1,6 @@
 #include "blpv_multi_fitter.cuh"
 
+//parameters to tune: maximum iterations, chi2max, chi2_cut, T
 
 
 __global__ void blpv_multi_fitter(
@@ -10,6 +11,7 @@ __global__ void blpv_multi_fitter(
   uint* dev_number_of_zpeaks,
   PV::Vertex* dev_multi_fit_vertices,
   uint* dev_number_of_multi_fit_vertices) {
+  //should tune this
   const uint maxNumIter = 5;
   const float chi2max= 9.f;
 

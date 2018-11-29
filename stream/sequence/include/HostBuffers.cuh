@@ -25,6 +25,8 @@ struct HostBuffers {
   SciFi::Track* host_scifi_tracks;
   uint* host_n_scifi_tracks;
   float* host_zhisto;
+  float* host_peaks;
+  uint* host_number_of_peaks;
   PV::Vertex* host_reconstructed_multi_pvs;
   int* host_number_of_multivertex;
 
