@@ -1,5 +1,6 @@
 #include "SequenceVisitor.cuh"
 #include "SciFiPreDecode.cuh"
+//#include "SciFiRaw.cuh"
 
 template<>
 void SequenceVisitor::set_arguments_size<scifi_pre_decode_t>(

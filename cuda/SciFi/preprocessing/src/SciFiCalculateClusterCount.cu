@@ -10,7 +10,7 @@ __global__ void scifi_calculate_cluster_count(
 ) {
   const uint event_number = blockIdx.x;
 
-  const SciFiRawEvent event(scifi_raw_input + scifi_raw_input_offsets[event_number]);
+  const SciFiRawEvent event(scifi_raw_input + scifi_raw_input_offsets[event_number]); 
   const SciFiGeometry geom(scifi_geometry);
   SciFi::HitCount hit_count;
   hit_count.typecast_before_prefix_sum(scifi_hit_count, event_number);
@@ -20,7 +20,7 @@ __global__ void scifi_calculate_cluster_count(
   for(uint i = threadIdx.x; i < event.number_of_raw_banks; i += blockDim.x)
   {
     uint32_t* hits_module;
-    const auto rawbank = event.getSciFiRawBank(i);
+    const auto rawbank = event.getSciFiRawBank(i); 
     uint16_t* it = rawbank.data + 2;
     uint16_t* last = rawbank.last;
 

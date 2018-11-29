@@ -2,6 +2,9 @@
 
 #include "Common.h"
 #include "Handler.cuh" 
+#include "SciFiRaw.cuh"
+
+static constexpr uint maxSciFiUTClusters = 11000; // CHANGE
 
 __global__ void global_event_cuts(
   char* dev_raw_input,
