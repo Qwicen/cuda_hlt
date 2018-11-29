@@ -31,6 +31,10 @@ namespace Constants {
   static constexpr uint n_layers             = 12;
   static constexpr uint n_mats               = 1024;
 
+  static constexpr uint n_consecutive_raw_banks = 160;
+  static constexpr uint n_mats_per_consec_raw_bank = 4;
+  static constexpr uint n_mat_groups_and_mats= 384;
+
   static constexpr float ZEndT               = 9410. * Gaudi::Units::mm;
 
   /* Cut-offs */

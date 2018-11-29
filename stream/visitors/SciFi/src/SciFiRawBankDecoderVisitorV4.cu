@@ -11,7 +11,6 @@ void SequenceVisitor::set_arguments_size<scifi_raw_bank_decoder_v4_t>(
   arguments.set_size<dev_scifi_hits>(host_buffers.scifi_hits_uints());
 }
 
-
 template<>
 void SequenceVisitor::visit<scifi_raw_bank_decoder_v4_t>(
   scifi_raw_bank_decoder_v4_t& state,

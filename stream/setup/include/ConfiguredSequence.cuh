@@ -21,6 +21,7 @@
 #include "SciFiPreDecode.cuh"
 #include "SciFiRawBankDecoder.cuh"
 #include "SciFiCalculateClusterCountV4.cuh"
+#include "SciFiDirectDecoderV4.cuh"
 #include "SciFiPreDecodeV4.cuh"
 #include "SciFiRawBankDecoderV4.cuh"
 #include "ConsolidateSciFi.cuh"

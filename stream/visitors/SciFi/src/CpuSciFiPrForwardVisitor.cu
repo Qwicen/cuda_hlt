@@ -29,7 +29,7 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
 
   // Run Forward on x86 architecture
   std::vector<uint> host_scifi_hits (host_buffers.scifi_hits_uints());
-  std::vector<uint> host_scifi_hit_count (2 * runtime_options.number_of_events * SciFi::Constants::n_mats + 1);
+  std::vector<uint> host_scifi_hit_count (2 * runtime_options.number_of_events * SciFi::Constants::n_mat_groups_and_mats + 1);
     
   host_buffers.scifi_tracks_events.reserve(runtime_options.number_of_events * SciFi::Constants::max_tracks);
 

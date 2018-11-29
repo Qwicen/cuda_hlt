@@ -57,7 +57,7 @@ __global__ void scifi_pre_decode_v4(
   __syncthreads();
 
   // Main execution loop
-  for(uint i = threadIdx.x; i < event.number_of_raw_banks; i += blockDim.x) {
+  for(uint i = SciFi::Constants::n_consecutive_raw_banks + threadIdx.x; i < event.number_of_raw_banks; i += blockDim.x) {
     auto rawbank = event.getSciFiRawBank(i);
     const uint16_t* starting_it = rawbank.data + 2;
     uint16_t* last = rawbank.last;

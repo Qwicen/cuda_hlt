@@ -36,7 +36,6 @@ namespace SciFi {
     } 
   };
 
-  
   /**
    * @brief Offset and number of hits of each layer.
    */
@@ -49,7 +48,7 @@ namespace SciFi {
       uint* base_pointer,
       const uint event_number
     ){
-      n_hits_mats = base_pointer + event_number * SciFi::Constants::n_mats;
+      n_hits_mats = base_pointer + event_number * SciFi::Constants::n_mat_groups_and_mats;
     }
     
     __device__ __host__
@@ -58,26 +57,45 @@ namespace SciFi {
       const uint event_number,
       const uint number_of_events
     ){
-      mat_offsets = base_pointer + event_number * SciFi::Constants::n_mats;
-      n_hits_mats = base_pointer + number_of_events * SciFi::Constants::n_mats + 1 + event_number * SciFi::Constants::n_mats;
+      mat_offsets = base_pointer + event_number * SciFi::Constants::n_mat_groups_and_mats;
+      n_hits_mats = base_pointer + number_of_events * SciFi::Constants::n_mat_groups_and_mats + 1 + event_number * SciFi::Constants::n_mat_groups_and_mats;
     }
     
     __device__ __host__
     uint mat_offset(const uint mat_number) const {
+      assert(mat_number >= SciFi::Constants::n_consecutive_raw_banks * SciFi::Constants::n_mats_per_consec_raw_bank &&
+        mat_number < SciFi::Constants::n_mats);
       return mat_offsets[mat_number];
     }
     
     __device__ __host__
     uint mat_number_of_hits(const uint mat_number) const {
+      assert(mat_number >= SciFi::Constants::n_consecutive_raw_banks * SciFi::Constants::n_mats_per_consec_raw_bank &&
+        mat_number < SciFi::Constants::n_mats);
       return mat_offsets[mat_number+1] - mat_offsets[mat_number];
+    }
+
+    __device__ __host__
+    uint mat_group_offset(const uint mat_group_number) const  {
+      assert(mat_group_number < SciFi::Constants::n_consecutive_raw_banks);
+      return mat_offsets[mat_group_number];
+    }
+
+    __device__ __host__
+    uint mat_group_number_of_hits(const uint mat_group_number) const  {
+      assert(mat_group_number < SciFi::Constants::n_consecutive_raw_banks);
+      return mat_offsets[mat_group_number+1] - mat_offsets[mat_group_number];
     }
 
     __device__ __host__
     uint zone_offset(const uint zone_number) const {
       // TODO: Make this a constant
+      // constexpr uint32_t first_corrected_unique_mat_in_zone[] = {
+      //   0, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640,
+      //   688, 736, 784, 832, 880, 928, 976, 1024};
       constexpr uint32_t first_corrected_unique_mat_in_zone[] = {
-      0, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640,
-      688, 736, 784, 832, 880, 928, 976, 1024};
+        0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160,
+        208, 256, 304, 352, 400, 448, 496, 544};
       return mat_offsets[first_corrected_unique_mat_in_zone[zone_number]];
     }
 
@@ -88,13 +106,24 @@ namespace SciFi {
     
     __device__ __host__
     uint event_number_of_hits() const {
-      return mat_offsets[SciFi::Constants::n_mats] - mat_offsets[0];
+      return mat_offsets[SciFi::Constants::n_mat_groups_and_mats] - mat_offsets[0];
+    }
+
+    __device__ __host__
+    uint number_of_hits_in_zones_without_mat_groups() const {
+      return mat_offsets[SciFi::Constants::n_mat_groups_and_mats] -
+        mat_offsets[SciFi::Constants::n_consecutive_raw_banks];
     }
     
     __device__ __host__
     uint event_offset() const {
       return mat_offsets[0];
-    } 
+    }
+
+    __device__ __host__
+    uint offset_zones_without_mat_groups() const {
+      return mat_offsets[SciFi::Constants::n_consecutive_raw_banks];
+    }
   };
 
   struct BaseHits {

@@ -221,6 +221,12 @@ typedef std::tuple<
     dev_scifi_raw_input_offsets,
     dev_scifi_hit_count
   >,
+  AlgorithmDependencies<scifi_direct_decoder_v4_t,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_scifi_hit_count,
+    dev_scifi_hits
+  >,
   AlgorithmDependencies<scifi_pre_decode_v4_t,
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,

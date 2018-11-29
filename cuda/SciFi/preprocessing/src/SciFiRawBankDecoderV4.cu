@@ -60,10 +60,10 @@ __global__ void scifi_raw_bank_decoder_v4(
   SciFi::Hits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mats], &geom, dev_inv_clus_res};
   SciFi::HitCount hit_count;
   hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
-  const uint number_of_hits_in_event = hit_count.event_number_of_hits();
+  const uint number_of_hits_in_last_zones = hit_count.number_of_hits_in_zones_without_mat_groups();
 
-  for (int i=threadIdx.x; i<number_of_hits_in_event; i+=blockDim.x) {
-    const uint32_t cluster_reference = hits.cluster_reference[hit_count.event_offset() + i];
+  for (int i=threadIdx.x; i<number_of_hits_in_last_zones; i+=blockDim.x) {
+    const uint32_t cluster_reference = hits.cluster_reference[hit_count.offset_zones_without_mat_groups() + i];
 
     const int raw_bank_number = (cluster_reference >> 8) & 0xFF;
     const int it_number = (cluster_reference) & 0xFF;
