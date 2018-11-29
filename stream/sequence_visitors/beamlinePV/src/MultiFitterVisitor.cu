@@ -1,6 +1,5 @@
 #include "SequenceVisitor.cuh"
 #include "blpv_multi_fitter.cuh"
-#include "TTree.h"
 
 template<>
 void SequenceVisitor::set_arguments_size<blpv_multi_fitter_t>(

@@ -1,6 +1,8 @@
 #include "SequenceVisitor.cuh"
 #include "blpv_histo.cuh"
+#ifdef WITH_ROOT
 #include "TTree.h"
+#endif
 
 template<>
 void SequenceVisitor::set_arguments_size<blpv_histo_t>(

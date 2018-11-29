@@ -1,6 +1,5 @@
 #include "SequenceVisitor.cuh"
 #include "blpv_peak.cuh"
-#include "TTree.h"
 
 template<>
 void SequenceVisitor::set_arguments_size<blpv_peak_t>(
