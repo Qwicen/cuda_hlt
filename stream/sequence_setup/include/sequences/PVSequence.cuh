@@ -23,5 +23,6 @@ SEQUENCE_T(
   //fitSeeds_t
   cpu_beamlinePV_t,
   blpv_extrapolate_t,
-  blpv_histo_t
+  blpv_histo_t,
+  blpv_peak_t
 )

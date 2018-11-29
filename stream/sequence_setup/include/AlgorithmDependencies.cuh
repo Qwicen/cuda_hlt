@@ -145,6 +145,11 @@ typedef std::tuple<
   dev_velo_track_hit_number,
   dev_pvtracks,
   dev_zhisto
+  >,
+    AlgorithmDependencies<blpv_peak_t,
+   dev_zhisto,
+  dev_zpeaks,
+  dev_number_of_zpeaks
   >, 
   AlgorithmDependencies<ut_calculate_number_of_hits_t,
     dev_ut_raw_input,
