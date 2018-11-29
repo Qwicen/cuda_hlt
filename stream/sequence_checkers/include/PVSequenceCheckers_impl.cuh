@@ -30,5 +30,21 @@ void SequenceVisitor::check<cpu_beamlinePV_t>(
   checkPVs( checker_invoker.mc_pv_folder,  number_of_events_requested, host_buffers.host_reconstructed_pvs, host_buffers.host_number_of_vertex ,"CPU");
   
 }
+
+
+/**
+ * @brief Specialization for beamline PV finding algorithm on GPU
+ */
+template<>
+void SequenceVisitor::check<blpv_multi_fitter_t>(
+  const uint& start_event_offset,
+  const uint& number_of_events_requested,
+  const HostBuffers& host_buffers,
+  const CheckerInvoker& checker_invoker) const
+{
+  info_cout << "Checking GPU beamline PVs " << checker_invoker.mc_pv_folder << std::endl;
+  checkPVs( checker_invoker.mc_pv_folder,  number_of_events_requested, host_buffers.host_reconstructed_multi_pvs, host_buffers.host_number_of_multivertex ,"GPU");
+
+}
   
 

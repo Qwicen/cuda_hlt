@@ -23,6 +23,9 @@ void HostBuffers::reserve(const uint max_number_of_events) {
   cudaCheck(cudaMallocHost((void**)&host_number_of_seeds, max_number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_zhisto, max_number_of_events * sizeof(float) * (m_zmax-m_zmin)/m_dz ) );
 
+  cudaCheck(cudaMallocHost((void**)&host_reconstructed_multi_pvs, max_number_of_events * PatPV::max_number_vertices * sizeof(PV::Vertex)));
+  cudaCheck(cudaMallocHost((void**)&host_number_of_multivertex, max_number_of_events * sizeof(int)));
+
 }
 
 
