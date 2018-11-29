@@ -21,7 +21,7 @@ __global__ void blpv_peak(
   //the parameters to find peaks can and should be fiddled with
   for(uint i = 2; i < Nbins-2; i++) {
     if(zhisto[i] > zhisto[i -1] && zhisto[i] > zhisto[i+1] && (zhisto[i] + zhisto[i-1] + zhisto[i+1]+ zhisto[i-2] + zhisto[i+2] > 2.5 ) && zhisto[i] > 1.5 ) {
-      zpeaks [number_of_peaks] = zhisto[i];
+      zpeaks [event_number * PV::max_number_vertices + number_of_peaks] = zhisto[i];
       number_of_peaks++;
     }
   }
