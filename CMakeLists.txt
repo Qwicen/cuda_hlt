@@ -19,10 +19,11 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/configuration/sequences/${SEQUENCE}.
 message(STATUS "Configured sequence: " ${SEQUENCE})
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -lpthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread")
 
 find_package(ZLIB REQUIRED)
 
@@ -72,6 +73,8 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
   set(CUDA_BUILD_TYPE "-O0\;-G\;-g\;-DDEBUG\;")
 endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 
+# In case we want to compile with clang:
+# --compiler-bindir /cvmfs/sft.cern.ch/lcg/releases/clang/6.0.0-6647e/x86_64-centos7-gcc62-opt/bin/clang++;
 set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=63;")
 
 add_subdirectory(cuda)
