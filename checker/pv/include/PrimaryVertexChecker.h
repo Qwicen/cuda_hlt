@@ -22,7 +22,8 @@ void checkPVs(
   const std::string& foldername, 
   uint number_of_files, 
   PV::Vertex * rec_vertex, 
-  int* number_of_vertex);
+  int* number_of_vertex,
+  const std::string mode);
 
 struct MCVertex {
   double x;

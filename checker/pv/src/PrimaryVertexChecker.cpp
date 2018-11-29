@@ -5,7 +5,8 @@ void checkPVs(
   const std::string& foldername, 
   uint number_of_files, 
   PV::Vertex * rec_vertex, 
-  int* number_of_vertex)
+  int* number_of_vertex,
+  const std::string mode)
 {
    std::vector<std::string> folderContents = list_folder(foldername);
   
@@ -346,7 +347,7 @@ void checkPVs(
   
   //save information about matched reconstructed PVs for pulls distributions
 #ifdef WITH_ROOT
-  TFile * out_fille = new TFile("PV.root", "RECREATE");
+  TFile * out_fille = new TFile(("../output/"+mode+"_PVChecker.root").data(), "RECREATE");
   TTree * tree = new TTree("PV_tree","PV_tree");
   //double x_true, y_true, z_true;
   double diff_x, diff_y, diff_z;
