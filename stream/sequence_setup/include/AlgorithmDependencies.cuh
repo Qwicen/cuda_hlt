@@ -134,23 +134,32 @@ typedef std::tuple<
     dev_atomics_storage,
     dev_velo_track_hit_number
   >,
-    AlgorithmDependencies<blpv_extrapolate_t,
-   dev_kalmanvelo_states,
-  dev_atomics_storage,
-  dev_velo_track_hit_number,
-  dev_pvtracks
+  AlgorithmDependencies<blpv_extrapolate_t,
+    dev_kalmanvelo_states,
+    dev_atomics_storage,
+    dev_velo_track_hit_number,
+    dev_pvtracks
   >,
-    AlgorithmDependencies<blpv_histo_t,
-   dev_atomics_storage,
-  dev_velo_track_hit_number,
-  dev_pvtracks,
-  dev_zhisto
+  AlgorithmDependencies<blpv_histo_t,
+    dev_atomics_storage,
+    dev_velo_track_hit_number,
+    dev_pvtracks,
+    dev_zhisto
   >,
-    AlgorithmDependencies<blpv_peak_t,
-   dev_zhisto,
-  dev_zpeaks,
-  dev_number_of_zpeaks
+  AlgorithmDependencies<blpv_peak_t,
+    dev_zhisto,
+    dev_zpeaks,
+    dev_number_of_zpeaks
   >, 
+  AlgorithmDependencies<blpv_multi_fitter_t,
+    dev_atomics_storage,
+    dev_velo_track_hit_number,
+    dev_pvtracks,
+    dev_zpeaks,
+    dev_number_of_zpeaks,
+    dev_multi_fit_vertices,
+    dev_number_of_multi_fit_vertices
+  >,
   AlgorithmDependencies<ut_calculate_number_of_hits_t,
     dev_ut_raw_input,
     dev_ut_raw_input_offsets,

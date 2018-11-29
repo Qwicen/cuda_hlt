@@ -24,6 +24,7 @@
 #include "blpv_extrapolate.cuh"
 #include "blpv_histo.cuh"
 #include "blpv_peak.cuh"
+#include "blpv_multi_fitter.cuh"
 #include "RunForwardCPU.h"
 #include "RunBeamlinePVonCPU.h"
 
