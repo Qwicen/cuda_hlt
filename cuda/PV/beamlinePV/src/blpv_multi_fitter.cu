@@ -78,13 +78,13 @@ __global__ void blpv_multi_fitter(
           ++nselectedtracks ;
           // Tukey's weight
           //double T = 1. + maxNumIter / (iter+1) * 0.05;
-          double T = 1.;
+          float T = 1.;
 
           //try out varying chi2_cut during iterations instead of T
-          double chi2_cut = 0.1 + 0.01*maxNumIter / (iter+1) ;
+          float chi2_cut = 0.1 + 0.01*maxNumIter / (iter+1) ;
 
           trk.weight = exp(-chi2/2./T);
-          double denom = exp(-chi2_cut/2./T);
+          float denom = exp(-chi2_cut/2./T);
           for (int i_otherseed = 0; i_otherseed < number_of_seeds; i_otherseed++) {
              float2 res{0.f,0.f};
              const float dz = zseeds[i_otherseed] - trk.z;
