@@ -1,8 +1,7 @@
-CUDA HLT
-========
+Allen
+=====
 
-Welcome to the CUDA High Level Trigger project, an attempt to provide
-a full HLT1 realization on GPU.
+Welcome to Allen, a project with the aim to provide a full HLT1 realization on GPU.
 
 Requisites
 ----------
@@ -61,13 +60,13 @@ There are some cmake options to configure the build process:
 * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
 * If ROOT is available, it can be enabled to generate graphs by `-DUSE_ROOT=ON`
 
-The MC validation is a standalone version of the PrChecker, it was written by
+The MC validation is standalone, it was written by
 Manuel Schiller, Rainer Schwemmer and Daniel Cámpora.
 
 Some binary input files are included with the project for testing.
 A run of the program with no arguments will let you know the basic options:
 
-    Usage: ./cu_hlt
+    Usage: ./Allen
     -f {folder containing directories with raw bank binaries for every sub-detector}
     -g {folder containing detector configuration}
     -d {folder containing bin files with MC truth information}
@@ -86,19 +85,19 @@ A run of the program with no arguments will let you know the basic options:
 Here are some example run options:
 
     # Run all input files once with the tracking validation
-    ./cu_hlt
+    ./Allen
 
     # Specify input files, run once over all of them with tracking validation
-    ./cu_hlt -f ../input/minbias/banks/ -d ../input/minbias/MC_info/
+    ./Allen -f ../input/minbias/banks/ -d ../input/minbias/MC_info/
 
     # Run a total of 1000 events, round robin over the existing ones, without tracking validation
-    ./cu_hlt -c 0 -n 1000
+    ./Allen -c 0 -n 1000
 
     # Run four streams, each with 4000 events, 20 repetitions
-    ./cu_hlt -t 4 -n 4000 -r 20 -c 0
+    ./Allen -t 4 -n 4000 -r 20 -c 0
 
     # Run one stream and print all memory allocations
-    ./cu_hlt -n 5000 -p
+    ./Allen -n 5000 -p
 
 
 [This readme](contributing.md) explains how to add a new algorithm to the sequence and how to use the memory scheduler to define global memory variables for this sequence and pass on the dependencies. It also explains which checks to do before placing a merge request with your changes.

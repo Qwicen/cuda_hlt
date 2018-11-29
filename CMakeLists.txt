@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-project(cu_hlt C CXX)
+project(Allen C CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}) # for find_package
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake) # for find_package
@@ -123,9 +123,9 @@ cuda_add_library(Common ${common_sources})
 target_link_libraries(Common mdf)
 
 # main executable
-cuda_add_executable(cu_hlt ${main_cpp_path})
+cuda_add_executable(Allen ${main_cpp_path})
 
-target_link_libraries(cu_hlt
+target_link_libraries(Allen
   Common
   Utils
   Velo
@@ -141,6 +141,6 @@ target_link_libraries(cu_hlt
   CheckClustering)
 
 if (ROOT_FOUND)
-  target_compile_definitions(cu_hlt PUBLIC WITH_ROOT)
-  target_link_libraries(cu_hlt ${ROOT_LIBRARIES})
+  target_compile_definitions(Allen PUBLIC WITH_ROOT)
+  target_link_libraries(Allen ${ROOT_LIBRARIES})
 endif()

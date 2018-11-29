@@ -6,6 +6,7 @@
 #include "UTDefinitions.cuh"
 #include "SciFiDefinitions.cuh"
 #include "UTEventModel.cuh"
+#include "MiniState.cuh"
 
 /**
  * @brief Prepares tracks for Velo consolidated datatypes.
@@ -47,6 +48,7 @@ std::vector<trackChecker::Tracks> prepareSciFiTracks(
   const char* scifi_track_hits,
   const uint* scifi_track_ut_indices,
   const float* scifi_qop,
+  const MiniState* scifi_states,
   const char* host_scifi_geometry,
   const std::array<float, 9>& host_inv_clus_res,
   const uint number_of_events);

@@ -7,6 +7,7 @@ __global__ void consolidate_scifi_tracks(
   int* dev_atomics_scifi,
   uint* dev_scifi_track_hit_number,
   float* dev_scifi_qop,
+  MiniState* dev_scifi_states,
   uint* dev_scifi_track_ut_indices,
   SciFi::TrackHits* dev_scifi_tracks,
   const char* dev_scifi_geometry,
@@ -29,6 +30,7 @@ __global__ void consolidate_scifi_tracks(
     (uint*)dev_atomics_scifi,
       dev_scifi_track_hit_number,
       dev_scifi_qop,
+      dev_scifi_states,
       dev_scifi_track_ut_indices,
       event_number,
       number_of_events
@@ -40,6 +42,7 @@ __global__ void consolidate_scifi_tracks(
   for(uint i=threadIdx.x; i<number_of_tracks_event; i+=blockDim.x){
     scifi_tracks.ut_track[i] = event_scifi_tracks[i].UTTrackIndex;
     scifi_tracks.qop[i] = event_scifi_tracks[i].qop;
+    scifi_tracks.states[i] = event_scifi_tracks[i].state;
     SciFi::Consolidated::Hits consolidated_hits =
       scifi_tracks.get_hits(dev_scifi_consolidated_hits, i, &scifi_geometry, dev_inv_clus_res);
     SciFi::TrackHits track = event_scifi_tracks[i];
