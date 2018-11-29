@@ -442,6 +442,7 @@ void findPVs(
     {
       for( int i = 0; i < number_of_tracks_in_zrange; i++ ) {
         PVTrack trk = pvtracks[i];
+        #ifdef WITH_ROOT
         cov_x = trk.W_00;
         cov_y = trk.W_11;
         cov_z = 1.;
@@ -452,6 +453,7 @@ void findPVs(
         tx = trk.tx.x;
         ty = trk.tx.y;
         t_velo_states->Fill();
+        #endif
         // bin in which z0 is, in floating point
         const float zbin = (trk.z - m_zmin)/m_dz ;
       
