@@ -499,7 +499,7 @@ void findPVs(
     Cluster clusters[PV::max_number_of_clusters];
     uint number_of_clusters = 0;
     std::cout << "--------" << std::endl;
-
+/*
     //try to find a simpler peak finding, the numbers here could be optimized
     for(uint i = 2; i < Nbins-2; i++) {
       if(zhisto[i] > zhisto[i -1] && zhisto[i] > zhisto[i+1] && (zhisto[i] + zhisto[i-1] + zhisto[i+1]+ zhisto[i-2] + zhisto[i+2] > 2.5 ) && zhisto[i] > 1.5 ) {
@@ -508,7 +508,7 @@ void findPVs(
         number_of_clusters++;
       }
     }
-/*
+*/
     {
       // step A: make 'ProtoClusters'
       // Step B: for each such ProtoClusters
@@ -640,7 +640,7 @@ void findPVs(
         }
       }
     }
-    */
+    
     debug_cout << "Found " <<  number_of_clusters << " clusters" << std::endl;
    
     // Step 4: partition the set of tracks by vertex seed: just
