@@ -6,7 +6,6 @@
 
 __device__ void make_cluster_v4 (
   const int hit_index,
-  const SciFi::HitCount& hit_count,
   const SciFi::SciFiGeometry& geom,
   uint32_t chan,
   uint8_t fraction,

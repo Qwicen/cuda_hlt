@@ -9,6 +9,7 @@ __device__ void store_sorted_cluster_reference_v4 (
   const uint32_t uniqueMat,
   const uint32_t chan,
   const uint32_t* shared_mat_offsets,
+  uint32_t* shared_mat_count,
   const int raw_bank,
   const int it,
   const int condition_1,

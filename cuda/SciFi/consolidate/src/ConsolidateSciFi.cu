@@ -22,8 +22,7 @@ __global__ void consolidate_scifi_tracks(
     dev_scifi_hit_count[number_of_events*SciFi::Constants::n_mats];
   const SciFi::SciFiGeometry scifi_geometry {dev_scifi_geometry}; 
   SciFi::Hits scifi_hits(dev_scifi_hits, total_number_of_scifi_hits, &scifi_geometry, dev_inv_clus_res); 
-  SciFi::HitCount scifi_hit_count;
-  scifi_hit_count.typecast_after_prefix_sum((uint*) dev_scifi_hit_count, event_number, number_of_events); 
+  const SciFi::HitCount scifi_hit_count {dev_scifi_hit_count, event_number};
 
   // Create consolidated SoAs.
   SciFi::Consolidated::Tracks scifi_tracks {

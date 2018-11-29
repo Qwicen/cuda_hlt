@@ -10,7 +10,7 @@ void SequenceVisitor::set_arguments_size<scifi_calculate_cluster_count_v4_t>(
 {
   arguments.set_size<dev_scifi_raw_input>(runtime_options.host_scifi_events_size);
   arguments.set_size<dev_scifi_raw_input_offsets>(runtime_options.host_scifi_event_offsets_size);
-  arguments.set_size<dev_scifi_hit_count>(2 * runtime_options.number_of_events * SciFi::Constants::n_mat_groups_and_mats + 1);
+  arguments.set_size<dev_scifi_hit_count>(runtime_options.number_of_events * SciFi::Constants::n_mat_groups_and_mats + 1);
 }
 
 template<>
