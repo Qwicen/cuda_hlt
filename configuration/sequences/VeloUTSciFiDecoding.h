@@ -25,8 +25,9 @@ SEQUENCE_T(
   copy_ut_track_hit_number_t,
   prefix_sum_ut_track_hit_number_t,
   consolidate_ut_tracks_t,
-  scifi_calculate_cluster_count_t,
+  scifi_calculate_cluster_count_v4_t,
   prefix_sum_scifi_hits_t,
-  scifi_pre_decode_t,
-  scifi_raw_bank_decoder_t,
+  scifi_pre_decode_v4_t,
+  scifi_raw_bank_decoder_v4_t,
+  scifi_direct_decoder_v4_t
 )

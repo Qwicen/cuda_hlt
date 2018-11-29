@@ -28,7 +28,9 @@ __global__ void scifi_calculate_cluster_count_v4(
     if (*(last - 1) == 0) --last; // Remove padding at the end
     const uint number_of_clusters = last - it;
 
-    hit_count.mat_offsets[i] = number_of_clusters;
+    if (last > it) {
+      hit_count.mat_offsets[i] = number_of_clusters;
+    }
   }
 
   const uint mats_difference = 3 * SciFi::Constants::n_consecutive_raw_banks;

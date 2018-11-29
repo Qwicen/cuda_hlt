@@ -13,7 +13,7 @@ void SequenceVisitor::visit<scifi_direct_decoder_v4_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(64, 16), cuda_stream);
+  state.set_opts(dim3(runtime_options.number_of_events), dim3(2, 16), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_scifi_raw_input>(),
     arguments.offset<dev_scifi_raw_input_offsets>(),
