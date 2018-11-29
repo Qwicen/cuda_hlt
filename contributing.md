@@ -1,12 +1,12 @@
-Cuda HLT: Adding a new CUDA algorithm
+Allen: Adding a new CUDA algorithm
 =====================================
 
-This tutorial will guide you through adding a new CUDA algorithm to the `cuda_hlt` project.
+This tutorial will guide you through adding a new CUDA algorithm to the `Allen` project.
 
 SAXPY
 -----
 
-Writing an algorithm in CUDA in the `cuda_hlt` project is no different than writing it on any other GPU project. The differences are in how to invoke that program, and how to setup the options, arguments, and so on.
+Writing an algorithm in CUDA in the `Allen` project is no different than writing it on any other GPU project. The differences are in how to invoke that program, and how to setup the options, arguments, and so on.
 
 So let's assume that we have the following simple `SAXPY` algorithm, taken out from this website https://devblogs.nvidia.com/easy-introduction-cuda-c-and-c/
 
@@ -67,7 +67,7 @@ The newly created `test/CMakeLists.txt` file should reflect the project we are c
 ```cmake=
 file(GLOB test_saxpy "saxpy/src/*cu")
 include_directories(saxpy/include)
-include_directories(../../stream/handlers/include)
+include_directories(${CMAKE_SOURCE_DIR}/stream/handlers/include)
 
 cuda_add_library(Test STATIC
   ${test_saxpy}
@@ -106,14 +106,14 @@ Ready to move on.
 
 ### Integrating the algorithm in the sequence
 
-`cuda_hlt` centers around the idea of running a __sequence of algorithms__ on input events. This sequence is predefined and will always be executed in the same order.
+`Allen` centers around the idea of running a __sequence of algorithms__ on input events. This sequence is predefined and will always be executed in the same order.
 
 Some events from the input will be discarded throughout the execution, and only a fraction of them will be kept for further processing. That is conceptually the idea behind the _High Level Trigger 1_ stage of LHCb, and is what is intended to achieve with this project.
 
 Therefore, we need to add our algorithm to the sequence of algorithms. First, make the folder visible to CMake by editing the file `stream/CMakeLists.txt` and adding:
 
 ```clike
-include_directories(../cuda/test/saxpy/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/test/saxpy/include)
 ```
 
 Then, add the following include to `stream/setup/include/ConfiguredSequence.cuh`:
@@ -334,13 +334,24 @@ void SequenceVisitor::visit<saxpy_t>(
 }
 ```
 
-We can compile the code and run the program `./cu_hlt`. If everything went well, the following text should appear:
+As a last step, add the visitor to `stream/CMakeLists.txt`:
+
+```clike
+...
+file(GLOB stream_visitors_test "visitors/test/src/*cu")
+...
+cuda_add_library(Stream STATIC
+${stream_visitors_test}
+...
+```
+
+We can compile the code and run the program `./Allen`. If everything went well, the following text should appear:
 
 ```
 Saxpy max error: 0.00
 ```
 
-The cool thing is your algorithm is now part of the sequence. You can see how memory is managed, taking into account your algorithm, and how it changes on every step by appending the `-p` option: `./cu_hlt -p`
+The cool thing is your algorithm is now part of the sequence. You can see how memory is managed, taking into account your algorithm, and how it changes on every step by appending the `-p` option: `./Allen -p`
 
 ```
 Sequence step 13 "saxpy_t" memory segments (MiB):
@@ -362,7 +373,7 @@ Before placing a merge request, please go through the following list and check t
   * Compilation with ROOT (if you have a ROOT installation available): `cmake -DUSE_ROOT=TRUE ..` If you don't have ROOT available, please mention this in the merge request, then we will test it.
   
 
-Check that you can run `./cu_hlt` after every compilation. 
+Check that you can run `./Allen` after every compilation. 
   
 
 Now you are ready to take over!
