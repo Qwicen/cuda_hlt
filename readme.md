@@ -60,7 +60,7 @@ There are some cmake options to configure the build process:
 * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
 * If ROOT is available, it can be enabled to generate graphs by `-DUSE_ROOT=ON`
 
-The MC validation is a standalone version of the PrChecker, it was written by
+The MC validation is standalone, it was written by
 Manuel Schiller, Rainer Schwemmer and Daniel Cámpora.
 
 Some binary input files are included with the project for testing.
