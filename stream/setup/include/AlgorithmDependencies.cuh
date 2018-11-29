@@ -12,6 +12,24 @@
  *          The types referred here are GPU buffers.
  */
 typedef std::tuple<
+  AlgorithmDependencies<init_event_list_t, // Algorithm
+    dev_raw_input,                         // Argument #0
+    dev_raw_input_offsets,                 // Argument #1
+    dev_ut_raw_input,
+    dev_ut_raw_input_offsets,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_event_list               
+  >,  
+  AlgorithmDependencies<global_event_cuts_t, 
+    dev_raw_input,                         
+    dev_raw_input_offsets,                 
+    dev_ut_raw_input,
+    dev_ut_raw_input_offsets,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_event_list               
+  >, 
   AlgorithmDependencies<velo_estimate_input_size_t, // Algorithm
     dev_raw_input,                                  // Argument #0
     dev_raw_input_offsets,                          // Argument #1
@@ -19,7 +37,7 @@ typedef std::tuple<
     dev_module_cluster_num,
     dev_module_candidate_num,
     dev_cluster_candidates
-  >,
+  >, 
   AlgorithmDependencies<prefix_sum_velo_clusters_t,
     dev_estimated_input_size,
     dev_cluster_offset

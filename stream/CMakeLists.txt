@@ -13,6 +13,7 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/velo/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/UT/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/SciFi/include)  
+include_directories(${CMAKE_SOURCE_DIR}/cuda/global_event_cuts/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/PrVeloUT/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/UTDecoding/include)
@@ -48,6 +49,7 @@ file(GLOB stream_scheduler "scheduler/src/*cu")
 file(GLOB stream_sequence "sequence/src/*cu")
 file(GLOB stream_sequence_cpp "sequence/src/*cpp")
 file(GLOB stream_setup "setup/src/*cu")
+file(GLOB stream_visitors_gec "visitors/global_event_cuts/src/*cu")
 file(GLOB stream_visitors_velo "visitors/velo/src/*cu")
 file(GLOB stream_visitors_pv "visitors/PV/src/*cu")
 file(GLOB stream_visitors_UT "visitors/UT/src/*cu")
@@ -61,6 +63,7 @@ cuda_add_library(Stream STATIC
   ${stream_sequence}
   ${stream_sequence_cpp}
   ${stream_setup}
+  ${stream_visitors_gec}
   ${stream_visitors_velo}
   ${stream_visitors_pv}
   ${stream_visitors_UT}
@@ -70,6 +73,7 @@ cuda_add_library(Stream STATIC
 target_link_libraries(Stream
   Common
   Utils
+  GlobalEventCuts
   Velo
   PV
   UT

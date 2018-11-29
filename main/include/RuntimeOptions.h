@@ -17,6 +17,7 @@ struct RuntimeOptions {
   size_t host_scifi_events_size;
   size_t host_scifi_event_offsets_size;
   uint number_of_events;
+  uint number_of_selected_events;
   uint number_of_repetitions;
 
   RuntimeOptions() = default;
@@ -49,5 +50,6 @@ struct RuntimeOptions {
     host_scifi_events_size(param_host_scifi_events_size),
     host_scifi_event_offsets_size(param_host_scifi_event_offsets_size),
     number_of_events(param_number_of_events),
+    number_of_selected_events(param_number_of_events),
     number_of_repetitions(param_number_of_repetitions) {}
 };

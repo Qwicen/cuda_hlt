@@ -8,8 +8,6 @@ void SequenceVisitor::set_arguments_size<ut_calculate_number_of_hits_t>(
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 {
-  arguments.set_size<dev_ut_raw_input>(runtime_options.host_ut_events_size);
-  arguments.set_size<dev_ut_raw_input_offsets>(runtime_options.host_ut_event_offsets_size);
   arguments.set_size<dev_ut_hit_offsets>(
     runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4] + 1);
 }
@@ -25,20 +23,6 @@ void SequenceVisitor::visit<ut_calculate_number_of_hits_t>(
   cudaEvent_t& cuda_generic_event)
 {
   // Setup opts and arguments for kernel call
-  cudaCheck(cudaMemcpyAsync(
-    arguments.offset<dev_ut_raw_input>(),
-    runtime_options.host_ut_events,
-    runtime_options.host_ut_events_size,
-    cudaMemcpyHostToDevice,
-    cuda_stream));
-
-  cudaCheck(cudaMemcpyAsync(
-    arguments.offset<dev_ut_raw_input_offsets>(),
-    runtime_options.host_ut_event_offsets,
-    runtime_options.host_ut_event_offsets_size * sizeof(uint32_t),
-    cudaMemcpyHostToDevice,
-    cuda_stream));
-
   cudaCheck(
     cudaMemsetAsync(arguments.offset<dev_ut_hit_offsets>(), 0, arguments.size<dev_ut_hit_offsets>(), cuda_stream));
 

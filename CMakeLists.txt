@@ -85,6 +85,7 @@ add_subdirectory(mdf)
 # Include directories
 include_directories(main/include)
 include_directories(x86/velo/clustering/include)
+include_directories(cuda/global_event_cuts/include)
 include_directories(cuda/UT/common/include)
 include_directories(cuda/UT/PrVeloUT/include)
 include_directories(cuda/UT/compassUT/include)
