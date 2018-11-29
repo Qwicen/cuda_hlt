@@ -19,4 +19,4 @@ __global__ void fill_candidates(
   short* dev_h2_candidates
 );
 
-ALGORITHM(fill_candidates, fill_candidates_t)
+ALGORITHM(fill_candidates, velo_fill_candidates_t)

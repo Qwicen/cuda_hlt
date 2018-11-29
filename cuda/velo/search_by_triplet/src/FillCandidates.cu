@@ -38,7 +38,7 @@ __device__ void fill_candidates_impl(
         hit_Phis + m0_hitStarts,
         m0_hitNums,
         h1_phi,
-        VeloTracking::phi_extrapolation
+        Velo::Tracking::phi_extrapolation
       );
 
       if (first_h0_bin != -1) {
@@ -47,7 +47,7 @@ __device__ void fill_candidates_impl(
           hit_Phis + m0_hitStarts + first_h0_bin,
           m0_hitNums - first_h0_bin,
           h1_phi,
-          VeloTracking::phi_extrapolation
+          Velo::Tracking::phi_extrapolation
         );
         first_h0_bin += m0_hitStarts;
         last_h0_bin = last_h0_bin==0 ? first_h0_bin+1 : first_h0_bin+last_h0_bin;
@@ -64,7 +64,7 @@ __device__ void fill_candidates_impl(
         hit_Phis + m2_hitStarts,
         m2_hitNums,
         h1_phi,
-        VeloTracking::phi_extrapolation
+        Velo::Tracking::phi_extrapolation
       );
 
       if (first_h2_bin != -1) {
@@ -73,7 +73,7 @@ __device__ void fill_candidates_impl(
           hit_Phis + m2_hitStarts + first_h2_bin,
           m2_hitNums - first_h2_bin,
           h1_phi,
-          VeloTracking::phi_extrapolation
+          Velo::Tracking::phi_extrapolation
         );
         first_h2_bin += m2_hitStarts;
         last_h2_bin = last_h2_bin==0 ? first_h2_bin+1 : first_h2_bin+last_h2_bin;
@@ -98,11 +98,11 @@ __global__ void fill_candidates(
   const uint number_of_events = gridDim.x;
 
   // Pointers to data within the event
-  const uint number_of_hits = dev_module_cluster_start[VeloTracking::n_modules * number_of_events];
-  const uint* module_hitStarts = dev_module_cluster_start + event_number * VeloTracking::n_modules;
-  const uint* module_hitNums = dev_module_cluster_num + event_number * VeloTracking::n_modules;
+  const uint number_of_hits = dev_module_cluster_start[Velo::Constants::n_modules * number_of_events];
+  const uint* module_hitStarts = dev_module_cluster_start + event_number * Velo::Constants::n_modules;
+  const uint* module_hitNums = dev_module_cluster_num + event_number * Velo::Constants::n_modules;
   const uint hit_offset = module_hitStarts[0];
-  assert((module_hitStarts[52] - module_hitStarts[0]) < VeloTracking::max_number_of_hits_per_event);
+  assert((module_hitStarts[52] - module_hitStarts[0]) < Velo::Constants::max_number_of_hits_per_event);
   
   // Order has changed since SortByPhi
   const float* hit_Phis = (float*) (dev_velo_cluster_container + 4 * number_of_hits + hit_offset);

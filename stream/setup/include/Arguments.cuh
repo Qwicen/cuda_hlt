@@ -2,10 +2,11 @@
 
 #include "Argument.cuh"
 #include "VeloEventModel.cuh"
-#include "VeloUTDefinitions.cuh"
+#include "UTDefinitions.cuh"
 #include "PrForward.cuh"
 #include "MuonDefinitions.cuh"
 #include "patPV_Definitions.cuh"
+#include "MiniState.cuh"
 
 /**
  * @brief Definition of arguments. All arguments should be defined here,
@@ -22,7 +23,7 @@ ARGUMENT(dev_velo_cluster_container, uint)
 ARGUMENT(dev_tracks, Velo::TrackHits)
 ARGUMENT(dev_tracks_to_follow, uint)
 ARGUMENT(dev_hit_used, bool)
-ARGUMENT(dev_atomics_storage, int)
+ARGUMENT(dev_atomics_velo, int)
 ARGUMENT(dev_tracklets, Velo::TrackletHits)
 ARGUMENT(dev_weak_tracks, Velo::TrackletHits)
 ARGUMENT(dev_h0_candidates, short)
@@ -31,32 +32,48 @@ ARGUMENT(dev_rel_indices, unsigned short)
 ARGUMENT(dev_hit_permutation, uint)
 ARGUMENT(dev_velo_track_hit_number, uint)
 ARGUMENT(dev_prefix_sum_auxiliary_array_2, uint)
-ARGUMENT(dev_velo_track_hits, uint)
-ARGUMENT(dev_velo_states, uint)
-ARGUMENT(dev_kalmanvelo_states, uint)
+ARGUMENT(dev_velo_track_hits, char)
+ARGUMENT(dev_velo_states, char)
+ARGUMENT(dev_kalmanvelo_states, char)
+
 ARGUMENT(dev_seeds, PatPV::XYZPoint)
 ARGUMENT(dev_number_seeds, uint)
 ARGUMENT(dev_vertex, PatPV::Vertex)
 ARGUMENT(dev_number_vertex, int)
-ARGUMENT(dev_ut_raw_input, uint)
+
+ARGUMENT(dev_ut_raw_input, char)
 ARGUMENT(dev_ut_raw_input_offsets, uint)
 ARGUMENT(dev_ut_hit_offsets, uint)
 ARGUMENT(dev_ut_hit_count, uint)
 ARGUMENT(dev_prefix_sum_auxiliary_array_3, uint)
 ARGUMENT(dev_ut_hits, uint)
 ARGUMENT(dev_ut_hit_permutations, uint)
-ARGUMENT(dev_veloUT_tracks, VeloUTTracking::TrackUT)
-ARGUMENT(dev_atomics_veloUT, int)
+ARGUMENT(dev_ut_tracks, UT::TrackHits)
+ARGUMENT(dev_atomics_ut, int)
+ARGUMENT(dev_prefix_sum_auxiliary_array_5, uint)
+ARGUMENT(dev_windows_layers, int)
+ARGUMENT(dev_active_tracks, int)
+
+ARGUMENT(dev_ut_track_hit_number, uint)
+ARGUMENT(dev_ut_track_hits, char)
+ARGUMENT(dev_ut_qop, float)
+ARGUMENT(dev_ut_track_velo_indices, uint)
+
 ARGUMENT(dev_scifi_raw_input_offsets, uint)
 ARGUMENT(dev_scifi_hit_count, uint)
 ARGUMENT(dev_prefix_sum_auxiliary_array_4, uint)
 ARGUMENT(dev_scifi_hit_permutations, uint)
 ARGUMENT(dev_scifi_hits, uint)
 ARGUMENT(dev_scifi_raw_input, char)
-ARGUMENT(dev_scifi_tracks, SciFi::Track)
-ARGUMENT(dev_n_scifi_tracks, uint)
-ARGUMENT(dev_muon_track, Muon::State)
+ARGUMENT(dev_scifi_tracks, SciFi::TrackHits)
+ARGUMENT(dev_atomics_scifi, int)
+ARGUMENT(dev_prefix_sum_auxiliary_array_6, uint)
+ARGUMENT(dev_scifi_track_hit_number, uint)
+ARGUMENT(dev_scifi_track_hits, char)
+ARGUMENT(dev_scifi_qop, float)
+ARGUMENT(dev_scifi_states, MiniState)
+ARGUMENT(dev_scifi_track_ut_indices, uint)
+
 ARGUMENT(dev_muon_hits, Muon::HitsSoA)
 ARGUMENT(dev_muon_catboost_features, float)
 ARGUMENT(dev_muon_catboost_output, float)
-

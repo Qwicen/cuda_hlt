@@ -32,4 +32,4 @@ __global__ void calculate_phi_and_sort(
   uint* dev_hit_permutations
 );
 
-ALGORITHM(calculate_phi_and_sort, calculate_phi_and_sort_t)
+ALGORITHM(calculate_phi_and_sort, velo_calculate_phi_and_sort_t)

@@ -1,7 +1,7 @@
 #include "HitUtils.cuh"
 
 // match stereo hits to x hits
-__host__ __device__ bool matchStereoHit( const int itUV1, const int uv_zone_offset_end, const SciFi::SciFiHits& scifi_hits, const int xMinUV, const int xMaxUV ) {
+__host__ __device__ bool matchStereoHit( const int itUV1, const int uv_zone_offset_end, const SciFi::Hits& scifi_hits, const int xMinUV, const int xMaxUV ) {
 
   for (int stereoHit = itUV1; stereoHit != uv_zone_offset_end; ++stereoHit) {
     if ( scifi_hits.x0[stereoHit] > xMinUV ) {
@@ -12,8 +12,8 @@ __host__ __device__ bool matchStereoHit( const int itUV1, const int uv_zone_offs
 }
 
 // match stereo hits to x hits using triangle method
-__host__ __device__ bool matchStereoHitWithTriangle( const int itUV2, const int triangle_zone_offset_end, const float yInZone, const SciFi::SciFiHits& scifi_hits, const int xMinUV, const int xMaxUV, const int side ) {
-
+__host__ __device__ bool matchStereoHitWithTriangle( const int itUV2, const int triangle_zone_offset_end, const float yInZone, const SciFi::Hits& scifi_hits, const int xMinUV, const int xMaxUV, const int side ) {
+  
   for (int stereoHit = itUV2; stereoHit != triangle_zone_offset_end; ++stereoHit) {
     if ( scifi_hits.x0[stereoHit] > xMinUV ) {
       // Triangle search condition depends on side
@@ -33,7 +33,7 @@ __host__ __device__ bool matchStereoHitWithTriangle( const int itUV2, const int 
 }
 
 __host__ __device__ void removeOutlier(
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   PlaneCounter& planeCounter,
   int* coordToFit,
   int& n_coordToFit,
@@ -60,7 +60,7 @@ __host__ __device__ void countPlanesOfXHits(
   const int n_x_hits,
   const int allXHits[SciFi::Tracking::max_x_hits],
   const bool usedHits[SciFi::Tracking::max_x_hits],
-  const SciFi::SciFiHits& scifi_hits ) {
+  const SciFi::Hits& scifi_hits ) {
 
   planeCounter.clear();
   for (int itH = it1; itH != it2; ++itH) {
@@ -80,7 +80,7 @@ __host__ __device__ void countUnusedXHitsOnPlanes(
   const int n_x_hits,
   const int allXHits[SciFi::Tracking::max_x_hits],
   const bool usedHits[SciFi::Tracking::max_x_hits],
-  const SciFi::SciFiHits& scifi_hits){
+  const SciFi::Hits& scifi_hits){
   for (int itH = itWindowStart; itH != itWindowEnd; ++itH) {
     assert( itH < n_x_hits );
     if (!usedHits[itH]) {
@@ -103,7 +103,7 @@ __host__ __device__ void addXHitsForCandidateWithTooFewPlanes(
   const bool usedHits[SciFi::Tracking::max_x_hits],
   const int n_x_hits,
   const int allXHits[SciFi::Tracking::max_x_hits],
-  const SciFi::SciFiHits& scifi_hits) {
+  const SciFi::Hits& scifi_hits) {
 
   while ( itWindowEnd <= it2 ) {
     if ( lplaneCounter.nbDifferent >= nPlanes ) {
@@ -164,7 +164,7 @@ __host__ __device__ void collectXHitsToFit(
 __host__ __device__ int findBestXHitOnEmptyLayer(
   const int itEnd,
   const int itBegin,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const float maxX,
   const float xPred) {
 
@@ -185,7 +185,7 @@ __host__ __device__ int findBestXHitOnEmptyLayer(
 __host__ __device__ void findStereoHitsWithinXTol(
   const int itBegin,
   const int itEnd,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const float yZone,
   const float xPred,
   const float dxTol,
@@ -220,7 +220,7 @@ __host__ __device__ void findStereoHitClusterByDx(
   float stereoCoords[SciFi::Tracking::max_stereo_hits],
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   const int n_stereoHits,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   float& sumCoord,
   int& first_hit) {
 
@@ -246,7 +246,7 @@ __host__ __device__ void cleanStereoHitCluster(
   const float stereoCoords[SciFi::Tracking::max_stereo_hits],
   float& sumCoord,
   PlaneCounter& planeCounter,
-  const SciFi::SciFiHits& scifi_hits) {
+  const SciFi::Hits& scifi_hits) {
 
   while ( endRange < n_stereoHits - 1 ) {
     const float averageCoord = sumCoord / float(endRange-beginRange);
@@ -280,7 +280,7 @@ __host__ __device__ void cleanStereoHitCluster(
 __host__ __device__ int findBestStereoHitOnEmptyLayer(
   const int itBegin,
   const int itEnd,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const float yZone,
   const float xPred,
   const float dxTol,

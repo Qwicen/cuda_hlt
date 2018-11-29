@@ -16,7 +16,7 @@ __global__ void muon_catboost_evaluator(
   const float* dev_muon_catboost_features,
   const float* dev_muon_catboost_leaf_values,
   const int* dev_muon_catboost_leaf_offsets,
-  const float* dev_muon_catbost_split_borders,
+  const float* dev_muon_catboost_split_borders,
   const int* dev_muon_catboost_split_features,
   const int* dev_muon_catboost_tree_sizes,
   const int* dev_muon_catboost_tree_offsets,
@@ -60,7 +60,7 @@ __global__ void muon_catboost_evaluator(
   if (tid < 32) warp_reduce(values, tid);
   
   if (threadIdx.x == 0)
-     dev_output[object_id] = values[0];
+     dev_muon_catboost_output[object_id] = values[0];
     
 }
 

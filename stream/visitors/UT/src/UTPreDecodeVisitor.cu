@@ -8,7 +8,7 @@ void SequenceVisitor::set_arguments_size<ut_pre_decode_t>(
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 {
-  arguments.set_size<dev_ut_hits>(UTHits::number_of_arrays * host_buffers.host_accumulated_number_of_ut_hits[0]);
+  arguments.set_size<dev_ut_hits>(UT::Hits::number_of_arrays * host_buffers.host_accumulated_number_of_ut_hits[0]);
   arguments.set_size<dev_ut_hit_count>(runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
 }
 

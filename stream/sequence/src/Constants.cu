@@ -1,22 +1,22 @@
 #include "Constants.cuh"
 
 void Constants::reserve_constants() {
-  cudaCheck(cudaMalloc((void**)&dev_velo_module_zs, VeloTracking::n_modules * sizeof(float)));
+  cudaCheck(cudaMalloc((void**)&dev_velo_module_zs, Velo::Constants::n_modules * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_velo_candidate_ks, 9 * sizeof(uint8_t)));
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_patterns, 256 * sizeof(uint8_t)));
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_fx, 512 * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_velo_sp_fy, 512 * sizeof(float)));
-  cudaCheck(cudaMalloc((void**)&dev_ut_dxDy, VeloUTTracking::n_layers * sizeof(float)));
+  cudaCheck(cudaMalloc((void**)&dev_ut_dxDy, UT::Constants::n_layers * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_scifi_tmva1, sizeof(SciFi::Tracking::TMVA)));
   cudaCheck(cudaMalloc((void**)&dev_scifi_tmva2, sizeof(SciFi::Tracking::TMVA)));
   cudaCheck(cudaMalloc((void**)&dev_scifi_constArrays, sizeof(SciFi::Tracking::Arrays)));
-  cudaCheck(cudaMalloc((void**)&dev_ut_region_offsets, (VeloUTTracking::n_layers * VeloUTTracking::n_regions_in_layer + 1) * sizeof(uint)));
+  cudaCheck(cudaMalloc((void**)&dev_ut_region_offsets, (UT::Constants::n_layers * UT::Constants::n_regions_in_layer + 1) * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_inv_clus_res, host_inv_clus_res.size() * sizeof(float)));
 }
 
 void Constants::initialize_constants() {
   // Velo module constants
-  const std::array<float, VeloTracking::n_modules> velo_module_zs = {-287.5, -275, -262.5, -250, -237.5, -225, -212.5, \
+  const std::array<float, Velo::Constants::n_modules> velo_module_zs = {-287.5, -275, -262.5, -250, -237.5, -225, -212.5, \
     -200, -137.5, -125, -62.5, -50, -37.5, -25, -12.5, 0, 12.5, 25, 37.5, 50, 62.5, 75, 87.5, 100, \
     112.5, 125, 137.5, 150, 162.5, 175, 187.5, 200, 212.5, 225, 237.5, 250, 262.5, 275, 312.5, 325, \
     387.5, 400, 487.5, 500, 587.5, 600, 637.5, 650, 687.5, 700, 737.5, 750};
@@ -67,14 +67,14 @@ void Constants::initialize_ut_decoding_constants(
   const UTGeometry geometry(ut_geometry);
 
   // Offset for each station / layer
-  const std::array<uint, VeloUTTracking::n_layers + 1> offsets {
+  const std::array<uint, UT::Constants::n_layers + 1> offsets {
     host_ut_region_offsets[0], host_ut_region_offsets[3], host_ut_region_offsets[6],
     host_ut_region_offsets[9], host_ut_region_offsets[12]};
   auto current_sector_offset = 0;
   host_unique_x_sector_offsets[current_sector_offset];
   host_unique_x_sector_layer_offsets[0] = 0;
 
-  for (int i=0; i<VeloUTTracking::n_layers; ++i) {
+  for (int i=0; i<UT::Constants::n_layers; ++i) {
     const auto offset = offsets[i];
     const auto size = offsets[i+1] - offsets[i];
 
@@ -120,22 +120,22 @@ void Constants::initialize_ut_decoding_constants(
     }
 
     // Some printouts in case we want to debug
-    if (logger::ll.verbosityLevel >= logger::debug) {
-      for (int j=0; j<size; ++j) {
-        debug_cout << j << ", " << geometry.p0X[offset + j] << ", " << permutation[j] << ", "
-          << permutation_repeated[j] << ", " << unique_permutation[j] << std::endl;
-      }
-      std::vector<float> unique_elements (number_of_unique_elements);
-      for (int j=0; j<size; ++j) {
-        const int index = unique_permutation[j];
-        unique_elements[index] = xs[j];
-      }
-      debug_cout << "Unique elements: " << number_of_unique_elements << std::endl;
-      for (int j=0; j<number_of_unique_elements; ++j) {
-        debug_cout << unique_elements[j] << ", ";
-      }
-      debug_cout << std::endl;
-    }
+    // if (logger::ll.verbosityLevel >= logger::debug) {
+    //   for (int j=0; j<size; ++j) {
+    //     debug_cout << j << ", " << geometry.p0X[offset + j] << ", " << permutation[j] << ", "
+    //       << permutation_repeated[j] << ", " << unique_permutation[j] << std::endl;
+    //   }
+    //   std::vector<float> unique_elements (number_of_unique_elements);
+    //   for (int j=0; j<size; ++j) {
+    //     const int index = unique_permutation[j];
+    //     unique_elements[index] = xs[j];
+    //   }
+    //   debug_cout << "Unique elements: " << number_of_unique_elements << std::endl;
+    //   for (int j=0; j<number_of_unique_elements; ++j) {
+    //     debug_cout << unique_elements[j] << ", ";
+    //   }
+    //   debug_cout << std::endl;
+    // }
 
     // Fill in host_unique_sector_xs
     std::vector<float> temp_unique_elements (number_of_unique_elements);
@@ -158,17 +158,17 @@ void Constants::initialize_ut_decoding_constants(
   }
 
   // Some debug printouts
-  if (logger::ll.verbosityLevel >= logger::debug) {
-    debug_cout << "Unique X sectors:";
-    for (auto i : host_unique_x_sector_layer_offsets) {
-      debug_cout << i << std::endl;
-    }
-    debug_cout << std::endl << "Unique X sector permutation:" << std::endl;
-    for (auto i : host_unique_x_sector_offsets) {
-      debug_cout << i << ", ";
-    }
-    debug_cout << std::endl;
-  }
+  // if (logger::ll.verbosityLevel >= logger::debug) {
+  //   debug_cout << "Unique X sectors:";
+  //   for (auto i : host_unique_x_sector_layer_offsets) {
+  //     debug_cout << i << std::endl;
+  //   }
+  //   debug_cout << std::endl << "Unique X sector permutation:" << std::endl;
+  //   for (auto i : host_unique_x_sector_offsets) {
+  //     debug_cout << i << ", ";
+  //   }
+  //   debug_cout << std::endl;
+  // }
 
   // Populate device constant into global memory
   cudaCheck(cudaMalloc((void**)&dev_unique_x_sector_layer_offsets, host_unique_x_sector_layer_offsets.size() * sizeof(uint)));
@@ -204,7 +204,7 @@ void Constants::initialize_geometry_constants(
   // Populate FT geometry
   cudaCheck(cudaMalloc((void**)&dev_scifi_geometry, scifi_geometry.size()));
   cudaCheck(cudaMemcpy(dev_scifi_geometry, scifi_geometry.data(), scifi_geometry.size(), cudaMemcpyHostToDevice));
-  host_scifi_geometry = scifi_geometry.data(); //for debugging
+  host_scifi_geometry = scifi_geometry.data(); 
 }
 
 void Constants::initialize_muon_catboost_model_constants(

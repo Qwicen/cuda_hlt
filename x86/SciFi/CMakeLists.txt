@@ -9,6 +9,8 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/velo/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/UT/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/SciFi/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/sorting)
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
 

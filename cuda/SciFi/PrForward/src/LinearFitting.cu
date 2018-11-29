@@ -6,7 +6,7 @@
 
 __host__ __device__ float getLineFitDistance(
   const SciFi::Tracking::LineFitterPars& parameters,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const float coordX[SciFi::Tracking::max_x_hits],
   const int allXHits[SciFi::Tracking::max_x_hits],
   const int it )
@@ -16,7 +16,7 @@ __host__ __device__ float getLineFitDistance(
 
 __host__ __device__ float getLineFitChi2(
   const SciFi::Tracking::LineFitterPars& parameters,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const float coordX[SciFi::Tracking::max_x_hits],
   const int allXHits[SciFi::Tracking::max_x_hits],
   const int it) {
@@ -32,7 +32,7 @@ __host__ __device__ void solveLineFit(SciFi::Tracking::LineFitterPars &parameter
 
 __host__ __device__ void incrementLineFitParameters(
   SciFi::Tracking::LineFitterPars &parameters,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const float coordX[SciFi::Tracking::max_x_hits],
   const int allXHits[SciFi::Tracking::max_x_hits],
   const int it)
@@ -52,7 +52,7 @@ __host__ __device__ void fitHitsFromSingleHitPlanes(
   const int it1,
   const int it2,
   const bool usedHits[SciFi::Tracking::max_x_hits],
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const int allXHits[SciFi::Tracking::max_x_hits],
   const int n_x_hits,
   const PlaneCounter planeCounter,
@@ -80,7 +80,7 @@ __host__ __device__ void fitHitsFromSingleHitPlanes(
 __host__ __device__ void addAndFitHitsFromMultipleHitPlanes(
   const int nOtherHits[SciFi::Constants::n_layers],
   SciFi::Tracking::LineFitterPars& lineFitParameters,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   const float coordX[SciFi::Tracking::max_x_hits],
   const int allXHits[SciFi::Tracking::max_x_hits],
   const int otherHits[SciFi::Constants::n_layers][SciFi::Tracking::max_other_hits]) {
@@ -108,8 +108,8 @@ __host__ __device__ void addAndFitHitsFromMultipleHitPlanes(
 // however only the first two parametres are varied in this fit
 // -> this is a linear fit
 __host__ __device__ void fastLinearFit(
-  const SciFi::SciFiHits& scifi_hits,
-  float trackParameters[SciFi::Tracking::nTrackParams],
+  const SciFi::Hits& scifi_hits,
+  float trackParameters[SciFi::Tracking::nTrackParams], 
   int coordToFit[SciFi::Tracking::max_coordToFit],
   int& n_coordToFit,
   PlaneCounter planeCounter,

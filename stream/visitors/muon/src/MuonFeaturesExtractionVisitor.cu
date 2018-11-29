@@ -9,7 +9,6 @@ void SequenceVisitor::set_arguments_size<muon_catboost_features_extraction_t>(
   argument_manager_t& arguments)
 { 
   // Set arguments size
-  arguments.set_size<dev_muon_track>(1);
   arguments.set_size<dev_muon_hits>(1);
   arguments.set_size<dev_muon_catboost_features>(constants.muon_catboost_n_features);
 }
@@ -27,16 +26,9 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
   Muon::State* host_muon_track = new Muon::State(0,0,1,1,1);
   // Copy memory from host to device
   cudaCheck(cudaMemcpyAsync(
-    arguments.offset<dev_muon_track>(),
-    host_muon_track,
-    1 * sizeof(Muon::State),
-    cudaMemcpyHostToDevice,
-    cuda_stream
-  ));
-  cudaCheck(cudaMemcpyAsync(
     arguments.offset<dev_muon_hits>(),
     &runtime_options.host_muon_hits_events[0],
-    1 * sizeof(Muon::HitsSoA),
+    1 * sizeof(Muon::HitsSoA), //todo
     cudaMemcpyHostToDevice,
     cuda_stream
   ));
@@ -46,7 +38,6 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
 
   // Setup arguments for kernel call
   state.set_arguments(
-    arguments.offset<dev_muon_track>(),
     arguments.offset<dev_muon_hits>(),
     arguments.offset<dev_muon_catboost_features>()
   );

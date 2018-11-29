@@ -8,8 +8,8 @@ void SequenceVisitor::set_arguments_size<veloUT_t>(
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 {
-  arguments.set_size<dev_veloUT_tracks>(runtime_options.number_of_events * VeloUTTracking::max_num_tracks);
-  arguments.set_size<dev_atomics_veloUT>(runtime_options.number_of_events * VeloUTTracking::num_atomics);
+  arguments.set_size<dev_ut_tracks>(runtime_options.number_of_events * UT::Constants::max_num_tracks);
+  arguments.set_size<dev_atomics_ut>(runtime_options.number_of_events * UT::num_atomics + 1);
 }
 
 template<>
@@ -26,12 +26,12 @@ void SequenceVisitor::visit<veloUT_t>(
   state.set_arguments(
     arguments.offset<dev_ut_hits>(),
     arguments.offset<dev_ut_hit_offsets>(),
-    arguments.offset<dev_atomics_storage>(),
+    arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>(),
     arguments.offset<dev_velo_track_hits>(),
     arguments.offset<dev_velo_states>(),
-    arguments.offset<dev_veloUT_tracks>(),
-    arguments.offset<dev_atomics_veloUT>(),
+    arguments.offset<dev_ut_tracks>(),
+    arguments.offset<dev_atomics_ut>(),
     constants.dev_ut_magnet_tool,
     constants.dev_ut_dxDy,
     constants.dev_unique_x_sector_layer_offsets,
@@ -40,18 +40,4 @@ void SequenceVisitor::visit<veloUT_t>(
   );
 
   state.invoke();
-
-  // TODO: Maybe this should not go here
-  // Fetch all UT tracks
-  cudaCheck(cudaMemcpyAsync(host_buffers.host_atomics_veloUT,
-    arguments.offset<dev_atomics_veloUT>(),
-    arguments.size<dev_atomics_veloUT>(),
-    cudaMemcpyDeviceToHost,
-    cuda_stream));
-
-  cudaCheck(cudaMemcpyAsync(host_buffers.host_veloUT_tracks,
-    arguments.offset<dev_veloUT_tracks>(),
-    arguments.size<dev_veloUT_tracks>(),
-    cudaMemcpyDeviceToHost, 
-    cuda_stream));
 }

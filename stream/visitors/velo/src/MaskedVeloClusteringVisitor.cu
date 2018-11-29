@@ -2,7 +2,7 @@
 #include "MaskedVeloClustering.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<masked_velo_clustering_t>(
+void SequenceVisitor::set_arguments_size<velo_masked_clustering_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -12,8 +12,8 @@ void SequenceVisitor::set_arguments_size<masked_velo_clustering_t>(
 }
 
 template<>
-void SequenceVisitor::visit<masked_velo_clustering_t>(
-  masked_velo_clustering_t& state,
+void SequenceVisitor::visit<velo_masked_clustering_t>(
+  velo_masked_clustering_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
