@@ -28,6 +28,7 @@ typedef std::tuple<
     dev_ut_raw_input_offsets,
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,
+    dev_number_of_selected_events,
     dev_event_list               
   >, 
   AlgorithmDependencies<velo_estimate_input_size_t, // Algorithm

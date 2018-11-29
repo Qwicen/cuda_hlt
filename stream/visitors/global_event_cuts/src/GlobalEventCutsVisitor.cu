@@ -1,7 +1,16 @@
 #include "SequenceVisitor.cuh" 
 #include "GlobalEventCuts.cuh"
 
-DEFINE_EMPTY_SET_ARGUMENTS_SIZE(global_event_cuts_t)
+template<>
+void SequenceVisitor::set_arguments_size<global_event_cuts_t>(
+  const RuntimeOptions& runtime_options,
+  const Constants& constants,
+  const HostBuffers& host_buffers,
+  argument_manager_t& arguments)
+{
+  arguments.set_size<dev_number_of_selected_events>(1);
+} 
+ 
 
 
 template<>
@@ -14,16 +23,36 @@ void SequenceVisitor::visit<global_event_cuts_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 { 
+  host_buffers.host_number_of_selected_events[0] = 0;
 
+  cudaCheck(cudaMemcpyAsync(
+    arguments.offset<dev_number_of_selected_events>(),
+    host_buffers.host_number_of_selected_events,
+    sizeof(uint),
+    cudaMemcpyHostToDevice, 
+    cuda_stream));
+  
   // Setup opts and arguments for kernel call
-  state.set_opts(dim3(1), dim3(runtime_options.number_of_events), cuda_stream);
+  state.set_opts(dim3(runtime_options.number_of_events), dim3(1), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_raw_input>(),
     arguments.offset<dev_raw_input_offsets>(),
     arguments.offset<dev_ut_raw_input>(),
     arguments.offset<dev_ut_raw_input_offsets>(),
     arguments.offset<dev_scifi_raw_input>(),
-    arguments.offset<dev_scifi_raw_input_offsets>() );
+    arguments.offset<dev_scifi_raw_input_offsets>(),
+    arguments.offset<dev_number_of_selected_events>(),
+    arguments.offset<dev_event_list>() );
  
- 
+  state.invoke();
+
+  cudaCheck(cudaMemcpyAsync(
+    host_buffers.host_number_of_selected_events,
+    arguments.offset<dev_number_of_selected_events>(),
+    sizeof(uint),
+    cudaMemcpyDeviceToHost, 
+    cuda_stream));
+    
+  cudaEventRecord(cuda_generic_event, cuda_stream);
+  cudaEventSynchronize(cuda_generic_event);
 }

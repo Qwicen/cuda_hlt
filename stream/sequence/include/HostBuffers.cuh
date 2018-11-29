@@ -11,6 +11,9 @@
 
 struct HostBuffers {
   // Pinned host datatypes
+  uint* host_number_of_selected_events;
+  uint* host_event_list;
+
   // Velo
   uint* host_atomics_velo;
   uint* host_velo_track_hit_number;

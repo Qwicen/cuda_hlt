@@ -4,6 +4,7 @@
  */
 SEQUENCE_T(
   init_event_list_t,
+  global_event_cuts_t,
   velo_estimate_input_size_t,
   prefix_sum_velo_clusters_t,
   velo_masked_clustering_t,

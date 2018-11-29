@@ -18,6 +18,7 @@ ARGUMENT(dev_ut_raw_input_offsets, uint)
 ARGUMENT(dev_scifi_raw_input, char)
 ARGUMENT(dev_scifi_raw_input_offsets, uint)
 ARGUMENT(dev_event_list, uint)
+ARGUMENT(dev_number_of_selected_events, uint)
 
 ARGUMENT(dev_estimated_input_size, uint)
 ARGUMENT(dev_module_cluster_num, uint)
