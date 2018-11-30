@@ -17,7 +17,7 @@ class FileStdLogger : public std::ostream {
 private:
   std::streambuf* b;
 public:
-  FileStdLogger() : std::ostream(b) {}
+  FileStdLogger() : std::ostream() {}
 };
 
 // This is relatively simple

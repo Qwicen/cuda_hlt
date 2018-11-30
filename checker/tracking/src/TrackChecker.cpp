@@ -71,8 +71,8 @@ void TrackChecker::TrackEffReport::operator()(const MCParticles &mcps) {
 }
 
 void TrackChecker::TrackEffReport::
-operator()(const trackChecker::Tracks::const_reference &track,
-           const MCParticles::const_reference &mcp, const float weight) {
+operator()(trackChecker::Tracks::const_reference &track,
+           MCParticles::const_reference &mcp, const float weight) {
 
   if (!m_accept(mcp))
     return;
