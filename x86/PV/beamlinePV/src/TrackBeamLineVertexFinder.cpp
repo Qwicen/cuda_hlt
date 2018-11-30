@@ -74,7 +74,6 @@ namespace {
 
     //loop over all seeds, on GPU do this in parallel
     for(int i_thisseed = 0; i_thisseed < number_of_seeds; i_thisseed++) {
-      i_event = i_thisseed;
       bool converged = false ;
       float vtxcov[6];
       vtxcov[0] = 0.;
@@ -146,10 +145,15 @@ namespace {
             }
 
             trk.weight = trk.weight/denom;
+            #ifdef WITH_ROOT
+            i_event = i_thisseed;
             b_weight = trk.weight;
             i_iteration = iter;
             i_track = i;
             weight_tree->Fill();
+            #endif
+
+
             if(trk.weight < 0.3) continue;
 
             float3 HWr;
