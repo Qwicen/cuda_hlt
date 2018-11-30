@@ -13,12 +13,13 @@ void SequenceVisitor::visit<scifi_direct_decoder_v4_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(2, 16), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(2, 16), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_scifi_raw_input>(),
     arguments.offset<dev_scifi_raw_input_offsets>(),
     arguments.offset<dev_scifi_hit_count>(),
     arguments.offset<dev_scifi_hits>(),
+    arguments.offset<dev_event_list>(),
     constants.dev_scifi_geometry,
     constants.dev_inv_clus_res);
 
@@ -48,12 +49,12 @@ void SequenceVisitor::visit<scifi_direct_decoder_v4_t>(
   // SciFi::SciFiGeometry host_geom(constants.host_scifi_geometry);
   // SciFi::Hits hi(
   //   host_scifi_hits.data(),
-  //   host_scifi_hit_count[runtime_options.number_of_events * SciFi::Constants::n_mat_groups_and_mats],
+  //   host_scifi_hit_count[host_buffers.host_number_of_selected_events[0] * SciFi::Constants::n_mat_groups_and_mats],
   //   &host_geom,
   //   constants.host_inv_clus_res.data());
 
   // std::ofstream outfile("dump.txt");
-  // for (uint event = 0; event < runtime_options.number_of_events; event++) {
+  // for (uint event = 0; event < host_buffers.host_number_of_selected_events[0]; event++) {
   //   const SciFi::HitCount host_scifi_hit_count_struct {(uint32_t*) host_scifi_hit_count.data(), event};
 
   //   for (size_t zone = 0; zone < SciFi::Constants::n_zones; zone++) {

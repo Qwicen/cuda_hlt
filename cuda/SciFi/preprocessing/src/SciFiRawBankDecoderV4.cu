@@ -47,14 +47,16 @@ __global__ void scifi_raw_bank_decoder_v4(
   uint* scifi_event_offsets,
   uint* scifi_hit_count,
   uint* scifi_hits,
+  const uint* event_list,
   char* scifi_geometry,
   const float* dev_inv_clus_res)
 {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
+  const uint selected_event_number = event_list[event_number];
 
   const SciFiGeometry geom {scifi_geometry};
-  const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
+  const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[selected_event_number]);
 
   SciFi::Hits hits {
     scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mat_groups_and_mats], &geom, dev_inv_clus_res};

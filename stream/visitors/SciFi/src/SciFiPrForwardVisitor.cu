@@ -59,7 +59,7 @@ void SequenceVisitor::visit<scifi_pr_forward_t>(
   // cudaEventRecord(cuda_generic_event, cuda_stream);
   // cudaEventSynchronize(cuda_generic_event);
 
-  // for (uint i=0; i<runtime_options.number_of_events; ++i) {
+  // for (uint i=0; i<host_buffers.host_number_of_selected_events[0]; ++i) {
   //   info_cout << "Event " << i
   //     << ", number of tracks " << host_buffers.host_atomics_scifi[i] << std::endl;
   // }

@@ -18,6 +18,7 @@ __global__ void scifi_raw_bank_decoder_v4(
   uint *scifi_event_offsets,
   uint *scifi_hit_count,
   uint *scifi_hits,
+  const uint* event_list,
   char *scifi_geometry,
   const float* dev_inv_clus_res);
 

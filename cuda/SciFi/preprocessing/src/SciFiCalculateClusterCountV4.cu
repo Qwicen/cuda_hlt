@@ -6,11 +6,13 @@ __global__ void scifi_calculate_cluster_count_v4(
   char* scifi_raw_input,
   uint* scifi_raw_input_offsets,
   uint* scifi_hit_count,
+  const uint* event_list,
   char* scifi_geometry)
 {
   const uint event_number = blockIdx.x;
-
-  const SciFiRawEvent event(scifi_raw_input + scifi_raw_input_offsets[event_number]);
+  const uint selected_event_number = event_list[event_number];
+  
+  const SciFiRawEvent event(scifi_raw_input + scifi_raw_input_offsets[selected_event_number]);
   const SciFiGeometry geom(scifi_geometry);
   SciFi::HitCount hit_count {scifi_hit_count, event_number};
 
