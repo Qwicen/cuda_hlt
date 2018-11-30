@@ -64,6 +64,9 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
     host_buffers.host_ut_track_velo_indices,
     host_buffers.host_number_of_selected_events[0]);
  
+  for ( int i = 0; i < host_buffers.host_number_of_selected_events[0]; ++i ) 
+    debug_cout << "Visitor: found " << host_buffers.host_atomics_scifi[i] << " tracks in event " << i << std::endl;
+
   // copy SciFi track to device for consolidation
   cudaCheck(cudaMemcpyAsync(
     arguments.offset<dev_atomics_scifi>(), 

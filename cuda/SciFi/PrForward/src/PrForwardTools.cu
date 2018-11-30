@@ -170,6 +170,7 @@ __host__ __device__ void find_forward_tracks(
       }
     }
   }
+
 }
 
 // Turn SciFi::Tracking::Track into a SciFi::Track

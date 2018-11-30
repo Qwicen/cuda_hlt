@@ -41,6 +41,7 @@ void SequenceVisitor::visit<scifi_pr_forward_t>(
     constants.dev_scifi_constArrays,
     constants.dev_scifi_geometry,
     constants.dev_inv_clus_res);
+
   state.invoke();
 
   // Transmission device to host
