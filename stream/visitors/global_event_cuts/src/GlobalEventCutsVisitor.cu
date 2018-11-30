@@ -51,12 +51,12 @@ void SequenceVisitor::visit<global_event_cuts_t>(
     cudaMemcpyDeviceToHost, 
     cuda_stream));
 
-  // cudaCheck(cudaMemcpyAsync(
-  //   host_buffers.host_event_list,
-  //   arguments.offset<dev_event_list>(),
-  //   runtime_options.number_of_events*sizeof(uint),
-  //   cudaMemcpyDeviceToHost, 
-  //   cuda_stream));
+  cudaCheck(cudaMemcpyAsync(
+    host_buffers.host_event_list,
+    arguments.offset<dev_event_list>(),
+    runtime_options.number_of_events*sizeof(uint),
+    cudaMemcpyDeviceToHost, 
+    cuda_stream));
     
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);

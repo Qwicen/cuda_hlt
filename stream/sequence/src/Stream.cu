@@ -110,7 +110,9 @@ void Stream::run_monte_carlo_test(
     mc_folder,
     mc_pv_folder,
     start_event_offset,
-    number_of_events_requested);
+    host_buffers.host_event_list,
+    number_of_events_requested,
+    host_buffers.host_number_of_selected_events[0]);
 
   Sch::RunChecker<
     SequenceVisitor,

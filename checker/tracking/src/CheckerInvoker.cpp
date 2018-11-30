@@ -5,7 +5,7 @@ std::tuple<bool, MCEvents> CheckerInvoker::read_mc_folder() const
   const auto folder_file_list = list_folder(mc_folder);
 
   uint requested_files =
-      number_of_events == 0 ? folder_file_list.size() : number_of_events;
+      number_of_requested_events == 0 ? folder_file_list.size() : number_of_requested_events;
   verbose_cout << "Requested " << requested_files << " files" << std::endl;
 
   if (requested_files > folder_file_list.size()) {

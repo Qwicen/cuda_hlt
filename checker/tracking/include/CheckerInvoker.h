@@ -10,27 +10,39 @@ struct CheckerInvoker {
   std::string mc_folder;
   std::string mc_pv_folder;
   uint start_event_offset;
-  uint number_of_events;
+  uint number_of_requested_events;
+  uint number_of_selected_events;
   bool check_events;
   bool is_mc_folder_populated;
   MCEvents mc_events;
+  MCEvents selected_mc_events;
 
   CheckerInvoker (
     const std::string& param_mc_folder,
     const std::string& param_mc_pv_folder,
     const uint param_start_event_offset,
-    const uint param_number_of_events,
+    const uint* event_list,
+    const uint param_number_of_requested_events,
+    const uint param_number_of_selected_events,
     const bool param_check_events = false) :
     mc_folder(param_mc_folder),
     mc_pv_folder(param_mc_pv_folder),
     start_event_offset(param_start_event_offset),
-    number_of_events(param_number_of_events),
-    check_events(param_check_events)
+    number_of_requested_events(param_number_of_requested_events),
+    number_of_selected_events(param_number_of_selected_events),
+      check_events(param_check_events)
   {
     const auto folder_contents = read_mc_folder();
 
     is_mc_folder_populated = std::get<0>(folder_contents);
     mc_events = std::get<1>(folder_contents);
+
+    // events selected by global event cuts
+    for ( int i = 0; i < number_of_selected_events; i++ ) {
+      const uint event = event_list[i];
+      MCEvent mc_event = mc_events[event];
+      selected_mc_events.push_back(mc_event);
+    }
   }
 
   std::tuple<bool, MCEvents> read_mc_folder() const;
@@ -46,8 +58,8 @@ struct CheckerInvoker {
       trackChecker.histos.initHistos(trackChecker.histo_categories());
 #endif
 
-      for (int evnum = 0; evnum < mc_events.size(); ++evnum) {
-        const auto& mc_event = mc_events[evnum];
+      for (int evnum = 0; evnum < selected_mc_events.size(); ++evnum) {
+        const auto& mc_event = selected_mc_events[evnum];
         const auto& event_tracks = tracks[evnum];
 
         const auto& mcps = mc_event.mc_particles<T>();
