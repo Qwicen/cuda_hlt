@@ -68,14 +68,14 @@ __global__ void estimate_input_size(
             // 0x04 | 0x40
             // 0x02 | 0x20
             // 0x01 | 0x10
-            const bool pattern_0 = sp&0x88 && !(sp&0x44) && sp&0x33;
+            const bool pattern_0 = (sp&0x88) && !(sp&0x44) && sp&0x33;
 
             // Pattern 1:
             // (x  x
             //  x  x)
             //  o  o
             // (x  x)
-            const bool pattern_1 = sp&0xCC && !(sp&0x22) && sp&0x11;
+            const bool pattern_1 = (sp&0xCC) && !(sp&0x22) && sp&0x11;
             const uint number_of_clusters = 1 + (pattern_0 | pattern_1);
             
             // Add the found clusters
@@ -114,7 +114,7 @@ __global__ void estimate_input_size(
             // 0x02   0x80   0x2000
             // 0x01   0x40   0x1000
             //        0x20   0x0800
-            uint32_t pixels = sp&0x0F | ((sp&0xF0) << 2);
+            uint32_t pixels = (sp&0x0F) | ((sp&0xF0) << 2);
 
             // Current row and col
             const uint32_t sp_row = sp_addr & 0x3FU;
