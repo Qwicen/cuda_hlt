@@ -53,7 +53,7 @@ namespace {
   }
  
   // This naively implements the adapative multi-vertex fit.
-  void multifitAdaptive( const PVTrack * tracks,
+  void multifitAdaptive( const Velo::State * velostates, const PVTrack * tracks,
           uint number_of_tracks,
           const float3 * seedpositions,
           uint number_of_seeds,
@@ -61,10 +61,20 @@ namespace {
           unsigned short maxNumIter=5,
           float chi2max=9)
   {
-    std::cout << "start mult fit" << std::endl;
+    #ifdef WITH_ROOT
+    TFile * weightfile = new TFile("weights.root", "RECREATE");
+    TTree * weight_tree = new TTree("weights", "weights");
+    int i_event, i_iteration,i_track;
+    double b_weight;
+    weight_tree->Branch("weight", &b_weight);
+    weight_tree->Branch("event", &i_event);
+    weight_tree->Branch("iteration", &i_iteration);
+    weight_tree->Branch("nr_track", &i_track);
+    #endif
 
     //loop over all seeds, on GPU do this in parallel
     for(int i_thisseed = 0; i_thisseed < number_of_seeds; i_thisseed++) {
+      i_event = i_thisseed;
       bool converged = false ;
       float vtxcov[6];
       vtxcov[0] = 0.;
@@ -92,16 +102,22 @@ namespace {
         float2 vtxposvec{vtxpos.x,vtxpos.y};
         debug_cout << "next track" << std::endl;
         for( int i = 0; i < number_of_tracks; i++ ) {
+          const Velo::State s = velostates[i];
+          // compute the (chance in) z of the poca to the beam axis
+          const auto tx = s.tx ;
+          const auto ty = s.ty ;
+          //extrapolate state to seed position
+          const float dz = vtxpos.z - s.z;
+          PVTrackInVertex trk  = PVTrack{s,dz,0} ;
           // compute the chi2
-          PVTrackInVertex trk = tracks[i];
-          const float dz = vtxpos.z - trk.z;
+          //PVTrackInVertex trk = tracks[i];
           float2 res{0.f,0.f};
-          res = vtxposvec - (trk.x + trk.tx*dz);
-          
-          float chi2 = res.x*res.x * trk.W_00 + res.y*res.y*trk.W_11 ;
+          res = vtxposvec - (trk.x );
+          double chi2 = res.x*res.x * trk.W_00 + res.y*res.y*trk.W_11 ;
           debug_cout << "chi2 = " << chi2 << ", max = " << chi2max << std::endl;
           // compute the weight.
           trk.weight = 0 ;
+          //probabaly no point to consider tracks with to high chi2
           //if( chi2 < chi2max ) { // to branch or not, that is the question!
           if(true){
             ++nselectedtracks ;
@@ -111,32 +127,31 @@ namespace {
 
             //try out varying chi2_cut during iterations instead of T
             double chi2_cut = 0.1 + 0.01*maxNumIter / (iter+1) ;
+            //double chi2_cut = 16.;
 
             trk.weight = exp(-chi2/2./T);
             double denom = exp(-chi2_cut/2./T);
+            //double denom = 0.;
             for (int i_otherseed = 0; i_otherseed < number_of_seeds; i_otherseed++) {
-               float2 res{0.f,0.f};
-               const float dz = seedpositions[i_otherseed].z- trk.z;
+               float2 tmp_res{0.f,0.f};
                float3 otherseedpos = seedpositions[i_otherseed];
                float2 otherseedvtx{otherseedpos.x,otherseedpos.y};
-
-               res = otherseedvtx - (trk.x + trk.tx*dz);
+               const float dz = seedpositions[i_otherseed].z- s.z;
+               PVTrackInVertex tmp_trk  = PVTrack{s,dz,0} ;
+               tmp_res = otherseedvtx - (tmp_trk.x );
                //at the moment this term reuses W'matrix at z of point of closest approach -> use seed positions instead?
-               float chi2 = res.x*res.x * trk.W_00 + res.y*res.y*trk.W_11 ;
-               denom += exp(-chi2/2./T);
+               double tmp_chi2 = tmp_res.x*tmp_res.x * tmp_trk.W_00 + tmp_res.y*tmp_res.y*tmp_trk.W_11 ;
+               denom += exp(-tmp_chi2/2./T);
 
             }
+
             trk.weight = trk.weight/denom;
-            
-            //trk.weight = sqr( 1.f - chi2 / chi2max ) ;
+            b_weight = trk.weight;
+            i_iteration = iter;
+            i_track = i;
+            weight_tree->Fill();
+            if(trk.weight < 0.3) continue;
 
-
-            //trk.weight = chi2 < 1 ? 1 : sqr( 1. - (chi2-1) / (chi2max-1) ) ;
-            // += operator does not work for mixed FP types
-            //halfD2Chi2DX2 += trk.weight * trk.HWH ;
-            //halfDChi2DX   += trk.weight * trk.HW * res ;
-            // if I use expressions, it crashes!
-            //const Gaudi::SymMatrix3x3F thisHalfD2Chi2DX2 = weight * ROOT::Math::Similarity(H, trk.W ) ;
             float3 HWr;
             HWr.x = res.x * trk.W_00;
             HWr.y = res.y * trk.W_11;
@@ -206,7 +221,10 @@ namespace {
           vertex.n_tracks++;   }
       vertices[i_thisseed] = vertex ;
     }
-
+    #ifdef WITH_ROOT
+    weight_tree->Write();
+    weightfile->Close();
+    #endif
   }
 
 
@@ -399,6 +417,7 @@ void findPVs(
     debug_cout << "# of input velo states: " << Ntrk << std::endl;
     std::vector< PVTrack > pvtracks_old(Ntrk) ; // allocate everything upfront. don't use push_back/emplace_back
     PVTrack pvtracks[Ntrk];
+    Velo::State event_velo_states[Ntrk];
     //only use tracks within a certain z-range
     uint number_of_tracks_in_zrange = 0;
 
@@ -409,10 +428,11 @@ void findPVs(
         // compute the (chance in) z of the poca to the beam axis
         const auto tx = s.tx ;
         const auto ty = s.ty ;
-        const double dz = ( tx * ( beamline.x - s.x ) + ty * ( beamline.y - s.y ) ) / (tx*tx+ty*ty) ;
+        const float dz = ( tx * ( beamline.x - s.x ) + ty * ( beamline.y - s.y ) ) / (tx*tx+ty*ty) ;
         const double newz = s.z + dz ;
         if( m_zmin < newz  && newz < m_zmax ) {
           pvtracks[number_of_tracks_in_zrange] = PVTrack{s,dz,index} ;
+          event_velo_states[number_of_tracks_in_zrange] = s;
           number_of_tracks_in_zrange++;
           *it = PVTrack{s,dz,index} ;
           ++it ;
@@ -500,7 +520,6 @@ void findPVs(
     //&&( zhisto[i] > zhisto[i-2] || zhisto[i] > zhisto[i+2])
     Cluster clusters[PV::max_number_of_clusters];
     uint number_of_clusters = 0;
-    std::cout << "--------" << std::endl;
 /*
     //try to find a simpler peak finding, the numbers here could be optimized
     for(uint i = 2; i < Nbins-2; i++) {
@@ -543,8 +562,6 @@ void findPVs(
               number_of_clusteredges-- ;
             prevempty = empty ;
             integral=0 ;
-            //std::cout << "creating cluster edge: "
-            //      << i << " " << zhisto[i] << " " << integral << std::endl ;
           }
         }
       }
@@ -716,10 +733,9 @@ void findPVs(
       seed_positions[i] = float3{beamline.x,beamline.y,seedsZWithIteratorPair[i].z};
     }
     PV::Vertex  preselected_vertices[number_of_seedsZWIP];
-    multifitAdaptive(pvtracks, number_of_tracks_in_zrange, seed_positions, number_of_seedsZWIP, preselected_vertices);
+    multifitAdaptive(event_velo_states, pvtracks, number_of_tracks_in_zrange, seed_positions, number_of_seedsZWIP, preselected_vertices);
     
     number_preselected_vertices = number_of_seedsZWIP;
-    std::cout << "fit successful " <<number_preselected_vertices << std::endl;
  /*
     for ( int i = 0; i < number_of_seedsZWIP; i++ ) {
       SeedZWithIteratorPair seed = seedsZWithIteratorPair[i];
@@ -745,7 +761,6 @@ void findPVs(
     // create the output container
     const auto maxVertexRho2 = sqr(m_maxVertexRho) ;
     for( int i = 0; i < number_preselected_vertices; i++ ) {
-      std::cout << std::setprecision(6)<< "vertex " << i << " " << preselected_vertices[i].position.x<< " " << preselected_vertices[i].position.y<< " " << preselected_vertices[i].position.z << " " <<preselected_vertices[i].cov22 << std::endl;
       PV::Vertex vertex = preselected_vertices[i];
       
       const auto beamlinedx = vertex.position.x - beamline.x ;
