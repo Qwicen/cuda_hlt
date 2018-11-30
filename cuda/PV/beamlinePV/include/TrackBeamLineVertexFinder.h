@@ -126,7 +126,8 @@ __host__ __device__  PVTrackInVertex( const PVTrack& trk )
   double HWH_11 ;
   double HWH_21 ;
   double HWH_22 ;
-  float weight = 1.f ;
+  //having this as double might be important
+  double weight = 1.f ;
 } ;
 
 void findPVs(

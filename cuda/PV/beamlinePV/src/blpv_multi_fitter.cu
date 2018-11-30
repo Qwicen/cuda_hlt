@@ -100,6 +100,8 @@ __global__ void blpv_multi_fitter(
 
           }
           trk.weight = trk.weight/denom;
+          //unfortunately branchy, but reduces fake rate
+          if(trk.weight < m_minWeight) continue;
           //trk.weight = sqr( 1.f - chi2 / chi2max ) ;
           //trk.weight = chi2 < 1 ? 1 : sqr( 1. - (chi2-1) / (chi2max-1) ) ;
           // += operator does not work for mixed FP types
@@ -177,4 +179,21 @@ __global__ void blpv_multi_fitter(
         vertex.n_tracks++;   }
     vertices[i_thisseed] = vertex ;
   }
+  //synchronize to get all vertices and apply radial cut. The cut on the number of tracks should at the moment do not much, since we do not directly assign vertices to a PV
+  __syncthreads();
+  uint number_of_vertices = 0;
+  for(int i = 0; i < number_of_seeds; i++) {
+    PV::Vertex vertex = vertices[i];
+
+    //TODO integrate beamline position
+    float2 beamline {0.,0.};
+    const float beamlinedx = vertex.position.x - beamline.x ;
+    const float beamlinedy = vertex.position.y - beamline.y ;
+    const float beamlinerho2 = sqr(beamlinedx) + sqr(beamlinedy) ;
+    if(vertex.n_tracks >= m_minNumTracksPerVertex && beamlinerho2 < m_maxVertexRho2){
+      vertices[number_of_vertices] = vertex;
+      number_of_vertices++;
+    }
+  }
+  dev_number_of_multi_fit_vertices[event_number] = number_of_vertices;
 }

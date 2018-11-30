@@ -9,8 +9,10 @@ static constexpr float        m_minDensity = 1.0; // unit: 1./mm "Minimal densit
 static constexpr float        m_minDipDensity = 2.0; // unit: 1./mm,"Minimal depth of a dip to split cluster (inverse resolution)"
 static constexpr float        m_minTracksInSeed = 2.5; // "MinTrackIntegralInSeed"
 static constexpr float        m_maxVertexRho = 0.3; // unit:: mm "Maximum distance of vertex to beam line"
+static constexpr float        m_maxVertexRho2 = 0.09;
 static constexpr unsigned int m_maxFitIter = 5; // "Maximum number of iterations for vertex fit"
 static constexpr float        m_maxDeltaChi2 = 9; //"Maximum chi2 contribution of track to vertex fit"
+static constexpr float        m_minWeight = 0.3; //"minimum value of adaptive weight of track in multi fit"
 
 // Get the beamline. this only accounts for position, not
 // rotation. that's something to improve! 
