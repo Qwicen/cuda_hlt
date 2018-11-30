@@ -19,11 +19,10 @@ __global__ void consolidate_scifi_tracks(
   const SciFi::TrackHits* event_scifi_tracks =
     dev_scifi_tracks + event_number*SciFi::Constants::max_tracks;
   const uint total_number_of_scifi_hits =
-    dev_scifi_hit_count[number_of_events*SciFi::Constants::n_mats];
+    dev_scifi_hit_count[number_of_events*SciFi::Constants::n_mat_groups_and_mats];
   const SciFi::SciFiGeometry scifi_geometry {dev_scifi_geometry}; 
   SciFi::Hits scifi_hits(dev_scifi_hits, total_number_of_scifi_hits, &scifi_geometry, dev_inv_clus_res); 
-  SciFi::HitCount scifi_hit_count;
-  scifi_hit_count.typecast_after_prefix_sum((uint*) dev_scifi_hit_count, event_number, number_of_events); 
+  const SciFi::HitCount scifi_hit_count {dev_scifi_hit_count, event_number};
 
   // Create consolidated SoAs.
   SciFi::Consolidated::Tracks scifi_tracks {
@@ -36,7 +35,7 @@ __global__ void consolidate_scifi_tracks(
       number_of_events
       };
   const uint number_of_tracks_event = scifi_tracks.number_of_tracks(event_number);
-  const uint event_offset = scifi_hit_count.mat_offsets[0]; 
+  const uint event_offset = scifi_hit_count.event_offset(); 
 
   // Loop over tracks.
   for(uint i=threadIdx.x; i<number_of_tracks_event; i+=blockDim.x){

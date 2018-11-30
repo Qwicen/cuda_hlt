@@ -243,6 +243,29 @@ typedef std::tuple<
     dev_scifi_hits,
     dev_event_list
   >,
+  AlgorithmDependencies<scifi_calculate_cluster_count_v4_t,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_scifi_hit_count
+  >,
+  AlgorithmDependencies<scifi_direct_decoder_v4_t,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_scifi_hit_count,
+    dev_scifi_hits
+  >,
+  AlgorithmDependencies<scifi_pre_decode_v4_t,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_scifi_hit_count,
+    dev_scifi_hits
+  >,
+  AlgorithmDependencies<scifi_raw_bank_decoder_v4_t,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_scifi_hit_count,
+    dev_scifi_hits
+  >,
   AlgorithmDependencies<scifi_pr_forward_t,
     dev_scifi_hits,
     dev_scifi_hit_count,

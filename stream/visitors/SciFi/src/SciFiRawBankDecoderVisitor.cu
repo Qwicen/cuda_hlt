@@ -45,7 +45,7 @@ void SequenceVisitor::visit<scifi_raw_bank_decoder_t>(
   // cudaEventSynchronize(cuda_generic_event);
   //
   // SciFi::SciFiGeometry host_geom(constants.host_scifi_geometry);
-  // SciFi::SciFiHits hi(host_scifi_hits, host_scifi_hit_count[host_buffers.host_number_of_selected_events[0] * SciFi::Constants::n_mats], &host_geom);
+  // SciFi::SciFiHits hi(host_scifi_hits, host_scifi_hit_count[host_buffers.host_number_of_selected_events[0] * SciFi::Constants::n_mats], &host_geom, constants.host_inv_clus_res.data());
   //
   // std::ofstream outfile("dump.txt");
   // SciFi::SciFiHitCount host_scifi_hit_count_struct;
@@ -55,7 +55,6 @@ void SequenceVisitor::visit<scifi_raw_bank_decoder_t>(
   //     for(size_t hit = 0; hit < host_scifi_hit_count_struct.zone_number_of_hits(zone); hit++) {
   //       uint h = host_scifi_hit_count_struct.zone_offset(zone) + hit;
   //       outfile << std::setprecision(8) << std::fixed
-  //         << h << " "
   //         << hi.planeCode(h) << " "
   //         << zone % 2     << " "
   //         << hi.LHCbID(h) << " "

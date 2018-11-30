@@ -60,8 +60,7 @@ __global__ void scifi_raw_bank_decoder(
   const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[selected_event_number]);
 
   SciFi::Hits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mats], &geom, dev_inv_clus_res};
-  SciFi::HitCount hit_count;
-  hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
+  SciFi::HitCount hit_count {scifi_hit_count, event_number};
   const uint number_of_hits_in_event = hit_count.event_number_of_hits();
 
   for (int i=threadIdx.x; i<number_of_hits_in_event; i+=blockDim.x) {
