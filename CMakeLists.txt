@@ -133,7 +133,8 @@ target_link_libraries(Allen
   Common
   Utils
   Velo
-  PV
+  PatPV
+  BLPV
   UT
   SciFi
   #x86PatPV

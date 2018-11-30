@@ -131,7 +131,7 @@ __host__ __device__  PVTrackInVertex( const PVTrack& trk )
 } ;
 
 void findPVs(
-  uint* kalmanvelo_states,
+  char* kalmanvelo_states,
   int * velo_atomics,
   uint* velo_track_hit_number,
   PV::Vertex* reconstructed_pvs,

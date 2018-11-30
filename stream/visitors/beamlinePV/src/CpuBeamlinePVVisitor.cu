@@ -27,7 +27,7 @@ void SequenceVisitor::visit<cpu_beamlinePV_t>(
 
   state.invoke(
     host_buffers.host_kalmanvelo_states,
-    host_buffers.host_velo_tracks_atomics,
+    host_buffers.host_atomics_velo,
     host_buffers.host_velo_track_hit_number,
     host_buffers.host_reconstructed_pvs,
     host_buffers.host_number_of_vertex,

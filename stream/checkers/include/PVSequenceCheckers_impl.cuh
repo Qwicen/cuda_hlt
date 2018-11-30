@@ -31,6 +31,7 @@ void SequenceVisitor::check<cpu_beamlinePV_t>(
   const uint& start_event_offset,
   const uint& number_of_events_requested,
   const HostBuffers& host_buffers,
+  const Constants& constants,
   const CheckerInvoker& checker_invoker) const
 {
     /*
@@ -59,6 +60,7 @@ void SequenceVisitor::check<blpv_multi_fitter_t>(
   const uint& start_event_offset,
   const uint& number_of_events_requested,
   const HostBuffers& host_buffers,
+  const Constants& constants,
   const CheckerInvoker& checker_invoker) const
 {
   /*

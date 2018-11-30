@@ -26,7 +26,7 @@ void SequenceVisitor::visit<blpv_multi_fitter_t>(
 
   state.set_opts(dim3(runtime_options.number_of_events), PV::max_number_vertices, cuda_stream);
   state.set_arguments(
-    arguments.offset<dev_atomics_storage>(),
+    arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>(),
     arguments.offset<dev_pvtracks>(),
     arguments.offset<dev_zpeaks>(),
