@@ -15,8 +15,8 @@ SEQUENCE_T(
   prefix_sum_velo_track_hit_number_t,
   consolidate_velo_tracks_t,
   velo_kalman_fit_t,
-  //getSeeds_t,
-  //fitSeeds_t
+  //pv_get_seeds_t,
+  //pv_fit_seeds_t,
   cpu_beamlinePV_t,
   blpv_extrapolate_t,
   blpv_histo_t,
