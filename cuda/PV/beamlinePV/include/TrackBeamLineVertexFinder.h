@@ -14,7 +14,7 @@
 struct PVTrack
 {
   __host__ __device__ PVTrack() {}
-__host__ __device__ PVTrack( const Velo::State& state, double dz, unsigned short _index )
+__host__ __device__ PVTrack( const Velo::State& state, float dz, unsigned short _index )
   : z{float(state.z+dz)},
     x{float(state.x+dz*state.tx),float(state.y+dz*state.ty)},
     tx{float(state.tx),float(state.ty)},index{_index}, old_z{float(state.z)}
@@ -25,7 +25,7 @@ __host__ __device__ PVTrack( const Velo::State& state, double dz, unsigned short
     PV::myfloat state_tmp_c00 = state.c00;
     PV::myfloat state_tmp_c11 = state.c11;
     
-    double dz2 = dz*dz ;
+    float dz2 = dz*dz ;
     
     state_tmp_c00 += dz2 * state.c22 + 2*dz* state.c20 ;
     state_tmp_c11 += dz2* state.c33 + 2* dz*state.c31 ;
@@ -37,8 +37,8 @@ __host__ __device__ PVTrack( const Velo::State& state, double dz, unsigned short
   float2 x ;      /// position (x,y)
   float2 tx ;     /// direction (tx,ty)
   // to do: check whether this needs to be a double
-  double W_00 ; /// weightmatrix
-  double W_11 ;
+  float W_00 ; /// weightmatrix
+  float W_11 ;
   unsigned short index{0} ;/// index in the list with tracks
 } ;
 
@@ -112,22 +112,22 @@ __host__ __device__  PVTrackInVertex( const PVTrack& trk )
     HWH_22 = H_20*H_20*W_00 + H_21*H_21*W_11;
   }
   // TO DO: check whether this needs to be a double
-  double H_00 ;
-  double H_11 ;
-  double H_20 ;
-  double H_21 ;
+  //changing it to float slightly (~ 1%) degrades the efficency and fake rate
+  float H_00 ;
+  float H_11 ;
+  float H_20 ;
+  float H_21 ;
   //HW: product of H and W matrices, symmetric with four non-zero entries
-  double HW_00 ;
-  double HW_11 ;
-  double HW_20 ;
-  double HW_21 ;
-  double HWH_00 ;
-  double HWH_20 ;
-  double HWH_11 ;
-  double HWH_21 ;
-  double HWH_22 ;
-  //having this as double might be important
-  double weight = 1.f ;
+  float HW_00 ;
+  float HW_11 ;
+  float HW_20 ;
+  float HW_21 ;
+  float HWH_00 ;
+  float HWH_20 ;
+  float HWH_11 ;
+  float HWH_21 ;
+  float HWH_22 ;
+  float weight = 1.f ;
 } ;
 
 void findPVs(
