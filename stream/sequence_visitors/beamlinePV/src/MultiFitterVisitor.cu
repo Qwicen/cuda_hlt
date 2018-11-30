@@ -50,8 +50,8 @@ void SequenceVisitor::visit<blpv_multi_fitter_t>(
 
     cudaCheck(cudaMemcpyAsync(
     host_buffers.host_number_of_multivertex,
-    arguments.offset<dev_number_of_zpeaks>(),
-    arguments.size<dev_number_of_zpeaks>(),
+    arguments.offset<dev_number_of_multi_fit_vertices>(),
+    arguments.size<dev_number_of_multi_fit_vertices>(),
     cudaMemcpyDeviceToHost,
     cuda_stream
   ));
