@@ -81,5 +81,4 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
   
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
-  
 }

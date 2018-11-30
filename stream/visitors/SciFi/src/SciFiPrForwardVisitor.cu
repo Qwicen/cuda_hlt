@@ -42,9 +42,7 @@ void SequenceVisitor::visit<scifi_pr_forward_t>(
     constants.dev_scifi_geometry,
     constants.dev_inv_clus_res);
   state.invoke();
-
-  // Transmission device to host
-  // SciFi tracks
+  
   // cudaCheck(cudaMemcpyAsync(host_buffers.host_atomics_scifi,
   //   arguments.offset<dev_atomics_scifi>(),
   //   arguments.size<dev_atomics_scifi>(),
@@ -56,4 +54,12 @@ void SequenceVisitor::visit<scifi_pr_forward_t>(
   //   arguments.size<dev_scifi_tracks>(),
   //   cudaMemcpyDeviceToHost,
   //   cuda_stream));
+
+  // cudaEventRecord(cuda_generic_event, cuda_stream);
+  // cudaEventSynchronize(cuda_generic_event);
+
+  // for (uint i=0; i<runtime_options.number_of_events; ++i) {
+  //   info_cout << "Event " << i
+  //     << ", number of tracks " << host_buffers.host_atomics_scifi[i] << std::endl;
+  // }
 }
