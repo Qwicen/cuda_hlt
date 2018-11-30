@@ -63,7 +63,7 @@ __global__ void scifi_direct_decoder_v4(
         // Apparently the unique* methods are not designed to start at 0, therefore -16
         const uint32_t uniqueZone = ((id.uniqueQuarter() - 16) >> 1);
         const uint plane_code = 2 * planeCode + (uniqueZone % 2);
-        const uint hit_index = raw_bank_offset + current_cluster;
+        const uint hit_index = raw_bank_offset + i_cluster;
         const uint8_t pseudoSize = cSize(c) ? 0 : 4;
 
         assert(pseudoSize < 9 && "Pseudosize of cluster is > 8. Out of range.");
