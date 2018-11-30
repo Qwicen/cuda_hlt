@@ -9,7 +9,7 @@ void SequenceVisitor::set_arguments_size<ut_pre_decode_t>(
   argument_manager_t& arguments)
 {
   arguments.set_size<dev_ut_hits>(UT::Hits::number_of_arrays * host_buffers.host_accumulated_number_of_ut_hits[0]);
-  arguments.set_size<dev_ut_hit_count>(runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
+  arguments.set_size<dev_ut_hit_count>(host_buffers.host_number_of_selected_events[0] * constants.host_unique_x_sector_layer_offsets[4]);
 }
 
 template<>
@@ -27,10 +27,11 @@ void SequenceVisitor::visit<ut_pre_decode_t>(
     arguments.size<dev_ut_hit_count>(),
     cuda_stream));
 
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(64, 4), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(64, 4), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_ut_raw_input>(),
     arguments.offset<dev_ut_raw_input_offsets>(),
+    arguments.offset<dev_event_list>(),
     constants.dev_ut_boards,
     constants.dev_ut_geometry,
     constants.dev_ut_region_offsets,

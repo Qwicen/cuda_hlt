@@ -21,7 +21,7 @@ void SequenceVisitor::visit<velo_calculate_phi_and_sort_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(64), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(64), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_estimated_input_size>(),
     arguments.offset<dev_module_cluster_num>(),

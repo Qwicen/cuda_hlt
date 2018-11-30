@@ -1,8 +1,6 @@
 #include "GlobalEventCuts.cuh"
 
 __global__ void global_event_cuts(
-  char* raw_input,
-  uint* raw_input_offsets,
   char* ut_raw_input,
   uint* ut_raw_input_offsets,
   char* scifi_raw_input,

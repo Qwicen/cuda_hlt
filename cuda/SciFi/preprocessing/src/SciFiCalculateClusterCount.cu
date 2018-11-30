@@ -5,12 +5,14 @@ using namespace SciFi;
 __global__ void scifi_calculate_cluster_count(
   char* scifi_raw_input,
   uint* scifi_raw_input_offsets,
+  const uint* event_list,
   uint* scifi_hit_count,
   char* scifi_geometry
 ) {
   const uint event_number = blockIdx.x;
+  const uint selected_event_number = event_list[event_number];
 
-  const SciFiRawEvent event(scifi_raw_input + scifi_raw_input_offsets[event_number]); 
+  const SciFiRawEvent event(scifi_raw_input + scifi_raw_input_offsets[selected_event_number]); 
   const SciFiGeometry geom(scifi_geometry);
   SciFi::HitCount hit_count;
   hit_count.typecast_before_prefix_sum(scifi_hit_count, event_number);

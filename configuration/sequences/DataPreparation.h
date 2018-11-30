@@ -3,6 +3,9 @@
  * in the expected order of execution.
  */
 SEQUENCE_T(
+  init_event_list_t,
+  global_event_cuts_t,
+
   // Velo data preparation
   velo_estimate_input_size_t,
   prefix_sum_velo_clusters_t,

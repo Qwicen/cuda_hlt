@@ -9,7 +9,7 @@ void SequenceVisitor::set_arguments_size<prefix_sum_velo_clusters_t>(
   argument_manager_t& arguments)
 {
   arguments.set_size<dev_cluster_offset>(
-    prefix_sum_velo_clusters_t::aux_array_size(runtime_options.number_of_events * Velo::Constants::n_modules));
+    prefix_sum_velo_clusters_t::aux_array_size(host_buffers.host_number_of_selected_events[0] * Velo::Constants::n_modules));
 }
 
 template<>
@@ -23,7 +23,7 @@ void SequenceVisitor::visit<prefix_sum_velo_clusters_t>(
   cudaEvent_t& cuda_generic_event)
 {
   // Set size of the main array to be prefix summed
-  state.set_size(runtime_options.number_of_events * Velo::Constants::n_modules);
+  state.set_size(host_buffers.host_number_of_selected_events[0] * Velo::Constants::n_modules);
 
   // Set the cuda_stream
   state.set_opts(cuda_stream);
@@ -39,11 +39,13 @@ void SequenceVisitor::visit<prefix_sum_velo_clusters_t>(
 
   // Fetch the number of hits we require
   cudaCheck(cudaMemcpyAsync(host_buffers.host_total_number_of_velo_clusters,
-    arguments.offset<dev_estimated_input_size>() + runtime_options.number_of_events * Velo::Constants::n_modules,
+    arguments.offset<dev_estimated_input_size>() + host_buffers.host_number_of_selected_events[0] * Velo::Constants::n_modules,
     sizeof(uint),
     cudaMemcpyDeviceToHost,
     cuda_stream));
 
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
+
+  debug_cout << "velo clusters = " << *host_buffers.host_total_number_of_velo_clusters << std::endl;
 }

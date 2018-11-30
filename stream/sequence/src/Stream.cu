@@ -45,6 +45,9 @@ cudaError_t Stream::initialize(
 
 cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
   for (uint repetition=0; repetition<runtime_options.number_of_repetitions; ++repetition) {
+    // Initialize selected_number_of_events with requested_number_of_events
+    host_buffers.host_number_of_selected_events[0] = runtime_options.number_of_events;
+
     // Reset scheduler
     scheduler.reset();
 

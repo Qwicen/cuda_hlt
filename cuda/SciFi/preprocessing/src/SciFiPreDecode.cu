@@ -42,6 +42,7 @@ __device__ void store_sorted_cluster_reference (
 __global__ void scifi_pre_decode(
   char *scifi_events,
   uint *scifi_event_offsets,
+  const uint *event_list,
   uint *scifi_hit_count,
   uint *scifi_hits,
   char *scifi_geometry,
@@ -49,9 +50,10 @@ __global__ void scifi_pre_decode(
 ) {
   const int number_of_events = gridDim.x;
   const int event_number = blockIdx.x;
+  const uint selected_event_number = event_list[event_number];
 
   SciFiGeometry geom(scifi_geometry);
-  const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
+  const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[selected_event_number]);
 
   Hits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mats], &geom, dev_inv_clus_res};
   HitCount hit_count;

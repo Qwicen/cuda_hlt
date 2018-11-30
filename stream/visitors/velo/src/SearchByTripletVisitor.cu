@@ -8,13 +8,13 @@ void SequenceVisitor::set_arguments_size<velo_search_by_triplet_t>(
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 {
-  arguments.set_size<dev_tracks>(runtime_options.number_of_events * Velo::Constants::max_tracks);
-  arguments.set_size<dev_tracklets>(runtime_options.number_of_events * Velo::Tracking::ttf_modulo);
-  arguments.set_size<dev_tracks_to_follow>(runtime_options.number_of_events * Velo::Tracking::ttf_modulo);
-  arguments.set_size<dev_weak_tracks>(runtime_options.number_of_events * Velo::Tracking::max_weak_tracks);
+  arguments.set_size<dev_tracks>(host_buffers.host_number_of_selected_events[0] * Velo::Constants::max_tracks);
+  arguments.set_size<dev_tracklets>(host_buffers.host_number_of_selected_events[0] * Velo::Tracking::ttf_modulo);
+  arguments.set_size<dev_tracks_to_follow>(host_buffers.host_number_of_selected_events[0] * Velo::Tracking::ttf_modulo);
+  arguments.set_size<dev_weak_tracks>(host_buffers.host_number_of_selected_events[0] * Velo::Tracking::max_weak_tracks);
   arguments.set_size<dev_hit_used>(host_buffers.host_total_number_of_velo_clusters[0]);
-  arguments.set_size<dev_atomics_velo>(runtime_options.number_of_events * Velo::num_atomics);
-  arguments.set_size<dev_rel_indices>(runtime_options.number_of_events * 2 * Velo::Constants::max_numhits_in_module);
+  arguments.set_size<dev_atomics_velo>(host_buffers.host_number_of_selected_events[0] * Velo::num_atomics);
+  arguments.set_size<dev_rel_indices>(host_buffers.host_number_of_selected_events[0] * 2 * Velo::Constants::max_numhits_in_module);
 }
 
 template<>
@@ -28,7 +28,7 @@ void SequenceVisitor::visit<velo_search_by_triplet_t>(
   cudaEvent_t& cuda_generic_event)
 {
   // Setup opts and arguments
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(32), cuda_stream, 32 * sizeof(float));
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(32), cuda_stream, 32 * sizeof(float));
   state.set_arguments(
     arguments.offset<dev_velo_cluster_container>(),
     arguments.offset<dev_estimated_input_size>(),

@@ -10,7 +10,7 @@ void SequenceVisitor::set_arguments_size<pv_get_seeds_t>(
 {
   // Set arguments size
   arguments.set_size<dev_seeds>(host_buffers.host_number_of_reconstructed_velo_tracks[0] );
-  arguments.set_size<dev_number_seeds>(runtime_options.number_of_events );
+  arguments.set_size<dev_number_seeds>(host_buffers.host_number_of_selected_events[0] );
 }
 
 
@@ -26,7 +26,7 @@ void SequenceVisitor::visit<pv_get_seeds_t>(
   cudaEvent_t& cuda_generic_event)
 {
 
-  state.set_opts(dim3(runtime_options.number_of_events), 1, cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), 1, cuda_stream);
   state.set_arguments(
     arguments.offset<dev_kalmanvelo_states>(),
     arguments.offset<dev_atomics_velo>(),
@@ -35,11 +35,9 @@ void SequenceVisitor::visit<pv_get_seeds_t>(
     arguments.offset<dev_number_seeds>()
   );
 
-
   state.invoke();
 
-
-      cudaCheck(cudaMemcpyAsync(
+  cudaCheck(cudaMemcpyAsync(
     host_buffers.host_number_of_seeds,
     arguments.offset<dev_number_seeds>(),
     arguments.size<dev_number_seeds>(),

@@ -146,7 +146,6 @@ __global__ void consolidate_velo_tracks(
   const float* hit_Xs   = (float*) (dev_velo_cluster_container + 5 * number_of_hits + hit_offset);
   const uint32_t* hit_IDs = (uint32_t*) (dev_velo_cluster_container + 2 * number_of_hits + hit_offset);
 
-
   for (uint i=threadIdx.x; i<number_of_tracks_event; i+=blockDim.x) {
     Velo::Consolidated::Hits consolidated_hits = velo_tracks.get_hits(dev_velo_track_hits, i);
     const Velo::TrackHits track = event_tracks[i];

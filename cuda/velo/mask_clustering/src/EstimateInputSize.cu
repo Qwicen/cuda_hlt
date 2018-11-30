@@ -7,12 +7,16 @@ __global__ void estimate_input_size(
   uint* dev_module_cluster_num,
   uint* dev_event_candidate_num,
   uint32_t* dev_cluster_candidates,
+  const uint* dev_event_list,
+  uint* dev_event_order,
   uint8_t* dev_velo_candidate_ks
 ) {
   const uint event_number = blockIdx.x;
+  const uint selected_event_number = dev_event_list[event_number];
+  
   const uint raw_bank_starting_chunk = threadIdx.y; // up to 26
   const uint raw_bank_chunk_size = Velo::Constants::n_sensors / blockDim.y; // blockDim.y = 26 -> chunk_size = 8
-  const char* raw_input = dev_raw_input + dev_raw_input_offsets[event_number];
+  const char* raw_input = dev_raw_input + dev_raw_input_offsets[selected_event_number];
   uint* estimated_input_size = dev_estimated_input_size + event_number * Velo::Constants::n_modules;
   uint* module_cluster_num = dev_module_cluster_num + event_number * Velo::Constants::n_modules;
   uint* event_candidate_num = dev_event_candidate_num + event_number;

@@ -9,7 +9,7 @@ void SequenceVisitor::set_arguments_size<prefix_sum_ut_hits_t>(
   argument_manager_t& arguments)
 {
   arguments.set_size<dev_prefix_sum_auxiliary_array_3>(
-    prefix_sum_ut_hits_t::aux_array_size(runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4]));
+    prefix_sum_ut_hits_t::aux_array_size(host_buffers.host_number_of_selected_events[0] * constants.host_unique_x_sector_layer_offsets[4]));
 }
 
 template<>
@@ -23,7 +23,7 @@ void SequenceVisitor::visit<prefix_sum_ut_hits_t>(
   cudaEvent_t& cuda_generic_event)
 {
   // Set size of the main array to be prefix summed
-  state.set_size(runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4]);
+  state.set_size(host_buffers.host_number_of_selected_events[0] * constants.host_unique_x_sector_layer_offsets[4]);
 
   // Set the cuda_stream
   state.set_opts(cuda_stream);
@@ -39,7 +39,7 @@ void SequenceVisitor::visit<prefix_sum_ut_hits_t>(
 
   // Fetch total number of hits accumulated with all tracks
   cudaCheck(cudaMemcpyAsync(host_buffers.host_accumulated_number_of_ut_hits,
-    arguments.offset<dev_ut_hit_offsets>() + runtime_options.number_of_events * constants.host_unique_x_sector_layer_offsets[4],
+    arguments.offset<dev_ut_hit_offsets>() + host_buffers.host_number_of_selected_events[0] * constants.host_unique_x_sector_layer_offsets[4],
     sizeof(uint),
     cudaMemcpyDeviceToHost,
     cuda_stream));

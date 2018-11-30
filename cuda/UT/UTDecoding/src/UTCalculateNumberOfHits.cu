@@ -10,11 +10,13 @@ __global__ void ut_calculate_number_of_hits (
   const uint* dev_ut_region_offsets,
   const uint* dev_unique_x_sector_layer_offsets,
   const uint* dev_unique_x_sector_offsets,
-  uint32_t* dev_ut_hit_offsets
+  uint32_t* dev_ut_hit_offsets,
+  const uint* dev_event_list
 ) {
   const uint32_t event_number = blockIdx.x;
+  const uint selected_event_number = dev_event_list[event_number];
 
-  const uint32_t event_offset = dev_ut_raw_input_offsets[event_number];
+  const uint32_t event_offset = dev_ut_raw_input_offsets[selected_event_number];
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
   uint32_t* hit_offsets = dev_ut_hit_offsets + event_number * number_of_unique_x_sectors;
 

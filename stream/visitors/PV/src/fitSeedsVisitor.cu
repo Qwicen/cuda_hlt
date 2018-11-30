@@ -9,8 +9,8 @@ void SequenceVisitor::set_arguments_size<pv_fit_seeds_t>(
   argument_manager_t& arguments)
 {
   // Set arguments size
-  arguments.set_size<dev_vertex>(PatPV::max_number_vertices * runtime_options.number_of_events );
-  arguments.set_size<dev_number_vertex>(runtime_options.number_of_events );
+  arguments.set_size<dev_vertex>(PatPV::max_number_vertices * host_buffers.host_number_of_selected_events[0] );
+  arguments.set_size<dev_number_vertex>(host_buffers.host_number_of_selected_events[0] );
 }
 
 
@@ -27,7 +27,7 @@ void SequenceVisitor::visit<pv_fit_seeds_t>(
 {
 
 
-  state.set_opts(dim3(runtime_options.number_of_events), 1, cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), 1, cuda_stream);
   state.set_arguments(
     arguments.offset<dev_vertex>(),
     arguments.offset<dev_number_vertex>(),

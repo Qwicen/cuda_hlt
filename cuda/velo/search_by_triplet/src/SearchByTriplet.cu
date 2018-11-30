@@ -21,7 +21,7 @@ __global__ void search_by_triplet(
 ) {
   /* Data initialization */
   // Each event is treated with two blocks, one for each side.
-  const uint event_number = blockIdx.x;
+  const uint event_number = blockIdx.x; 
   const uint number_of_events = gridDim.x;
   const uint tracks_offset = event_number * Velo::Constants::max_tracks;
 

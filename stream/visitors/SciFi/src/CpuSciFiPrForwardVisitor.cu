@@ -9,8 +9,8 @@ void SequenceVisitor::set_arguments_size<cpu_scifi_pr_forward_t>(
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 {
-  arguments.set_size<dev_scifi_tracks>(runtime_options.number_of_events * SciFi::Constants::max_tracks);
-  arguments.set_size<dev_atomics_scifi>(runtime_options.number_of_events * SciFi::num_atomics);
+  arguments.set_size<dev_scifi_tracks>(host_buffers.host_number_of_selected_events[0] * SciFi::Constants::max_tracks);
+  arguments.set_size<dev_atomics_scifi>(host_buffers.host_number_of_selected_events[0] * SciFi::num_atomics);
 }
 
 template<>
@@ -29,9 +29,9 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
 
   // Run Forward on x86 architecture
   std::vector<uint> host_scifi_hits (host_buffers.scifi_hits_uints());
-  std::vector<uint> host_scifi_hit_count (2 * runtime_options.number_of_events * SciFi::Constants::n_mats + 1);
+  std::vector<uint> host_scifi_hit_count (2 * host_buffers.host_number_of_selected_events[0] * SciFi::Constants::n_mats + 1);
     
-  host_buffers.scifi_tracks_events.reserve(runtime_options.number_of_events * SciFi::Constants::max_tracks);
+  host_buffers.scifi_tracks_events.reserve(host_buffers.host_number_of_selected_events[0] * SciFi::Constants::max_tracks);
 
   cudaCheck(cudaMemcpyAsync(
     host_scifi_hits.data(),
@@ -62,7 +62,7 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
     host_buffers.host_ut_track_hit_number,
     host_buffers.host_ut_qop,
     host_buffers.host_ut_track_velo_indices,
-    runtime_options.number_of_events);
+    host_buffers.host_number_of_selected_events[0]);
  
   // copy SciFi track to device for consolidation
   cudaCheck(cudaMemcpyAsync(

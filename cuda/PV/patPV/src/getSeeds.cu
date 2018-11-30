@@ -53,7 +53,8 @@ __device__ void errorForPVSeedFinding(PatPV::myfloat tx, PatPV::myfloat ty, PatP
   int * dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   PatPV::XYZPoint * dev_seeds,
-  uint * dev_number_seed) {
+  uint * dev_number_seed
+) {
 
   PatPV::XYZPoint beamspot;
   beamspot.x = 0;

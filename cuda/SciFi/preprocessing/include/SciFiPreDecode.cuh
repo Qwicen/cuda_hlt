@@ -19,6 +19,7 @@ __device__ void store_sorted_cluster_reference (
 __global__ void scifi_pre_decode(
   char *scifi_events,
   uint *scifi_event_offsets,
+  const uint *event_list,
   uint *scifi_hit_count,
   uint *scifi_hits,
   char *scifi_geometry,
