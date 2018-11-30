@@ -70,7 +70,7 @@ struct CheckerInvoker {
               warning_cout << "0x" << id << ", ";
             }
             warning_cout << std::endl << std::endl << std::dec;
-          }
+          } 
         }
       }
     }

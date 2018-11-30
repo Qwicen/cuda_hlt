@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "VeloEventModel.cuh"
+#include "States.cuh"
 #include "Common.h"
 #include "Handler.cuh"
 #include "VeloConsolidated.cuh"
@@ -23,9 +24,9 @@ __device__ float velo_kalman_filter_step(
  *        allowing for some scattering at every hit
  */
 template<bool upstream>
-__device__ Velo::State simplified_fit(
+__device__ VeloState simplified_fit(
   const Velo::Consolidated::Hits consolidated_hits,
-  const Velo::State& stateAtBeamLine,
+  const VeloState& stateAtBeamLine,
   const uint nhits
 ) {
   // backward = state.z > track.hits[0].z;
@@ -47,7 +48,7 @@ __device__ Velo::State simplified_fit(
 
   // We filter x and y simultaneously but take them uncorrelated.
   // filter first the first hit.
-  Velo::State state;
+  VeloState state;
   state.x = consolidated_hits.x[firsthit];
   state.y = consolidated_hits.y[firsthit];
   state.z = consolidated_hits.z[firsthit];
@@ -55,8 +56,8 @@ __device__ Velo::State simplified_fit(
   state.ty = stateAtBeamLine.ty;
 
   // Initialize the covariance matrix
-  state.c00 = VeloTracking::param_w_inverted;
-  state.c11 = VeloTracking::param_w_inverted;
+  state.c00 = Velo::Tracking::param_w_inverted;
+  state.c11 = Velo::Tracking::param_w_inverted;
   state.c20 = 0.f;
   state.c31 = 0.f;
   state.c22 = 1.f;
@@ -75,8 +76,8 @@ __device__ Velo::State simplified_fit(
     state.c33 += noise2PerLayer;
 
     // filter X and filter Y
-    state.chi2 += velo_kalman_filter_step(state.z, hit_z, hit_x, VeloTracking::param_w, state.x, state.tx, state.c00, state.c20, state.c22);
-    state.chi2 += velo_kalman_filter_step(state.z, hit_z, hit_y, VeloTracking::param_w, state.y, state.ty, state.c11, state.c31, state.c33);
+    state.chi2 += velo_kalman_filter_step(state.z, hit_z, hit_x, Velo::Tracking::param_w, state.x, state.tx, state.c00, state.c20, state.c22);
+    state.chi2 += velo_kalman_filter_step(state.z, hit_z, hit_y, Velo::Tracking::param_w, state.y, state.ty, state.c11, state.c31, state.c33);
     
     // update z (note done in the filter, since needed only once)
     state.z = hit_z;
@@ -91,11 +92,11 @@ __device__ Velo::State simplified_fit(
 }
 
 __global__ void velo_kalman_fit(
-  int* dev_atomics_storage,
+  int* dev_atomics_velo,
   uint* dev_velo_track_hit_number,
-  uint* dev_velo_track_hits,
-  uint* dev_velo_states,
-  uint* dev_kalmanvelo_states
+  char* dev_velo_track_hits,
+  char* dev_velo_states,
+  char* dev_kalmanvelo_states
 );
 
 ALGORITHM(velo_kalman_fit, velo_kalman_fit_t)

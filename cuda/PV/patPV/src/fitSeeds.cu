@@ -1,11 +1,11 @@
 #include "fitSeeds.cuh"
 
-__global__ void fitSeeds(
+__global__ void fit_seeds(
   PV::Vertex* dev_vertex,
   int * dev_number_vertex,
   PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seeds,
-  uint* dev_kalmanvelo_states,
+  char* dev_kalmanvelo_states,
   int * dev_atomics_storage,
   uint* dev_velo_track_hit_number)
 {
@@ -24,7 +24,7 @@ __global__ void fitSeeds(
 
   int counter_vertex = 0;
   for(int i_seed = 0; i_seed < dev_number_seeds[event_number]; i_seed++) {
-    bool success = fitVertex(dev_seeds[event_number * PatPV::max_number_vertices + i_seed], velo_states, vertex, number_of_tracks_event, event_tracks_offset);
+    bool success = fit_vertex(dev_seeds[event_number * PatPV::max_number_vertices + i_seed], velo_states, vertex, number_of_tracks_event, event_tracks_offset);
     if(success) {
       
       dev_vertex[PatPV::max_number_vertices * event_number + counter_vertex] = vertex;
@@ -40,25 +40,27 @@ __global__ void fitSeeds(
 
 
 
-__device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
+__device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
               Velo::Consolidated::States velo_states,
               PV::Vertex& vtx,
               int number_of_tracks,
               uint tracks_offset) 
 {
-  PatPV::myfloat tr_state_x[VeloTracking::max_tracks] ;
-  PatPV::myfloat tr_state_y[VeloTracking::max_tracks] ;
-  PatPV::myfloat tr_state_z[VeloTracking::max_tracks] ;
 
-  PatPV::myfloat tr_state_tx[VeloTracking::max_tracks];
-  PatPV::myfloat tr_state_ty[VeloTracking::max_tracks] ;
+  PatPV::myfloat tr_state_x[Velo::Constants::max_tracks] ;
+  PatPV::myfloat tr_state_y[Velo::Constants::max_tracks] ;
+  PatPV::myfloat tr_state_z[Velo::Constants::max_tracks] ;
 
-  PatPV::myfloat tr_state_c00[VeloTracking::max_tracks] ;
-  PatPV::myfloat tr_state_c11[VeloTracking::max_tracks] ;
-  PatPV::myfloat tr_state_c20[VeloTracking::max_tracks] ;
-  PatPV::myfloat tr_state_c22[VeloTracking::max_tracks] ;
-  PatPV::myfloat tr_state_c31[VeloTracking::max_tracks] ;
-  PatPV::myfloat tr_state_c33[VeloTracking::max_tracks] ;
+  PatPV::myfloat tr_state_tx[Velo::Constants::max_tracks];
+  PatPV::myfloat tr_state_ty[Velo::Constants::max_tracks] ;
+
+  PatPV::myfloat tr_state_c00[Velo::Constants::max_tracks] ;
+  PatPV::myfloat tr_state_c11[Velo::Constants::max_tracks] ;
+  PatPV::myfloat tr_state_c20[Velo::Constants::max_tracks] ;
+  PatPV::myfloat tr_state_c22[Velo::Constants::max_tracks] ;
+  PatPV::myfloat tr_state_c31[Velo::Constants::max_tracks] ;
+  PatPV::myfloat tr_state_c33[Velo::Constants::max_tracks] ;
+
 
   // position at which derivatives are evaluated
 
@@ -72,7 +74,7 @@ __device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
   for(int i = 0; i < number_of_tracks; i++) {
     int index = i + tracks_offset;
 
-    Velo::State trk = velo_states.get( index);
+    VeloState trk = velo_states.get( index);
     PatPV::myfloat new_z = vtxpos.z;
 
     PatPV::myfloat m_state_x = trk.x;
@@ -195,7 +197,7 @@ __device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
       PatPV::myfloat tr_chi2          = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
 
 
-      PatPV::myfloat weight = getTukeyWeight(tr_chi2, nbIter) ;
+      PatPV::myfloat weight = get_tukey_weight(tr_chi2, nbIter) ;
 
       // add the track
       if ( weight > PatPV::m_minTrackWeight ) {
@@ -286,7 +288,7 @@ __device__ bool fitVertex( PatPV::XYZPoint& seedPoint,
 //=============================================================================
 // Get Tukey's weight
 //=============================================================================
-__device__ PatPV::myfloat getTukeyWeight(PatPV::myfloat trchi2, int iter) 
+__device__ PatPV::myfloat get_tukey_weight(PatPV::myfloat trchi2, int iter) 
 {
   if (iter<1 ) return 1.;
   PatPV::myfloat ctrv = PatPV::m_trackChi * std::max(PatPV::m_minIter -  iter,1);

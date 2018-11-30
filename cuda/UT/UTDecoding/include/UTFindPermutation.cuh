@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VeloUTDefinitions.cuh"
+#include "UTEventModel.cuh"
 #include "UTDefinitions.cuh"
 #include "Handler.cuh"
 

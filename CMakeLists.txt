@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-project(cu_hlt C CXX)
+project(Allen C CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}) # for find_package
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake) # for find_package
@@ -15,14 +15,15 @@ MESSAGE(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 if(NOT SEQUENCE)
   set(SEQUENCE DefaultSequence)
 endif(NOT SEQUENCE)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/stream/sequence_setup/include/sequences/${SEQUENCE}.cuh" "${CMAKE_CURRENT_SOURCE_DIR}/stream/sequence_setup/include/sequences/ConfiguredSequence.cuh" COPYONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/configuration/sequences/${SEQUENCE}.h" "${CMAKE_CURRENT_SOURCE_DIR}/configuration/sequences/ConfiguredSequence.h" COPYONLY)
 message(STATUS "Configured sequence: " ${SEQUENCE})
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -lpthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread")
 
 find_package(ZLIB REQUIRED)
 
@@ -72,6 +73,8 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
   set(CUDA_BUILD_TYPE "-O0\;-G\;-g\;-DDEBUG\;")
 endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 
+# In case we want to compile with clang:
+# --compiler-bindir /cvmfs/sft.cern.ch/lcg/releases/clang/6.0.0-6647e/x86_64-centos7-gcc62-opt/bin/clang++;
 set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=63;")
 
 add_subdirectory(cuda)
@@ -88,7 +91,9 @@ include_directories(main/include)
 include_directories(x86/velo/clustering/include)
 include_directories(cuda/UT/common/include)
 include_directories(cuda/UT/PrVeloUT/include)
+include_directories(cuda/UT/compassUT/include)
 include_directories(cuda/UT/UTDecoding/include)
+include_directories(cuda/UT/consolidate/include)
 include_directories(cuda/velo/common/include)
 include_directories(cuda/velo/calculate_phi_and_sort/include)
 include_directories(cuda/velo/consolidate_tracks/include)
@@ -99,12 +104,15 @@ include_directories(cuda/SciFi/common/include)
 include_directories(cuda/muon/common/include)
 include_directories(cuda/utils/prefix_sum/include)
 include_directories(cuda/event_model/velo/include)
+include_directories(cuda/event_model/UT/include)
+include_directories(cuda/event_model/SciFi/include)
 include_directories(cuda/event_model/common/include)
 include_directories(checker/tracking/include)
 include_directories(checker/pv/include)
 include_directories(stream/sequence/include)
 include_directories(x86/SciFi/include)
 include_directories(cuda/SciFi/PrForward/include)
+include_directories(cuda/SciFi/consolidate/include)
 include_directories(cuda/UT/UTDecoding/include)
 include_directories(mdf/include)
 
@@ -119,13 +127,13 @@ cuda_add_library(Common ${common_sources})
 target_link_libraries(Common mdf)
 
 # main executable
-cuda_add_executable(cu_hlt ${main_cpp_path})
+cuda_add_executable(Allen ${main_cpp_path})
 
-target_link_libraries(cu_hlt
+target_link_libraries(Allen
   Common
   Utils
   Velo
-  PatPV
+  PV
   UT
   SciFi
   #x86PatPV
@@ -139,7 +147,6 @@ target_link_libraries(cu_hlt
   CheckClustering)
 
 if (ROOT_FOUND)
-  target_compile_definitions(cu_hlt PUBLIC WITH_ROOT)
-  target_link_libraries(cu_hlt ${ROOT_LIBRARIES})
+  target_compile_definitions(Allen PUBLIC WITH_ROOT)
+  target_link_libraries(Allen ${ROOT_LIBRARIES})
 endif()
-

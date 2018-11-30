@@ -4,7 +4,7 @@
 
 
 
-__device__ PatPV::myfloat zCloseBeam( Velo::State track, const PatPV::XYZPoint& beamspot) {
+__device__ PatPV::myfloat zCloseBeam( VeloState track, const PatPV::XYZPoint& beamspot) {
 
   PatPV::XYZPoint tpoint(track.x, track.y, track.z);
   PatPV::XYZPoint tdir(track.tx, track.ty, 1.);
@@ -48,10 +48,8 @@ __device__ void errorForPVSeedFinding(PatPV::myfloat tx, PatPV::myfloat ty, PatP
 }
 
 
-
-
- __global__ void getSeeds(
-  uint* dev_kalmanvelo_states,
+ __global__ void get_seeds(
+  char* dev_kalmanvelo_states,
   int * dev_atomics_storage,
   uint* dev_velo_track_hit_number, 
   PatPV::XYZPoint * dev_seeds,
@@ -69,8 +67,10 @@ __device__ void errorForPVSeedFinding(PatPV::myfloat tx, PatPV::myfloat ty, PatP
   const Velo::Consolidated::States velo_states {dev_kalmanvelo_states, velo_tracks.total_number_of_tracks};
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
-  
-  PatPV::vtxCluster  vclusters[VeloTracking::max_tracks];
+
+  PatPV::vtxCluster vclusters[Velo::Constants::max_tracks];
+
+
 
   int counter_number_of_clusters = 0;
   for (int i = 0; i < number_of_tracks_event; i++) {
@@ -78,7 +78,7 @@ __device__ void errorForPVSeedFinding(PatPV::myfloat tx, PatPV::myfloat ty, PatP
     
     PatPV::myfloat sigsq;
     PatPV::myfloat zclu;
-    Velo::State trk = velo_states.get(event_tracks_offset + i);
+    VeloState trk = velo_states.get(event_tracks_offset + i);
 
 
     zclu = zCloseBeam(trk,beamspot);
@@ -96,9 +96,9 @@ __device__ void errorForPVSeedFinding(PatPV::myfloat tx, PatPV::myfloat ty, PatP
 
   }
 
-  PatPV::myfloat  zseeds[VeloTracking::max_tracks];
+  PatPV::myfloat  zseeds[Velo::Constants::max_tracks];
 
-  int number_final_clusters = findClusters(vclusters, zseeds, counter_number_of_clusters);
+  int number_final_clusters = find_clusters(vclusters, zseeds, counter_number_of_clusters);
 
   for(int i = 0; i < number_final_clusters; i++) dev_seeds[event_number * PatPV::max_number_vertices + i] = PatPV::XYZPoint{ beamspot.x, beamspot.y, zseeds[i]};
   
@@ -108,12 +108,7 @@ __device__ void errorForPVSeedFinding(PatPV::myfloat tx, PatPV::myfloat ty, PatP
 
  };
 
- __device__ int findClusters(PatPV::vtxCluster * vclus, PatPV::myfloat * zclusters, int number_of_clusters)  {
-
-
-  
-  
-
+ __device__ int find_clusters(PatPV::vtxCluster * vclus, PatPV::myfloat * zclusters, int number_of_clusters)  {
   
   for(int i = 0; i < number_of_clusters; i++) {
     vclus[i].sigsq *= PatPV::mcu_factorToIncreaseErrors*PatPV::mcu_factorToIncreaseErrors; // blow up errors
@@ -180,7 +175,7 @@ __device__ void errorForPVSeedFinding(PatPV::myfloat tx, PatPV::myfloat ty, PatP
 
   int return_number_of_clusters = 0;
   //count final number of clusters
-  PatPV::vtxCluster pvclus[VeloTracking::max_tracks];
+  PatPV::vtxCluster pvclus[Velo::Constants::max_tracks];
   for(int i = 0; i < number_of_clusters; i++) {
     if(vclus[i].ntracks != 0)     {pvclus[return_number_of_clusters] = vclus[i]; return_number_of_clusters++;}
   } 

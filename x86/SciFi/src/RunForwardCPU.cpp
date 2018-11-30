@@ -7,17 +7,20 @@
 #endif
 
 int run_forward_on_CPU (
-  std::vector< trackChecker::Tracks >& forward_tracks_events,
-  uint* host_scifi_hits,
-  uint* host_scifi_hit_count,
-  char* host_scifi_geometry,
-  uint* host_velo_tracks_atomics,
-  uint* host_velo_track_hit_number,
-  uint* host_velo_states,
-  VeloUTTracking::TrackUT * veloUT_tracks,
-  const int * n_veloUT_tracks_events,
-  const uint number_of_events,
-  const std::array<float, 9>& host_inv_clus_res
+  SciFi::TrackHits* host_scifi_tracks,
+  int* host_scifi_n_tracks,
+  const uint* host_scifi_hits,
+  const uint* host_scifi_hit_count,
+  const char* host_scifi_geometry,
+  const std::array<float, 9>& host_inv_clus_res,
+  const uint* host_velo_tracks_atomics,
+  const uint* host_velo_track_hit_number,
+  const char* host_velo_states,
+  const int * host_atomics_ut,
+  const uint* host_ut_track_hit_number,
+  const float* host_ut_qop,
+  const uint* host_ut_track_velo_indices,
+  const uint number_of_events
 ) {
 
 #ifdef WITH_ROOT
@@ -30,8 +33,14 @@ int run_forward_on_CPU (
   float x0, z0, w, dxdy, dzdy, yMin, yMax;
   float qop;
   int n_tracks;
+  float state_x, state_y, state_z, state_tx, state_ty;
 
   t_Forward_tracks->Branch("qop", &qop);
+  t_Forward_tracks->Branch("state_x", &state_x);
+  t_Forward_tracks->Branch("state_y", &state_y);
+  t_Forward_tracks->Branch("state_z", &state_z);
+  t_Forward_tracks->Branch("state_tx", &state_tx);
+  t_Forward_tracks->Branch("state_ty", &state_ty);
   t_statistics->Branch("n_tracks", &n_tracks);
   t_scifi_hits->Branch("planeCode", &planeCode);
   t_scifi_hits->Branch("LHCbID", &LHCbID);
@@ -47,22 +56,36 @@ int run_forward_on_CPU (
   for ( uint i_event = 0; i_event < number_of_events; ++i_event ) {
 
     // Velo consolidated types
-    const Velo::Consolidated::Tracks velo_tracks {(uint*) host_velo_tracks_atomics, host_velo_track_hit_number, i_event, number_of_events};
+    const Velo::Consolidated::Tracks velo_tracks {(uint*) host_velo_tracks_atomics, (uint*)host_velo_track_hit_number, i_event, number_of_events};
     const uint event_tracks_offset = velo_tracks.tracks_offset(i_event);
-    const Velo::Consolidated::States host_velo_states_event {host_velo_states, velo_tracks.total_number_of_tracks};
+    const Velo::Consolidated::States host_velo_states_event {(char*)host_velo_states, velo_tracks.total_number_of_tracks};
 
-    uint n_forward_tracks = 0;
-    SciFi::Track forward_tracks[SciFi::max_tracks];
+    // UT consolidated types
+    UT::Consolidated::Tracks ut_tracks {
+     (uint*)host_atomics_ut,
+     (uint*)host_ut_track_hit_number,
+     (float*)host_ut_qop,
+     (uint*)host_ut_track_velo_indices,
+      i_event,
+      number_of_events
+      };
+    const int n_veloUT_tracks_event = ut_tracks.number_of_tracks(i_event);
+    
+    // SciFi non-consolidated types
+    int* n_forward_tracks = host_scifi_n_tracks + i_event;
+    SciFi::TrackHits* scifi_tracks_event = host_scifi_tracks + i_event * SciFi::Constants::max_tracks;
 
-    SciFi::SciFiHitCount scifi_hit_count;
-    scifi_hit_count.typecast_after_prefix_sum(host_scifi_hit_count, i_event, number_of_events);
-
-    const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::Constants::n_zones];
+    const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::Constants::n_mats]; 
+    SciFi::HitCount scifi_hit_count;
+    scifi_hit_count.typecast_after_prefix_sum((uint*)host_scifi_hit_count, i_event, number_of_events);
+    
     const SciFi::SciFiGeometry scifi_geometry(host_scifi_geometry);
-    SciFi::SciFiHits scifi_hits(host_scifi_hits,
-      total_number_of_hits,
-      &scifi_geometry, 
-      reinterpret_cast<const float*>(host_inv_clus_res.data()));
+    
+    SciFi::Hits scifi_hits(
+     (uint*)host_scifi_hits,
+     total_number_of_hits,
+     &scifi_geometry, 
+     reinterpret_cast<const float*>(host_inv_clus_res.data()));
 
 #ifdef WITH_ROOT
     // store hit variables in tree
@@ -72,7 +95,6 @@ int run_forward_on_CPU (
         const auto hit_offset = zone_offset + hit;
 
         planeCode = scifi_hits.planeCode(hit_offset);
-        // hitZone = scifi_hits.planeCode(hit_offset);
         LHCbID = scifi_hits.LHCbID(hit_offset);
         x0 = scifi_hits.x0[hit_offset];
         z0 = scifi_hits.z0[hit_offset];
@@ -85,7 +107,6 @@ int run_forward_on_CPU (
       }
     }
 #endif
-
 
     // initialize TMVA vars
     SciFi::Tracking::TMVA tmva1;
@@ -100,28 +121,28 @@ int run_forward_on_CPU (
       scifi_hit_count,
       host_velo_states_event,
       event_tracks_offset,
-      veloUT_tracks + i_event * VeloUTTracking::max_num_tracks,
-      n_veloUT_tracks_events[i_event],
+      ut_tracks,
+      n_veloUT_tracks_event,
       &tmva1,
       &tmva2,
       &constArrays,
-      forward_tracks,
-      &n_forward_tracks);
-
+      scifi_tracks_event,
+      (uint*)n_forward_tracks);
 
 #ifdef WITH_ROOT
     // store qop in tree
-    for ( int i_track = 0; i_track < n_forward_tracks; ++i_track ) {
-      qop = forward_tracks[i_track].qop;
+    for ( int i_track = 0; i_track < *n_forward_tracks; ++i_track ) {
+      qop = scifi_tracks_event[i_track].qop;
+      state_x  = scifi_tracks_event[i_track].state.x;
+      state_y  = scifi_tracks_event[i_track].state.y;
+      state_z  = scifi_tracks_event[i_track].state.z;
+      state_tx = scifi_tracks_event[i_track].state.tx;
+      state_ty = scifi_tracks_event[i_track].state.ty;
       t_Forward_tracks->Fill();
     }
-    n_tracks = n_forward_tracks;
+    n_tracks = n_forward_tracks[i_event];
     t_statistics->Fill();
 #endif
-
-    // save in format for track checker
-    trackChecker::Tracks checker_tracks = prepareTracksSingleEvent<TrackCheckerForward, SciFi::Track>( forward_tracks, n_forward_tracks );
-    forward_tracks_events.emplace_back( checker_tracks );
   }
 
 #ifdef WITH_ROOT

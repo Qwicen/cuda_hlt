@@ -115,69 +115,76 @@
 __global__ void scifi_pr_forward(
   uint32_t* dev_scifi_hits,
   const uint32_t* dev_scifi_hit_count,
-  int* dev_atomics_storage,
-  uint* dev_velo_track_hit_number,
-  uint* dev_velo_states,
-  VeloUTTracking::TrackUT * dev_veloUT_tracks,
-  const int * dev_atomics_veloUT,
-  SciFi::Track* dev_scifi_tracks,
-  uint* dev_n_scifi_tracks ,
-  SciFi::Tracking::TMVA* dev_tmva1,
-  SciFi::Tracking::TMVA* dev_tmva2,
-  SciFi::Tracking::Arrays* dev_constArrays,
+  const int* dev_atomics_velo,
+  const uint* dev_velo_track_hit_number,
+  const char* dev_velo_states,
+  const int* dev_atomics_ut,
+  const char* dev_ut_track_hits,
+  const uint* dev_ut_track_hit_number,
+  const float* dev_ut_qop,
+  const uint* dev_ut_track_velo_indices,
+  SciFi::TrackHits* dev_scifi_tracks,
+  int* dev_atomics_scifi,
+  const SciFi::Tracking::TMVA* dev_tmva1,
+  const SciFi::Tracking::TMVA* dev_tmva2,
+  const SciFi::Tracking::Arrays* dev_constArrays,
   const char* dev_scifi_geometry,
-  const float* dev_inv_clus_res
-) {
+  const float* dev_inv_clus_res)
+{
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
 
   // Velo consolidated types
-  const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
-  const Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
-  const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
-  const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
+  const Velo::Consolidated::Tracks velo_tracks {
+    (uint*) dev_atomics_velo, (uint*) dev_velo_track_hit_number, event_number, number_of_events};
+  const Velo::Consolidated::States velo_states {(char*) dev_velo_states, velo_tracks.total_number_of_tracks};
+  const uint velo_tracks_offset_event = velo_tracks.tracks_offset(event_number);
 
-  // UT un-consolidated tracks (-> should be consolidated soon)
-  const int* n_veloUT_tracks_event = dev_atomics_veloUT + event_number;
-  VeloUTTracking::TrackUT* veloUT_tracks_event = dev_veloUT_tracks + event_number * VeloUTTracking::max_num_tracks;
+  // UT consolidated tracks
+  UT::Consolidated::Tracks ut_tracks {(uint*) dev_atomics_ut,
+                                      (uint*) dev_ut_track_hit_number,
+                                      (float*) dev_ut_qop,
+                                      (uint*) dev_ut_track_velo_indices,
+                                      event_number,
+                                      number_of_events};
+  const int n_veloUT_tracks_event = ut_tracks.number_of_tracks(event_number);
 
   // SciFi un-consolidated track types
-  SciFi::Track* scifi_tracks_event = dev_scifi_tracks + event_number * SciFi::max_tracks;
-  uint* n_scifi_tracks_event = dev_n_scifi_tracks + event_number;
+  SciFi::TrackHits* scifi_tracks_event = dev_scifi_tracks + event_number * SciFi::Constants::max_tracks;
+  int* atomics_scifi_event = dev_atomics_scifi + event_number;
 
   // SciFi hits
   const uint total_number_of_hits = dev_scifi_hit_count[number_of_events * SciFi::Constants::n_mats];
-  SciFi::SciFiHitCount scifi_hit_count;
+  SciFi::HitCount scifi_hit_count;
   scifi_hit_count.typecast_after_prefix_sum((uint*) dev_scifi_hit_count, event_number, number_of_events);
   const SciFi::SciFiGeometry scifi_geometry {dev_scifi_geometry};
-  SciFi::SciFiHits scifi_hits(dev_scifi_hits, total_number_of_hits, &scifi_geometry, dev_inv_clus_res);
+  SciFi::Hits scifi_hits(dev_scifi_hits, total_number_of_hits, &scifi_geometry, dev_inv_clus_res);
 
   // initialize atomic SciFi tracks counter
-  if ( threadIdx.x == 0 ) {
-    *n_scifi_tracks_event = 0;
-  }
+  if (threadIdx.x == 0) { *atomics_scifi_event = 0; }
   __syncthreads();
 
   // Loop over the veloUT input tracks
-  for ( int i = 0; i < (*n_veloUT_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
+  for (int i = 0; i < (n_veloUT_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
     const int i_veloUT_track = i * blockDim.x + threadIdx.x;
-    if ( i_veloUT_track < *n_veloUT_tracks_event ) {
-      const VeloUTTracking::TrackUT& veloUTTr = veloUT_tracks_event[i_veloUT_track];
+    if (i_veloUT_track < n_veloUT_tracks_event) {
+      const float qop_ut = ut_tracks.qop[i_veloUT_track];
 
-      const uint velo_states_index = event_tracks_offset + veloUTTr.veloTrackIndex;
+      const int i_velo_track = ut_tracks.velo_track[i_veloUT_track];
+      const uint velo_states_index = velo_tracks_offset_event + i_velo_track;
       const MiniState velo_state {velo_states, velo_states_index};
 
       find_forward_tracks(
         scifi_hits,
         scifi_hit_count,
-        veloUTTr,
+        qop_ut,
+        i_veloUT_track,
         scifi_tracks_event,
-        n_scifi_tracks_event,
+        (uint*) atomics_scifi_event,
         dev_tmva1,
         dev_tmva2,
         dev_constArrays,
         velo_state);
     }
   }
-
 }

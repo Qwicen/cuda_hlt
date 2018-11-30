@@ -53,7 +53,7 @@ namespace {
   }
  
   // This naively implements the adapative multi-vertex fit.
-  void multifitAdaptive( const Velo::State * velostates, const PVTrack * tracks,
+  void multifitAdaptive( const VeloState * velostates, const PVTrack * tracks,
           uint number_of_tracks,
           const float3 * seedpositions,
           uint number_of_seeds,
@@ -101,7 +101,7 @@ namespace {
         float2 vtxposvec{vtxpos.x,vtxpos.y};
         debug_cout << "next track" << std::endl;
         for( int i = 0; i < number_of_tracks; i++ ) {
-          const Velo::State s = velostates[i];
+          const VeloState s = velostates[i];
           // compute the (chance in) z of the poca to the beam axis
           const auto tx = s.tx ;
           const auto ty = s.ty ;
@@ -359,7 +359,7 @@ namespace {
 }
  
 void findPVs(
-  uint* kalmanvelo_states,
+  char* kalmanvelo_states,
   int * velo_atomics,
   uint* velo_track_hit_number,
   PV::Vertex* reconstructed_pvs,
@@ -409,7 +409,7 @@ void findPVs(
 
      // get consolidated states
     const Velo::Consolidated::Tracks velo_tracks {(uint*) velo_atomics, velo_track_hit_number, event_number, number_of_events};
-    const Velo::Consolidated::States velo_states {kalmanvelo_states, velo_tracks.total_number_of_tracks};
+    const Velo::Consolidated::States velo_states = Velo::Consolidated::States(kalmanvelo_states, velo_tracks.total_number_of_tracks);
     const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
     const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
       
@@ -421,14 +421,14 @@ void findPVs(
     debug_cout << "# of input velo states: " << Ntrk << std::endl;
     std::vector< PVTrack > pvtracks_old(Ntrk) ; // allocate everything upfront. don't use push_back/emplace_back
     PVTrack pvtracks[Ntrk];
-    Velo::State event_velo_states[Ntrk];
+    VeloState event_velo_states[Ntrk];
     //only use tracks within a certain z-range
     uint number_of_tracks_in_zrange = 0;
 
     {
       auto it = pvtracks_old.begin() ;
       for(short unsigned int index = 0; index < Ntrk; ++index) {
-        const Velo::State s = velo_states.get(event_tracks_offset + index); 
+        const VeloState s = velo_states.get(event_tracks_offset + index); 
         // compute the (chance in) z of the poca to the beam axis
         const auto tx = s.tx ;
         const auto ty = s.ty ;

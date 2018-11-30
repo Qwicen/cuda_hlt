@@ -13,7 +13,7 @@
 
 
 
-__global__ void blpv_extrapolate(uint* dev_kalmanvelo_states,
+__global__ void blpv_extrapolate(char* dev_kalmanvelo_states,
   int * dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   PVTrack* dev_pvtracks);

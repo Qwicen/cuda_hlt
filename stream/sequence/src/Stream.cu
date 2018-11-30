@@ -27,10 +27,8 @@ cudaError_t Stream::initialize(
   start_event_offset = param_start_event_offset;
   constants = param_constants;
 
-
   // Reserve host buffers
   host_buffers.reserve(max_number_of_events);
-
 
   // Malloc a configurable reserved memory
   cudaCheck(cudaMalloc((void**)&dev_base_pointer, reserve_mb * 1024 * 1024));
@@ -118,6 +116,7 @@ void Stream::run_monte_carlo_test(
       const uint&,
       const uint&,
       const HostBuffers&,
+      const Constants&,
       const CheckerInvoker&
     >
   >::check(
@@ -125,6 +124,7 @@ void Stream::run_monte_carlo_test(
     start_event_offset,
     number_of_events_requested,
     host_buffers,
+    constants,
     checker_invoker
   );
 }

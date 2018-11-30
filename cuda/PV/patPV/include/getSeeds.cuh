@@ -9,14 +9,14 @@
 #include "VeloConsolidated.cuh"
 
 
-__global__ void getSeeds(
-  uint* dev_kalmanvelo_states,
+__global__ void get_seeds(
+  char* dev_kalmanvelo_states,
   int * dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seeds);
 
- __device__ int findClusters(PatPV::vtxCluster * vclus, PatPV::myfloat * zclusters, int number_of_clusters);
+ __device__ int find_clusters(PatPV::vtxCluster * vclus, PatPV::myfloat * zclusters, int number_of_clusters);
 
 
- ALGORITHM(getSeeds, getSeeds_t)
+ ALGORITHM(get_seeds, pv_get_seeds_t)

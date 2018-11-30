@@ -14,7 +14,7 @@
 struct PVTrack
 {
   __host__ __device__ PVTrack() {}
-__host__ __device__ PVTrack( const Velo::State& state, float dz, unsigned short _index )
+__host__ __device__ PVTrack( const VeloState& state, float dz, unsigned short _index )
   : z{float(state.z+dz)},
     x{float(state.x+dz*state.tx),float(state.y+dz*state.ty)},
     tx{float(state.tx),float(state.ty)},index{_index}, old_z{float(state.z)}

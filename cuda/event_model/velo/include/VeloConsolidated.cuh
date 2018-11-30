@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <cassert>
+#include "States.cuh"
 #include "VeloEventModel.cuh"
 #include "ConsolidatedTypes.cuh"
 
@@ -20,14 +21,19 @@ struct Hits {
     z(hits.z), LHCbID(hits.LHCbID) {}
   
   __device__ __host__ Hits(
-    uint* base_pointer,
+    char* base_pointer,
     const uint track_offset,
     const uint total_number_of_hits
   ) {
-    x = reinterpret_cast<float*>(base_pointer + track_offset);
-    y = reinterpret_cast<float*>(base_pointer + total_number_of_hits + track_offset);
-    z = reinterpret_cast<float*>(base_pointer + 2*total_number_of_hits + track_offset);
-    LHCbID = reinterpret_cast<uint*>(base_pointer + 3*total_number_of_hits + track_offset);
+    x = reinterpret_cast<float*>(base_pointer);
+    y = reinterpret_cast<float*>(base_pointer + sizeof(float) * total_number_of_hits);
+    z = reinterpret_cast<float*>(base_pointer + sizeof(float) * 2 * total_number_of_hits);
+    LHCbID = reinterpret_cast<uint*>(base_pointer + sizeof(float) * 3 *total_number_of_hits);
+
+    x += track_offset;
+    y += track_offset;
+    z += track_offset;
+    LHCbID += track_offset;
   }
 
   __device__ __host__ void set(
@@ -62,7 +68,9 @@ struct Tracks : public ::Consolidated::Tracks {
     ::Consolidated::Tracks(atomics_base_pointer, track_hit_number_base_pointer,
       current_event_number, number_of_events) {}
 
-  __device__ __host__ Hits get_hits(uint* hits_base_pointer, const uint track_number) const {
+  __device__ __host__ Hits get_hits(
+    char* hits_base_pointer, 
+    const uint track_number) const {
     return Hits {hits_base_pointer, track_offset(track_number), total_number_of_hits};
   }
 };
@@ -86,27 +94,27 @@ struct States {
   bool* backward;
 
   __device__ __host__ States(
-    uint* base_pointer,
+    char* base_pointer,
     const uint total_number_of_tracks
   ) {
     x = reinterpret_cast<float*>(base_pointer);
-    y = reinterpret_cast<float*>(base_pointer + total_number_of_tracks);
-    tx = reinterpret_cast<float*>(base_pointer + 2*total_number_of_tracks);
-    ty = reinterpret_cast<float*>(base_pointer + 3*total_number_of_tracks);
-    c00 = reinterpret_cast<float*>(base_pointer + 4*total_number_of_tracks);
-    c20 = reinterpret_cast<float*>(base_pointer + 5*total_number_of_tracks);
-    c22 = reinterpret_cast<float*>(base_pointer + 6*total_number_of_tracks);
-    c11 = reinterpret_cast<float*>(base_pointer + 7*total_number_of_tracks);
-    c31 = reinterpret_cast<float*>(base_pointer + 8*total_number_of_tracks);
-    c33 = reinterpret_cast<float*>(base_pointer + 9*total_number_of_tracks);
-    chi2 = reinterpret_cast<float*>(base_pointer + 10*total_number_of_tracks);
-    z = reinterpret_cast<float*>(base_pointer + 11*total_number_of_tracks);
-    backward = reinterpret_cast<bool*>(base_pointer + 12*total_number_of_tracks);
+    y = reinterpret_cast<float*>(base_pointer + sizeof(float)*total_number_of_tracks);
+    tx = reinterpret_cast<float*>(base_pointer + sizeof(float)*2*total_number_of_tracks);
+    ty = reinterpret_cast<float*>(base_pointer + sizeof(float)*3*total_number_of_tracks);
+    c00 = reinterpret_cast<float*>(base_pointer + sizeof(float)*4*total_number_of_tracks);
+    c20 = reinterpret_cast<float*>(base_pointer + sizeof(float)*5*total_number_of_tracks);
+    c22 = reinterpret_cast<float*>(base_pointer + sizeof(float)*6*total_number_of_tracks);
+    c11 = reinterpret_cast<float*>(base_pointer + sizeof(float)*7*total_number_of_tracks);
+    c31 = reinterpret_cast<float*>(base_pointer + sizeof(float)*8*total_number_of_tracks);
+    c33 = reinterpret_cast<float*>(base_pointer + sizeof(float)*9*total_number_of_tracks);
+    chi2 = reinterpret_cast<float*>(base_pointer + sizeof(float)*10*total_number_of_tracks);
+    z = reinterpret_cast<float*>(base_pointer + sizeof(float)*11*total_number_of_tracks);
+    backward = reinterpret_cast<bool*>(base_pointer + sizeof(float)*12*total_number_of_tracks);
   }
 
   __device__ __host__ void set(
     const uint track_number,
-    const Velo::State& state
+    const VeloState& state
   ) {
     x[track_number] = state.x;
     y[track_number] = state.y;
@@ -125,10 +133,10 @@ struct States {
     backward[track_number] = state.backward;
   }
 
-  __device__ __host__ Velo::State get(
+  __device__ __host__ VeloState get(
     const uint track_number
   ) const {
-    Velo::State state;
+    VeloState state;
     
     state.x = x[track_number];
     state.y = y[track_number];

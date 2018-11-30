@@ -19,17 +19,17 @@ __device__ float fit_hit_to_track(
   // tolerances
   const float x_prediction = h0.x + predx;
   const float dx = fabs(x_prediction - h2.x);
-  const bool tolx_condition = dx < VeloTracking::tolerance;
+  const bool tolx_condition = dx < Velo::Tracking::tolerance;
 
   const float y_prediction = h0.y + predy;
   const float dy = fabs(y_prediction - h2.y);
-  const bool toly_condition = dy < VeloTracking::tolerance;
+  const bool toly_condition = dy < Velo::Tracking::tolerance;
 
   // Scatter
   const float scatterNum = (dx * dx) + (dy * dy);
   const float scatter = scatterNum * scatterDenom2;
 
-  const bool scatter_condition = scatter < VeloTracking::max_scatter_forwarding;
+  const bool scatter_condition = scatter < Velo::Tracking::max_scatter_forwarding;
   const bool condition = tolx_condition && toly_condition && scatter_condition;
 
   return condition * scatter + !condition * FLT_MAX;
@@ -60,16 +60,16 @@ __device__ void track_forwarding(
   for (int i=0; i<(diff_ttf + blockDim.x - 1) / blockDim.x; ++i) {
     const uint ttf_element = blockDim.x * i + threadIdx.x;
     if (ttf_element < diff_ttf) {
-      const auto fulltrackno = tracks_to_follow[(prev_ttf + ttf_element) % VeloTracking::ttf_modulo];
+      const auto fulltrackno = tracks_to_follow[(prev_ttf + ttf_element) % Velo::Tracking::ttf_modulo];
       const bool track_flag = (fulltrackno & 0x80000000) == 0x80000000;
       const auto skipped_modules = (fulltrackno & 0x70000000) >> 28;
       auto trackno = fulltrackno & 0x0FFFFFFF;
-      assert(track_flag ? trackno < VeloTracking::ttf_modulo : trackno < VeloTracking::max_tracks);
+      assert(track_flag ? trackno < Velo::Tracking::ttf_modulo : trackno < Velo::Constants::max_tracks);
 
       Velo::TrackHits t = track_flag ? Velo::TrackHits{tracklets[trackno]} : tracks[trackno];
 
       // Load last two hits in h0, h1
-      assert(t.hitsNum < VeloTracking::max_track_size);
+      assert(t.hitsNum < Velo::Constants::max_track_size);
       const auto h0_num = t.hits[t.hitsNum - 2];
       const auto h1_num = t.hits[t.hitsNum - 1];
 
@@ -150,7 +150,7 @@ __device__ void track_forwarding(
 
         // Update the tracks to follow, we'll have to follow up
         // this track on the next iteration :)
-        assert(t.hitsNum < VeloTracking::max_track_size);
+        assert(t.hitsNum < Velo::Constants::max_track_size);
         t.hits[t.hitsNum++] = best_h2;
 
         // Update the track in the bag
@@ -170,28 +170,28 @@ __device__ void track_forwarding(
         }
 
         // Copy the track into tracks
-        assert(trackno < VeloTracking::max_tracks);
+        assert(trackno < Velo::Constants::max_tracks);
         tracks[trackno] = t;
 
         // Add the tracks to the bag of tracks to_follow
-        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % VeloTracking::ttf_modulo;
+        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % Velo::Tracking::ttf_modulo;
         tracks_to_follow[ttfP] = trackno;
       }
       // A track just skipped a module
       // We keep it for another round
-      else if (skipped_modules < VeloTracking::max_skipped_modules) {
+      else if (skipped_modules < Velo::Tracking::max_skipped_modules) {
         // Form the new mask
         trackno = ((skipped_modules + 1) << 28) | (fulltrackno & 0x8FFFFFFF);
 
         // Add the tracks to the bag of tracks to_follow
-        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % VeloTracking::ttf_modulo;
+        const auto ttfP = atomicAdd(ttf_insertPointer, 1) % Velo::Tracking::ttf_modulo;
         tracks_to_follow[ttfP] = trackno;
       }
       // If there are only three hits in this track,
       // mark it as "doubtful"
       else if (t.hitsNum == 3) {
-        const auto weakP = atomicAdd(weaktracks_insertPointer, 1) % VeloTracking::ttf_modulo;
-        assert(weakP < VeloTracking::max_weak_tracks);
+        const auto weakP = atomicAdd(weaktracks_insertPointer, 1) % Velo::Tracking::ttf_modulo;
+        assert(weakP < Velo::Tracking::max_weak_tracks);
         weak_tracks[weakP] = Velo::TrackletHits{t.hits[0], t.hits[1], t.hits[2]};
       }
       // In the "else" case, we couldn't follow up the track,

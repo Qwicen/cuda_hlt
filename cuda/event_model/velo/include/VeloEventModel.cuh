@@ -67,7 +67,7 @@ struct TrackletHits { // 3 * 2 = 6 B
 /* Structure containing indices to hits within hit array */
 struct TrackHits { // 2 + 26 * 2 = 54 B
   unsigned short hitsNum;
-  unsigned short hits[VeloTracking::max_track_size];
+  unsigned short hits[Velo::Constants::max_track_size];
 
   __device__ TrackHits(){}
   
@@ -98,7 +98,7 @@ struct TrackHits { // 2 + 26 * 2 = 54 B
 struct Track { // 4 + 26 * 16 = 420 B
   bool backward;
   unsigned short hitsNum;
-  Hit hits[VeloTracking::max_track_size];
+  Hit hits[Velo::Constants::max_track_size];
   
   __device__ Track(){
     hitsNum = 0;
@@ -108,30 +108,6 @@ struct Track { // 4 + 26 * 16 = 420 B
     hits[ hitsNum ] = _h;
     hitsNum++;
   }
-};
-
-/**
- * @brief A simplified state for the Velo
- *        
- *        {x, y, tx, ty, 0}
- *        
- *        associated with a simplified covariance
- *        since we do two fits (one in X, one in Y)
- *
- *        c00 0.f c20 0.f 0.f
- *            c11 0.f c31 0.f
- *                c22 0.f 0.f
- *                    c33 0.f
- *                        0.f
- */
-
-struct State { // 48 B
-  float x, y, tx, ty;
-  float c00, c20, c22, c11, c31, c33;
-  float chi2;
-  float z;
-  bool backward;
-
 };
 
 /**
