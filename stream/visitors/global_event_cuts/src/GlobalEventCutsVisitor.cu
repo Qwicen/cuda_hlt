@@ -61,7 +61,7 @@ void SequenceVisitor::visit<global_event_cuts_t>(
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
   
-  info_cout << "Selected " << host_buffers.host_number_of_selected_events[0] << " / " << runtime_options.number_of_events << " events with global event cuts" << std::endl;
+  debug_cout << "Selected " << host_buffers.host_number_of_selected_events[0] << " / " << runtime_options.number_of_events << " events with global event cuts" << std::endl;
   // for ( int i = 0; i < host_buffers.host_number_of_selected_events[0]; ++i ) {
   //   debug_cout << host_buffers.host_event_list[i] << std::endl;
   // }
