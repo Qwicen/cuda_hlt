@@ -9,10 +9,8 @@ void SequenceVisitor::set_arguments_size<blpv_extrapolate_t>(
   argument_manager_t& arguments)
 {
   // Set arguments size
-  arguments.set_size<dev_pvtracks>(host_buffers.host_number_of_reconstructed_velo_tracks[0] );
+  arguments.set_size<dev_pvtracks>(host_buffers.host_number_of_reconstructed_velo_tracks[0]);
 }
-
-
 
 template<>
 void SequenceVisitor::visit<blpv_extrapolate_t>(
@@ -24,20 +22,12 @@ void SequenceVisitor::visit<blpv_extrapolate_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-
   state.set_opts(dim3(runtime_options.number_of_events), 100, cuda_stream);
   state.set_arguments(
     arguments.offset<dev_kalmanvelo_states>(),
     arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>(),
-    arguments.offset<dev_pvtracks>()
-  );
-
+    arguments.offset<dev_pvtracks>());
 
   state.invoke();
-
-
-
-
-    
 }

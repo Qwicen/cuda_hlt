@@ -12,10 +12,8 @@ void SequenceVisitor::set_arguments_size<blpv_histo_t>(
   argument_manager_t& arguments)
 {
   // Set arguments size
-  arguments.set_size<dev_zhisto>(runtime_options.number_of_events * (m_zmax-m_zmin)/m_dz);
+  arguments.set_size<dev_zhisto>(runtime_options.number_of_events * (m_zmax - m_zmin) / m_dz);
 }
-
-
 
 template<>
 void SequenceVisitor::visit<blpv_histo_t>(
@@ -27,20 +25,16 @@ void SequenceVisitor::visit<blpv_histo_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-
   state.set_opts(dim3(runtime_options.number_of_events), 100, cuda_stream);
   state.set_arguments(
     arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>(),
     arguments.offset<dev_pvtracks>(),
-    arguments.offset<dev_zhisto>()
-  );
-
+    arguments.offset<dev_zhisto>());
 
   state.invoke();
 
-
-//debugging 
+  // debugging
   /*
     // Retrieve result
   cudaCheck(cudaMemcpyAsync(
@@ -72,19 +66,15 @@ void SequenceVisitor::visit<blpv_histo_t>(
     for (int i=0; i<Nbins; i++) {
       int index = Nbins * i_event + i;
       mindex = i;
-      
+
       z_histo = host_buffers.host_zhisto[index];
       z_bin = m_zmin + i * m_dz;
-      if(host_buffers.host_zhisto[index]> 5.) info_cout << "zhisto: " << i << " " << z_bin << " " << host_buffers.host_zhisto[index] << std::endl << std::endl;
-      outtree->Fill();
+      if(host_buffers.host_zhisto[index]> 5.) info_cout << "zhisto: " << i << " " << z_bin << " " <<
+  host_buffers.host_zhisto[index] << std::endl << std::endl; outtree->Fill();
    }
   }
   outtree->Write();
   outfile->Close();
-  
+
   */
-
-
-
-    
 }

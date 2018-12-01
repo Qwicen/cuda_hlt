@@ -17,7 +17,7 @@ SEQUENCE_T(
   velo_kalman_fit_t,
   //pv_get_seeds_t,
   //pv_fit_seeds_t,
-  cpu_beamlinePV_t,
+  //cpu_beamlinePV_t,
   blpv_extrapolate_t,
   blpv_histo_t,
   blpv_peak_t,
