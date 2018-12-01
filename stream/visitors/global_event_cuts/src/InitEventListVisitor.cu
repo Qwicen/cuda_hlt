@@ -69,4 +69,12 @@ void SequenceVisitor::visit<init_event_list_t>(
     cuda_stream)); 
 
   state.invoke();
+
+  cudaCheck(cudaMemcpyAsync(
+    host_buffers.host_event_list,
+    arguments.offset<dev_event_list>(),
+    runtime_options.number_of_events*sizeof(uint),
+    cudaMemcpyDeviceToHost, 
+    cuda_stream));
+
 }
