@@ -338,7 +338,7 @@ void checkPVs(
   printRat("Real false rate", m_nFalsePV_real, m_nRecMCPV + m_nFalsePV_real);
 
   info_cout << "new found: " << m_nRecMCPV << " / " << m_nMCPV << std::endl;
-  info_cout << "new fakes: " << m_nFalsePV << std::endl;
+  info_cout << "new fakes: " << m_nFalsePV << std::endl << std::endl;
 
   // save information about matched reconstructed PVs for pulls distributions
 #ifdef WITH_ROOT
