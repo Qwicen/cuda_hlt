@@ -33,11 +33,10 @@ __global__ void blpv_multi_fitter(
 
   PV::Vertex* vertices = dev_multi_fit_vertices + event_number * PV::max_number_vertices;
 
-  uint i_thisseed = threadIdx.x;
   PV::Vertex vertex;
-
+  
   // make sure that we have one thread per seed
-  if (i_thisseed < number_of_seeds) {
+  for ( uint i_thisseed = threadIdx.x; i_thisseed < number_of_seeds; i_thisseed += blockDim.x) {
     bool converged = false;
     float vtxcov[6] = {0.f, 0.f, 0.f, 0.f, 0.f, 0.f};
 
@@ -46,6 +45,7 @@ __global__ void blpv_multi_fitter(
     const float maxDeltaZConverged {0.001f};
     float chi2tot = 0.f;
     unsigned short nselectedtracks = 0;
+    
     unsigned short iter = 0;
     // debug_cout << "next vertex " << std::endl;
     for (; iter < maxNumIter && !converged; ++iter) {
@@ -61,6 +61,7 @@ __global__ void blpv_multi_fitter(
       float2 vtxposvec {vtxpos.x, vtxpos.y};
       // debug_cout << "next track" << std::endl;
       for (int i = 0; i < number_of_tracks; i++) {
+        
         // compute the chi2
         PVTrackInVertex trk = tracks[i];
         // skip tracks lying outside histogram range
@@ -71,7 +72,7 @@ __global__ void blpv_multi_fitter(
         float chi2 = res.x * res.x * trk.W_00 + res.y * res.y * trk.W_11;
         // debug_cout << "chi2 = " << chi2 << ", max = " << chi2max << std::endl;
         // compute the weight.
-        trk.weight = 0;
+        trk.weight = 0.f;
         if (chi2 < chi2max) { // to branch or not, that is the question!
                               // if (true) {
           ++nselectedtracks;
@@ -122,6 +123,7 @@ __global__ void blpv_multi_fitter(
           chi2tot += trk.weight * chi2;
         }
       }
+      __syncthreads();
       
       if (nselectedtracks >= 2) {
         // compute the new vertex covariance using analytical inversion
@@ -170,7 +172,7 @@ __global__ void blpv_multi_fitter(
     vertex.setCovMatrix(vtxcov);
     for (int i = 0; i < number_of_tracks; i++) {
       PVTrackInVertex trk = tracks[i];
-      if (trk.weight > 0) vertex.n_tracks++;
+      if (trk.weight > 0.f) vertex.n_tracks++;
     }
     
     // TODO integrate beamline position

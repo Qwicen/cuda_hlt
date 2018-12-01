@@ -25,7 +25,7 @@ void SequenceVisitor::visit<blpv_histo_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events), 100, cuda_stream);
+  state.set_opts(dim3(runtime_options.number_of_events), 128, cuda_stream);
   state.set_arguments(
     arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>(),

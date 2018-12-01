@@ -3,10 +3,10 @@
 __device__ float gauss_integral(float x)
 {
   constexpr int N = 2;
-  const float a = std::sqrt(double(2 * N + 3));
+  const float a = std::sqrt(float(2 * N + 3));
   const float xi = x / a;
-  const float eta = 1 - xi * xi;
-  constexpr float p[] = {0.5, 0.25, 0.1875, 0.15625};
+  const float eta = 1.f - xi * xi;
+  constexpr float p[] = {0.5f, 0.25f, 0.1875f, 0.15625f};
   // be careful: if you choose here one order more, you also need to choose 'a' differently (a(N)=sqrt(2N+3))
   return 0.5f + xi * (p[0] + eta * (p[1] + eta * p[2]));
 }
@@ -51,12 +51,12 @@ blpv_histo(int* dev_atomics_storage, uint* dev_velo_track_hit_number, PVTrack* d
         // errors. eventually we can just parametrize this as function of
         // track slope.
         const float zweight = trk.tx.x * trk.tx.x * trk.W_00 + trk.tx.y * trk.tx.y * trk.W_11;
-        const float zerr = 1 / std::sqrt(zweight);
+        const float zerr = 1.f / std::sqrt(zweight);
         // get rid of useless tracks. must be a bit carefull with this.
         if (zerr < m_maxTrackZ0Err) { // m_nsigma < 10*m_dz ) {
           // find better place to define this
           constexpr int N = 2;
-          const float a = std::sqrt(double(2 * N + 3));
+          const float a = std::sqrt(float(2 * N + 3));
           const float halfwindow = a * zerr / m_dz;
           // this looks a bit funny, but we need the first and last bin of the histogram to remain empty.
           const int minbin = std::max(int(zbin - halfwindow), 1);

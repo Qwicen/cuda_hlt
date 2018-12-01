@@ -22,7 +22,7 @@ void SequenceVisitor::visit<blpv_extrapolate_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events), 100, cuda_stream);
+  state.set_opts(dim3(runtime_options.number_of_events), 128, cuda_stream);
   state.set_arguments(
     arguments.offset<dev_kalmanvelo_states>(),
     arguments.offset<dev_atomics_velo>(),
