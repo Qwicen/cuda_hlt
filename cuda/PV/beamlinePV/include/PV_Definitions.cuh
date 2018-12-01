@@ -2,13 +2,24 @@
 
 #include "cuda_runtime.h"
 
-namespace PatPV {
+namespace PV {
 
 typedef float myfloat;
+
+// Number of threads blpv_peak_t
+static constexpr uint num_threads_blpv_peak_t = 64;
 
 // maximum number of vertices in a event
 static constexpr uint max_number_vertices = 32;
 
+// study this
+static constexpr uint max_number_subclusters = 50;
+
+// STUDY THIS NUMBER
+static constexpr uint max_number_of_clusters = 200;
+
+// STUDY THIS
+static constexpr uint max_number_clusteredges = 200;
 // auxiliary class for searching of clusters of tracks
 
 // configuration for seeding
@@ -64,49 +75,28 @@ struct vtxCluster final {
   vtxCluster() = default;
 };
 
-struct XYZPoint {
-  myfloat x = 0.;
-  myfloat y = 0.;
-  myfloat z = 0.;
-  __device__ __host__ XYZPoint(myfloat m_x, myfloat m_y, myfloat m_z) : x(m_x), y(m_y), z(m_z) {};
-  __device__ __host__ XYZPoint() {};
-};
-
-struct Vector2 {
-  myfloat x;
-  myfloat y;
-
-  __device__ __host__ Vector2(myfloat m_x, myfloat m_y) : x(m_x), y(m_y) {}
-};
-
 class Vertex {
 public:
-  __device__ Vertex() {};
-  PatPV::myfloat x = 0.;
-  PatPV::myfloat y = 0.;
-  PatPV::myfloat z = 0.;
-  PatPV::myfloat chi2;
+  __host__ __device__ Vertex() {};
+  float3 position;
+  myfloat chi2;
   int ndof;
+  uint n_tracks = 0;
 
-  PatPV::myfloat cov00 = 0.;
-  PatPV::myfloat cov10 = 0.;
-  PatPV::myfloat cov11 = 0.;
-  PatPV::myfloat cov20 = 0.;
-  PatPV::myfloat cov21 = 0.;
-  PatPV::myfloat cov22 = 0.;
+  myfloat cov00 = 0.;
+  myfloat cov10 = 0.;
+  myfloat cov11 = 0.;
+  myfloat cov20 = 0.;
+  myfloat cov21 = 0.;
+  myfloat cov22 = 0.;
 
-  __device__ void setChi2AndDoF(PatPV::myfloat m_chi2, int m_ndof)
+  __host__ __device__ void setChi2AndDoF(myfloat m_chi2, int m_ndof)
   {
     chi2 = m_chi2;
     ndof = m_ndof;
   }
-  __device__ void setPosition(XYZPoint& point)
-  {
-    x = point.x;
-    y = point.y;
-    z = point.z;
-  }
-  __device__ void setCovMatrix(PatPV::myfloat* m_cov)
+  __host__ __device__ void setPosition(float3& point) { position = point; }
+  __host__ __device__ void setCovMatrix(myfloat* m_cov)
   {
     cov00 = m_cov[0];
     cov10 = m_cov[1];
@@ -118,4 +108,4 @@ public:
   int nTracks = 0.;
 };
 
-} // namespace PatPV
+} // namespace PV

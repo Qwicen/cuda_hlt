@@ -83,6 +83,7 @@ add_subdirectory(checker)
 add_subdirectory(x86/UT/PrVeloUT)
 add_subdirectory(x86/SciFi)
 add_subdirectory(x86/velo/clustering)
+add_subdirectory(x86/PV/beamlinePV)
 add_subdirectory(mdf)
 
 # Include directories
@@ -134,9 +135,12 @@ target_link_libraries(Allen
   Utils
   GlobalEventCuts
   Velo
-  PV
+  PatPV
+  BLPV
   UT
   SciFi
+  #x86PatPV
+  x86beamlinePV
   x86VeloUT
   x86Forward
   Stream

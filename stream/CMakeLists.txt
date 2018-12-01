@@ -41,6 +41,8 @@ include_directories(${CMAKE_SOURCE_DIR}/x86/UT/PrVeloUT/include)
 include_directories(${CMAKE_SOURCE_DIR}/x86/SciFi/include)
 include_directories(${CMAKE_SOURCE_DIR}/checker/tracking/include)
 include_directories(${CMAKE_SOURCE_DIR}/checker/pv/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/PV/beamlinePV/include)
+include_directories(${CMAKE_SOURCE_DIR}/x86/PV/beamlinePV/include)
 
 file(GLOB stream_gear "gear/src/*cu")
 file(GLOB stream_handlers "handlers/src/*cu")
@@ -51,7 +53,8 @@ file(GLOB stream_sequence_cpp "sequence/src/*cpp")
 file(GLOB stream_setup "setup/src/*cu")
 file(GLOB stream_visitors_gec "visitors/global_event_cuts/src/*cu")
 file(GLOB stream_visitors_velo "visitors/velo/src/*cu")
-file(GLOB stream_visitors_pv "visitors/PV/src/*cu")
+file(GLOB stream_visitors_patPV "visitors/patPV/src/*cu")
+file(GLOB stream_visitors_beamlinePV "visitors/beamlinePV/src/*cu") 
 file(GLOB stream_visitors_UT "visitors/UT/src/*cu")
 file(GLOB stream_visitors_SciFi "visitors/SciFi/src/*cu")
 
@@ -65,7 +68,8 @@ cuda_add_library(Stream STATIC
   ${stream_setup}
   ${stream_visitors_gec}
   ${stream_visitors_velo}
-  ${stream_visitors_pv}
+  ${stream_visitors_patPV}
+  ${stream_visitors_beamlinePV}
   ${stream_visitors_UT}
   ${stream_visitors_SciFi}
 )
@@ -75,7 +79,10 @@ target_link_libraries(Stream
   Utils
   GlobalEventCuts
   Velo
-  PV
+  PatPV
+  BLPV
+  #x86PatPV
+  x86beamlinePV
   UT
   x86Forward
   SciFi

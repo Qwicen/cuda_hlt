@@ -31,8 +31,9 @@ cuda_add_library(x86Forward STATIC
 
 if ( ROOT_FOUND )
   target_compile_definitions(x86Forward PUBLIC WITH_ROOT)
+  target_include_directories(x86Forward PUBLIC ${ROOT_INCLUDE_DIRS})  
   target_link_libraries(x86Forward
     ${ROOT_LIBRARIES}
   )
-  target_include_directories(x86Forward PUBLIC ${ROOT_INCLUDE_DIRS})
+
 endif()

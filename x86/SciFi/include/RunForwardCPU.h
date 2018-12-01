@@ -24,4 +24,4 @@ int run_forward_on_CPU (
   const uint* host_ut_track_velo_indices,
   const uint number_of_events);
 
-CPU_ALGORITHM(run_forward_on_CPU, cpu_scifi_pr_forward_t)
+CPU_ALGORITHM(run_forward_on_CPU, cpu_scifi_pr_forward_t) 

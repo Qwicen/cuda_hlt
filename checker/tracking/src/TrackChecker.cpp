@@ -33,28 +33,28 @@ TrackChecker::~TrackChecker() {
     dirName = "Upstream";
   TDirectory *trackerDir = f->mkdir(dirName.c_str());
   trackerDir->cd();
-  for (auto histo : histos.h_reconstructible_eta)
-    histo.second.Write();
-  for (auto histo : histos.h_reconstructible_p)
-    histo.second.Write();
-  for (auto histo : histos.h_reconstructible_pt)
-    histo.second.Write();
-  for (auto histo : histos.h_reconstructible_phi)
-    histo.second.Write();
-  for (auto histo : histos.h_reconstructible_nPV)
-    histo.second.Write();
-  for (auto histo : histos.h_reconstructed_eta)
-    histo.second.Write();
-  for (auto histo : histos.h_reconstructed_p)
-    histo.second.Write();
-  for (auto histo : histos.h_reconstructed_pt)
-    histo.second.Write();
-  for (auto histo : histos.h_reconstructed_phi)
-    histo.second.Write();
-  for (auto histo : histos.h_reconstructed_nPV)
-    histo.second.Write();
-  histos.h_ghost_nPV.Write();
-  histos.h_total_nPV.Write();
+  for (auto histo : histos->h_reconstructible_eta)
+    histo.second->Write();
+  for (auto histo : histos->h_reconstructible_p)
+    histo.second->Write();
+  for (auto histo : histos->h_reconstructible_pt)
+    histo.second->Write();
+  for (auto histo : histos->h_reconstructible_phi)
+    histo.second->Write();
+  for (auto histo : histos->h_reconstructible_nPV)
+    histo.second->Write();
+  for (auto histo : histos->h_reconstructed_eta)
+    histo.second->Write();
+  for (auto histo : histos->h_reconstructed_p)
+    histo.second->Write();
+  for (auto histo : histos->h_reconstructed_pt)
+    histo.second->Write();
+  for (auto histo : histos->h_reconstructed_phi)
+    histo.second->Write();
+  for (auto histo : histos->h_reconstructed_nPV)
+    histo.second->Write();
+  histos->h_ghost_nPV->Write();
+  histos->h_total_nPV->Write();
 
   f->Write();
   f->Close();
@@ -133,46 +133,46 @@ void TrackChecker::Histos::initHistos(
     std::string name = category + "_Eta_reconstructible";
     if (category.find("eta25") != std::string::npos) {
       h_reconstructible_eta[name] =
-          TH1D(name.c_str(), name.c_str(), 50, 0., 7.);
+          new TH1D(name.c_str(), name.c_str(), 50, 0., 7.);
       name = category + "_Eta_reconstructed";
       h_reconstructed_eta[name] =
-          TH1D(name.c_str(), name.c_str(), 50, 0., 7.);
+          new TH1D(name.c_str(), name.c_str(), 50, 0., 7.);
     } else {
       h_reconstructible_eta[name] =
-          TH1D(name.c_str(), name.c_str(), 100, -7., 7.);
+          new TH1D(name.c_str(), name.c_str(), 100, -7., 7.);
       name = category + "_Eta_reconstructed";
       h_reconstructed_eta[name] =
-          TH1D(name.c_str(), name.c_str(), 100, -7., 7.);
+          new TH1D(name.c_str(), name.c_str(), 100, -7., 7.);
     }
     name = category + "_P_reconstructible";
     h_reconstructible_p[name] =
-        TH1D(name.c_str(), name.c_str(), 50, 0., 100000.);
+        new TH1D(name.c_str(), name.c_str(), 50, 0., 100000.);
     name = category + "_Pt_reconstructible";
     h_reconstructible_pt[name] =
-        TH1D(name.c_str(), name.c_str(), 50, 0., 100000.);
+        new TH1D(name.c_str(), name.c_str(), 50, 0., 100000.);
     name = category + "_Phi_reconstructible";
     h_reconstructible_phi[name] =
-        TH1D(name.c_str(), name.c_str(), 25, -3.142, 3.142);
+        new TH1D(name.c_str(), name.c_str(), 25, -3.142, 3.142);
     name = category + "_nPV_reconstructible";
     h_reconstructible_nPV[name] =
-        TH1D(name.c_str(), name.c_str(), 21, -0.5, 20.5);
+        new TH1D(name.c_str(), name.c_str(), 21, -0.5, 20.5);
     name = category + "_P_reconstructed";
     h_reconstructed_p[name] =
-        TH1D(name.c_str(), name.c_str(), 50, 0., 100000.);
+        new TH1D(name.c_str(), name.c_str(), 50, 0., 100000.);
     name = category + "_Pt_reconstructed";
     h_reconstructed_pt[name] =
-        TH1D(name.c_str(), name.c_str(), 50, 0., 100000.);
+        new TH1D(name.c_str(), name.c_str(), 50, 0., 100000.);
     name = category + "_Phi_reconstructed";
     h_reconstructed_phi[name] =
-        TH1D(name.c_str(), name.c_str(), 25, -3.142, 3.142);
+        new TH1D(name.c_str(), name.c_str(), 25, -3.142, 3.142);
     name = category + "_nPV_reconstructed";
     h_reconstructed_nPV[name] =
-        TH1D(name.c_str(), name.c_str(), 21, -0.5, 20.5);
+        new TH1D(name.c_str(), name.c_str(), 21, -0.5, 20.5);
   }
 
   // histos for ghost rate
-  h_ghost_nPV = TH1D("nPV_Ghosts", "nPV_Ghosts", 21, -0.5, 20.5);
-  h_total_nPV = TH1D("nPV_Total", "nPV_Total", 21, -0.5, 20.5);
+  h_ghost_nPV = new TH1D("nPV_Ghosts", "nPV_Ghosts", 21, -0.5, 20.5);
+  h_total_nPV = new TH1D("nPV_Total", "nPV_Total", 21, -0.5, 20.5);
 #endif
 }
 
@@ -186,11 +186,11 @@ void TrackChecker::Histos::fillReconstructibleHistos(
   const std::string nPV_name = category.m_name + "_nPV_reconstructible";
   for (auto mcp : mcps) {
     if (category.m_accept(mcp)) {
-      h_reconstructible_eta[eta_name].Fill(mcp.eta);
-      h_reconstructible_p[p_name].Fill(mcp.p);
-      h_reconstructible_pt[pt_name].Fill(mcp.pt);
-      h_reconstructible_phi[phi_name].Fill(mcp.phi);
-      h_reconstructible_nPV[nPV_name].Fill(mcp.nPV);
+      h_reconstructible_eta[eta_name]->Fill(mcp.eta);
+      h_reconstructible_p[p_name]->Fill(mcp.p);
+      h_reconstructible_pt[pt_name]->Fill(mcp.pt);
+      h_reconstructible_phi[phi_name]->Fill(mcp.phi);
+      h_reconstructible_nPV[nPV_name]->Fill(mcp.nPV);
     }
   }
 #endif
@@ -210,23 +210,23 @@ void TrackChecker::Histos::fillReconstructedHistos(const MCParticle &mcp,
   const std::string pt_name = category.m_name + "_Pt_reconstructed";
   const std::string phi_name = category.m_name + "_Phi_reconstructed";
   const std::string nPV_name = category.m_name + "_nPV_reconstructed";
-  h_reconstructed_eta[eta_name].Fill(mcp.eta);
-  h_reconstructed_p[p_name].Fill(mcp.p);
-  h_reconstructed_pt[pt_name].Fill(mcp.pt);
-  h_reconstructed_phi[phi_name].Fill(mcp.phi);
-  h_reconstructed_nPV[nPV_name].Fill(mcp.nPV);
+  h_reconstructed_eta[eta_name]->Fill(mcp.eta);
+  h_reconstructed_p[p_name]->Fill(mcp.p);
+  h_reconstructed_pt[pt_name]->Fill(mcp.pt);
+  h_reconstructed_phi[phi_name]->Fill(mcp.phi);
+  h_reconstructed_nPV[nPV_name]->Fill(mcp.nPV);
 #endif
 }
 
 void TrackChecker::Histos::fillTotalHistos(const MCParticle &mcp) {
 #ifdef WITH_ROOT
-  h_total_nPV.Fill(mcp.nPV);
+  h_total_nPV->Fill(mcp.nPV);
 #endif
 }
 
 void TrackChecker::Histos::fillGhostHistos(const MCParticle &mcp) {
 #ifdef WITH_ROOT
-  h_ghost_nPV.Fill(mcp.nPV);
+  h_ghost_nPV->Fill(mcp.nPV);
 #endif
 }
 
@@ -238,27 +238,27 @@ void TrackChecker::operator()(const trackChecker::Tracks &tracks,
     report(mcps);
   // fill histograms of reconstructible MC particles in various categories
   for (auto &histo_cat : m_histo_categories) {
-    histos.fillReconstructibleHistos(mcps, histo_cat);
+    histos->fillReconstructibleHistos(mcps, histo_cat);
   }
 
   // go through tracks
   const std::size_t ntracksperevt = tracks.size();
   std::size_t nghostsperevt = 0;
   for (auto track : tracks) {
-    histos.fillTotalHistos(mcps[0]);
+    histos->fillTotalHistos(mcps[0]);
     // check LHCbIDs for MC association
     const auto &ids = track.ids();
     const auto assoc = mcassoc(ids.begin(), ids.end(), track.n_matched_total);
     if (!assoc) {
       ++nghostsperevt;
-      histos.fillGhostHistos(mcps[0]);
+      histos->fillGhostHistos(mcps[0]);
       continue;
     }
     // have MC association, check weight
     const auto weight = assoc.front().second;
     if (weight < m_minweight) {
       ++nghostsperevt;
-      histos.fillGhostHistos(mcps[0]);
+      histos->fillGhostHistos(mcps[0]);
       continue;
     }
     // okay, sufficient to proceed...
@@ -269,7 +269,7 @@ void TrackChecker::operator()(const trackChecker::Tracks &tracks,
     }
     // fill histograms of reconstructible MC particles in various categories
     for (auto &histo_cat : m_histo_categories) {
-      histos.fillReconstructedHistos(mcp, histo_cat);
+      histos->fillReconstructedHistos(mcp, histo_cat);
     }
   }
   // almost done, notify of end of event...

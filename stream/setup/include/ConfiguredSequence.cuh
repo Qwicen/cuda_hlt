@@ -33,7 +33,12 @@
 #include "VeloKalmanFilter.cuh"
 #include "getSeeds.cuh"
 #include "fitSeeds.cuh"
+#include "blpv_extrapolate.cuh"
+#include "blpv_histo.cuh"
+#include "blpv_peak.cuh"
+#include "blpv_multi_fitter.cuh"
 #include "RunForwardCPU.h"
+#include "RunBeamlinePVonCPU.h"
 
 #define SEQUENCE_T(...) typedef std::tuple<__VA_ARGS__> configured_sequence_t;
 

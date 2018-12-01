@@ -1,12 +1,7 @@
 #include "fitSeeds.cuh"
-//simplification : don't disable/ remove tracks
-
-
-
-
 
 __global__ void fit_seeds(
-  PatPV::Vertex* dev_vertex,
+  PV::Vertex* dev_vertex,
   int * dev_number_vertex,
   PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seeds,
@@ -25,7 +20,7 @@ __global__ void fit_seeds(
 
 
 
-  PatPV::Vertex vertex;
+  PV::Vertex vertex;
 
   int counter_vertex = 0;
   for(int i_seed = 0; i_seed < dev_number_seeds[event_number]; i_seed++) {
@@ -47,7 +42,7 @@ __global__ void fit_seeds(
 
 __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
               Velo::Consolidated::States velo_states,
-             PatPV::Vertex& vtx,
+              PV::Vertex& vtx,
               int number_of_tracks,
               uint tracks_offset) 
 {
@@ -69,7 +64,7 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
 
   // position at which derivatives are evaluated
 
-  PatPV::XYZPoint vtxpos = seedPoint ;
+  float3 vtxpos{seedPoint.x, seedPoint.y, seedPoint.z} ;
 
   // prepare tracks
  
@@ -109,11 +104,8 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
 
     PatPV::Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
-
     PatPV::myfloat  tr_chi2 = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
-      
-
-
+  
     if(tr_chi2 < PatPV::m_maxChi2) {
  // have to use updated values!!
       tr_state_x[pvTrack_counter] = m_state_x;
@@ -158,10 +150,6 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
     PatPV::myfloat halfD2Chi2DX2_21 = 0.;
     PatPV::myfloat halfD2Chi2DX2_22 = 0.;
     PatPV::XYZPoint halfDChi2DX(0.,0.,0.) ;
-
-
-    
-    
 
     // add contribution from all tracks
     PatPV::myfloat chi2(0) ;
@@ -292,7 +280,7 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
   vtx.setCovMatrix( vtxcov ) ;
   // Set tracks. Compute final chi2.
 
- vtx.nTracks = tracks_in_vertex;
+  vtx.nTracks = tracks_in_vertex;
   
   return true;
 }

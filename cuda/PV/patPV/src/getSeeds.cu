@@ -51,7 +51,7 @@ __device__ void errorForPVSeedFinding(PatPV::myfloat tx, PatPV::myfloat ty, PatP
  __global__ void get_seeds(
   char* dev_kalmanvelo_states,
   int * dev_atomics_storage,
-  uint* dev_velo_track_hit_number,
+  uint* dev_velo_track_hit_number, 
   PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seed
 ) {
