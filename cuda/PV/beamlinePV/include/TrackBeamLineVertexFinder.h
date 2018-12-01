@@ -24,8 +24,8 @@ struct PVTrack {
 
     float dz2 = dz * dz;
 
-    state_tmp_c00 += dz2 * state.c22 + 2 * dz * state.c20;
-    state_tmp_c11 += dz2 * state.c33 + 2 * dz * state.c31;
+    state_tmp_c00 += dz2 * state.c22 + 2.f * dz * state.c20;
+    state_tmp_c11 += dz2 * state.c33 + 2.f * dz * state.c31;
     W_00 = 1.f / state_tmp_c00;
     W_11 = 1.f / state_tmp_c11;
   }
