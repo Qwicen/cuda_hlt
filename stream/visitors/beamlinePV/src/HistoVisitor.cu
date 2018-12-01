@@ -12,7 +12,7 @@ void SequenceVisitor::set_arguments_size<blpv_histo_t>(
   argument_manager_t& arguments)
 {
   // Set arguments size
-  arguments.set_size<dev_zhisto>(runtime_options.number_of_events * (m_zmax - m_zmin) / m_dz);
+  arguments.set_size<dev_zhisto>(host_buffers.host_number_of_selected_events[0] * (m_zmax - m_zmin) / m_dz);
 }
 
 template<>
@@ -25,7 +25,7 @@ void SequenceVisitor::visit<blpv_histo_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events), 100, cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), 100, cuda_stream);
   state.set_arguments(
     arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>(),
@@ -60,7 +60,7 @@ void SequenceVisitor::visit<blpv_histo_t>(
   outtree->Branch("z_bin",&z_bin);
   int mindex;
   outtree->Branch("index",&mindex);
-  for(i_event = 0; i_event < runtime_options.number_of_events; i_event++) {
+  for(i_event = 0; i_event < host_buffers.host_number_of_selected_events[0]; i_event++) {
     info_cout << "number event " << i_event << std::endl;
     int Nbins = (m_zmax-m_zmin)/m_dz;
     for (int i=0; i<Nbins; i++) {

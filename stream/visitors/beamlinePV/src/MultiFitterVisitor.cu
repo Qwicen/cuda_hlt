@@ -9,8 +9,8 @@ void SequenceVisitor::set_arguments_size<blpv_multi_fitter_t>(
   argument_manager_t& arguments)
 {
   // Set arguments size
-  arguments.set_size<dev_multi_fit_vertices>(runtime_options.number_of_events * PV::max_number_vertices);
-  arguments.set_size<dev_number_of_multi_fit_vertices>(runtime_options.number_of_events);
+  arguments.set_size<dev_multi_fit_vertices>(host_buffers.host_number_of_selected_events[0] * PV::max_number_vertices);
+  arguments.set_size<dev_number_of_multi_fit_vertices>(host_buffers.host_number_of_selected_events[0]);
 }
 
 template<>
@@ -23,7 +23,7 @@ void SequenceVisitor::visit<blpv_multi_fitter_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(PV::max_number_vertices), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(PV::max_number_vertices), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>(),

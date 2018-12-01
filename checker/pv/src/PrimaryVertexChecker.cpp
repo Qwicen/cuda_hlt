@@ -5,6 +5,8 @@ void checkPVs(
   uint number_of_files,
   PV::Vertex* rec_vertex,
   int* number_of_vertex,
+  const uint number_of_selected_events,
+  const uint* event_list,
   const std::string mode)
 {
   std::vector<std::string> folderContents = list_folder(foldername);
@@ -50,6 +52,7 @@ void checkPVs(
   std::vector<double> vec_err_z;
 
   // loop over files/events
+  std::vector< std::vector<MCVertex> > MC_vertices_events;
   for (uint i_event = 0; i_event < requestedFiles; ++i_event) {
     // Read event #i in the list and add it to the inputs
     // if more files are requested than present in folder, read them again
@@ -83,9 +86,19 @@ void checkPVs(
       // if(mc_vertex.numberTracks >= 4) vertices.push_back(mc_vertex);
       MC_vertices.push_back(mc_vertex);
     }
+    MC_vertices_events.push_back(MC_vertices);
+  }
+  
+  // events selected by global event cuts
+  std::vector< std::vector<MCVertex> > MC_vertices_selected_events;
+  for ( int i = 0; i < number_of_selected_events; i++ ) {
+    const uint event = event_list[i];
+    std::vector<MCVertex> MC_vertices = MC_vertices_events[event];
+    MC_vertices_selected_events.push_back(MC_vertices);
+  }
 
-    // try to implement nominal PV checker
-
+  // loop over selected events
+  for (uint i_event = 0; i_event < number_of_selected_events; ++i_event) {
     std::vector<PV::Vertex*> vecOfVertices;
     // first fill vector with vertices
     for (uint i = 0; i < number_of_vertex[i_event]; i++) {
@@ -147,7 +160,7 @@ void checkPVs(
     // vector with MCPVinfo
     std::vector<MCPVInfo> mcpvvec;
 
-    for (std::vector<MCVertex>::iterator itMCV = MC_vertices.begin(); MC_vertices.end() != itMCV; itMCV++) {
+    for (std::vector<MCVertex>::iterator itMCV = MC_vertices_selected_events[i_event].begin(); MC_vertices_selected_events[i_event].end() != itMCV; itMCV++) {
 
       MCPVInfo mcprimvert;
       mcprimvert.pMCPV = &(*itMCV);
@@ -301,7 +314,6 @@ void checkPVs(
       vec_err_z.push_back(err_z);
     }
 
-    MC_vertices.clear();
   } // end loop over files/events
 
   info_cout.precision(4);

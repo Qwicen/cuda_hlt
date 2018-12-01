@@ -31,9 +31,9 @@ void SequenceVisitor::visit<cpu_beamlinePV_t>(
     host_buffers.host_velo_track_hit_number,
     host_buffers.host_reconstructed_pvs,
     host_buffers.host_number_of_vertex,
-    runtime_options.number_of_events);
+    host_buffers.host_number_of_selected_events[0]);
   
-  for ( int i_event = 0; i_event < runtime_options.number_of_events; i_event++ ) {
+  for ( int i_event = 0; i_event < host_buffers.host_number_of_selected_events[0]; i_event++ ) {
     debug_cout << "# of PVs found = " << host_buffers.host_number_of_vertex[i_event] << std::endl;
   }
 
