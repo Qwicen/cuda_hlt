@@ -247,43 +247,84 @@ void checkPVs(
         if (!vis_found) nFalsePV_real++;
       }
     }
-
+    
     // Fill distance to closest recble MC PV and its multiplicity
     std::vector<MCPVInfo>::iterator itmcl;
-    for (itmcl = rblemcpv.begin(); rblemcpv.end() != itmcl; itmcl++) {
-      std::vector<MCPVInfo>::iterator cmc = closestMCPV(rblemcpv, itmcl);
+    for(itmcl = rblemcpv.begin(); rblemcpv.end() != itmcl; itmcl++) {
+      std::vector<MCPVInfo>::iterator cmc = closestMCPV(rblemcpv,itmcl);
       double dist = 999999.;
       int mult = 0;
-      if (cmc != rblemcpv.end()) {
-
+      if(cmc != rblemcpv.end()) {
+        
         double diff_x = cmc->pMCPV->x - itmcl->pMCPV->x;
         double diff_y = cmc->pMCPV->y - itmcl->pMCPV->y;
         double diff_z = cmc->pMCPV->z - itmcl->pMCPV->z;
-        double dist = sqrt(diff_x * diff_x + diff_y * diff_y + diff_z * diff_z);
+        double dist = sqrt(diff_x*diff_x + diff_y*diff_y + diff_z*diff_z);
         mult = cmc->nRecTracks;
+        itmcl->distToClosestMCPV = dist;
+        itmcl->multClosestMCPV = mult;
       }
-      itmcl->distToClosestMCPV = dist;
-      itmcl->multClosestMCPV = mult;
+      
     }
-
+    
+    //count non.reconstructible close and isolated PVs
+    int nmrc_isol = 0;
+    int nmrc_close = 0;
+    
     // Counters
-    int nMCPV = rblemcpv.size() - nmrc;
-    int nRecMCPV = 0;
-    int nMCPV_isol = 0;
-    int nRecMCPV_isol = 0;
-    int nMCPV_close = 0;
-    int nRecMCPV_close = 0;
-
-    for (itmc = rblemcpv.begin(); rblemcpv.end() != itmc; itmc++) {
-      if (itmc->distToClosestMCPV > m_dzIsolated) nMCPV_isol++;
-      if (itmc->distToClosestMCPV < m_dzIsolated) nMCPV_close++;
-      if (itmc->indexRecPVInfo > -1) {
+    int nMCPV                 = rblemcpv.size()-nmrc;
+    int nRecMCPV              = 0;
+    int nMCPV_isol            = 0;
+    int nRecMCPV_isol         = 0;
+    int nMCPV_close           = 0;
+    int nRecMCPV_close        = 0;
+    
+    for(itmc = rblemcpv.begin(); rblemcpv.end() != itmc; itmc++) {
+      if(itmc->distToClosestMCPV > m_dzIsolated) nMCPV_isol++;
+      if(itmc->distToClosestMCPV > m_dzIsolated && itmc->nRecTracks < m_nTracksToBeRecble) nmrc_isol++;
+      if(itmc->distToClosestMCPV < m_dzIsolated) nMCPV_close++;
+      if(itmc->distToClosestMCPV < m_dzIsolated && itmc->nRecTracks < m_nTracksToBeRecble) nmrc_close++;
+      if(itmc->indexRecPVInfo > -1) {
         nRecMCPV++;
-        if (itmc->distToClosestMCPV > m_dzIsolated) nRecMCPV_isol++;
-        if (itmc->distToClosestMCPV < m_dzIsolated) nRecMCPV_close++;
+        if(itmc->distToClosestMCPV > m_dzIsolated) nRecMCPV_isol++;
+        if(itmc->distToClosestMCPV < m_dzIsolated) nRecMCPV_close++;
       }
     }
+    
+    nMCPV_isol = nMCPV_isol -nmrc_isol;
+    nMCPV_close = nMCPV_close -nmrc_close;
+    
+    m_nMCPV                 +=  nMCPV;
+    m_nRecMCPV              +=  nRecMCPV;
+    m_nMCPV_isol            +=  nMCPV_isol;
+    m_nRecMCPV_isol         +=  nRecMCPV_isol;
+    m_nMCPV_close           +=  nMCPV_close;
+    m_nRecMCPV_close        +=  nRecMCPV_close;
+    m_nFalsePV              +=  nFalsePV;
+    m_nFalsePV_real         +=  nFalsePV_real;
+    
+    //loop over matched MC PVs and get pull and errors
+    for(auto mc_vertex_info : rblemcpv) {
+      int rec_index = mc_vertex_info.indexRecPVInfo;
+      if(rec_index < 0) continue;
+      MCVertex* mc_vertex = mc_vertex_info.pMCPV; 
+      double diff_x = recpvvec[rec_index].x - mc_vertex->x;
+      double diff_y = recpvvec[rec_index].y - mc_vertex->y;
+      double diff_z = recpvvec[rec_index].z - mc_vertex->z;
+      vec_diff_x.push_back(diff_x);
+      vec_diff_y.push_back(diff_y);
+      vec_diff_z.push_back(diff_z);
+      
+      double err_x = recpvvec[rec_index].positionSigma.x;
+      double err_y = recpvvec[rec_index].positionSigma.y;
+      double err_z = recpvvec[rec_index].positionSigma.z;
 
+      vec_err_x.push_back(err_x);
+      vec_err_y.push_back(err_y);
+      vec_err_z.push_back(err_z);
+      
+    }
+    
     m_nMCPV += nMCPV;
     m_nRecMCPV += nRecMCPV;
     m_nMCPV_isol += nMCPV_isol;
