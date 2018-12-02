@@ -257,7 +257,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_simplified(
           // 0x02   0x80   0x2000
           // 0x01   0x40   0x1000
           //        0x20   0x0800
-          uint32_t pixels = sp&0x0F | ((sp&0xF0) << 2);
+          uint32_t pixels = (sp&0x0F) | ((sp&0xF0) << 2);
 
           for (unsigned int k=0; k<velo_raw_bank.sp_count; ++k) {
             const uint32_t other_sp_word = velo_raw_bank.sp_word[k];
@@ -282,7 +282,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_simplified(
               const bool is_bottom = other_sp_row==(sp_row-1) && other_sp_col==sp_col;
 
               if (is_top || is_top_right || is_right || is_right_bottom || is_bottom) {
-                pixels |= is_top*((other_sp&0x01 | ((other_sp&0x10) << 2)) << 4);
+                pixels |= is_top*(((other_sp&0x01) | ((other_sp&0x10) << 2)) << 4);
                 pixels |= is_top_right*((other_sp&0x01) << 16);
                 pixels |= is_right*((other_sp&0x0F) << 12);
                 pixels |= is_right_bottom*((other_sp&0x08) << 8);
@@ -333,7 +333,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_simplified(
           for (int k=0; k<4; ++k) {
             // For pixels 4 to 7, we need to shift everything by 6
             const bool isolated = (pixels&(0x71 << (k+7))) == 0;
-            const bool is_candidate = (pixels&(0x01 << k+6)) != 0 && isolated;
+            const bool is_candidate = (pixels&(0x01 << (k+6))) != 0 && isolated;
 
             const uint32_t row = sp_row * 4 + k;
             const uint32_t col = sp_col * 2 + 1;

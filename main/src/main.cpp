@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
     switch (c) {
     case 0:
       if (long_options[option_index].flag != 0) {
-         if (long_options[option_index].name == "device" && optarg) {
+         if (strncmp(long_options[option_index].name, "device", 6) == 0 && optarg) {
             cuda_device = atoi(optarg);
          }
          break;

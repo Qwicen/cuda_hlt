@@ -20,15 +20,7 @@ typedef std::tuple<
     dev_module_candidate_num,
     dev_cluster_candidates
   >,
-  AlgorithmDependencies<prefix_sum_reduce_velo_clusters_t,
-    dev_estimated_input_size,
-    dev_cluster_offset
-  >,
-  AlgorithmDependencies<prefix_sum_single_block_velo_clusters_t,
-    dev_estimated_input_size,
-    dev_cluster_offset
-  >,
-  AlgorithmDependencies<prefix_sum_scan_velo_clusters_t,
+  AlgorithmDependencies<prefix_sum_velo_clusters_t,
     dev_estimated_input_size,
     dev_cluster_offset
   >,
@@ -84,15 +76,7 @@ typedef std::tuple<
     dev_atomics_velo,
     dev_velo_track_hit_number
   >,
-  AlgorithmDependencies<prefix_sum_reduce_velo_track_hit_number_t,
-    dev_velo_track_hit_number,
-    dev_prefix_sum_auxiliary_array_2
-  >,
-  AlgorithmDependencies<prefix_sum_single_block_velo_track_hit_number_t,
-    dev_velo_track_hit_number,
-    dev_prefix_sum_auxiliary_array_2
-  >,
-  AlgorithmDependencies<prefix_sum_scan_velo_track_hit_number_t,
+  AlgorithmDependencies<prefix_sum_velo_track_hit_number_t,
     dev_velo_track_hit_number,
     dev_prefix_sum_auxiliary_array_2
   >,
@@ -134,15 +118,7 @@ typedef std::tuple<
     dev_ut_raw_input_offsets,
     dev_ut_hit_offsets
   >,
-  AlgorithmDependencies<prefix_sum_reduce_ut_hits_t,
-    dev_ut_hit_offsets,
-    dev_prefix_sum_auxiliary_array_3
-  >,
-  AlgorithmDependencies<prefix_sum_single_block_ut_hits_t,
-    dev_ut_hit_offsets,
-    dev_prefix_sum_auxiliary_array_3
-  >,
-  AlgorithmDependencies<prefix_sum_scan_ut_hits_t,
+  AlgorithmDependencies<prefix_sum_ut_hits_t,
     dev_ut_hit_offsets,
     dev_prefix_sum_auxiliary_array_3
   >,
@@ -184,15 +160,7 @@ typedef std::tuple<
     dev_atomics_ut,
     dev_ut_track_hit_number
   >,
-  AlgorithmDependencies<prefix_sum_reduce_ut_track_hit_number_t,
-    dev_ut_track_hit_number,
-    dev_prefix_sum_auxiliary_array_5
-  >,
-  AlgorithmDependencies<prefix_sum_single_block_ut_track_hit_number_t,
-    dev_ut_track_hit_number,
-    dev_prefix_sum_auxiliary_array_5
-  >,
-  AlgorithmDependencies<prefix_sum_scan_ut_track_hit_number_t,
+  AlgorithmDependencies<prefix_sum_ut_track_hit_number_t,
     dev_ut_track_hit_number,
     dev_prefix_sum_auxiliary_array_5
   >,
@@ -232,15 +200,7 @@ typedef std::tuple<
     dev_scifi_raw_input_offsets,
     dev_scifi_hit_count
   >,
-  AlgorithmDependencies<prefix_sum_reduce_scifi_hits_t,
-    dev_scifi_hit_count,
-    dev_prefix_sum_auxiliary_array_4
-  >,
-  AlgorithmDependencies<prefix_sum_single_block_scifi_hits_t,
-    dev_scifi_hit_count,
-    dev_prefix_sum_auxiliary_array_4
-  >,
-  AlgorithmDependencies<prefix_sum_scan_scifi_hits_t,
+  AlgorithmDependencies<prefix_sum_scifi_hits_t,
     dev_scifi_hit_count,
     dev_prefix_sum_auxiliary_array_4
   >,
@@ -278,15 +238,7 @@ typedef std::tuple<
     dev_atomics_scifi,
     dev_scifi_track_hit_number
   >,
-  AlgorithmDependencies<prefix_sum_reduce_scifi_track_hit_number_t,
-    dev_scifi_track_hit_number,
-    dev_prefix_sum_auxiliary_array_6
-  >,
-  AlgorithmDependencies<prefix_sum_single_block_scifi_track_hit_number_t,
-    dev_scifi_track_hit_number,
-    dev_prefix_sum_auxiliary_array_6
-  >,
-  AlgorithmDependencies<prefix_sum_scan_scifi_track_hit_number_t,
+  AlgorithmDependencies<prefix_sum_scifi_track_hit_number_t,
     dev_scifi_track_hit_number,
     dev_prefix_sum_auxiliary_array_6
   >,

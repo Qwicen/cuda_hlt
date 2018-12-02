@@ -1,24 +1,20 @@
+#include "PrefixSumHandler.cuh"
 #include "SequenceVisitor.cuh"
-#include "PrefixSum.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<prefix_sum_reduce_scifi_hits_t>(
+void SequenceVisitor::set_arguments_size<prefix_sum_scifi_hits_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 {
-  const uint total_number_of_mats = runtime_options.number_of_events * SciFi::Constants::n_mats;
-  const size_t prefix_sum_auxiliary_array_size = (total_number_of_mats + 511) / 512;
-  arguments.set_size<dev_prefix_sum_auxiliary_array_4>(prefix_sum_auxiliary_array_size);
+  arguments.set_size<dev_prefix_sum_auxiliary_array_4>(
+    prefix_sum_scifi_hits_t::aux_array_size(runtime_options.number_of_events * SciFi::Constants::n_mats));
 }
 
-DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_single_block_scifi_hits_t)
-DEFINE_EMPTY_SET_ARGUMENTS_SIZE(prefix_sum_scan_scifi_hits_t)
-
 template<>
-void SequenceVisitor::visit<prefix_sum_reduce_scifi_hits_t>(
-  prefix_sum_reduce_scifi_hits_t& state,
+void SequenceVisitor::visit<prefix_sum_scifi_hits_t>(
+  prefix_sum_scifi_hits_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
@@ -26,66 +22,22 @@ void SequenceVisitor::visit<prefix_sum_reduce_scifi_hits_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  // Prefix sum: Reduce
-  const uint total_number_of_mats = runtime_options.number_of_events * SciFi::Constants::n_mats;
-  const size_t prefix_sum_auxiliary_array_size = (total_number_of_mats + 511) / 512;
-  state.set_opts(dim3(prefix_sum_auxiliary_array_size), dim3(256), cuda_stream);
-  state.set_arguments(
-    arguments.offset<dev_scifi_hit_count>(),
-    arguments.offset<dev_prefix_sum_auxiliary_array_4>(),
-    total_number_of_mats
-  );
+  // Set size of the main array to be prefix summed
+  state.set_size(runtime_options.number_of_events * SciFi::Constants::n_mats);
 
-  state.invoke();
-}
+  // Set the cuda_stream
+  state.set_opts(cuda_stream);
 
-template<>
-void SequenceVisitor::visit<prefix_sum_single_block_scifi_hits_t>(
-  prefix_sum_single_block_scifi_hits_t& state,
-  const RuntimeOptions& runtime_options,
-  const Constants& constants,
-  argument_manager_t& arguments,
-  HostBuffers& host_buffers,
-  cudaStream_t& cuda_stream,
-  cudaEvent_t& cuda_generic_event)
-{
-  const uint total_number_of_mats = runtime_options.number_of_events * SciFi::Constants::n_mats;
-  const size_t prefix_sum_auxiliary_array_size = (total_number_of_mats + 511) / 512;
-  state.set_opts(dim3(1), dim3(1024), cuda_stream);
-  state.set_arguments(
-    arguments.offset<dev_scifi_hit_count>() + total_number_of_mats,
-    arguments.offset<dev_prefix_sum_auxiliary_array_4>(),
-    prefix_sum_auxiliary_array_size
-  );
+  // Set arguments: Array to prefix sum and auxiliary array
+  state.set_arguments(arguments.offset<dev_scifi_hit_count>(), arguments.offset<dev_prefix_sum_auxiliary_array_4>());
 
-  state.invoke();
-}
-
-template<>
-void SequenceVisitor::visit<prefix_sum_scan_scifi_hits_t>(
-  prefix_sum_scan_scifi_hits_t& state,
-  const RuntimeOptions& runtime_options,
-  const Constants& constants,
-  argument_manager_t& arguments,
-  HostBuffers& host_buffers,
-  cudaStream_t& cuda_stream,
-  cudaEvent_t& cuda_generic_event)
-{
-  const uint total_number_of_mats = runtime_options.number_of_events * SciFi::Constants::n_mats;
-  const size_t prefix_sum_auxiliary_array_size = (total_number_of_mats + 511) / 512;
-  const uint pss_scifi_hits_blocks = prefix_sum_auxiliary_array_size==1 ? 1 : (prefix_sum_auxiliary_array_size-1);
-  state.set_opts(dim3(pss_scifi_hits_blocks), dim3(512), cuda_stream);
-  state.set_arguments(
-    arguments.offset<dev_scifi_hit_count>(),
-    arguments.offset<dev_prefix_sum_auxiliary_array_4>(),
-    total_number_of_mats
-  );
-
+  // Invoke all steps of prefix sum
   state.invoke();
 
   // Fetch total number of hits
-  cudaCheck(cudaMemcpyAsync(host_buffers.host_accumulated_number_of_scifi_hits,
-    arguments.offset<dev_scifi_hit_count>() + total_number_of_mats,
+  cudaCheck(cudaMemcpyAsync(
+    host_buffers.host_accumulated_number_of_scifi_hits,
+    arguments.offset<dev_scifi_hit_count>() + runtime_options.number_of_events * SciFi::Constants::n_mats,
     sizeof(uint),
     cudaMemcpyDeviceToHost,
     cuda_stream));
