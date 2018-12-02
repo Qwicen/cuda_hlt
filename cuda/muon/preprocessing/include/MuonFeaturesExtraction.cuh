@@ -2,9 +2,11 @@
 
 #include "Handler.cuh"
 #include "MuonDefinitions.cuh"
+#include "MiniState.cuh"
+
 
 __global__ void muon_catboost_features_extraction(
-  const Muon::State* muTrack,
+  const SciFi::MiniState* muTrack,
   const Muon::HitsSoA* muon_hits,
   float* dev_muon_catboost_features
 );
