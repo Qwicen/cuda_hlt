@@ -39,6 +39,7 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
   state.set_arguments(
     arguments.offset<dev_scifi_states>(),
     arguments.offset<dev_muon_hits>(),
+    arguments.offset<dev_scifi_qop>(),
     arguments.offset<dev_muon_catboost_features>()
   );
 
