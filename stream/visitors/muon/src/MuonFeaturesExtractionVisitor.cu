@@ -8,7 +8,7 @@ void SequenceVisitor::set_arguments_size<muon_catboost_features_extraction_t>(
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 { 
-  // Set arguments size
+  arguments.set_size<dev_scifi_states>(host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
   arguments.set_size<dev_muon_hits>(1);
   arguments.set_size<dev_muon_catboost_features>(constants.muon_catboost_n_features);
 }
@@ -23,7 +23,6 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  Muon::State* host_muon_track = new Muon::State(0,0,1,1,1);
   // Copy memory from host to device
   cudaCheck(cudaMemcpyAsync(
     arguments.offset<dev_muon_hits>(),
@@ -65,7 +64,4 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
     debug_cout << host_buffers.host_muon_catboost_features[i] << " ";
   }
   debug_cout << std::endl << std::endl;
-  delete host_muon_track;
 }
-
-

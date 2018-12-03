@@ -33,13 +33,4 @@ namespace Muon {
     int delta_time[Constants::max_numhits_per_event] = {0};
     int cluster_size[Constants::max_numhits_per_event] = {0};
   };
-
-  struct State {
-    State(float x, float y, float tx, float ty, float p) : x(x), y(y), tx(tx), ty(ty), p(p) {}
-    float x;
-    float y;
-    float tx;
-    float ty;
-    float p;
-  };
 }

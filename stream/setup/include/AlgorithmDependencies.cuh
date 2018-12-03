@@ -267,6 +267,7 @@ typedef std::tuple<
     dev_ut_track_velo_indices
   >,
   AlgorithmDependencies<muon_catboost_features_extraction_t,
+    dev_scifi_states,
     dev_muon_hits,
     dev_muon_catboost_features
   >,
