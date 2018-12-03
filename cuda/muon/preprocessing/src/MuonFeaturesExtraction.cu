@@ -9,8 +9,9 @@ enum offset {
 };
 
 __global__ void muon_catboost_features_extraction(
-  const Muon::State* mu_track,
+  const MiniState* mu_track,
   const Muon::HitsSoA* muon_hits,
+  const float* scifi_qop,
   float* dev_muon_catboost_features
 ) {
   const int i_station = blockIdx.x;
@@ -41,7 +42,7 @@ __global__ void muon_catboost_features_extraction(
     }
   }
   
-  const float common_factor = Muon::Constants::MSFACTOR/mu_track->p;
+  const float common_factor = Muon::Constants::MSFACTOR*std::abs(scifi_qop[0]); //todo:block id
   for(int i_hit = 0; i_hit < number_of_hits; ++i_hit) {
     const int idx = station_offset + i_hit;
     if (muon_hits->tile[idx] == closest_hits) {

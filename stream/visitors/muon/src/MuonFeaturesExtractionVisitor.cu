@@ -38,6 +38,7 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
 
   // Setup arguments for kernel call
   state.set_arguments(
+    arguments.offset<dev_scifi_states>(),
     arguments.offset<dev_muon_hits>(),
     arguments.offset<dev_muon_catboost_features>()
   );
