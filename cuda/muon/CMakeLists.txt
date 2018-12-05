@@ -22,7 +22,7 @@ cuda_add_library(Muon STATIC
 macro(test_program name)
 cuda_add_executable(${name} tests/${name}.cu)
 
-#target_link_libraries(${name} ${muon_features_extraction})
+target_link_libraries(${name} Muon)
 endmacro()
 
 test_program(TestFeatures)

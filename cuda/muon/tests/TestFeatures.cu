@@ -37,34 +37,69 @@ Muon::HitsSoA ConstructMockMuonHit(int n_hits) {
 SCENARIO( "Finding closest hits" ) {
 
     GIVEN( "A vector of muon common hits" ) {
-        
+
+        MiniState track = MiniState(0, 0, 1, 1, 1);
         std::vector<Muon::HitsSoA> muon_hits_events;
         Muon::HitsSoA muon_hits = ConstructMockMuonHit(5);
         muon_hits_events.push_back(muon_hits);
 
         REQUIRE( muon_hits_events.size() == 1 );
 
-        WHEN( "uncrossed" ) {
-            muon_hits_events.resize( 10 );
+        MiniState *dev_track;
+        cudaMalloc(&dev_track, 1 * sizeof(MiniState));
+        cudaMemcpyAsync(
+            dev_track,
+            &track,
+            1 * sizeof(MiniState),
+            cudaMemcpyHostToDevice
+        );
+
+        Muon::HitsSoA *dev_muon_hits;
+        cudaMalloc(&dev_muon_hits, 1 * sizeof(Muon::HitsSoA));
+        cudaMemcpyAsync(
+            dev_muon_hits,
+            &muon_hits_events[0],
+            1 * sizeof(Muon::HitsSoA),
+            cudaMemcpyHostToDevice
+        );
+
+        float *host_features, *dev_features;
+        cudaMalloc(&dev_features, 20 * sizeof(float));
+        host_features = (float*)malloc(20 * sizeof(float));
+
+        float *host_qop, *dev_qop;
+        cudaMalloc(&dev_qop, 1);
+        host_qop = (float*)malloc(1 * sizeof(float));
+        host_qop[0] = 5;
+        cudaMemcpyAsync(
+            dev_qop,
+            &host_qop,
+            1 * sizeof(float),
+            cudaMemcpyHostToDevice
+        );
+
+        WHEN( "features calculated" ) {
+            
+            muon_catboost_features_extraction<<<4,1>>>(
+                dev_track,
+                dev_muon_hits,
+                dev_qop,
+                dev_features
+            );
+
+            cudaMemcpy(host_features, dev_features, 20 * sizeof(float), cudaMemcpyDeviceToHost);
 
             THEN( "smth" ) {
-                REQUIRE( muon_hits_events[0].x[0] == 1 );
-                REQUIRE( muon_hits_events.capacity() >= 10 );
-            }
-        }
-    }
 
-    GIVEN( "A MiniState" ) {
-        
-        MiniState track = MiniState(0, 0, 1, 1, 1);
-
-        REQUIRE( track.x == 0 );
-
-        WHEN( "smth" ) {
-            //smth
-
-            THEN( "smth" ) {
-                REQUIRE( track.z == 1 );
+                for (int i = 0; i < 20; i++) {
+                    printf("%f ", host_features[i]);
+                }
+                printf("\n");
+                
+                REQUIRE(host_features[0] == muon_hits_events[0].delta_time[0]);
+                REQUIRE(host_features[1] == muon_hits_events[0].delta_time[1]);
+                REQUIRE(host_features[2] == muon_hits_events[0].delta_time[2]);
+                REQUIRE(host_features[3] == muon_hits_events[0].delta_time[3]);
             }
         }
     }
@@ -107,7 +142,7 @@ SCENARIO ("saxpy") {
                 REQUIRE( y[N-1] == 4 );
             }
         }
-        
+
         cudaFree(d_x);
         cudaFree(d_y);
         free(x);
