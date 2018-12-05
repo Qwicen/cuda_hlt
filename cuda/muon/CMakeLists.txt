@@ -1,6 +1,10 @@
 file(GLOB muon_features_extraction "preprocessing/src/*cu")
 file(GLOB muon_classification "IsMuon/src/*cu")
 
+include_directories(tests)
+include_directories(${CMAKE_SOURCE_DIR}/main/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/PrVeloUT/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/common/include)
 include_directories(preprocessing/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/consolidate/include)
@@ -14,3 +18,11 @@ cuda_add_library(Muon STATIC
   ${muon_features_extraction}
   ${muon_classification}
 )
+
+macro(test_program name)
+cuda_add_executable(${name} tests/${name}.cu)
+
+#target_link_libraries(${name} ${muon_features_extraction})
+endmacro()
+
+test_program(TestFeatures)
