@@ -1,6 +1,5 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
-#include <stdio.h>
 #include "MuonDefinitions.cuh"
 #include "MuonFeaturesExtraction.cuh"
 
@@ -34,118 +33,59 @@ Muon::HitsSoA ConstructMockMuonHit(int n_hits) {
     return muon_hits;
 }
 
-SCENARIO( "Finding closest hits" ) {
+SCENARIO( "Muon catboost features evaluation" ) {
 
-    GIVEN( "A vector of muon common hits" ) {
+    GIVEN( "Track, hits, qop" ) {
 
         MiniState track = MiniState(0, 0, 1, 1, 1);
+        MiniState *dev_track;
+        cudaMalloc(&dev_track, 1 * sizeof(MiniState));
+        cudaMemcpyAsync(dev_track, &track, 1 * sizeof(MiniState), cudaMemcpyHostToDevice);
+
         std::vector<Muon::HitsSoA> muon_hits_events;
         Muon::HitsSoA muon_hits = ConstructMockMuonHit(5);
         muon_hits_events.push_back(muon_hits);
+        Muon::HitsSoA *dev_muon_hits;
+        cudaMalloc(&dev_muon_hits, 1 * sizeof(Muon::HitsSoA));
+        cudaMemcpyAsync(dev_muon_hits, &muon_hits_events[0], 1 * sizeof(Muon::HitsSoA), cudaMemcpyHostToDevice);
+
+        float *host_features = (float*)malloc(20 * sizeof(float));
+        float *dev_features;
+        cudaMalloc(&dev_features, 20 * sizeof(float));
+
+        float *host_qop = (float*)malloc(1 * sizeof(float));
+        float *dev_qop;
+        host_qop[0] = 5;
+        cudaMalloc(&dev_qop, 1);
+        cudaMemcpyAsync(dev_qop, &host_qop, 1 * sizeof(float), cudaMemcpyHostToDevice);
 
         REQUIRE( muon_hits_events.size() == 1 );
 
-        MiniState *dev_track;
-        cudaMalloc(&dev_track, 1 * sizeof(MiniState));
-        cudaMemcpyAsync(
-            dev_track,
-            &track,
-            1 * sizeof(MiniState),
-            cudaMemcpyHostToDevice
-        );
-
-        Muon::HitsSoA *dev_muon_hits;
-        cudaMalloc(&dev_muon_hits, 1 * sizeof(Muon::HitsSoA));
-        cudaMemcpyAsync(
-            dev_muon_hits,
-            &muon_hits_events[0],
-            1 * sizeof(Muon::HitsSoA),
-            cudaMemcpyHostToDevice
-        );
-
-        float *host_features, *dev_features;
-        cudaMalloc(&dev_features, 20 * sizeof(float));
-        host_features = (float*)malloc(20 * sizeof(float));
-
-        float *host_qop, *dev_qop;
-        cudaMalloc(&dev_qop, 1);
-        host_qop = (float*)malloc(1 * sizeof(float));
-        host_qop[0] = 5;
-        cudaMemcpyAsync(
-            dev_qop,
-            &host_qop,
-            1 * sizeof(float),
-            cudaMemcpyHostToDevice
-        );
-
         WHEN( "features calculated" ) {
             
-            muon_catboost_features_extraction<<<4,1>>>(
-                dev_track,
-                dev_muon_hits,
-                dev_qop,
-                dev_features
-            );
-
+            BENCHMARK( "muon_catboost_features_extraction kernel call" ) {
+                muon_catboost_features_extraction<<<4,1>>>(
+                    dev_track,
+                    dev_muon_hits,
+                    dev_qop,
+                    dev_features
+                );
+            }
+            
             cudaMemcpy(host_features, dev_features, 20 * sizeof(float), cudaMemcpyDeviceToHost);
 
-            THEN( "smth" ) {
-
-                for (int i = 0; i < 20; i++) {
-                    printf("%f ", host_features[i]);
-                }
-                printf("\n");
+            THEN( "the result is reasonable" ) {
                 
                 REQUIRE(host_features[0] == muon_hits_events[0].delta_time[0]);
                 REQUIRE(host_features[1] == muon_hits_events[0].delta_time[1]);
                 REQUIRE(host_features[2] == muon_hits_events[0].delta_time[2]);
                 REQUIRE(host_features[3] == muon_hits_events[0].delta_time[3]);
+
+                REQUIRE(host_features[4] == muon_hits_events[0].time[0]);
+                REQUIRE(host_features[5] == muon_hits_events[0].time[1]);
+                REQUIRE(host_features[6] == muon_hits_events[0].time[2]);
+                REQUIRE(host_features[7] == muon_hits_events[0].time[3]);
             }
         }
-    }
-}
-
-__global__ void saxpy(int n, float a, float *x, float *y) {
-    int i = blockIdx.x*blockDim.x + threadIdx.x;
-    if (i < n) y[i] = a*x[i] + y[i];
-}
-
-SCENARIO ("saxpy") {
-
-    GIVEN ("Two vectors X and Y") {
-        int N = 16;
-        float *x, *y, *d_x, *d_y;
-
-        x = (float*)malloc(N*sizeof(float));
-        y = (float*)malloc(N*sizeof(float));
-
-        for (int i = 0; i < N; i++) {
-            x[i] = 1.0f;
-            y[i] = 2.0f;
-        }
-
-        WHEN ( "Adding them" ) {
-
-            cudaMalloc(&d_x, N*sizeof(float)); 
-            cudaMalloc(&d_y, N*sizeof(float));
-
-            cudaMemcpy(d_x, x, N*sizeof(float), cudaMemcpyHostToDevice);
-            cudaMemcpy(d_y, y, N*sizeof(float), cudaMemcpyHostToDevice);
-
-            saxpy<<<1,N>>>(N, 2.0, d_x, d_y);
-
-            cudaMemcpy(y, d_y, N*sizeof(float), cudaMemcpyDeviceToHost);
-
-            THEN ("Y changes") {
-                REQUIRE( y[0] == 4 );
-
-                REQUIRE( y[N-1] == 4 );
-            }
-        }
-
-        cudaFree(d_x);
-        cudaFree(d_y);
-        free(x);
-        free(y);
     }
 }
