@@ -8,7 +8,7 @@ void SequenceVisitor::set_arguments_size<ut_search_windows_t>(
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 {
-  arguments.set_size<dev_windows_layers>(6 * VeloUTTracking::n_layers * host_buffers.host_number_of_reconstructed_velo_tracks[0]);
+  arguments.set_size<dev_windows_layers>(10 * VeloUTTracking::n_layers * host_buffers.host_number_of_reconstructed_velo_tracks[0]);
 }
 
 template<>

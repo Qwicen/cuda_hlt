@@ -1,5 +1,32 @@
 #include "FindBestHits.cuh"
 
+__device__ __inline__ int sum_layer_hits(
+  const TrackCandidates* ranges,
+  const int first_layer,
+  const int second_layer)
+{
+  return  ranges->layer[first_layer].size0 + 
+          ranges->layer[first_layer].size1 + 
+          ranges->layer[first_layer].size2 +
+          ranges->layer[first_layer].size3 +
+          ranges->layer[first_layer].size4 +
+          ranges->layer[second_layer].size0 + 
+          ranges->layer[second_layer].size1 + 
+          ranges->layer[second_layer].size2 +
+          ranges->layer[second_layer].size3 +
+          ranges->layer[second_layer].size4;
+}
+
+__device__ __inline__ int sum_layer_hits(
+  const LayerCandidates& layer_candidates)
+{
+  return  layer_candidates.size0 + 
+          layer_candidates.size1 + 
+          layer_candidates.size2 +
+          layer_candidates.size3 +
+          layer_candidates.size4;
+}
+
 //=========================================================================
 // Get the best 3 or 4 hits, 1 per layer, for a given VELO track
 // When iterating over a panel, 3 windows are given, we set the index
@@ -27,8 +54,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   BestParams best_params;
 
   // Get total number of hits for forward + backward in first layer (0 for fwd, 3 for bwd)
-  const int total_hits_2layers_0 = ranges->layer[0].size0 + ranges->layer[0].size1 + ranges->layer[0].size2 +
-                                   ranges->layer[3].size0 + ranges->layer[3].size1 + ranges->layer[3].size2;
+  const int total_hits_2layers_0 = sum_layer_hits(ranges, 0, 3);
   for (int i=0; (!found || considered < CompassUT::max_considered_before_found) && i<total_hits_2layers_0; ++i) {
     const int i_hit0 = set_index(i, ranges->layer[0], ranges->layer[3]);
 
@@ -51,8 +77,8 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
     const auto zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
 
     // 2nd layer
-    for (int j=0; (!found || considered < CompassUT::max_considered_before_found) && 
-                  j<layer_2.size0 + layer_2.size1 + layer_2.size2; ++j) {
+    const int total_hits_2layers_2 = sum_layer_hits(layer_2);
+    for (int j=0; (!found || considered < CompassUT::max_considered_before_found) && j<total_hits_2layers_2; ++j) {
       int i_hit2 = set_index(j, layer_2);
 
       // Get info to calculate slope
@@ -75,7 +101,8 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
         float hitTol = VeloUTConst::hitTol2;
 
         // search for a triplet in 3rd layer
-        for (int i1=0; i1<ranges->layer[layers[0]].size0 + ranges->layer[layers[0]].size1 + ranges->layer[layers[0]].size2; ++i1) {
+        const int total_hits_2layers_1 = sum_layer_hits(ranges->layer[layers[0]]);
+        for (int i1=0; i1<total_hits_2layers_1; ++i1) {
 
           int i_hit1 = set_index(i1, ranges->layer[layers[0]]);
 
@@ -93,7 +120,8 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 
         // search for triplet/quadruplet in 4th layer
         hitTol = VeloUTConst::hitTol2;
-        for (int i3=0; i3<ranges->layer[layers[1]].size0 + ranges->layer[layers[1]].size1 + ranges->layer[layers[1]].size2; ++i3) {
+        const int total_hits_2layers_3 = sum_layer_hits(ranges->layer[layers[1]]);
+        for (int i3=0; i3<total_hits_2layers_3; ++i3) {
 
           int i_hit3 = set_index(i3, ranges->layer[layers[1]]);
 
@@ -233,33 +261,6 @@ __device__ BestParams pkick_fit(
 }
 
 //=========================================================================
-// Given 2 windows, 
-// set the index in the correct place depending on the iteration
-//=========================================================================
-__device__ __inline__ int set_index(
-  const int i, 
-  const LayerCandidates& layer_cand0,
-  const LayerCandidates& layer_cand2)
-{
-  int hit = -1;
-  if (i < layer_cand0.size0) {
-    hit = layer_cand0.from0 + i;
-  } else if (i < layer_cand0.size0 + layer_cand0.size1) {
-    hit = layer_cand0.from1 + i - layer_cand0.size0;
-  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2) {
-    hit = layer_cand0.from2 + i - layer_cand0.size0 - layer_cand0.size1;
-  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand2.size0) {
-    hit = layer_cand2.from0 + i - (layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2) ;
-  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand2.size0 + layer_cand2.size1) {
-    hit = layer_cand2.from1 + i - layer_cand2.size0 - (layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2);
-  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2) {
-    hit = layer_cand2.from2 + i - layer_cand2.size0 - layer_cand2.size1 - (layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2);
-  }
-
-  return hit;
-}
-
-//=========================================================================
 // Given a window, 
 // set the index in the correct place depending on the iteration
 //=========================================================================
@@ -273,8 +274,50 @@ __device__ __inline__ int set_index(
   } else if (i < layer_cand.size0 + layer_cand.size1) {
     hit = layer_cand.from1 + i - layer_cand.size0;
   } else if (i < layer_cand.size0 + layer_cand.size1 + layer_cand.size2) {
-    hit = layer_cand.from2 + i - layer_cand.size0 - layer_cand.size1;
-  } 
+    hit = layer_cand.from2 + i - (layer_cand.size0 + layer_cand.size1);
+  } else if (i < layer_cand.size0 + layer_cand.size1 + layer_cand.size2 + layer_cand.size3) {
+    hit = layer_cand.from3 + i - (layer_cand.size0 + layer_cand.size1 + layer_cand.size2);
+  } else if (i < layer_cand.size0 + layer_cand.size1 + layer_cand.size2 + layer_cand.size3 + layer_cand.size4) {
+    hit = layer_cand.from4 + i - (layer_cand.size0 + layer_cand.size1 + layer_cand.size2 + layer_cand.size3);
+  }
+
+  return hit;
+}
+
+//=========================================================================
+// Given 2 windows, 
+// set the index in the correct place depending on the iteration
+//=========================================================================
+__device__ __inline__ int set_index(
+  const int i, 
+  const LayerCandidates& layer_cand0,
+  const LayerCandidates& layer_cand2)
+{
+  int hit = -1;
+  int cand0size = layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand0.size3 + layer_cand0.size4;
+  if (i < layer_cand0.size0) {
+    hit = layer_cand0.from0 + i;
+  } else if (i < layer_cand0.size0 + layer_cand0.size1) {
+    hit = layer_cand0.from1 + i - layer_cand0.size0;
+  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2) {
+    hit = layer_cand0.from2 + i - (layer_cand0.size0 + layer_cand0.size1);
+  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand0.size3) {
+    hit = layer_cand0.from2 + i - (layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2);
+  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand0.size3 + layer_cand0.size4) {
+    hit = layer_cand0.from2 + i - (layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand0.size3);
+  }
+  // layer_cand2
+  else if (i < cand0size + layer_cand2.size0) {
+    hit = layer_cand2.from0 + i - cand0size ;
+  } else if (i < cand0size + layer_cand2.size0 + layer_cand2.size1) {
+    hit = layer_cand2.from1 + i - layer_cand2.size0 - (cand0size);
+  } else if (i < cand0size + layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2) {
+    hit = layer_cand2.from2 + i - (layer_cand2.size0 + layer_cand2.size1) - (cand0size);
+  } else if (i < cand0size + layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2 + layer_cand2.size3) {
+    hit = layer_cand2.from3 + i - (layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2) - (cand0size);
+  } else if (i < cand0size + layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2 + layer_cand2.size3 + layer_cand2.size4) {
+    hit = layer_cand2.from3 + i - (layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2 + layer_cand2.size3) - (cand0size);
+  }
 
   return hit;
 }

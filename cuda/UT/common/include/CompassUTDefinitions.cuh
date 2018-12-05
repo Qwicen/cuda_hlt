@@ -3,6 +3,7 @@
 #include "SystemOfUnits.h"
 
 constexpr uint N_LAYERS = VeloUTTracking::n_layers;
+constexpr uint NUM_ELEMS = 5 * 2; // num windows * 2
 
 namespace CompassUT {
 
@@ -20,6 +21,10 @@ struct LayerCandidates {
   int size1;
   int from2;
   int size2;
+  int from3;
+  int size3;
+  int from4;
+  int size4;
 };
 
 struct TrackCandidates {
@@ -32,7 +37,7 @@ struct WindowIndicator {
 
   __host__ __device__ const TrackCandidates* get_track_candidates(const int i_track)
   {
-    return reinterpret_cast<const TrackCandidates*>(m_base_pointer + (6 * N_LAYERS * i_track));
+    return reinterpret_cast<const TrackCandidates*>(m_base_pointer + (NUM_ELEMS * N_LAYERS * i_track));
   }
 };
 

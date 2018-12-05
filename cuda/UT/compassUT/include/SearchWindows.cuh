@@ -2,6 +2,7 @@
 
 #include "VeloUTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
+#include "CompassUTDefinitions.cuh"
 #include "Handler.cuh"
 
 __global__ void ut_search_windows(

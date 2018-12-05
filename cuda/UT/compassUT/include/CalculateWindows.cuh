@@ -8,7 +8,7 @@
 
 __device__ bool velo_track_in_UTA_acceptance(const MiniState& state);
 
-__device__ std::tuple<int, int, int, int, int, int> calculate_windows(
+__device__ std::tuple<int, int, int, int, int, int, int, int, int, int> calculate_windows(
   const int i_track,
   const int layer,
   const MiniState& velo_state,
