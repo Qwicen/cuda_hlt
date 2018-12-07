@@ -261,8 +261,9 @@ __device__ BestParams pkick_fit(
 }
 
 //=========================================================================
-// Given a window, 
-// set the index in the correct place depending on the iteration
+// Given a panel, 
+// set the index in the correct place depending on the iteration.
+// Put the index first in the central window, then left, then right
 //=========================================================================
 __device__ __inline__ int set_index(
   const int i, 
@@ -285,8 +286,9 @@ __device__ __inline__ int set_index(
 }
 
 //=========================================================================
-// Given 2 windows, 
-// set the index in the correct place depending on the iteration
+// Given 2 panels (forward backward case)
+// set the index in the correct place depending on the iteration.
+// Put the index first in the central window, then left, then right
 //=========================================================================
 __device__ __inline__ int set_index(
   const int i, 

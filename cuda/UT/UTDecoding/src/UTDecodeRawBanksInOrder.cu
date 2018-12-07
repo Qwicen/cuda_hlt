@@ -84,7 +84,7 @@ __global__ void ut_decode_raw_banks_in_order(
     const float yEnd = m_dy + yBegin;
     const float zAtYEq0 = m_p0Z + numstrips * m_dp0diZ;
     const float xAtYEq0 = m_p0X + numstrips * m_dp0diX;
-    const float weight = 1.f / (m_pitch / sqrtf(12.f));
+    const float weight = 12.f / (m_pitch*m_pitch);
     const uint32_t highThreshold = threshold;
     const uint32_t LHCbID = chanID + strip;
     const uint32_t planeCode = 2 * station + (layer & 1);

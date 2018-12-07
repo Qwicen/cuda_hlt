@@ -24,12 +24,12 @@ __device__ BestParams pkick_fit(
 
 __device__ __inline__ int set_index(
   const int i, 
-  const LayerCandidates& layer_cand0,
-  const LayerCandidates& layer_cand2);
+  const LayerCandidates& layer_cand);
 
 __device__ __inline__ int set_index(
   const int i, 
-  const LayerCandidates& layer_cand);
+  const LayerCandidates& layer_cand0,
+  const LayerCandidates& layer_cand2);
 
 __device__ __inline__ bool check_tol_refine(
   const int hit_index,

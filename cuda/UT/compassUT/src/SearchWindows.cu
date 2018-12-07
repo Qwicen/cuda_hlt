@@ -41,9 +41,10 @@ __global__ void ut_search_windows(
     int left2_group_first_candidate = -1, left2_group_last_candidate = -1;
     int right2_group_first_candidate = -1, right2_group_last_candidate = -1;
 
+    const auto velo_state = MiniState{velo_states, current_track_offset};
     if (!velo_states.backward[current_track_offset]) {
       // Using Mini State with only x, y, tx, ty and z
-      const auto velo_state = MiniState{velo_states, current_track_offset};
+      
       if (velo_track_in_UTA_acceptance(velo_state)) {
         const auto candidates = calculate_windows(
           i,
@@ -57,29 +58,17 @@ __global__ void ut_search_windows(
           dev_unique_x_sector_layer_offsets,
           velo_tracks);
 
-        first_candidate = std::get<0>(candidates);
-        last_candidate  = std::get<1>(candidates);
-        left_group_first_candidate = std::get<2>(candidates);
-        left_group_last_candidate = std::get<3>(candidates);
-        right_group_first_candidate = std::get<4>(candidates);
-        right_group_last_candidate = std::get<5>(candidates);
-        left2_group_first_candidate = std::get<6>(candidates);
-        left2_group_last_candidate = std::get<7>(candidates);
-        right2_group_first_candidate = std::get<8>(candidates);
-        right2_group_last_candidate = std::get<9>(candidates);
+        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer]     = std::get<0>(candidates);
+        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 1] = std::get<1>(candidates);
+        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 2] = std::get<2>(candidates);
+        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 3] = std::get<3>(candidates);
+        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 4] = std::get<4>(candidates);
+        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 5] = std::get<5>(candidates);
+        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 6] = std::get<6>(candidates);
+        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 7] = std::get<7>(candidates);
+        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 8] = std::get<8>(candidates);
+        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 9] = std::get<9>(candidates);
       }
     }
-
-    // Save first and last candidates in the correct position of dev_windows_layers
-    dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer]     = first_candidate;
-    dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 1] = last_candidate;
-    dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 2] = left_group_first_candidate;
-    dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 3] = left_group_last_candidate;
-    dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 4] = right_group_first_candidate;
-    dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 5] = right_group_last_candidate;
-    dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 6] = left2_group_first_candidate;
-    dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 7] = left2_group_last_candidate;
-    dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 8] = right2_group_first_candidate;
-    dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 9] = right2_group_last_candidate;    
   }
 }
