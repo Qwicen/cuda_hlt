@@ -58,16 +58,17 @@ __global__ void ut_search_windows(
           dev_unique_x_sector_layer_offsets,
           velo_tracks);
 
-        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer]     = std::get<0>(candidates);
-        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 1] = std::get<1>(candidates);
-        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 2] = std::get<2>(candidates);
-        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 3] = std::get<3>(candidates);
-        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 4] = std::get<4>(candidates);
-        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 5] = std::get<5>(candidates);
-        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 6] = std::get<6>(candidates);
-        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 7] = std::get<7>(candidates);
-        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 8] = std::get<8>(candidates);
-        dev_windows_layers[NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer + 9] = std::get<9>(candidates);
+        const int total_offset = NUM_ELEMS * VeloUTTracking::n_layers * current_track_offset + NUM_ELEMS * layer;
+        dev_windows_layers[total_offset]     = std::get<0>(candidates); // first_candidate
+        dev_windows_layers[total_offset + 1] = std::get<1>(candidates); // last_candidate
+        dev_windows_layers[total_offset + 2] = std::get<2>(candidates); // left_group_first
+        dev_windows_layers[total_offset + 3] = std::get<3>(candidates); // left_group_last
+        dev_windows_layers[total_offset + 4] = std::get<4>(candidates); // right_group_first
+        dev_windows_layers[total_offset + 5] = std::get<5>(candidates); // right_group_last
+        dev_windows_layers[total_offset + 6] = std::get<6>(candidates); // left2_group_first
+        dev_windows_layers[total_offset + 7] = std::get<7>(candidates); // left2_group_last
+        dev_windows_layers[total_offset + 8] = std::get<8>(candidates); // right2_group_first
+        dev_windows_layers[total_offset + 9] = std::get<9>(candidates); // right2_group_last
       }
     }
   }

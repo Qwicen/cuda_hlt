@@ -71,10 +71,10 @@ __global__ void compass_ut(
 
     if (i_track < number_of_tracks_event) {
       const uint current_track_offset = event_tracks_offset + i_track;
-      // const auto velo_state = MiniState{velo_states, current_track_offset};
+      const auto velo_state = MiniState{velo_states, current_track_offset};
       
       if (!velo_states.backward[current_track_offset] && 
-          // velo_track_in_UTA_acceptance(velo_state) &&
+          velo_track_in_UTA_acceptance(velo_state) &&
           found_active_windows(dev_windows_layers, current_track_offset) ) {
             int current_track = atomicAdd(active_tracks, 1);
             shared_active_tracks[current_track] = i_track;
