@@ -4,6 +4,13 @@
 #include "MuonDefinitions.cuh"
 #include "MiniState.cuh"
 
+enum offset {
+  DTS   = 0,
+  TIMES = 1 * Muon::Constants::n_stations,
+  CROSS = 2 * Muon::Constants::n_stations,
+  RES_X = 3 * Muon::Constants::n_stations,
+  RES_Y = 4 * Muon::Constants::n_stations
+};
 
 __global__ void muon_catboost_features_extraction(
   const MiniState* muTrack,
