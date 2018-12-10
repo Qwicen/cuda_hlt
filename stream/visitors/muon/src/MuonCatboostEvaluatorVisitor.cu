@@ -8,9 +8,8 @@ void SequenceVisitor::set_arguments_size<muon_catboost_evaluator_t>(
   const Constants& constants,
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
-{ 
-  int event_N = 1;
-  arguments.set_size<dev_muon_catboost_output>(event_N);
+{
+  arguments.set_size<dev_muon_catboost_output>(host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
 }
 
 template<>
@@ -23,10 +22,11 @@ void SequenceVisitor::visit<muon_catboost_evaluator_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  int event_N = 1;
-  state.set_opts(dim3(event_N), dim3(32), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_reconstructed_scifi_tracks[0]),dim3(32), cuda_stream);
+  //state.set_opts(dim3(1),dim3(32), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_muon_catboost_features>(),
+    arguments.offset<dev_muon_catboost_output>(),
     constants.dev_muon_catboost_leaf_values,
     constants.dev_muon_catboost_leaf_offsets,
     constants.dev_muon_catboost_split_borders,
@@ -35,12 +35,12 @@ void SequenceVisitor::visit<muon_catboost_evaluator_t>(
     constants.dev_muon_catboost_tree_offsets,
     constants.muon_catboost_n_trees,
     constants.muon_catboost_n_features,
-    event_N,
-    arguments.offset<dev_muon_catboost_output>()
+    host_buffers.host_number_of_reconstructed_scifi_tracks[0]
   );
+  std::cerr << host_buffers.host_number_of_reconstructed_scifi_tracks[0];
   state.invoke();
-  std::vector<float> output(event_N);
-  
+  std::vector<float> output(host_buffers.host_number_of_reconstructed_scifi_tracks[0]); // for all
+
   cudaCheck(cudaMemcpyAsync(
     output.data(),
     arguments.offset<dev_muon_catboost_output>(),
@@ -52,7 +52,7 @@ void SequenceVisitor::visit<muon_catboost_evaluator_t>(
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
   debug_cout << "IsMuon" << std::endl;
-  for(int i = 0; i < event_N; ++i) {
+  for(int i = 0; i < output.size(); ++i) {
     debug_cout << output[i] << std::endl;
   }
 }
