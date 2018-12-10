@@ -14,6 +14,7 @@ across an entire level of a tree.
 */
 __global__ void muon_catboost_evaluator(
   const float* dev_muon_catboost_features,
+  float* dev_muon_catboost_output,
   const float* dev_muon_catboost_leaf_values,
   const int* dev_muon_catboost_leaf_offsets,
   const float* dev_muon_catboost_split_borders,
@@ -22,8 +23,7 @@ __global__ void muon_catboost_evaluator(
   const int* dev_muon_catboost_tree_offsets,
   const int n_trees,
   const int n_features,
-  const int n_objects,
-  float* dev_muon_catboost_output
+  const int n_objects
 ) {
   const int object_id = blockIdx.x;
   const int block_size = blockDim.x;

@@ -6,9 +6,12 @@
 
 
 __global__ void muon_catboost_features_extraction(
-  const MiniState* muTrack,
+  int* dev_atomics_scifi,
+  uint* dev_scifi_track_hit_number,
+  float* dev_scifi_qop,
+  MiniState* dev_scifi_states,
+  uint* dev_scifi_track_ut_indices,
   const Muon::HitsSoA* muon_hits,
-  const float* dev_scifi_qop,
   float* dev_muon_catboost_features
 );
 
