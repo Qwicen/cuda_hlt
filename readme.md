@@ -41,8 +41,8 @@ Where to find input
 -------------
 Input from 1k events can be found here: 
 
-* minimum bias (for performance checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbias_dump_phi_nPV.tar.gz`
-* Bs->PhiPhi (for efficiency checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi_dump_phi_nPV.tar.gz`
+* minimum bias (for performance checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbias_dump_PV_truth.tar.gz`
+* Bs->PhiPhi (for efficiency checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi_dump_PV_truth.tar.gz`
 
 How to run it
 -------------
@@ -59,9 +59,10 @@ There are some cmake options to configure the build process:
 * The sequence can be configured by specifying `-DSEQUENCE=<name_of_sequence>`. For a complete list of sequences available, check `configuration/sequences/`. Sequence names should be specified without the `.h`, ie. `-DSEQUENCE=VeloUT`.
 * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
 * If ROOT is available, it can be enabled to generate graphs by `-DUSE_ROOT=ON`
+* Verbose compilation can be turned on with `-DVERBOSE_COMPILATION=TRUE`, by default it is set to `FALSE`.
 
 The MC validation is standalone, it was written by
-Manuel Schiller, Rainer Schwemmer and Daniel Cámpora.
+Manuel Schiller, Rainer Schwemmer, Daniel Cámpora and Dorothea vom Bruch.
 
 Some binary input files are included with the project for testing.
 A run of the program with no arguments will let you know the basic options:
