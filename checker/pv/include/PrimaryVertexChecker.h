@@ -98,7 +98,7 @@ void printRat(std::string mes, int a, int b)
 {
 
   double rat = 0.;
-  if (b > 0) rat = 1.0 * a / b;
+  if (b > 0) rat = 1.0f * a / b;
 
   // reformat message
   unsigned int len = 20;
