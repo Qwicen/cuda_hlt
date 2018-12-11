@@ -15,6 +15,7 @@ void SequenceVisitor::set_arguments_size<init_event_list_t>(
   arguments.set_size<dev_scifi_raw_input>(runtime_options.host_scifi_events_size);
   arguments.set_size<dev_scifi_raw_input_offsets>(runtime_options.host_scifi_event_offsets_size); 
   arguments.set_size<dev_event_list>(runtime_options.number_of_events);
+  arguments.set_size<dev_number_of_selected_events>(1);
 } 
  
 template<>

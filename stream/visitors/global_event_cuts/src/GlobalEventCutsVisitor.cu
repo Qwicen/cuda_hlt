@@ -1,17 +1,7 @@
 #include "SequenceVisitor.cuh" 
 #include "GlobalEventCuts.cuh"
 
-template<>
-void SequenceVisitor::set_arguments_size<global_event_cuts_t>(
-  const RuntimeOptions& runtime_options,
-  const Constants& constants,
-  const HostBuffers& host_buffers,
-  argument_manager_t& arguments)
-{
-  arguments.set_size<dev_number_of_selected_events>(1);
-} 
- 
-
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(global_event_cuts_t)
 
 template<>
 void SequenceVisitor::visit<global_event_cuts_t>(
