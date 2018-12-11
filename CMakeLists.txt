@@ -75,7 +75,17 @@ endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 
 # In case we want to compile with clang:
 # --compiler-bindir /cvmfs/sft.cern.ch/lcg/releases/clang/6.0.0-6647e/x86_64-centos7-gcc62-opt/bin/clang++;
-set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--nvlink-options=--verbose;--maxrregcount=63;")
+
+# verbose compilation
+option(VERBOSE_COMPILATION OFF)
+if ( VERBOSE_COMPILATION )
+   message(STATUS "Verbose compilation")
+   set(CUDA_VERBOSE_BUILD "--resource-usage;-Xptxas=--verbose;" )
+else()
+   set(CUDA_VERBOSE_BUILD "")
+endif()
+
+set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}${CUDA_VERBOSE_BUILD}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--nvlink-options=--verbose;--maxrregcount=63;")
 
 add_subdirectory(cuda)
 add_subdirectory(stream)
