@@ -30,6 +30,7 @@ __global__ void compass_ut(
 __device__ void compass_ut_tracking(
   const int* dev_windows_layers,
   uint* dev_velo_track_hits,
+  const uint number_of_tracks_event,
   const int i_track,
   const uint current_track_offset,
   const Velo::Consolidated::States& velo_states,
@@ -51,8 +52,9 @@ __host__ __device__ __inline__ void fill_shared_windows(
   int* win_size_shared);
 
 __device__ __inline__ bool found_active_windows(
-  const int* windows_layers,
-  const uint current_track_offset);
+  const int* dev_windows_layers,
+  const int total_tracks_event,
+  const int track);
 
 __device__ void save_track(
   const int i_track,

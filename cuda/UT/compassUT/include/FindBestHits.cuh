@@ -9,6 +9,8 @@
 
 __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   const int* win_size_shared,
+  const uint number_of_tracks_event,
+  const int i_track,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
@@ -22,11 +24,18 @@ __device__ BestParams pkick_fit(
   const float yyProto,
   const bool forward);
 
-__device__ __inline__ int set_index(
+__device__ __inline__ int sum_layer_hits(
+  const LayerCandidates& layer_candidate);
+
+__device__ __inline__ int sum_layer_hits(
+  const LayerCandidates& first_candidate,
+  const LayerCandidates& second_candidate);
+
+__device__ __inline__ int calc_index(
   const int i, 
   const LayerCandidates& layer_cand);
 
-__device__ __inline__ int set_index(
+__device__ __inline__ int calc_index(
   const int i, 
   const LayerCandidates& layer_cand0,
   const LayerCandidates& layer_cand2);

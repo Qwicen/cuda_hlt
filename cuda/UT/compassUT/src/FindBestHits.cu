@@ -1,32 +1,5 @@
 #include "FindBestHits.cuh"
 
-__device__ __inline__ int sum_layer_hits(
-  const TrackCandidates* ranges,
-  const int first_layer,
-  const int second_layer)
-{
-  return  ranges->layer[first_layer].size0 + 
-          ranges->layer[first_layer].size1 + 
-          ranges->layer[first_layer].size2 +
-          ranges->layer[first_layer].size3 +
-          ranges->layer[first_layer].size4 +
-          ranges->layer[second_layer].size0 + 
-          ranges->layer[second_layer].size1 + 
-          ranges->layer[second_layer].size2 +
-          ranges->layer[second_layer].size3 +
-          ranges->layer[second_layer].size4;
-}
-
-__device__ __inline__ int sum_layer_hits(
-  const LayerCandidates& layer_candidates)
-{
-  return  layer_candidates.size0 + 
-          layer_candidates.size1 + 
-          layer_candidates.size2 +
-          layer_candidates.size3 +
-          layer_candidates.size4;
-}
-
 //=========================================================================
 // Get the best 3 or 4 hits, 1 per layer, for a given VELO track
 // When iterating over a panel, 3 windows are given, we set the index
@@ -34,14 +7,18 @@ __device__ __inline__ int sum_layer_hits(
 //=========================================================================
 __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   const int* win_size_shared,
+  const uint number_of_tracks_event,
+  const int i_track,
   const UTHits& ut_hits,
   const UTHitOffsets& ut_hit_count,
   const MiniState& velo_state,
   const float* ut_dxDy)
 {
   const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
-  WindowIndicator win_ranges(win_size_shared); 
-  const auto* ranges = win_ranges.get_track_candidates(threadIdx.x);
+
+  TrackCandidates ranges (win_size_shared, number_of_tracks_event, i_track);
+  // WindowIndicator win_ranges(win_size_shared); 
+  // const auto* ranges = win_ranges.get_track_candidates(threadIdx.x);
 
   int best_hits [4] = {-1, -1, -1, -1};
 
@@ -54,20 +31,21 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   BestParams best_params;
 
   // Get total number of hits for forward + backward in first layer (0 for fwd, 3 for bwd)
-  const int total_hits_2layers_0 = sum_layer_hits(ranges, 0, 3);
+  const int total_hits_2layers_0 = sum_layer_hits(ranges.layers[0], ranges.layers[3]);
   for (int i=0; (!found || considered < CompassUT::max_considered_before_found) && i<total_hits_2layers_0; ++i) {
-    const int i_hit0 = set_index(i, ranges->layer[0], ranges->layer[3]);
+    // const int i_hit0 = calc_index(i, ranges->layer[0], ranges->layer[3]);
+    const int i_hit0 = calc_index(i, ranges.layers[0], ranges.layers[3]);
 
     // set range for next layer if forward or backward
-    LayerCandidates layer_2;
+    int layer_2;
     int dxdy_layer = -1;
-    if (i < ranges->layer[0].size0 + ranges->layer[0].size1 + ranges->layer[0].size2) {
+    if (i < sum_layer_hits(ranges.layers[0])) {
       forward = true;
-      layer_2 = ranges->layer[2];
+      layer_2 = 2;
       dxdy_layer = 0;
     } else {
       forward = false;
-      layer_2 = ranges->layer[1];
+      layer_2 = 1;
       dxdy_layer = 3;
     }
 
@@ -77,9 +55,9 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
     const auto zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
 
     // 2nd layer
-    const int total_hits_2layers_2 = sum_layer_hits(layer_2);
+    const int total_hits_2layers_2 = sum_layer_hits(ranges.layers[layer_2]);
     for (int j=0; (!found || considered < CompassUT::max_considered_before_found) && j<total_hits_2layers_2; ++j) {
-      int i_hit2 = set_index(j, layer_2);
+      int i_hit2 = calc_index(j, ranges.layers[layer_2]);
 
       // Get info to calculate slope
       const int dxdy_layer_2 = forward ? 2 : 1;
@@ -101,10 +79,10 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
         float hitTol = VeloUTConst::hitTol2;
 
         // search for a triplet in 3rd layer
-        const int total_hits_2layers_1 = sum_layer_hits(ranges->layer[layers[0]]);
+        const int total_hits_2layers_1 = sum_layer_hits(ranges.layers[layers[0]]);
         for (int i1=0; i1<total_hits_2layers_1; ++i1) {
 
-          int i_hit1 = set_index(i1, ranges->layer[layers[0]]);
+          int i_hit1 = calc_index(i1, ranges.layers[layers[0]]);
 
           // Get info to check tolerance
           const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
@@ -120,10 +98,10 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 
         // search for triplet/quadruplet in 4th layer
         hitTol = VeloUTConst::hitTol2;
-        const int total_hits_2layers_3 = sum_layer_hits(ranges->layer[layers[1]]);
+        const int total_hits_2layers_3 = sum_layer_hits(ranges.layers[layers[1]]);
         for (int i3=0; i3<total_hits_2layers_3; ++i3) {
 
-          int i_hit3 = set_index(i3, ranges->layer[layers[1]]);
+          int i_hit3 = calc_index(i3, ranges.layers[layers[1]]);
 
           // Get info to check tolerance
           const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
@@ -261,11 +239,35 @@ __device__ BestParams pkick_fit(
 }
 
 //=========================================================================
+// Give total number of hits for N windows in 2 layers
+//=========================================================================
+__device__ __inline__ int sum_layer_hits(
+  const LayerCandidates& first_candidate,
+  const LayerCandidates& second_candidate)
+{
+  return  sum_layer_hits(first_candidate) +
+          sum_layer_hits(second_candidate);
+}
+
+//=========================================================================
+// Give total number of hits for N windows in a layer
+//=========================================================================
+__device__ __inline__ int sum_layer_hits(
+  const LayerCandidates& layer_candidate)
+{
+  return  layer_candidate.size0 + 
+          layer_candidate.size1 + 
+          layer_candidate.size2 + 
+          layer_candidate.size3 + 
+          layer_candidate.size4; 
+}
+
+//=========================================================================
 // Given a panel, 
-// set the index in the correct place depending on the iteration.
+// return the index in the correct place depending on the iteration.
 // Put the index first in the central window, then left, then right
 //=========================================================================
-__device__ __inline__ int set_index(
+__device__ __inline__ int calc_index(
   const int i, 
   const LayerCandidates& layer_cand)
 {
@@ -286,11 +288,11 @@ __device__ __inline__ int set_index(
 }
 
 //=========================================================================
-// Given 2 panels (forward backward case)
-// set the index in the correct place depending on the iteration.
+// Given 2 panels (forward backward case),
+// return the index in the correct place depending on the iteration.
 // Put the index first in the central window, then left, then right
 //=========================================================================
-__device__ __inline__ int set_index(
+__device__ __inline__ int calc_index(
   const int i, 
   const LayerCandidates& layer_cand0,
   const LayerCandidates& layer_cand2)

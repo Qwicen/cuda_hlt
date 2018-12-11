@@ -74,7 +74,8 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
   set(CUDA_BUILD_TYPE "-O0\;-G\;-g\;-DDEBUG\;")
 endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 
-set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=63;")
+set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--maxrregcount=63;")
+# set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=63;")
 
 add_subdirectory(cuda)
 add_subdirectory(stream)

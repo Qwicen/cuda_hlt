@@ -33,6 +33,8 @@ __global__ void compass_ut(
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
+  int* windows_layers = dev_windows_layers + event_tracks_offset * NUM_ELEMS * N_LAYERS;
+
   UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
   UTHits ut_hits {dev_ut_hits, total_number_of_hits};
 
@@ -75,7 +77,7 @@ __global__ void compass_ut(
       
       if (!velo_states.backward[current_track_offset] && 
           velo_track_in_UTA_acceptance(velo_state) &&
-          found_active_windows(dev_windows_layers, current_track_offset) ) {
+          found_active_windows(windows_layers, number_of_tracks_event, i_track) ) {
             int current_track = atomicAdd(active_tracks, 1);
             shared_active_tracks[current_track] = i_track;
       }
@@ -88,8 +90,9 @@ __global__ void compass_ut(
     if (*active_tracks >= blockDim.x) {
 
       compass_ut_tracking(
-        dev_windows_layers,
+        windows_layers,
         dev_velo_track_hits,
+        number_of_tracks_event,
         shared_active_tracks[threadIdx.x],
         event_tracks_offset + shared_active_tracks[threadIdx.x],
         velo_states,
@@ -126,8 +129,9 @@ __global__ void compass_ut(
     const uint current_track_offset = event_tracks_offset + i_track;
 
     compass_ut_tracking(
-      dev_windows_layers,
+      windows_layers,
       dev_velo_track_hits,
+      number_of_tracks_event,
       i_track,
       current_track_offset,
       velo_states,
@@ -143,8 +147,9 @@ __global__ void compass_ut(
 }
 
 __device__ void compass_ut_tracking(
-  const int* dev_windows_layers,
+  const int* windows_layers,
   uint* dev_velo_track_hits,
+  const uint number_of_tracks_event,
   const int i_track,
   const uint current_track_offset,
   const Velo::Consolidated::States& velo_states,
@@ -161,14 +166,16 @@ __device__ void compass_ut_tracking(
   // select velo track to join with UT hits
   const MiniState velo_state{velo_states, current_track_offset};
 
-  fill_shared_windows( 
-    dev_windows_layers, 
-    current_track_offset, 
-    win_size_shared);
+  // fill_shared_windows( 
+  //   windows_layers, 
+  //   current_track_offset, 
+  //   win_size_shared);
   
   // Find compatible hits in the windows for this VELO track
   const auto best_hits_and_params = find_best_hits(
-    win_size_shared,
+    windows_layers,
+    number_of_tracks_event,
+    i_track,
     ut_hits,
     ut_hit_offsets,
     velo_state,
@@ -267,34 +274,34 @@ __device__ __inline__ void fill_shared_windows(
 //=========================================================================
 __device__ __inline__ bool found_active_windows(
   const int* windows_layers,
-  const uint current_track_offset)
+  const int total_tracks_event,
+  const int track)
 {
-  const int total_offset = NUM_ELEMS * N_LAYERS * current_track_offset;
+  const bool l1_found = windows_layers[(total_tracks_event * (0 + NUM_ELEMS * 0)) + track] != -1 ||
+                        windows_layers[(total_tracks_event * (2 + NUM_ELEMS * 0)) + track] != -1 ||
+                        windows_layers[(total_tracks_event * (4 + NUM_ELEMS * 0)) + track] != -1 ||
+                        windows_layers[(total_tracks_event * (6 + NUM_ELEMS * 0)) + track] != -1 ||
+                        windows_layers[(total_tracks_event * (8 + NUM_ELEMS * 0)) + track] != -1;
 
-  const bool main_win_found = windows_layers[total_offset]     != -1 || 
-                              windows_layers[total_offset + 2] != -1 ||
-                              windows_layers[total_offset + 4] != -1 ||
-                              windows_layers[total_offset + 6] != -1 ||
-                              windows_layers[total_offset + 8] != -1;
+  const bool l2_found = windows_layers[(total_tracks_event * (0 + NUM_ELEMS * 2)) + track] != -1 ||
+                        windows_layers[(total_tracks_event * (2 + NUM_ELEMS * 2)) + track] != -1 ||
+                        windows_layers[(total_tracks_event * (4 + NUM_ELEMS * 2)) + track] != -1 ||
+                        windows_layers[(total_tracks_event * (6 + NUM_ELEMS * 2)) + track] != -1 ||
+                        windows_layers[(total_tracks_event * (8 + NUM_ELEMS * 2)) + track] != -1;
 
-  const bool left_win_found = windows_layers[total_offset + (NUM_ELEMS*2)    ] != -1 ||
-                              windows_layers[total_offset + (NUM_ELEMS*2) + 2] != -1 ||
-                              windows_layers[total_offset + (NUM_ELEMS*2) + 4] != -1 ||
-                              windows_layers[total_offset + (NUM_ELEMS*2) + 6] != -1 ||
-                              windows_layers[total_offset + (NUM_ELEMS*2) + 8] != -1;
+  const bool l3_l4_found =  windows_layers[(total_tracks_event * (0 + NUM_ELEMS * 1)) + track] != -1 ||
+                            windows_layers[(total_tracks_event * (2 + NUM_ELEMS * 1)) + track] != -1 ||
+                            windows_layers[(total_tracks_event * (4 + NUM_ELEMS * 1)) + track] != -1 ||
+                            windows_layers[(total_tracks_event * (6 + NUM_ELEMS * 1)) + track] != -1 ||
+                            windows_layers[(total_tracks_event * (8 + NUM_ELEMS * 1)) + track] != -1 ||
 
-  const bool right_win_found = windows_layers[total_offset + NUM_ELEMS]         != -1 || 
-                               windows_layers[total_offset + NUM_ELEMS + 2]     != -1 ||
-                               windows_layers[total_offset + NUM_ELEMS + 4]     != -1 || 
-                               windows_layers[total_offset + NUM_ELEMS + 6]     != -1 || 
-                               windows_layers[total_offset + NUM_ELEMS + 8]     != -1 || 
-                               windows_layers[total_offset + (NUM_ELEMS*3)]     != -1 ||
-                               windows_layers[total_offset + (NUM_ELEMS*3) + 2] != -1 ||
-                               windows_layers[total_offset + (NUM_ELEMS*3) + 4] != -1 ||
-                               windows_layers[total_offset + (NUM_ELEMS*3) + 6] != -1 ||
-                               windows_layers[total_offset + (NUM_ELEMS*3) + 8] != -1;
+                            windows_layers[(total_tracks_event * (0 + NUM_ELEMS * 3)) + track] != -1 ||
+                            windows_layers[(total_tracks_event * (2 + NUM_ELEMS * 3)) + track] != -1 ||
+                            windows_layers[(total_tracks_event * (4 + NUM_ELEMS * 3)) + track] != -1 ||
+                            windows_layers[(total_tracks_event * (6 + NUM_ELEMS * 3)) + track] != -1 ||
+                            windows_layers[(total_tracks_event * (8 + NUM_ELEMS * 3)) + track] != -1;                        
 
-  return main_win_found && left_win_found && right_win_found;
+  return l1_found && l2_found && l3_l4_found;
 }
 
 // These things are all hardcopied from the PrTableForFunction and PrUTMagnetTool

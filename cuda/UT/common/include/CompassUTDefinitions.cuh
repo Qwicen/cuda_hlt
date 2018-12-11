@@ -28,17 +28,47 @@ struct LayerCandidates {
 };
 
 struct TrackCandidates {
-  LayerCandidates layer[N_LAYERS];
-};
-
-struct WindowIndicator {
   const int* m_base_pointer;
-  __host__ __device__ WindowIndicator(const int* base_pointer) : m_base_pointer(base_pointer) {}
+  const int  m_num_tracks_event;
+  const int  m_track;
+  LayerCandidates layers[N_LAYERS];
 
-  __host__ __device__ const TrackCandidates* get_track_candidates(const int i_track)
-  {
-    return reinterpret_cast<const TrackCandidates*>(m_base_pointer + (NUM_ELEMS * N_LAYERS * i_track));
-  }
+  __host__ __device__ TrackCandidates(
+    const int* base_pointer,
+    const int num_tracks_event,
+    const int track) : 
+    m_base_pointer(base_pointer),
+    m_num_tracks_event(num_tracks_event),
+    m_track(track) {
+      for (int i=0; i<N_LAYERS; ++i) {
+        fill_layer(i);
+        // printf("TC - t: %i - (%i, %i)(%i, %i)(%i, %i)(%i, %i)(%i, %i)\n",
+        //   m_track,
+        //   layers[i].from0,
+        //   layers[i].size0,
+        //   layers[i].from1,
+        //   layers[i].size1,
+        //   layers[i].from2,
+        //   layers[i].size2,
+        //   layers[i].from3,
+        //   layers[i].size3,
+        //   layers[i].from4,
+        //   layers[i].size4);
+      }
+    }
+
+  __host__ __device__ void fill_layer(const int layer) {
+    layers[layer].from0 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 0))];
+    layers[layer].size0 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 1))];
+    layers[layer].from1 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 2))];
+    layers[layer].size1 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 3))];
+    layers[layer].from2 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 4))];
+    layers[layer].size2 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 5))];
+    layers[layer].from3 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 6))];
+    layers[layer].size3 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 7))];
+    layers[layer].from4 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 8))];
+    layers[layer].size4 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 9))];    
+  };
 };
 
 //=========================================================================
