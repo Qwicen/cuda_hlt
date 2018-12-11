@@ -12,12 +12,12 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/sorting/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/velo/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/UT/include)
-include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/SciFi/include)  
+include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/SciFi/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/PrVeloUT/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/UTDecoding/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/sorting/include)
-include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/consolidate/include) 
+include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/consolidate/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/compassUT/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/calculate_phi_and_sort/include)
@@ -53,7 +53,7 @@ file(GLOB stream_visitors_pv "visitors/PV/src/*cu")
 file(GLOB stream_visitors_UT "visitors/UT/src/*cu")
 file(GLOB stream_visitors_SciFi "visitors/SciFi/src/*cu")
 
-cuda_add_library(Stream STATIC
+add_library(Stream STATIC
   ${stream_gear}
   ${stream_handlers}
   ${stream_memory_manager}
@@ -67,15 +67,18 @@ cuda_add_library(Stream STATIC
   ${stream_visitors_SciFi}
 )
 
-target_link_libraries(Stream
+target_link_libraries(Stream PRIVATE
   Common
   Utils
   Velo
   PV
   UT
-  x86Forward
   SciFi
+  x86Forward
   x86VeloUT)
+
+set_property(TARGET Stream PROPERTY
+             CUDA_SEPERABLE_COMPILATION ON)
 
 if ( ROOT_FOUND )
   target_compile_definitions(Stream PUBLIC WITH_ROOT)

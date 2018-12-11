@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
-project(Allen C CXX)
+project(Allen C CXX CUDA)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}) # for find_package
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake) # for find_package
@@ -42,7 +42,7 @@ else(USE_LZ4)
   set(LZ4_FOUND OFF)
 endif(USE_LZ4)
 
-find_package(CUDA REQUIRED)
+# find_package(CUDA REQUIRED)
 #set(CUDA_HOST_COMPILER "g++")
 set(CUDA_SEPARABLE_COMPILATION ON)
 option(CUDA_PROPAGATE_HOST_FLAGS OFF)
@@ -66,16 +66,17 @@ endif()
 
 # Cuda: Deal with build type
 if(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
-  set(CUDA_BUILD_TYPE "-O3\;-g\;-DNDEBUG\;")
+  set(CUDA_BUILD_TYPE "-O3 -g -DNDEBUG ")
 elseif(${CMAKE_BUILD_TYPE} STREQUAL Release)
-  set(CUDA_BUILD_TYPE "-O3\;-DNDEBUG\;")
+  set(CUDA_BUILD_TYPE "-O3 -DNDEBUG ")
 elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
-  set(CUDA_BUILD_TYPE "-O0\;-G\;-g\;-DDEBUG\;")
+  set(CUDA_BUILD_TYPE "-O0 -G -g -DDEBUG ")
 endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 
 # In case we want to compile with clang:
 # --compiler-bindir /cvmfs/sft.cern.ch/lcg/releases/clang/6.0.0-6647e/x86_64-centos7-gcc62-opt/bin/clang++;
-set(CUDA_NVCC_FLAGS "${CUDA_BUILD_TYPE}--use_fast_math;--expt-relaxed-constexpr;--generate-line-info;--resource-usage;--verbose;--nvlink-options=--verbose;-Xptxas=--verbose;--maxrregcount=63;")
+set(CMAKE_CUDA_STANDARD 14)
+set(CMAKE_CUDA_FLAGS " --relocatable-device-code=true --use_fast_math --expt-relaxed-constexpr --generate-line-info --resource-usage --verbose --nvlink-options=--verbose -Xptxas=--verbose --maxrregcount=63")
 
 add_subdirectory(cuda)
 add_subdirectory(stream)
@@ -86,6 +87,7 @@ add_subdirectory(x86/velo/clustering)
 add_subdirectory(mdf)
 
 # Include directories
+include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 include_directories(main/include)
 include_directories(x86/velo/clustering/include)
 include_directories(cuda/UT/common/include)
@@ -122,21 +124,18 @@ get_filename_component(main_cpp_path ${CMAKE_CURRENT_SOURCE_DIR}/main/src/main.c
 list(REMOVE_ITEM common_sources "${main_cpp_path}")
 
 # common library
-cuda_add_library(Common ${common_sources})
+add_library(Common ${common_sources})
 target_link_libraries(Common mdf)
 
-# main executable
-cuda_add_executable(Allen ${main_cpp_path})
+set_property(TARGET Common PROPERTY
+             CUDA_SEPERABLE_COMPILATION ON)
 
-target_link_libraries(Allen
-  Common
-  Utils
-  Velo
-  PV
-  UT
-  SciFi
-  x86VeloUT
-  x86Forward
+# main executable
+add_executable(Allen ${main_cpp_path})
+set_property(TARGET Allen
+             PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+target_link_libraries(Allen PRIVATE
   Stream
   x86Clustering
   TrackChecking

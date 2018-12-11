@@ -1,4 +1,5 @@
 include_directories(include)
+include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 include_directories(${CMAKE_SOURCE_DIR}/checker/tracking/include)
 include_directories(${CMAKE_SOURCE_DIR}/main/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/include)
@@ -24,10 +25,12 @@ file(GLOB PrForwardTools "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/FindStere
   "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/ReferencePlaneProjection.cu"
   "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/TrackUtils.cu")
 
-cuda_add_library(x86Forward STATIC
+add_library(x86Forward STATIC
   ${x86Forward}
   ${PrForwardTools}
 )
+set_property(TARGET x86Forward PROPERTY
+             CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 
 if ( ROOT_FOUND )
   target_compile_definitions(x86Forward PUBLIC WITH_ROOT)
