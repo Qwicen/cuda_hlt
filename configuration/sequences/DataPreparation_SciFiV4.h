@@ -3,6 +3,9 @@
  * in the expected order of execution.
  */
 SEQUENCE_T(
+  init_event_list_t,
+  global_event_cut_t,
+
   // SciFi data preparation
   scifi_calculate_cluster_count_v4_t,
   prefix_sum_scifi_hits_t,

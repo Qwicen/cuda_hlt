@@ -7,7 +7,7 @@
 
 static constexpr uint maxSciFiUTClusters = 9750; // check tha this removes 10% of the events!
 
-__global__ void global_event_cuts(
+__global__ void global_event_cut(
   char* dev_ut_raw_input,
   uint* dev_ut_raw_input_offsets,
   char* dev_scifi_raw_input,
@@ -16,4 +16,4 @@ __global__ void global_event_cuts(
   uint* event_list
 ); 
 
-ALGORITHM(global_event_cuts, global_event_cuts_t)
+ALGORITHM(global_event_cut, global_event_cut_t)

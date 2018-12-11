@@ -1,5 +1,5 @@
 add_subdirectory(utils)
-add_subdirectory(global_event_cuts)
+add_subdirectory(global_event_cut)
 add_subdirectory(velo)
 add_subdirectory(PV/patPV)
 add_subdirectory(PV/beamlinePV)

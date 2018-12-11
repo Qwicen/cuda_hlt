@@ -1,11 +1,11 @@
 #include "SequenceVisitor.cuh" 
-#include "GlobalEventCuts.cuh"
+#include "GlobalEventCut.cuh"
 
-DEFINE_EMPTY_SET_ARGUMENTS_SIZE(global_event_cuts_t)
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(global_event_cut_t)
 
 template<>
-void SequenceVisitor::visit<global_event_cuts_t>(
-  global_event_cuts_t& state,
+void SequenceVisitor::visit<global_event_cut_t>(
+  global_event_cut_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,

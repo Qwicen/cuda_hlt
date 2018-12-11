@@ -4,7 +4,7 @@
  */
 SEQUENCE_T(
   init_event_list_t,
-  global_event_cuts_t,
+  global_event_cut_t,
 
   // Velo data preparation
   velo_estimate_input_size_t,
