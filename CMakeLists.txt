@@ -146,7 +146,7 @@ target_link_libraries(Allen
   GlobalEventCut
   Velo
   PatPV
-  BLPV
+  PV_beamline
   UT
   SciFi
   #x86PatPV

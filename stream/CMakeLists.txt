@@ -80,7 +80,7 @@ target_link_libraries(Stream
   GlobalEventCut
   Velo
   PatPV
-  BLPV
+  PV_beamline
   #x86PatPV
   x86beamlinePV
   UT
