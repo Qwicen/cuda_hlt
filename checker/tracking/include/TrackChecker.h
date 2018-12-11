@@ -118,6 +118,7 @@ protected:
                                  HistoCategory &category);
     void fillTotalHistos(const MCParticle &mcp);
     void fillGhostHistos(const MCParticle &mcp);
+    void deleteHistos(const std::vector<HistoCategory>& histo_categories);
   };
  
   const float m_minweight = 0.7f;

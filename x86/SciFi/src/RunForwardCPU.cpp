@@ -90,7 +90,7 @@ int run_forward_on_CPU (
     // store hit variables in tree
     for(size_t mat = 0; mat < SciFi::Constants::n_mat_groups_and_mats; mat++) {
       const auto zone_offset = scifi_hit_count.mat_offsets[mat];
-      for(size_t hit = 0; hit < scifi_hit_count.n_hits_mats[mat]; hit++) {
+      for(size_t hit = 0; hit < scifi_hit_count.mat_number_of_hits(mat); hit++) {
         const auto hit_offset = zone_offset + hit;
 
         planeCode = scifi_hits.planeCode(hit_offset);

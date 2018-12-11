@@ -58,6 +58,8 @@ TrackChecker::~TrackChecker() {
 
   f->Write();
   f->Close();
+
+  histos->deleteHistos(m_histo_categories);
 #endif
 }
 
@@ -172,7 +174,37 @@ void TrackChecker::Histos::initHistos(
 
   // histos for ghost rate
   h_ghost_nPV = new TH1D("nPV_Ghosts", "nPV_Ghosts", 21, -0.5, 20.5);
-  h_total_nPV = new TH1D("nPV_Total", "nPV_Total", 21, -0.5, 20.5);
+  h_total_nPV = new TH1D("nPV_Total", "nPV_Total", 21, -0.5, 20.5); 
+#endif
+}
+
+void TrackChecker::Histos::deleteHistos(const std::vector<HistoCategory>& histo_categories) {
+#ifdef WITH_ROOT
+   for (auto histoCat : histo_categories) {
+    const std::string &category = histoCat.m_name;
+    std::string name = category + "_Eta_reconstructible";
+    delete h_reconstructible_eta[name];
+    name = category + "_Eta_reconstructed";
+    delete  h_reconstructed_eta[name];
+    name = category + "_P_reconstructible";
+    delete h_reconstructible_p[name];
+    name = category + "_Pt_reconstructible";
+    delete h_reconstructible_pt[name];
+    name = category + "_Phi_reconstructible";
+    delete h_reconstructible_phi[name]; 
+    name = category + "_nPV_reconstructible";
+    delete h_reconstructible_nPV[name];
+    name = category + "_P_reconstructed";
+    delete h_reconstructed_p[name];
+    name = category + "_Pt_reconstructed";
+    delete h_reconstructed_pt[name];
+    name = category + "_Phi_reconstructed";
+    delete h_reconstructed_phi[name];
+    name = category + "_nPV_reconstructed";
+    delete h_reconstructed_nPV[name];
+  }
+   delete h_ghost_nPV;
+   delete h_total_nPV;
 #endif
 }
 
