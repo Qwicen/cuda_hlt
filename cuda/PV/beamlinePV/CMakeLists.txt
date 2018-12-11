@@ -14,6 +14,6 @@ include_directories(../patPV/include)
 include_directories(../../../x86/PV/beamlinePV/include)
 
 
-cuda_add_library(BLPV STATIC
+cuda_add_library(PV_beamline STATIC
   ${blPV} 
 )
