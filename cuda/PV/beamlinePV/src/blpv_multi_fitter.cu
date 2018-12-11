@@ -179,7 +179,7 @@ __global__ void blpv_multi_fitter(
     float2 beamline {0.f, 0.f};
     const float beamlinedx = vertex.position.x - beamline.x;
     const float beamlinedy = vertex.position.y - beamline.y;
-    const float beamlinerho2 = sqr(beamlinedx) + sqr(beamlinedy);
+    const float beamlinerho2 = beamlinedx * beamlinedx + beamlinedy * beamlinedy;
     if (vertex.n_tracks >= m_minNumTracksPerVertex && beamlinerho2 < m_maxVertexRho2) {
       uint vertex_index = atomicAdd(number_of_multi_fit_vertices, 1);
       vertices[vertex_index] = vertex;

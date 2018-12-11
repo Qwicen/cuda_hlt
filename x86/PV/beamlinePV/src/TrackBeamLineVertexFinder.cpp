@@ -285,8 +285,8 @@ namespace {
         if( chi2 < chi2max ) { // to branch or not, that is the question!
           ++nselectedtracks ;
           // Tukey's weight
-          trk.weight = sqr( 1.f - chi2 / chi2max ) ;
-          //trk.weight = chi2 < 1 ? 1 : sqr( 1. - (chi2-1) / (chi2max-1) ) ;
+          trk.weight = 1.f - chi2 / chi2max ;
+          trk.weight = trk_weight * trk.weight
           // += operator does not work for mixed FP types
           //halfD2Chi2DX2 += trk.weight * trk.HWH ;
           //halfDChi2DX   += trk.weight * trk.HW * res ;
@@ -763,13 +763,13 @@ void findPVs(
     // * merge vertices that are close
 
     // create the output container
-    const auto maxVertexRho2 = sqr(m_maxVertexRho) ;
+    const auto maxVertexRho2 = m_maxVertexRho * m_maxVertexRho ;
     for( int i = 0; i < number_preselected_vertices; i++ ) {
       PV::Vertex vertex = preselected_vertices[i];
       
       const auto beamlinedx = vertex.position.x - beamline.x ;
       const auto beamlinedy = vertex.position.y - beamline.y ;
-      const auto beamlinerho2 = sqr(beamlinedx) + sqr(beamlinedy) ;
+      const auto beamlinerho2 = beamlinedx * beamlinedx + beamlinedy * beamlinedy ;
 #ifdef WITH_ROOT
       h_vx[event_number]->Fill(vertex.position.x);
       h_vy[event_number]->Fill(vertex.position.y);

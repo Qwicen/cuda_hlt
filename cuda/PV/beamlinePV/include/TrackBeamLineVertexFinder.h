@@ -39,12 +39,6 @@ struct PVTrack {
   unsigned short index {0}; /// index in the list with tracks
 };
 
-template<typename FTYPE>
-__host__ __device__ FTYPE sqr(FTYPE x)
-{
-  return x * x;
-}
-
 struct Extremum {
   __host__ __device__ Extremum(unsigned short _index, float _value, float _integral) :
     index {_index}, value {_value}, integral {_integral} {};
