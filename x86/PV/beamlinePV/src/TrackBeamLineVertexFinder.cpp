@@ -9,7 +9,7 @@
 * or submit itself to any jurisdiction.                                       *
 \*****************************************************************************/
 
-#include "TrackBeamLineVertexFinder.h"
+#include "TrackBeamLineVertexFinder.cuh"
 #include "BeamlinePVConstants.cuh"
 #include "SeedZWithIteratorPair.h"
 

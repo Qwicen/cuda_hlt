@@ -3,7 +3,7 @@
 #include "BeamlinePVConstants.cuh"
 #include "Common.h"
 #include "Handler.cuh"
-#include "TrackBeamLineVertexFinder.h"
+#include "TrackBeamLineVertexFinder.cuh"
 #include "VeloConsolidated.cuh"
 #include "VeloDefinitions.cuh"
 #include "VeloEventModel.cuh"

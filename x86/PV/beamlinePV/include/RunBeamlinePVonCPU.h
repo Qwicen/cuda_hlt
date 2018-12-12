@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common.h"
-#include "TrackBeamLineVertexFinder.h" 
+#include "TrackBeamLineVertexFinder.cuh"
 #include "CpuHandler.cuh" 
 
 void run_BeamlinePV_on_CPU(
