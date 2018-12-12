@@ -19,5 +19,10 @@ add_library(Utils STATIC
   ${prefix_sum}
 )
 
+target_link_libraries(Utils PRIVATE
+  UT
+  SciFi
+)
+
 set_property(TARGET Utils PROPERTY
              CUDA_SEPERABLE_COMPILATION ON)
