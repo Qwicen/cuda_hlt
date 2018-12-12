@@ -1,7 +1,6 @@
 file(GLOB blPV "src/*.cu")
 include_directories(include)
 include_directories(../common/include)
-include_directories(../patPV/include)
 include_directories(${CMAKE_SOURCE_DIR}/main/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/veloUT/common/include)
