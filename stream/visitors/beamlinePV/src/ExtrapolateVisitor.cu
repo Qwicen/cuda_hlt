@@ -1,8 +1,8 @@
 #include "SequenceVisitor.cuh"
-#include "blpv_extrapolate.cuh"
+#include "pv_beamline_extrapolate.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<blpv_extrapolate_t>(
+void SequenceVisitor::set_arguments_size<pv_beamline_extrapolate_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -13,8 +13,8 @@ void SequenceVisitor::set_arguments_size<blpv_extrapolate_t>(
 }
 
 template<>
-void SequenceVisitor::visit<blpv_extrapolate_t>(
-  blpv_extrapolate_t& state,
+void SequenceVisitor::visit<pv_beamline_extrapolate_t>(
+  pv_beamline_extrapolate_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,

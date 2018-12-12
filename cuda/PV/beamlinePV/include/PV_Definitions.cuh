@@ -6,8 +6,8 @@ namespace PV {
 
 typedef float myfloat;
 
-// Number of threads blpv_peak_t
-static constexpr uint num_threads_blpv_peak_t = 64;
+// Number of threads pv_beamline_peak_t
+static constexpr uint num_threads_pv_beamline_peak_t = 64;
 
 // maximum number of vertices in a event
 static constexpr uint max_number_vertices = 32;

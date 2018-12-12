@@ -10,13 +10,10 @@
 #include "patPV_Definitions.cuh"
 #include <stdint.h>
 
-__global__ void blpv_multi_fitter(
-  int* dev_atomics_storage,
-  uint* dev_velo_track_hit_number,
-  PVTrack* dev_pvtracks,
+__global__ void pv_beamline_peak(
+  float* dev_zhisto,
   float* dev_zpeaks,
   uint* dev_number_of_zpeaks,
-  PV::Vertex* dev_multi_fit_vertices,
-  uint* dev_number_of_multi_fit_vertices);
+  uint number_of_events);
 
-ALGORITHM(blpv_multi_fitter, blpv_multi_fitter_t)
+ALGORITHM(pv_beamline_peak, pv_beamline_peak_t)

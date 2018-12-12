@@ -1,6 +1,6 @@
-#include "blpv_peak.cuh"
+#include "pv_beamline_peak.cuh"
 
-__global__ void blpv_peak(
+__global__ void pv_beamline_peak(
   float* dev_zhisto,
   float* dev_zpeaks,
   uint* dev_number_of_zpeaks,

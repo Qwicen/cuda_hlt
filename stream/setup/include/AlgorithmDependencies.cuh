@@ -140,24 +140,24 @@ typedef std::tuple<
     dev_atomics_velo,
     dev_velo_track_hit_number
   >,
-  AlgorithmDependencies<blpv_extrapolate_t,
+  AlgorithmDependencies<pv_beamline_extrapolate_t,
     dev_kalmanvelo_states,
     dev_atomics_velo,
     dev_velo_track_hit_number,
     dev_pvtracks
   >,
-  AlgorithmDependencies<blpv_histo_t,
+  AlgorithmDependencies<pv_beamline_histo_t,
     dev_atomics_velo,
     dev_velo_track_hit_number,
     dev_pvtracks,
     dev_zhisto
   >,
-  AlgorithmDependencies<blpv_peak_t,
+  AlgorithmDependencies<pv_beamline_peak_t,
     dev_zhisto,
     dev_zpeaks,
     dev_number_of_zpeaks
   >, 
-  AlgorithmDependencies<blpv_multi_fitter_t,
+  AlgorithmDependencies<pv_beamline_multi_fitter_t,
     dev_atomics_velo,
     dev_velo_track_hit_number,
     dev_pvtracks,

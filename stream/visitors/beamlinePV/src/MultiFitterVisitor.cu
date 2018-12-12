@@ -1,8 +1,8 @@
 #include "SequenceVisitor.cuh"
-#include "blpv_multi_fitter.cuh"
+#include "pv_beamline_multi_fitter.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<blpv_multi_fitter_t>(
+void SequenceVisitor::set_arguments_size<pv_beamline_multi_fitter_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -14,8 +14,8 @@ void SequenceVisitor::set_arguments_size<blpv_multi_fitter_t>(
 }
 
 template<>
-void SequenceVisitor::visit<blpv_multi_fitter_t>(
-  blpv_multi_fitter_t& state,
+void SequenceVisitor::visit<pv_beamline_multi_fitter_t>(
+  pv_beamline_multi_fitter_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,

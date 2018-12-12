@@ -61,7 +61,7 @@ void SequenceVisitor::check<cpu_beamlinePV_t>(
  * @brief Specialization for beamline PV finding algorithm on GPU
  */
 template<>
-void SequenceVisitor::check<blpv_multi_fitter_t>(
+void SequenceVisitor::check<pv_beamline_multi_fitter_t>(
   const uint& start_event_offset,
   const uint& number_of_events_requested,
   const HostBuffers& host_buffers,

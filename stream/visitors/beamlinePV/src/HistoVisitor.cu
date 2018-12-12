@@ -1,11 +1,11 @@
 #include "SequenceVisitor.cuh"
-#include "blpv_histo.cuh"
+#include "pv_beamline_histo.cuh"
 #ifdef WITH_ROOT
 #include "TTree.h"
 #endif
 
 template<>
-void SequenceVisitor::set_arguments_size<blpv_histo_t>(
+void SequenceVisitor::set_arguments_size<pv_beamline_histo_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -16,8 +16,8 @@ void SequenceVisitor::set_arguments_size<blpv_histo_t>(
 }
 
 template<>
-void SequenceVisitor::visit<blpv_histo_t>(
-  blpv_histo_t& state,
+void SequenceVisitor::visit<pv_beamline_histo_t>(
+  pv_beamline_histo_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,

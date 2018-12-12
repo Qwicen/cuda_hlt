@@ -1,8 +1,8 @@
 #include "SequenceVisitor.cuh"
-#include "blpv_peak.cuh"
+#include "pv_beamline_peak.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<blpv_peak_t>(
+void SequenceVisitor::set_arguments_size<pv_beamline_peak_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
@@ -14,8 +14,8 @@ void SequenceVisitor::set_arguments_size<blpv_peak_t>(
 }
 
 template<>
-void SequenceVisitor::visit<blpv_peak_t>(
-  blpv_peak_t& state,
+void SequenceVisitor::visit<pv_beamline_peak_t>(
+  pv_beamline_peak_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
@@ -24,8 +24,8 @@ void SequenceVisitor::visit<blpv_peak_t>(
   cudaEvent_t& cuda_generic_event)
 {
   state.set_opts(
-    dim3((host_buffers.host_number_of_selected_events[0] + PV::num_threads_blpv_peak_t - 1) / PV::num_threads_blpv_peak_t),
-    PV::num_threads_blpv_peak_t,
+    dim3((host_buffers.host_number_of_selected_events[0] + PV::num_threads_pv_beamline_peak_t - 1) / PV::num_threads_pv_beamline_peak_t),
+    PV::num_threads_pv_beamline_peak_t,
     cuda_stream);
 
   state.set_arguments(

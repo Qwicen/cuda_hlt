@@ -1,6 +1,6 @@
-#include "blpv_extrapolate.cuh"
+#include "pv_beamline_extrapolate.cuh"
 
-__global__ void blpv_extrapolate(
+__global__ void pv_beamline_extrapolate(
   char* dev_kalmanvelo_states,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,

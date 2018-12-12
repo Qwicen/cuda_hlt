@@ -1,8 +1,8 @@
-#include "blpv_multi_fitter.cuh"
+#include "pv_beamline_multi_fitter.cuh"
 
 // parameters to tune: maximum iterations, chi2max, chi2_cut, T
 
-__global__ void blpv_multi_fitter(
+__global__ void pv_beamline_multi_fitter(
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
   PVTrack* dev_pvtracks,

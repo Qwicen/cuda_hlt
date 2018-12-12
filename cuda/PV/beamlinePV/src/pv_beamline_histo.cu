@@ -1,4 +1,4 @@
-#include "blpv_histo.cuh"
+#include "pv_beamline_histo.cuh"
 
 __device__ float gauss_integral(float x)
 {
@@ -12,7 +12,7 @@ __device__ float gauss_integral(float x)
 }
 
 __global__ void
-blpv_histo(int* dev_atomics_storage, uint* dev_velo_track_hit_number, PVTrack* dev_pvtracks, float* dev_zhisto)
+pv_beamline_histo(int* dev_atomics_storage, uint* dev_velo_track_hit_number, PVTrack* dev_pvtracks, float* dev_zhisto)
 {
 
   const int Nbins = (m_zmax - m_zmin) / m_dz;
