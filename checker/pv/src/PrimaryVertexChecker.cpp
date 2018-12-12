@@ -33,14 +33,14 @@ void checkPVs(
     // std::vector<MCVertex> vertices;
 
     // counters for efficiencies/fake rate
-    int m_nMCPV = 0;
-    int m_nRecMCPV = 0;
-    int m_nMCPV_isol = 0;
-    int m_nRecMCPV_isol = 0;
-    int m_nMCPV_close = 0;
-    int m_nRecMCPV_close = 0;
-    int m_nFalsePV = 0;
-    int m_nFalsePV_real = 0;
+    int sum_nMCPV = 0;
+    int sum_nRecMCPV = 0;
+    int sum_nMCPV_isol = 0;
+    int sum_nRecMCPV_isol = 0;
+    int sum_nMCPV_close = 0;
+    int sum_nRecMCPV_close = 0;
+    int sum_nFalsePV = 0;
+    int sum_nFalsePV_real = 0;
 
     // vectors to collect the pulls and erros
     std::vector<double> vec_diff_x;
@@ -188,13 +188,13 @@ void checkPVs(
       for (itmc = mcpvvec.begin(); mcpvvec.end() != itmc; itmc++) {
         rblemcpv.push_back(*itmc);
 
-        if (itmc->nRecTracks < m_nTracksToBeRecble) {
+        if (itmc->nRecTracks < nTracksToBeRecble) {
           nmrc++;
         }
-        if (itmc->nRecTracks < m_nTracksToBeRecble && itmc->nRecTracks > 1) {
+        if (itmc->nRecTracks < nTracksToBeRecble && itmc->nRecTracks > 1) {
           not_rble_but_visible.push_back(*itmc);
         }
-        if (itmc->nRecTracks < m_nTracksToBeRecble && itmc->nRecTracks < 2) {
+        if (itmc->nRecTracks < nTracksToBeRecble && itmc->nRecTracks < 2) {
           not_rble.push_back(*itmc);
         }
       }
@@ -278,28 +278,28 @@ void checkPVs(
       int nRecMCPV_close        = 0;
 
       for(itmc = rblemcpv.begin(); rblemcpv.end() != itmc; itmc++) {
-        if(itmc->distToClosestMCPV > m_dzIsolated) nMCPV_isol++;
-        if(itmc->distToClosestMCPV > m_dzIsolated && itmc->nRecTracks < m_nTracksToBeRecble) nmrc_isol++;
-        if(itmc->distToClosestMCPV < m_dzIsolated) nMCPV_close++;
-        if(itmc->distToClosestMCPV < m_dzIsolated && itmc->nRecTracks < m_nTracksToBeRecble) nmrc_close++;
+        if(itmc->distToClosestMCPV > dzIsolated) nMCPV_isol++;
+        if(itmc->distToClosestMCPV > dzIsolated && itmc->nRecTracks < nTracksToBeRecble) nmrc_isol++;
+        if(itmc->distToClosestMCPV < dzIsolated) nMCPV_close++;
+        if(itmc->distToClosestMCPV < dzIsolated && itmc->nRecTracks < nTracksToBeRecble) nmrc_close++;
         if(itmc->indexRecPVInfo > -1) {
           nRecMCPV++;
-          if(itmc->distToClosestMCPV > m_dzIsolated) nRecMCPV_isol++;
-          if(itmc->distToClosestMCPV < m_dzIsolated) nRecMCPV_close++;
+          if(itmc->distToClosestMCPV > dzIsolated) nRecMCPV_isol++;
+          if(itmc->distToClosestMCPV < dzIsolated) nRecMCPV_close++;
         }
       }
 
       nMCPV_isol = nMCPV_isol -nmrc_isol;
       nMCPV_close = nMCPV_close -nmrc_close;
 
-      m_nMCPV                 +=  nMCPV;
-      m_nRecMCPV              +=  nRecMCPV;
-      m_nMCPV_isol            +=  nMCPV_isol;
-      m_nRecMCPV_isol         +=  nRecMCPV_isol;
-      m_nMCPV_close           +=  nMCPV_close;
-      m_nRecMCPV_close        +=  nRecMCPV_close;
-      m_nFalsePV              +=  nFalsePV;
-      m_nFalsePV_real         +=  nFalsePV_real;
+      sum_nMCPV                 +=  nMCPV;
+      sum_nRecMCPV              +=  nRecMCPV;
+      sum_nMCPV_isol            +=  nMCPV_isol;
+      sum_nRecMCPV_isol         +=  nRecMCPV_isol;
+      sum_nMCPV_close           +=  nMCPV_close;
+      sum_nRecMCPV_close        +=  nRecMCPV_close;
+      sum_nFalsePV              +=  nFalsePV;
+      sum_nFalsePV_real         +=  nFalsePV_real;
 
       //loop over matched MC PVs and get pull and errors
       for(auto mc_vertex_info : rblemcpv) {
@@ -323,14 +323,14 @@ void checkPVs(
         
       }
 
-      m_nMCPV += nMCPV;
-      m_nRecMCPV += nRecMCPV;
-      m_nMCPV_isol += nMCPV_isol;
-      m_nRecMCPV_isol += nRecMCPV_isol;
-      m_nMCPV_close += nMCPV_close;
-      m_nRecMCPV_close += nRecMCPV_close;
-      m_nFalsePV += nFalsePV;
-      m_nFalsePV_real += nFalsePV_real;
+      sum_nMCPV += nMCPV;
+      sum_nRecMCPV += nRecMCPV;
+      sum_nMCPV_isol += nMCPV_isol;
+      sum_nRecMCPV_isol += nRecMCPV_isol;
+      sum_nMCPV_close += nMCPV_close;
+      sum_nRecMCPV_close += nRecMCPV_close;
+      sum_nFalsePV += nFalsePV;
+      sum_nFalsePV_real += nFalsePV_real;
 
       // loop over matched MC PVs and get pull and errors
       for (auto mc_vertex_info : rblemcpv) {
@@ -361,23 +361,23 @@ void checkPVs(
     info_cout << " ============================================" << std::endl;
     info_cout << " " << std::endl;
 
-    info_cout << " MC PV is reconstructible if at least " << m_nTracksToBeRecble << "  tracks are reconstructed"
+    info_cout << " MC PV is reconstructible if at least " << nTracksToBeRecble << "  tracks are reconstructed"
               << std::endl;
-    info_cout << " MC PV is isolated if dz to closest reconstructible MC PV >  " << m_dzIsolated << " mm" << std::endl;
+    info_cout << " MC PV is isolated if dz to closest reconstructible MC PV >  " << dzIsolated << " mm" << std::endl;
     std::string ff = "by counting tracks";
-    if (!m_matchByTracks) ff = "by dz distance";
+    if (!matchByTracks) ff = "by dz distance";
     info_cout << " REC and MC vertices matched:  " << ff << std::endl;
 
     info_cout << " " << std::endl;
 
-    printRat("All", m_nRecMCPV, m_nMCPV);
-    printRat("Isolated", m_nRecMCPV_isol, m_nMCPV_isol);
-    printRat("Close", m_nRecMCPV_close, m_nMCPV_close);
-    printRat("False rate", m_nFalsePV, m_nRecMCPV + m_nFalsePV);
-    printRat("Real false rate", m_nFalsePV_real, m_nRecMCPV + m_nFalsePV_real);
+    printRat("All", sum_nRecMCPV, sum_nMCPV);
+    printRat("Isolated", sum_nRecMCPV_isol, sum_nMCPV_isol);
+    printRat("Close", sum_nRecMCPV_close, sum_nMCPV_close);
+    printRat("False rate", sum_nFalsePV, sum_nRecMCPV + sum_nFalsePV);
+    printRat("Real false rate", sum_nFalsePV_real, sum_nRecMCPV + sum_nFalsePV_real);
 
-    info_cout << "new found: " << m_nRecMCPV << " / " << m_nMCPV << std::endl;
-    info_cout << "new fakes: " << m_nFalsePV << std::endl << std::endl;
+    info_cout << "new found: " << sum_nRecMCPV << " / " << sum_nMCPV << std::endl;
+    info_cout << "new fakes: " << sum_nFalsePV << std::endl << std::endl;
 
     // save information about matched reconstructed PVs for pulls distributions
     #ifdef WITH_ROOT

@@ -14,9 +14,9 @@
 #endif
 
 // configuration for PV checker -> check values
-int m_nTracksToBeRecble = 4;
-double m_dzIsolated = 10; // mm
-bool m_matchByTracks = false;
+static constexpr int nTracksToBeRecble = 4;
+static constexpr double dzIsolated = 10.; // mm
+static constexpr bool matchByTracks = false;
 
 void checkPVs(
   const std::string& foldername,
