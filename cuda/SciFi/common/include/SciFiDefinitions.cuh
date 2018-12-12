@@ -21,22 +21,43 @@ namespace SciFi {
 static constexpr int num_atomics = 3;
 
 namespace Constants {
-  /* Detector description
-     There are three stations with four layers each
-  */
+  // Detector description
+  // There are three stations with four layers each
   static constexpr uint n_stations           = 3;
   static constexpr uint n_layers_per_station = 4;
   static constexpr uint n_zones              = 24;
   static constexpr uint n_layers             = 12;
   static constexpr uint n_mats               = 1024;
 
+  /**
+   * The following constants are based on the number of modules per quarter.
+   * There are currently 80 raw banks per SciFi station:
+   * 
+   *   The first two stations (first 160 raw banks) encode 4 modules per quarter.
+   *   The last station (raw banks 161 to 240) encode 5 modules per quarter.
+   *   
+   * The raw data is sorted such that every four consecutive modules are either
+   * monotonically increasing or monotonically decreasing, following a particular pattern.
+   * Thus, it is possible to decode the first 160 raw banks in v4 in parallel since the
+   * position of each hit is known by simply knowing the current iteration in the raw bank,
+   * and using that information as a relative index, given the raw bank offset.
+   * This kind of decoding is what we call "direct decoding".
+   * 
+   * However, the last 80 raw banks cannot be decoded in this manner. Therefore, the
+   * previous method is employed for these last raw banks, consisting in a two-step
+   * decoding.
+   * 
+   * The constants below capture this idea. The prefix sum needed contains information about
+   * "mat groups" (the first 160 raw banks, since the offset of the group is enough).
+   * However, for the last sector, every mat offset is stored individually.
+   */
   static constexpr uint n_consecutive_raw_banks = 160;
   static constexpr uint n_mats_per_consec_raw_bank = 4;
   static constexpr uint n_mat_groups_and_mats = 544;
   static constexpr uint mat_index_substract = n_consecutive_raw_banks * 3;
   static constexpr uint n_mats_without_group = n_mats - n_consecutive_raw_banks*n_mats_per_consec_raw_bank;
 
-  static constexpr float ZEndT               = 9410. * Gaudi::Units::mm;
+  static constexpr float ZEndT               = 9410.f * Gaudi::Units::mm;
 
   /* Cut-offs */
   static constexpr uint max_numhits_per_event = 10000;

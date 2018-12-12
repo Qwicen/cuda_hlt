@@ -3,6 +3,17 @@
 
 using namespace SciFi;
 
+/**
+ * @brief Direct decoder for the first two stations.
+ * @detail The first two stations (first 160 raw banks) encode 4 modules per quarter.
+ *         
+ *         The raw data is sorted such that every four consecutive modules are either
+ *         monotonically increasing or monotonically decreasing, following a particular pattern.
+ *         Thus, it is possible to decode the first 160 raw banks in v4 in parallel since the
+ *         position of each hit is known by simply knowing the current iteration in the raw bank,
+ *         and using that information as a relative index, given the raw bank offset.
+ *         This kind of decoding is what we call "direct decoding".
+ */
 __global__ void scifi_direct_decoder_v4(
   char *scifi_events,
   uint *scifi_event_offsets,
