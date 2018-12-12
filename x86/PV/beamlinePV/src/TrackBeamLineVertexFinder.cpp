@@ -11,6 +11,7 @@
 
 #include "TrackBeamLineVertexFinder.h"
 #include "BeamlinePVConstants.cuh"
+#include "SeedZWithIteratorPair.h"
 
 #ifdef WITH_ROOT
 #include "TH1D.h"
