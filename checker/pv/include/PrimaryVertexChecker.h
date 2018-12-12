@@ -97,7 +97,7 @@ void match_mc_vertex_by_distance(int ipv, std::vector<RecPVInfo>& rinfo, std::ve
 void printRat(std::string mes, int a, int b)
 {
 
-  double rat = 0.;
+  float rat = 0.f;
   if (b > 0) rat = 1.0f * a / b;
 
   // reformat message
