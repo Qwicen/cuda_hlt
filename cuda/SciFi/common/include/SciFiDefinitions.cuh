@@ -1,5 +1,4 @@
-#ifndef SCIFIDEFINITIONS_H
-#define SCIFIDEFINITIONS_H 1
+#pragma once
 
 #include <stdint.h>
 #include <vector>
@@ -176,5 +175,3 @@ struct SciFiChannelID {
   __device__ bool cSize(uint16_t c);
 
 }
-
-#endif
