@@ -66,11 +66,11 @@ endif()
 
 # Cuda: Deal with build type
 if(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
-  set(CUDA_BUILD_TYPE "-O3 -g -DNDEBUG ")
+  set(CMAKE_CUDA_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG ")
 elseif(${CMAKE_BUILD_TYPE} STREQUAL Release)
-  set(CUDA_BUILD_TYPE "-O3 -DNDEBUG ")
+  set(CMAKE_CUDA_FLAGS_RELEASE "-O3 -DNDEBUG ")
 elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
-  set(CUDA_BUILD_TYPE "-O0 -G -g -DDEBUG ")
+  set(CMAKE_CUDA_FLAGS_DEBUG "-O0 -G -g -DDEBUG ")
 endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 
 # In case we want to compile with clang:
