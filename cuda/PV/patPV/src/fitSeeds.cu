@@ -47,19 +47,19 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
               uint tracks_offset) 
 {
 
-  PatPV::myfloat tr_state_x[Velo::Constants::max_tracks] ;
-  PatPV::myfloat tr_state_y[Velo::Constants::max_tracks] ;
-  PatPV::myfloat tr_state_z[Velo::Constants::max_tracks] ;
+  float tr_state_x[Velo::Constants::max_tracks] ;
+  float tr_state_y[Velo::Constants::max_tracks] ;
+  float tr_state_z[Velo::Constants::max_tracks] ;
 
-  PatPV::myfloat tr_state_tx[Velo::Constants::max_tracks];
-  PatPV::myfloat tr_state_ty[Velo::Constants::max_tracks] ;
+  float tr_state_tx[Velo::Constants::max_tracks];
+  float tr_state_ty[Velo::Constants::max_tracks] ;
 
-  PatPV::myfloat tr_state_c00[Velo::Constants::max_tracks] ;
-  PatPV::myfloat tr_state_c11[Velo::Constants::max_tracks] ;
-  PatPV::myfloat tr_state_c20[Velo::Constants::max_tracks] ;
-  PatPV::myfloat tr_state_c22[Velo::Constants::max_tracks] ;
-  PatPV::myfloat tr_state_c31[Velo::Constants::max_tracks] ;
-  PatPV::myfloat tr_state_c33[Velo::Constants::max_tracks] ;
+  float tr_state_c00[Velo::Constants::max_tracks] ;
+  float tr_state_c11[Velo::Constants::max_tracks] ;
+  float tr_state_c20[Velo::Constants::max_tracks] ;
+  float tr_state_c22[Velo::Constants::max_tracks] ;
+  float tr_state_c31[Velo::Constants::max_tracks] ;
+  float tr_state_c33[Velo::Constants::max_tracks] ;
 
 
   // position at which derivatives are evaluated
@@ -75,24 +75,24 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
     int index = i + tracks_offset;
 
     VeloState trk = velo_states.get( index);
-    PatPV::myfloat new_z = vtxpos.z;
+    float new_z = vtxpos.z;
 
-    PatPV::myfloat m_state_x = trk.x;
-    PatPV::myfloat m_state_y = trk.y;
-    PatPV::myfloat m_state_z = trk.z;
+    float m_state_x = trk.x;
+    float m_state_y = trk.y;
+    float m_state_z = trk.z;
 
-    PatPV::myfloat m_state_tx = trk.tx;
-    PatPV::myfloat m_state_ty = trk.ty;
+    float m_state_tx = trk.tx;
+    float m_state_ty = trk.ty;
 
-    PatPV::myfloat m_state_c00 = trk.c00;
-    PatPV::myfloat m_state_c11 = trk.c11;
-    PatPV::myfloat m_state_c20 = trk.c20;
-    PatPV::myfloat m_state_c22 = trk.c22;
-    PatPV::myfloat m_state_c31 = trk.c31;
-    PatPV::myfloat m_state_c33 = trk.c33;
+    float m_state_c00 = trk.c00;
+    float m_state_c11 = trk.c11;
+    float m_state_c20 = trk.c20;
+    float m_state_c22 = trk.c22;
+    float m_state_c31 = trk.c31;
+    float m_state_c33 = trk.c33;
 
-    const PatPV::myfloat dz = new_z - m_state_z ;
-    const PatPV::myfloat dz2 = dz*dz ;
+    const float dz = new_z - m_state_z ;
+    const float dz2 = dz*dz ;
 
     m_state_x += dz * m_state_tx ;
     m_state_y += dz * m_state_ty ;
@@ -104,7 +104,7 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
 
     PatPV::Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
-    PatPV::myfloat  tr_chi2 = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
+    float  tr_chi2 = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
   
     if(tr_chi2 < PatPV::m_maxChi2) {
  // have to use updated values!!
@@ -135,44 +135,44 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
   }
 
 
-  PatPV::myfloat vtxcov[6] ;
+  float vtxcov[6] ;
   bool converged = false;
-  PatPV::myfloat maxdz = PatPV::m_maxDeltaZ;
+  float maxdz = PatPV::m_maxDeltaZ;
   int nbIter = 0;
   int tracks_in_vertex = 0;
   while( (nbIter < PatPV::m_minIter) || (!converged && nbIter < PatPV::m_Iterations) ) {
     ++nbIter;
 
-    PatPV::myfloat halfD2Chi2DX2_00 = 0.;
-    PatPV::myfloat halfD2Chi2DX2_10 = 0.;
-    PatPV::myfloat halfD2Chi2DX2_11 = 0.;
-    PatPV::myfloat halfD2Chi2DX2_20 = 0.;
-    PatPV::myfloat halfD2Chi2DX2_21 = 0.;
-    PatPV::myfloat halfD2Chi2DX2_22 = 0.;
+    float halfD2Chi2DX2_00 = 0.;
+    float halfD2Chi2DX2_10 = 0.;
+    float halfD2Chi2DX2_11 = 0.;
+    float halfD2Chi2DX2_20 = 0.;
+    float halfD2Chi2DX2_21 = 0.;
+    float halfD2Chi2DX2_22 = 0.;
     PatPV::XYZPoint halfDChi2DX(0.,0.,0.) ;
 
     // add contribution from all tracks
-    PatPV::myfloat chi2(0) ;
+    float chi2(0) ;
     size_t ntrin(0) ;
     for( int index = 0; index < pvTrack_counter; index++) {
       
-      PatPV::myfloat new_z = vtxpos.z;
-      PatPV::myfloat m_state_x = tr_state_x[index];
-      PatPV::myfloat m_state_y = tr_state_y[index];
-      PatPV::myfloat m_state_z = tr_state_z[index];
+      float new_z = vtxpos.z;
+      float m_state_x = tr_state_x[index];
+      float m_state_y = tr_state_y[index];
+      float m_state_z = tr_state_z[index];
 
-      PatPV::myfloat m_state_tx = tr_state_tx[index];
-      PatPV::myfloat m_state_ty = tr_state_ty[index];
+      float m_state_tx = tr_state_tx[index];
+      float m_state_ty = tr_state_ty[index];
 
-      PatPV::myfloat m_state_c00 = tr_state_c00[index];
-      PatPV::myfloat m_state_c11 = tr_state_c11[index];
-      PatPV::myfloat m_state_c20 = tr_state_c20[index];
-      PatPV::myfloat m_state_c22 = tr_state_c22[index];
-      PatPV::myfloat m_state_c31 = tr_state_c31[index];
-      PatPV::myfloat m_state_c33 = tr_state_c33[index];
+      float m_state_c00 = tr_state_c00[index];
+      float m_state_c11 = tr_state_c11[index];
+      float m_state_c20 = tr_state_c20[index];
+      float m_state_c22 = tr_state_c22[index];
+      float m_state_c31 = tr_state_c31[index];
+      float m_state_c33 = tr_state_c33[index];
 
-      const PatPV::myfloat dz = new_z - m_state_z ;
-      const PatPV::myfloat dz2 = dz*dz ;
+      const float dz = new_z - m_state_z ;
+      const float dz2 = dz*dz ;
 
       m_state_x += dz * m_state_tx ;
       m_state_y += dz * m_state_ty ;
@@ -184,20 +184,20 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
 
       PatPV::Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
-      PatPV::myfloat tr_halfD2Chi2DX2_00 = 1. / m_state_c00;
-      PatPV::myfloat tr_halfD2Chi2DX2_10 = 0.;
-      PatPV::myfloat tr_halfD2Chi2DX2_11 = 1. / m_state_c11;
-      PatPV::myfloat tr_halfD2Chi2DX2_20 = - m_state_tx / m_state_c00;
-      PatPV::myfloat tr_halfD2Chi2DX2_21 = - m_state_ty / m_state_c11;
-      PatPV::myfloat tr_halfD2Chi2DX2_22 = m_state_tx * m_state_tx / m_state_c00 + m_state_ty * m_state_ty / m_state_c11;
+      float tr_halfD2Chi2DX2_00 = 1. / m_state_c00;
+      float tr_halfD2Chi2DX2_10 = 0.;
+      float tr_halfD2Chi2DX2_11 = 1. / m_state_c11;
+      float tr_halfD2Chi2DX2_20 = - m_state_tx / m_state_c00;
+      float tr_halfD2Chi2DX2_21 = - m_state_ty / m_state_c11;
+      float tr_halfD2Chi2DX2_22 = m_state_tx * m_state_tx / m_state_c00 + m_state_ty * m_state_ty / m_state_c11;
 
-      PatPV::myfloat tr_halfDChi2DX_x = res.x / m_state_c00;
-      PatPV::myfloat tr_halfDChi2DX_y = res.y / m_state_c11;
-      PatPV::myfloat tr_halfDChi2DX_z = -m_state_tx*res.x / m_state_c00-m_state_ty*res.y / m_state_c11;
-      PatPV::myfloat tr_chi2          = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
+      float tr_halfDChi2DX_x = res.x / m_state_c00;
+      float tr_halfDChi2DX_y = res.y / m_state_c11;
+      float tr_halfDChi2DX_z = -m_state_tx*res.x / m_state_c00-m_state_ty*res.y / m_state_c11;
+      float tr_chi2          = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
 
 
-      PatPV::myfloat weight = get_tukey_weight(tr_chi2, nbIter) ;
+      float weight = get_tukey_weight(tr_chi2, nbIter) ;
 
       // add the track
       if ( weight > PatPV::m_minTrackWeight ) {
@@ -231,14 +231,14 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
 
 
     //replace Cholesky inverter by analytical solution
-    PatPV::myfloat a00 = halfD2Chi2DX2_00;
-    PatPV::myfloat a10 = halfD2Chi2DX2_10;
-    PatPV::myfloat a11 = halfD2Chi2DX2_11;
-    PatPV::myfloat a20 = halfD2Chi2DX2_20;
-    PatPV::myfloat a21 = halfD2Chi2DX2_21;
-    PatPV::myfloat a22 = halfD2Chi2DX2_22;
+    float a00 = halfD2Chi2DX2_00;
+    float a10 = halfD2Chi2DX2_10;
+    float a11 = halfD2Chi2DX2_11;
+    float a20 = halfD2Chi2DX2_20;
+    float a21 = halfD2Chi2DX2_21;
+    float a22 = halfD2Chi2DX2_22;
 
-    PatPV::myfloat det = a00 * (a22 * a11 - a21 * a21) - a10 * (a22 * a10 - a21 * a20) + a20 * (a21*a10 - a11*a20);
+    float det = a00 * (a22 * a11 - a21 * a21) - a10 * (a22 * a10 - a21 * a20) + a20 * (a21*a10 - a11*a20);
     if (det == 0) return false;
 
 
@@ -288,11 +288,11 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
 //=============================================================================
 // Get Tukey's weight
 //=============================================================================
-__device__ PatPV::myfloat get_tukey_weight(PatPV::myfloat trchi2, int iter) 
+__device__ float get_tukey_weight(float trchi2, int iter) 
 {
   if (iter<1 ) return 1.;
-  PatPV::myfloat ctrv = PatPV::m_trackChi * std::max(PatPV::m_minIter -  iter,1);
-  PatPV::myfloat cT2 = trchi2 / std::pow(ctrv*PatPV::m_TrackErrorScaleFactor,2);
+  float ctrv = PatPV::m_trackChi * std::max(PatPV::m_minIter -  iter,1);
+  float cT2 = trchi2 / std::pow(ctrv*PatPV::m_TrackErrorScaleFactor,2);
   return cT2 < 1. ? std::pow(1.-cT2,2) : 0. ;
 }
 

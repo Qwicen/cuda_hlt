@@ -19,8 +19,8 @@ struct PVTrack {
     // perhaps we should invert it /before/ switching to single FPP?
     // it doesn't seem to make much difference.
 
-    PV::myfloat state_tmp_c00 = state.c00;
-    PV::myfloat state_tmp_c11 = state.c11;
+    float state_tmp_c00 = state.c00;
+    float state_tmp_c11 = state.c11;
 
     float dz2 = dz * dz;
 

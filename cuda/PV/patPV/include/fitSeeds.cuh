@@ -23,6 +23,6 @@ __device__ bool fit_vertex(PatPV::XYZPoint& seedPoint,
               int number_of_tracks,
               uint tracks_offset) ;
 
-__device__ PatPV::myfloat get_tukey_weight(PatPV::myfloat trchi2, int iter) ;
+__device__ float get_tukey_weight(float trchi2, int iter) ;
 
 ALGORITHM(fit_seeds, pv_fit_seeds_t)

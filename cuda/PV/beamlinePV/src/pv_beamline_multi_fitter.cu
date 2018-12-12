@@ -49,12 +49,12 @@ __global__ void pv_beamline_multi_fitter(
     unsigned short iter = 0;
     // debug_cout << "next vertex " << std::endl;
     for (; iter < maxNumIter && !converged; ++iter) {
-      PV::myfloat halfD2Chi2DX2_00 = 0.f;
-      PV::myfloat halfD2Chi2DX2_10 = 0.f;
-      PV::myfloat halfD2Chi2DX2_11 = 0.f;
-      PV::myfloat halfD2Chi2DX2_20 = 0.f;
-      PV::myfloat halfD2Chi2DX2_21 = 0.f;
-      PV::myfloat halfD2Chi2DX2_22 = 0.f;
+      float halfD2Chi2DX2_00 = 0.f;
+      float halfD2Chi2DX2_10 = 0.f;
+      float halfD2Chi2DX2_11 = 0.f;
+      float halfD2Chi2DX2_20 = 0.f;
+      float halfD2Chi2DX2_21 = 0.f;
+      float halfD2Chi2DX2_22 = 0.f;
       float3 halfDChi2DX {0.f, 0.f, 0.f};
       chi2tot = 0.f;
       nselectedtracks = 0;
@@ -127,14 +127,14 @@ __global__ void pv_beamline_multi_fitter(
       
       if (nselectedtracks >= 2) {
         // compute the new vertex covariance using analytical inversion
-        PV::myfloat a00 = halfD2Chi2DX2_00;
-        PV::myfloat a10 = halfD2Chi2DX2_10;
-        PV::myfloat a11 = halfD2Chi2DX2_11;
-        PV::myfloat a20 = halfD2Chi2DX2_20;
-        PV::myfloat a21 = halfD2Chi2DX2_21;
-        PV::myfloat a22 = halfD2Chi2DX2_22;
+        float a00 = halfD2Chi2DX2_00;
+        float a10 = halfD2Chi2DX2_10;
+        float a11 = halfD2Chi2DX2_11;
+        float a20 = halfD2Chi2DX2_20;
+        float a21 = halfD2Chi2DX2_21;
+        float a22 = halfD2Chi2DX2_22;
 
-        PV::myfloat det = a00 * (a22 * a11 - a21 * a21) - a10 * (a22 * a10 - a21 * a20) + a20 * (a21 * a10 - a11 * a20);
+        float det = a00 * (a22 * a11 - a21 * a21) - a10 * (a22 * a10 - a21 * a20) + a20 * (a21 * a10 - a11 * a20);
         // maybe we should catch the case when det = 0
         // if (det == 0) return false;
 

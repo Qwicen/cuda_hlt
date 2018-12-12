@@ -89,12 +89,12 @@ namespace {
       unsigned short iter = 0;
       debug_cout << "next vertex " << std::endl;
       for(; iter<maxNumIter && !converged;++iter) {
-        PV::myfloat halfD2Chi2DX2_00 = 0.;
-        PV::myfloat halfD2Chi2DX2_10 = 0.;
-        PV::myfloat halfD2Chi2DX2_11 = 0.;
-        PV::myfloat halfD2Chi2DX2_20 = 0.;
-        PV::myfloat halfD2Chi2DX2_21 = 0.;
-        PV::myfloat halfD2Chi2DX2_22 = 0.;
+        float halfD2Chi2DX2_00 = 0.;
+        float halfD2Chi2DX2_10 = 0.;
+        float halfD2Chi2DX2_11 = 0.;
+        float halfD2Chi2DX2_20 = 0.;
+        float halfD2Chi2DX2_21 = 0.;
+        float halfD2Chi2DX2_22 = 0.;
         float3 halfDChi2DX{0.f,0.f,0.f} ;
         chi2tot = 0.f ;
         nselectedtracks = 0 ;
@@ -175,14 +175,14 @@ namespace {
         }
         if(nselectedtracks>=2) {
           // compute the new vertex covariance using analytical inversion
-          PV::myfloat a00 = halfD2Chi2DX2_00;
-          PV::myfloat a10 = halfD2Chi2DX2_10;
-          PV::myfloat a11 = halfD2Chi2DX2_11;
-          PV::myfloat a20 = halfD2Chi2DX2_20;
-          PV::myfloat a21 = halfD2Chi2DX2_21;
-          PV::myfloat a22 = halfD2Chi2DX2_22;
+          float a00 = halfD2Chi2DX2_00;
+          float a10 = halfD2Chi2DX2_10;
+          float a11 = halfD2Chi2DX2_11;
+          float a20 = halfD2Chi2DX2_20;
+          float a21 = halfD2Chi2DX2_21;
+          float a22 = halfD2Chi2DX2_22;
           
-          PV::myfloat det = a00 * (a22 * a11 - a21 * a21) - a10 * (a22 * a10 - a21 * a20) + a20 * (a21*a10 - a11*a20);
+          float det = a00 * (a22 * a11 - a21 * a21) - a10 * (a22 * a10 - a21 * a20) + a20 * (a21*a10 - a11*a20);
           // if (det == 0) return false;
                   
           vtxcov[0] = (a22*a11 - a21*a21) / det;
@@ -260,12 +260,12 @@ namespace {
     unsigned short iter = 0;
     debug_cout << "next vertex " << std::endl;
     for(; iter<maxNumIter && !converged;++iter) {
-      PV::myfloat halfD2Chi2DX2_00 = 0.;
-      PV::myfloat halfD2Chi2DX2_10 = 0.;
-      PV::myfloat halfD2Chi2DX2_11 = 0.;
-      PV::myfloat halfD2Chi2DX2_20 = 0.;
-      PV::myfloat halfD2Chi2DX2_21 = 0.;
-      PV::myfloat halfD2Chi2DX2_22 = 0.;
+      float halfD2Chi2DX2_00 = 0.;
+      float halfD2Chi2DX2_10 = 0.;
+      float halfD2Chi2DX2_11 = 0.;
+      float halfD2Chi2DX2_20 = 0.;
+      float halfD2Chi2DX2_21 = 0.;
+      float halfD2Chi2DX2_22 = 0.;
       float3 halfDChi2DX{0.f,0.f,0.f} ;
       chi2tot = 0.f ;
       nselectedtracks = 0 ;
@@ -286,7 +286,7 @@ namespace {
           ++nselectedtracks ;
           // Tukey's weight
           trk.weight = 1.f - chi2 / chi2max ;
-          trk.weight = trk_weight * trk.weight
+          trk.weight = trk.weight * trk.weight;
           // += operator does not work for mixed FP types
           //halfD2Chi2DX2 += trk.weight * trk.HWH ;
           //halfDChi2DX   += trk.weight * trk.HW * res ;
@@ -311,14 +311,14 @@ namespace {
       }
       if(nselectedtracks>=2) {
         // compute the new vertex covariance using analytical inversion
-        PV::myfloat a00 = halfD2Chi2DX2_00;
-        PV::myfloat a10 = halfD2Chi2DX2_10;
-        PV::myfloat a11 = halfD2Chi2DX2_11;
-        PV::myfloat a20 = halfD2Chi2DX2_20;
-        PV::myfloat a21 = halfD2Chi2DX2_21;
-        PV::myfloat a22 = halfD2Chi2DX2_22;
+        float a00 = halfD2Chi2DX2_00;
+        float a10 = halfD2Chi2DX2_10;
+        float a11 = halfD2Chi2DX2_11;
+        float a20 = halfD2Chi2DX2_20;
+        float a21 = halfD2Chi2DX2_21;
+        float a22 = halfD2Chi2DX2_22;
         
-        PV::myfloat det = a00 * (a22 * a11 - a21 * a21) - a10 * (a22 * a10 - a21 * a20) + a20 * (a21*a10 - a11*a20);
+        float det = a00 * (a22 * a11 - a21 * a21) - a10 * (a22 * a10 - a21 * a20) + a20 * (a21*a10 - a11*a20);
         // if (det == 0) return false;
                 
         vtxcov[0] = (a22*a11 - a21*a21) / det;
