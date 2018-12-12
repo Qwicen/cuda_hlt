@@ -32,4 +32,3 @@ add_library(Velo STATIC
 )
 
 set_target_properties(Velo PROPERTIES CUDA_SEPERABLE_COMPILATION ON)
-set_target_properties(Velo PROPERTIES POSITION_INDEPENDENT_CODE ON)
