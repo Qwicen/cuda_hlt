@@ -5,9 +5,9 @@ struct SeedZWithIteratorPair {
   float z;
   iterator begin;
   iterator end;
-  __host__ __device__ SeedZWithIteratorPair(float _z, iterator _begin, iterator _end) :
+  SeedZWithIteratorPair(float _z, iterator _begin, iterator _end) :
     z {_z}, begin {_begin}, end {_end} {};
-  __host__ __device__ SeedZWithIteratorPair() {};
+  SeedZWithIteratorPair() {};
 
   PVTrack* get_array() const
   {
