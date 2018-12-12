@@ -20,11 +20,11 @@ __global__ void pv_beamline_extrapolate(
     int index = blockDim.x * i + threadIdx.x;
     if (index < number_of_tracks_event) {
       VeloState s = velo_states.get(event_tracks_offset + index);
-      PatPV::XYZPoint beamline(0., 0., 0.);
+      PatPV::XYZPoint beamline{0.f, 0.f, 0.f};
       const auto tx = s.tx;
       const auto ty = s.ty;
-      const double dz = (tx * (beamline.x - s.x) + ty * (beamline.y - s.y)) / (tx * tx + ty * ty);
-      const double newz = s.z + dz;
+      const float dz = (tx * (beamline.x - s.x) + ty * (beamline.y - s.y)) / (tx * tx + ty * ty);
+      const float newz = s.z + dz;
       PVTrack pvtrack = PVTrack {s, dz, index};
       dev_pvtracks[event_tracks_offset + index] = pvtrack;
     }
