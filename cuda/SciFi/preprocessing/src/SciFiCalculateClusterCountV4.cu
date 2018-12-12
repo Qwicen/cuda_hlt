@@ -2,6 +2,11 @@
 
 using namespace SciFi;
 
+/**
+ * @brief This function calculates the amount of clusters in all mats.
+ * @details More details about the SciFi format:
+ *          https://cds.cern.ch/record/2630154/files/LHCb-INT-2018-024.pdf
+ */
 __global__ void scifi_calculate_cluster_count_v4(
   char* scifi_raw_input,
   uint* scifi_raw_input_offsets,
