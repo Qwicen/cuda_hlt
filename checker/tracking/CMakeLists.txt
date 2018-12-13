@@ -20,5 +20,11 @@ add_library(TrackChecking STATIC
 set_target_properties(TrackChecking PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if(ROOT_FOUND)
-  target_compile_definitions(TrackChecking PUBLIC WITH_ROOT)
+  target_compile_definitions(TrackChecking PRIVATE WITH_ROOT)
+  target_include_directories(TrackChecking BEFORE PRIVATE
+    ${ROOT_INCLUDE_DIRS}
+  )
+  target_link_libraries(TrackChecking PRIVATE
+    ${ROOT_LIBRARIES}
+  )
 endif()

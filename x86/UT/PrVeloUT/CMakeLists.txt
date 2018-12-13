@@ -21,7 +21,10 @@ set_property(TARGET x86VeloUT PROPERTY
 
 if ( ROOT_FOUND )
   target_compile_definitions(x86VeloUT PUBLIC WITH_ROOT)
-  target_link_libraries(x86VeloUT
+  target_include_directories(x86VeloUT BEFORE PRIVATE
+    ${ROOT_INCLUDE_DIRS}
+  )
+  target_link_libraries(x86VeloUT PRIVATE
     ${ROOT_LIBRARIES}
   )
 endif()

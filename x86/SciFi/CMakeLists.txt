@@ -34,8 +34,10 @@ set_property(TARGET x86Forward PROPERTY
 
 if ( ROOT_FOUND )
   target_compile_definitions(x86Forward PUBLIC WITH_ROOT)
-  target_link_libraries(x86Forward
+  target_link_libraries(x86Forward PRIVATE
     ${ROOT_LIBRARIES}
   )
-  target_include_directories(x86Forward PUBLIC ${ROOT_INCLUDE_DIRS})
+  target_include_directories(x86Forward BEFORE PRIVATE
+    ${ROOT_INCLUDE_DIRS}
+  )
 endif()

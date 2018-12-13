@@ -16,5 +16,11 @@ add_library(PVChecking SHARED
 set_target_properties(PVChecking PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if(ROOT_FOUND)
-  target_compile_definitions(PVChecking PUBLIC WITH_ROOT)
+  target_compile_definitions(PVChecking PRIVATE WITH_ROOT)
+  target_include_directories(PVChecking BEFORE PRIVATE
+    ${ROOT_INCLUDE_DIRS}
+  )
+  target_link_libraries(PVChecking PRIVATE
+    ${ROOT_LIBRARIES}
+  )
 endif()

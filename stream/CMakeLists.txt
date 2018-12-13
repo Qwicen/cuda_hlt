@@ -80,9 +80,12 @@ target_link_libraries(Stream PRIVATE
 set_property(TARGET Stream PROPERTY
              CUDA_SEPARABLE_COMPILATION ON)
 
-if ( ROOT_FOUND )
+if (ROOT_FOUND)
   target_compile_definitions(Stream PUBLIC WITH_ROOT)
-  message("-- Found ROOT, setting WITH_ROOT to true")
-  target_link_libraries(Stream
-    ${ROOT_LIBRARIES})
+  target_include_directories(Stream BEFORE PRIVATE
+    ${ROOT_INCLUDE_DIRS}
+  )
+  target_link_libraries(Stream PRIVATE
+    ${ROOT_LIBRARIES}
+  )
 endif()
