@@ -18,7 +18,7 @@ __global__ void ut_search_windows(
 {
   const uint number_of_events           = gridDim.x;
   const uint event_number               = blockIdx.x;
-  const uint layer                       = threadIdx.x;
+  const uint layer                      = threadIdx.x;
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[VeloUTTracking::n_layers];
   const uint total_number_of_hits       = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
 
@@ -37,7 +37,7 @@ __global__ void ut_search_windows(
   int* active_tracks = dev_active_tracks + event_number;
 
   // initialize atomic veloUT tracks counter && active track
-  if (threadIdx.x == 0) {
+  if (threadIdx.y == 0) {
     *active_tracks = 0;
   }
 
@@ -50,8 +50,6 @@ __global__ void ut_search_windows(
   // for (int i = threadIdx.y; i < number_of_tracks_event; i += blockDim.y) {
     const auto i_track = i * blockDim.y + threadIdx.y;
 
-    // printf("i_track: %i\n", i_track);
-
     __syncthreads();
 
     // filter the tracks that won't be valid
@@ -62,7 +60,6 @@ __global__ void ut_search_windows(
         if (!velo_states.backward[current_track_offset] && 
             velo_track_in_UTA_acceptance(velo_state) ) {
               int current_track = atomicAdd(active_tracks, 1);
-              // printf("current_track: %i\n", current_track);
               shared_active_tracks[current_track] = i_track;
         }
       }      
@@ -77,10 +74,8 @@ __global__ void ut_search_windows(
 
       // printf("track: %i\n", shared_active_tracks[threadIdx.y]);
 
-      const uint current_track_offset = event_tracks_offset + i_track;
+      const uint current_track_offset = event_tracks_offset + shared_active_tracks[threadIdx.y];
       const auto velo_state = MiniState{velo_states, current_track_offset};
-
-      printf("shared_active_tracks[threadIdx.y]: %i\n", shared_active_tracks[threadIdx.y]);
 
       const auto candidates = calculate_windows(
         shared_active_tracks[threadIdx.y],
@@ -130,9 +125,7 @@ __global__ void ut_search_windows(
       __syncthreads();
 
       if (threadIdx.x == 0 && threadIdx.y == 0) {
-        // assert((*active_tracks) >= blockDim.y);
         *active_tracks -= blockDim.y;
-        printf("active_tracks: %i, size: %i\n", *active_tracks, (blockDim.y * blockDim.x));
       }
     }
   }
