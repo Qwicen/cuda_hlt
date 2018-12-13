@@ -7,7 +7,6 @@
 #include "VeloConsolidated.cuh"
 #include "VeloDefinitions.cuh"
 #include "VeloEventModel.cuh"
-#include "patPV_Definitions.cuh"
 #include <stdint.h>
 
 __global__ void pv_beamline_multi_fitter(

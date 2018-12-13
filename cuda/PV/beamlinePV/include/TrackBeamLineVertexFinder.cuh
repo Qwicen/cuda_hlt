@@ -4,7 +4,7 @@
 #include "Logger.h"
 #include "PV_Definitions.cuh"
 #include "VeloConsolidated.cuh"
-#include "float_operations.h"
+#include "float_operations.cuh"
 
 #include <algorithm>
 #include <math.h>
