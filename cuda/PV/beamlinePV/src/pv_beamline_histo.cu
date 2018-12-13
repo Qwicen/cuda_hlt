@@ -15,7 +15,7 @@ __global__ void
 pv_beamline_histo(int* dev_atomics_storage, uint* dev_velo_track_hit_number, PVTrack* dev_pvtracks, float* dev_zhisto)
 {
 
-  const int Nbins = (m_zmax - m_zmin) / m_dz;
+  const int Nbins = (zmax - zmin) / dz;
 
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
@@ -42,10 +42,10 @@ pv_beamline_histo(int* dev_atomics_storage, uint* dev_velo_track_hit_number, PVT
 
       PVTrack trk = dev_pvtracks[event_tracks_offset + index];
       // apply the z cut here
-      if (m_zmin < trk.z && trk.z < m_zmax) {
+      if (zmin < trk.z && trk.z < zmax) {
 
         // bin in which z0 is, in floating point
-        const float zbin = (trk.z - m_zmin) / m_dz;
+        const float zbin = (trk.z - zmin) / dz;
 
         // to compute the size of the window, we use the track
         // errors. eventually we can just parametrize this as function of
@@ -53,11 +53,11 @@ pv_beamline_histo(int* dev_atomics_storage, uint* dev_velo_track_hit_number, PVT
         const float zweight = trk.tx.x * trk.tx.x * trk.W_00 + trk.tx.y * trk.tx.y * trk.W_11;
         const float zerr = 1.f / std::sqrt(zweight);
         // get rid of useless tracks. must be a bit carefull with this.
-        if (zerr < m_maxTrackZ0Err) { // m_nsigma < 10*m_dz ) {
+        if (zerr < maxTrackZ0Err) { // m_nsigma < 10*m_dz ) {
           // find better place to define this
           constexpr int N = 2;
           const float a = std::sqrt(float(2 * N + 3));
-          const float halfwindow = a * zerr / m_dz;
+          const float halfwindow = a * zerr / dz;
           // this looks a bit funny, but we need the first and last bin of the histogram to remain empty.
           const int minbin = std::max(int(zbin - halfwindow), 1);
           const int maxbin = std::min(int(zbin + halfwindow), Nbins - 2);
@@ -65,7 +65,7 @@ pv_beamline_histo(int* dev_atomics_storage, uint* dev_velo_track_hit_number, PVT
           if (maxbin >= minbin) {
             float integral = 0;
             for (auto i = minbin; i < maxbin; ++i) {
-              const float relz = (m_zmin + (i + 1) * m_dz - trk.z) / zerr;
+              const float relz = (zmin + (i + 1) * dz - trk.z) / zerr;
               const float thisintegral = gauss_integral(relz);
               atomicAdd(histo_base_pointer + i, thisintegral - integral);
               integral = thisintegral;

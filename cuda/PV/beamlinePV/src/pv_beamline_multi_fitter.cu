@@ -40,8 +40,9 @@ __global__ void pv_beamline_multi_fitter(
     bool converged = false;
     float vtxcov[6] = {0.f, 0.f, 0.f, 0.f, 0.f, 0.f};
 
-    // TODO: use x,y from beamline
-    float3 vtxpos = {0.f, 0.f, zseeds[i_thisseed]};
+    //initial vertex posisiton, use x,y of the beamline and z of the seed
+    float2 vtxpos_xy {beamline.x, beamline.y};
+    float vtxpos_z = zseeds[i_thisseed];
     const float maxDeltaZConverged {0.001f};
     float chi2tot = 0.f;
     unsigned short nselectedtracks = 0;
@@ -58,17 +59,16 @@ __global__ void pv_beamline_multi_fitter(
       float3 halfDChi2DX {0.f, 0.f, 0.f};
       chi2tot = 0.f;
       nselectedtracks = 0;
-      float2 vtxposvec {vtxpos.x, vtxpos.y};
       // debug_cout << "next track" << std::endl;
       for (int i = 0; i < number_of_tracks; i++) {
         
         // compute the chi2
         PVTrackInVertex trk = tracks[i];
         // skip tracks lying outside histogram range
-        if (m_zmin > trk.z || trk.z > m_zmax) continue;
-        const float dz = vtxpos.z - trk.z;
+        if (zmin > trk.z || trk.z > zmax) continue;
+        const float dz = vtxpos_z - trk.z;
         float2 res {0.f, 0.f};
-        res = vtxposvec - (trk.x + trk.tx * dz);
+        res = vtxpos_xy - (trk.x + trk.tx * dz);
         float chi2 = res.x * res.x * trk.W_00 + res.y * res.y * trk.W_11;
         // debug_cout << "chi2 = " << chi2 << ", max = " << chi2max << std::endl;
         // compute the weight.
@@ -81,24 +81,25 @@ __global__ void pv_beamline_multi_fitter(
           // float T = 1.f;
 
           // try out varying chi2_cut during iterations instead of T
-          float chi2_cut = 0.1f + 0.01f * maxNumIter / (iter + 1);
+          const float chi2_cut = 0.1f + 0.01f * maxNumIter / (iter + 1);
 
           trk.weight = exp(-chi2 * 0.5f);
           float denom = exp(-chi2_cut * 0.5f);
           for (int i_otherseed = 0; i_otherseed < number_of_seeds; i_otherseed++) {
-            float2 res {0.f, 0.f};
+            float2 res_otherseed {0.f, 0.f};
             const float dz = zseeds[i_otherseed] - trk.z;
-            float2 otherseedvtx {0.f, 0.f};
 
-            res = otherseedvtx - (trk.x + trk.tx * dz);
+            //we calculate the residual w.r.t to the other seed positions. Since we don't update them during the fit we use the beamline (x,y)
+            res_otherseed = res_otherseed - (trk.x + trk.tx * dz);
+            //res_otherseed = res_otherseed * res_otherseed;
             // at the moment this term reuses W'matrix at z of point of closest approach -> use seed positions instead?
-            float chi2 = res.x * res.x * trk.W_00 + res.y * res.y * trk.W_11;
+            float chi2 = res_otherseed.x * res_otherseed.x * trk.W_00 + res_otherseed.y * res_otherseed.y * trk.W_11;
             denom += exp(-chi2 * 0.5f);
           }
           trk.weight = trk.weight / denom;
 
           // unfortunately branchy, but reduces fake rate
-          if (trk.weight < m_minWeight) continue;
+          if (trk.weight < minWeight) continue;
           // trk.weight = sqr( 1.f - chi2 / chi2max ) ;
           // trk.weight = chi2 < 1 ? 1 : sqr( 1. - (chi2-1) / (chi2max-1) ) ;
           // += operator does not work for mixed FP types
@@ -146,18 +147,18 @@ __global__ void pv_beamline_multi_fitter(
         vtxcov[5] = (a11 * a00 - a10 * a10) / det;
 
         // compute the delta w.r.t. the reference
-        float3 delta {
+        const float2 delta_xy {
           -1.f * (vtxcov[0] * halfDChi2DX.x + vtxcov[1] * halfDChi2DX.y + vtxcov[3] * halfDChi2DX.z),
-          -1.f * (vtxcov[1] * halfDChi2DX.x + vtxcov[2] * halfDChi2DX.y + vtxcov[4] * halfDChi2DX.z),
-          -1.f * (vtxcov[3] * halfDChi2DX.x + vtxcov[4] * halfDChi2DX.y + vtxcov[5] * halfDChi2DX.z)
+          -1.f * (vtxcov[1] * halfDChi2DX.x + vtxcov[2] * halfDChi2DX.y + vtxcov[4] * halfDChi2DX.z)
         };
 
-        // note: this is only correct if chi2 was chi2 of reference!
-        chi2tot += delta.x * halfDChi2DX.x + delta.y * halfDChi2DX.y + delta.z * halfDChi2DX.z;
+        const float delta_z = -1.f * (vtxcov[3] * halfDChi2DX.x + vtxcov[4] * halfDChi2DX.y + vtxcov[5] * halfDChi2DX.z);
+        chi2tot += delta_xy.x * halfDChi2DX.x + delta_xy.y * halfDChi2DX.y + delta_z * halfDChi2DX.z;
 
         // update the position
-        vtxpos = vtxpos + delta;
-        converged = std::abs(delta.z) < maxDeltaZConverged;
+        vtxpos_xy = vtxpos_xy + delta_xy;
+        vtxpos_z  = vtxpos_z + delta_z;
+        converged = std::abs(delta_z) < maxDeltaZConverged;
       }
       else {
         float3 fakepos {-99999.f, -99999.f, -99999.f};
@@ -167,7 +168,7 @@ __global__ void pv_beamline_multi_fitter(
     } // end iteration loop
     // std::cout << "Number of iterations: " << iter << " " << nselectedtracks << std::endl ;
     vertex.chi2 = chi2tot;
-    vertex.setPosition(vtxpos);
+    vertex.setPosition(vtxpos_xy, vtxpos_z);
     // vtxcov[5] = 100.;
     vertex.setCovMatrix(vtxcov);
     for (int i = 0; i < number_of_tracks; i++) {
@@ -180,7 +181,7 @@ __global__ void pv_beamline_multi_fitter(
     const float beamlinedx = vertex.position.x - beamline.x;
     const float beamlinedy = vertex.position.y - beamline.y;
     const float beamlinerho2 = beamlinedx * beamlinedx + beamlinedy * beamlinedy;
-    if (vertex.n_tracks >= m_minNumTracksPerVertex && beamlinerho2 < m_maxVertexRho2) {
+    if (vertex.n_tracks >= minNumTracksPerVertex && beamlinerho2 < maxVertexRho2) {
       uint vertex_index = atomicAdd(number_of_multi_fit_vertices, 1);
       vertices[vertex_index] = vertex;
     }

@@ -94,6 +94,7 @@ public:
     ndof = m_ndof;
   }
   __host__ __device__ void setPosition(float3& point) { position = point; }
+  __host__ __device__ void setPosition(float2& xypos, float& zpos) { position = float3{xypos.x, xypos.y, zpos}; }
   __host__ __device__ void setCovMatrix(float* m_cov)
   {
     cov00 = m_cov[0];

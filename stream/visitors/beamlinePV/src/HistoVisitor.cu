@@ -12,7 +12,7 @@ void SequenceVisitor::set_arguments_size<pv_beamline_histo_t>(
   argument_manager_t& arguments)
 {
   // Set arguments size
-  arguments.set_size<dev_zhisto>(host_buffers.host_number_of_selected_events[0] * (m_zmax - m_zmin) / m_dz);
+  arguments.set_size<dev_zhisto>(host_buffers.host_number_of_selected_events[0] * (zmax - zmin) / dz);
 }
 
 template<>

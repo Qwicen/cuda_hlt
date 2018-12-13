@@ -160,12 +160,12 @@ namespace {
             float3 HWr;
             HWr.x = res.x * trk.W_00;
             HWr.y = res.y * trk.W_11;
-            HWr.z = -trk.tx.x*res.x*trk.W_00 - trk.tx.y*res.y*trk.W_11;  
+            HWr.z = -trk.tx.x*res.x*trk.W_00 - trk.tx.y*res.y*trk.W_11;
                   
             halfDChi2DX = halfDChi2DX + HWr * trk.weight;
             
             halfD2Chi2DX2_00 += trk.weight * trk.HWH_00 ;
-            halfD2Chi2DX2_10 += 0.f; 
+            halfD2Chi2DX2_10 += 0.f;
             halfD2Chi2DX2_11 += trk.weight * trk.HWH_11 ;
             halfD2Chi2DX2_20 += trk.weight * trk.HWH_20 ;
             halfD2Chi2DX2_21 += trk.weight * trk.HWH_21 ;
@@ -219,7 +219,7 @@ namespace {
       vertex.chi2 = chi2tot ;
       vertex.setPosition(vtxpos);
       //vtxcov[5] = 100.;
-      vertex.setCovMatrix(vtxcov);    
+      vertex.setCovMatrix(vtxcov);
       for( int i = 0; i < number_of_tracks; i++) {
         PVTrackInVertex trk = tracks[i];
         if( trk.weight > 0 ) 
@@ -296,12 +296,12 @@ namespace {
           float3 HWr;
           HWr.x = res.x * trk.W_00;
           HWr.y = res.y * trk.W_11;
-          HWr.z = -trk.tx.x*res.x*trk.W_00 - trk.tx.y*res.y*trk.W_11;  
+          HWr.z = -trk.tx.x*res.x*trk.W_00 - trk.tx.y*res.y*trk.W_11;
                 
           halfDChi2DX = halfDChi2DX + HWr * trk.weight;
           
           halfD2Chi2DX2_00 += trk.weight * trk.HWH_00 ;
-          halfD2Chi2DX2_10 += 0.f; 
+          halfD2Chi2DX2_10 += 0.f;
           halfD2Chi2DX2_11 += trk.weight * trk.HWH_11 ;
           halfD2Chi2DX2_20 += trk.weight * trk.HWH_20 ;
           halfD2Chi2DX2_21 += trk.weight * trk.HWH_21 ;
@@ -349,7 +349,7 @@ namespace {
     //std::cout << "Number of iterations: " << iter << " " << nselectedtracks << std::endl ;
     vertex.chi2 = chi2tot ;
     vertex.setPosition(vtxpos);
-    vertex.setCovMatrix(vtxcov);    
+    vertex.setCovMatrix(vtxcov);
     for( int i = 0; i < number_of_tracks; i++) {
       PVTrackInVertex trk = tracks[i];
       if( trk.weight > 0 ) 
@@ -369,7 +369,7 @@ void findPVs(
 ) 
 {
   
-  const int Nbins = (m_zmax-m_zmin)/m_dz ; 
+  const int Nbins = (zmax-zmin)/dz ;
 #ifdef WITH_ROOT
   // Histograms only for checking and debugging
   TFile *f = new TFile("../output/PVs.root", "RECREATE");
@@ -429,13 +429,13 @@ void findPVs(
     {
       auto it = pvtracks_old.begin() ;
       for(short unsigned int index = 0; index < Ntrk; ++index) {
-        const VeloState s = velo_states.get(event_tracks_offset + index); 
+        const VeloState s = velo_states.get(event_tracks_offset + index);
         // compute the (chance in) z of the poca to the beam axis
         const auto tx = s.tx ;
         const auto ty = s.ty ;
         const float dz = ( tx * ( beamline.x - s.x ) + ty * ( beamline.y - s.y ) ) / (tx*tx+ty*ty) ;
         const double newz = s.z + dz ;
-        if( m_zmin < newz  && newz < m_zmax ) {
+        if( zmin < newz  && newz < zmax ) {
           pvtracks[number_of_tracks_in_zrange] = PVTrack{s,dz,index} ;
           event_velo_states[number_of_tracks_in_zrange] = s;
           number_of_tracks_in_zrange++;
@@ -480,7 +480,7 @@ void findPVs(
         t_velo_states->Fill();
         #endif
         // bin in which z0 is, in floating point
-        const float zbin = (trk.z - m_zmin)/m_dz ;
+        const float zbin = (trk.z - zmin)/dz ;
       
         // to compute the size of the window, we use the track
         // errors. eventually we can just parametrize this as function of
@@ -488,8 +488,8 @@ void findPVs(
         const float zweight = trk.tx.x*trk.tx.x*trk.W_00 + trk.tx.y*trk.tx.y*trk.W_11;
         const float zerr = 1/std::sqrt( zweight );
         // get rid of useless tracks. must be a bit carefull with this.
-        if( zerr < m_maxTrackZ0Err) { //m_nsigma < 10*m_dz ) {
-          const float halfwindow = GaussApprox::a*zerr / m_dz;
+        if( zerr < maxTrackZ0Err) { //m_nsigma < 10*m_dz ) {
+          const float halfwindow = GaussApprox::a*zerr / dz;
           // this looks a bit funny, but we need the first and last bin of the histogram to remain empty.
           const int minbin = std::max(int( zbin - halfwindow ),1);
           const int maxbin = std::min(int( zbin + halfwindow ),Nbins-2);
@@ -497,7 +497,7 @@ void findPVs(
           if( maxbin >= minbin ) {
             float integral = 0 ;
             for( auto i=minbin; i<maxbin; ++i) {
-              const float relz = ( m_zmin + (i+1)*m_dz - trk.z ) /zerr;
+              const float relz = ( zmin + (i+1)*dz - trk.z ) /zerr;
               const float thisintegral = GaussApprox::integral( relz );
               zhisto[i] += thisintegral - integral;
               integral = thisintegral;
@@ -551,14 +551,14 @@ void findPVs(
       BinIndex clusteredges[PV::max_number_clusteredges];
       uint number_of_clusteredges = 0;
       {
-        const float threshold = m_dz / (10.f * m_maxTrackZ0Err) ; // need something sensible that depends on binsize
+        const float threshold = dz / (10.f * maxTrackZ0Err) ; // need something sensible that depends on binsize
         bool prevempty = true ;
         float integral = zhisto[0] ;
         for(BinIndex i=1; i<Nbins; ++i) {
           integral += zhisto[i] ;
           bool empty = zhisto[i] < threshold ;
           if( empty != prevempty ) {
-            if( prevempty || integral > m_minTracksInSeed )
+            if( prevempty || integral > minTracksInSeed )
               {
               clusteredges[number_of_clusteredges] = i;
               number_of_clusteredges++;
@@ -580,8 +580,8 @@ void findPVs(
         //std::cout << "Trying cluster: " << ibegin << " " << iend << std::endl ;
       
         // find the extrema
-        const float mindip = m_minDipDensity * m_dz  ; // need to invent something
-        const float minpeak = m_minDensity * m_dz  ;
+        const float mindip = minDipDensity * dz  ; // need to invent something
+        const float minpeak = minDensity * dz  ;
 
         //std::vector<Extremum> extrema ;
         Extremum extrema[PV::max_number_vertices];
@@ -640,7 +640,7 @@ void findPVs(
         uint number_of_subclusters = 0;
         if(N>3) {
           for(unsigned int i=1; i<N/2+1; ++i ) {
-            if( extrema[2*i].integral - extrema[2*i-2].integral > m_minTracksInSeed ) {
+            if( extrema[2*i].integral - extrema[2*i-2].integral > minTracksInSeed ) {
               subclusters[number_of_subclusters] = Cluster( extrema[2*i-2].index, extrema[2*i].index, extrema[2*i-1].index);
               number_of_subclusters++;
             }
@@ -683,7 +683,7 @@ void findPVs(
       float d1 = *b - *(b-1) ;
       float d2 = *b - *(b+1) ;
       float idz =  d1+d2>0 ? 0.5f*(d1-d2)/(d1+d2) : 0.0f ;
-      return m_zmin + m_dz * (izmax + idz + 0.5f) ;
+      return zmin + dz * (izmax + idz + 0.5f) ;
     };
   
     //std::vector<SeedZWithIteratorPair> seedsZWithIteratorPair ;
@@ -695,10 +695,10 @@ void findPVs(
       int iprev=0 ;
       for( int i=0; i<int(number_of_clusters)-1; ++i ) {
         //const float zmid = 0.5f*(zseeds[i+1].z+zseeds[i].z) ;
-        const float zmid = m_zmin + m_dz * 0.5f* (clusters[i].izlast + clusters[i+1].izfirst + 1.f ) ;
+        const float zmid = zmin + dz * 0.5f* (clusters[i].izlast + clusters[i+1].izfirst + 1.f ) ;
         std::vector< PVTrack >::iterator newit = std::partition( it, pvtracks_old.end(), [zmid](const auto& trk) { return trk.z < zmid ; } ) ;
         // complicated logic to get rid of partitions that are too small, doign the least amount of work
-        if( std::distance( it, newit ) >= m_minNumTracksPerVertex ) {
+        if( std::distance( it, newit ) >= minNumTracksPerVertex ) {
           seedsZWithIteratorPair[number_of_seedsZWIP] = SeedZWithIteratorPair( zClusterMean(clusters[i].izmax), it, newit ) ;
           number_of_seedsZWIP++;
           iprev = i ;
@@ -708,7 +708,7 @@ void findPVs(
           // could also 'skip' this partition, but then you do too much
           // work for the next.
           if( number_of_seedsZWIP != 0 && newit != it ) {
-            const float zmid = m_zmin + m_dz * (clusters[iprev].izlast + clusters[i+1].izfirst+0.5f ) ;
+            const float zmid = zmin + dz * (clusters[iprev].izlast + clusters[i+1].izfirst+0.5f ) ;
             newit = std::partition( it, newit, [zmid](const auto& trk) { return trk.z < zmid ; } ) ;
             // update the last one
             seedsZWithIteratorPair[number_of_seedsZWIP - 1].end = newit ;
@@ -717,7 +717,7 @@ void findPVs(
         it = newit ;
       }
       // Make sure to add the last partition
-      if( std::distance( it, pvtracks_old.end() ) >= m_minNumTracksPerVertex ) {
+      if( std::distance( it, pvtracks_old.end() ) >= minNumTracksPerVertex ) {
         seedsZWithIteratorPair[number_of_seedsZWIP] = SeedZWithIteratorPair(zClusterMean(clusters[number_of_clusters - 1].izmax) , it, pvtracks_old.end() ) ;
         number_of_seedsZWIP++;
       } else if( number_of_seedsZWIP != 0 ) {
@@ -764,7 +764,7 @@ void findPVs(
     // * merge vertices that are close
 
     // create the output container
-    const auto maxVertexRho2 = m_maxVertexRho * m_maxVertexRho ;
+    const auto maxVertexRho2 = maxVertexRho * maxVertexRho ;
     for( int i = 0; i < number_preselected_vertices; i++ ) {
       PV::Vertex vertex = preselected_vertices[i];
       
@@ -776,7 +776,7 @@ void findPVs(
       h_vy[event_number]->Fill(vertex.position.y);
       h_vz[event_number]->Fill(vertex.position.z);
 #endif
-      if( vertex.n_tracks >= m_minNumTracksPerVertex && beamlinerho2 < maxVertexRho2 ) {
+      if( vertex.n_tracks >= minNumTracksPerVertex && beamlinerho2 < maxVertexRho2 ) {
         reconstructed_pvs[PV::max_number_vertices*event_number +  n_pvs++ ] = vertex;
       }
     }

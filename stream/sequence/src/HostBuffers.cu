@@ -39,7 +39,7 @@ void HostBuffers::reserve(const uint max_number_of_events) {
   cudaCheck(cudaMallocHost((void**)&host_reconstructed_pvs,max_number_of_events * PV::max_number_vertices * sizeof(PV::Vertex)));
   cudaCheck(cudaMallocHost((void**)&host_number_of_vertex, max_number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_number_of_seeds, max_number_of_events * sizeof(int)));
-  cudaCheck(cudaMallocHost((void**)&host_zhisto, max_number_of_events * sizeof(float) * (m_zmax-m_zmin)/m_dz ) );
+  cudaCheck(cudaMallocHost((void**)&host_zhisto, max_number_of_events * sizeof(float) * (zmax-zmin)/dz ) );
 
   cudaCheck(cudaMallocHost((void**)&host_peaks, max_number_of_events * sizeof(float) * PV::max_number_vertices));
   cudaCheck(cudaMallocHost((void**)&host_number_of_peaks, max_number_of_events * sizeof(uint) ));

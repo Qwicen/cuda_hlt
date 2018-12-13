@@ -6,7 +6,7 @@ __global__ void pv_beamline_peak(
   uint* dev_number_of_zpeaks,
   uint number_of_events)
 {
-  const int Nbins = (m_zmax - m_zmin) / m_dz;
+  const int Nbins = (zmax - zmin) / dz;
 
   // At least parallelize over events, even if it's
   // one event on each thread
@@ -23,14 +23,14 @@ __global__ void pv_beamline_peak(
     BinIndex clusteredges[PV::max_number_clusteredges];
     uint number_of_clusteredges = 0;
     {
-      const float threshold = m_dz / (10.f * m_maxTrackZ0Err); // need something sensible that depends on binsize
+      const float threshold = dz / (10.f * maxTrackZ0Err); // need something sensible that depends on binsize
       bool prevempty = true;
       float integral = zhisto[0];
       for (BinIndex i = 1; i < Nbins; ++i) {
         integral += zhisto[i];
         bool empty = zhisto[i] < threshold;
         if (empty != prevempty) {
-          if (prevempty || integral > m_minTracksInSeed) {
+          if (prevempty || integral > minTracksInSeed) {
             clusteredges[number_of_clusteredges] = i;
             number_of_clusteredges++;
           }
@@ -47,8 +47,8 @@ __global__ void pv_beamline_peak(
         const BinIndex ibegin = clusteredges[i * 2];
         const BinIndex iend = clusteredges[i * 2 + 1];
         // find the extrema
-        const float mindip = m_minDipDensity * m_dz; // need to invent something
-        const float minpeak = m_minDensity * m_dz;
+        const float mindip = minDipDensity * dz; // need to invent something
+        const float minpeak = minDensity * dz;
 
         Extremum extrema[PV::max_number_vertices];
         uint number_of_extrema = 0;
@@ -106,7 +106,7 @@ __global__ void pv_beamline_peak(
         uint number_of_subclusters = 0;
         if (N > 3) {
           for (unsigned int i = 1; i < N / 2 + 1; ++i) {
-            if (extrema[2 * i].integral - extrema[2 * i - 2].integral > m_minTracksInSeed) {
+            if (extrema[2 * i].integral - extrema[2 * i - 2].integral > minTracksInSeed) {
               subclusters[number_of_subclusters] =
                 Cluster(extrema[2 * i - 2].index, extrema[2 * i].index, extrema[2 * i - 1].index);
               number_of_subclusters++;
@@ -139,7 +139,7 @@ __global__ void pv_beamline_peak(
       float d1 = *b - *(b - 1);
       float d2 = *b - *(b + 1);
       float idz = d1 + d2 > 0 ? 0.5f * (d1 - d2) / (d1 + d2) : 0.0f;
-      return m_zmin + m_dz * (izmax + idz + 0.5f);
+      return zmin + dz * (izmax + idz + 0.5f);
     };
 
     for (int i = 0; i < number_of_clusters; ++i) {
