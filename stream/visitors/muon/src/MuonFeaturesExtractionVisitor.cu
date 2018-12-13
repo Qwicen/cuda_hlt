@@ -75,7 +75,7 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
   // Check the output
   debug_cout << "MUON FEATURES: " << std::endl;
   for (int i = 0; i < constants.muon_catboost_n_features * host_buffers.host_number_of_reconstructed_scifi_tracks[0]/*constants.muon_catboost_n_features*/ ; i++) {
-    debug_cout << features[i] << " ";
+    debug_cout << i % 20 << " " << features[i] << "\n";
     //debug_cout <<  host_buffers.host_muon_catboost_features[i] << " ";
   }
   debug_cout << std::endl << std::endl;

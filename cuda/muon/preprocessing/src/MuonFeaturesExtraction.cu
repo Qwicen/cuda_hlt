@@ -37,6 +37,7 @@ __global__ void muon_catboost_features_extraction(
   const uint event_offset = scifi_tracks.tracks_offset(event_id);
   for (uint track_id = threadIdx.x; track_id < number_of_tracks_event; track_id += blockDim.x)
   {
+    printf("Event = %d Track = %d States = %f %f %f %f %f\n", event_id, track_id, scifi_tracks.states[track_id].x, scifi_tracks.states[track_id].tx, scifi_tracks.states[track_id].y, scifi_tracks.states[track_id].ty, scifi_tracks.states[track_id].z);
     float min_dist = 1e10;
     int tile_of_closest_hit;
 
@@ -45,10 +46,10 @@ __global__ void muon_catboost_features_extraction(
     const float station_z = muon_hits[event_id].z[station_offset];
     const float station_z0 = muon_hits[event_id].z[muon_hits[event_id].station_offsets[0]];
 
-    const float extrapolation_x = scifi_tracks.states[track_id].x + scifi_tracks.states[track_id].tx * station_z;
-    const float extrapolation_y = scifi_tracks.states[track_id].y + scifi_tracks.states[track_id].ty * station_z;
-    const float extrapolation_x0 = scifi_tracks.states[track_id].x + scifi_tracks.states[track_id].tx * station_z0;
-    const float extrapolation_y0 = scifi_tracks.states[track_id].y + scifi_tracks.states[track_id].ty * station_z0;
+    const float extrapolation_x = scifi_tracks.states[track_id].x + scifi_tracks.states[track_id].tx * (station_z - scifi_tracks.states[track_id].z);
+    const float extrapolation_y = scifi_tracks.states[track_id].y + scifi_tracks.states[track_id].ty * (station_z - scifi_tracks.states[track_id].z);
+    const float extrapolation_x0 = scifi_tracks.states[track_id].x + scifi_tracks.states[track_id].tx * (station_z0 - scifi_tracks.states[track_id].z);
+    const float extrapolation_y0 = scifi_tracks.states[track_id].y + scifi_tracks.states[track_id].ty * (station_z0 - scifi_tracks.states[track_id].z);
 
 
     for (int i_hit = 0; i_hit < number_of_hits; ++i_hit) {
