@@ -76,7 +76,9 @@ __global__ void pv_beamline_multi_fitter(
         if (chi2 < chi2max) { // to branch or not, that is the question!
                               // if (true) {
           ++nselectedtracks;
-          // Tukey's weight
+          // for more information on the weighted fitting, see e.g.
+          // Adaptive Multi-vertex fitting, R. Frühwirth, W. Waltenberger
+          // https://cds.cern.ch/record/803519/files/p280.pdf
           // double T = 1. + maxNumIter / (iter+1) * 0.05;
           // float T = 1.f;
 
@@ -93,7 +95,8 @@ __global__ void pv_beamline_multi_fitter(
             res_otherseed = res_otherseed - (trk.x + trk.tx * dz);
             //res_otherseed = res_otherseed * res_otherseed;
             // at the moment this term reuses W'matrix at z of point of closest approach -> use seed positions instead?
-            float chi2 = res_otherseed.x * res_otherseed.x * trk.W_00 + res_otherseed.y * res_otherseed.y * trk.W_11;
+            res_otherseed = float2_sqr(res_otherseed);
+            const float chi2 = res_otherseed.x * trk.W_00 + res_otherseed.y * trk.W_11;
             denom += exp(-chi2 * 0.5f);
           }
           trk.weight = trk.weight / denom;

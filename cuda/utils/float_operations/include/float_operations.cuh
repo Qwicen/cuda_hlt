@@ -14,6 +14,13 @@ float float2_dot(const float2& l, const float2& r) {
 
 __host__ __device__
 inline
+float2 float2_sqr(const float2& l) {
+  return { l.x * l.x, l.y * l.y };
+}
+
+
+__host__ __device__
+inline
 float2 operator + (const float2& l, const float2& r) {
   return { l.x + r.x, l.y + r.y };
 }
