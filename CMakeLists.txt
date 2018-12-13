@@ -73,10 +73,16 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
   set(CMAKE_CUDA_FLAGS_DEBUG "-O0 -G -g -DDEBUG ")
 endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 
+option(CUDA_VEBOSE_BUILD OFF)
+if (CUDA_VERBOSE_BUILD)
+  set(CUDA_VERBOSE_FLAGS "--resource-usage --verbose --nvlink-options=--verbose -Xptxas=--verbose")
+else()
+  set(CUDA_VERBOSE_FLAGS "")
+endif()
 # In case we want to compile with clang:
 # --compiler-bindir /cvmfs/sft.cern.ch/lcg/releases/clang/6.0.0-6647e/x86_64-centos7-gcc62-opt/bin/clang++;
 set(CMAKE_CUDA_STANDARD 14)
-set(CMAKE_CUDA_FLAGS " --use_fast_math --expt-relaxed-constexpr --generate-line-info --resource-usage --verbose --nvlink-options=--verbose -Xptxas=--verbose --maxrregcount=63")
+set(CMAKE_CUDA_FLAGS " --use_fast_math --expt-relaxed-constexpr --generate-line-info --maxrregcount=63 ${CUDA_VERBOSE_FLAGS}")
 
 add_subdirectory(cuda)
 add_subdirectory(stream)
