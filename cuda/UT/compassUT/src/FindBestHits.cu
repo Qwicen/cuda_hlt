@@ -6,7 +6,7 @@
 // to be only in the windows
 //=========================================================================
 __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
-  const int* win_size_shared,
+  const short* win_size_shared,
   const uint number_of_tracks_event,
   const int i_track,
   const UTHits& ut_hits,

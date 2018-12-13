@@ -15,6 +15,7 @@ __global__ void ut_search_windows(
   const float* dev_ut_dxDy,
   const uint* dev_unique_x_sector_layer_offsets,
   const float* dev_unique_sector_xs,
-  int* dev_windows_layers);
+  short* dev_windows_layers,
+  int* dev_active_tracks);
 
 ALGORITHM(ut_search_windows, ut_search_windows_t)

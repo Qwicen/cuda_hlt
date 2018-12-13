@@ -28,13 +28,13 @@ struct LayerCandidates {
 };
 
 struct TrackCandidates {
-  const int* m_base_pointer;
+  const short* m_base_pointer;
   const int  m_num_tracks_event;
   const int  m_track;
   LayerCandidates layers[N_LAYERS];
 
   __host__ __device__ TrackCandidates(
-    const int* base_pointer,
+    const short* base_pointer,
     const int num_tracks_event,
     const int track) : 
     m_base_pointer(base_pointer),

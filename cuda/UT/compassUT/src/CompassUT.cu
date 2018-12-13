@@ -18,7 +18,7 @@ __global__ void compass_ut(
   const float* dev_unique_sector_xs, // list of xs that define the groups
   VeloUTTracking::TrackUT* dev_compassUT_tracks,
   int* dev_atomics_compassUT, // size of number of events
-  int* dev_windows_layers)
+  short* dev_windows_layers)
 {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
@@ -33,7 +33,7 @@ __global__ void compass_ut(
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  int* windows_layers = dev_windows_layers + event_tracks_offset * NUM_ELEMS * N_LAYERS;
+  short* windows_layers = dev_windows_layers + event_tracks_offset * NUM_ELEMS * N_LAYERS;
 
   UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
   UTHits ut_hits {dev_ut_hits, total_number_of_hits};
@@ -147,7 +147,7 @@ __global__ void compass_ut(
 }
 
 __device__ void compass_ut_tracking(
-  const int* windows_layers,
+  const short* windows_layers,
   uint* dev_velo_track_hits,
   const uint number_of_tracks_event,
   const int i_track,
@@ -213,7 +213,7 @@ __device__ void compass_ut_tracking(
 // (3 windows per layer)
 //=============================================================================
 __device__ __inline__ void fill_shared_windows(
-  const int* windows_layers,
+  const short* windows_layers,
   const uint current_track_offset,
   int* win_size_shared)
 {
@@ -222,58 +222,58 @@ __device__ __inline__ void fill_shared_windows(
 
   // layer 0
   win_size_shared[idx]     = windows_layers[total_offset];
-  win_size_shared[idx + 1] = windows_layers[total_offset + 1] - win_size_shared[idx];
+  win_size_shared[idx + 1] = windows_layers[total_offset + 1];
   win_size_shared[idx + 2] = windows_layers[total_offset + 2];
-  win_size_shared[idx + 3] = windows_layers[total_offset + 3] - win_size_shared[idx + 2];
+  win_size_shared[idx + 3] = windows_layers[total_offset + 3];
   win_size_shared[idx + 4] = windows_layers[total_offset + 4];
-  win_size_shared[idx + 5] = windows_layers[total_offset + 5] - win_size_shared[idx + 4];
+  win_size_shared[idx + 5] = windows_layers[total_offset + 5];
   win_size_shared[idx + 6] = windows_layers[total_offset + 6];
-  win_size_shared[idx + 7] = windows_layers[total_offset + 7] - win_size_shared[idx + 6];
+  win_size_shared[idx + 7] = windows_layers[total_offset + 7];
   win_size_shared[idx + 8] = windows_layers[total_offset + 8];
-  win_size_shared[idx + 9] = windows_layers[total_offset + 9] - win_size_shared[idx + 8];
+  win_size_shared[idx + 9] = windows_layers[total_offset + 9];
 
   // layer 1
   win_size_shared[idx + NUM_ELEMS]     = windows_layers[total_offset + NUM_ELEMS];
-  win_size_shared[idx + NUM_ELEMS + 1] = windows_layers[total_offset + NUM_ELEMS + 1] - win_size_shared[idx + NUM_ELEMS];
+  win_size_shared[idx + NUM_ELEMS + 1] = windows_layers[total_offset + NUM_ELEMS + 1];
   win_size_shared[idx + NUM_ELEMS + 2] = windows_layers[total_offset + NUM_ELEMS + 2];
-  win_size_shared[idx + NUM_ELEMS + 3] = windows_layers[total_offset + NUM_ELEMS + 3] - win_size_shared[idx + NUM_ELEMS + 2];
+  win_size_shared[idx + NUM_ELEMS + 3] = windows_layers[total_offset + NUM_ELEMS + 3];
   win_size_shared[idx + NUM_ELEMS + 4] = windows_layers[total_offset + NUM_ELEMS + 4];
-  win_size_shared[idx + NUM_ELEMS + 5] = windows_layers[total_offset + NUM_ELEMS + 5] - win_size_shared[idx + NUM_ELEMS + 4];
+  win_size_shared[idx + NUM_ELEMS + 5] = windows_layers[total_offset + NUM_ELEMS + 5];
   win_size_shared[idx + NUM_ELEMS + 6] = windows_layers[total_offset + NUM_ELEMS + 6];
-  win_size_shared[idx + NUM_ELEMS + 7] = windows_layers[total_offset + NUM_ELEMS + 7] - win_size_shared[idx + NUM_ELEMS + 6];
+  win_size_shared[idx + NUM_ELEMS + 7] = windows_layers[total_offset + NUM_ELEMS + 7];
   win_size_shared[idx + NUM_ELEMS + 8] = windows_layers[total_offset + NUM_ELEMS + 8];
-  win_size_shared[idx + NUM_ELEMS + 9] = windows_layers[total_offset + NUM_ELEMS + 9] - win_size_shared[idx + NUM_ELEMS + 8];
+  win_size_shared[idx + NUM_ELEMS + 9] = windows_layers[total_offset + NUM_ELEMS + 9];
 
   // layer 2
   win_size_shared[idx + (NUM_ELEMS*2)]     = windows_layers[total_offset + (NUM_ELEMS*2)];
-  win_size_shared[idx + (NUM_ELEMS*2) + 1] = windows_layers[total_offset + (NUM_ELEMS*2) + 1] - win_size_shared[idx + (NUM_ELEMS*2)];
+  win_size_shared[idx + (NUM_ELEMS*2) + 1] = windows_layers[total_offset + (NUM_ELEMS*2) + 1];
   win_size_shared[idx + (NUM_ELEMS*2) + 2] = windows_layers[total_offset + (NUM_ELEMS*2) + 2];
-  win_size_shared[idx + (NUM_ELEMS*2) + 3] = windows_layers[total_offset + (NUM_ELEMS*2) + 3] - win_size_shared[idx + (NUM_ELEMS*2) + 2];
+  win_size_shared[idx + (NUM_ELEMS*2) + 3] = windows_layers[total_offset + (NUM_ELEMS*2) + 3];
   win_size_shared[idx + (NUM_ELEMS*2) + 4] = windows_layers[total_offset + (NUM_ELEMS*2) + 4];
-  win_size_shared[idx + (NUM_ELEMS*2) + 5] = windows_layers[total_offset + (NUM_ELEMS*2) + 5] - win_size_shared[idx + (NUM_ELEMS*2) + 4];
+  win_size_shared[idx + (NUM_ELEMS*2) + 5] = windows_layers[total_offset + (NUM_ELEMS*2) + 5];
   win_size_shared[idx + (NUM_ELEMS*2) + 6] = windows_layers[total_offset + (NUM_ELEMS*2) + 6];
-  win_size_shared[idx + (NUM_ELEMS*2) + 7] = windows_layers[total_offset + (NUM_ELEMS*2) + 7] - win_size_shared[idx + (NUM_ELEMS*2) + 6];
+  win_size_shared[idx + (NUM_ELEMS*2) + 7] = windows_layers[total_offset + (NUM_ELEMS*2) + 7];
   win_size_shared[idx + (NUM_ELEMS*2) + 8] = windows_layers[total_offset + (NUM_ELEMS*2) + 8];
-  win_size_shared[idx + (NUM_ELEMS*2) + 9] = windows_layers[total_offset + (NUM_ELEMS*2) + 9] - win_size_shared[idx + (NUM_ELEMS*2) + 8];
+  win_size_shared[idx + (NUM_ELEMS*2) + 9] = windows_layers[total_offset + (NUM_ELEMS*2) + 9];
 
   // layer 3
   win_size_shared[idx + (NUM_ELEMS*3)]     = windows_layers[total_offset + (NUM_ELEMS*3)];
-  win_size_shared[idx + (NUM_ELEMS*3) + 1] = windows_layers[total_offset + (NUM_ELEMS*3) + 1] - win_size_shared[idx + (NUM_ELEMS*3)];
+  win_size_shared[idx + (NUM_ELEMS*3) + 1] = windows_layers[total_offset + (NUM_ELEMS*3) + 1];
   win_size_shared[idx + (NUM_ELEMS*3) + 2] = windows_layers[total_offset + (NUM_ELEMS*3) + 2];
-  win_size_shared[idx + (NUM_ELEMS*3) + 3] = windows_layers[total_offset + (NUM_ELEMS*3) + 3] - win_size_shared[idx + (NUM_ELEMS*3) + 2];
+  win_size_shared[idx + (NUM_ELEMS*3) + 3] = windows_layers[total_offset + (NUM_ELEMS*3) + 3];
   win_size_shared[idx + (NUM_ELEMS*3) + 4] = windows_layers[total_offset + (NUM_ELEMS*3) + 4];
-  win_size_shared[idx + (NUM_ELEMS*3) + 5] = windows_layers[total_offset + (NUM_ELEMS*3) + 5] - win_size_shared[idx + (NUM_ELEMS*3) + 4];
+  win_size_shared[idx + (NUM_ELEMS*3) + 5] = windows_layers[total_offset + (NUM_ELEMS*3) + 5];
   win_size_shared[idx + (NUM_ELEMS*3) + 6] = windows_layers[total_offset + (NUM_ELEMS*3) + 6];
-  win_size_shared[idx + (NUM_ELEMS*3) + 7] = windows_layers[total_offset + (NUM_ELEMS*3) + 7] - win_size_shared[idx + (NUM_ELEMS*3) + 6];
+  win_size_shared[idx + (NUM_ELEMS*3) + 7] = windows_layers[total_offset + (NUM_ELEMS*3) + 7];
   win_size_shared[idx + (NUM_ELEMS*3) + 8] = windows_layers[total_offset + (NUM_ELEMS*3) + 8];
-  win_size_shared[idx + (NUM_ELEMS*3) + 9] = windows_layers[total_offset + (NUM_ELEMS*3) + 9] - win_size_shared[idx + (NUM_ELEMS*3) + 8];
+  win_size_shared[idx + (NUM_ELEMS*3) + 9] = windows_layers[total_offset + (NUM_ELEMS*3) + 9];
 }
 
 //=========================================================================
 // Determine if there are valid windows for this track
 //=========================================================================
 __device__ __inline__ bool found_active_windows(
-  const int* windows_layers,
+  const short* windows_layers,
   const int total_tracks_event,
   const int track)
 {

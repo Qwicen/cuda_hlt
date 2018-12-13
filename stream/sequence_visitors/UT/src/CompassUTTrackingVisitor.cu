@@ -10,7 +10,7 @@ void SequenceVisitor::set_arguments_size<compass_ut_t>(
 {
   arguments.set_size<dev_compassUT_tracks>(runtime_options.number_of_events * VeloUTTracking::max_num_tracks);
   arguments.set_size<dev_atomics_compassUT>(runtime_options.number_of_events * VeloUTTracking::num_atomics);
-  arguments.set_size<dev_active_tracks>(runtime_options.number_of_events);
+  // arguments.set_size<dev_active_tracks>(runtime_options.number_of_events);
 }
 
 template<>

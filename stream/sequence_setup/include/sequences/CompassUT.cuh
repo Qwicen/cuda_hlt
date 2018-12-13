@@ -27,7 +27,7 @@ SEQUENCE_T(
   ut_decode_raw_banks_in_order_t,
   // veloUT_t,
   ut_search_windows_t,
-  compass_ut_t,
+  // compass_ut_t,
   // estimate_cluster_count_t,
   // prefix_sum_reduce_scifi_hits_t,
   // prefix_sum_single_block_scifi_hits_t,

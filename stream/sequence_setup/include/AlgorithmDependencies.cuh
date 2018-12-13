@@ -160,7 +160,8 @@ typedef std::tuple<
     dev_velo_track_hit_number,
     dev_velo_track_hits,
     dev_velo_states,
-    dev_windows_layers
+    dev_windows_layers,
+    dev_active_tracks
   >,
   AlgorithmDependencies<compass_ut_t,
     dev_ut_hits,
