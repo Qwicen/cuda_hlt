@@ -70,12 +70,6 @@ struct XYZPoint {
   __device__ __host__ XYZPoint() {};
 };
 
-struct Vector2 {
-  float x;
-  float y;
-
-  __device__ __host__ Vector2(float m_x, float m_y) : x(m_x), y(m_y) {}
-};
 
 class Vertex {
 public:

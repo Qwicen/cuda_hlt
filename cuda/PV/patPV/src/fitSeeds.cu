@@ -102,7 +102,7 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
     m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
     m_state_c31 += dz* m_state_c33 ;
 
-    PatPV::Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
+    float2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
     float  tr_chi2 = res.x*res.x / m_state_c00 +res.y*res.y / m_state_c11;
   
@@ -182,7 +182,7 @@ __device__ bool fit_vertex( PatPV::XYZPoint& seedPoint,
       m_state_c11 += dz2* m_state_c33 + 2* dz*m_state_c31 ;
       m_state_c31 += dz* m_state_c33 ;
 
-      PatPV::Vector2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
+      float2 res{ vtxpos.x - m_state_x, vtxpos.y - m_state_y };
 
       float tr_halfD2Chi2DX2_00 = 1. / m_state_c00;
       float tr_halfD2Chi2DX2_10 = 0.;
