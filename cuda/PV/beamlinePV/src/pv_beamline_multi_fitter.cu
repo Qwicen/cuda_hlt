@@ -129,22 +129,23 @@ __global__ void pv_beamline_multi_fitter(
       
       if (nselectedtracks >= 2) {
         // compute the new vertex covariance using analytical inversion
-        float a00 = halfD2Chi2DX2_00;
-        float a11 = halfD2Chi2DX2_11;
-        float a20 = halfD2Chi2DX2_20;
-        float a21 = halfD2Chi2DX2_21;
-        float a22 = halfD2Chi2DX2_22;
+        const float a00 = halfD2Chi2DX2_00;
+        const float a11 = halfD2Chi2DX2_11;
+        const float a20 = halfD2Chi2DX2_20;
+        const float a21 = halfD2Chi2DX2_21;
+        const float a22 = halfD2Chi2DX2_22;
 
-        float det = a00 * (a22 * a11 - a21 * a21) + a20 * ( - a11 * a20);
+        const float det = a00 * (a22 * a11 - a21 * a21) + a20 * ( - a11 * a20);
+        const float inv_det = 1.f / det;
         // maybe we should catch the case when det = 0
         // if (det == 0) return false;
 
-        vtxcov[0] = (a22 * a11 - a21 * a21) / det;
-        vtxcov[1] = -( - a20 * a21) / det;
-        vtxcov[2] = (a22 * a00 - a20 * a20) / det;
-        vtxcov[3] = (- a20 * a11) / det;
-        vtxcov[4] = -(a21 * a00 ) / det;
-        vtxcov[5] = (a11 * a00 ) / det;
+        vtxcov[0] = (a22 * a11 - a21 * a21) * inv_det;
+        vtxcov[1] = -( - a20 * a21) * inv_det;
+        vtxcov[2] = (a22 * a00 - a20 * a20) * inv_det;
+        vtxcov[3] = (- a20 * a11) * inv_det;
+        vtxcov[4] = -(a21 * a00 ) * inv_det;
+        vtxcov[5] = (a11 * a00 ) * inv_det;
 
         // compute the delta w.r.t. the reference
         const float2 delta_xy {
