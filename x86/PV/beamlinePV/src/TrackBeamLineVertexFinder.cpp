@@ -376,14 +376,13 @@ void findPVs(
   //TTree *t_velo_states = new TTree("velo_states", "velo_states");
   TTree *t_velo_states = new TTree("velo_states", "velo_states");
   double cov_x, cov_y, cov_z;
-  float  tx, ty, x, y, z, old_z;
+  float  tx, ty, x, y, z;
   t_velo_states->Branch("cov_x",&cov_x);
   t_velo_states->Branch("cov_y",&cov_y);
   t_velo_states->Branch("cov_z",&cov_z);
   t_velo_states->Branch("x",&x);
   t_velo_states->Branch("y",&y);
   t_velo_states->Branch("z",&z);
-  t_velo_states->Branch("old_z",&old_z);
   t_velo_states->Branch("tx",&tx);
   t_velo_states->Branch("ty",&ty);
   TH1F* h_z0[number_of_events];
@@ -474,7 +473,6 @@ void findPVs(
         x = trk.x.x;
         y = trk.x.y;
         z = trk.z;
-        old_z = trk.old_z;
         tx = trk.tx.x;
         ty = trk.tx.y;
         t_velo_states->Fill();
