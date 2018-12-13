@@ -3,6 +3,7 @@
 static constexpr unsigned int minNumTracksPerVertex = 5;
 static constexpr float zmin = -300.f;        // unit: mm Min z position of vertex seed
 static constexpr float zmax = 300.f;         // unit: mm Max z position of vertex seed
+static constexpr int Nbins = 2400;           // nubmer of bins in the histogram. Make sure that Nbins = (zmax-zmin)/dz
 static constexpr float dz = 0.25f;           // unit: mm Z histogram bin size
 static constexpr float maxTrackZ0Err = 1.5f; // unit: mm "Maximum z0-error for adding track to histo"
 static constexpr float minDensity = 1.0f;    // unit: 1./mm "Minimal density at cluster peak  (inverse resolution)"

@@ -15,7 +15,6 @@ __global__ void
 pv_beamline_histo(int* dev_atomics_storage, uint* dev_velo_track_hit_number, PVTrack* dev_pvtracks, float* dev_zhisto)
 {
 
-  const int Nbins = (zmax - zmin) / dz;
 
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;

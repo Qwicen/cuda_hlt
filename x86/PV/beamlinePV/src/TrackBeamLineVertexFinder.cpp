@@ -369,7 +369,6 @@ void findPVs(
 ) 
 {
   
-  const int Nbins = (zmax-zmin)/dz ;
 #ifdef WITH_ROOT
   // Histograms only for checking and debugging
   TFile *f = new TFile("../output/PVs.root", "RECREATE");

@@ -62,7 +62,6 @@ void SequenceVisitor::visit<pv_beamline_histo_t>(
   outtree->Branch("index",&mindex);
   for(i_event = 0; i_event < host_buffers.host_number_of_selected_events[0]; i_event++) {
     info_cout << "number event " << i_event << std::endl;
-    int Nbins = (m_zmax-m_zmin)/m_dz;
     for (int i=0; i<Nbins; i++) {
       int index = Nbins * i_event + i;
       mindex = i;

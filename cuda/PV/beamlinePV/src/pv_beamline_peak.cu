@@ -6,8 +6,6 @@ __global__ void pv_beamline_peak(
   uint* dev_number_of_zpeaks,
   uint number_of_events)
 {
-  const int Nbins = (zmax - zmin) / dz;
-
   // At least parallelize over events, even if it's
   // one event on each thread
   const uint event_number = blockIdx.x * blockDim.x + threadIdx.x;
