@@ -31,4 +31,4 @@ add_library(Velo STATIC
   ${velo_consolidate_tracks}
 )
 
-set_target_properties(Velo PROPERTIES CUDA_SEPERABLE_COMPILATION ON)
+set_target_properties(Velo PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

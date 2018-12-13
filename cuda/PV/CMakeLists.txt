@@ -17,4 +17,4 @@ add_library(PV STATIC
   ${pat_pv}
 )
 set_property(TARGET PV PROPERTY
-             CUDA_SEPERABLE_COMPILATION ON)
+             CUDA_SEPARABLE_COMPILATION ON)

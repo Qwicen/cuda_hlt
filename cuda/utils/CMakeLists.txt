@@ -25,4 +25,4 @@ target_link_libraries(Utils PRIVATE
 )
 
 set_property(TARGET Utils PROPERTY
-             CUDA_SEPERABLE_COMPILATION ON)
+             CUDA_SEPARABLE_COMPILATION ON)

@@ -78,7 +78,7 @@ target_link_libraries(Stream PRIVATE
   x86VeloUT)
 
 set_property(TARGET Stream PROPERTY
-             CUDA_SEPERABLE_COMPILATION ON)
+             CUDA_SEPARABLE_COMPILATION ON)
 
 if ( ROOT_FOUND )
   target_compile_definitions(Stream PUBLIC WITH_ROOT)

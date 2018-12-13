@@ -27,4 +27,4 @@ add_library(UT STATIC
 )
 
 set_property(TARGET UT PROPERTY
-             CUDA_SEPERABLE_COMPILATION ON)
+             CUDA_SEPARABLE_COMPILATION ON)

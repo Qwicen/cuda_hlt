@@ -17,7 +17,7 @@ add_library(x86VeloUT STATIC
   )
 
 set_property(TARGET x86VeloUT PROPERTY
-             CUDA_SEPERABLE_COMPILATION ON)
+             CUDA_SEPARABLE_COMPILATION ON)
 
 if ( ROOT_FOUND )
   target_compile_definitions(x86VeloUT PUBLIC WITH_ROOT)

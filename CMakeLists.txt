@@ -76,7 +76,7 @@ endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
 # In case we want to compile with clang:
 # --compiler-bindir /cvmfs/sft.cern.ch/lcg/releases/clang/6.0.0-6647e/x86_64-centos7-gcc62-opt/bin/clang++;
 set(CMAKE_CUDA_STANDARD 14)
-set(CMAKE_CUDA_FLAGS " --relocatable-device-code=true --use_fast_math --expt-relaxed-constexpr --generate-line-info --resource-usage --verbose --nvlink-options=--verbose -Xptxas=--verbose --maxrregcount=63")
+set(CMAKE_CUDA_FLAGS " --use_fast_math --expt-relaxed-constexpr --generate-line-info --resource-usage --verbose --nvlink-options=--verbose -Xptxas=--verbose --maxrregcount=63")
 
 add_subdirectory(cuda)
 add_subdirectory(stream)
@@ -128,7 +128,7 @@ add_library(Common ${common_sources})
 target_link_libraries(Common mdf)
 
 set_property(TARGET Common PROPERTY
-             CUDA_SEPERABLE_COMPILATION ON)
+             CUDA_SEPARABLE_COMPILATION ON)
 
 # main executable
 add_executable(Allen ${main_cpp_path})
