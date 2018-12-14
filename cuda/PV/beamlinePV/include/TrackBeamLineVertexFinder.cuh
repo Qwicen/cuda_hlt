@@ -16,8 +16,6 @@ struct PVTrack {
     z {float(state.z + dz)}, x {float(state.x + dz * state.tx), float(state.y + dz * state.ty)},
     tx {float(state.tx), float(state.ty)}, index {_index}
   {
-    // perhaps we should invert it /before/ switching to single FPP?
-    // it doesn't seem to make much difference.
 
     float state_tmp_c00 = state.c00;
     float state_tmp_c11 = state.c11;
@@ -92,6 +90,7 @@ struct PVTrackInVertex : PVTrack {
   float HW_11;
   float HW_20;
   float HW_21;
+  // HWH: ROOT::Math::Similarity(H,W), meaning the product of H_transposed * W * H
   float HWH_00;
   float HWH_20;
   float HWH_11;
