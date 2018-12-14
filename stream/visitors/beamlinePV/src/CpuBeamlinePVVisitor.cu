@@ -1,5 +1,5 @@
 #include "SequenceVisitor.cuh"
-#include "RunBeamlinePVonCPU.h"
+#include "RunBeamlinePVOnCPU.h"
 #include "Tools.h"
 
 DEFINE_EMPTY_SET_ARGUMENTS_SIZE(cpu_pv_beamline_t)

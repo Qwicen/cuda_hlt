@@ -38,7 +38,7 @@
 #include "pv_beamline_peak.cuh"
 #include "pv_beamline_multi_fitter.cuh"
 #include "RunForwardCPU.h"
-#include "RunBeamlinePVonCPU.h"
+#include "RunBeamlinePVOnCPU.h"
 
 #define SEQUENCE_T(...) typedef std::tuple<__VA_ARGS__> configured_sequence_t;
 
