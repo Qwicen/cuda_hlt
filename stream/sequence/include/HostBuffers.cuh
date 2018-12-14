@@ -48,9 +48,6 @@ struct HostBuffers {
   MiniState* host_scifi_states;
   uint* host_scifi_track_ut_indices;
 
-  // Muon Features
-  float* host_muon_catboost_features;
-
   // Non pinned datatypes: CPU algorithms
   std::vector<SciFi::TrackHits> scifi_tracks_events;
   //std::vector<uint> n_scifi_tracks;
