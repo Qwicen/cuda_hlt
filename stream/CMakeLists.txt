@@ -32,6 +32,8 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/consolidate/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/common/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/preprocessing/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/IsMuon/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/PV/patPV/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/PV/common/include)
@@ -52,6 +54,7 @@ file(GLOB stream_visitors_velo "visitors/velo/src/*cu")
 file(GLOB stream_visitors_pv "visitors/PV/src/*cu")
 file(GLOB stream_visitors_UT "visitors/UT/src/*cu")
 file(GLOB stream_visitors_SciFi "visitors/SciFi/src/*cu")
+file(GLOB stream_visitors_Muon "visitors/muon/src/*cu")
 
 add_library(Stream STATIC
   ${stream_gear}
@@ -65,6 +68,7 @@ add_library(Stream STATIC
   ${stream_visitors_pv}
   ${stream_visitors_UT}
   ${stream_visitors_SciFi}
+  ${stream_visitors_Muon}
 )
 
 target_link_libraries(Stream PRIVATE
@@ -75,7 +79,8 @@ target_link_libraries(Stream PRIVATE
   UT
   SciFi
   x86Forward
-  x86VeloUT)
+  x86VeloUT
+  Muon)
 
 set_property(TARGET Stream PROPERTY
              CUDA_SEPARABLE_COMPILATION ON)

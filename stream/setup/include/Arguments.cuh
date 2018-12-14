@@ -4,6 +4,7 @@
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
 #include "PrForward.cuh"
+#include "MuonDefinitions.cuh"
 #include "patPV_Definitions.cuh"
 #include "MiniState.cuh"
 
@@ -72,3 +73,7 @@ ARGUMENT(dev_scifi_track_hits, char)
 ARGUMENT(dev_scifi_qop, float)
 ARGUMENT(dev_scifi_states, MiniState)
 ARGUMENT(dev_scifi_track_ut_indices, uint)
+
+ARGUMENT(dev_muon_hits, Muon::HitsSoA)
+ARGUMENT(dev_muon_catboost_features, float)
+ARGUMENT(dev_muon_catboost_output, float)

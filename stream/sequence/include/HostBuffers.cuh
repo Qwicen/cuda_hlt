@@ -4,6 +4,7 @@
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
 #include "SciFiDefinitions.cuh"
+#include "MuonDefinitions.cuh"
 #include "TrackChecker.h"
 #include "SciFiEventModel.cuh"
 #include "UTEventModel.cuh"
@@ -46,6 +47,9 @@ struct HostBuffers {
   float* host_scifi_qop;
   MiniState* host_scifi_states;
   uint* host_scifi_track_ut_indices;
+
+  // Muon Features
+  float* host_muon_catboost_features;
 
   // Non pinned datatypes: CPU algorithms
   std::vector<SciFi::TrackHits> scifi_tracks_events;

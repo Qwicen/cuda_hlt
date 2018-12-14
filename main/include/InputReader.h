@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <gsl-lite.hpp>
+#include "json.hpp"
 
 struct Reader {
   std::string folder_name;
@@ -105,6 +106,27 @@ protected:
 private:
    std::map<BankTypes, std::pair<gsl::span<char>, gsl::span<uint>>> m_events;
    std::map<BankTypes, std::string> m_folders;
+};
+
+struct CatboostModelReader {
+   CatboostModelReader(const std::string& file_name);
+   const int n_features() const { return m_num_features; }
+   const int n_trees() const { return m_num_trees; }
+   std::vector<int> tree_depths() const { return m_tree_depths; }
+   std::vector<int> tree_offsets() const { return m_tree_offsets; }
+   std::vector<int> leaf_offsets() const { return m_leaf_offsets; }
+   std::vector<float> leaf_values() const { return m_leaf_values; }
+   std::vector<float> split_border() const { return m_split_border; }
+   std::vector<int> split_feature() const { return m_split_feature; }
+private:
+   int m_num_features;
+   int m_num_trees;
+   std::vector<int> m_tree_depths;
+   std::vector<int> m_tree_offsets;
+   std::vector<int> m_leaf_offsets;
+   std::vector<float> m_leaf_values;
+   std::vector<float> m_split_border;
+   std::vector<int> m_split_feature;
 };
 
 #endif

@@ -28,10 +28,14 @@ SEQUENCE_T(
   scifi_calculate_cluster_count_t,
   prefix_sum_scifi_hits_t,
   scifi_pre_decode_t,
+  scifi_raw_bank_decoder_t,
+  scifi_pr_forward_t,
   scifi_raw_bank_decoder_t, 
   scifi_pr_forward_t,
   copy_and_prefix_sum_single_block_scifi_t,
   copy_scifi_track_hit_number_t,
   prefix_sum_scifi_track_hit_number_t,
-  consolidate_scifi_tracks_t
+  consolidate_scifi_tracks_t,
+  muon_catboost_features_extraction_t,
+  muon_catboost_evaluator_t
 )

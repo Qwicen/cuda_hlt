@@ -68,3 +68,32 @@ bool EventReader::check_events(BankTypes type,
       return events.size() == event_offsets.back();
    }
 }
+
+CatboostModelReader::CatboostModelReader(const std::string& file_name) {
+   if (!exists_test(file_name)) {
+      throw StrException("Catboost model file " + file_name + " does not exist.");
+   }
+   std::ifstream i(file_name);
+   nlohmann::json j;
+   i >> j;
+   m_num_features = j["features_info"]["float_features"].size();
+   m_num_trees = j["oblivious_trees"].size();
+   m_tree_offsets.push_back(0);
+   m_leaf_offsets.push_back(0);
+   for (nlohmann::json::iterator it = j["oblivious_trees"].begin(); it != j["oblivious_trees"].end(); ++it) {
+      nlohmann::json tree(*it); 
+      std::vector<float> tree_split_borders;
+      std::vector<int> tree_split_features;
+      m_leaf_values.insert(std::end(m_leaf_values), std::begin(tree["leaf_values"]), std::end(tree["leaf_values"]));
+      m_tree_depths.push_back(tree["splits"].size());
+      m_tree_offsets.push_back(m_tree_offsets.back() + m_tree_depths.back());
+      m_leaf_offsets.push_back(m_leaf_offsets.back() + (1<<m_tree_depths.back()));
+      for(nlohmann::json::iterator it_spl = tree["splits"].begin(); it_spl != tree["splits"].end(); ++it_spl) {
+         nlohmann::json split(*it_spl);
+         tree_split_borders.push_back(split["border"]);
+         tree_split_features.push_back(split["float_feature_index"]);
+      }
+      m_split_border.insert(std::end(m_split_border), std::begin(tree_split_borders), std::end(tree_split_borders));
+      m_split_feature.insert(std::end(m_split_feature), std::begin(tree_split_features), std::end(tree_split_features));
+   }
+}

@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+#include "MuonDefinitions.cuh"
 
 /**
  * @brief Runtime options singleton.
@@ -16,6 +18,7 @@ struct RuntimeOptions {
   uint* host_scifi_event_offsets;
   size_t host_scifi_events_size;
   size_t host_scifi_event_offsets_size;
+  std::vector<Muon::HitsSoA> host_muon_hits_events;
   uint number_of_events;
   uint number_of_repetitions;
 
@@ -34,6 +37,7 @@ struct RuntimeOptions {
     uint* param_host_scifi_event_offsets,
     size_t param_host_scifi_events_size,
     size_t param_host_scifi_event_offsets_size,
+    std::vector<Muon::HitsSoA> param_host_muon_hits_events,
     uint param_number_of_events,
     uint param_number_of_repetitions)
   : host_velopix_events(param_host_velopix_events),
@@ -48,6 +52,7 @@ struct RuntimeOptions {
     host_scifi_event_offsets(param_host_scifi_event_offsets),
     host_scifi_events_size(param_host_scifi_events_size),
     host_scifi_event_offsets_size(param_host_scifi_event_offsets_size),
+    host_muon_hits_events(param_host_muon_hits_events),
     number_of_events(param_number_of_events),
     number_of_repetitions(param_number_of_repetitions) {}
 };
