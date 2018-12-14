@@ -32,7 +32,7 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
   ));
 
   // Setup opts for kernel call
-  state.set_opts(dim3(runtime_options.number_of_events, Muon::Constants::n_stations), dim3(1), cuda_stream);
+  state.set_opts(dim3(runtime_options.number_of_events, Muon::Constants::n_stations), dim3(32), cuda_stream);
 
   // Setup arguments for kernel call
   state.set_arguments(

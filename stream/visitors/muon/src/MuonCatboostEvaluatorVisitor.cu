@@ -1,6 +1,6 @@
 #include "SequenceVisitor.cuh"
 #include "MuonCatboostEvaluator.cuh"
-#include<vector>
+#include <vector>
 
 template<>
 void SequenceVisitor::set_arguments_size<muon_catboost_evaluator_t>(
