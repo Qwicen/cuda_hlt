@@ -90,12 +90,12 @@ namespace {
       unsigned short iter = 0;
       debug_cout << "next vertex " << std::endl;
       for(; iter<maxNumIter && !converged;++iter) {
-        float halfD2Chi2DX2_00 = 0.;
-        float halfD2Chi2DX2_10 = 0.;
-        float halfD2Chi2DX2_11 = 0.;
-        float halfD2Chi2DX2_20 = 0.;
-        float halfD2Chi2DX2_21 = 0.;
-        float halfD2Chi2DX2_22 = 0.;
+        float halfD2Chi2DX2_00 = 0.f;
+        float halfD2Chi2DX2_10 = 0.f;
+        float halfD2Chi2DX2_11 = 0.f;
+        float halfD2Chi2DX2_20 = 0.f;
+        float halfD2Chi2DX2_21 = 0.f;
+        float halfD2Chi2DX2_22 = 0.f;
         float3 halfDChi2DX{0.f,0.f,0.f} ;
         chi2tot = 0.f ;
         nselectedtracks = 0 ;
@@ -131,7 +131,6 @@ namespace {
 
             trk.weight = exp(-chi2/2./T);
             double denom = exp(-chi2_cut/2./T);
-            //double denom = 0.;
             for (int i_otherseed = 0; i_otherseed < number_of_seeds; i_otherseed++) {
                float2 tmp_res{0.f,0.f};
                float3 otherseedpos = seedpositions[i_otherseed];
@@ -256,7 +255,7 @@ namespace {
     vtxcov[5] = 0.f;
 
     const float maxDeltaZConverged{0.001f} ;
-    float chi2tot = 0;
+    float chi2tot = 0.f;
     unsigned short nselectedtracks = 0;
     unsigned short iter = 0;
     debug_cout << "next vertex " << std::endl;
@@ -492,7 +491,7 @@ void findPVs(
           const int maxbin = std::min(int( zbin + halfwindow ),Nbins-2);
           // we can get rid of this if statement if we make a selection of seeds earlier
           if( maxbin >= minbin ) {
-            float integral = 0 ;
+            float integral = 0.f ;
             for( auto i=minbin; i<maxbin; ++i) {
               const float relz = ( zmin + (i+1)*dz - trk.z ) /zerr;
               const float thisintegral = GaussApprox::integral( relz );
