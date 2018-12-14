@@ -12,6 +12,9 @@ namespace Muon {
     static constexpr float SQRT3                = 1.7320508075688772;
     static constexpr float INVSQRT3             = 0.5773502691896258;
     static constexpr float MSFACTOR             = 5.552176750308537;
+
+    /*Muon Catboost model uses 5 features for each station: Delta time, Time, Crossed, X residual, Y residual*/
+    static constexpr uint n_catboost_features   = 5 * n_stations;
   }
   /* SoA for hit variables
     The hits for every layer are written behind each other, the offsets

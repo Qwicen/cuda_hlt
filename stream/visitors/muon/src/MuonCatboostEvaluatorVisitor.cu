@@ -23,7 +23,6 @@ void SequenceVisitor::visit<muon_catboost_evaluator_t>(
   cudaEvent_t& cuda_generic_event)
 {
   state.set_opts(dim3(host_buffers.host_number_of_reconstructed_scifi_tracks[0]),dim3(32), cuda_stream);
-  //state.set_opts(dim3(1),dim3(32), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_muon_catboost_features>(),
     arguments.offset<dev_muon_catboost_output>(),
@@ -37,9 +36,8 @@ void SequenceVisitor::visit<muon_catboost_evaluator_t>(
     constants.muon_catboost_n_features,
     host_buffers.host_number_of_reconstructed_scifi_tracks[0]
   );
-  std::cerr << host_buffers.host_number_of_reconstructed_scifi_tracks[0];
   state.invoke();
-  std::vector<float> output(host_buffers.host_number_of_reconstructed_scifi_tracks[0]); // for all
+  std::vector<float> output(host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
 
   cudaCheck(cudaMemcpyAsync(
     output.data(),

@@ -15,7 +15,8 @@ include_directories(${CMAKE_SOURCE_DIR}/main/include)
 include_directories(common/include)
 include_directories(IsMuon/include)
 
-cuda_add_library(Muon STATIC
+add_library(Muon STATIC
   ${muon_features_extraction}
   ${muon_classification}
 )
+set_property(TARGET Muon PROPERTY CUDA_SEPARABLE_COMPILATION ON)
