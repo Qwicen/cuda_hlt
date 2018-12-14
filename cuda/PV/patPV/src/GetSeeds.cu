@@ -1,4 +1,4 @@
-#include "getSeeds.cuh"
+#include "GetSeeds.cuh"
 //simplficiations: no tracks2disable
 
 

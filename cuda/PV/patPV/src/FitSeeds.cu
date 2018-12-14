@@ -1,4 +1,4 @@
-#include "fitSeeds.cuh"
+#include "FitSeeds.cuh"
 
 __global__ void fit_seeds(
   PV::Vertex* dev_vertex,

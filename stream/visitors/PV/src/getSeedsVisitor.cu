@@ -1,5 +1,5 @@
 #include "SequenceVisitor.cuh"
-#include "getSeeds.cuh"
+#include "GetSeeds.cuh"
 
 template<>
 void SequenceVisitor::set_arguments_size<pv_get_seeds_t>(

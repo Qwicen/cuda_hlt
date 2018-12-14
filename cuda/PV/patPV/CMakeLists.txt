@@ -1,4 +1,3 @@
-file(GLOB patPV "src/patPV.cu")
 include_directories(include)
 include_directories(${CMAKE_SOURCE_DIR}/main/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/common/include)
@@ -13,5 +12,5 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/prefix_sum/include)
 include_directories(../beamlinePV/include)
 
 cuda_add_library(PatPV STATIC
-  ${patPV} src/getSeeds.cu src/fitSeeds.cu
+  ${patPV} src/GetSeeds.cu src/FitSeeds.cu
 )

@@ -1,5 +1,5 @@
 #include "SequenceVisitor.cuh"
-#include "fitSeeds.cuh"
+#include "FitSeeds.cuh"
 
 template<>
 void SequenceVisitor::set_arguments_size<pv_fit_seeds_t>(
