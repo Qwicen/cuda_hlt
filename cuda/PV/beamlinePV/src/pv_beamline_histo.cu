@@ -2,8 +2,7 @@
 
 __device__ float gauss_integral(float x)
 {
-  constexpr int N = 2;
-  const float a = std::sqrt(float(2 * N + 3));
+  const float a = std::sqrt(float(2 * order_polynomial + 3));
   const float xi = x / a;
   const float eta = 1.f - xi * xi;
   constexpr float p[] = {0.5f, 0.25f, 0.1875f, 0.15625f};
@@ -54,8 +53,7 @@ pv_beamline_histo(int* dev_atomics_storage, uint* dev_velo_track_hit_number, PVT
         // get rid of useless tracks. must be a bit carefull with this.
         if (zerr < maxTrackZ0Err) { // m_nsigma < 10*m_dz ) {
           // find better place to define this
-          constexpr int N = 2;
-          const float a = std::sqrt(float(2 * N + 3));
+          const float a = std::sqrt(float(2 * order_polynomial + 3));
           const float halfwindow = a * zerr / dz;
           // this looks a bit funny, but we need the first and last bin of the histogram to remain empty.
           const int minbin = std::max(int(zbin - halfwindow), 1);
