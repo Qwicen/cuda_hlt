@@ -90,7 +90,7 @@ struct PVTrackInVertex : PVTrack {
   float HW_11;
   float HW_20;
   float HW_21;
-  // HWH: ROOT::Math::Similarity(H,W), meaning the product of H_transposed * W * H
+  // HWH: ROOT::Math::Similarity(H,W), doing a similarity transformation of W, meaning the product of H_transposed * W * H
   float HWH_00;
   float HWH_20;
   float HWH_11;
