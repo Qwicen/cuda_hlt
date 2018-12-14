@@ -2,11 +2,11 @@
 #include "RunBeamlinePVonCPU.h"
 #include "Tools.h"
 
-DEFINE_EMPTY_SET_ARGUMENTS_SIZE(cpu_beamlinePV_t)
+DEFINE_EMPTY_SET_ARGUMENTS_SIZE(cpu_pv_beamline_t)
 
 template<>
-void SequenceVisitor::visit<cpu_beamlinePV_t>(
-  cpu_beamlinePV_t& state,
+void SequenceVisitor::visit<cpu_pv_beamline_t>(
+  cpu_pv_beamline_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,

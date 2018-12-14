@@ -13,4 +13,4 @@ void run_BeamlinePV_on_CPU(
   const uint number_of_events 
 );
 
-CPU_ALGORITHM(run_BeamlinePV_on_CPU, cpu_beamlinePV_t)  
+CPU_ALGORITHM(run_BeamlinePV_on_CPU, cpu_pv_beamline_t)

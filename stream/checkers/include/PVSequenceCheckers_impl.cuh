@@ -27,7 +27,7 @@ void SequenceVisitor::check<pv_fit_seeds_t>(
  * @brief Specialization for beamline PV finding algorithm
  */
 template<>
-void SequenceVisitor::check<cpu_beamlinePV_t>(
+void SequenceVisitor::check<cpu_pv_beamline_t>(
   const uint& start_event_offset,
   const uint& number_of_events_requested,
   const HostBuffers& host_buffers,

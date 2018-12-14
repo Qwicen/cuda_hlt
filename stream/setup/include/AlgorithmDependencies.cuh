@@ -135,7 +135,7 @@ typedef std::tuple<
     dev_atomics_velo,
     dev_velo_track_hit_number
   >,
-  AlgorithmDependencies<cpu_beamlinePV_t,
+  AlgorithmDependencies<cpu_pv_beamline_t,
     dev_kalmanvelo_states,
     dev_atomics_velo,
     dev_velo_track_hit_number
