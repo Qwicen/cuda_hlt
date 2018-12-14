@@ -38,18 +38,18 @@ __global__ void pv_beamline_multi_fitter(
     float vtxcov[6] = {0.f, 0.f, 0.f, 0.f, 0.f, 0.f};
     //initial vertex posisiton, use x,y of the beamline and z of the seed
     float2 vtxpos_xy {beamline.x, beamline.y};
-    float vtxpos_z = zseeds[i_thisseed];
-    const float maxDeltaZConverged {0.001f};
-    float chi2tot = 0.f;
+    auto vtxpos_z = zseeds[i_thisseed];
+    const auto maxDeltaZConverged {0.001f};
+    auto chi2tot = 0.f;
     unsigned short nselectedtracks = 0;
     unsigned short iter = 0;
     // debug_cout << "next vertex " << std::endl;
     for (; iter < maxFitIter && !converged; ++iter) {
-      float halfD2Chi2DX2_00 = 0.f;
-      float halfD2Chi2DX2_11 = 0.f;
-      float halfD2Chi2DX2_20 = 0.f;
-      float halfD2Chi2DX2_21 = 0.f;
-      float halfD2Chi2DX2_22 = 0.f;
+      auto halfD2Chi2DX2_00 = 0.f;
+      auto halfD2Chi2DX2_11 = 0.f;
+      auto halfD2Chi2DX2_20 = 0.f;
+      auto halfD2Chi2DX2_21 = 0.f;
+      auto halfD2Chi2DX2_22 = 0.f;
       float3 halfDChi2DX {0.f, 0.f, 0.f};
       chi2tot = 0.f;
       nselectedtracks = 0;
@@ -59,10 +59,10 @@ __global__ void pv_beamline_multi_fitter(
         PVTrackInVertex trk = tracks[i];
         // skip tracks lying outside histogram range
         if (zmin > trk.z || trk.z > zmax) continue;
-        const float dz = vtxpos_z - trk.z;
+        const auto dz = vtxpos_z - trk.z;
         float2 res {0.f, 0.f};
         res = vtxpos_xy - (trk.x + trk.tx * dz);
-        const float chi2 = res.x * res.x * trk.W_00 + res.y * res.y * trk.W_11;
+        const auto chi2 = res.x * res.x * trk.W_00 + res.y * res.y * trk.W_11;
         // debug_cout << "chi2 = " << chi2 << ", max = " << chi2max << std::endl;
         // compute the weight.
         trk.weight = 0.f;
@@ -76,18 +76,18 @@ __global__ void pv_beamline_multi_fitter(
           // float T = 1.f;
 
           // try out varying chi2_cut during iterations instead of T
-          const float chi2_cut = 0.1f + 0.01f * maxFitIter / (iter + 1);
+          const auto chi2_cut = 0.1f + 0.01f * maxFitIter / (iter + 1);
 
           trk.weight = exp(-chi2 * 0.5f);
-          float denom = exp(-chi2_cut * 0.5f);
+          auto denom = exp(-chi2_cut * 0.5f);
           for (int i_otherseed = 0; i_otherseed < number_of_seeds; i_otherseed++) {
             float2 res_otherseed {0.f, 0.f};
-            const float dz = zseeds[i_otherseed] - trk.z;
+            const auto dz = zseeds[i_otherseed] - trk.z;
 
             //we calculate the residual w.r.t to the other seed positions. Since we don't update them during the fit we use the beamline (x,y)
             res_otherseed = res_otherseed - (trk.x + trk.tx * dz);
             // at the moment this term reuses W matrix at z of point of closest approach -> use seed positions instead?
-            const float chi2_otherseed = res_otherseed.x * res_otherseed.x * trk.W_00 + res_otherseed.y * res_otherseed.y * trk.W_11;
+            const auto chi2_otherseed = res_otherseed.x * res_otherseed.x * trk.W_00 + res_otherseed.y * res_otherseed.y * trk.W_11;
             denom += exp(-chi2_otherseed * 0.5f);
           }
           trk.weight = trk.weight / denom;
@@ -121,14 +121,14 @@ __global__ void pv_beamline_multi_fitter(
       
       if (nselectedtracks >= 2) {
         // compute the new vertex covariance using analytical inversion
-        const float a00 = halfD2Chi2DX2_00;
-        const float a11 = halfD2Chi2DX2_11;
-        const float a20 = halfD2Chi2DX2_20;
-        const float a21 = halfD2Chi2DX2_21;
-        const float a22 = halfD2Chi2DX2_22;
+        const auto a00 = halfD2Chi2DX2_00;
+        const auto a11 = halfD2Chi2DX2_11;
+        const auto a20 = halfD2Chi2DX2_20;
+        const auto a21 = halfD2Chi2DX2_21;
+        const auto a22 = halfD2Chi2DX2_22;
 
-        const float det = a00 * (a22 * a11 - a21 * a21) + a20 * ( - a11 * a20);
-        const float inv_det = 1.f / det;
+        const auto det = a00 * (a22 * a11 - a21 * a21) + a20 * ( - a11 * a20);
+        const auto inv_det = 1.f / det;
         // maybe we should catch the case when det = 0
         // if (det == 0) return false;
 
@@ -145,7 +145,7 @@ __global__ void pv_beamline_multi_fitter(
           -1.f * (vtxcov[1] * halfDChi2DX.x + vtxcov[2] * halfDChi2DX.y + vtxcov[4] * halfDChi2DX.z)
         };
 
-        const float delta_z = -1.f * (vtxcov[3] * halfDChi2DX.x + vtxcov[4] * halfDChi2DX.y + vtxcov[5] * halfDChi2DX.z);
+        const auto delta_z = -1.f * (vtxcov[3] * halfDChi2DX.x + vtxcov[4] * halfDChi2DX.y + vtxcov[5] * halfDChi2DX.z);
         chi2tot += delta_xy.x * halfDChi2DX.x + delta_xy.y * halfDChi2DX.y + delta_z * halfDChi2DX.z;
 
         // update the position
@@ -171,9 +171,9 @@ __global__ void pv_beamline_multi_fitter(
     
     // TODO integrate beamline position
     const float2 beamline {0.f, 0.f};
-    const float beamlinedx = vertex.position.x - beamline.x;
-    const float beamlinedy = vertex.position.y - beamline.y;
-    const float beamlinerho2 = beamlinedx * beamlinedx + beamlinedy * beamlinedy;
+    const auto beamlinedx = vertex.position.x - beamline.x;
+    const auto beamlinedy = vertex.position.y - beamline.y;
+    const auto beamlinerho2 = beamlinedx * beamlinedx + beamlinedy * beamlinedy;
     if (vertex.n_tracks >= minNumTracksPerVertex && beamlinerho2 < maxVertexRho2) {
       uint vertex_index = atomicAdd(number_of_multi_fit_vertices, 1);
       vertices[vertex_index] = vertex;
