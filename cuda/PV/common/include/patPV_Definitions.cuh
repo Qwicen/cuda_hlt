@@ -107,7 +107,7 @@ public:
     cov21 = m_cov[4];
     cov22 = m_cov[5];
   }
-  int nTracks = 0.;
+  int nTracks = 0;
 };
 
 } // namespace PatPV
