@@ -78,9 +78,5 @@ SCENARIO( "Muon catboost features evaluation" ) {
         cudaFree(dev_scifi_track_hit_number);
         cudaFree(dev_scifi_track_ut_indices);
         free(host_features);
-        free(host_qop);
-        free(host_atomics_scifi);
-        free(host_scifi_track_hit_number);
-        free(host_scifi_track_ut_indices);
     }
 }
