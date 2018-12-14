@@ -11,9 +11,6 @@ __global__ void pv_beamline_multi_fitter(
   PV::Vertex* dev_multi_fit_vertices,
   uint* dev_number_of_multi_fit_vertices)
 {
-  // should tune this
-  const uint maxNumIter = 2;
-  const float chi2max = 9.f;
 
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
@@ -49,7 +46,7 @@ __global__ void pv_beamline_multi_fitter(
     
     unsigned short iter = 0;
     // debug_cout << "next vertex " << std::endl;
-    for (; iter < maxNumIter && !converged; ++iter) {
+    for (; iter < maxFitIter && !converged; ++iter) {
       float halfD2Chi2DX2_00 = 0.f;
       float halfD2Chi2DX2_11 = 0.f;
       float halfD2Chi2DX2_20 = 0.f;
@@ -72,7 +69,7 @@ __global__ void pv_beamline_multi_fitter(
         // debug_cout << "chi2 = " << chi2 << ", max = " << chi2max << std::endl;
         // compute the weight.
         trk.weight = 0.f;
-        if (chi2 < chi2max) { // to branch or not, that is the question!
+        if (chi2 < maxDeltaChi2) { // to branch or not, that is the question!
                               // if (true) {
           ++nselectedtracks;
           // for more information on the weighted fitting, see e.g.
@@ -82,7 +79,7 @@ __global__ void pv_beamline_multi_fitter(
           // float T = 1.f;
 
           // try out varying chi2_cut during iterations instead of T
-          const float chi2_cut = 0.1f + 0.01f * maxNumIter / (iter + 1);
+          const float chi2_cut = 0.1f + 0.01f * maxFitIter / (iter + 1);
 
           trk.weight = exp(-chi2 * 0.5f);
           float denom = exp(-chi2_cut * 0.5f);

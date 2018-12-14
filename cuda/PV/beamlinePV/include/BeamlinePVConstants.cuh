@@ -12,7 +12,7 @@ static constexpr float minDipDensity =
 static constexpr float minTracksInSeed = 2.5f; // "MinTrackIntegralInSeed"
 static constexpr float maxVertexRho = 0.3f;    // unit:: mm "Maximum distance of vertex to beam line"
 static constexpr float maxVertexRho2 = 0.09f;
-static constexpr unsigned int maxFitIter = 5; // "Maximum number of iterations for vertex fit"
+static constexpr unsigned int maxFitIter = 2; // "Maximum number of iterations for vertex fit"
 static constexpr float maxDeltaChi2 = 9.f;    //"Maximum chi2 contribution of track to vertex fit"
 static constexpr float minWeight = 0.3f;      //"minimum value of adaptive weight of track in multi fit"
 
