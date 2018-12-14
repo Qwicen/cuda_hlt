@@ -37,7 +37,7 @@ namespace Constants {
   static constexpr uint max_numhits_per_event = 10000;
   static constexpr uint max_hit_candidates_per_layer = 200;
 
-  const int max_tracks = 200; 
+  const int max_tracks = 200;
   const int max_track_size = Tracking::max_scifi_hits;
 } // Constants
 
@@ -167,7 +167,7 @@ struct SciFiChannelID {
                      stationBits       = 18};
 };
 
-  
+
   __device__ uint32_t channelInBank(uint32_t c);
   __device__ uint16_t getLinkInBank(uint16_t c);
   __device__ int cell(uint16_t c);

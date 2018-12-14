@@ -44,10 +44,11 @@ if (LZ4_FOUND)
 endif (LZ4_FOUND)
 
 macro(test_program name)
-cuda_add_executable(${name}
+add_executable(${name}
   test/${name}.cpp)
 
 target_include_directories(${name} PUBLIC
+  ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
   ${CMAKE_SOURCE_DIR}/mdf/include
   ${CMAKE_SOURCE_DIR}/main/include
   ${CMAKE_SOURCE_DIR}/cuda/event_model/velo/include

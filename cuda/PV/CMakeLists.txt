@@ -13,6 +13,8 @@ include_directories(${ROOT_INCLUDE_DIRS})
 
 file(GLOB pat_pv "patPV/src/*cu")
 
-cuda_add_library(PV STATIC
+add_library(PV STATIC
   ${pat_pv}
 )
+set_property(TARGET PV PROPERTY
+             CUDA_SEPARABLE_COMPILATION ON)
