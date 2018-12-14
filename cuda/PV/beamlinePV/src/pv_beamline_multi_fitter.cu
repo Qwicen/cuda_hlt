@@ -36,14 +36,12 @@ __global__ void pv_beamline_multi_fitter(
   for ( uint i_thisseed = threadIdx.x; i_thisseed < number_of_seeds; i_thisseed += blockDim.x) {
     bool converged = false;
     float vtxcov[6] = {0.f, 0.f, 0.f, 0.f, 0.f, 0.f};
-
     //initial vertex posisiton, use x,y of the beamline and z of the seed
     float2 vtxpos_xy {beamline.x, beamline.y};
     float vtxpos_z = zseeds[i_thisseed];
     const float maxDeltaZConverged {0.001f};
     float chi2tot = 0.f;
     unsigned short nselectedtracks = 0;
-    
     unsigned short iter = 0;
     // debug_cout << "next vertex " << std::endl;
     for (; iter < maxFitIter && !converged; ++iter) {
@@ -57,7 +55,6 @@ __global__ void pv_beamline_multi_fitter(
       nselectedtracks = 0;
       // debug_cout << "next track" << std::endl;
       for (int i = 0; i < number_of_tracks; i++) {
-        
         // compute the chi2
         PVTrackInVertex trk = tracks[i];
         // skip tracks lying outside histogram range
@@ -65,7 +62,7 @@ __global__ void pv_beamline_multi_fitter(
         const float dz = vtxpos_z - trk.z;
         float2 res {0.f, 0.f};
         res = vtxpos_xy - (trk.x + trk.tx * dz);
-        float chi2 = res.x * res.x * trk.W_00 + res.y * res.y * trk.W_11;
+        const float chi2 = res.x * res.x * trk.W_00 + res.y * res.y * trk.W_11;
         // debug_cout << "chi2 = " << chi2 << ", max = " << chi2max << std::endl;
         // compute the weight.
         trk.weight = 0.f;
@@ -89,11 +86,9 @@ __global__ void pv_beamline_multi_fitter(
 
             //we calculate the residual w.r.t to the other seed positions. Since we don't update them during the fit we use the beamline (x,y)
             res_otherseed = res_otherseed - (trk.x + trk.tx * dz);
-            //res_otherseed = res_otherseed * res_otherseed;
-            // at the moment this term reuses W'matrix at z of point of closest approach -> use seed positions instead?
-            res_otherseed = float2_sqr(res_otherseed);
-            const float chi2 = res_otherseed.x * trk.W_00 + res_otherseed.y * trk.W_11;
-            denom += exp(-chi2 * 0.5f);
+            // at the moment this term reuses W matrix at z of point of closest approach -> use seed positions instead?
+            const float chi2_otherseed = res_otherseed.x * res_otherseed.x * trk.W_00 + res_otherseed.y * res_otherseed.y * trk.W_11;
+            denom += exp(-chi2_otherseed * 0.5f);
           }
           trk.weight = trk.weight / denom;
 
@@ -175,7 +170,7 @@ __global__ void pv_beamline_multi_fitter(
     }
     
     // TODO integrate beamline position
-    float2 beamline {0.f, 0.f};
+    const float2 beamline {0.f, 0.f};
     const float beamlinedx = vertex.position.x - beamline.x;
     const float beamlinedy = vertex.position.y - beamline.y;
     const float beamlinerho2 = beamlinedx * beamlinedx + beamlinedy * beamlinedy;
