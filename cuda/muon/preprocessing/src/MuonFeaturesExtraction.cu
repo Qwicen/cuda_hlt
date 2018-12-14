@@ -1,14 +1,5 @@
 #include "MuonFeaturesExtraction.cuh"
 #include "ConsolidateSciFi.cuh"
-#include <stdio.h>
-
-enum offset {
-  DTS   = 0,
-  TIMES = 1 * Muon::Constants::n_stations,
-  CROSS = 2 * Muon::Constants::n_stations,
-  RES_X = 3 * Muon::Constants::n_stations,
-  RES_Y = 4 * Muon::Constants::n_stations
-};
 
 __global__ void muon_catboost_features_extraction(
   int* dev_atomics_scifi,
@@ -35,9 +26,7 @@ __global__ void muon_catboost_features_extraction(
 
   const uint number_of_tracks_event = scifi_tracks.number_of_tracks(event_id);
   const uint event_offset = scifi_tracks.tracks_offset(event_id);
-  for (uint track_id = threadIdx.x; track_id < number_of_tracks_event; track_id += blockDim.x)
-  {
-    printf("Event = %d Track = %d States = %f %f %f %f %f\n", event_id, track_id, scifi_tracks.states[track_id].x, scifi_tracks.states[track_id].tx, scifi_tracks.states[track_id].y, scifi_tracks.states[track_id].ty, scifi_tracks.states[track_id].z);
+  for (uint track_id = threadIdx.x; track_id < number_of_tracks_event; track_id += blockDim.x) {
     float min_dist = 1e10;
     int tile_of_closest_hit;
 
@@ -77,11 +66,11 @@ __global__ void muon_catboost_features_extraction(
         dev_muon_catboost_features[tracks_features_offset + offset::CROSS + station_id] = (muon_hits[event_id].uncrossed[idx] == 0) ? 2. : muon_hits[event_id].uncrossed[idx];
 
         const float trav_dist = sqrt(
-		(station_z - station_z0) * (station_z - station_z0) +
-		(extrapolation_x - extrapolation_x0) * (extrapolation_x - extrapolation_x0) +
-		(extrapolation_y - extrapolation_y0) * (extrapolation_y - extrapolation_y0)
-	);
-	const float errMS = common_factor * trav_dist * sqrt(trav_dist) * 0.23850119787527452;
+          (station_z - station_z0) * (station_z - station_z0) +
+          (extrapolation_x - extrapolation_x0) * (extrapolation_x - extrapolation_x0) +
+          (extrapolation_y - extrapolation_y0) * (extrapolation_y - extrapolation_y0)
+        );
+        const float errMS = common_factor * trav_dist * sqrt(trav_dist) * 0.23850119787527452;
 
         if (std::abs(extrapolation_x - muon_hits[event_id].x[idx]) != 2000) {
           dev_muon_catboost_features[tracks_features_offset + offset::RES_X + station_id] = (extrapolation_x - muon_hits[event_id].x[idx]) /

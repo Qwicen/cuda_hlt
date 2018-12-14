@@ -249,6 +249,7 @@ typedef std::tuple<
     dev_atomics_scifi,
     dev_scifi_track_hit_number,
     dev_scifi_qop,
+    dev_scifi_states,
     dev_scifi_track_ut_indices,
     dev_scifi_tracks
   >,
@@ -300,5 +301,6 @@ typedef std::tuple<
   dev_scifi_track_hits,
   dev_scifi_track_hit_number,
   dev_scifi_qop,
+  //dev_scifi_states,
   dev_scifi_track_ut_indices
 > output_arguments_t;

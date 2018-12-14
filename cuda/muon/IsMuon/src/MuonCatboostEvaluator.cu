@@ -1,5 +1,4 @@
 #include "MuonCatboostEvaluator.cuh"
-#include <stdio.h>
 /**
 * Computes probability of being a muon.
 * CatBoost uses oblivious trees as base predictors. In such trees same splitting criterion is used

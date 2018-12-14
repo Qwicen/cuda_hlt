@@ -36,9 +36,6 @@ void HostBuffers::reserve(const uint max_number_of_events) {
   cudaCheck(cudaMallocHost((void**)&host_reconstructed_pvs,max_number_of_events * PatPV::max_number_vertices * sizeof(PatPV::Vertex)));
   cudaCheck(cudaMallocHost((void**)&host_number_of_vertex, max_number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_number_of_seeds, max_number_of_events * sizeof(int)));
-
-  // Muon features
-  cudaCheck(cudaMallocHost((void**)&host_muon_catboost_features, 20 * sizeof(float)));
 }
 
 size_t HostBuffers::velo_track_hit_number_size() const {
