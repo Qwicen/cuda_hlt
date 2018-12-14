@@ -60,7 +60,7 @@ namespace {
           uint number_of_seeds,
           PV::Vertex * vertices,
           unsigned short maxNumIter=5,
-          float chi2max=9)
+          float chi2max=9.f)
   {
     #ifdef WITH_ROOT
     TFile * weightfile = new TFile("weights.root", "RECREATE");
@@ -77,12 +77,12 @@ namespace {
     for(int i_thisseed = 0; i_thisseed < number_of_seeds; i_thisseed++) {
       bool converged = false ;
       float vtxcov[6];
-      vtxcov[0] = 0.;
-      vtxcov[1] = 0.;
-      vtxcov[2] = 0.;
-      vtxcov[3] = 0.;
-      vtxcov[4] = 0.;
-      vtxcov[5] = 0.;
+      vtxcov[0] = 0.f;
+      vtxcov[1] = 0.f;
+      vtxcov[2] = 0.f;
+      vtxcov[3] = 0.f;
+      vtxcov[4] = 0.f;
+      vtxcov[5] = 0.f;
       float3 vtxpos = seedpositions[i_thisseed];
       const float maxDeltaZConverged{0.001} ;
       float chi2tot = 0;
@@ -123,10 +123,10 @@ namespace {
             ++nselectedtracks ;
             // Tukey's weight
             //double T = 1. + maxNumIter / (iter+1) * 0.05;
-            double T = 1.;
+            double T = 1.f;
 
             //try out varying chi2_cut during iterations instead of T
-            double chi2_cut = 0.1 + 0.01*maxNumIter / (iter+1) ;
+            double chi2_cut = 0.1f + 0.01f*maxNumIter / (iter+1) ;
             //double chi2_cut = 16.;
 
             trk.weight = exp(-chi2/2./T);
@@ -141,7 +141,7 @@ namespace {
                tmp_res = otherseedvtx - (tmp_trk.x );
                //at the moment this term reuses W'matrix at z of point of closest approach -> use seed positions instead?
                double tmp_chi2 = tmp_res.x*tmp_res.x * tmp_trk.W_00 + tmp_res.y*tmp_res.y*tmp_trk.W_11 ;
-               denom += exp(-tmp_chi2/2./T);
+               denom += exp(-tmp_chi2/2.f/T);
 
             }
 
@@ -155,7 +155,7 @@ namespace {
             #endif
 
 
-            if(trk.weight < 0.3) continue;
+            if(trk.weight < 0.3f) continue;
 
             float3 HWr;
             HWr.x = res.x * trk.W_00;
@@ -208,7 +208,7 @@ namespace {
           converged = std::abs(delta.z) < maxDeltaZConverged ;
         } else {
           PV::Vertex vertex;
-          float3 fakepos{-99999.,-99999.,-99999.};
+          float3 fakepos{-99999.f,-99999.f,-99999.f};
           vertex.setPosition(fakepos);
           vertices[i_thisseed] = vertex ;
           break ;
@@ -239,7 +239,7 @@ namespace {
           uint number_of_tracks,
           const float3& seedposition,
           unsigned short maxNumIter=5,
-          float chi2max=9)
+          float chi2max=9.f)
   {
     // make vector of TrackInVertex objects
     bool converged = false ;
@@ -248,25 +248,25 @@ namespace {
 
     PV::Vertex vertex;
     float vtxcov[6];
-    vtxcov[0] = 0.;
-    vtxcov[1] = 0.;
-    vtxcov[2] = 0.;
-    vtxcov[3] = 0.;
-    vtxcov[4] = 0.;
-    vtxcov[5] = 0.;
+    vtxcov[0] = 0.f;
+    vtxcov[1] = 0.f;
+    vtxcov[2] = 0.f;
+    vtxcov[3] = 0.f;
+    vtxcov[4] = 0.f;
+    vtxcov[5] = 0.f;
 
-    const float maxDeltaZConverged{0.001} ;
+    const float maxDeltaZConverged{0.001f} ;
     float chi2tot = 0;
     unsigned short nselectedtracks = 0;
     unsigned short iter = 0;
     debug_cout << "next vertex " << std::endl;
     for(; iter<maxNumIter && !converged;++iter) {
-      float halfD2Chi2DX2_00 = 0.;
-      float halfD2Chi2DX2_10 = 0.;
-      float halfD2Chi2DX2_11 = 0.;
-      float halfD2Chi2DX2_20 = 0.;
-      float halfD2Chi2DX2_21 = 0.;
-      float halfD2Chi2DX2_22 = 0.;
+      float halfD2Chi2DX2_00 = 0.f;
+      float halfD2Chi2DX2_10 = 0.f;
+      float halfD2Chi2DX2_11 = 0.f;
+      float halfD2Chi2DX2_20 = 0.f;
+      float halfD2Chi2DX2_21 = 0.f;
+      float halfD2Chi2DX2_22 = 0.f;
       float3 halfDChi2DX{0.f,0.f,0.f} ;
       chi2tot = 0.f ;
       nselectedtracks = 0 ;
