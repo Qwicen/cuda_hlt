@@ -33,7 +33,7 @@ void SequenceVisitor::visit<pv_fit_seeds_t>(
     arguments.offset<dev_number_vertex>(),
     arguments.offset<dev_seeds>(),
     arguments.offset<dev_number_seeds>(),
-    arguments.offset<dev_kalmanvelo_states>(),
+    arguments.offset<dev_velo_kalman_beamline_states>(),
     arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>()
   );

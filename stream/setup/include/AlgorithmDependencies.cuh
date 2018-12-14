@@ -117,10 +117,10 @@ typedef std::tuple<
     dev_velo_track_hit_number,
     dev_velo_track_hits,
     dev_velo_states,
-    dev_kalmanvelo_states
+    dev_velo_kalman_beamline_states
   >,
   AlgorithmDependencies<pv_get_seeds_t,
-    dev_kalmanvelo_states,
+    dev_velo_kalman_beamline_states,
     dev_atomics_velo,
     dev_velo_track_hit_number,
     dev_seeds,
@@ -131,17 +131,17 @@ typedef std::tuple<
     dev_number_vertex,
     dev_seeds,
     dev_number_seeds,
-    dev_kalmanvelo_states,
+    dev_velo_kalman_beamline_states,
     dev_atomics_velo,
     dev_velo_track_hit_number
   >,
   AlgorithmDependencies<cpu_pv_beamline_t,
-    dev_kalmanvelo_states,
+    dev_velo_kalman_beamline_states,
     dev_atomics_velo,
     dev_velo_track_hit_number
   >,
   AlgorithmDependencies<pv_beamline_extrapolate_t,
-    dev_kalmanvelo_states,
+    dev_velo_kalman_beamline_states,
     dev_atomics_velo,
     dev_velo_track_hit_number,
     dev_pvtracks

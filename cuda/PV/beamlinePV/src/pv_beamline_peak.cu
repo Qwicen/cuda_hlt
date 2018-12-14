@@ -21,7 +21,8 @@ __global__ void pv_beamline_peak(
     BinIndex clusteredges[PV::max_number_clusteredges];
     uint number_of_clusteredges = 0;
     {
-      const float threshold = dz / (10.f * maxTrackZ0Err); // need something sensible that depends on binsize
+      const float inv_maxTrackZ0Err = 1.f / (10.f * maxTrackZ0Err);
+      const float threshold = dz * inv_maxTrackZ0Err; // need something sensible that depends on binsize
       bool prevempty = true;
       float integral = zhisto[0];
       for (BinIndex i = 1; i < Nbins; ++i) {

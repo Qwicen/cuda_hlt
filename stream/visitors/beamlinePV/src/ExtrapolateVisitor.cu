@@ -24,7 +24,7 @@ void SequenceVisitor::visit<pv_beamline_extrapolate_t>(
 {
   state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), 128, cuda_stream);
   state.set_arguments(
-    arguments.offset<dev_kalmanvelo_states>(),
+    arguments.offset<dev_velo_kalman_beamline_states>(),
     arguments.offset<dev_atomics_velo>(),
     arguments.offset<dev_velo_track_hit_number>(),
     arguments.offset<dev_pvtracks>());

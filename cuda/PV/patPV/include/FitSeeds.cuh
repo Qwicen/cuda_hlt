@@ -13,7 +13,7 @@ __global__ void fit_seeds(
   int * dev_number_vertex,
   PatPV::XYZPoint * dev_seeds,
   uint * dev_number_seeds,
-  char* dev_kalmanvelo_states,
+  char* dev_velo_kalman_beamline_states,
   int * dev_atomics_storage,
   uint* dev_velo_track_hit_number);
 

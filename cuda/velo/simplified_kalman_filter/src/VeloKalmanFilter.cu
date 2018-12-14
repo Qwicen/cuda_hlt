@@ -45,7 +45,7 @@ __global__ void velo_kalman_fit(
   uint* dev_velo_track_hit_number,
   char* dev_velo_track_hits,
   char* dev_velo_states,
-  char* dev_kalmanvelo_states
+  char* dev_velo_kalman_beamline_states
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
@@ -53,7 +53,7 @@ __global__ void velo_kalman_fit(
   // Consolidated datatypes
   const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_velo, dev_velo_track_hit_number, event_number, number_of_events};
   Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
-  Velo::Consolidated::States kalmanvelo_states {dev_kalmanvelo_states, velo_tracks.total_number_of_tracks};
+  Velo::Consolidated::States kalmanvelo_states {dev_velo_kalman_beamline_states, velo_tracks.total_number_of_tracks};
 
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);

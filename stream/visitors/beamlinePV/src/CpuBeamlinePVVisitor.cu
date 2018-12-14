@@ -20,8 +20,8 @@ void SequenceVisitor::visit<cpu_pv_beamline_t>(
 
   cudaCheck(cudaMemcpyAsync(
     host_buffers.host_kalmanvelo_states,
-    arguments.offset<dev_kalmanvelo_states>(),
-    arguments.size<dev_kalmanvelo_states>(),
+    arguments.offset<dev_velo_kalman_beamline_states>(),
+    arguments.size<dev_velo_kalman_beamline_states>(),
     cudaMemcpyDeviceToHost,
     cuda_stream));
 
