@@ -17,18 +17,5 @@ SEQUENCE_T(
   prefix_sum_velo_track_hit_number_t,
   consolidate_velo_tracks_t,
   velo_kalman_fit_t,
-  pv_beamline_extrapolate_t,
-  pv_beamline_histo_t,
-  pv_beamline_peak_t,
-  pv_beamline_multi_fitter_t,
-  ut_calculate_number_of_hits_t,
-  prefix_sum_ut_hits_t,
-  ut_pre_decode_t,
-  ut_find_permutation_t,
-  ut_decode_raw_banks_in_order_t,
-  veloUT_t,
-  copy_and_prefix_sum_single_block_ut_t,
-  copy_ut_track_hit_number_t,
-  prefix_sum_ut_track_hit_number_t,
-  consolidate_ut_tracks_t
+  cpu_pv_beamline_t
 )
