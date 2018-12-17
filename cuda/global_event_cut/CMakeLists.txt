@@ -8,6 +8,8 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/include)
 
-cuda_add_library(GlobalEventCut STATIC
+add_library(GlobalEventCut STATIC
   ${global_event_cut}
 )
+set_property(TARGET GlobalEventCut PROPERTY
+             CUDA_SEPARABLE_COMPILATION ON)

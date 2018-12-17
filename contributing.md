@@ -69,7 +69,7 @@ file(GLOB test_saxpy "saxpy/src/*cu")
 include_directories(saxpy/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/handlers/include)
 
-cuda_add_library(Test STATIC
+add_library(Test STATIC
   ${test_saxpy}
 )
 ```
@@ -340,7 +340,7 @@ As a last step, add the visitor to `stream/CMakeLists.txt`:
 ...
 file(GLOB stream_visitors_test "visitors/test/src/*cu")
 ...
-cuda_add_library(Stream STATIC
+add_library(Stream STATIC
 ${stream_visitors_test}
 ...
 ```
