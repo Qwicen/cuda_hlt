@@ -369,7 +369,7 @@ Before placing a merge request, please go through the following list and check t
    * Different sequences:
       * Default sequence: `cmake -DSEQUENCE=DefaultSequence ..`
       * CPU SciFi tracking sequence: `cmake -DSEQUENCE=CPUSciFi ..`
-      * PV finding sequence: `cmake -DSEQUENCE=PVSequence ..`
+      * CPU PV finding sequence: `cmake -DSEQUENCE=CPUPVSequence ..`
   * Compilation with ROOT (if you have a ROOT installation available): `cmake -DUSE_ROOT=TRUE ..` If you don't have ROOT available, please mention this in the merge request, then we will test it.
   
 
