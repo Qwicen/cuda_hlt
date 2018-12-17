@@ -131,16 +131,14 @@ protected:
   virtual void SetCategories() = 0;
 
 public:
-  TrackChecker(){
-    histos = new Histos();
-  };
+  TrackChecker(){};
   ~TrackChecker();
   void operator()(const trackChecker::Tracks &tracks,
                   const MCAssociator &mcassoc, const MCParticles &mcps);
   const std::vector<HistoCategory>& histo_categories() {
     return m_histo_categories;
   }
-  Histos * histos;
+  Histos histos;
 };
 
 class TrackCheckerVelo : public TrackChecker {
