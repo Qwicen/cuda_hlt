@@ -10,15 +10,13 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   const uint number_of_tracks_event,
   const int i_track,
   const UTHits& ut_hits,
-  const UTHitOffsets& ut_hit_count,
+  const UTHitOffsets& ut_hit_offsets,
   const MiniState& velo_state,
   const float* ut_dxDy)
 {
   const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
 
-  TrackCandidates ranges (win_size_shared, number_of_tracks_event, i_track);
-  // WindowIndicator win_ranges(win_size_shared); 
-  // const auto* ranges = win_ranges.get_track_candidates(threadIdx.x);
+  const TrackCandidates ranges (win_size_shared, number_of_tracks_event, i_track);
 
   int best_hits [4] = {-1, -1, -1, -1};
 
@@ -31,15 +29,13 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   BestParams best_params;
 
   // Get total number of hits for forward + backward in first layer (0 for fwd, 3 for bwd)
-  const int total_hits_2layers_0 = sum_layer_hits(ranges.layers[0], ranges.layers[3]);
-  for (int i=0; (!found || considered < CompassUT::max_considered_before_found) && i<total_hits_2layers_0; ++i) {
-    // const int i_hit0 = calc_index(i, ranges->layer[0], ranges->layer[3]);
-    const int i_hit0 = calc_index(i, ranges.layers[0], ranges.layers[3]);
+  for (int i=0; (!found || considered < CompassUT::max_considered_before_found) && i < sum_layer_hits(ranges, 0, 3); ++i) {
+    const int i_hit0 = calc_index(i, ranges, 0, 3, ut_hit_offsets);
 
     // set range for next layer if forward or backward
     int layer_2;
     int dxdy_layer = -1;
-    if (i < sum_layer_hits(ranges.layers[0])) {
+    if (i < sum_layer_hits(ranges, 0)) {
       forward = true;
       layer_2 = 2;
       dxdy_layer = 0;
@@ -55,9 +51,9 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
     const auto zhitLayer0 = ut_hits.zAtYEq0[i_hit0];
 
     // 2nd layer
-    const int total_hits_2layers_2 = sum_layer_hits(ranges.layers[layer_2]);
+    const int total_hits_2layers_2 = sum_layer_hits(ranges, layer_2);
     for (int j=0; (!found || considered < CompassUT::max_considered_before_found) && j<total_hits_2layers_2; ++j) {
-      int i_hit2 = calc_index(j, ranges.layers[layer_2]);
+      int i_hit2 = calc_index(j, ranges, layer_2, ut_hit_offsets);
 
       // Get info to calculate slope
       const int dxdy_layer_2 = forward ? 2 : 1;
@@ -79,10 +75,9 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
         float hitTol = VeloUTConst::hitTol2;
 
         // search for a triplet in 3rd layer
-        const int total_hits_2layers_1 = sum_layer_hits(ranges.layers[layers[0]]);
-        for (int i1=0; i1<total_hits_2layers_1; ++i1) {
+        for (int i1=0; i1 < sum_layer_hits(ranges, layers[0]); ++i1) {
 
-          int i_hit1 = calc_index(i1, ranges.layers[layers[0]]);
+          int i_hit1 = calc_index(i1, ranges, layers[0], ut_hit_offsets);
 
           // Get info to check tolerance
           const float yy1 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit1]);
@@ -98,10 +93,9 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 
         // search for triplet/quadruplet in 4th layer
         hitTol = VeloUTConst::hitTol2;
-        const int total_hits_2layers_3 = sum_layer_hits(ranges.layers[layers[1]]);
-        for (int i3=0; i3<total_hits_2layers_3; ++i3) {
+        for (int i3=0; i3 < sum_layer_hits(ranges, layers[1]); ++i3) {
 
-          int i_hit3 = calc_index(i3, ranges.layers[layers[1]]);
+          int i_hit3 = calc_index(i3, ranges, layers[1], ut_hit_offsets);
 
           // Get info to check tolerance
           const float yy3 = yyProto + (velo_state.ty * ut_hits.zAtYEq0[i_hit3]);
@@ -194,7 +188,7 @@ __device__ BestParams pkick_fit(
 
   // new VELO slope x
   const float xb = xUTFit + xSlopeUTFit * (VeloUTConst::zKink - VeloUTConst::zMidUT);
-  const float invKinkVeloDist = 1 / (VeloUTConst::zKink - velo_state.z);
+  const float invKinkVeloDist = 1.f / (VeloUTConst::zKink - velo_state.z);
   const float xSlopeVeloFit = (xb - velo_state.x) * invKinkVeloDist;
   const float chi2VeloSlope = (velo_state.tx - xSlopeVeloFit) * VeloUTConst::invSigmaVeloSlope;
 
@@ -222,6 +216,8 @@ __device__ BestParams pkick_fit(
     }
   }
 
+  // constexpr float bs [4] = {0.f, 0.f, 0.5f, 0.33f};
+  // chi2UT *= bs[total_num_hits-1];
   chi2UT /= (total_num_hits - 1);
 
   // Save the best parameters if chi2 is good
@@ -242,24 +238,22 @@ __device__ BestParams pkick_fit(
 // Give total number of hits for N windows in 2 layers
 //=========================================================================
 __device__ __inline__ int sum_layer_hits(
-  const LayerCandidates& first_candidate,
-  const LayerCandidates& second_candidate)
+  const TrackCandidates& ranges, const int layer0, const int layer2)
 {
-  return  sum_layer_hits(first_candidate) +
-          sum_layer_hits(second_candidate);
+  return  sum_layer_hits(ranges, layer0) + sum_layer_hits(ranges, layer2);
 }
 
 //=========================================================================
 // Give total number of hits for N windows in a layer
 //=========================================================================
 __device__ __inline__ int sum_layer_hits(
-  const LayerCandidates& layer_candidate)
+  const TrackCandidates& ranges, const int layer)
 {
-  return  layer_candidate.size0 + 
-          layer_candidate.size1 + 
-          layer_candidate.size2 + 
-          layer_candidate.size3 + 
-          layer_candidate.size4; 
+  return  ranges.get_size(layer, 0) + 
+          ranges.get_size(layer, 1) + 
+          ranges.get_size(layer, 2) + 
+          ranges.get_size(layer, 3) + 
+          ranges.get_size(layer, 4); 
 }
 
 //=========================================================================
@@ -269,19 +263,22 @@ __device__ __inline__ int sum_layer_hits(
 //=========================================================================
 __device__ __inline__ int calc_index(
   const int i, 
-  const LayerCandidates& layer_cand)
+  const TrackCandidates& ranges, 
+  const int layer,
+  const UTHitOffsets& ut_hit_offsets)
 {
   int hit = -1;
-  if (i < layer_cand.size0) {
-    hit = layer_cand.from0 + i;
-  } else if (i < layer_cand.size0 + layer_cand.size1) {
-    hit = layer_cand.from1 + i - layer_cand.size0;
-  } else if (i < layer_cand.size0 + layer_cand.size1 + layer_cand.size2) {
-    hit = layer_cand.from2 + i - (layer_cand.size0 + layer_cand.size1);
-  } else if (i < layer_cand.size0 + layer_cand.size1 + layer_cand.size2 + layer_cand.size3) {
-    hit = layer_cand.from3 + i - (layer_cand.size0 + layer_cand.size1 + layer_cand.size2);
-  } else if (i < layer_cand.size0 + layer_cand.size1 + layer_cand.size2 + layer_cand.size3 + layer_cand.size4) {
-    hit = layer_cand.from4 + i - (layer_cand.size0 + layer_cand.size1 + layer_cand.size2 + layer_cand.size3);
+  const int sum_offset = i + ut_hit_offsets.layer_offset(layer);
+  if (i < ranges.get_size(layer, 0)) {
+    hit = ranges.get_from(layer, 0) + sum_offset;
+  } else if (i < ranges.get_size(layer, 0) + ranges.get_size(layer, 1)) {
+    hit = ranges.get_from(layer, 1) + sum_offset - ranges.get_size(layer, 0);
+  } else if (i < ranges.get_size(layer, 0) + ranges.get_size(layer, 1) + ranges.get_size(layer, 2)) {
+    hit = ranges.get_from(layer, 2) + sum_offset - ranges.get_size(layer, 0) + ranges.get_size(layer, 1);
+  } else if (i < ranges.get_size(layer, 0) + ranges.get_size(layer, 1) + ranges.get_size(layer, 2) + ranges.get_size(layer, 3)) {
+    hit = ranges.get_from(layer, 3) + sum_offset - ranges.get_size(layer, 0) + ranges.get_size(layer, 1) + ranges.get_size(layer, 2);
+  } else if (i < ranges.get_size(layer, 0) + ranges.get_size(layer, 1) + ranges.get_size(layer, 2) + ranges.get_size(layer, 3) + ranges.get_size(layer, 4)) {
+    hit = ranges.get_from(layer, 4) + sum_offset - ranges.get_size(layer, 0) + ranges.get_size(layer, 1) + ranges.get_size(layer, 2) + ranges.get_size(layer, 3);
   }
 
   return hit;
@@ -294,33 +291,42 @@ __device__ __inline__ int calc_index(
 //=========================================================================
 __device__ __inline__ int calc_index(
   const int i, 
-  const LayerCandidates& layer_cand0,
-  const LayerCandidates& layer_cand2)
+  const TrackCandidates& ranges, 
+  const int layer0,
+  const int layer2,
+  const UTHitOffsets& ut_hit_offsets)
 {
   int hit = -1;
-  int cand0size = layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand0.size3 + layer_cand0.size4;
-  if (i < layer_cand0.size0) {
-    hit = layer_cand0.from0 + i;
-  } else if (i < layer_cand0.size0 + layer_cand0.size1) {
-    hit = layer_cand0.from1 + i - layer_cand0.size0;
-  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2) {
-    hit = layer_cand0.from2 + i - (layer_cand0.size0 + layer_cand0.size1);
-  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand0.size3) {
-    hit = layer_cand0.from2 + i - (layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2);
-  } else if (i < layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand0.size3 + layer_cand0.size4) {
-    hit = layer_cand0.from2 + i - (layer_cand0.size0 + layer_cand0.size1 + layer_cand0.size2 + layer_cand0.size3);
+  int cand0size = ranges.get_size(layer0, 0) + 
+                  ranges.get_size(layer0, 1) + 
+                  ranges.get_size(layer0, 2) + 
+                  ranges.get_size(layer0, 3) + 
+                  ranges.get_size(layer0, 4);
+
+  const int sum_offset0 = i + ut_hit_offsets.layer_offset(layer0);
+  const int sum_offset2 = i + ut_hit_offsets.layer_offset(layer2);
+  if (i < ranges.get_size(layer0, 0)) {
+    hit = ranges.get_from(layer0, 0) + sum_offset0;
+  } else if (i < ranges.get_size(layer0, 0) + ranges.get_size(layer0, 1)) {
+    hit = ranges.get_from(layer0, 1) + sum_offset0 - ranges.get_size(layer0, 0);
+  } else if (i < ranges.get_size(layer0, 0) + ranges.get_size(layer0, 1) + ranges.get_size(layer0, 2)) {
+    hit = ranges.get_from(layer0, 2) + sum_offset0 - ranges.get_size(layer0, 0) + ranges.get_size(layer0, 1);
+  } else if (i < ranges.get_size(layer0, 0) + ranges.get_size(layer0, 1) + ranges.get_size(layer0, 2) + ranges.get_size(layer0, 3)) {
+    hit = ranges.get_from(layer0, 3) + sum_offset0 - ranges.get_size(layer0, 0) + ranges.get_size(layer0, 1) + ranges.get_size(layer0, 2);
+  } else if (i < ranges.get_size(layer0, 0) + ranges.get_size(layer0, 1) + ranges.get_size(layer0, 2) + ranges.get_size(layer0, 3) + ranges.get_size(layer0, 4)) {
+    hit = ranges.get_from(layer0, 4) + sum_offset0 - ranges.get_size(layer0, 0) + ranges.get_size(layer0, 1) + ranges.get_size(layer0, 2) + ranges.get_size(layer0, 3);
   }
   // layer_cand2
-  else if (i < cand0size + layer_cand2.size0) {
-    hit = layer_cand2.from0 + i - cand0size ;
-  } else if (i < cand0size + layer_cand2.size0 + layer_cand2.size1) {
-    hit = layer_cand2.from1 + i - layer_cand2.size0 - (cand0size);
-  } else if (i < cand0size + layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2) {
-    hit = layer_cand2.from2 + i - (layer_cand2.size0 + layer_cand2.size1) - (cand0size);
-  } else if (i < cand0size + layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2 + layer_cand2.size3) {
-    hit = layer_cand2.from3 + i - (layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2) - (cand0size);
-  } else if (i < cand0size + layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2 + layer_cand2.size3 + layer_cand2.size4) {
-    hit = layer_cand2.from3 + i - (layer_cand2.size0 + layer_cand2.size1 + layer_cand2.size2 + layer_cand2.size3) - (cand0size);
+  else if (i < cand0size + ranges.get_size(layer2, 0)) {
+    hit = ranges.get_from(layer2, 0) + sum_offset2 - cand0size ;
+  } else if (i < cand0size + ranges.get_size(layer2, 0) + ranges.get_size(layer2, 1)) {
+    hit = ranges.get_from(layer2, 1) + sum_offset2 - cand0size - ranges.get_size(layer2, 0);
+  } else if (i < cand0size + ranges.get_size(layer2, 0) + ranges.get_size(layer2, 1) + ranges.get_size(layer2, 2)) {
+    hit = ranges.get_from(layer2, 2) + sum_offset2 - cand0size - ranges.get_size(layer2, 0) + ranges.get_size(layer2, 1);
+  } else if (i < cand0size + ranges.get_size(layer2, 0) + ranges.get_size(layer2, 1) + ranges.get_size(layer2, 2) + ranges.get_size(layer2, 3)) {
+    hit = ranges.get_from(layer2, 3) + sum_offset2 - cand0size - ranges.get_size(layer2, 0) + ranges.get_size(layer2, 1) + ranges.get_size(layer2, 2);
+  } else if (i < cand0size + ranges.get_size(layer2, 0) + ranges.get_size(layer2, 1) + ranges.get_size(layer2, 2) + ranges.get_size(layer2, 3) + ranges.get_size(layer2, 4)) {
+    hit = ranges.get_from(layer2, 4) + sum_offset2 - cand0size - ranges.get_size(layer2, 0) + ranges.get_size(layer2, 1) + ranges.get_size(layer2, 2) + ranges.get_size(layer2, 3);
   }
 
   return hit;

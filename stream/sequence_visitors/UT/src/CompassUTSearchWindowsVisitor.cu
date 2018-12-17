@@ -38,5 +38,7 @@ void SequenceVisitor::visit<ut_search_windows_t>(
     arguments.offset<dev_active_tracks>()
   );
 
+  cudaCheck(cudaMemsetAsync(arguments.offset<dev_active_tracks>(), 0, arguments.size<dev_active_tracks>(), cuda_stream));
+
   state.invoke();
 }

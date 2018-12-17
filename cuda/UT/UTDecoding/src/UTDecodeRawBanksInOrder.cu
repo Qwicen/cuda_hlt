@@ -48,7 +48,7 @@ __global__ void ut_decode_raw_banks_in_order(
     // Extract values from raw_data
     const uint32_t fracStrip = (value & UTDecoding::frac_mask) >> UTDecoding::frac_offset;
     const uint32_t channelID = (value & UTDecoding::chan_mask) >> UTDecoding::chan_offset;
-    const uint32_t threshold = (value & UTDecoding::thre_mask) >> UTDecoding::thre_offset;
+    // const uint32_t threshold = (value & UTDecoding::thre_mask) >> UTDecoding::thre_offset;
 
     // Calculate the relative index of the corresponding board
     const uint32_t index = channelID / nStripsPerHybrid;
@@ -86,9 +86,9 @@ __global__ void ut_decode_raw_banks_in_order(
     const float xAtYEq0 = m_p0X + numstrips * m_dp0diX;
     // const float weight = 1.f / (m_pitch / sqrtf(12.f));
     const float weight = 12.f / (m_pitch*m_pitch);
-    const uint32_t highThreshold = threshold;
+    // const uint32_t highThreshold = threshold;
     const uint32_t LHCbID = chanID + strip;
-    const uint32_t planeCode = 2 * station + (layer & 1);
+    // const uint32_t planeCode = 2 * station + (layer & 1);
 
     ut_hits.yBegin[hit_index] = yBegin;
     ut_hits.yEnd[hit_index] = yEnd;

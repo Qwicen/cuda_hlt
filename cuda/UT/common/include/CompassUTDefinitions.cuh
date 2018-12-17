@@ -3,7 +3,7 @@
 #include "SystemOfUnits.h"
 
 constexpr uint N_LAYERS = VeloUTTracking::n_layers;
-constexpr uint NUM_ELEMS = 5 * 2; // num windows * 2
+constexpr uint NUM_ELEMS = 5 * 2; // num sectors * 2
 
 namespace CompassUT {
 
@@ -14,24 +14,11 @@ constexpr uint max_considered_before_found = 4;
 //=========================================================================
 // Point to correct position for windows pointers
 //=========================================================================
-struct LayerCandidates {
-  int from0;
-  int size0;
-  int from1;
-  int size1;
-  int from2;
-  int size2;
-  int from3;
-  int size3;
-  int from4;
-  int size4;
-};
-
 struct TrackCandidates {
   const short* m_base_pointer;
   const int  m_num_tracks_event;
   const int  m_track;
-  LayerCandidates layers[N_LAYERS];
+  // LayerCandidates layers[N_LAYERS];
 
   __host__ __device__ TrackCandidates(
     const short* base_pointer,
@@ -39,36 +26,17 @@ struct TrackCandidates {
     const int track) : 
     m_base_pointer(base_pointer),
     m_num_tracks_event(num_tracks_event),
-    m_track(track) {
-      for (int i=0; i<N_LAYERS; ++i) {
-        fill_layer(i);
-        // printf("TC - t: %i - (%i, %i)(%i, %i)(%i, %i)(%i, %i)(%i, %i)\n",
-        //   m_track,
-        //   layers[i].from0,
-        //   layers[i].size0,
-        //   layers[i].from1,
-        //   layers[i].size1,
-        //   layers[i].from2,
-        //   layers[i].size2,
-        //   layers[i].from3,
-        //   layers[i].size3,
-        //   layers[i].from4,
-        //   layers[i].size4);
-      }
+    m_track(track) {}
+
+    __host__ __device__ short get_from(int layer, int sector) const 
+    {
+      return m_base_pointer[(m_num_tracks_event * VeloUTTracking::n_layers) * sector + (m_track * VeloUTTracking::n_layers + layer)];
     }
 
-  __host__ __device__ void fill_layer(const int layer) {
-    layers[layer].from0 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 0))];
-    layers[layer].size0 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 1))];
-    layers[layer].from1 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 2))];
-    layers[layer].size1 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 3))];
-    layers[layer].from2 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 4))];
-    layers[layer].size2 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 5))];
-    layers[layer].from3 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 6))];
-    layers[layer].size3 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 7))];
-    layers[layer].from4 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 8))];
-    layers[layer].size4 = m_base_pointer[m_track + (m_num_tracks_event * (NUM_ELEMS * layer + 9))];    
-  };
+    __host__ __device__ short get_size(int layer, int sector) const 
+    {
+      return m_base_pointer[(m_num_tracks_event * VeloUTTracking::n_layers) * (sector + (NUM_ELEMS/2)) + (m_track * VeloUTTracking::n_layers + layer)];
+    }
 };
 
 //=========================================================================

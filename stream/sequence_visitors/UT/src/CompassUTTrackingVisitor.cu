@@ -41,6 +41,10 @@ void SequenceVisitor::visit<compass_ut_t>(
     arguments.offset<dev_atomics_compassUT>(),
     arguments.offset<dev_windows_layers>()    
   );
+
+  cudaCheck(cudaMemsetAsync(arguments.offset<dev_active_tracks>(), 0, arguments.size<dev_active_tracks>(), cuda_stream));
+  cudaCheck(cudaMemsetAsync(arguments.offset<dev_atomics_compassUT>(), 0, arguments.size<dev_atomics_compassUT>(), cuda_stream));
+
   state.invoke();
 
   // TODO: Maybe this should not go here

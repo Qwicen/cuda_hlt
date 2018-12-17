@@ -48,14 +48,6 @@ __global__ void compass_ut(
   int* n_veloUT_tracks_event = dev_atomics_compassUT + event_number;
   VeloUTTracking::TrackUT* veloUT_tracks_event = dev_compassUT_tracks + event_number * VeloUTTracking::max_num_tracks;
 
-  // initialize atomic veloUT tracks counter && active track
-  if (threadIdx.x == 0) {
-    *n_veloUT_tracks_event = 0;
-    *active_tracks         = 0;
-  }
-
-  __syncthreads();
-
   // store the tracks with valid windows
   __shared__ int shared_active_tracks[2 * VeloUTTracking::num_threads - 1];
 
@@ -85,7 +77,7 @@ __global__ void compass_ut(
 
     __syncthreads();
 
-    const uint current_track_offset = event_tracks_offset + i_track;
+    // const uint current_track_offset = event_tracks_offset + i_track;
 
     if (*active_tracks >= blockDim.x) {
 
@@ -124,16 +116,12 @@ __global__ void compass_ut(
 
   // remaining tracks
   if (threadIdx.x < *active_tracks) {
-
-    const int i_track = shared_active_tracks[threadIdx.x];
-    const uint current_track_offset = event_tracks_offset + i_track;
-
     compass_ut_tracking(
       windows_layers,
       dev_velo_track_hits,
       number_of_tracks_event,
-      i_track,
-      current_track_offset,
+      shared_active_tracks[threadIdx.x],
+      event_tracks_offset + shared_active_tracks[threadIdx.x],
       velo_states,
       velo_tracks,
       ut_hits,
@@ -270,38 +258,42 @@ __device__ __inline__ void fill_shared_windows(
 }
 
 //=========================================================================
-// Determine if there are valid windows for this track
+// Determine if there are valid windows for this track looking at the sizes
 //=========================================================================
 __device__ __inline__ bool found_active_windows(
   const short* windows_layers,
-  const int total_tracks_event,
-  const int track)
+  const int number_of_tracks_event,
+  const int i_track)
 {
-  const bool l1_found = windows_layers[(total_tracks_event * (0 + NUM_ELEMS * 0)) + track] != -1 ||
-                        windows_layers[(total_tracks_event * (2 + NUM_ELEMS * 0)) + track] != -1 ||
-                        windows_layers[(total_tracks_event * (4 + NUM_ELEMS * 0)) + track] != -1 ||
-                        windows_layers[(total_tracks_event * (6 + NUM_ELEMS * 0)) + track] != -1 ||
-                        windows_layers[(total_tracks_event * (8 + NUM_ELEMS * 0)) + track] != -1;
+  const int size_pos = number_of_tracks_event * N_LAYERS;
+  const int track_pos = i_track * N_LAYERS;
 
-  const bool l2_found = windows_layers[(total_tracks_event * (0 + NUM_ELEMS * 2)) + track] != -1 ||
-                        windows_layers[(total_tracks_event * (2 + NUM_ELEMS * 2)) + track] != -1 ||
-                        windows_layers[(total_tracks_event * (4 + NUM_ELEMS * 2)) + track] != -1 ||
-                        windows_layers[(total_tracks_event * (6 + NUM_ELEMS * 2)) + track] != -1 ||
-                        windows_layers[(total_tracks_event * (8 + NUM_ELEMS * 2)) + track] != -1;
+  const bool l0_found = windows_layers[size_pos * 5 + (track_pos + 0)] != 0 ||
+                        windows_layers[size_pos * 6 + (track_pos + 0)] != 0 ||
+                        windows_layers[size_pos * 7 + (track_pos + 0)] != 0 ||
+                        windows_layers[size_pos * 8 + (track_pos + 0)] != 0 ||
+                        windows_layers[size_pos * 9 + (track_pos + 0)] != 0;
 
-  const bool l3_l4_found =  windows_layers[(total_tracks_event * (0 + NUM_ELEMS * 1)) + track] != -1 ||
-                            windows_layers[(total_tracks_event * (2 + NUM_ELEMS * 1)) + track] != -1 ||
-                            windows_layers[(total_tracks_event * (4 + NUM_ELEMS * 1)) + track] != -1 ||
-                            windows_layers[(total_tracks_event * (6 + NUM_ELEMS * 1)) + track] != -1 ||
-                            windows_layers[(total_tracks_event * (8 + NUM_ELEMS * 1)) + track] != -1 ||
+  const bool l1_found = windows_layers[size_pos * 5 + (track_pos + 1)] != 0 ||
+                        windows_layers[size_pos * 6 + (track_pos + 1)] != 0 ||
+                        windows_layers[size_pos * 7 + (track_pos + 1)] != 0 ||
+                        windows_layers[size_pos * 8 + (track_pos + 1)] != 0 ||
+                        windows_layers[size_pos * 9 + (track_pos + 1)] != 0;
 
-                            windows_layers[(total_tracks_event * (0 + NUM_ELEMS * 3)) + track] != -1 ||
-                            windows_layers[(total_tracks_event * (2 + NUM_ELEMS * 3)) + track] != -1 ||
-                            windows_layers[(total_tracks_event * (4 + NUM_ELEMS * 3)) + track] != -1 ||
-                            windows_layers[(total_tracks_event * (6 + NUM_ELEMS * 3)) + track] != -1 ||
-                            windows_layers[(total_tracks_event * (8 + NUM_ELEMS * 3)) + track] != -1;                        
+  const bool l2_found = windows_layers[size_pos * 5 + (track_pos + 2)] != 0 ||
+                        windows_layers[size_pos * 6 + (track_pos + 2)] != 0 ||
+                        windows_layers[size_pos * 7 + (track_pos + 2)] != 0 ||
+                        windows_layers[size_pos * 8 + (track_pos + 2)] != 0 ||
+                        windows_layers[size_pos * 9 + (track_pos + 2)] != 0;
 
-  return l1_found && l2_found && l3_l4_found;
+  const bool l3_found = windows_layers[size_pos * 5 + (track_pos + 3)] != 0 ||
+                        windows_layers[size_pos * 6 + (track_pos + 3)] != 0 ||
+                        windows_layers[size_pos * 7 + (track_pos + 3)] != 0 ||
+                        windows_layers[size_pos * 8 + (track_pos + 3)] != 0 ||
+                        windows_layers[size_pos * 9 + (track_pos + 3)] != 0;
+
+  return (l0_found && l2_found && (l1_found || l3_found)) ||
+         (l3_found && l1_found && (l2_found || l0_found));
 }
 
 // These things are all hardcopied from the PrTableForFunction and PrUTMagnetTool
