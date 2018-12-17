@@ -21,13 +21,10 @@ __global__ void muon_catboost_evaluator(
   const int* dev_muon_catboost_tree_sizes,
   const int* dev_muon_catboost_tree_offsets,
   const int n_trees,
-  const int n_features,
-  const int n_objects
+  const int n_features
 ) {
   const int object_id = blockIdx.x;
   const int block_size = blockDim.x;
-  if (object_id >= n_objects)
-    return;
   int tree_id = threadIdx.x;
   float sum = 0;
   
