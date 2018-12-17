@@ -54,9 +54,8 @@ struct HitCount {
 
   __device__ __host__ uint mat_number_of_hits(const uint mat_number) const
   {
-    assert(
-      mat_number >= SciFi::Constants::n_consecutive_raw_banks * SciFi::Constants::n_mats_per_consec_raw_bank &&
-      mat_number < SciFi::Constants::n_mats);
+    assert(mat_number >= SciFi::Constants::n_consecutive_raw_banks * SciFi::Constants::n_mats_per_consec_raw_bank);
+    assert( mat_number < SciFi::Constants::n_mats);
     const uint corrected_mat_number = mat_number - SciFi::Constants::mat_index_substract;
     return mat_offsets[corrected_mat_number + 1] - mat_offsets[corrected_mat_number];
   }
