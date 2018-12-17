@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Handler.cuh"
+#include "MuonDefinitions.cuh"
 
 __global__ void muon_catboost_evaluator(
   const float* dev_muon_catboost_features,
@@ -11,8 +12,7 @@ __global__ void muon_catboost_evaluator(
   const int* dev_muon_catboost_split_features,
   const int* dev_muon_catboost_tree_sizes,
   const int* dev_muon_catboost_tree_offsets,
-  const int n_trees,
-  const int n_features
+  const int n_trees
 );
 
 __device__ void warp_reduce(

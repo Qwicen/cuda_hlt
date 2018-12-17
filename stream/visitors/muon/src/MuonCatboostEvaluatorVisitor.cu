@@ -32,8 +32,7 @@ void SequenceVisitor::visit<muon_catboost_evaluator_t>(
     constants.dev_muon_catboost_split_features,
     constants.dev_muon_catboost_tree_depths,
     constants.dev_muon_catboost_tree_offsets,
-    constants.muon_catboost_n_trees,
-    constants.muon_catboost_n_features
+    constants.muon_catboost_n_trees
   );
   state.invoke();
   std::vector<float> output(host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
