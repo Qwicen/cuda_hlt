@@ -47,24 +47,13 @@ __global__ void muon_catboost_evaluator(
   int tid = threadIdx.x;
   values[tid] = sum;
    __syncthreads();
-  for (unsigned int s=block_size/2; s>=32; s>>=1) {
+  for (unsigned int s=block_size/2; s > 0; s>>=1) {
     if (tid < s)
       values[tid] += values[tid + s];
     __syncthreads();
   }
-  if (tid < 32) warp_reduce(values, tid);
   
   if (threadIdx.x == 0)
      dev_muon_catboost_output[object_id] = values[0];
     
 }
-
-__device__ void warp_reduce(
-  volatile float* sdata, 
-  int tid
-) {
-  for (unsigned int s=16; s>0; s>>=1)
-    if( tid < s )
-      sdata[tid] += sdata[tid + s];
-}
-

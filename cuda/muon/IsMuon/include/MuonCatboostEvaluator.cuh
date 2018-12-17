@@ -15,9 +15,4 @@ __global__ void muon_catboost_evaluator(
   const int n_trees
 );
 
-__device__ void warp_reduce(
-  volatile float* sdata, 
-  int tid
-);
-
 ALGORITHM(muon_catboost_evaluator, muon_catboost_evaluator_t)
