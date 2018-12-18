@@ -24,11 +24,6 @@ void checkPVs(
     // vector containing for each event vector of MCVertices
     std::vector<std::vector<MCVertex>> events_vertices;
 
-    // counters for efficiency
-    int number_reconstructible_vertices = 0;
-    int number_reconstructed_vertices = 0;
-    int number_fake_vertices = 0;
-
     // vector containing MC vertices
     // std::vector<MCVertex> vertices;
 
@@ -74,7 +69,6 @@ void checkPVs(
 
         int VertexNumberOfTracks = *((int*) input);
         input += sizeof(int);
-        if (VertexNumberOfTracks >= 4) number_reconstructible_vertices++;
         mc_vertex.numberTracks = VertexNumberOfTracks;
         mc_vertex.x = *((double*) input);
         input += sizeof(double);
@@ -88,7 +82,6 @@ void checkPVs(
       }
       MC_vertices_events.push_back(MC_vertices);
     }
-
     // events selected by global event cuts
     std::vector< std::vector<MCVertex> > MC_vertices_selected_events;
     for ( int i = 0; i < number_of_selected_events; i++ ) {
@@ -322,37 +315,6 @@ void checkPVs(
         vec_err_z.push_back(err_z);
         
       }
-
-      sum_nMCPV += nMCPV;
-      sum_nRecMCPV += nRecMCPV;
-      sum_nMCPV_isol += nMCPV_isol;
-      sum_nRecMCPV_isol += nRecMCPV_isol;
-      sum_nMCPV_close += nMCPV_close;
-      sum_nRecMCPV_close += nRecMCPV_close;
-      sum_nFalsePV += nFalsePV;
-      sum_nFalsePV_real += nFalsePV_real;
-
-      // loop over matched MC PVs and get pull and errors
-      for (auto mc_vertex_info : rblemcpv) {
-        int rec_index = mc_vertex_info.indexRecPVInfo;
-        if (rec_index < 0) continue;
-        MCVertex* mc_vertex = mc_vertex_info.pMCPV;
-        double diff_x = recpvvec[rec_index].x - mc_vertex->x;
-        double diff_y = recpvvec[rec_index].y - mc_vertex->y;
-        double diff_z = recpvvec[rec_index].z - mc_vertex->z;
-        vec_diff_x.push_back(diff_x);
-        vec_diff_y.push_back(diff_y);
-        vec_diff_z.push_back(diff_z);
-
-        double err_x = recpvvec[rec_index].positionSigma.x;
-        double err_y = recpvvec[rec_index].positionSigma.y;
-        double err_z = recpvvec[rec_index].positionSigma.z;
-
-        vec_err_x.push_back(err_x);
-        vec_err_y.push_back(err_y);
-        vec_err_z.push_back(err_z);
-      }
-
     } // end loop over files/events
 
     info_cout.precision(4);
