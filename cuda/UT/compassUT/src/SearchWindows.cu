@@ -78,7 +78,7 @@ __global__ void ut_search_windows(
         velo_tracks);
 
       // Write the windows in SoA style
-      short* windows_layers = dev_windows_layers + event_tracks_offset * NUM_ELEMS * VeloUTTracking::n_layers;
+      short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * VeloUTTracking::n_layers;
 
       const int track_pos = VeloUTTracking::n_layers * number_of_tracks_event;
       const int layer_pos = layer * number_of_tracks_event + shared_active_tracks[threadIdx.y];
@@ -134,7 +134,7 @@ __global__ void ut_search_windows(
       velo_tracks);
 
     // Write the windows in SoA style
-    short* windows_layers = dev_windows_layers + event_tracks_offset * NUM_ELEMS * VeloUTTracking::n_layers;
+    short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * VeloUTTracking::n_layers;
 
     const int track_pos = VeloUTTracking::n_layers * number_of_tracks_event;
     const int layer_pos = layer * number_of_tracks_event + shared_active_tracks[threadIdx.y];

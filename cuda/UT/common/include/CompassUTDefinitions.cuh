@@ -2,11 +2,9 @@
 
 #include "SystemOfUnits.h"
 
-constexpr uint N_LAYERS = VeloUTTracking::n_layers;
-constexpr uint NUM_ELEMS = 5 * 2; // num sectors * 2
-
 namespace CompassUT {
 
+constexpr uint n_elems = 5 * 2; // num sectors * 2
 constexpr uint max_considered_before_found = 4;
 
 }
@@ -24,7 +22,7 @@ struct TrackCandidates {
   }
 
   __host__ __device__ short get_size(int layer, int sector) const {
-    return m_base_pointer[(sector + (NUM_ELEMS/2)) * VeloUTTracking::n_layers * VeloUTTracking::num_threads + layer * VeloUTTracking::num_threads + threadIdx.x];
+    return m_base_pointer[(sector + (CompassUT::n_elems/2)) * VeloUTTracking::n_layers * VeloUTTracking::num_threads + layer * VeloUTTracking::num_threads + threadIdx.x];
   }
 };
 

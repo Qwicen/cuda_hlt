@@ -23,7 +23,7 @@ __global__ void compass_ut(
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
 
-  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[N_LAYERS];
+  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[VeloUTTracking::n_layers];
   const uint total_number_of_hits = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
 
   // Velo consolidated types
@@ -33,7 +33,7 @@ __global__ void compass_ut(
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  short* windows_layers = dev_windows_layers + event_tracks_offset * NUM_ELEMS * N_LAYERS;
+  short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * VeloUTTracking::n_layers;
 
   UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
   UTHits ut_hits {dev_ut_hits, total_number_of_hits};
@@ -52,7 +52,7 @@ __global__ void compass_ut(
   __shared__ int shared_active_tracks[2 * VeloUTTracking::num_threads - 1];
 
   // store windows and num candidates in shared mem
-  __shared__ short win_size_shared[VeloUTTracking::num_threads * N_LAYERS * NUM_ELEMS];
+  __shared__ short win_size_shared[VeloUTTracking::num_threads * VeloUTTracking::n_layers * CompassUT::n_elems];
 
   // const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
@@ -169,7 +169,7 @@ __device__ void compass_ut_tracking(
     velo_state,
     dev_ut_dxDy);
 
-  const int best_hits[N_LAYERS] = {
+  const int best_hits[VeloUTTracking::n_layers] = {
     std::get<0>(best_hits_and_params),
     std::get<1>(best_hits_and_params),
     std::get<2>(best_hits_and_params),
@@ -209,8 +209,8 @@ __device__ __inline__ void fill_shared_windows(
   const int track_pos = VeloUTTracking::n_layers * number_of_tracks_event;
   const int track_pos_sh = VeloUTTracking::n_layers * VeloUTTracking::num_threads;
 
-  for (int layer=0; layer<N_LAYERS; ++layer) {
-    for (int pos=0; pos<NUM_ELEMS; ++pos) {
+  for (int layer=0; layer<VeloUTTracking::n_layers; ++layer) {
+    for (int pos=0; pos<CompassUT::n_elems; ++pos) {
       win_size_shared[pos * track_pos_sh + layer * VeloUTTracking::num_threads + threadIdx.x] = 
       windows_layers [pos * track_pos    + layer * number_of_tracks_event      + i_track];
     }
@@ -331,7 +331,7 @@ __device__ void save_track(
   track.qop = qop;
   
   // Adding hits to track
-  for (int i = 0; i < N_LAYERS; ++i) {
+  for (int i = 0; i < VeloUTTracking::n_layers; ++i) {
     const int hit_index = best_hits[i];
     if (hit_index >= 0) {
       track.lhcb_ids[track.number_of_hits++] = ut_hits.LHCbID[hit_index];

@@ -18,7 +18,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 
   const TrackCandidates ranges (win_size_shared);
 
-  int best_hits [4] = {-1, -1, -1, -1};
+  int best_hits [VeloUTTracking::n_layers] = {-1, -1, -1, -1};
 
   bool found = false;
   bool forward = false;
@@ -143,7 +143,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 // Apply the p-kick method to the triplet/quadruplet
 //=========================================================================
 __device__ BestParams pkick_fit(
-  const int best_hits[N_LAYERS],
+  const int best_hits[VeloUTTracking::n_layers],
   const UTHits& ut_hits,
   const MiniState& velo_state,
   const float* ut_dxDy,
@@ -162,11 +162,11 @@ __device__ BestParams pkick_fit(
 
   // add hits
   #pragma unroll
-  for (int i = 0; i < N_LAYERS; ++i) {
+  for (int i = 0; i < VeloUTTracking::n_layers; ++i) {
     int hit_index = best_hits[i];
     if (hit_index >= 0) {
       const float wi = ut_hits.weight[hit_index];
-      const int plane_code = forward ? i : N_LAYERS - 1 - i;
+      const int plane_code = forward ? i : VeloUTTracking::n_layers - 1 - i;
       const float dxDy = ut_dxDy[plane_code];
       const float ci = ut_hits.cosT(hit_index, dxDy);
       const float dz = 0.001f * (ut_hits.zAtYEq0[hit_index] - VeloUTConst::zMidUT);
@@ -197,13 +197,13 @@ __device__ BestParams pkick_fit(
   // add chi2
   int total_num_hits = 0;
   #pragma unroll
-  for (int i = 0; i < N_LAYERS; ++i) {
+  for (int i = 0; i < VeloUTTracking::n_layers; ++i) {
     int hit_index = best_hits[i];
     if (hit_index >= 0) {
       const float zd = ut_hits.zAtYEq0[hit_index];
       const float xd = xUTFit + xSlopeUTFit * (zd - VeloUTConst::zMidUT);
       // x_pos_layer
-      const int plane_code = forward ? i : N_LAYERS - 1 - i;
+      const int plane_code = forward ? i : VeloUTTracking::n_layers - 1 - i;
       const float dxDy = ut_dxDy[plane_code];
       const float yy = yyProto + (velo_state.ty * ut_hits.zAtYEq0[hit_index]);
       const float x = ut_hits.xAt(hit_index, yy, dxDy);
@@ -303,6 +303,7 @@ __device__ __inline__ int calc_index(
 
   const int sum_offset0 = i + ut_hit_offsets.layer_offset(layer0);
   const int sum_offset2 = i + ut_hit_offsets.layer_offset(layer2);
+
   if (i < ranges.get_size(layer0, 0)) {
     hit = ranges.get_from(layer0, 0) + sum_offset0;
   } else if (i < ranges.get_size(layer0, 0) + ranges.get_size(layer0, 1)) {

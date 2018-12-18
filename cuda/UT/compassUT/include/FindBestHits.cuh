@@ -17,7 +17,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   const float* ut_dxDy);
 
 __device__ BestParams pkick_fit(
-  const int best_hits[N_LAYERS],
+  const int best_hits[VeloUTTracking::n_layers],
   const UTHits& ut_hits,
   const MiniState& velo_state,
   const float* ut_dxDy,
