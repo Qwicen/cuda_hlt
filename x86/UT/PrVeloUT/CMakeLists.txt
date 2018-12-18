@@ -12,13 +12,19 @@ include_directories(${CMAKE_SOURCE_DIR}/checker/tracking/include)
 
 file(GLOB x86VeloUT_cpp "src/*cpp")
 
-cuda_add_library(x86VeloUT STATIC
+add_library(x86VeloUT STATIC
   ${x86VeloUT_cpp}
   )
 
+set_property(TARGET x86VeloUT PROPERTY
+             CUDA_SEPARABLE_COMPILATION ON)
+
 if ( ROOT_FOUND )
   target_compile_definitions(x86VeloUT PUBLIC WITH_ROOT)
-  target_link_libraries(x86VeloUT
+  target_include_directories(x86VeloUT BEFORE PRIVATE
+    ${ROOT_INCLUDE_DIRS}
+  )
+  target_link_libraries(x86VeloUT PRIVATE
     ${ROOT_LIBRARIES}
   )
 endif()

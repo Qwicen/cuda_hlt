@@ -18,10 +18,13 @@ include_directories(PrVeloUT/include)
 include_directories(consolidate/include)
 include_directories(compassUT/include)
 
-cuda_add_library(UT STATIC
+add_library(UT STATIC
   ${UT_common}
   ${UT_decoding}
   ${UT_tracking}
   ${UT_consolidate}
   ${CompassUT_tracking}
 )
+
+set_property(TARGET UT PROPERTY
+             CUDA_SEPARABLE_COMPILATION ON)

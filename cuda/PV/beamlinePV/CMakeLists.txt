@@ -12,6 +12,9 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/float_operations/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
 include_directories(${CMAKE_SOURCE_DIR}/x86/PV/beamlinePV/include)
 
-cuda_add_library(PV_beamline STATIC
+add_library(PV_beamline STATIC
   ${blPV} 
 )
+set_property(TARGET PV_beamline PROPERTY
+             CUDA_SEPARABLE_COMPILATION ON)
+

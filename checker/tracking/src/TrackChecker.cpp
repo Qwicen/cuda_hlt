@@ -33,33 +33,33 @@ TrackChecker::~TrackChecker() {
     dirName = "Upstream";
   TDirectory *trackerDir = f->mkdir(dirName.c_str());
   trackerDir->cd();
-  for (auto histo : histos->h_reconstructible_eta)
+  for (auto histo : histos.h_reconstructible_eta)
     histo.second->Write();
-  for (auto histo : histos->h_reconstructible_p)
+  for (auto histo : histos.h_reconstructible_p)
     histo.second->Write();
-  for (auto histo : histos->h_reconstructible_pt)
+  for (auto histo : histos.h_reconstructible_pt)
     histo.second->Write();
-  for (auto histo : histos->h_reconstructible_phi)
+  for (auto histo : histos.h_reconstructible_phi)
     histo.second->Write();
-  for (auto histo : histos->h_reconstructible_nPV)
+  for (auto histo : histos.h_reconstructible_nPV)
     histo.second->Write();
-  for (auto histo : histos->h_reconstructed_eta)
+  for (auto histo : histos.h_reconstructed_eta)
     histo.second->Write();
-  for (auto histo : histos->h_reconstructed_p)
+  for (auto histo : histos.h_reconstructed_p)
     histo.second->Write();
-  for (auto histo : histos->h_reconstructed_pt)
+  for (auto histo : histos.h_reconstructed_pt)
     histo.second->Write();
-  for (auto histo : histos->h_reconstructed_phi)
+  for (auto histo : histos.h_reconstructed_phi)
     histo.second->Write();
-  for (auto histo : histos->h_reconstructed_nPV)
+  for (auto histo : histos.h_reconstructed_nPV)
     histo.second->Write();
-  histos->h_ghost_nPV->Write();
-  histos->h_total_nPV->Write();
+  histos.h_ghost_nPV->Write();
+  histos.h_total_nPV->Write();
 
   f->Write();
   f->Close();
 
-  histos->deleteHistos(m_histo_categories);
+  histos.deleteHistos(m_histo_categories);
 #endif
 }
 
@@ -270,27 +270,27 @@ void TrackChecker::operator()(const trackChecker::Tracks &tracks,
     report(mcps);
   // fill histograms of reconstructible MC particles in various categories
   for (auto &histo_cat : m_histo_categories) {
-    histos->fillReconstructibleHistos(mcps, histo_cat);
+    histos.fillReconstructibleHistos(mcps, histo_cat);
   }
 
   // go through tracks
   const std::size_t ntracksperevt = tracks.size();
   std::size_t nghostsperevt = 0;
   for (auto track : tracks) {
-    histos->fillTotalHistos(mcps[0]);
+    histos.fillTotalHistos(mcps[0]);
     // check LHCbIDs for MC association
     const auto &ids = track.ids();
     const auto assoc = mcassoc(ids.begin(), ids.end(), track.n_matched_total);
     if (!assoc) {
       ++nghostsperevt;
-      histos->fillGhostHistos(mcps[0]);
+      histos.fillGhostHistos(mcps[0]);
       continue;
     }
     // have MC association, check weight
     const auto weight = assoc.front().second;
     if (weight < m_minweight) {
       ++nghostsperevt;
-      histos->fillGhostHistos(mcps[0]);
+      histos.fillGhostHistos(mcps[0]);
       continue;
     }
     // okay, sufficient to proceed...
@@ -301,7 +301,7 @@ void TrackChecker::operator()(const trackChecker::Tracks &tracks,
     }
     // fill histograms of reconstructible MC particles in various categories
     for (auto &histo_cat : m_histo_categories) {
-      histos->fillReconstructedHistos(mcp, histo_cat);
+      histos.fillReconstructedHistos(mcp, histo_cat);
     }
   }
   // almost done, notify of end of event...

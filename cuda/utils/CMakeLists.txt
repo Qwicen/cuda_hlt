@@ -15,11 +15,14 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/include)
 
-cuda_add_library(Utils STATIC
+add_library(Utils STATIC
   ${prefix_sum}
 )
 
-target_link_libraries(Utils
+target_link_libraries(Utils PRIVATE
   UT
   SciFi
 )
+
+set_property(TARGET Utils PROPERTY
+             CUDA_SEPARABLE_COMPILATION ON)

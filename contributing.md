@@ -69,7 +69,7 @@ file(GLOB test_saxpy "saxpy/src/*cu")
 include_directories(saxpy/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/handlers/include)
 
-cuda_add_library(Test STATIC
+add_library(Test STATIC
   ${test_saxpy}
 )
 ```
@@ -340,7 +340,7 @@ As a last step, add the visitor to `stream/CMakeLists.txt`:
 ...
 file(GLOB stream_visitors_test "visitors/test/src/*cu")
 ...
-cuda_add_library(Stream STATIC
+add_library(Stream STATIC
 ${stream_visitors_test}
 ...
 ```
@@ -369,7 +369,7 @@ Before placing a merge request, please go through the following list and check t
    * Different sequences:
       * Default sequence: `cmake -DSEQUENCE=DefaultSequence ..`
       * CPU SciFi tracking sequence: `cmake -DSEQUENCE=CPUSciFi ..`
-      * PV finding sequence: `cmake -DSEQUENCE=PVSequence ..`
+      * CPU PV finding sequence: `cmake -DSEQUENCE=CPUPVSequence ..`
   * Compilation with ROOT (if you have a ROOT installation available): `cmake -DUSE_ROOT=TRUE ..` If you don't have ROOT available, please mention this in the merge request, then we will test it.
   
 

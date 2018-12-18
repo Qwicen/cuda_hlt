@@ -76,7 +76,7 @@ int run_forward_on_CPU (
     SciFi::TrackHits* scifi_tracks_event = host_scifi_tracks + i_event * SciFi::Constants::max_tracks;
 
     const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::Constants::n_mat_groups_and_mats]; 
-    SciFi::HitCount scifi_hit_count {(uint*)host_scifi_hit_count, i_event};
+    SciFi::HitCount scifi_hit_count {(uint32_t*)host_scifi_hit_count, i_event};
     
     const SciFi::SciFiGeometry scifi_geometry(host_scifi_geometry);
     
