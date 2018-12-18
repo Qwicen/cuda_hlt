@@ -4,6 +4,7 @@
 #include "VeloEventModel.cuh"
 #include "UTDefinitions.cuh"
 #include "SciFiDefinitions.cuh"
+#include "MuonDefinitions.cuh"
 #include "TrackChecker.h"
 #include "SciFiEventModel.cuh"
 #include "UTEventModel.cuh"

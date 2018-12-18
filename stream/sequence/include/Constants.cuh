@@ -55,6 +55,17 @@ struct Constants {
   char* dev_scifi_geometry;
   const char* host_scifi_geometry; 
   PrUTMagnetTool* dev_ut_magnet_tool;
+  
+  // Muon classification model constatns
+  int muon_catboost_n_features;
+  int muon_catboost_n_trees;
+  int* dev_muon_catboost_tree_depths;
+  int* dev_muon_catboost_tree_offsets;
+  int* dev_muon_catboost_split_features;
+  float* dev_muon_catboost_split_borders;
+  float* dev_muon_catboost_leaf_values;
+  int* dev_muon_catboost_leaf_offsets;
+
 
   /**
    * @brief Reserves and initializes constants.
@@ -88,4 +99,16 @@ struct Constants {
     const std::vector<char>& ut_geometry,
     const std::vector<char>& ut_magnet_tool,
     const std::vector<char>& scifi_geometry);
+
+  void initialize_muon_catboost_model_constants(
+    const int n_features,
+    const int n_trees,
+    const std::vector<int>& tree_depths,
+    const std::vector<int>& tree_offsets,
+    const std::vector<float>& leaf_values,
+    const std::vector<int>& leaf_offsets,
+    const std::vector<float>& split_borders,
+    const std::vector<int>& split_features
+  );
+
 };
