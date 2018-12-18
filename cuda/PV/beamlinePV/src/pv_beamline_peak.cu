@@ -50,7 +50,7 @@ __global__ void pv_beamline_peak(
         const float minpeak = minDensity * dz;
 
         Extremum extrema[PV::max_number_vertices];
-        uint number_of_extrema = 0;
+        int number_of_extrema = 0;
         {
           bool rising = true;
           float integral = zhisto[ibegin];
