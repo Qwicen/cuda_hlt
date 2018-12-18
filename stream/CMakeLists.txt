@@ -82,7 +82,7 @@ target_link_libraries(Stream PRIVATE
   Velo
   PatPV
   PV_beamline
-  #x86PatPV
+  x86Clustering
   x86beamlinePV
   UT
   SciFi

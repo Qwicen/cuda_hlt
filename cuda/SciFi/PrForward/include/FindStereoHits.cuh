@@ -5,10 +5,6 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
-
-#include <thrust/sort.h>
-#include <thrust/execution_policy.h>
-
 #include "SciFiDefinitions.cuh"
 #include "SciFiEventModel.cuh"
 #include "TrackUtils.cuh"
