@@ -10,6 +10,9 @@
  * 2018-07 Dorothea vom Bruch: updated to run over different track types,
  * use exact same categories as PrChecker2,
  * take input from Renato Quagliani's TrackerDumper
+ *
+ * 10-12/2018 Dorothea vom Bruch: add histograms of track efficiency, ghost rate,
+ * momentum resolution
  */
 
 #include <cstdio>
@@ -55,6 +58,7 @@ TrackChecker::~TrackChecker() {
     histo.second->Write();
   histos.h_ghost_nPV->Write();
   histos.h_total_nPV->Write();
+  histos.h_momentum_resolution->Write();
 
   f->Write();
   f->Close();
@@ -125,8 +129,7 @@ void TrackChecker::HistoCategory::evtEnds() {
   m_keysseen.clear();
 }
 
-void TrackChecker::Histos::initHistos(
-  const std::vector<HistoCategory>& histo_categories)
+void TrackChecker::Histos::initHistos(const std::vector<HistoCategory>& histo_categories)
 {
 #ifdef WITH_ROOT
   // histos for efficiency
@@ -175,6 +178,10 @@ void TrackChecker::Histos::initHistos(
   // histos for ghost rate
   h_ghost_nPV = new TH1D("nPV_Ghosts", "nPV_Ghosts", 21, -0.5, 20.5);
   h_total_nPV = new TH1D("nPV_Total", "nPV_Total", 21, -0.5, 20.5); 
+
+  // histo for momentum resolution
+  h_momentum_resolution = new TH2D("dp vs. p", "dp vs. p", 100, 0, 100000., 100, -10000., 10000.);
+  
 #endif
 }
 
@@ -205,6 +212,7 @@ void TrackChecker::Histos::deleteHistos(const std::vector<HistoCategory>& histo_
   }
    delete h_ghost_nPV;
    delete h_total_nPV;
+   delete h_momentum_resolution;
 #endif
 }
 
@@ -262,6 +270,12 @@ void TrackChecker::Histos::fillGhostHistos(const MCParticle &mcp) {
 #endif
 }
 
+void TrackChecker::Histos::fillMomentumResolutionHisto(const MCParticle &mcp, const float p) {
+#ifdef WITH_ROOT
+  h_momentum_resolution->Fill(mcp.p, mcp.p - p);
+#endif
+}
+
 void TrackChecker::operator()(const trackChecker::Tracks &tracks,
                               const MCAssociator &mcassoc,
                               const MCParticles &mcps) {
@@ -303,6 +317,8 @@ void TrackChecker::operator()(const trackChecker::Tracks &tracks,
     for (auto &histo_cat : m_histo_categories) {
       histos.fillReconstructedHistos(mcp, histo_cat);
     }
+    // fill histogram of momentum resolution
+    histos.fillMomentumResolutionHisto(mcp, track.p);
   }
   // almost done, notify of end of event...
   ++m_nevents;
