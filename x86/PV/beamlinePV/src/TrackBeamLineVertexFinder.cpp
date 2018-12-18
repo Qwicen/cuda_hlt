@@ -108,7 +108,7 @@ namespace {
           const auto ty = s.ty ;
           //extrapolate state to seed position
           const float dz = vtxpos.z - s.z;
-          PVTrackInVertex trk  = PVTrack{s,dz,0} ;
+          PVTrackInVertex trk  = PVTrack{s,dz} ;
           // compute the chi2
           //PVTrackInVertex trk = tracks[i];
           float2 res{0.f,0.f};
@@ -136,7 +136,7 @@ namespace {
                float3 otherseedpos = seedpositions[i_otherseed];
                float2 otherseedvtx{otherseedpos.x,otherseedpos.y};
                const float dz = seedpositions[i_otherseed].z- s.z;
-               PVTrackInVertex tmp_trk  = PVTrack{s,dz,0} ;
+               PVTrackInVertex tmp_trk  = PVTrack{s,dz} ;
                tmp_res = otherseedvtx - (tmp_trk.x );
                //at the moment this term reuses W'matrix at z of point of closest approach -> use seed positions instead?
                double tmp_chi2 = tmp_res.x*tmp_res.x * tmp_trk.W_00 + tmp_res.y*tmp_res.y*tmp_trk.W_11 ;
@@ -433,10 +433,10 @@ void findPVs(
         const float dz = ( tx * ( beamline.x - s.x ) + ty * ( beamline.y - s.y ) ) / (tx*tx+ty*ty) ;
         const double newz = s.z + dz ;
         if( zmin < newz  && newz < zmax ) {
-          pvtracks[number_of_tracks_in_zrange] = PVTrack{s,dz,index} ;
+          pvtracks[number_of_tracks_in_zrange] = PVTrack{s,dz} ;
           event_velo_states[number_of_tracks_in_zrange] = s;
           number_of_tracks_in_zrange++;
-          *it = PVTrack{s,dz,index} ;
+          *it = PVTrack{s,dz} ;
           ++it ;
 
         }

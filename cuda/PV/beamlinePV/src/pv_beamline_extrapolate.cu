@@ -24,8 +24,7 @@ __global__ void pv_beamline_extrapolate(
       const auto tx = s.tx;
       const auto ty = s.ty;
       const float dz = (tx * (beamline.x - s.x) + ty * (beamline.y - s.y)) / (tx * tx + ty * ty);
-      const float newz = s.z + dz;
-      PVTrack pvtrack = PVTrack {s, dz, index};
+      PVTrack pvtrack = PVTrack {s, dz};
       dev_pvtracks[event_tracks_offset + index] = pvtrack;
     }
   }

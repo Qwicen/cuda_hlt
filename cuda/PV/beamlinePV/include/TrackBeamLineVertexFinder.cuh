@@ -12,9 +12,9 @@
 // structure with minimal track info needed for PV search
 struct PVTrack {
   __host__ __device__ PVTrack() {}
-  __host__ __device__ PVTrack(const VeloState& state, float dz, unsigned short _index) :
+  __host__ __device__ PVTrack(const VeloState& state, float dz) :
     z {float(state.z + dz)}, x {float(state.x + dz * state.tx), float(state.y + dz * state.ty)},
-    tx {float(state.tx), float(state.ty)}, index {_index}
+    tx {float(state.tx), float(state.ty)}
   {
 
     float state_tmp_c00 = state.c00;
@@ -33,7 +33,6 @@ struct PVTrack {
   // to do: check whether this needs to be a double
   float W_00; /// weightmatrix
   float W_11;
-  unsigned short index {0}; /// index in the list with tracks
 };
 
 struct Extremum {
