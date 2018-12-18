@@ -32,7 +32,7 @@ static constexpr uint max_num_tracks = 400; // TODO: what is the best / safest v
 static constexpr uint max_track_size = VeloTracking::max_track_size + 8; // TODO: double check what the max # of hits added in UT really is
 
 static constexpr uint window_search_num_threads = 512;
-static constexpr uint num_threads = 32;
+static constexpr uint num_threads = 128;
 
 struct TrackUT { // 6 * 4 = 24 Bytes
   uint lhcb_ids [4];

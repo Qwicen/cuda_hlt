@@ -16,27 +16,16 @@ constexpr uint max_considered_before_found = 4;
 //=========================================================================
 struct TrackCandidates {
   const short* m_base_pointer;
-  const int  m_num_tracks_event;
-  const int  m_track;
-  // LayerCandidates layers[N_LAYERS];
 
-  __host__ __device__ TrackCandidates(
-    const short* base_pointer,
-    const int num_tracks_event,
-    const int track) : 
-    m_base_pointer(base_pointer),
-    m_num_tracks_event(num_tracks_event),
-    m_track(track) {}
+  __host__ __device__ TrackCandidates(const short* base_pointer) : m_base_pointer(base_pointer) {}
 
-    __host__ __device__ short get_from(int layer, int sector) const 
-    {
-      return m_base_pointer[(m_num_tracks_event * VeloUTTracking::n_layers) * sector + (m_track * VeloUTTracking::n_layers + layer)];
-    }
+  __host__ __device__ short get_from(int layer, int sector) const {
+    return m_base_pointer[sector * VeloUTTracking::n_layers * VeloUTTracking::num_threads + layer * VeloUTTracking::num_threads + threadIdx.x];
+  }
 
-    __host__ __device__ short get_size(int layer, int sector) const 
-    {
-      return m_base_pointer[(m_num_tracks_event * VeloUTTracking::n_layers) * (sector + (NUM_ELEMS/2)) + (m_track * VeloUTTracking::n_layers + layer)];
-    }
+  __host__ __device__ short get_size(int layer, int sector) const {
+    return m_base_pointer[(sector + (NUM_ELEMS/2)) * VeloUTTracking::n_layers * VeloUTTracking::num_threads + layer * VeloUTTracking::num_threads + threadIdx.x];
+  }
 };
 
 //=========================================================================

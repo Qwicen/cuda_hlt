@@ -52,8 +52,7 @@ __global__ void compass_ut(
   __shared__ int shared_active_tracks[2 * VeloUTTracking::num_threads - 1];
 
   // store windows and num candidates in shared mem
-  // 32 * 4 * 3(num_windows) * 2 (from, size) = 768 (3072 bytes)
-  __shared__ int win_size_shared[VeloUTTracking::num_threads * N_LAYERS * NUM_ELEMS];
+  __shared__ short win_size_shared[VeloUTTracking::num_threads * N_LAYERS * NUM_ELEMS];
 
   // const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
@@ -146,7 +145,7 @@ __device__ void compass_ut_tracking(
   const UTHitOffsets& ut_hit_offsets,
   const float* bdl_table,
   const float* dev_ut_dxDy,
-  int* win_size_shared,
+  short* win_size_shared,
   int* n_veloUT_tracks_event,
   VeloUTTracking::TrackUT* veloUT_tracks_event)
 {
@@ -154,14 +153,15 @@ __device__ void compass_ut_tracking(
   // select velo track to join with UT hits
   const MiniState velo_state{velo_states, current_track_offset};
 
-  // fill_shared_windows( 
-  //   windows_layers, 
-  //   current_track_offset, 
-  //   win_size_shared);
+  fill_shared_windows(
+    windows_layers, 
+    number_of_tracks_event,
+    i_track,
+    win_size_shared);
   
   // Find compatible hits in the windows for this VELO track
   const auto best_hits_and_params = find_best_hits(
-    windows_layers,
+    win_size_shared,
     number_of_tracks_event,
     i_track,
     ut_hits,
@@ -202,59 +202,19 @@ __device__ void compass_ut_tracking(
 //=============================================================================
 __device__ __inline__ void fill_shared_windows(
   const short* windows_layers,
-  const uint current_track_offset,
-  int* win_size_shared)
+  const int number_of_tracks_event,
+  const int i_track,
+  short* win_size_shared)
 {
-  const int total_offset = NUM_ELEMS * N_LAYERS * current_track_offset;
-  const int idx = NUM_ELEMS * N_LAYERS * threadIdx.x;
+  const int track_pos = VeloUTTracking::n_layers * number_of_tracks_event;
+  const int track_pos_sh = VeloUTTracking::n_layers * VeloUTTracking::num_threads;
 
-  // layer 0
-  win_size_shared[idx]     = windows_layers[total_offset];
-  win_size_shared[idx + 1] = windows_layers[total_offset + 1];
-  win_size_shared[idx + 2] = windows_layers[total_offset + 2];
-  win_size_shared[idx + 3] = windows_layers[total_offset + 3];
-  win_size_shared[idx + 4] = windows_layers[total_offset + 4];
-  win_size_shared[idx + 5] = windows_layers[total_offset + 5];
-  win_size_shared[idx + 6] = windows_layers[total_offset + 6];
-  win_size_shared[idx + 7] = windows_layers[total_offset + 7];
-  win_size_shared[idx + 8] = windows_layers[total_offset + 8];
-  win_size_shared[idx + 9] = windows_layers[total_offset + 9];
-
-  // layer 1
-  win_size_shared[idx + NUM_ELEMS]     = windows_layers[total_offset + NUM_ELEMS];
-  win_size_shared[idx + NUM_ELEMS + 1] = windows_layers[total_offset + NUM_ELEMS + 1];
-  win_size_shared[idx + NUM_ELEMS + 2] = windows_layers[total_offset + NUM_ELEMS + 2];
-  win_size_shared[idx + NUM_ELEMS + 3] = windows_layers[total_offset + NUM_ELEMS + 3];
-  win_size_shared[idx + NUM_ELEMS + 4] = windows_layers[total_offset + NUM_ELEMS + 4];
-  win_size_shared[idx + NUM_ELEMS + 5] = windows_layers[total_offset + NUM_ELEMS + 5];
-  win_size_shared[idx + NUM_ELEMS + 6] = windows_layers[total_offset + NUM_ELEMS + 6];
-  win_size_shared[idx + NUM_ELEMS + 7] = windows_layers[total_offset + NUM_ELEMS + 7];
-  win_size_shared[idx + NUM_ELEMS + 8] = windows_layers[total_offset + NUM_ELEMS + 8];
-  win_size_shared[idx + NUM_ELEMS + 9] = windows_layers[total_offset + NUM_ELEMS + 9];
-
-  // layer 2
-  win_size_shared[idx + (NUM_ELEMS*2)]     = windows_layers[total_offset + (NUM_ELEMS*2)];
-  win_size_shared[idx + (NUM_ELEMS*2) + 1] = windows_layers[total_offset + (NUM_ELEMS*2) + 1];
-  win_size_shared[idx + (NUM_ELEMS*2) + 2] = windows_layers[total_offset + (NUM_ELEMS*2) + 2];
-  win_size_shared[idx + (NUM_ELEMS*2) + 3] = windows_layers[total_offset + (NUM_ELEMS*2) + 3];
-  win_size_shared[idx + (NUM_ELEMS*2) + 4] = windows_layers[total_offset + (NUM_ELEMS*2) + 4];
-  win_size_shared[idx + (NUM_ELEMS*2) + 5] = windows_layers[total_offset + (NUM_ELEMS*2) + 5];
-  win_size_shared[idx + (NUM_ELEMS*2) + 6] = windows_layers[total_offset + (NUM_ELEMS*2) + 6];
-  win_size_shared[idx + (NUM_ELEMS*2) + 7] = windows_layers[total_offset + (NUM_ELEMS*2) + 7];
-  win_size_shared[idx + (NUM_ELEMS*2) + 8] = windows_layers[total_offset + (NUM_ELEMS*2) + 8];
-  win_size_shared[idx + (NUM_ELEMS*2) + 9] = windows_layers[total_offset + (NUM_ELEMS*2) + 9];
-
-  // layer 3
-  win_size_shared[idx + (NUM_ELEMS*3)]     = windows_layers[total_offset + (NUM_ELEMS*3)];
-  win_size_shared[idx + (NUM_ELEMS*3) + 1] = windows_layers[total_offset + (NUM_ELEMS*3) + 1];
-  win_size_shared[idx + (NUM_ELEMS*3) + 2] = windows_layers[total_offset + (NUM_ELEMS*3) + 2];
-  win_size_shared[idx + (NUM_ELEMS*3) + 3] = windows_layers[total_offset + (NUM_ELEMS*3) + 3];
-  win_size_shared[idx + (NUM_ELEMS*3) + 4] = windows_layers[total_offset + (NUM_ELEMS*3) + 4];
-  win_size_shared[idx + (NUM_ELEMS*3) + 5] = windows_layers[total_offset + (NUM_ELEMS*3) + 5];
-  win_size_shared[idx + (NUM_ELEMS*3) + 6] = windows_layers[total_offset + (NUM_ELEMS*3) + 6];
-  win_size_shared[idx + (NUM_ELEMS*3) + 7] = windows_layers[total_offset + (NUM_ELEMS*3) + 7];
-  win_size_shared[idx + (NUM_ELEMS*3) + 8] = windows_layers[total_offset + (NUM_ELEMS*3) + 8];
-  win_size_shared[idx + (NUM_ELEMS*3) + 9] = windows_layers[total_offset + (NUM_ELEMS*3) + 9];
+  for (int layer=0; layer<N_LAYERS; ++layer) {
+    for (int pos=0; pos<NUM_ELEMS; ++pos) {
+      win_size_shared[pos * track_pos_sh + layer * VeloUTTracking::num_threads + threadIdx.x] = 
+      windows_layers [pos * track_pos    + layer * number_of_tracks_event      + i_track];
+    }
+  }
 }
 
 //=========================================================================
@@ -265,32 +225,31 @@ __device__ __inline__ bool found_active_windows(
   const int number_of_tracks_event,
   const int i_track)
 {
-  const int size_pos = number_of_tracks_event * N_LAYERS;
-  const int track_pos = i_track * N_LAYERS;
+  const int track_pos = VeloUTTracking::n_layers * number_of_tracks_event;
 
-  const bool l0_found = windows_layers[size_pos * 5 + (track_pos + 0)] != 0 ||
-                        windows_layers[size_pos * 6 + (track_pos + 0)] != 0 ||
-                        windows_layers[size_pos * 7 + (track_pos + 0)] != 0 ||
-                        windows_layers[size_pos * 8 + (track_pos + 0)] != 0 ||
-                        windows_layers[size_pos * 9 + (track_pos + 0)] != 0;
+  const bool l0_found = windows_layers[5 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[6 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[7 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[8 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[9 * track_pos + 0 * number_of_tracks_event + i_track] != 0;
 
-  const bool l1_found = windows_layers[size_pos * 5 + (track_pos + 1)] != 0 ||
-                        windows_layers[size_pos * 6 + (track_pos + 1)] != 0 ||
-                        windows_layers[size_pos * 7 + (track_pos + 1)] != 0 ||
-                        windows_layers[size_pos * 8 + (track_pos + 1)] != 0 ||
-                        windows_layers[size_pos * 9 + (track_pos + 1)] != 0;
+  const bool l1_found = windows_layers[5 * track_pos + 1 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[6 * track_pos + 1 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[7 * track_pos + 1 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[8 * track_pos + 1 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[9 * track_pos + 1 * number_of_tracks_event + i_track] != 0;
 
-  const bool l2_found = windows_layers[size_pos * 5 + (track_pos + 2)] != 0 ||
-                        windows_layers[size_pos * 6 + (track_pos + 2)] != 0 ||
-                        windows_layers[size_pos * 7 + (track_pos + 2)] != 0 ||
-                        windows_layers[size_pos * 8 + (track_pos + 2)] != 0 ||
-                        windows_layers[size_pos * 9 + (track_pos + 2)] != 0;
+  const bool l2_found = windows_layers[5 * track_pos + 2 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[6 * track_pos + 2 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[7 * track_pos + 2 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[8 * track_pos + 2 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[9 * track_pos + 2 * number_of_tracks_event + i_track] != 0;
 
-  const bool l3_found = windows_layers[size_pos * 5 + (track_pos + 3)] != 0 ||
-                        windows_layers[size_pos * 6 + (track_pos + 3)] != 0 ||
-                        windows_layers[size_pos * 7 + (track_pos + 3)] != 0 ||
-                        windows_layers[size_pos * 8 + (track_pos + 3)] != 0 ||
-                        windows_layers[size_pos * 9 + (track_pos + 3)] != 0;
+  const bool l3_found = windows_layers[5 * track_pos + 3 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[6 * track_pos + 3 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[7 * track_pos + 3 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[8 * track_pos + 3 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[9 * track_pos + 3 * number_of_tracks_event + i_track] != 0;
 
   return (l0_found && l2_found && (l1_found || l3_found)) ||
          (l3_found && l1_found && (l2_found || l0_found));

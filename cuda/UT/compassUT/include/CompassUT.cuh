@@ -39,17 +39,18 @@ __device__ void compass_ut_tracking(
   const UTHitOffsets& ut_hit_offsets,
   const float* bdl_table,
   const float* dev_ut_dxDy,
-  int* win_size_shared,
+  short* win_size_shared,
   int* n_veloUT_tracks_event,
   VeloUTTracking::TrackUT* veloUT_tracks_event);
 
 __host__ __device__ __inline__ bool velo_track_in_UT_acceptance(
   const MiniState& state);
 
-__host__ __device__ __inline__ void fill_shared_windows(
+__device__ __inline__ void fill_shared_windows(
   const short* windows_layers,
-  const uint current_track_offset,
-  int* win_size_shared);
+  const int number_of_tracks_event,
+  const int i_track,
+  short* win_size_shared);
 
 __device__ __inline__ bool found_active_windows(
   const short* dev_windows_layers,

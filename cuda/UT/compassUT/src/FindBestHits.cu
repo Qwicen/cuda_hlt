@@ -16,7 +16,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 {
   const float yyProto = velo_state.y - velo_state.ty * velo_state.z;
 
-  const TrackCandidates ranges (win_size_shared, number_of_tracks_event, i_track);
+  const TrackCandidates ranges (win_size_shared);
 
   int best_hits [4] = {-1, -1, -1, -1};
 
@@ -216,8 +216,6 @@ __device__ BestParams pkick_fit(
     }
   }
 
-  // constexpr float bs [4] = {0.f, 0.f, 0.5f, 0.33f};
-  // chi2UT *= bs[total_num_hits-1];
   chi2UT /= (total_num_hits - 1);
 
   // Save the best parameters if chi2 is good
@@ -240,7 +238,7 @@ __device__ BestParams pkick_fit(
 __device__ __inline__ int sum_layer_hits(
   const TrackCandidates& ranges, const int layer0, const int layer2)
 {
-  return  sum_layer_hits(ranges, layer0) + sum_layer_hits(ranges, layer2);
+  return sum_layer_hits(ranges, layer0) + sum_layer_hits(ranges, layer2);
 }
 
 //=========================================================================
