@@ -48,7 +48,7 @@ __global__ void scifi_pre_decode(
   const float* dev_inv_clus_res
 ) {
   const int number_of_events = gridDim.x;
-  const int event_number = blockIdx.x;
+  const uint event_number = blockIdx.x;
   const uint selected_event_number = event_list[event_number];
 
   SciFiGeometry geom(scifi_geometry);

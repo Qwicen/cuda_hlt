@@ -11,6 +11,7 @@ If you are working from a node with CVMFS and CentOS 7, we suggest the following
 
 ```shell
 source /cvmfs/lhcb.cern.ch/lib/lcg/releases/gcc/7.3.0/x86_64-centos7/setup.sh
+export PATH=/cvmfs/lhcb.cern.ch/lib/contrib/CMake/3.12.1/Linux-x86_64/bin/:$PATH
 ```
 
 Regardless of the OS you are running on, you can check your compiler versions as follows:
@@ -20,7 +21,10 @@ $ g++ --version
 g++ (GCC) 7.3.0
 
 $ nvcc --version
-Cuda compilation tools, release 9.2, V9.2.88
+Cuda compilation tools, release 10.0, V10.0.130
+
+$ cmake --version
+cmake version 3.12.1
 ```
 
 You can check your compiler standard compatibility by scrolling to the `C++14 features` chart [here](https://en.cppreference.com/w/cpp/compiler_support).

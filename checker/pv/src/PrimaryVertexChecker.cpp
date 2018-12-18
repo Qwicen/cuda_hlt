@@ -12,13 +12,14 @@ void checkPVs(
   std::vector<std::string> folderContents = list_folder(foldername);
 
   uint requestedFiles = number_of_files == 0 ? folderContents.size() : number_of_files;
-  verbose_cout << "Requested " << requestedFiles << " files" << std::endl;
 
   if (requestedFiles > folderContents.size()) {
-    error_cout << "ERROR: requested " << requestedFiles << " files, but only " << folderContents.size()
-               << " files are present" << std::endl;
+    warning_cout << "Requested " << requestedFiles << " files, but only " << folderContents.size()
+               << " files are present" << std::endl << std::endl;
   }
   else {
+    verbose_cout << "Requested " << requestedFiles << " files" << std::endl;
+
     int readFiles = 0;
 
     // vector containing for each event vector of MCVertices
