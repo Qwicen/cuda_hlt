@@ -76,8 +76,6 @@ __global__ void compass_ut(
 
     __syncthreads();
 
-    // const uint current_track_offset = event_tracks_offset + i_track;
-
     if (*active_tracks >= blockDim.x) {
 
       compass_ut_tracking(
@@ -227,6 +225,7 @@ __device__ __inline__ bool found_active_windows(
 {
   const int track_pos = VeloUTTracking::n_layers * number_of_tracks_event;
 
+  // windows_layers[sector_size * track_pos + layer * ...]
   const bool l0_found = windows_layers[5 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
                         windows_layers[6 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
                         windows_layers[7 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
@@ -255,8 +254,10 @@ __device__ __inline__ bool found_active_windows(
          (l3_found && l1_found && (l2_found || l0_found));
 }
 
+//=========================================================================
 // These things are all hardcopied from the PrTableForFunction and PrUTMagnetTool
 // If the granularity or whatever changes, this will give wrong results
+//=========================================================================
 __host__ __device__ __inline__ int master_index(const int index1, const int index2, const int index3)
 {
   return (index3 * 11 + index2) * 31 + index1;

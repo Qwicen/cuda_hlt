@@ -5,7 +5,7 @@
 namespace CompassUT {
 
 constexpr uint n_elems = 5 * 2; // num sectors * 2
-constexpr uint max_considered_before_found = 4;
+constexpr uint max_considered_before_found = 2;
 
 }
 
