@@ -12,9 +12,10 @@ void SequenceVisitor::check<pv_fit_seeds_t>(
   const CheckerInvoker& checker_invoker) const
 {
 
-  info_cout << "Checking GPU PVs " << checker_invoker.mc_pv_folder << std::endl;
+  info_cout << "Checking GPU PVs " << std::endl;
+  const std::string mc_pv_folder = checker_invoker.mc_folder + "/PVs";
   checkPVs(
-    checker_invoker.mc_pv_folder,
+    mc_pv_folder,
     number_of_events_requested,
     host_buffers.host_reconstructed_pvs,
     host_buffers.host_number_of_vertex,
@@ -46,9 +47,10 @@ void SequenceVisitor::check<cpu_pv_beamline_t>(
     }
   }
   */
-  info_cout << "Checking CPU beamline PVs " << checker_invoker.mc_pv_folder << std::endl;
+  info_cout << "Checking CPU beamline PVs " << std::endl;
+  const std::string mc_pv_folder = checker_invoker.mc_folder + "/PVs";
   checkPVs(
-    checker_invoker.mc_pv_folder,
+    mc_pv_folder,
     number_of_events_requested,
     host_buffers.host_reconstructed_pvs,
     host_buffers.host_number_of_vertex,
@@ -80,9 +82,10 @@ void SequenceVisitor::check<pv_beamline_multi_fitter_t>(
       }
     }
     */
-  info_cout << "Checking GPU beamline PVs " << checker_invoker.mc_pv_folder << std::endl;
+  info_cout << "Checking GPU beamline PVs " << std::endl;
+  const std::string mc_pv_folder = checker_invoker.mc_folder + "/PVs";
   checkPVs(
-    checker_invoker.mc_pv_folder,
+    mc_pv_folder,
     number_of_events_requested,
     host_buffers.host_reconstructed_multi_pvs,
     host_buffers.host_number_of_multivertex,

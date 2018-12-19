@@ -34,11 +34,10 @@ void StreamWrapper::run_stream(const uint i, const RuntimeOptions& runtime_optio
 void StreamWrapper::run_monte_carlo_test(
   const uint i,
   const std::string& mc_folder,
-  const std::string& mc_pv_folder,
   const uint number_of_events_requested)
 {
   auto& s = *(streams[i]);
-  s.run_monte_carlo_test(mc_folder, mc_pv_folder, number_of_events_requested);
+  s.run_monte_carlo_test(mc_folder, number_of_events_requested);
 }
 
 StreamWrapper::~StreamWrapper() {
