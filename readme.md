@@ -65,8 +65,7 @@ There are some cmake options to configure the build process:
 * If ROOT is available, it can be enabled to generate graphs by `-DUSE_ROOT=ON`
 * If more verbose build output from the CUDA toolchain is desired, specify `-DCUDA_VERBOSE_BUILD=ON`
 * If multiple versions of CUDA are installed and CUDA 10.0 is not the default, it can be specified using: `-DCMAKE_CUDA_COMPILER=/usr/local/cuda-10.0/bin/nvcc`
-The MC validation is standalone, it was written by
-Manuel Schiller, Rainer Schwemmer, Daniel Cámpora and Dorothea vom Bruch.
+* The MC validation is standalone, it was written by Manuel Schiller, Rainer Schwemmer, Daniel Cámpora and Dorothea vom Bruch.
 
 How to run it
 -------------
