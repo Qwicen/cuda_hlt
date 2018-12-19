@@ -45,8 +45,8 @@ Where to find input
 -------------
 Input from 1k events can be found here:
 
-* minimum bias (for performance checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbias_dump_PV_truth.tar.gz`
-* Bs->PhiPhi (for efficiency checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi_dump_PV_truth.tar.gz`
+* minimum bias (for performance checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbiastar.gz`
+* Bs->PhiPhi (for efficiency checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi.tar.gz`
 
 How to build it
 ---------------
@@ -86,7 +86,6 @@ A run of the program with no arguments will let you know the basic options:
     --mdf {use MDF files as input instead of binary files}
     -g {folder containing detector configuration}
     -d {folder containing .bin files with MC truth information}
-    -i {folder containing .bin files with PV MC truth information}
     -n {number of events to process}=0 (all)
     -o {offset of events from which to start}=0 (beginning)
     -t {number of threads / streams}=1
@@ -103,7 +102,7 @@ Here are some example run options:
     ./Allen
 
     # Specify input files, run once over all of them with tracking validation
-    ./Allen -f ../input/minbias/banks/ -d ../input/minbias/MC_info/
+    ./Allen -f ../input/minbias/banks/ -d ../input/minbias/MC_info/ -b ../input/minbias/muon_common_hits
 
     # Run a total of 1000 events, round robin over the existing ones, without tracking validation
     ./Allen -c 0 -n 1000
