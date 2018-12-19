@@ -13,7 +13,7 @@ void SequenceVisitor::check<pv_fit_seeds_t>(
 {
 
   info_cout << "Checking GPU PVs " << std::endl;
-  std::string mc_pv_folder = checker_invoker.mc_folder + "/PVs";
+  const std::string mc_pv_folder = checker_invoker.mc_folder + "/PVs";
   checkPVs(
     mc_pv_folder,
     number_of_events_requested,
@@ -48,7 +48,7 @@ void SequenceVisitor::check<cpu_pv_beamline_t>(
   }
   */
   info_cout << "Checking CPU beamline PVs " << std::endl;
-  std::string mc_pv_folder = checker_invoker.mc_folder + "/PVs";
+  const std::string mc_pv_folder = checker_invoker.mc_folder + "/PVs";
   checkPVs(
     mc_pv_folder,
     number_of_events_requested,
@@ -83,7 +83,7 @@ void SequenceVisitor::check<pv_beamline_multi_fitter_t>(
     }
     */
   info_cout << "Checking GPU beamline PVs " << std::endl;
-  std::string mc_pv_folder = checker_invoker.mc_folder + "/PVs";
+  const std::string mc_pv_folder = checker_invoker.mc_folder + "/PVs";
   checkPVs(
     mc_pv_folder,
     number_of_events_requested,
