@@ -51,18 +51,12 @@ Input from 1k events can be found here:
 How to build it
 ---------------
 
-The build process doesn't differ from standard cmake projects, but
-does require at least cmake version 3.12:
+The build process doesn't differ from standard cmake projects:
 
     mkdir build
     cd build
     cmake ..
     make
-
-If CVMFS is available, cmake 3.12.1 can be obtained by setting:
-```shell
-export PATH=/cvmfs/lhcb.cern.ch/lib/contrib/CMake/3.12.1/Linux-x86_64/bin:$PATH
-```
 
 There are some cmake options to configure the build process:
 
