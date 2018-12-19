@@ -5,7 +5,7 @@ Welcome to Allen, a project with the aim to provide a full HLT1 realization on G
 
 Requisites
 ----------
-The project requires a graphics card with CUDA support, CUDA 10.0 and a compiler supporting C++14.
+The project requires a graphics card with CUDA support, CUDA 10.0, CMake 3.12 and a compiler supporting C++14.
 
 If you are working from a node with CVMFS and CentOS 7, we suggest the following setup:
 
