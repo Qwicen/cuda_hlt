@@ -7,7 +7,7 @@ __device__ void store_sorted_cluster_reference (
   const SciFi::HitCount& hit_count,
   const uint32_t uniqueMat,
   const uint32_t chan,
-  const uint32_t* shared_mat_offsets,
+  uint32_t* shared_mat_offsets,
   const int raw_bank,
   const int it,
   const int condition_1,
@@ -15,8 +15,7 @@ __device__ void store_sorted_cluster_reference (
   const int delta,
   SciFi::Hits& hits)
 {
-  uint32_t* hits_mat = hit_count.n_hits_mats + uniqueMat;
-  uint32_t hitIndex = (*hits_mat)++;
+  uint32_t hitIndex = (*shared_mat_offsets)++;
 
   const SciFi::SciFiChannelID id {chan};
   if (id.reversedZone()) {
@@ -42,26 +41,26 @@ __device__ void store_sorted_cluster_reference (
 __global__ void scifi_pre_decode(
   char *scifi_events,
   uint *scifi_event_offsets,
+  const uint *event_list,
   uint *scifi_hit_count,
   uint *scifi_hits,
   char *scifi_geometry,
   const float* dev_inv_clus_res
 ) {
   const int number_of_events = gridDim.x;
-  const int event_number = blockIdx.x;
+  const uint event_number = blockIdx.x;
+  const uint selected_event_number = event_list[event_number];
 
   SciFiGeometry geom(scifi_geometry);
-  const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[event_number]);
+  const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[selected_event_number]);
 
   Hits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mats], &geom, dev_inv_clus_res};
-  HitCount hit_count;
-  hit_count.typecast_after_prefix_sum(scifi_hit_count, event_number, number_of_events);
+  HitCount hit_count {scifi_hit_count, event_number};
 
   __shared__ uint32_t shared_mat_offsets[SciFi::Constants::n_mats];
 
   for (uint i = threadIdx.x; i < SciFi::Constants::n_mats; i += blockDim.x) {
     shared_mat_offsets[i] = hit_count.mat_offsets[i];
-    hit_count.n_hits_mats[i] = 0;
   }
 
   __syncthreads();
@@ -91,7 +90,7 @@ __global__ void scifi_pre_decode(
             hit_count,
             correctedMat,
             ch,
-            (const uint32_t*) &shared_mat_offsets[0],
+            (uint32_t*) &shared_mat_offsets[it_number],
             i,
             it_number,
             condition_1, // Condition 1
@@ -117,7 +116,7 @@ __global__ void scifi_pre_decode(
                   hit_count,
                   correctedMat,
                   ch,
-                  (const uint32_t*) &shared_mat_offsets[0],
+                  (uint32_t*) &shared_mat_offsets[it_number],
                   i,
                   it_number,
                   condition_1,
@@ -132,7 +131,7 @@ __global__ void scifi_pre_decode(
                 hit_count,
                 correctedMat,
                 ch,
-                (const uint32_t*) &shared_mat_offsets[0],
+                (uint32_t*) &shared_mat_offsets[it_number],
                 i,
                 it_number,
                 condition_1,
@@ -148,7 +147,7 @@ __global__ void scifi_pre_decode(
                 hit_count,
                 correctedMat,
                 ch,
-                (const uint32_t*) &shared_mat_offsets[0],
+                (uint32_t*) &shared_mat_offsets[it_number],
                 i,
                 it_number,
                 condition_1,
@@ -168,7 +167,7 @@ __global__ void scifi_pre_decode(
               hit_count,
               correctedMat,
               ch,
-              (const uint32_t*) &shared_mat_offsets[0],
+              (uint32_t*) &shared_mat_offsets[it_number],
               i,
               it_number,
               condition_1,

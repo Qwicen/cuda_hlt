@@ -22,10 +22,11 @@ void SequenceVisitor::visit<scifi_raw_bank_decoder_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(256), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(256), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_scifi_raw_input>(),
     arguments.offset<dev_scifi_raw_input_offsets>(),
+    arguments.offset<dev_event_list>(),
     arguments.offset<dev_scifi_hit_count>(),
     arguments.offset<dev_scifi_hits>(),
     constants.dev_scifi_geometry,
@@ -35,7 +36,7 @@ void SequenceVisitor::visit<scifi_raw_bank_decoder_t>(
   state.invoke();
 
   // // SciFi Decoder Debugging
-  // const uint hit_count_uints = 2 * runtime_options.number_of_events * SciFi::Constants::n_mats + 1;
+  // const uint hit_count_uints = 2 * host_buffers.host_number_of_selected_events[0] * SciFi::Constants::n_mats + 1;
   // uint host_scifi_hit_count[hit_count_uints];
   // uint* host_scifi_hits = new uint[host_buffers.scifi_hits_uints()];
   // cudaCheck(cudaMemcpyAsync(&host_scifi_hit_count, arguments.offset<dev_scifi_hit_count>(), hit_count_uints*sizeof(uint), cudaMemcpyDeviceToHost, cuda_stream));
@@ -44,17 +45,16 @@ void SequenceVisitor::visit<scifi_raw_bank_decoder_t>(
   // cudaEventSynchronize(cuda_generic_event);
   //
   // SciFi::SciFiGeometry host_geom(constants.host_scifi_geometry);
-  // SciFi::SciFiHits hi(host_scifi_hits, host_scifi_hit_count[runtime_options.number_of_events * SciFi::Constants::n_mats], &host_geom);
+  // SciFi::SciFiHits hi(host_scifi_hits, host_scifi_hit_count[host_buffers.host_number_of_selected_events[0] * SciFi::Constants::n_mats], &host_geom, constants.host_inv_clus_res.data());
   //
   // std::ofstream outfile("dump.txt");
   // SciFi::SciFiHitCount host_scifi_hit_count_struct;
-  // for(size_t event = 0; event < runtime_options.number_of_events; event++) {
-  //   host_scifi_hit_count_struct.typecast_after_prefix_sum(host_scifi_hit_count, event, runtime_options.number_of_events);
+  // for(size_t event = 0; event < host_buffers.host_number_of_selected_events[0]; event++) {
+  //   host_scifi_hit_count_struct.typecast_after_prefix_sum(host_scifi_hit_count, event, host_buffers.host_number_of_selected_events[0]);
   //   for(size_t zone = 0; zone < SciFi::Constants::n_zones; zone++) {
   //     for(size_t hit = 0; hit < host_scifi_hit_count_struct.zone_number_of_hits(zone); hit++) {
   //       uint h = host_scifi_hit_count_struct.zone_offset(zone) + hit;
   //       outfile << std::setprecision(8) << std::fixed
-  //         << h << " "
   //         << hi.planeCode(h) << " "
   //         << zone % 2     << " "
   //         << hi.LHCbID(h) << " "

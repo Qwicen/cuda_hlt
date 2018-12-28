@@ -47,4 +47,6 @@ void SequenceVisitor::visit<prefix_sum_velo_track_hit_number_t>(
 
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
+  
+  debug_cout << "Total number of hits on all tracks = " << host_buffers.host_accumulated_number_of_hits_in_velo_tracks[0] << std::endl;
 }

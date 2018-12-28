@@ -12,6 +12,8 @@ __global__ void estimate_input_size(
   uint* dev_module_cluster_num,
   uint* dev_module_candidate_num,
   uint32_t* dev_cluster_candidates,
+  const uint* dev_event_list,
+  uint *dev_event_order,
   uint8_t* dev_velo_candidate_ks
 );
 

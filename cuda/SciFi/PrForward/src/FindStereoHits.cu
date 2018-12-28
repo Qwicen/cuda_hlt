@@ -17,7 +17,7 @@ __host__ __device__ void collectStereoHits(
   for (int zone = 0; zone < SciFi::Constants::n_layers; ++zone) {
     // get yZone and xPred: x and y values at z of layer based on candidate track parameters
     const float parsX[4] = {track.trackParams[0], track.trackParams[1], track.trackParams[2], track.trackParams[3]};
-    const float parsY[4] = {track.trackParams[4], track.trackParams[5], track.trackParams[6], 0.};
+    const float parsY[4] = {track.trackParams[4], track.trackParams[5], track.trackParams[6], 0.f};
     float zZone = constArrays->uvZone_zPos[zone];
     const float yZone = evalCubicParameterization(parsY, zZone);
     assert(constArrays->uvZones[zone] < SciFi::Constants::n_zones);

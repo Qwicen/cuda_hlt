@@ -23,7 +23,7 @@ void SequenceVisitor::visit<consolidate_ut_tracks_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(256), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(256), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_ut_hits>(),
     arguments.offset<dev_ut_hit_offsets>(),
@@ -42,7 +42,7 @@ void SequenceVisitor::visit<consolidate_ut_tracks_t>(
   cudaCheck(cudaMemcpyAsync(
     host_buffers.host_atomics_ut,
     arguments.offset<dev_atomics_ut>(),
-    (2 * runtime_options.number_of_events + 1) * sizeof(uint),
+    (2 * host_buffers.host_number_of_selected_events[0] + 1) * sizeof(uint),
     cudaMemcpyDeviceToHost, 
     cuda_stream));
 

@@ -47,10 +47,12 @@ struct MemoryManager {
   {
     // Tag and requested size
     const auto tag = Argument::name;
-    const size_t requested_size = argument_manager.template size<Argument>();
+    size_t requested_size = argument_manager.template size<Argument>();
 
     // Size requested should be greater than zero
-    assert(requested_size > 0);
+    if (requested_size == 0) {
+      requested_size = 8;
+    }
 
     // Aligned requested size
     const size_t aligned_request = requested_size + guarantee_alignment - 1

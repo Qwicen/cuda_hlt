@@ -67,25 +67,6 @@ __device__ __host__ SciFiGeometry::SciFiGeometry(
 
 SciFiGeometry::SciFiGeometry(const std::vector<char>& geometry) : SciFiGeometry::SciFiGeometry(geometry.data()) {}
 
-__device__ __host__ SciFiRawEvent::SciFiRawEvent(const char* event) {
-  const char* p = event;
-  number_of_raw_banks = *((uint32_t*)p); p += sizeof(uint32_t);
-  raw_bank_offset = (uint32_t*) p; p += (number_of_raw_banks + 1) * sizeof(uint32_t);
-  payload = (char*) p;
-}
-
-__device__ __host__ SciFiRawBank SciFiRawEvent::getSciFiRawBank(const uint32_t index) const {
-  SciFiRawBank bank(payload + raw_bank_offset[index], payload + raw_bank_offset[index + 1]);
-  return bank;
-}
-
-__device__ __host__ SciFiRawBank::SciFiRawBank(const char* raw_bank, const char* end) {
-  const char* p = raw_bank;
-  sourceID = *((uint32_t*)p); p += sizeof(uint32_t);
-  data = (uint16_t*) p;
-  last = (uint16_t*) end;
-}
-
 __device__ __host__ SciFiChannelID::SciFiChannelID(const uint32_t channelID) : channelID(channelID) {};
 
 __host__ std::string SciFiChannelID::toString()

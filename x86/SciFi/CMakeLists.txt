@@ -15,7 +15,7 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/SciFi/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/sorting)
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
 
-file(GLOB x86Forward "src/*cpp" "${CMAKE_SOURCE_DIR}/cuda/SciFi/common/src/*cu")
+file(GLOB x86Forward_src "src/*cpp" "${CMAKE_SOURCE_DIR}/cuda/SciFi/common/src/*cu")
 file(GLOB PrForwardTools "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/FindStereoHits.cu"
   "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/FindXHits.cu"
   "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/HitUtils.cu"
@@ -26,7 +26,7 @@ file(GLOB PrForwardTools "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/FindStere
   "${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/src/TrackUtils.cu")
 
 add_library(x86Forward STATIC
-  ${x86Forward}
+  ${x86Forward_src}
   ${PrForwardTools}
 )
 set_property(TARGET x86Forward PROPERTY

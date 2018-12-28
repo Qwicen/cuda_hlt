@@ -24,7 +24,7 @@ void SequenceVisitor::visit<consolidate_scifi_tracks_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(256), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(256), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_scifi_hits>(),
     arguments.offset<dev_scifi_hit_count>(),
@@ -48,7 +48,7 @@ void SequenceVisitor::visit<consolidate_scifi_tracks_t>(
   cudaCheck(cudaMemcpyAsync(
     host_buffers.host_atomics_scifi,
     arguments.offset<dev_atomics_scifi>(),
-    (2 * runtime_options.number_of_events + 1) * sizeof(int),
+    (2 * host_buffers.host_number_of_selected_events[0] + 1) * sizeof(int),
     cudaMemcpyDeviceToHost, 
     cuda_stream));
 

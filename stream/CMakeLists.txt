@@ -8,11 +8,13 @@ include_directories(checkers/include)
 include_directories(${CMAKE_SOURCE_DIR}/main/include)
 include_directories(${CMAKE_SOURCE_DIR}/configuration/sequences)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/prefix_sum/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/float_operations/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/sorting/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/velo/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/UT/include)
-include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/SciFi/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/SciFi/include)  
+include_directories(${CMAKE_SOURCE_DIR}/cuda/global_event_cut/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/PrVeloUT/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/UTDecoding/include)
@@ -42,6 +44,8 @@ include_directories(${CMAKE_SOURCE_DIR}/x86/UT/PrVeloUT/include)
 include_directories(${CMAKE_SOURCE_DIR}/x86/SciFi/include)
 include_directories(${CMAKE_SOURCE_DIR}/checker/tracking/include)
 include_directories(${CMAKE_SOURCE_DIR}/checker/pv/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/PV/beamlinePV/include)
+include_directories(${CMAKE_SOURCE_DIR}/x86/PV/beamlinePV/include)
 
 file(GLOB stream_gear "gear/src/*cu")
 file(GLOB stream_handlers "handlers/src/*cu")
@@ -50,8 +54,10 @@ file(GLOB stream_scheduler "scheduler/src/*cu")
 file(GLOB stream_sequence "sequence/src/*cu")
 file(GLOB stream_sequence_cpp "sequence/src/*cpp")
 file(GLOB stream_setup "setup/src/*cu")
+file(GLOB stream_visitors_gec "visitors/global_event_cut/src/*cu")
 file(GLOB stream_visitors_velo "visitors/velo/src/*cu")
-file(GLOB stream_visitors_pv "visitors/PV/src/*cu")
+file(GLOB stream_visitors_patPV "visitors/patPV/src/*cu")
+file(GLOB stream_visitors_beamlinePV "visitors/beamlinePV/src/*cu") 
 file(GLOB stream_visitors_UT "visitors/UT/src/*cu")
 file(GLOB stream_visitors_SciFi "visitors/SciFi/src/*cu")
 file(GLOB stream_visitors_Muon "visitors/muon/src/*cu")
@@ -64,8 +70,10 @@ add_library(Stream STATIC
   ${stream_sequence}
   ${stream_sequence_cpp}
   ${stream_setup}
+  ${stream_visitors_gec}
   ${stream_visitors_velo}
-  ${stream_visitors_pv}
+  ${stream_visitors_patPV}
+  ${stream_visitors_beamlinePV}
   ${stream_visitors_UT}
   ${stream_visitors_SciFi}
   ${stream_visitors_Muon}
@@ -74,8 +82,12 @@ add_library(Stream STATIC
 target_link_libraries(Stream PRIVATE
   Common
   Utils
+  GlobalEventCut
   Velo
-  PV
+  PatPV
+  PV_beamline
+  x86Clustering
+  x86beamlinePV
   UT
   SciFi
   x86Forward

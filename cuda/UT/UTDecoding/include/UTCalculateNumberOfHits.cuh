@@ -10,7 +10,8 @@ __global__ void ut_calculate_number_of_hits (
   const uint* dev_ut_region_offsets,
   const uint* dev_unique_x_sector_layer_offsets,
   const uint* dev_unique_x_sector_offsets,
-  uint32_t* dev_ut_hit_offsets
+  uint32_t* dev_ut_hit_offsets,
+  const uint* dev_event_list
 );
 
 ALGORITHM(ut_calculate_number_of_hits, ut_calculate_number_of_hits_t)

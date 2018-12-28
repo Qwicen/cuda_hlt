@@ -3,6 +3,8 @@
  * in the expected order of execution.
  */
 SEQUENCE_T(
+  init_event_list_t,
+  global_event_cut_t,
   velo_estimate_input_size_t,
   prefix_sum_velo_clusters_t,
   velo_masked_clustering_t,
@@ -15,6 +17,8 @@ SEQUENCE_T(
   prefix_sum_velo_track_hit_number_t,
   consolidate_velo_tracks_t,
   velo_kalman_fit_t,
-  pv_get_seeds_t,
-  pv_fit_seeds_t
+  pv_beamline_extrapolate_t,
+  pv_beamline_histo_t,
+  pv_beamline_peak_t,
+  pv_beamline_multi_fitter_t
 )

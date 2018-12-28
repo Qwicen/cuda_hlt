@@ -3,6 +3,8 @@
 #include "SystemOfUnits.h"
 #include "VeloEventModel.cuh"
 #include "VeloConsolidated.cuh"
+#include "UTRaw.cuh"
+
 #include <ostream>
 #include <stdint.h>
 #include <vector>
@@ -108,26 +110,4 @@ struct UTGeometry {
   UTGeometry(const std::vector<char>& ut_geometry);
 
   __device__ __host__ UTGeometry(const char* ut_geometry);
-};
-
-struct UTRawBank {
-  uint32_t sourceID;
-  uint32_t number_of_hits;
-  uint16_t* data;
-
-  __device__ __host__ UTRawBank(const char* ut_raw_bank);
-};
-
-struct UTRawEvent {
-  uint32_t number_of_raw_banks;
-  uint32_t* raw_bank_offsets;
-  char* data;
-
-  __device__ __host__ UTRawEvent (
-    const char* ut_raw_event
-  ); 
- 
-  __device__ __host__ UTRawBank getUTRawBank(
-    const uint32_t index
-  ) const;
 };

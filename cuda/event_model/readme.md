@@ -41,4 +41,5 @@ Two different types of states exist in the current event model:
    * FullState: Containing the position `x, y, z` and slopes `tx, ty` as well as all entries of the covariance matrix defined after the SciFi pattern recognition step.
    
 
+[This](https://indico.cern.ch/event/692177/contributions/3252276/subcontributions/269262/attachments/1771794/2879440/Allen_event_model_DvB.pdf) presentation gives an overview of the event model.
 

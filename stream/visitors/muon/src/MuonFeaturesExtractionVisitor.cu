@@ -8,7 +8,7 @@ void SequenceVisitor::set_arguments_size<muon_catboost_features_extraction_t>(
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 { 
-  arguments.set_size<dev_muon_hits>(runtime_options.number_of_events);
+  arguments.set_size<dev_muon_hits>(host_buffers.host_number_of_selected_events[0]);
   arguments.set_size<dev_muon_catboost_features>(constants.muon_catboost_n_features * host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
 }
 
@@ -26,13 +26,13 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
   cudaCheck(cudaMemcpyAsync(
     arguments.offset<dev_muon_hits>(),
     runtime_options.host_muon_hits_events.data(),
-    runtime_options.number_of_events * sizeof(Muon::HitsSoA),
+    host_buffers.host_number_of_selected_events[0] * sizeof(Muon::HitsSoA),
     cudaMemcpyHostToDevice,
     cuda_stream
   ));
 
   // Setup opts for kernel call
-  state.set_opts(dim3(runtime_options.number_of_events, Muon::Constants::n_stations), dim3(1), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0], Muon::Constants::n_stations), dim3(32), cuda_stream);
 
   // Setup arguments for kernel call
   state.set_arguments(
@@ -47,27 +47,4 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
 
   // Kernel call
   state.invoke();
-
-  // Retrieve result
-  std::vector<float> features(constants.muon_catboost_n_features * host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
-  cudaCheck(cudaMemcpyAsync(
-    features.data(),
-    arguments.offset<dev_muon_catboost_features>(),
-    arguments.size<dev_muon_catboost_features>(),
-    cudaMemcpyDeviceToHost,
-    cuda_stream
-  ));
-
-  cudaEventRecord(cuda_generic_event, cuda_stream);
-  cudaEventSynchronize(cuda_generic_event);
-
-  // Check the output
-  debug_cout << "MUON FEATURES: " << std::endl;
-  for (int j = 0; j < host_buffers.host_number_of_reconstructed_scifi_tracks[0]; j++) {
-    for (int i = 0; i < constants.muon_catboost_n_features; i++) {
-      debug_cout << features[j * constants.muon_catboost_n_features + i] << " ";
-    }
-    debug_cout << std::endl;
-  }
-  debug_cout << std::endl << std::endl;
 }

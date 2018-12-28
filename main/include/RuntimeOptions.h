@@ -20,6 +20,7 @@ struct RuntimeOptions {
   size_t host_scifi_event_offsets_size;
   std::vector<Muon::HitsSoA> host_muon_hits_events;
   uint number_of_events;
+  uint number_of_selected_events;
   uint number_of_repetitions;
 
   RuntimeOptions() = default;
@@ -54,5 +55,6 @@ struct RuntimeOptions {
     host_scifi_event_offsets_size(param_host_scifi_event_offsets_size),
     host_muon_hits_events(param_host_muon_hits_events),
     number_of_events(param_number_of_events),
+    number_of_selected_events(param_number_of_events),
     number_of_repetitions(param_number_of_repetitions) {}
 };

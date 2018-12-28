@@ -66,14 +66,18 @@ __global__ void masked_velo_clustering(
   uint* dev_event_candidate_num,
   uint* dev_cluster_candidates,
   uint32_t* dev_velo_cluster_container,
+  const uint* dev_event_list,
+  uint* dev_event_order,
   char* dev_velo_geometry,
   uint8_t* dev_velo_sp_patterns,
   float* dev_velo_sp_fx,
   float* dev_velo_sp_fy
 ) {
   const uint number_of_events = gridDim.x;
-  const uint event_number = blockIdx.x;
-  const char* raw_input = dev_raw_input + dev_raw_input_offsets[event_number];
+  const uint event_number = blockIdx.x; 
+  const uint selected_event_number = dev_event_list[event_number];
+
+  const char* raw_input = dev_raw_input + dev_raw_input_offsets[selected_event_number];
   const uint* module_cluster_start = dev_module_cluster_start + event_number * Velo::Constants::n_modules;
   uint* module_cluster_num = dev_module_cluster_num + event_number * Velo::Constants::n_modules;
   uint number_of_candidates = dev_event_candidate_num[event_number];

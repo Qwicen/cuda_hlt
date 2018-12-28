@@ -9,9 +9,13 @@
 #include "SciFiEventModel.cuh"
 #include "UTEventModel.cuh"
 #include "patPV_Definitions.cuh"
+#include "PV_Definitions.cuh"
 
 struct HostBuffers {
   // Pinned host datatypes
+  uint* host_number_of_selected_events;
+  uint* host_event_list;
+
   // Velo
   uint* host_atomics_velo;
   uint* host_velo_track_hit_number;
@@ -21,9 +25,15 @@ struct HostBuffers {
   uint* host_accumulated_number_of_hits_in_velo_tracks;
   char* host_velo_states;
   char* host_kalmanvelo_states;
-  PatPV::Vertex* host_reconstructed_pvs;
+  PV::Vertex* host_reconstructed_pvs;
   int* host_number_of_vertex;
   int* host_number_of_seeds;
+  uint* host_n_scifi_tracks;
+  float* host_zhisto;
+  float* host_peaks;
+  uint* host_number_of_peaks;
+  PV::Vertex* host_reconstructed_multi_pvs;
+  int* host_number_of_multivertex;
 
   // UT 
   int* host_atomics_ut;

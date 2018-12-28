@@ -97,19 +97,19 @@ protected:
 
   struct Histos {
 #ifdef WITH_ROOT
-    std::map<std::string, TH1D> h_reconstructible_eta;
-    std::map<std::string, TH1D> h_reconstructible_p;
-    std::map<std::string, TH1D> h_reconstructible_pt;
-    std::map<std::string, TH1D> h_reconstructible_phi;
-    std::map<std::string, TH1D> h_reconstructible_nPV;
-    std::map<std::string, TH1D> h_reconstructed_eta;
-    std::map<std::string, TH1D> h_reconstructed_p;
-    std::map<std::string, TH1D> h_reconstructed_pt;
-    std::map<std::string, TH1D> h_reconstructed_phi;
-    std::map<std::string, TH1D> h_reconstructed_nPV;
+    std::map<std::string, TH1D*> h_reconstructible_eta;
+    std::map<std::string, TH1D*> h_reconstructible_p;
+    std::map<std::string, TH1D*> h_reconstructible_pt;
+    std::map<std::string, TH1D*> h_reconstructible_phi;
+    std::map<std::string, TH1D*> h_reconstructible_nPV;
+    std::map<std::string, TH1D*> h_reconstructed_eta;
+    std::map<std::string, TH1D*> h_reconstructed_p;
+    std::map<std::string, TH1D*> h_reconstructed_pt;
+    std::map<std::string, TH1D*> h_reconstructed_phi;
+    std::map<std::string, TH1D*> h_reconstructed_nPV;
 
-    TH1D h_ghost_nPV;
-    TH1D h_total_nPV;
+    TH1D* h_ghost_nPV;
+    TH1D* h_total_nPV;
 #endif
     void initHistos(const std::vector<HistoCategory>& histo_categories);
     void fillReconstructibleHistos(const MCParticles &mcps,
@@ -118,6 +118,7 @@ protected:
                                  HistoCategory &category);
     void fillTotalHistos(const MCParticle &mcp);
     void fillGhostHistos(const MCParticle &mcp);
+    void deleteHistos(const std::vector<HistoCategory>& histo_categories);
   };
  
   const float m_minweight = 0.7f;
@@ -137,7 +138,7 @@ public:
   const std::vector<HistoCategory>& histo_categories() {
     return m_histo_categories;
   }
-   Histos histos;
+  Histos histos;
 };
 
 class TrackCheckerVelo : public TrackChecker {

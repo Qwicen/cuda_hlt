@@ -66,9 +66,9 @@ endif()
 
 # Cuda: Deal with build type
 if(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
-  set(CMAKE_CUDA_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG ")
+  set(CMAKE_CUDA_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG --generate-line-info ")
 elseif(${CMAKE_BUILD_TYPE} STREQUAL Release)
-  set(CMAKE_CUDA_FLAGS_RELEASE "-O3 -DNDEBUG ")
+  set(CMAKE_CUDA_FLAGS_RELEASE "-O3 -DNDEBUG --generate-line-info ")
 elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
   set(CMAKE_CUDA_FLAGS_DEBUG "-O0 -G -g -DDEBUG ")
 endif(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
@@ -82,7 +82,7 @@ endif()
 # In case we want to compile with clang:
 # --compiler-bindir /cvmfs/sft.cern.ch/lcg/releases/clang/6.0.0-6647e/x86_64-centos7-gcc62-opt/bin/clang++;
 set(CMAKE_CUDA_STANDARD 14)
-set(CMAKE_CUDA_FLAGS " --use_fast_math --expt-relaxed-constexpr --generate-line-info --maxrregcount=63 ${CUDA_VERBOSE_FLAGS}")
+set(CMAKE_CUDA_FLAGS " --use_fast_math --expt-relaxed-constexpr --maxrregcount=63 ${CUDA_VERBOSE_FLAGS}")
 
 add_subdirectory(cuda)
 add_subdirectory(stream)
@@ -90,12 +90,14 @@ add_subdirectory(checker)
 add_subdirectory(x86/UT/PrVeloUT)
 add_subdirectory(x86/SciFi)
 add_subdirectory(x86/velo/clustering)
+add_subdirectory(x86/PV/beamlinePV)
 add_subdirectory(mdf)
 
 # Include directories
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 include_directories(main/include)
 include_directories(x86/velo/clustering/include)
+include_directories(cuda/global_event_cut/include)
 include_directories(cuda/UT/common/include)
 include_directories(cuda/UT/PrVeloUT/include)
 include_directories(cuda/UT/compassUT/include)
@@ -143,7 +145,6 @@ set_property(TARGET Allen
 
 target_link_libraries(Allen PRIVATE
   Stream
-  x86Clustering
   TrackChecking
   PVChecking
   CheckClustering)

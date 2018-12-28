@@ -8,9 +8,9 @@ void SequenceVisitor::set_arguments_size<compass_ut_t>(
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 {
-  arguments.set_size<dev_ut_tracks>(runtime_options.number_of_events * UT::Constants::max_num_tracks);
-  arguments.set_size<dev_atomics_ut>(runtime_options.number_of_events * UT::num_atomics + 1);
-  arguments.set_size<dev_active_tracks>(runtime_options.number_of_events);
+  arguments.set_size<dev_ut_tracks>(host_buffers.host_number_of_selected_events[0] * UT::Constants::max_num_tracks);
+  arguments.set_size<dev_atomics_ut>(host_buffers.host_number_of_selected_events[0] * UT::num_atomics + 1);
+  arguments.set_size<dev_active_tracks>(host_buffers.host_number_of_selected_events[0]);
 }
 
 template<>
@@ -23,7 +23,7 @@ void SequenceVisitor::visit<compass_ut_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(runtime_options.number_of_events), dim3(CompassUT::num_threads), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(CompassUT::num_threads), cuda_stream);
 
   state.set_arguments(
     arguments.offset<dev_ut_hits>(),

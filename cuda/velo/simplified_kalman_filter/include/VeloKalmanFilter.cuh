@@ -96,7 +96,7 @@ __global__ void velo_kalman_fit(
   uint* dev_velo_track_hit_number,
   char* dev_velo_track_hits,
   char* dev_velo_states,
-  char* dev_kalmanvelo_states
+  char* dev_velo_kalman_beamline_states
 );
 
 ALGORITHM(velo_kalman_fit, velo_kalman_fit_t)

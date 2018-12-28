@@ -138,7 +138,7 @@ __host__ __device__ void find_forward_tracks(
 
     }
 
-    const uint event_hit_offset = scifi_hit_count.mat_offsets[0]; 
+    const uint event_hit_offset = scifi_hit_count.event_offset(); 
     float minQuality = SciFi::Tracking::maxQuality;
     for ( int i_track = 0; i_track < n_selected_tracks; ++i_track ) {
       SciFi::Tracking::Track& track = selected_tracks[i_track];
@@ -170,6 +170,7 @@ __host__ __device__ void find_forward_tracks(
       }
     }
   }
+
 }
 
 // Turn SciFi::Tracking::Track into a SciFi::Track

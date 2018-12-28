@@ -5,12 +5,13 @@ Welcome to Allen, a project with the aim to provide a full HLT1 realization on G
 
 Requisites
 ----------
-The project requires a graphics card with CUDA support, CUDA 10.0 and a compiler supporting C++14.
+The project requires a graphics card with CUDA support, CUDA 10.0, CMake 3.12 and a compiler supporting C++14.
 
 If you are working from a node with CVMFS and CentOS 7, we suggest the following setup:
 
 ```shell
 source /cvmfs/lhcb.cern.ch/lib/lcg/releases/gcc/7.3.0/x86_64-centos7/setup.sh
+export PATH=/cvmfs/lhcb.cern.ch/lib/contrib/CMake/3.12.1/Linux-x86_64/bin/:$PATH
 ```
 
 Regardless of the OS you are running on, you can check your compiler versions as follows:
@@ -20,7 +21,10 @@ $ g++ --version
 g++ (GCC) 7.3.0
 
 $ nvcc --version
-Cuda compilation tools, release 9.2, V9.2.88
+Cuda compilation tools, release 10.0, V10.0.130
+
+$ cmake --version
+cmake version 3.12.1
 ```
 
 You can check your compiler standard compatibility by scrolling to the `C++14 features` chart [here](https://en.cppreference.com/w/cpp/compiler_support).
@@ -41,24 +45,18 @@ Where to find input
 -------------
 Input from 1k events can be found here:
 
-* minimum bias (for performance checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbias_dump_phi_nPV.tar.gz`
-* Bs->PhiPhi (for efficiency checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi_dump_phi_nPV.tar.gz`
+* minimum bias (for performance checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_minbiastar.gz`
+* Bs->PhiPhi (for efficiency checks): `/afs/cern.ch/work/d/dovombru/public/gpu_input/1kevents_BsPhiPhi.tar.gz`
 
 How to build it
 ---------------
 
-The build process doesn't differ from standard cmake projects, but
-does require at least cmake version 3.12:
+The build process doesn't differ from standard cmake projects:
 
     mkdir build
     cd build
     cmake ..
     make
-
-If CVMFS is available, cmake 3.12.1 can be obtained by setting:
-```shell
-export PATH=/cvmfs/lhcb.cern.ch/lib/contrib/CMake/3.12.1/Linux-x86_64/bin:$PATH
-```
 
 There are some cmake options to configure the build process:
 
@@ -67,8 +65,7 @@ There are some cmake options to configure the build process:
 * If ROOT is available, it can be enabled to generate graphs by `-DUSE_ROOT=ON`
 * If more verbose build output from the CUDA toolchain is desired, specify `-DCUDA_VERBOSE_BUILD=ON`
 * If multiple versions of CUDA are installed and CUDA 10.0 is not the default, it can be specified using: `-DCMAKE_CUDA_COMPILER=/usr/local/cuda-10.0/bin/nvcc`
-The MC validation is standalone, it was written by
-Manuel Schiller, Rainer Schwemmer and Daniel Cámpora.
+* The MC validation is standalone, it was written by Manuel Schiller, Rainer Schwemmer, Daniel Cámpora and Dorothea vom Bruch.
 
 How to run it
 -------------
@@ -82,7 +79,6 @@ A run of the program with no arguments will let you know the basic options:
     --mdf {use MDF files as input instead of binary files}
     -g {folder containing detector configuration}
     -d {folder containing .bin files with MC truth information}
-    -i {folder containing .bin files with PV MC truth information}
     -n {number of events to process}=0 (all)
     -o {offset of events from which to start}=0 (beginning)
     -t {number of threads / streams}=1
@@ -99,7 +95,7 @@ Here are some example run options:
     ./Allen
 
     # Specify input files, run once over all of them with tracking validation
-    ./Allen -f ../input/minbias/banks/ -d ../input/minbias/MC_info/
+    ./Allen -f ../input/minbias/banks/ -d ../input/minbias/MC_info/ -b ../input/minbias/muon_common_hits
 
     # Run a total of 1000 events, round robin over the existing ones, without tracking validation
     ./Allen -c 0 -n 1000

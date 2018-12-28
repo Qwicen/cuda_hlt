@@ -2,10 +2,11 @@
 
 std::tuple<bool, MCEvents> CheckerInvoker::read_mc_folder() const
 {
-  const auto folder_file_list = list_folder(mc_folder);
+  std::string mc_tracks_folder = mc_folder + "/tracks";
+  const auto folder_file_list = list_folder(mc_tracks_folder);
 
   uint requested_files =
-      number_of_events == 0 ? folder_file_list.size() : number_of_events;
+      number_of_requested_events == 0 ? folder_file_list.size() : number_of_requested_events;
   verbose_cout << "Requested " << requested_files << " files" << std::endl;
 
   if (requested_files > folder_file_list.size()) {
@@ -25,7 +26,7 @@ std::tuple<bool, MCEvents> CheckerInvoker::read_mc_folder() const
     std::string readingFile = folder_file_list[i];
 
     std::vector<char> input_contents;
-    readFileIntoVector(mc_folder + "/" + readingFile, input_contents);
+    readFileIntoVector(mc_tracks_folder + "/" + readingFile, input_contents);
     const auto event = MCEvent(input_contents, check_events);
 
     // debug_cout << "At MCEvent " << i << ": " << int(event.mcps.size())

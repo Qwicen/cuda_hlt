@@ -154,9 +154,8 @@ __global__ void scifi_pr_forward(
   int* atomics_scifi_event = dev_atomics_scifi + event_number;
 
   // SciFi hits
-  const uint total_number_of_hits = dev_scifi_hit_count[number_of_events * SciFi::Constants::n_mats];
-  SciFi::HitCount scifi_hit_count;
-  scifi_hit_count.typecast_after_prefix_sum((uint*) dev_scifi_hit_count, event_number, number_of_events);
+  const uint total_number_of_hits = dev_scifi_hit_count[number_of_events * SciFi::Constants::n_mat_groups_and_mats];
+  const SciFi::HitCount scifi_hit_count {(uint32_t*) dev_scifi_hit_count, event_number};
   const SciFi::SciFiGeometry scifi_geometry {dev_scifi_geometry};
   SciFi::Hits scifi_hits(dev_scifi_hits, total_number_of_hits, &scifi_geometry, dev_inv_clus_res);
 

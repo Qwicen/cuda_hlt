@@ -75,9 +75,8 @@ int run_forward_on_CPU (
     int* n_forward_tracks = host_scifi_n_tracks + i_event;
     SciFi::TrackHits* scifi_tracks_event = host_scifi_tracks + i_event * SciFi::Constants::max_tracks;
 
-    const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::Constants::n_mats]; 
-    SciFi::HitCount scifi_hit_count;
-    scifi_hit_count.typecast_after_prefix_sum((uint*)host_scifi_hit_count, i_event, number_of_events);
+    const uint total_number_of_hits = host_scifi_hit_count[number_of_events * SciFi::Constants::n_mat_groups_and_mats]; 
+    SciFi::HitCount scifi_hit_count {(uint32_t*)host_scifi_hit_count, i_event};
     
     const SciFi::SciFiGeometry scifi_geometry(host_scifi_geometry);
     
@@ -89,9 +88,9 @@ int run_forward_on_CPU (
 
 #ifdef WITH_ROOT
     // store hit variables in tree
-    for(size_t mat = 0; mat < SciFi::Constants::n_mats; mat++) {
-      const auto zone_offset = scifi_hit_count.mat_offsets[mat];
-      for(size_t hit = 0; hit < scifi_hit_count.n_hits_mats[mat]; hit++) {
+    for(size_t zone = 0; zone < SciFi::Constants::n_zones; zone++) {
+      const auto zone_offset = scifi_hit_count.zone_offset(zone);
+      for(size_t hit = 0; hit < scifi_hit_count.zone_number_of_hits(zone); hit++) {
         const auto hit_offset = zone_offset + hit;
 
         planeCode = scifi_hits.planeCode(hit_offset);

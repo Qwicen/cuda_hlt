@@ -15,10 +15,10 @@ void SequenceVisitor::visit<copy_and_prefix_sum_single_block_scifi_t>(
 {
   state.set_opts(dim3(1), dim3(1024), cuda_stream);
   state.set_arguments(
-    (uint*) arguments.offset<dev_atomics_scifi>() + runtime_options.number_of_events*2,
+    (uint*) arguments.offset<dev_atomics_scifi>() + host_buffers.host_number_of_selected_events[0]*2,
     (uint*) arguments.offset<dev_atomics_scifi>(),
-    (uint*) arguments.offset<dev_atomics_scifi>() + runtime_options.number_of_events,
-    runtime_options.number_of_events
+    (uint*) arguments.offset<dev_atomics_scifi>() + host_buffers.host_number_of_selected_events[0],
+    host_buffers.host_number_of_selected_events[0]
   );
   
   state.invoke();
@@ -27,7 +27,7 @@ void SequenceVisitor::visit<copy_and_prefix_sum_single_block_scifi_t>(
   cudaCheck(
     cudaMemcpyAsync(
       host_buffers.host_number_of_reconstructed_scifi_tracks,
-      arguments.offset<dev_atomics_scifi>() + runtime_options.number_of_events*2,
+      arguments.offset<dev_atomics_scifi>() + host_buffers.host_number_of_selected_events[0]*2,
       sizeof(uint),
       cudaMemcpyDeviceToHost,
       cuda_stream
@@ -36,4 +36,6 @@ void SequenceVisitor::visit<copy_and_prefix_sum_single_block_scifi_t>(
 
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
+
+  debug_cout << "Total # of SciFi tracks = " << host_buffers.host_number_of_reconstructed_scifi_tracks[0]  << std::endl;
 }

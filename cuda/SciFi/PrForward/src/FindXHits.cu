@@ -39,7 +39,7 @@ __host__ __device__ void collectAllXHits(
   const float pt = sqrtf( fabsf(1.f/ (qOverP*qOverP) ) ) * (slope2) / (1.f + slope2);
   const bool wSignTreatment = SciFi::Tracking::useWrongSignWindow && pt > SciFi::Tracking::wrongSignPT;
 
-  float dxRefWS = 0.0;
+  float dxRefWS = 0.f;
   if( wSignTreatment ){
     // DvB: what happens if we use the actual momentum from VeloUT here instead of a constant?
     dxRefWS = 0.9f * calcDxRef(SciFi::Tracking::wrongSignPT, velo_state); //make windows a bit too small - FIXME check effect of this, seems wrong

@@ -12,26 +12,48 @@
  *          The types referred here are GPU buffers.
  */
 typedef std::tuple<
-  AlgorithmDependencies<velo_estimate_input_size_t, // Algorithm
-    dev_raw_input,                                  // Argument #0
-    dev_raw_input_offsets,                          // Argument #1
-    dev_estimated_input_size,                       // ...
+  AlgorithmDependencies<init_event_list_t, // Algorithm
+    dev_velo_raw_input,                    // Argument #0
+    dev_velo_raw_input_offsets,            // Argument #1
+    dev_ut_raw_input,
+    dev_ut_raw_input_offsets,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_number_of_selected_events,
+    dev_event_list
+  >,  
+  AlgorithmDependencies<global_event_cut_t, 
+    dev_ut_raw_input,
+    dev_ut_raw_input_offsets,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_number_of_selected_events,
+    dev_event_list               
+  >, 
+  AlgorithmDependencies<velo_estimate_input_size_t, 
+    dev_velo_raw_input,                             
+    dev_velo_raw_input_offsets,                     
+    dev_estimated_input_size,                       
     dev_module_cluster_num,
     dev_module_candidate_num,
-    dev_cluster_candidates
-  >,
+    dev_cluster_candidates,
+    dev_event_list,
+    dev_event_order
+  >, 
   AlgorithmDependencies<prefix_sum_velo_clusters_t,
     dev_estimated_input_size,
     dev_cluster_offset
   >,
   AlgorithmDependencies<velo_masked_clustering_t,
-    dev_raw_input,
-    dev_raw_input_offsets,
+    dev_velo_raw_input,
+    dev_velo_raw_input_offsets,
     dev_estimated_input_size,
     dev_module_cluster_num,
     dev_module_candidate_num,
     dev_cluster_candidates,
-    dev_velo_cluster_container
+    dev_velo_cluster_container,
+    dev_event_list,
+    dev_event_order
   >,
   AlgorithmDependencies<velo_calculate_phi_and_sort_t,
     dev_estimated_input_size,
@@ -95,10 +117,10 @@ typedef std::tuple<
     dev_velo_track_hit_number,
     dev_velo_track_hits,
     dev_velo_states,
-    dev_kalmanvelo_states
+    dev_velo_kalman_beamline_states
   >,
   AlgorithmDependencies<pv_get_seeds_t,
-    dev_kalmanvelo_states,
+    dev_velo_kalman_beamline_states,
     dev_atomics_velo,
     dev_velo_track_hit_number,
     dev_seeds,
@@ -109,14 +131,46 @@ typedef std::tuple<
     dev_number_vertex,
     dev_seeds,
     dev_number_seeds,
-    dev_kalmanvelo_states,
+    dev_velo_kalman_beamline_states,
     dev_atomics_velo,
     dev_velo_track_hit_number
+  >,
+  AlgorithmDependencies<cpu_pv_beamline_t,
+    dev_velo_kalman_beamline_states,
+    dev_atomics_velo,
+    dev_velo_track_hit_number
+  >,
+  AlgorithmDependencies<pv_beamline_extrapolate_t,
+    dev_velo_kalman_beamline_states,
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_pvtracks
+  >,
+  AlgorithmDependencies<pv_beamline_histo_t,
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_pvtracks,
+    dev_zhisto
+  >,
+  AlgorithmDependencies<pv_beamline_peak_t,
+    dev_zhisto,
+    dev_zpeaks,
+    dev_number_of_zpeaks
+  >, 
+  AlgorithmDependencies<pv_beamline_multi_fitter_t,
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_pvtracks,
+    dev_zpeaks,
+    dev_number_of_zpeaks,
+    dev_multi_fit_vertices,
+    dev_number_of_multi_fit_vertices
   >,
   AlgorithmDependencies<ut_calculate_number_of_hits_t,
     dev_ut_raw_input,
     dev_ut_raw_input_offsets,
-    dev_ut_hit_offsets
+    dev_ut_hit_offsets,
+    dev_event_list
   >,
   AlgorithmDependencies<prefix_sum_ut_hits_t,
     dev_ut_hit_offsets,
@@ -127,7 +181,8 @@ typedef std::tuple<
     dev_ut_raw_input_offsets,
     dev_ut_hits,
     dev_ut_hit_offsets,
-    dev_ut_hit_count
+    dev_ut_hit_count,
+    dev_event_list
   >,
   AlgorithmDependencies<ut_find_permutation_t,
     dev_ut_hits,
@@ -140,7 +195,8 @@ typedef std::tuple<
     dev_ut_hits,
     dev_ut_hit_offsets,
     dev_ut_hit_count,
-    dev_ut_hit_permutations
+    dev_ut_hit_permutations,
+    dev_event_list
   >,
   AlgorithmDependencies<veloUT_t,
     dev_ut_hits,
@@ -198,7 +254,8 @@ typedef std::tuple<
   AlgorithmDependencies<scifi_calculate_cluster_count_t,
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,
-    dev_scifi_hit_count
+    dev_scifi_hit_count,
+    dev_event_list
   >,
   AlgorithmDependencies<prefix_sum_scifi_hits_t,
     dev_scifi_hit_count,
@@ -208,13 +265,42 @@ typedef std::tuple<
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,
     dev_scifi_hit_count,
-    dev_scifi_hits
+    dev_scifi_hits,
+    dev_event_list
   >,
   AlgorithmDependencies<scifi_raw_bank_decoder_t,
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,
     dev_scifi_hit_count,
-    dev_scifi_hits
+    dev_scifi_hits,
+    dev_event_list
+  >,
+  AlgorithmDependencies<scifi_calculate_cluster_count_v4_t,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_scifi_hit_count,
+    dev_event_list
+  >,
+  AlgorithmDependencies<scifi_direct_decoder_v4_t,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_scifi_hit_count,
+    dev_scifi_hits,
+    dev_event_list
+  >,
+  AlgorithmDependencies<scifi_pre_decode_v4_t,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_scifi_hit_count,
+    dev_scifi_hits,
+    dev_event_list
+  >,
+  AlgorithmDependencies<scifi_raw_bank_decoder_v4_t,
+    dev_scifi_raw_input,
+    dev_scifi_raw_input_offsets,
+    dev_scifi_hit_count,
+    dev_scifi_hits,
+    dev_event_list
   >,
   AlgorithmDependencies<scifi_pr_forward_t,
     dev_scifi_hits,
@@ -301,6 +387,8 @@ typedef std::tuple<
   dev_scifi_track_hits,
   dev_scifi_track_hit_number,
   dev_scifi_qop,
-  //dev_scifi_states,
-  dev_scifi_track_ut_indices
+  dev_scifi_states,
+  dev_scifi_track_ut_indices,
+  dev_event_list,
+  dev_number_of_selected_events
 > output_arguments_t;

@@ -17,6 +17,7 @@ __device__ void make_cluster (
 __global__ void scifi_raw_bank_decoder(
   char *scifi_events,
   uint *scifi_event_offsets,
+  const uint *event_list,
   uint *scifi_hit_count,
   uint *scifi_hits,
   char *scifi_geometry,

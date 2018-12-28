@@ -3,6 +3,7 @@
 __global__ void ut_decode_raw_banks_in_order(
   const char *dev_ut_raw_input,
   const uint32_t *dev_ut_raw_input_offsets,
+  const uint *dev_event_list,
   const char *ut_boards, const char *ut_geometry,
   const uint *dev_ut_region_offsets,
   const uint *dev_unique_x_sector_layer_offsets,
@@ -14,8 +15,10 @@ __global__ void ut_decode_raw_banks_in_order(
 {
   const uint32_t number_of_events = gridDim.x;
   const uint32_t event_number = blockIdx.x;
+  const uint selected_event_number = dev_event_list[event_number];
+
   const uint layer_number = blockIdx.y;
-  const uint32_t event_offset = dev_ut_raw_input_offsets[event_number];
+  const uint32_t event_offset = dev_ut_raw_input_offsets[selected_event_number];
 
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[UT::Constants::n_layers];
 
