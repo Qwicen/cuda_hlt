@@ -75,13 +75,13 @@ void Initialise() {
 
     // Scifi Hit Number
     std::vector<uint> host_scifi_track_hit_number;
-    host_scifi_track_hit_number.push_back(-42);
+    host_scifi_track_hit_number.push_back(42);
     cudaMalloc(&dev_scifi_track_hit_number, host_scifi_track_hit_number.size() * sizeof(uint));
     cudaMemcpyAsync(dev_scifi_track_hit_number, host_scifi_track_hit_number.data(), host_scifi_track_hit_number.size() * sizeof(uint), cudaMemcpyHostToDevice);
 
     // Scifi track ut indices
     std::vector<uint> host_scifi_track_ut_indices;
-    host_scifi_track_ut_indices.push_back(-42);
+    host_scifi_track_ut_indices.push_back(42);
     cudaMalloc(&dev_scifi_track_ut_indices, host_scifi_track_ut_indices.size() * sizeof(uint));
     cudaMemcpyAsync(dev_scifi_track_ut_indices, host_scifi_track_ut_indices.data(), host_scifi_track_ut_indices.size() * sizeof(uint), cudaMemcpyHostToDevice);
 }
