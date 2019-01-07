@@ -51,8 +51,14 @@ void SequenceVisitor::visit<is_muon_t>(
     constants.dev_muon_momentum_cuts
   );
 
-  debug_cout << "Calling is_muon kernel" << std::endl;
-
   // Kernel call
   state.invoke();
+
+  cudaCheck(cudaMemcpyAsync(
+    host_buffers.host_is_muon,
+    arguments.offset<dev_is_muon>(),
+    arguments.size<dev_is_muon>(),
+    cudaMemcpyDeviceToHost,
+    cuda_stream
+  ));
 }

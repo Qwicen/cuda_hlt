@@ -31,6 +31,8 @@ void SequenceVisitor::check<consolidate_scifi_tracks_t>(
     host_buffers.host_scifi_states,
     constants.host_scifi_geometry,
     constants.host_inv_clus_res,
+    host_buffers.host_muon_catboost_output,
+    host_buffers.host_is_muon,
     host_buffers.host_number_of_selected_events[0]);
 
   checker_invoker.check<TrackCheckerForward>(start_event_offset, tracks);

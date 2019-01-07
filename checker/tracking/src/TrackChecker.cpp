@@ -63,6 +63,10 @@ TrackChecker::~TrackChecker()
     histo.second->Write();
   histos.h_ghost_nPV->Write();
   histos.h_total_nPV->Write();
+  histos.h_muon_catboost_output_matched_muon->Write();
+  histos.h_muon_catboost_output_matched_notMuon->Write();
+  histos.h_is_muon_matched_muon->Write();
+  histos.h_is_muon_matched_notMuon->Write();
 
   f->Write();
   f->Close();
@@ -180,6 +184,12 @@ void TrackChecker::Histos::initHistos(const std::vector<HistoCategory>& histo_ca
   // histo for momentum resolution
   h_momentum_resolution = new TH2D("dp_vs_p", "dp vs. p", 10, 0, 100000., 1000, -5., 5.);
   h_momentum_matched = new TH1D("p_matched", "p, matched", 100, 0, 100000.);
+
+  // histo for muon ID
+  h_muon_catboost_output_matched_muon = new TH1D("muon_catboost_output_matched_muon", "muon_catboost_output_matched_muon", 200, -5., 5.);
+  h_muon_catboost_output_matched_notMuon = new TH1D("muon_catboost_output_matched_notMuon", "muon_catboost_output_matched_notMuon", 200, -5., 5.);
+  h_is_muon_matched_muon = new TH1D("is_muon_matched_muon", "is_muon_matched_muon", 2, -0.5, 1.5);
+  h_is_muon_matched_notMuon = new TH1D("is_muon_matched_notMuon", "is_muon_catboost_matched_notMuon", 2, -0.5, 1.5);
 #endif
 }
 
@@ -213,6 +223,10 @@ void TrackChecker::Histos::deleteHistos(const std::vector<HistoCategory>& histo_
   delete h_total_nPV;
   delete h_momentum_resolution;
   delete h_momentum_matched;
+  delete h_muon_catboost_output_matched_muon;
+  delete h_muon_catboost_output_matched_notMuon;
+  delete h_is_muon_matched_muon;
+  delete h_is_muon_matched_notMuon;
 #endif
 }
 
@@ -278,6 +292,18 @@ void TrackChecker::Histos::fillMomentumResolutionHisto(const MCParticle& mcp, co
 #endif
 }
 
+void TrackChecker::Histos::fillMuonIDMatchedHistos(const trackChecker::Track &track, const MCParticle &mcp) {
+#ifdef WITH_ROOT
+  if ( std::abs(mcp.pid) == 13 ){
+    h_muon_catboost_output_matched_muon->Fill(track.muon_catboost_output);
+    h_is_muon_matched_muon->Fill(track.is_muon);
+  } else {
+    h_muon_catboost_output_matched_notMuon->Fill(track.muon_catboost_output);
+    h_is_muon_matched_notMuon->Fill(track.is_muon);
+  }
+#endif
+}
+
 void TrackChecker::operator()(const trackChecker::Tracks& tracks, const MCAssociator& mcassoc, const MCParticles& mcps)
 {
   // register MC particles
@@ -320,6 +346,8 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks, const MCAssoci
     }
     // fill histogram of momentum resolution
     histos.fillMomentumResolutionHisto(mcp, track.p);
+    // fill muon ID histograms
+    histos.fillMuonIDMatchedHistos(track, mcp);
   }
   // almost done, notify of end of event...
   ++m_nevents;
