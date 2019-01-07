@@ -55,6 +55,7 @@ TrackChecker::~TrackChecker() {
     histo.second->Write();
   histos.h_ghost_nPV->Write();
   histos.h_total_nPV->Write();
+  histos.h_muon_catboost_output->Write();
 
   f->Write();
   f->Close();
@@ -175,6 +176,9 @@ void TrackChecker::Histos::initHistos(
   // histos for ghost rate
   h_ghost_nPV = new TH1D("nPV_Ghosts", "nPV_Ghosts", 21, -0.5, 20.5);
   h_total_nPV = new TH1D("nPV_Total", "nPV_Total", 21, -0.5, 20.5); 
+
+  // histo for muon ID
+  h_muon_catboost_output = new TH1D("muon_catboost_output", "muon_catboost_output", 200, -5., 5.); 
 #endif
 }
 
@@ -205,6 +209,7 @@ void TrackChecker::Histos::deleteHistos(const std::vector<HistoCategory>& histo_
   }
    delete h_ghost_nPV;
    delete h_total_nPV;
+   delete h_muon_catboost_output;
 #endif
 }
 
@@ -262,6 +267,12 @@ void TrackChecker::Histos::fillGhostHistos(const MCParticle &mcp) {
 #endif
 }
 
+void TrackChecker::Histos::fillMuonIDHistos(const trackChecker::Track &track) {
+#ifdef WITH_ROOT
+  h_muon_catboost_output->Fill(track.muon_catboost_output);
+#endif
+}
+
 void TrackChecker::operator()(const trackChecker::Tracks &tracks,
                               const MCAssociator &mcassoc,
                               const MCParticles &mcps) {
@@ -278,6 +289,7 @@ void TrackChecker::operator()(const trackChecker::Tracks &tracks,
   std::size_t nghostsperevt = 0;
   for (auto track : tracks) {
     histos.fillTotalHistos(mcps[0]);
+    histos.fillMuonIDHistos(track);
     // check LHCbIDs for MC association
     const auto &ids = track.ids();
     const auto assoc = mcassoc(ids.begin(), ids.end(), track.n_matched_total);

@@ -23,6 +23,7 @@ namespace trackChecker {
   public:
     SomeLHCbIDs  allids;
     std::size_t n_matched_total = 0;
+    float muon_catboost_output;
         
     void addId ( LHCbID id ) {
       allids.push_back(id);

@@ -110,6 +110,7 @@ protected:
 
     TH1D* h_ghost_nPV;
     TH1D* h_total_nPV;
+    TH1D* h_muon_catboost_output;
 #endif
     void initHistos(const std::vector<HistoCategory>& histo_categories);
     void fillReconstructibleHistos(const MCParticles &mcps,
@@ -118,6 +119,7 @@ protected:
                                  HistoCategory &category);
     void fillTotalHistos(const MCParticle &mcp);
     void fillGhostHistos(const MCParticle &mcp);
+    void fillMuonIDHistos(const trackChecker::Track &track);
     void deleteHistos(const std::vector<HistoCategory>& histo_categories);
   };
  
