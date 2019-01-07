@@ -56,6 +56,8 @@ TrackChecker::~TrackChecker() {
   histos.h_ghost_nPV->Write();
   histos.h_total_nPV->Write();
   histos.h_muon_catboost_output->Write();
+  histos.h_muon_catboost_output_matched_muon->Write();
+  histos.h_muon_catboost_output_matched_notMuon->Write();
 
   f->Write();
   f->Close();
@@ -179,6 +181,8 @@ void TrackChecker::Histos::initHistos(
 
   // histo for muon ID
   h_muon_catboost_output = new TH1D("muon_catboost_output", "muon_catboost_output", 200, -5., 5.); 
+  h_muon_catboost_output_matched_muon = new TH1D("muon_catboost_output_matched_muon", "muon_catboost_output_matched_muon", 200, -5., 5.);
+  h_muon_catboost_output_matched_notMuon = new TH1D("muon_catboost_output_matched_notMuon", "muon_catboost_output_matched_notMuon", 200, -5., 5.);
 #endif
 }
 
@@ -210,6 +214,8 @@ void TrackChecker::Histos::deleteHistos(const std::vector<HistoCategory>& histo_
    delete h_ghost_nPV;
    delete h_total_nPV;
    delete h_muon_catboost_output;
+   delete h_muon_catboost_output_matched_muon;
+   delete h_muon_catboost_output_matched_notMuon;
 #endif
 }
 
@@ -273,6 +279,17 @@ void TrackChecker::Histos::fillMuonIDHistos(const trackChecker::Track &track) {
 #endif
 }
 
+void TrackChecker::Histos::fillMuonIDMatchedHistos(const trackChecker::Track &track, const MCParticle &mcp) {
+#ifdef WITH_ROOT
+  if ( std::abs(mcp.pid) == 13 ){
+    h_muon_catboost_output_matched_muon->Fill(track.muon_catboost_output);
+  } else {
+    h_muon_catboost_output_matched_notMuon->Fill(track.muon_catboost_output);
+  }
+#endif
+}
+
+
 void TrackChecker::operator()(const trackChecker::Tracks &tracks,
                               const MCAssociator &mcassoc,
                               const MCParticles &mcps) {
@@ -315,6 +332,8 @@ void TrackChecker::operator()(const trackChecker::Tracks &tracks,
     for (auto &histo_cat : m_histo_categories) {
       histos.fillReconstructedHistos(mcp, histo_cat);
     }
+    // fill muon ID histograms
+    histos.fillMuonIDMatchedHistos(track, mcp);
   }
   // almost done, notify of end of event...
   ++m_nevents;
