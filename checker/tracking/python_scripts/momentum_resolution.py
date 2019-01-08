@@ -36,9 +36,11 @@ for tracker in trackers :
     trackerDir = outputfile.mkdir(tracker)
     trackerDir.cd()
     
-    # get histogram
+    # get histograms
     name = tracker + "/dp_vs_p"
     histo2D = f.Get(name)
+    name = tracker + "/p_matched"
+    histoP = f.Get(name)
 
     # fit slices in p
     n = 0
@@ -73,8 +75,10 @@ for tracker in trackers :
 
     name = "dp_vs_p_gauss"
     title = "dp vs p, Gaussian fit"
-    canvas = ROOT.TCanvas(name, title)    
+    canvas = ROOT.TCanvas(name, title) 
+    canvas.cd()
     gr = TGraphErrors( n, xFit, yFit, xFitErr, yFitErr )
+    #histoP.Draw()
     gr.Draw("ap")
 
     name = tracker + "/momentum_resolution_vs_p"
@@ -82,6 +86,7 @@ for tracker in trackers :
     gr.GetYaxis().SetTitle("#sigma_{p}/p")
     gr.SetTitle("")
     gr.SetName(name)
+    
     gr.Write()
     canvas.Write()
 

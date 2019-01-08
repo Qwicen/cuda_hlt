@@ -112,6 +112,7 @@ protected:
     TH1D* h_ghost_nPV;
     TH1D* h_total_nPV;
     TH2D* h_momentum_resolution;
+    TH1D* h_momentum_matched;
 #endif
     void initHistos(const std::vector<HistoCategory>& histo_categories);
     void fillReconstructibleHistos(const MCParticles &mcps,

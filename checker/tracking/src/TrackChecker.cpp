@@ -37,6 +37,7 @@ TrackChecker::~TrackChecker() {
   TDirectory *trackerDir = f->mkdir(dirName.c_str());
   trackerDir->cd();
   histos.h_momentum_resolution->Write();
+  histos.h_momentum_matched->Write();
   for (auto histo : histos.h_reconstructible_eta)
     histo.second->Write();
   for (auto histo : histos.h_reconstructible_p)
@@ -181,7 +182,7 @@ void TrackChecker::Histos::initHistos(const std::vector<HistoCategory>& histo_ca
 
   // histo for momentum resolution
   h_momentum_resolution = new TH2D("dp_vs_p", "dp vs. p", 10, 0, 100000., 1000, -5., 5.);
-  
+  h_momentum_matched = new TH1D("p_matched", "p, matched", 100, 0, 100000.);
 #endif
 }
 
@@ -213,6 +214,7 @@ void TrackChecker::Histos::deleteHistos(const std::vector<HistoCategory>& histo_
    delete h_ghost_nPV;
    delete h_total_nPV;
    delete h_momentum_resolution;
+   delete h_momentum_matched;
 #endif
 }
 
@@ -273,6 +275,7 @@ void TrackChecker::Histos::fillGhostHistos(const MCParticle &mcp) {
 void TrackChecker::Histos::fillMomentumResolutionHisto(const MCParticle &mcp, const float p) {
 #ifdef WITH_ROOT
   h_momentum_resolution->Fill(mcp.p, (mcp.p - p) / mcp.p);
+  h_momentum_matched->Fill(mcp.p);
 #endif
 }
 
