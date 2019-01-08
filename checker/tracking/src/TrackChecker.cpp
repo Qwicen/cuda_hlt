@@ -36,6 +36,7 @@ TrackChecker::~TrackChecker() {
     dirName = "Upstream";
   TDirectory *trackerDir = f->mkdir(dirName.c_str());
   trackerDir->cd();
+  histos.h_momentum_resolution->Write();
   for (auto histo : histos.h_reconstructible_eta)
     histo.second->Write();
   for (auto histo : histos.h_reconstructible_p)
@@ -58,8 +59,7 @@ TrackChecker::~TrackChecker() {
     histo.second->Write();
   histos.h_ghost_nPV->Write();
   histos.h_total_nPV->Write();
-  histos.h_momentum_resolution->Write();
-
+  
   f->Write();
   f->Close();
 
@@ -180,7 +180,7 @@ void TrackChecker::Histos::initHistos(const std::vector<HistoCategory>& histo_ca
   h_total_nPV = new TH1D("nPV_Total", "nPV_Total", 21, -0.5, 20.5); 
 
   // histo for momentum resolution
-  h_momentum_resolution = new TH2D("dp_vs_p", "dp vs. p", 10, 0, 100000., 10, -10000., 10000.);
+  h_momentum_resolution = new TH2D("dp_vs_p", "dp vs. p", 10, 0, 100000., 1000, -5., 5.);
   
 #endif
 }
@@ -272,7 +272,7 @@ void TrackChecker::Histos::fillGhostHistos(const MCParticle &mcp) {
 
 void TrackChecker::Histos::fillMomentumResolutionHisto(const MCParticle &mcp, const float p) {
 #ifdef WITH_ROOT
-  h_momentum_resolution->Fill(mcp.p, mcp.p - p);
+  h_momentum_resolution->Fill(mcp.p, (mcp.p - p) / mcp.p);
 #endif
 }
 
