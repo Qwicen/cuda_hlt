@@ -70,7 +70,6 @@ struct Stream {
 
   void run_monte_carlo_test(
     const std::string& mc_folder,
-    const std::string& mc_pv_folder,
     const uint number_of_events_requested
   );
 

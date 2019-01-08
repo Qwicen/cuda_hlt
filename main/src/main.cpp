@@ -41,7 +41,6 @@ void printUsage(char* argv[]){
     << std::endl << " --mdf {use MDF files as input instead of binary files}"
     << std::endl << " -g {folder containing detector configuration}"
     << std::endl << " -d {folder containing .bin files with MC truth information}"
-    << std::endl << " -i {folder containing .bin files with PV MC truth information}"
     << std::endl << " -n {number of events to process}=0 (all)"
     << std::endl << " -o {offset of events from which to start}=0 (beginning)"
     << std::endl << " -t {number of threads / streams}=1"
@@ -59,7 +58,6 @@ int main(int argc, char *argv[])
   std::string folder_name_raw = "../input/minbias/banks/";
   std::string folder_name_MC = "../input/minbias/MC_info/";
   std::string folder_name_detector_configuration = "../input/detector_configuration/";
-  std::string folder_name_pv = "../input/minbias/true_pvs/";
   std::string folder_name_muon_common_hits = "../input/minbias/muon_common_hits/";
   std::string file_name_muon_catboost_model = "../input/muon/muon_catboost_model.json";
   uint number_of_events_requested = 0;
@@ -108,9 +106,6 @@ int main(int argc, char *argv[])
     case 'd':
       folder_name_MC = std::string(optarg);
       break;
-    case 'i':
-      folder_name_pv = std::string(optarg);
-      break;
     case 'g':
       folder_name_detector_configuration = std::string(optarg);
       break;
@@ -154,7 +149,6 @@ int main(int argc, char *argv[])
     else if (folder_name_muon_common_hits.empty()) missing_folder = "Muon common hits";
     else if (folder_name_detector_configuration.empty()) missing_folder = "detector geometry";
     else if (folder_name_MC.empty() && do_check) missing_folder = "Monte Carlo";
-    else if (folder_name_pv.empty() && do_check) missing_folder = "PV Monte Carlo truth";
 
     error_cout << "No folder for " << missing_folder << " specified" << std::endl;
     printUsage(argv);
@@ -186,7 +180,6 @@ int main(int argc, char *argv[])
     << " using " << (use_mdf ? "MDF" : "binary") << " input" << (use_mdf ? " (--mdf)" : "") << std::endl
     << " folder with detector configuration (-g): " << folder_name_detector_configuration << std::endl
     << " folder with MC truth input (-d): " << folder_name_MC << std::endl
-    << " folder with PV truth input (-i): " << folder_name_pv << std::endl
     << " run checkers (-c): " << do_check << std::endl
     << " number of files (-n): " << number_of_events_requested << std::endl
     << " start event offset (-o): " << start_event_offset << std::endl
@@ -335,7 +328,7 @@ int main(int argc, char *argv[])
 
   // Do optional Monte Carlo truth test on stream 0
   if (do_check) {
-    stream_wrapper.run_monte_carlo_test(0, folder_name_MC, folder_name_pv, number_of_events_requested);
+    stream_wrapper.run_monte_carlo_test(0, folder_name_MC, number_of_events_requested);
   }
 
   std::cout << (number_of_events_requested * number_of_threads * number_of_repetitions / t.get()) << " events/s" << std::endl
