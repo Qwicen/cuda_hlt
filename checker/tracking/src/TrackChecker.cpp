@@ -180,7 +180,7 @@ void TrackChecker::Histos::initHistos(const std::vector<HistoCategory>& histo_ca
   h_total_nPV = new TH1D("nPV_Total", "nPV_Total", 21, -0.5, 20.5); 
 
   // histo for momentum resolution
-  h_momentum_resolution = new TH2D("dp_vs_p", "dp vs. p", 100, 0, 100000., 100, -10000., 10000.);
+  h_momentum_resolution = new TH2D("dp_vs_p", "dp vs. p", 10, 0, 100000., 10, -10000., 10000.);
   
 #endif
 }
