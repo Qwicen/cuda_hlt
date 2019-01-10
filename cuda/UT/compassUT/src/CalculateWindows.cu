@@ -165,7 +165,7 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
 
     // Right group
     const int right_group = sector_group + 1;
-    if (right_group < last_sector_group_in_layer) {
+    if (right_group < last_sector_group_in_layer - 1) {
       // We found a sector group with potentially compatible hits
       // Look for them
       const auto right_group_candidates = find_candidates_in_sector_group(
