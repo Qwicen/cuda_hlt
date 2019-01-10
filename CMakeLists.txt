@@ -32,7 +32,7 @@ if (CUDA_ARCH STREQUAL "MIN" OR CUDA_ARCH STREQUAL "MAX" OR CUDA_ARCH STREQUAL "
   set(OUTPUTFILE ${PROJECT_BINARY_DIR}/cuda_arch) # No suffix required
   set(CUDAFILE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/utils/cuda_arch.cu)
   execute_process(COMMAND ${CMAKE_CUDA_COMPILER} -lcuda ${CUDAFILE} -o ${OUTPUTFILE})
-  if(CUDA_ARCH EQUAL "MAX")
+  if(CUDA_ARCH STREQUAL "MAX")
     set(CHECK_ARGS "-l")
   endif()
   message(STATUS "Detecting ${CUDA_ARCH} CUDA architecture")
