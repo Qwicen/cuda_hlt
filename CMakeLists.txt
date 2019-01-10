@@ -43,7 +43,7 @@ if (CUDA_ARCH STREQUAL "MIN" OR CUDA_ARCH STREQUAL "MAX" OR CUDA_ARCH STREQUAL "
   if(${CUDA_RETURN_CODE} EQUAL 1)
     message(FATAL_ERROR "${CUDA_ARCH}")
   else()
-    if (CUDA_ARCH EQUAL "MIN")
+    if (CUDA_ARCH STREQUAL "MIN")
       message(STATUS "Detecting ${CUDA_ARCH} CUDA architecture - sm_30")
       set(ARCH_FLAG "-arch=sm_30")
     else()
