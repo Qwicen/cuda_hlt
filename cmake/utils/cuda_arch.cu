@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
 
   for (int cd = 0; cd < n_devices; ++cd) {
     cudaDeviceProp dev;
-    int rc = cudaGetDeviceProperties(&dev, 0);
+    int rc = cudaGetDeviceProperties(&dev, cd);
     if(rc != cudaSuccess) {
       cudaError_t error = cudaGetLastError();
       std::cout << "CUDA error: " << cudaGetErrorString(error) << std::endl;
