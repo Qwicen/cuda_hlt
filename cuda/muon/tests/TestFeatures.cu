@@ -272,3 +272,212 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
     }
     DevFreeMemory();
 }
+
+SCENARIO( "Check closest hit works in general case" ) {
+
+    DevAllocateMemory();
+
+    GIVEN( 
+        "Grid of hits\n" 
+        "There is 9 hits on each station with coordinates x,y: \n"
+		"\t (-1, 1) - ( 0, 1) - ( 1, 1) \n"
+		"\t (-1, 0) - ( 0, 0) - ( 1, 0) \n"
+        "\t (-1,-1) - ( 0,-1) - ( 1,-1) \n"
+        "z = i_station + 1 \n"
+        "Hits indices on first station: \n"
+        "\t 6	-    7	  -    8 \n"
+        "\t 3	-    4	  -    5 \n"
+        "\t 0	-    1	  -    2 \n"
+        "and so on \n"
+        "dx = index, dy = 2 * index, dz = 0 \n"
+    ) {
+
+        std::vector<Muon::HitsSoA> muon_hits_events;
+        Muon::HitsSoA muon_hits = ConstructMockMuonHit();
+
+        // One event
+        muon_hits_events.push_back(muon_hits);
+        
+        Muon::HitsSoA *dev_muon_hits;
+        cudaMalloc(&dev_muon_hits, muon_hits_events.size() * sizeof(Muon::HitsSoA));
+        cudaMemcpy(dev_muon_hits, muon_hits_events.data(), muon_hits_events.size() * sizeof(Muon::HitsSoA), cudaMemcpyHostToDevice);
+
+        const float c = 0.23850119787527452 * 5.552176750308537;
+        const float INVSQRT3 = 0.5773502691896258;
+        float *host_features = (float*)malloc(1 * n_features * sizeof(float));
+
+        WHEN( "Track inside grid of hits (x=-2.7, y=-2.7, dx=1, dy=1, z=0)" ) {
+
+            // Track initialization
+            MiniState track = MiniState(-2.7, -2.7, 1, 1, 0);
+            cudaMemcpy(dev_track, &track, 1 * sizeof(MiniState), cudaMemcpyHostToDevice);
+
+            muon_catboost_features_extraction<<<dim3(1, 4), 1>>>(
+                dev_atomics_scifi,
+                dev_scifi_track_hit_number,
+                dev_qop,
+                dev_track,
+                dev_scifi_track_ut_indices,
+                dev_muon_hits,
+                dev_features
+            );
+
+            cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
+
+            THEN(
+                "Extrapolation of track: \n"
+                "\t station 1 - (-1.7,-1.7) \n"
+                "\t station 2 - (-0.7,-0.7) \n"
+                "\t station 3 - ( 0.3, 0.3) \n"
+                "\t station 4 - ( 1.3, 1.3) \n"
+                "Closest hits: \n"
+                "\t station 1 - (-1,-1), index = 0 \n"
+                "\t station 2 - (-1,-1), index = 9 \n"
+                "\t station 3 - ( 0, 0), index = 22 \n"
+                "\t station 4 - ( 1, 1), index = 35 \n"
+                "Traveled distance: \n"
+                "\t station 1 - sqrt(3) \n"
+                "\t station 2 - sqrt(12) \n"
+                "\t station 3 - sqrt(27) \n"
+                "\t station 4 - sqrt(48) \n"
+            ) {
+                const std::vector<int> closest_hits = {0, 9, 22, 35};
+                const std::vector<float> extrapolation_x = {-1.7, -0.7, 0.3, 1.3};
+                const std::vector<float> extrapolation_y = {-1.7, -0.7, 0.3, 1.3};
+                const std::vector<float> trav_dist = {sqrt(3.0f), sqrt(12.0f), sqrt(27.0f), sqrt(48.0f)};
+                for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
+                    const int closest_idx = closest_hits[i_station];
+                    const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
+                    CHECK(host_features[offset::DTS + i_station] == muon_hits_events[0].delta_time[closest_idx]);
+                    CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
+                    CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
+                    CHECK_THAT(
+                        host_features[offset::RES_X + i_station], WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
+                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.005)
+                    );
+                    CHECK_THAT(
+                        host_features[offset::RES_Y + i_station], WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
+                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.005)
+                    );
+                }
+            }
+        }
+
+        WHEN( "Track inside grid of hits (x=-2.2, y=2.1, dx=1, dy=0.5, z=0)" ) {
+
+            // Track initialization
+            MiniState track = MiniState(-2.2, 2.1, 1, 0.5, 0);
+            cudaMemcpy(dev_track, &track, 1 * sizeof(MiniState), cudaMemcpyHostToDevice);
+
+            muon_catboost_features_extraction<<<dim3(1, 4), 1>>>(
+                dev_atomics_scifi,
+                dev_scifi_track_hit_number,
+                dev_qop,
+                dev_track,
+                dev_scifi_track_ut_indices,
+                dev_muon_hits,
+                dev_features
+            );
+
+            cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
+
+            THEN(
+                "Extrapolation of track: \n"
+                "\t station 1 - (-1.2, 1.6) \n"
+                "\t station 2 - (-0.2, 1.1) \n"
+                "\t station 3 - ( 0.8, 0.6) \n"
+                "\t station 4 - ( 1.8, 0.1) \n"
+                "Closest hits: \n"
+                "\t station 1 - (-1,-1), index = 6 \n"
+                "\t station 2 - ( 0, 1), index = 16 \n"
+                "\t station 3 - ( 1, 1), index = 26 \n"
+                "\t station 4 - ( 1, 0), index = 32 \n"
+                "Traveled distance: \n"
+                "\t station 1 - 1.5 \n"
+                "\t station 2 - 3 \n"
+                "\t station 3 - sqrt(20.25) \n"
+                "\t station 4 - 6 \n"
+            ) {
+                const std::vector<int> closest_hits = {6, 16, 26, 32};
+                const std::vector<float> extrapolation_x = {-1.2, -0.2, 0.8, 1.8};
+                const std::vector<float> extrapolation_y = { 1.6,  1.1, 0.6, 0.1};
+                const std::vector<float> trav_dist = {1.5, 3, sqrt(20.25f), 6};
+                for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
+                    const int closest_idx = closest_hits[i_station];
+                    const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
+                    CHECK(host_features[offset::DTS + i_station] == muon_hits_events[0].delta_time[closest_idx]);
+                    CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
+                    CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
+                    CHECK_THAT(
+                        host_features[offset::RES_X + i_station], WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
+                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.005)
+                    );
+                    CHECK_THAT(
+                        host_features[offset::RES_Y + i_station], WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
+                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.005)
+                    );
+                }
+            }
+        }
+
+        WHEN( "Track is far away from hits (x=999, y=-2.7, dx=1, dy=1, z=0)" ) {
+
+            // Track initialization
+            MiniState track = MiniState(999, -2.7, 1, 1, 0);
+            cudaMemcpy(dev_track, &track, 1 * sizeof(MiniState), cudaMemcpyHostToDevice);
+
+            muon_catboost_features_extraction<<<dim3(1, 4), 1>>>(
+                dev_atomics_scifi,
+                dev_scifi_track_hit_number,
+                dev_qop,
+                dev_track,
+                dev_scifi_track_ut_indices,
+                dev_muon_hits,
+                dev_features
+            );
+
+            cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
+
+            THEN(
+                "Extrapolation of track: \n"
+                "\t station 1 - (1000,-1.7) \n"
+                "\t station 2 - (1001,-0.7) \n"
+                "\t station 3 - (1002, 0.3) \n"
+                "\t station 4 - (1003, 1.3) \n"
+                "Closest hits: \n"
+                "\t station 1 - ( 1,-1), index = 2 \n"
+                "\t station 2 - ( 1,-1), index = 11 \n"
+                "\t station 3 - ( 1, 0), index = 23 \n"
+                "\t station 4 - ( 1, 1), index = 35 \n"
+                "Traveled distance: \n"
+                "\t station 1 - sqrt(3) \n"
+                "\t station 2 - sqrt(12) \n"
+                "\t station 3 - sqrt(27) \n"
+                "\t station 4 - sqrt(48) \n"
+            ) {
+                const std::vector<int> closest_hits = {2, 11, 23, 35};
+                const std::vector<float> extrapolation_x = {1000, 1001, 1002, 1003};
+                const std::vector<float> extrapolation_y = {-1.7, -0.7, 0.3, 1.3};
+                const std::vector<float> trav_dist = {sqrt(3.0f), sqrt(12.0f), sqrt(27.0f), sqrt(48.0f)};
+                for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
+                    const int closest_idx = closest_hits[i_station];
+                    const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
+                    CHECK(host_features[offset::DTS + i_station] == muon_hits_events[0].delta_time[closest_idx]);
+                    CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
+                    CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
+                    CHECK_THAT(
+                        host_features[offset::RES_X + i_station], WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
+                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.005)
+                    );
+                    CHECK_THAT(
+                        host_features[offset::RES_Y + i_station], WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
+                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.005)
+                    );
+                }
+            }
+        }
+        free(host_features);
+        cudaFree(dev_muon_hits);
+    }
+    DevFreeMemory();
+}
