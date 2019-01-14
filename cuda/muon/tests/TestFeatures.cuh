@@ -1,7 +1,45 @@
-#include<iterator>
+#include <iterator>
 #include <vector>
 #include "MuonDefinitions.cuh"
 #include "MuonFeaturesExtraction.cuh"
+
+float *dev_features;
+float *dev_qop;
+int *dev_atomics_scifi;
+uint *dev_scifi_track_hit_number;
+uint *dev_scifi_track_ut_indices;
+MiniState *dev_track;
+const int n_features = 20;
+
+void DevAllocateMemory() {
+    cudaMalloc(&dev_track, 1 * sizeof(MiniState));
+    cudaMalloc(&dev_features, 1 * n_features * sizeof(float));
+
+    std::vector<float> host_qop = {1};
+    cudaMalloc(&dev_qop, host_qop.size() * sizeof(float));
+    cudaMemcpy(dev_qop, host_qop.data(), host_qop.size() * sizeof(float), cudaMemcpyHostToDevice);
+
+    std::vector<int> host_atomics_scifi = {1};
+    cudaMalloc((void**)&dev_atomics_scifi, host_atomics_scifi.size() * sizeof(int));
+    cudaMemcpy(dev_atomics_scifi, host_atomics_scifi.data(), host_atomics_scifi.size() * sizeof(int), cudaMemcpyHostToDevice);
+
+    std::vector<uint> host_scifi_track_hit_number = {0};
+    cudaMalloc(&dev_scifi_track_hit_number, host_scifi_track_hit_number.size() * sizeof(uint));
+    cudaMemcpy(dev_scifi_track_hit_number, host_scifi_track_hit_number.data(), host_scifi_track_hit_number.size() * sizeof(uint), cudaMemcpyHostToDevice);
+
+    std::vector<uint> host_scifi_track_ut_indices = {42};
+    cudaMalloc(&dev_scifi_track_ut_indices, host_scifi_track_ut_indices.size() * sizeof(uint));
+    cudaMemcpy(dev_scifi_track_ut_indices, host_scifi_track_ut_indices.data(), host_scifi_track_ut_indices.size() * sizeof(uint), cudaMemcpyHostToDevice);
+}
+
+void DevFreeMemory() {
+    cudaFree(dev_track);
+    cudaFree(dev_features);
+    cudaFree(dev_qop);
+    cudaFree(dev_atomics_scifi);
+    cudaFree(dev_scifi_track_hit_number);
+    cudaFree(dev_scifi_track_ut_indices);
+}
 
 // Initialise each station with same hits
 Muon::HitsSoA ConstructMockMuonHit(
