@@ -6,7 +6,6 @@ include_directories(sequence/include)
 include_directories(setup/include)
 include_directories(checkers/include)
 include_directories(${CMAKE_SOURCE_DIR}/main/include)
-include_directories(${CMAKE_SOURCE_DIR}/configuration/sequences)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/prefix_sum/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/float_operations/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/sorting/include)
@@ -46,6 +45,7 @@ include_directories(${CMAKE_SOURCE_DIR}/checker/tracking/include)
 include_directories(${CMAKE_SOURCE_DIR}/checker/pv/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/PV/beamlinePV/include)
 include_directories(${CMAKE_SOURCE_DIR}/x86/PV/beamlinePV/include)
+include_directories(${PROJECT_BINARY_DIR}/configuration/sequences)
 
 file(GLOB stream_gear "gear/src/*cu")
 file(GLOB stream_handlers "handlers/src/*cu")
@@ -62,7 +62,15 @@ file(GLOB stream_visitors_UT "visitors/UT/src/*cu")
 file(GLOB stream_visitors_SciFi "visitors/SciFi/src/*cu")
 file(GLOB stream_visitors_Muon "visitors/muon/src/*cu")
 
+add_custom_command(
+    OUTPUT "${PROJECT_BINARY_DIR}/configuration/sequences/ConfiguredSequence.h"
+    COMMAND cmake -E copy "${CMAKE_SOURCE_DIR}/configuration/sequences/${SEQUENCE}.h" "${PROJECT_BINARY_DIR}/configuration/sequences/ConfiguredSequence.h"
+    DEPENDS "${CMAKE_SOURCE_DIR}/configuration/sequences/${SEQUENCE}.h"
+)
+message(STATUS "Configured sequence: " ${SEQUENCE})
+
 add_library(Stream STATIC
+  "${PROJECT_BINARY_DIR}/configuration/sequences/ConfiguredSequence.h"
   ${stream_gear}
   ${stream_handlers}
   ${stream_memory_manager}

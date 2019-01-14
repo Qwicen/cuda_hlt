@@ -15,8 +15,6 @@ MESSAGE(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 if(NOT SEQUENCE)
   set(SEQUENCE DefaultSequence)
 endif(NOT SEQUENCE)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/configuration/sequences/${SEQUENCE}.h" "${CMAKE_CURRENT_SOURCE_DIR}/configuration/sequences/ConfiguredSequence.h" COPYONLY)
-message(STATUS "Configured sequence: " ${SEQUENCE})
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
@@ -24,6 +22,37 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread")
+
+# Configuration of CUDA compute architecture
+set(CUDA_ARCH "MIN" CACHE STRING "Cuda architecture")
+
+if (CUDA_ARCH STREQUAL "MIN" OR CUDA_ARCH STREQUAL "MAX" OR CUDA_ARCH STREQUAL "COMP")
+  set(OUTPUTFILE ${PROJECT_BINARY_DIR}/cuda_arch) # No suffix required
+  set(CUDAFILE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/utils/cuda_arch.cu)
+  execute_process(COMMAND ${CMAKE_CUDA_COMPILER} -lcuda ${CUDAFILE} -o ${OUTPUTFILE})
+  if(CUDA_ARCH STREQUAL "MAX")
+    set(CHECK_ARGS "-l")
+  endif()
+  message(STATUS "Detecting ${CUDA_ARCH} CUDA architecture")
+  execute_process(COMMAND ${OUTPUTFILE} ${CHECK_ARGS}
+    RESULT_VARIABLE CUDA_RETURN_CODE
+    OUTPUT_VARIABLE CUDA_ARCH_OUTPUT)
+
+  if(${CUDA_RETURN_CODE} EQUAL 1)
+    message(FATAL_ERROR "${CUDA_ARCH}")
+  else()
+    if (CUDA_ARCH STREQUAL "MIN")
+      message(STATUS "Detecting ${CUDA_ARCH} CUDA architecture - sm_30")
+      set(ARCH_FLAG "-arch=sm_30")
+    else()
+      message(STATUS "Detecting ${CUDA_ARCH} CUDA architecture - ${CUDA_ARCH_OUTPUT}")
+      set(ARCH_FLAG "-arch=${CUDA_ARCH_OUTPUT}")
+    endif()
+  endif()
+else()
+  message(STATUS "Cuda architecture manually set to ${CUDA_ARCH}")
+  set(ARCH_FLAG "-arch=${CUDA_ARCH}")
+endif()
 
 find_package(ZLIB REQUIRED)
 
@@ -82,7 +111,7 @@ endif()
 # In case we want to compile with clang:
 # --compiler-bindir /cvmfs/sft.cern.ch/lcg/releases/clang/6.0.0-6647e/x86_64-centos7-gcc62-opt/bin/clang++;
 set(CMAKE_CUDA_STANDARD 14)
-set(CMAKE_CUDA_FLAGS " --use_fast_math --expt-relaxed-constexpr --maxrregcount=63 ${CUDA_VERBOSE_FLAGS}")
+set(CMAKE_CUDA_FLAGS " ${ARCH_FLAG} --use_fast_math --expt-relaxed-constexpr --maxrregcount=63 ${CUDA_VERBOSE_FLAGS}")
 
 add_subdirectory(cuda)
 add_subdirectory(stream)
