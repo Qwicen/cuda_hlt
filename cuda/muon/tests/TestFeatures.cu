@@ -78,7 +78,12 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
 
             cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
 
-            THEN( "The closest hit at all stations is ( 1, 1). Indices: 8, 17, 26, 35" ) {
+            THEN(
+                "Extrapolation at all stations is (0.9, 0.9).\n"
+                "The closest hit at all stations is ( 1, 1).\n"
+                "Indices: 8, 17, 26, 35.\n"
+                "Traveled distance is 0, 1, 2, 3.\n"
+            ) {
                 const std::vector<int> closest_hits = {8, 17, 26, 35};
                 const std::vector<float> trav_dist = {0, 1, 2, 3};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
@@ -113,8 +118,12 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
 
             cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
 
-            THEN( "The closest hit at all stations is ( 0, 0) or ( 0, 1) or ( 1, 0) or ( 1, 1)." 
-                "Indices: (4, 13, 22, 31) or (7, 16, 25, 34) or (5, 14, 23, 32) or (8, 17, 26, 35)" ) {
+            THEN( 
+                "Extrapolation at all stations is (0.5, 0.5).\n"
+                "The closest hit at all stations is ( 0, 0) or ( 0, 1) or ( 1, 0) or ( 1, 1).\n" 
+                "Indices: (4, 13, 22, 31) or (7, 16, 25, 34) or (5, 14, 23, 32) or (8, 17, 26, 35).\n"
+                "Traveled distance is 0, 1, 2, 3.\n"
+            ) {
                 const std::vector<int> closest_hits1 = {4, 13, 22, 31};
                 const std::vector<int> closest_hits2 = {7, 16, 25, 34};
                 const std::vector<int> closest_hits3 = {5, 14, 23, 32};
@@ -178,7 +187,12 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
 
             cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
 
-            THEN( "The closest hit at all stations is ( 1,-1). Indices: 2, 11, 20, 29" ) {
+            THEN( 
+                "Extrapolation at all stations is ( 1,-1).\n"
+                "The closest hit at all stations is ( 1,-1).\n"
+                "Indices: 2, 11, 20, 29.\n"
+                "Traveled distance is 0, 1, 2, 3.\n"
+            ) {
                 const std::vector<int> closest_hits = {2, 11, 20, 29};
                 const std::vector<float> trav_dist = {0, 1, 2, 3};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
@@ -213,7 +227,12 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
 
             cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
 
-            THEN( "The closest hit at all stations is ( 1, 0). Indices: 5, 14, 23, 32" ) {
+            THEN(
+                "Extrapolation at all stations is (1000, 0.4).\n"
+                "The closest hit at all stations is ( 1, 0).\n" 
+                "Indices: 5, 14, 23, 32.\n"
+                "Traveled distance is 0, 1, 2, 3.\n"
+            ) {
                 const std::vector<int> closest_hits = {5, 14, 23, 32};
                 const std::vector<float> trav_dist = {0, 1, 2, 3};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
