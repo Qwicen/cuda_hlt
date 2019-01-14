@@ -7,47 +7,23 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
 
     DevAllocateMemory();
 
-    GIVEN( "Grid of hits" ) {
+    GIVEN( 
+        "Grid of hits\n" 
+        "There is 9 hits on each station with coordinates x,y: \n"
+		"\t (-1, 1) - ( 0, 1) - ( 1, 1) \n"
+		"\t (-1, 0) - ( 0, 0) - ( 1, 0) \n"
+        "\t (-1,-1) - ( 0,-1) - ( 1,-1) \n"
+        "z = i_station + 1 \n"
+        "Hits indices on first station: \n"
+        "\t 6	-    7	  -    8 \n"
+        "\t 3	-    4	  -    5 \n"
+        "\t 0	-    1	  -    2 \n"
+        "and so on \n"
+        "dx = index, dy = 2 * index, dz = 0 \n"
+    ) {
 
         std::vector<Muon::HitsSoA> muon_hits_events;
-        // Hits initialization
-        const int grid_size = 3;
-        // Fill with 0, 1, 2, ...
-        std::vector<int> muon_hit_tile(Muon::Constants::n_stations * grid_size * grid_size);
-        std::iota (std::begin(muon_hit_tile), std::end(muon_hit_tile), 0);
-        // Grid initialization
-        std::vector<float> x, y;
-        std::vector<float> muon_hit_x, muon_hit_y, muon_hit_z;
-        generateGrid(grid_size, x, y);
-        for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
-            std::vector<float> z(grid_size * grid_size, i_station);
-            muon_hit_x.insert(muon_hit_x.end(), x.begin(), x.end());
-            muon_hit_y.insert(muon_hit_y.end(), y.begin(), y.end());
-            muon_hit_z.insert(muon_hit_z.end(), z.begin(), z.end());
-        }
-        // Fill with 0, 1, 2, ...
-        std::vector<float> muon_hit_dx(Muon::Constants::n_stations * grid_size * grid_size);
-        std::iota (std::begin(muon_hit_dx), std::end(muon_hit_dx), 0);
-        // Fill with 0, 2, 4, ...
-        std::vector<float> muon_hit_dy(Muon::Constants::n_stations * grid_size * grid_size);
-        float j = 0;
-        for(std::vector<float>::iterator it = muon_hit_dy.begin() ; it != muon_hit_dy.end(); ++it){
-            *it = j;
-            j += 2;
-        }
-        // Fill with zeros (unused variable)
-        std::vector<float> muon_hit_dz(Muon::Constants::n_stations * grid_size * grid_size);
-
-        Muon::HitsSoA muon_hits = ConstructMockMuonHit(
-            grid_size * grid_size, 
-            muon_hit_tile.data(),
-            muon_hit_x.data(), 
-            muon_hit_dx.data(),
-            muon_hit_y.data(), 
-            muon_hit_dy.data(),
-            muon_hit_z.data(), 
-            muon_hit_dz.data()
-        );
+        Muon::HitsSoA muon_hits = ConstructMockMuonHit();
 
         // One event
         muon_hits_events.push_back(muon_hits);
@@ -79,13 +55,24 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
             cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
 
             THEN(
-                "Extrapolation at all stations is (0.9, 0.9).\n"
-                "The closest hit at all stations is ( 1, 1).\n"
-                "Indices: 8, 17, 26, 35.\n"
-                "Traveled distance is 0, 1, 2, 3.\n"
+                "Extrapolation of track:   \n"
+                "\t station 0 - (0.9, 0.9) \n"
+                "\t station 1 - (0.9, 0.9) \n"
+                "\t station 2 - (0.9, 0.9) \n"
+                "\t station 3 - (0.9, 0.9) \n"
+                "Closest hits: \n"
+                "\t station 0 - ( 1, 1), index = 8  \n"
+                "\t station 1 - ( 1, 1), index = 17 \n"
+                "\t station 2 - ( 1, 1), index = 26 \n"
+                "\t station 3 - ( 1, 1), index = 35 \n"
+                "Traveled distance: \n"
+                "\t station 0 - 1   \n"
+                "\t station 1 - 2   \n"
+                "\t station 2 - 3   \n"
+                "\t station 3 - 4   \n"
             ) {
                 const std::vector<int> closest_hits = {8, 17, 26, 35};
-                const std::vector<float> trav_dist = {0, 1, 2, 3};
+                const std::vector<float> trav_dist = {1, 2, 3, 4};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
                     const int closest_idx = closest_hits[i_station];
                     const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
@@ -118,17 +105,28 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
 
             cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
 
-            THEN( 
-                "Extrapolation at all stations is (0.5, 0.5).\n"
-                "The closest hit at all stations is ( 0, 0) or ( 0, 1) or ( 1, 0) or ( 1, 1).\n" 
-                "Indices: (4, 13, 22, 31) or (7, 16, 25, 34) or (5, 14, 23, 32) or (8, 17, 26, 35).\n"
-                "Traveled distance is 0, 1, 2, 3.\n"
+            THEN(
+                "Extrapolation of track:   \n"
+                "\t station 0 - (0.5, 0.5) \n"
+                "\t station 1 - (0.5, 0.5) \n"
+                "\t station 2 - (0.5, 0.5) \n"
+                "\t station 3 - (0.5, 0.5) \n"
+                "Closest hits: \n"
+                "\t station 0 - ( 0, 0) or ( 0, 1) or ( 1, 0) or ( 1, 1), index =  4 or  7 or  5 or 8  \n"
+                "\t station 1 - ( 0, 0) or ( 0, 1) or ( 1, 0) or ( 1, 1), index = 13 or 16 or 14 or 17 \n"
+                "\t station 2 - ( 0, 0) or ( 0, 1) or ( 1, 0) or ( 1, 1), index = 22 or 25 or 23 or 26 \n"
+                "\t station 3 - ( 0, 0) or ( 0, 1) or ( 1, 0) or ( 1, 1), index = 31 or 34 or 32 or 35 \n"
+                "Traveled distance: \n"
+                "\t station 0 - 1   \n"
+                "\t station 1 - 2   \n"
+                "\t station 2 - 3   \n"
+                "\t station 3 - 4   \n"
             ) {
                 const std::vector<int> closest_hits1 = {4, 13, 22, 31};
                 const std::vector<int> closest_hits2 = {7, 16, 25, 34};
                 const std::vector<int> closest_hits3 = {5, 14, 23, 32};
                 const std::vector<int> closest_hits4 = {8, 17, 26, 35};
-                const std::vector<float> trav_dist = {0, 1, 2, 3};
+                const std::vector<float> trav_dist = {1, 2, 3, 4};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
                     const int closest_idx1 = closest_hits1[i_station];
                     const int closest_idx2 = closest_hits2[i_station];
@@ -187,14 +185,25 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
 
             cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
 
-            THEN( 
-                "Extrapolation at all stations is ( 1,-1).\n"
-                "The closest hit at all stations is ( 1,-1).\n"
-                "Indices: 2, 11, 20, 29.\n"
-                "Traveled distance is 0, 1, 2, 3.\n"
+            THEN(
+                "Extrapolation of track:\n"
+                "\t station 0 - ( 1,-1) \n"
+                "\t station 1 - ( 1,-1) \n"
+                "\t station 2 - ( 1,-1) \n"
+                "\t station 3 - ( 1,-1) \n"
+                "Closest hits: \n"
+                "\t station 0 - ( 1,-1), index = 2  \n"
+                "\t station 1 - ( 1,-1), index = 11 \n"
+                "\t station 2 - ( 1,-1), index = 20 \n"
+                "\t station 3 - ( 1,-1), index = 29 \n"
+                "Traveled distance: \n"
+                "\t station 0 - 1   \n"
+                "\t station 1 - 2   \n"
+                "\t station 2 - 3   \n"
+                "\t station 3 - 4   \n"
             ) {
                 const std::vector<int> closest_hits = {2, 11, 20, 29};
-                const std::vector<float> trav_dist = {0, 1, 2, 3};
+                const std::vector<float> trav_dist = {1, 2, 3, 4};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
                     const int closest_idx = closest_hits[i_station];
                     const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
@@ -226,15 +235,25 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
             );
 
             cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
-
             THEN(
-                "Extrapolation at all stations is (1000, 0.4).\n"
-                "The closest hit at all stations is ( 1, 0).\n" 
-                "Indices: 5, 14, 23, 32.\n"
-                "Traveled distance is 0, 1, 2, 3.\n"
+                "Extrapolation of track:\n"
+                "\t station 0 - (1000, 0.4) \n"
+                "\t station 1 - (1000, 0.4) \n"
+                "\t station 2 - (1000, 0.4) \n"
+                "\t station 3 - (1000, 0.4) \n"
+                "Closest hits: \n"
+                "\t station 0 - ( 1, 0), index = 5  \n"
+                "\t station 1 - ( 1, 0), index = 14 \n"
+                "\t station 2 - ( 1, 0), index = 23 \n"
+                "\t station 3 - ( 1, 0), index = 32 \n"
+                "Traveled distance: \n"
+                "\t station 0 - 1   \n"
+                "\t station 1 - 2   \n"
+                "\t station 2 - 3   \n"
+                "\t station 3 - 4   \n"
             ) {
                 const std::vector<int> closest_hits = {5, 14, 23, 32};
-                const std::vector<float> trav_dist = {0, 1, 2, 3};
+                const std::vector<float> trav_dist = {1, 2, 3, 4};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
                     const int closest_idx = closest_hits[i_station];
                     const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
