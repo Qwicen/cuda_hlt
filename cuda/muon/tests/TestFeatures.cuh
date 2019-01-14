@@ -1,4 +1,5 @@
 #include<iterator>
+#include <vector>
 #include "MuonDefinitions.cuh"
 #include "MuonFeaturesExtraction.cuh"
 
@@ -75,7 +76,7 @@ void Initialise() {
 
     // Scifi Hit Number
     std::vector<uint> host_scifi_track_hit_number;
-    host_scifi_track_hit_number.push_back(42);
+    host_scifi_track_hit_number.push_back(0);
     cudaMalloc(&dev_scifi_track_hit_number, host_scifi_track_hit_number.size() * sizeof(uint));
     cudaMemcpyAsync(dev_scifi_track_hit_number, host_scifi_track_hit_number.data(), host_scifi_track_hit_number.size() * sizeof(uint), cudaMemcpyHostToDevice);
 
