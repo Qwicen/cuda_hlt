@@ -10,8 +10,8 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
     GIVEN( 
         "Grid of hits\n" 
         "There is 9 hits on each station with coordinates x,y: \n"
-		"\t (-1, 1) - ( 0, 1) - ( 1, 1) \n"
-		"\t (-1, 0) - ( 0, 0) - ( 1, 0) \n"
+        "\t (-1, 1) - ( 0, 1) - ( 1, 1) \n"
+        "\t (-1, 0) - ( 0, 0) - ( 1, 0) \n"
         "\t (-1,-1) - ( 0,-1) - ( 1,-1) \n"
         "z = i_station + 1 \n"
         "Hits indices on first station: \n"
@@ -280,8 +280,8 @@ SCENARIO( "Check closest hit works in general case" ) {
     GIVEN( 
         "Grid of hits\n" 
         "There is 9 hits on each station with coordinates x,y: \n"
-		"\t (-1, 1) - ( 0, 1) - ( 1, 1) \n"
-		"\t (-1, 0) - ( 0, 0) - ( 1, 0) \n"
+        "\t (-1, 1) - ( 0, 1) - ( 1, 1) \n"
+        "\t (-1, 0) - ( 0, 0) - ( 1, 0) \n"
         "\t (-1,-1) - ( 0,-1) - ( 1,-1) \n"
         "z = i_station + 1 \n"
         "Hits indices on first station: \n"
