@@ -112,28 +112,29 @@ Muon::HitsSoA ConstructMockMuonHit() {
     return muon_hits;
 }
 
-bool CheckMultipleHits(
-    std::vector<int> closest_hits, 
+bool any_of(
+    const std::vector<int> closest_hits, 
     const int calculated_value, 
-    const int* true_values
+    const int* values
 ) {
-    bool flag = false;
-    for(std::vector<int>::iterator it = closest_hits.begin() ; it != closest_hits.end(); ++it){
-        flag = flag || (calculated_value == true_values[*it]);
+    std::vector<int> true_values;
+    for(std::vector<int>::const_iterator it = closest_hits.begin() ; it != closest_hits.end(); ++it){
+        true_values.push_back(values[*it]);
     }
-    return flag;
+    return std::any_of(true_values.cbegin(), true_values.cend(), [calculated_value](int i){ return i == calculated_value; });
 }
 
-std::vector<float> CalculateRES(
-    std::vector<int> closest_hits, 
+std::vector<float> calculate_res(
+    const std::vector<int> closest_hits, 
     const float extrapolation,
     const float* x,
     const float* dx,
-    const float errMS
+    const float multiple_scattering_error
 ) {
     std::vector<float> res;
-    for(std::vector<int>::iterator it = closest_hits.begin() ; it != closest_hits.end(); ++it){
-        const float value = (extrapolation - x[*it]) / sqrt(dx[*it] * dx[*it] * INVSQRT3 * INVSQRT3 + errMS * errMS);
+    for(std::vector<int>::const_iterator it = closest_hits.begin() ; it != closest_hits.end(); ++it){
+        const float value = (extrapolation - x[*it]) / 
+            sqrt(dx[*it] * dx[*it] * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error);
         res.push_back(value);
     }
     return res;
