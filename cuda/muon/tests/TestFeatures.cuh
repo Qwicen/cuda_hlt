@@ -10,6 +10,10 @@ uint *dev_scifi_track_hit_number;
 uint *dev_scifi_track_ut_indices;
 MiniState *dev_track;
 const int n_features = 20;
+const float MSFACTOR = 5.552176750308537;
+const float COMMON_FACTOR = MSFACTOR * 0.23850119787527452 * 1; // 1 = qop
+const float INVSQRT3 = 0.5773502691896258;
+const float eps = 0.0001;
 
 void DevAllocateMemory() {
     cudaMalloc(&dev_track, 1 * sizeof(MiniState));
@@ -106,4 +110,31 @@ Muon::HitsSoA ConstructMockMuonHit() {
         }
     }
     return muon_hits;
+}
+
+bool CheckMultipleHits(
+    std::vector<int> closest_hits, 
+    const int calculated_value, 
+    const int* true_values
+) {
+    bool flag = false;
+    for(std::vector<int>::iterator it = closest_hits.begin() ; it != closest_hits.end(); ++it){
+        flag = flag || (calculated_value == true_values[*it]);
+    }
+    return flag;
+}
+
+std::vector<float> CalculateRES(
+    std::vector<int> closest_hits, 
+    const float extrapolation,
+    const float* x,
+    const float* dx,
+    const float errMS
+) {
+    std::vector<float> res;
+    for(std::vector<int>::iterator it = closest_hits.begin() ; it != closest_hits.end(); ++it){
+        const float value = (extrapolation - x[*it]) / sqrt(dx[*it] * dx[*it] * INVSQRT3 * INVSQRT3 + errMS * errMS);
+        res.push_back(value);
+    }
+    return res;
 }
