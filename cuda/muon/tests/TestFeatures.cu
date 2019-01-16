@@ -1,3 +1,8 @@
+/*
+*   Tests for calculation muon catbost features
+*   How to run it
+*   ./cuda/muon/TestFeatures
+*/
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "TestFeatures.cuh"
@@ -32,8 +37,10 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
         cudaMalloc(&dev_muon_hits, muon_hits_events.size() * sizeof(Muon::HitsSoA));
         cudaMemcpy(dev_muon_hits, muon_hits_events.data(), muon_hits_events.size() * sizeof(Muon::HitsSoA), cudaMemcpyHostToDevice);
 
-        const float c = 0.23850119787527452 * 5.552176750308537;
+        const float MSFACTOR = 5.552176750308537;
+        const float COMMON_FACTOR = MSFACTOR * 0.23850119787527452 * 1; // 1 = qop
         const float INVSQRT3 = 0.5773502691896258;
+        const float eps = 0.0001;
         float *host_features = (float*)malloc(1 * n_features * sizeof(float));
 
         WHEN( "Track inside grid of hits and parallel to the axis OZ (x=0.9, y=0.9, z=0, dx=0, dy=0)" ) {
@@ -77,17 +84,17 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
                 const std::vector<float> extrapolation_y = {0.9, 0.9, 0.9, 0.9};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
                     const int closest_idx = closest_hits[i_station];
-                    const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
+                    const float errMS = COMMON_FACTOR * trav_dist[i_station] * sqrt(trav_dist[i_station]);
                     CHECK(host_features[offset::DTS + i_station] == muon_hits_events[0].delta_time[closest_idx]);
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(host_features[offset::RES_X + i_station], 
                         WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
-                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                     CHECK_THAT(host_features[offset::RES_Y + i_station], 
                         WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
-                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                 }
             }
@@ -140,7 +147,7 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
                     const int closest_idx2 = closest_hits2[i_station];
                     const int closest_idx3 = closest_hits3[i_station];
                     const int closest_idx4 = closest_hits4[i_station];
-                    const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
+                    const float errMS = COMMON_FACTOR * trav_dist[i_station] * sqrt(trav_dist[i_station]);
                     CHECK((
                         host_features[offset::DTS + i_station] == muon_hits_events[0].delta_time[closest_idx1] || 
                         host_features[offset::DTS + i_station] == muon_hits_events[0].delta_time[closest_idx2] ||
@@ -161,23 +168,23 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
                     ));
                     CHECK_THAT(host_features[offset::RES_X + i_station], 
                         WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx1]) / 
-                            sqrt(closest_idx1 * closest_idx1 * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001) ||
+                            sqrt(closest_idx1 * closest_idx1 * INVSQRT3 * INVSQRT3 + errMS * errMS), eps) ||
                         WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx2]) / 
-                            sqrt(closest_idx2 * closest_idx2 * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001) ||
+                            sqrt(closest_idx2 * closest_idx2 * INVSQRT3 * INVSQRT3 + errMS * errMS), eps) ||
                         WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx3]) / 
-                            sqrt(closest_idx3 * closest_idx3 * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001) ||
+                            sqrt(closest_idx3 * closest_idx3 * INVSQRT3 * INVSQRT3 + errMS * errMS), eps) ||
                         WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx4]) / 
-                            sqrt(closest_idx4 * closest_idx4 * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                            sqrt(closest_idx4 * closest_idx4 * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                     CHECK_THAT(host_features[offset::RES_Y + i_station], 
                         WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx1]) / 
-                            sqrt(4 * closest_idx1 * closest_idx1 * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001) ||
+                            sqrt(4 * closest_idx1 * closest_idx1 * INVSQRT3 * INVSQRT3 + errMS * errMS), eps) ||
                         WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx2]) / 
-                            sqrt(4 * closest_idx2 * closest_idx2 * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001) ||
+                            sqrt(4 * closest_idx2 * closest_idx2 * INVSQRT3 * INVSQRT3 + errMS * errMS), eps) ||
                         WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx3]) / 
-                            sqrt(4 * closest_idx3 * closest_idx3 * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001) ||
+                            sqrt(4 * closest_idx3 * closest_idx3 * INVSQRT3 * INVSQRT3 + errMS * errMS), eps) ||
                         WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx4]) / 
-                            sqrt(4 * closest_idx4 * closest_idx4 * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                            sqrt(4 * closest_idx4 * closest_idx4 * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                 }
             }
@@ -224,17 +231,17 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
                 const std::vector<float> extrapolation_y = {-1, -1, -1, -1};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
                     const int closest_idx = closest_hits[i_station];
-                    const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
+                    const float errMS = COMMON_FACTOR * trav_dist[i_station] * sqrt(trav_dist[i_station]);
                     CHECK(host_features[offset::DTS + i_station] == muon_hits_events[0].delta_time[closest_idx]);
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(host_features[offset::RES_X + i_station], 
                         WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
-                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                     CHECK_THAT(host_features[offset::RES_Y + i_station], 
                         WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
-                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                 }
             }
@@ -280,17 +287,17 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
                 const std::vector<float> extrapolation_y = {0.4, 0.4, 0.4, 0.4};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
                     const int closest_idx = closest_hits[i_station];
-                    const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
+                    const float errMS = COMMON_FACTOR * trav_dist[i_station] * sqrt(trav_dist[i_station]);
                     CHECK(host_features[offset::DTS + i_station] == muon_hits_events[0].delta_time[closest_idx]);
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(host_features[offset::RES_X + i_station], 
                         WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
-                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                     CHECK_THAT(host_features[offset::RES_Y + i_station],
                         WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
-                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                 }
             }
@@ -330,8 +337,10 @@ SCENARIO( "Check closest hit works in general case" ) {
         cudaMalloc(&dev_muon_hits, muon_hits_events.size() * sizeof(Muon::HitsSoA));
         cudaMemcpy(dev_muon_hits, muon_hits_events.data(), muon_hits_events.size() * sizeof(Muon::HitsSoA), cudaMemcpyHostToDevice);
 
-        const float c = 0.23850119787527452 * 5.552176750308537;
+        const float MSFACTOR = 5.552176750308537;
+        const float COMMON_FACTOR = MSFACTOR * 0.23850119787527452 * 1; // 1 = qop
         const float INVSQRT3 = 0.5773502691896258;
+        const float eps = 0.0001;
         float *host_features = (float*)malloc(1 * n_features * sizeof(float));
 
         WHEN( "Track inside grid of hits (x=-2.7, y=-2.7, z=0, dx=1, dy=1)" ) {
@@ -375,17 +384,17 @@ SCENARIO( "Check closest hit works in general case" ) {
                 const std::vector<float> trav_dist = {0, sqrt(3.0f), sqrt(12.0f), sqrt(27.0f)};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
                     const int closest_idx = closest_hits[i_station];
-                    const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
+                    const float errMS = COMMON_FACTOR * trav_dist[i_station] * sqrt(trav_dist[i_station]);
                     CHECK(host_features[offset::DTS + i_station] == muon_hits_events[0].delta_time[closest_idx]);
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(
                         host_features[offset::RES_X + i_station], WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
-                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                     CHECK_THAT(
                         host_features[offset::RES_Y + i_station], WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
-                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                 }
             }
@@ -432,17 +441,17 @@ SCENARIO( "Check closest hit works in general case" ) {
                 const std::vector<float> trav_dist = {0, 1.5, 3, sqrt(20.25f)};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
                     const int closest_idx = closest_hits[i_station];
-                    const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
+                    const float errMS = COMMON_FACTOR * trav_dist[i_station] * sqrt(trav_dist[i_station]);
                     CHECK(host_features[offset::DTS + i_station] == muon_hits_events[0].delta_time[closest_idx]);
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(
                         host_features[offset::RES_X + i_station], WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
-                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                     CHECK_THAT(
                         host_features[offset::RES_Y + i_station], WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
-                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                 }
             }
@@ -489,17 +498,17 @@ SCENARIO( "Check closest hit works in general case" ) {
                 const std::vector<float> trav_dist = {0, sqrt(3.0f), sqrt(12.0f), sqrt(27.0f)};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
                     const int closest_idx = closest_hits[i_station];
-                    const float errMS = c * 1 * trav_dist[i_station] * sqrt(trav_dist[i_station]);
+                    const float errMS = COMMON_FACTOR * trav_dist[i_station] * sqrt(trav_dist[i_station]);
                     CHECK(host_features[offset::DTS + i_station] == muon_hits_events[0].delta_time[closest_idx]);
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(
                         host_features[offset::RES_X + i_station], WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
-                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                     CHECK_THAT(
                         host_features[offset::RES_Y + i_station], WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
-                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), 0.0001)
+                        sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + errMS * errMS), eps)
                     );
                 }
             }
