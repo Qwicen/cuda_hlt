@@ -3,14 +3,12 @@
 *   How to run it
 *   ./cuda/muon/TestFeatures
 */
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
-#include "TestFeatures.cuh"
-using namespace Catch::Matchers;
+#include "MuonFeaturesExtraction.test.cuh"
 
 SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
 
-    DevAllocateMemory();
+    dev_allocate_memory();
 
     GIVEN( 
         "Grid of hits\n" 
@@ -85,11 +83,11 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(host_features[offset::RES_X + i_station], 
-                        WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
+                        Catch::Matchers::WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
                         sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                     CHECK_THAT(host_features[offset::RES_Y + i_station], 
-                        WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
+                        Catch::Matchers::WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
                         sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                 }
@@ -168,10 +166,10 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
                         multiple_scattering_error
                     );
                     CHECK_THAT(host_features[offset::RES_X + i_station], 
-                        WithinAbs(true_res_x[0], eps) ||
-                        WithinAbs(true_res_x[1], eps) ||
-                        WithinAbs(true_res_x[2], eps) ||
-                        WithinAbs(true_res_x[3], eps)
+                        Catch::Matchers::WithinAbs(true_res_x[0], eps) ||
+                        Catch::Matchers::WithinAbs(true_res_x[1], eps) ||
+                        Catch::Matchers::WithinAbs(true_res_x[2], eps) ||
+                        Catch::Matchers::WithinAbs(true_res_x[3], eps)
                     );
                     const std::vector<float> true_res_y = calculate_res(
                         closest_hits[i_station],
@@ -181,10 +179,10 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
                         multiple_scattering_error
                     );
                     CHECK_THAT(host_features[offset::RES_Y + i_station], 
-                        WithinAbs(true_res_y[0], eps) ||
-                        WithinAbs(true_res_y[1], eps) ||
-                        WithinAbs(true_res_y[2], eps) ||
-                        WithinAbs(true_res_y[3], eps)
+                        Catch::Matchers::WithinAbs(true_res_y[0], eps) ||
+                        Catch::Matchers::WithinAbs(true_res_y[1], eps) ||
+                        Catch::Matchers::WithinAbs(true_res_y[2], eps) ||
+                        Catch::Matchers::WithinAbs(true_res_y[3], eps)
                     );
                 }
             }
@@ -236,11 +234,11 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(host_features[offset::RES_X + i_station], 
-                        WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
+                        Catch::Matchers::WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
                         sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                     CHECK_THAT(host_features[offset::RES_Y + i_station], 
-                        WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
+                        Catch::Matchers::WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
                         sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                 }
@@ -292,11 +290,11 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(host_features[offset::RES_X + i_station], 
-                        WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
+                        Catch::Matchers::WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
                         sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                     CHECK_THAT(host_features[offset::RES_Y + i_station],
-                        WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
+                        Catch::Matchers::WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
                         sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                 }
@@ -305,12 +303,12 @@ SCENARIO( "Check closest hit works in case there is no extrapolation" ) {
         free(host_features);
         cudaFree(dev_muon_hits);
     }
-    DevFreeMemory();
+    dev_free_memory();
 }
 
 SCENARIO( "Check closest hit works in general case" ) {
 
-    DevAllocateMemory();
+    dev_allocate_memory();
 
     GIVEN( 
         "Grid of hits\n" 
@@ -385,11 +383,11 @@ SCENARIO( "Check closest hit works in general case" ) {
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(
-                        host_features[offset::RES_X + i_station], WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
+                        host_features[offset::RES_X + i_station], Catch::Matchers::WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
                         sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                     CHECK_THAT(
-                        host_features[offset::RES_Y + i_station], WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
+                        host_features[offset::RES_Y + i_station], Catch::Matchers::WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
                         sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                 }
@@ -442,11 +440,11 @@ SCENARIO( "Check closest hit works in general case" ) {
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(
-                        host_features[offset::RES_X + i_station], WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
+                        host_features[offset::RES_X + i_station], Catch::Matchers::WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
                         sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                     CHECK_THAT(
-                        host_features[offset::RES_Y + i_station], WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
+                        host_features[offset::RES_Y + i_station], Catch::Matchers::WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
                         sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                 }
@@ -499,11 +497,11 @@ SCENARIO( "Check closest hit works in general case" ) {
                     CHECK(host_features[offset::TIMES + i_station] == muon_hits_events[0].time[closest_idx]);
                     CHECK(host_features[offset::CROSS + i_station] + muon_hits_events[0].uncrossed[closest_idx] == 2);
                     CHECK_THAT(
-                        host_features[offset::RES_X + i_station], WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
+                        host_features[offset::RES_X + i_station], Catch::Matchers::WithinAbs((extrapolation_x[i_station] - muon_hits_events[0].x[closest_idx]) / 
                         sqrt(closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                     CHECK_THAT(
-                        host_features[offset::RES_Y + i_station], WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
+                        host_features[offset::RES_Y + i_station], Catch::Matchers::WithinAbs((extrapolation_y[i_station] - muon_hits_events[0].y[closest_idx]) / 
                         sqrt(4 * closest_idx * closest_idx * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error), eps)
                     );
                 }
@@ -512,5 +510,5 @@ SCENARIO( "Check closest hit works in general case" ) {
         free(host_features);
         cudaFree(dev_muon_hits);
     }
-    DevFreeMemory();
+    dev_free_memory();
 }

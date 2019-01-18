@@ -1,5 +1,6 @@
 #include <iterator>
 #include <vector>
+#include <numeric>
 #include "MuonDefinitions.cuh"
 #include "MuonFeaturesExtraction.cuh"
 
@@ -15,7 +16,7 @@ const float COMMON_FACTOR = MSFACTOR * 0.23850119787527452 * 1; // 1 = qop
 const float INVSQRT3 = 0.5773502691896258;
 const float eps = 0.0001;
 
-void DevAllocateMemory() {
+void dev_allocate_memory() {
     cudaMalloc(&dev_track, 1 * sizeof(MiniState));
     cudaMalloc(&dev_features, 1 * n_features * sizeof(float));
 
@@ -36,7 +37,7 @@ void DevAllocateMemory() {
     cudaMemcpy(dev_scifi_track_ut_indices, host_scifi_track_ut_indices.data(), host_scifi_track_ut_indices.size() * sizeof(uint), cudaMemcpyHostToDevice);
 }
 
-void DevFreeMemory() {
+void dev_free_memory() {
     cudaFree(dev_track);
     cudaFree(dev_features);
     cudaFree(dev_qop);

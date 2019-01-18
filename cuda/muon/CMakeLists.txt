@@ -1,7 +1,6 @@
 file(GLOB muon_features_extraction "preprocessing/src/*cu")
 file(GLOB muon_classification "IsMuon/src/*cu")
 
-include_directories(tests)
 include_directories(preprocessing/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/consolidate/include)
@@ -21,12 +20,3 @@ add_library(Muon STATIC
   ${muon_classification}
 )
 set_property(TARGET Muon PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
-macro(test_program name)
-add_executable(${name} tests/${name}.cu)
-target_link_libraries(${name} Muon)
-set_property(TARGET ${name} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-endmacro()
-
-test_program(TestFeatures)
-
