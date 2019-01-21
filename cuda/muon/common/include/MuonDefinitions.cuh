@@ -36,4 +36,15 @@ namespace Muon {
     int delta_time[Constants::max_numhits_per_event] = {0};
     int cluster_size[Constants::max_numhits_per_event] = {0};
   };
+
+  struct MuonCoords {
+    int number_of_hits_per_station[Constants::n_stations] = {0};
+    int station_offsets[Constants::n_stations] = {0};
+    int digit_tile_station_offsets[Constants::n_stations] = {0};
+    int number_of_digit_tiles_per_station[Constants::n_stations] = {0};
+    int uncrossed[Constants::max_numhits_per_event] = {0};
+    int digit_tile[Constants::max_numhits_per_event * 2] = {0};
+    unsigned int digitTDC1[Constants::max_numhits_per_event] = {0};
+    unsigned int digitTDC2[Constants::max_numhits_per_event] = {0};
+  };
 }

@@ -7,6 +7,7 @@
 #include <vector>
 #include <cfloat>
 #include <cstdint>
+#include <numeric>
 #include "CudaCommon.h"
 #include "Logger.h"
 #include "ClusteringDefinitions.cuh"
