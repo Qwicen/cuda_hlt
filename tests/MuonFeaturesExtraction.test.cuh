@@ -49,44 +49,46 @@ void dev_free_memory() {
 void generateGrid(const int n, std::vector<float> &x, std::vector<float> &y) {
 	for(int i = 0; i < n; i++) {
 		for(int j = 0; j < n; j++) {
-			y.push_back(i - n/2);
-			x.push_back(j - n/2);
+            if ((i - n/2) != 0 || (j - n/2) != 0) {
+                y.push_back((i - n/2) * 10);
+                x.push_back((j - n/2) * 10);
+            }
 		}
 	}
 }
 
 Muon::HitsSoA ConstructMockMuonHit() {
     // Hits initialization
-    const int grid_size = 3;
+    const int grid_size = 5;
     // Fill with 0, 1, 2, ...
-    std::vector<int> muon_hit_tile(Muon::Constants::n_stations * grid_size * grid_size);
+    std::vector<int> muon_hit_tile(Muon::Constants::n_stations * (grid_size * grid_size - 1));
     std::iota (std::begin(muon_hit_tile), std::end(muon_hit_tile), 0);
     // Grid initialization
     std::vector<float> x, y;
     std::vector<float> muon_hit_x, muon_hit_y, muon_hit_z;
     generateGrid(grid_size, x, y);
     for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
-        std::vector<float> z(grid_size * grid_size, i_station + 1);
+        std::vector<float> z(grid_size * grid_size - 1, (i_station + 1) * 100);
         muon_hit_x.insert(muon_hit_x.end(), x.begin(), x.end());
         muon_hit_y.insert(muon_hit_y.end(), y.begin(), y.end());
         muon_hit_z.insert(muon_hit_z.end(), z.begin(), z.end());
     }
     // Fill with 0, 1, 2, ...
-    std::vector<float> muon_hit_dx(Muon::Constants::n_stations * grid_size * grid_size);
+    std::vector<float> muon_hit_dx(Muon::Constants::n_stations * (grid_size * grid_size - 1));
     std::iota (std::begin(muon_hit_dx), std::end(muon_hit_dx), 0);
-    // Fill with 0, 2, 4, ...
-    std::vector<float> muon_hit_dy(Muon::Constants::n_stations * grid_size * grid_size);
+    // Fill with 0, 0.5, 1, ...
+    std::vector<float> muon_hit_dy(Muon::Constants::n_stations * (grid_size * grid_size - 1));
     float j = 0;
     for(std::vector<float>::iterator it = muon_hit_dy.begin() ; it != muon_hit_dy.end(); ++it){
         *it = j;
-        j += 2;
+        j += 0.5;
     }
     // Fill with zeros (unused variable)
-    std::vector<float> muon_hit_dz(Muon::Constants::n_stations * grid_size * grid_size);
+    std::vector<float> muon_hit_dz(Muon::Constants::n_stations * (grid_size * grid_size - 1));
 
     Muon::HitsSoA muon_hits;
     for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
-        muon_hits.number_of_hits_per_station[i_station] = grid_size * grid_size;
+        muon_hits.number_of_hits_per_station[i_station] = grid_size * grid_size - 1;
         if (i_station == 0) {
             muon_hits.station_offsets[i_station] = 0;
         } else {
@@ -127,14 +129,14 @@ bool any_of(
 
 std::vector<float> calculate_res(
     const std::vector<int> closest_hits, 
-    const float extrapolation,
+    const float extrapolation_x,
     const float* x,
     const float* dx,
     const float multiple_scattering_error
 ) {
     std::vector<float> res;
     for(std::vector<int>::const_iterator it = closest_hits.begin() ; it != closest_hits.end(); ++it){
-        const float value = (extrapolation - x[*it]) / 
+        const float value = (extrapolation_x - x[*it]) / 
             sqrt(dx[*it] * dx[*it] * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error);
         res.push_back(value);
     }
