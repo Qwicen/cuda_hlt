@@ -25,6 +25,10 @@ void SequenceVisitor::visit<cpu_pv_beamline_t>(
     cudaMemcpyDeviceToHost,
     cuda_stream));
 
+   // Synchronize previous CUDA transmissions
+  cudaEventRecord(cuda_generic_event, cuda_stream);
+  cudaEventSynchronize(cuda_generic_event);
+
   state.invoke(
     host_buffers.host_kalmanvelo_states,
     host_buffers.host_atomics_velo,
