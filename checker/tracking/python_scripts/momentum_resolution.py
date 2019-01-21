@@ -73,10 +73,14 @@ for tracker in trackers :
             
             n+=1
 
+    if n == 0 :
+        continue
+
     name = "dp_vs_p_gauss"
     title = "dp vs p, Gaussian fit"
     canvas = ROOT.TCanvas(name, title) 
     canvas.cd()
+    print('{:s}: n = {:d}: '.format(tracker, n))
     gr = TGraphErrors( n, xFit, yFit, xFitErr, yFitErr )
     #histoP.Draw()
     gr.Draw("ap")
