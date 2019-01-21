@@ -132,6 +132,11 @@ void TrackChecker::Histos::initHistos(
   const std::vector<HistoCategory>& histo_categories)
 {
 #ifdef WITH_ROOT
+  // histo for muon ID
+  h_muon_catboost_output = new TH1D("muon_catboost_output", "muon_catboost_output", 200, -5., 5.); 
+  h_muon_catboost_output_matched_muon = new TH1D("muon_catboost_output_matched_muon", "muon_catboost_output_matched_muon", 200, -5., 5.);
+  h_muon_catboost_output_matched_notMuon = new TH1D("muon_catboost_output_matched_notMuon", "muon_catboost_output_matched_notMuon", 200, -5., 5.);
+  
   // histos for efficiency
   for (auto histoCat : histo_categories) {
     const std::string &category = histoCat.m_name;
@@ -178,11 +183,7 @@ void TrackChecker::Histos::initHistos(
   // histos for ghost rate
   h_ghost_nPV = new TH1D("nPV_Ghosts", "nPV_Ghosts", 21, -0.5, 20.5);
   h_total_nPV = new TH1D("nPV_Total", "nPV_Total", 21, -0.5, 20.5); 
-
-  // histo for muon ID
-  h_muon_catboost_output = new TH1D("muon_catboost_output", "muon_catboost_output", 200, -5., 5.); 
-  h_muon_catboost_output_matched_muon = new TH1D("muon_catboost_output_matched_muon", "muon_catboost_output_matched_muon", 200, -5., 5.);
-  h_muon_catboost_output_matched_notMuon = new TH1D("muon_catboost_output_matched_notMuon", "muon_catboost_output_matched_notMuon", 200, -5., 5.);
+  
 #endif
 }
 
