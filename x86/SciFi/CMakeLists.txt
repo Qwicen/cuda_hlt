@@ -29,6 +29,9 @@ add_library(x86Forward STATIC
   ${x86Forward_src}
   ${PrForwardTools}
 )
+
+set_property(TARGET x86Forward PROPERTY
+             CUDA_SEPARABLE_COMPILATION ON)
 set_property(TARGET x86Forward PROPERTY
              CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 
