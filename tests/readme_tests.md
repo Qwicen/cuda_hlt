@@ -4,13 +4,18 @@ How to add a new test
 ------------
 [Catch2 documentation](https://github.com/catchorg/Catch2/blob/master/docs/tutorial.md)  
 In order to add a new test called `TestName`, it is necessary to put `TestName` into `UNIT_TEST_LIST` in [tests/CMakeLists.txt](CMakeLists.txt).
-```shell
+```
 set(UNIT_TEST_LIST
   MuonFeaturesExtraction
   ...
   TestName)
 ```
-Create a new file inside the `tests` directory named `TestName.test.cu`. Now we are ready to add test to the project.
+Create a new file inside the `tests` directory named `TestName.test.cu`.  
+Then add the following include to a file:
+```
+#include "catch.hpp"
+```
+Now we are ready to add test to the project.
 
 How to build it
 ------------
