@@ -46,18 +46,18 @@ void dev_free_memory() {
     cudaFree(dev_scifi_track_ut_indices);
 }
 
-void generateGrid(const int n, std::vector<float> &x, std::vector<float> &y) {
-	for(int i = 0; i < n; i++) {
-		for(int j = 0; j < n; j++) {
+void generate_grid(const int n, std::vector<float> &x, std::vector<float> &y) {
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
             if ((i - n/2) != 0 || (j - n/2) != 0) {
                 y.push_back((i - n/2) * 10);
                 x.push_back((j - n/2) * 10);
             }
-		}
-	}
+        }
+    }
 }
 
-Muon::HitsSoA ConstructMockMuonHit() {
+Muon::HitsSoA construct_mock_muon_hit() {
     // Hits initialization
     const int grid_size = 5;
     // Fill with 0, 1, 2, ...
@@ -66,7 +66,7 @@ Muon::HitsSoA ConstructMockMuonHit() {
     // Grid initialization
     std::vector<float> x, y;
     std::vector<float> muon_hit_x, muon_hit_y, muon_hit_z;
-    generateGrid(grid_size, x, y);
+    generate_grid(grid_size, x, y);
     for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
         std::vector<float> z(grid_size * grid_size - 1, (i_station + 1) * 100);
         muon_hit_x.insert(muon_hit_x.end(), x.begin(), x.end());
@@ -105,11 +105,11 @@ Muon::HitsSoA ConstructMockMuonHit() {
             muon_hits.dy[station_offset + i_hit] = muon_hit_dy[station_offset + i_hit];
             muon_hits.z[station_offset + i_hit] = muon_hit_z[station_offset + i_hit];
             muon_hits.dz[station_offset + i_hit] = muon_hit_dz[station_offset + i_hit];
-
-            muon_hits.uncrossed[station_offset + i_hit] = 0;
-            muon_hits.time[station_offset + i_hit]          = 1000;
-            muon_hits.delta_time[station_offset + i_hit]    = 1000;
-            muon_hits.cluster_size[station_offset + i_hit]  = 1000;
+            // if uncrossed = 1 then time = delta_time
+            muon_hits.uncrossed[station_offset + i_hit] = i_hit % 2;
+            muon_hits.time[station_offset + i_hit] = 10;
+            muon_hits.delta_time[station_offset + i_hit] = 10 + (1 - i_hit % 2) * 5;
+            muon_hits.cluster_size[station_offset + i_hit]  = 0;
         }
     }
     return muon_hits;
@@ -127,18 +127,18 @@ bool any_of(
     return std::any_of(true_values.cbegin(), true_values.cend(), [calculated_value](int i){ return i == calculated_value; });
 }
 
-std::vector<float> calculate_res(
+std::vector<float> calculate_residual(
     const std::vector<int> closest_hits, 
     const float extrapolation_x,
     const float* x,
     const float* dx,
     const float multiple_scattering_error
 ) {
-    std::vector<float> res;
+    std::vector<float> residual;
     for(std::vector<int>::const_iterator it = closest_hits.begin() ; it != closest_hits.end(); ++it){
         const float value = (extrapolation_x - x[*it]) / 
             sqrt(dx[*it] * dx[*it] * INVSQRT3 * INVSQRT3 + multiple_scattering_error * multiple_scattering_error);
-        res.push_back(value);
+        residual.push_back(value);
     }
-    return res;
+    return residual;
 }

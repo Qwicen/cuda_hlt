@@ -8,7 +8,7 @@ set(UNIT_TEST_LIST
  
 foreach(NAME IN LISTS UNIT_TEST_LIST)
 
-  set(TARGET_NAME ${NAME}.tests)
+  set(TARGET_NAME ${NAME}.test)
   
   add_executable(${TARGET_NAME}
     main.cu

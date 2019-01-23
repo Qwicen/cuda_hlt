@@ -1,13 +1,7 @@
-/*
-*   Tests for calculation muon catbost features
-*   How to run it
-*   ./cuda/muon/TestFeatures
-*/
 #include "catch.hpp"
 #include "MuonFeaturesExtraction.test.cuh"
 
 SCENARIO( "Track is parallel to the axis OZ" ) {
-
     dev_allocate_memory();
 
     GIVEN( 
@@ -19,7 +13,7 @@ SCENARIO( "Track is parallel to the axis OZ" ) {
         "\t (-20,-10) - (-10,-10) - ( 0,-10) - ( 10,-10) - ( 20,-10)\n"
         "\t (-20,-20) - (-10,-20) - ( 0,-20) - ( 10,-20) - ( 20,-20)\n"
         "z = 100, 200, 300, 400 for stations 1, 2, 3, 4 respectively\n"
-        "Hits indices on first station: \n"
+        "Hits indices for the first station: \n"
         "\t 19	-   20	  -   21    -   22    -   23\n"
         "\t 14	-   15	  -   16    -   17    -   18\n"
         "\t 10	-   11	  -         -   12    -   13\n"
@@ -28,10 +22,8 @@ SCENARIO( "Track is parallel to the axis OZ" ) {
         "and so on \n"
         "Let dx = index, dy = index / 2, dz = 0\n"
     ) {
-
         std::vector<Muon::HitsSoA> muon_hits_events;
-        Muon::HitsSoA muon_hits = ConstructMockMuonHit();
-
+        Muon::HitsSoA muon_hits = construct_mock_muon_hit();
         // One event
         muon_hits_events.push_back(muon_hits);
         
@@ -42,8 +34,6 @@ SCENARIO( "Track is parallel to the axis OZ" ) {
         float *host_features = (float*)malloc(1 * n_features * sizeof(float));
 
         WHEN( "Track parallel to the axis OZ (x=9, y=9, z=0, dx=0, dy=0)" ) {
-
-            // Track initialization
             MiniState track = MiniState(9, 9, 0, 0, 0);
             cudaMemcpy(dev_track, &track, 1 * sizeof(MiniState), cudaMemcpyHostToDevice);
 
@@ -99,8 +89,6 @@ SCENARIO( "Track is parallel to the axis OZ" ) {
         }
         
         WHEN( "Track parallel to the axis OZ (x=5, y=5, z=0, dx=0, dy=0)" ) {
-
-            // Track initialization
             MiniState track = MiniState(5, 5, 0, 0, 0);
             cudaMemcpy(dev_track, &track, 1 * sizeof(MiniState), cudaMemcpyHostToDevice);
 
@@ -133,36 +121,25 @@ SCENARIO( "Track is parallel to the axis OZ" ) {
                 "\t station 3 - 200 \n"
                 "\t station 4 - 300 \n"
             ) {
-                const std::vector<std::vector<int>> closest_hits = {
-                    {16, 12, 17}, 
-                    {40, 36, 41}, 
-                    {64, 60, 65}, 
-                    {88, 84, 89}
-                };
+                const std::vector<std::vector<int>> closest_hits = {{16, 12, 17}, {40, 36, 41}, {64, 60, 65}, {88, 84, 89}};
                 const std::vector<float> trav_dist = {0, 100, 200, 300};
                 const std::vector<float> extrapolation_x = {5, 5, 5, 5};
                 const std::vector<float> extrapolation_y = {5, 5, 5, 5};
                 for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
                     const float multiple_scattering_error = COMMON_FACTOR * trav_dist[i_station] * sqrt(trav_dist[i_station]);
                     CHECK(
-                        any_of(
-                            closest_hits[i_station], 
-                            host_features[offset::DTS + i_station], 
+                        any_of(closest_hits[i_station], host_features[offset::DTS + i_station], 
                             muon_hits_events[0].delta_time) == true
                     );
                     CHECK(
-                        any_of(
-                            closest_hits[i_station], 
-                            host_features[offset::TIMES + i_station], 
+                        any_of(closest_hits[i_station], host_features[offset::TIMES + i_station], 
                             (int*) muon_hits_events[0].time) == true
                     );
                     CHECK(
-                        any_of(
-                            closest_hits[i_station], 
-                            2 - host_features[offset::CROSS + i_station], 
+                        any_of(closest_hits[i_station], 2 - host_features[offset::CROSS + i_station], 
                             muon_hits_events[0].uncrossed) == true
                     );
-                    const std::vector<float> true_res_x = calculate_res(
+                    const std::vector<float> true_res_x = calculate_residual(
                         closest_hits[i_station],
                         extrapolation_x[i_station],
                         muon_hits_events[0].x,
@@ -174,7 +151,7 @@ SCENARIO( "Track is parallel to the axis OZ" ) {
                         Catch::Matchers::WithinAbs(true_res_x[1], eps) ||
                         Catch::Matchers::WithinAbs(true_res_x[2], eps)
                     );
-                    const std::vector<float> true_res_y = calculate_res(
+                    const std::vector<float> true_res_y = calculate_residual(
                         closest_hits[i_station],
                         extrapolation_y[i_station],
                         muon_hits_events[0].y,
@@ -191,8 +168,6 @@ SCENARIO( "Track is parallel to the axis OZ" ) {
         }
 
         WHEN( "Track mathes hit and parallel to the axis OZ (x=10, y=-10, z=0, dx=0, dy=0)" ) {
-
-            // Track initialization
             MiniState track = MiniState(10, -10, 0, 0, 0);
             cudaMemcpy(dev_track, &track, 1 * sizeof(MiniState), cudaMemcpyHostToDevice);
 
@@ -248,8 +223,6 @@ SCENARIO( "Track is parallel to the axis OZ" ) {
         }
 
         WHEN( "Track is far away from all hits and parallel to the axis OZ (x=4000, y=4, z=0, dx=0, dy=0)" ) {
-
-            // Track initialization
             MiniState track = MiniState(4000, 4, 0, 0, 0);
             cudaMemcpy(dev_track, &track, 1 * sizeof(MiniState), cudaMemcpyHostToDevice);
 
@@ -264,6 +237,7 @@ SCENARIO( "Track is parallel to the axis OZ" ) {
             );
 
             cudaMemcpy(host_features, dev_features, n_features * sizeof(float), cudaMemcpyDeviceToHost);
+
             THEN(
                 "Extrapolation of track:  \n"
                 "\t station 1 - (4000, 4) \n"
@@ -309,7 +283,6 @@ SCENARIO( "Track is parallel to the axis OZ" ) {
 }
 
 SCENARIO( "General case" ) {
-
     dev_allocate_memory();
 
     GIVEN( 
@@ -321,7 +294,7 @@ SCENARIO( "General case" ) {
         "\t (-20,-10) - (-10,-10) - ( 0,-10) - ( 10,-10) - ( 20,-10)\n"
         "\t (-20,-20) - (-10,-20) - ( 0,-20) - ( 10,-20) - ( 20,-20)\n"
         "z = 100, 200, 300, 400 for stations 1, 2, 3, 4 respectively\n"
-        "Hits indices on first station: \n"
+        "Hits indices for the first station: \n"
         "\t 19	-   20	  -   21    -   22    -   23\n"
         "\t 14	-   15	  -   16    -   17    -   18\n"
         "\t 10	-   11	  -         -   12    -   13\n"
@@ -330,10 +303,8 @@ SCENARIO( "General case" ) {
         "and so on \n"
         "Let dx = index, dy = index / 2, dz = 0\n"
     ) {
-
         std::vector<Muon::HitsSoA> muon_hits_events;
-        Muon::HitsSoA muon_hits = ConstructMockMuonHit();
-
+        Muon::HitsSoA muon_hits = construct_mock_muon_hit();
         // One event
         muon_hits_events.push_back(muon_hits);
         
@@ -344,8 +315,6 @@ SCENARIO( "General case" ) {
         float *host_features = (float*)malloc(1 * n_features * sizeof(float));
 
         WHEN( "Track is (x=-3, y=-2, z=0, dx=0.05, dy=0.05)" ) {
-
-            // Track initialization
             MiniState track = MiniState(-3, -2, 0, 0.05, 0.05);
             cudaMemcpy(dev_track, &track, 1 * sizeof(MiniState), cudaMemcpyHostToDevice);
 
@@ -401,8 +370,6 @@ SCENARIO( "General case" ) {
         }
 
         WHEN( "Track is (x=-3, y=4, z=0, dx=0.01, dy=-0.05)" ) {
-
-            // Track initialization
             MiniState track = MiniState(-3, 4, 0, 0.01, -0.05);
             cudaMemcpy(dev_track, &track, 1 * sizeof(MiniState), cudaMemcpyHostToDevice);
 
@@ -458,8 +425,6 @@ SCENARIO( "General case" ) {
         }
 
         WHEN( "Track is far away from hits (x=1960, y=-27, z=0, dx=0.1, dy=0.1)" ) {
-
-            // Track initialization
             MiniState track = MiniState(1960, -27, 0, 0.1, 0.1);
             cudaMemcpy(dev_track, &track, 1 * sizeof(MiniState), cudaMemcpyHostToDevice);
 
