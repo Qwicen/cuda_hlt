@@ -12,14 +12,14 @@ set(UNIT_TEST_LIST
 ```
 Create a new file inside the `tests` directory named `TestName.test.cu`.  
 Then add the following include to a file:
-```
+```cpp
 #include "catch.hpp"
 ```
 Now we are ready to add test to the project.
 
 How to build it
 ------------
-```shell
+```
 mkdir build && cd build
 cmake -DBUILD_TESTS=ON ..
 make
@@ -27,7 +27,7 @@ make
 
 How to run it
 ------------
-```shell
+```
 ctest { runs all the tests }
 ctest -R test_name { runs specific test }
 ./tests/test_name.test { runs specific test and shows failed assertions }
