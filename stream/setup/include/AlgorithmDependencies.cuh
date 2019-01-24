@@ -353,6 +353,16 @@ typedef std::tuple<
     dev_ut_qop,
     dev_ut_track_velo_indices
   >,
+  AlgorithmDependencies<is_muon_t,
+    dev_atomics_scifi,
+    dev_scifi_track_hit_number,
+    dev_scifi_qop,
+    dev_scifi_states,
+    dev_scifi_track_ut_indices,
+    dev_muon_foi,
+    dev_muon_momentum_cuts,
+    dev_is_muon
+  >,
   AlgorithmDependencies<muon_catboost_features_extraction_t,
     dev_atomics_scifi,
     dev_scifi_track_hit_number,

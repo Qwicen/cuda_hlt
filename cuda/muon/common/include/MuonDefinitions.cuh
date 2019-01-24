@@ -1,11 +1,12 @@
 #pragma once
-
+#include <vector>
 namespace Muon {
   namespace Constants {
     /* Detector description
        There are four stations with number of regions in it
        in current implementation regions are ignored
     */
+    static constexpr uint n_stations            = 4;
     static constexpr uint n_regions             = 4;
     /* Cut-offs */
     static constexpr uint max_numhits_per_event = 200 * n_stations;
@@ -18,28 +19,45 @@ namespace Muon {
 
     /* IsMuon constants */
     static constexpr float momentum_cuts[]      = {3000, 6000, 10000};
-    namespace FOI {
-      using namespace xy = std::pair<float, float>;
-      static constexpr float factor = 1.2;
-      static constexpr std::vector<xy> a = {
-        { xy(5.2, 3.3), xy(3.6, 2.1), xy(2.4, 1.7), xy(2.4, 1.6) },
-        { xy(5.7, 3.6), xy(4.4, 2.8), xy(2.8, 1.9), xy(2.3, 1.8) },
-        { xy(5.1, 4.4), xy(3.1, 3.3), xy(2.3, 2.2), xy(2.1, 2.2) },
-        { xy(5.8, 4.8), xy(3.4, 3.9), xy(2.6, 2.6), xy(2.8, 2.3) }
+    struct FOI {
+      const float factor = 1.2;
+      const float param_a_x[Constants::n_stations][Constants::n_regions] = {
+        { 5.2, 3.6, 2.4, 2.4 },
+        { 5.7, 4.4, 2.8, 2.3 },
+        { 5.1, 3.1, 2.3, 2.1 },
+        { 5.8, 3.4, 2.6, 2.8 }
       };
-      static constexpr std::vector<xy> b = {
-        { xy(31, 17), xy(28, 15), xy(21,  9), xy(17, 5) },
-        { xy(30, 26), xy(31, 25), xy(27, 16), xy(22, 15) },
-        { xy(28, 30), xy(33, 49), xy(35, 57), xy(47, 92) },
-        { xy(31, 32), xy(39, 55), xy(56, 96), xy(151,166) }
+      const float param_a_y[Constants::n_stations][Constants::n_regions] = {
+        { 3.3, 2.1, 1.7, 1.6 },
+        { 3.6, 2.8, 1.9, 1.8 },
+        { 4.4, 3.3, 2.2, 2.2 },
+        { 4.8, 3.9, 2.6, 2.3 }
       };
-      static constexpr std::vector<xy> c = {
-        { xy(0.06, 0.13), xy(0.08, 0.19), xy(0.10, 0.19), xy(0.15, 0.24) },
-        { xy(0.04, 0.11), xy(0.06, 0.19), xy(0.09, 0.21), xy(0.12, 0.32) },
-        { xy(0.08, 0.10), xy(0.15, 0.22), xy(0.23, 0.30), xy(0.36, 0.52) },
-        { xy(0.07, 0.08), xy(0.14, 0.20), xy(0.24, 0.34), xy(0.49, 0.52) }
+      const float param_b_x[Constants::n_stations][Constants::n_regions] = {
+        { 31, 28, 21, 17 },
+        { 30, 31, 27, 22 },
+        { 28, 33, 35, 47 },
+        { 31, 39, 56, 151}
       };
-    }
+      const float param_b_y[Constants::n_stations][Constants::n_regions] = {
+        { 17, 15,  9,   5 },
+        { 26, 25, 16,  15 },
+        { 30, 49, 57,  92 },
+        { 32, 55, 96, 166 }
+      };
+      const float param_c_x[Constants::n_stations][Constants::n_regions] = {
+        { 0.13, 0.19, 0.19, 0.24 },
+        { 0.11, 0.19, 0.21, 0.32 },
+        { 0.10, 0.22, 0.30, 0.52 },
+        { 0.08, 0.20, 0.34, 0.52 }
+      };
+      const float param_c_y[Constants::n_stations][Constants::n_regions] = {
+        {5.2, 3.6, 2.4, 2.4},
+        {5.7, 4.4, 2.8, 2.3},
+        {5.1, 3.1, 2.3, 2.1},
+        {5.8, 3.4, 2.6, 2.8}
+      };
+    };
   }
   /* SoA for hit variables
     The hits for every layer are written behind each other, the offsets

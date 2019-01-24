@@ -263,7 +263,6 @@ int main(int argc, char *argv[])
     ut_magnet_tool,
     scifi_geometry);
   constants.initialize_muon_catboost_model_constants(
-    muon_catboost_model_reader->n_features(),
     muon_catboost_model_reader->n_trees(),
     muon_catboost_model_reader->tree_depths(),
     muon_catboost_model_reader->tree_offsets(),

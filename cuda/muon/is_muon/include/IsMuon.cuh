@@ -10,8 +10,9 @@ __global__ void is_muon(
     float* dev_scifi_qop,
     MiniState* dev_scifi_states,
     uint* dev_scifi_track_ut_indices,
-    const Muon::HitsSoA* muon_hits,
-    bool* dev_is_muon
+    bool* dev_is_muon,
+    const Muon::Constants::FOI* dev_muon_foi,
+    const float* dev_muon_momentum_cuts
 );
 
 ALGORITHM(is_muon, is_muon_t)

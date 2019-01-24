@@ -14,6 +14,7 @@
 #include "UTDefinitions.cuh"
 #include "Logger.h"
 #include "PrVeloUTMagnetToolDefinitions.h"
+#include "MuonDefinitions.cuh"
 
 /**
  * @brief Struct intended as a singleton with constants defined on GPU.
@@ -57,7 +58,8 @@ struct Constants {
   PrUTMagnetTool* dev_ut_magnet_tool;
   
   // Muon classification model constatns
-  int muon_catboost_n_features;
+  Muon::Constants::FOI* dev_muon_foi;
+  float* dev_muon_momentum_cuts;
   int muon_catboost_n_trees;
   int* dev_muon_catboost_tree_depths;
   int* dev_muon_catboost_tree_offsets;
@@ -101,7 +103,6 @@ struct Constants {
     const std::vector<char>& scifi_geometry);
 
   void initialize_muon_catboost_model_constants(
-    const int n_features,
     const int n_trees,
     const std::vector<int>& tree_depths,
     const std::vector<int>& tree_offsets,

@@ -39,6 +39,7 @@
 #include "pv_beamline_multi_fitter.cuh"
 #include "RunForwardCPU.h"
 #include "RunBeamlinePVOnCPU.h"
+#include "IsMuon.cuh"
 #include "MuonFeaturesExtraction.cuh"
 #include "MuonCatboostEvaluator.cuh"
 

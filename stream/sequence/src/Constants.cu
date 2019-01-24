@@ -12,6 +12,8 @@ void Constants::reserve_constants() {
   cudaCheck(cudaMalloc((void**)&dev_scifi_constArrays, sizeof(SciFi::Tracking::Arrays)));
   cudaCheck(cudaMalloc((void**)&dev_ut_region_offsets, (UT::Constants::n_layers * UT::Constants::n_regions_in_layer + 1) * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_inv_clus_res, host_inv_clus_res.size() * sizeof(float)));
+  cudaCheck(cudaMalloc((void**)&dev_muon_foi, sizeof(Muon::Constants::FOI)));
+  cudaCheck(cudaMalloc((void**)&dev_muon_momentum_cuts, 3 * sizeof(float)));
 }
 
 void Constants::initialize_constants() {
@@ -59,6 +61,11 @@ void Constants::initialize_constants() {
 
   host_inv_clus_res = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
   cudaCheck(cudaMemcpy(dev_inv_clus_res, &host_inv_clus_res, host_inv_clus_res.size() * sizeof(float), cudaMemcpyHostToDevice));
+
+  // Muon constants
+  Muon::Constants::FOI host_muon_foi;
+  cudaCheck(cudaMemcpy(dev_muon_momentum_cuts, &Muon::Constants::momentum_cuts, 3 * sizeof(float), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_muon_foi, &host_muon_foi, sizeof(Muon::Constants::FOI), cudaMemcpyHostToDevice));
 }
 
 void Constants::initialize_ut_decoding_constants(
@@ -208,7 +215,6 @@ void Constants::initialize_geometry_constants(
 }
 
 void Constants::initialize_muon_catboost_model_constants(
-  const int n_features,
   const int n_trees,
   const std::vector<int>& tree_depths,
   const std::vector<int>& tree_offsets,
@@ -217,7 +223,6 @@ void Constants::initialize_muon_catboost_model_constants(
   const std::vector<float>& split_borders,
   const std::vector<int>& split_features
 ) {
-  muon_catboost_n_features = n_features;
   muon_catboost_n_trees = n_trees;
   cudaCheck(cudaMalloc((void**)&dev_muon_catboost_split_features, split_features.size() * sizeof(int)));
   cudaCheck(cudaMalloc((void**)&dev_muon_catboost_split_borders, split_borders.size() * sizeof(float)));

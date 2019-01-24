@@ -1,20 +1,19 @@
 #include "SequenceVisitor.cuh"
-#include "MuonFeaturesExtraction.cuh"
+#include "IsMuon.cuh"
 
 template<>
-void SequenceVisitor::set_arguments_size<muon_catboost_features_extraction_t>(
+void SequenceVisitor::set_arguments_size<is_muon_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 { 
-  arguments.set_size<dev_muon_hits>(host_buffers.host_number_of_selected_events[0]);
-  arguments.set_size<dev_muon_catboost_features>(Muon::Constants::n_catboost_features * host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
+  arguments.set_size<dev_is_muon>(host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
 }
 
 template<>
-void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
-  muon_catboost_features_extraction_t& state,
+void SequenceVisitor::visit<is_muon_t>(
+  is_muon_t& state,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   argument_manager_t& arguments,
@@ -24,7 +23,7 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
 {
   // Copy memory from host to device
   cudaCheck(cudaMemcpyAsync(
-    arguments.offset<dev_muon_hits>(),
+    arguments.offset<dev_muon_foi>(),
     runtime_options.host_muon_hits_events.data(),
     host_buffers.host_number_of_selected_events[0] * sizeof(Muon::HitsSoA),
     cudaMemcpyHostToDevice,
@@ -32,7 +31,7 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
   ));
 
   // Setup opts for kernel call
-  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0], Muon::Constants::n_stations), dim3(32), cuda_stream);
+  state.set_opts(1, 1, cuda_stream);
 
   // Setup arguments for kernel call
   state.set_arguments(
@@ -41,8 +40,9 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
     arguments.offset<dev_scifi_qop>(),
     arguments.offset<dev_scifi_states>(),
     arguments.offset<dev_scifi_track_ut_indices>(),
-    arguments.offset<dev_muon_hits>(),
-    arguments.offset<dev_muon_catboost_features>()
+    arguments.offset<dev_is_muon>(),
+    constants.dev_muon_foi,
+    constants.dev_muon_momentum_cuts
   );
 
   // Kernel call
