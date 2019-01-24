@@ -21,15 +21,6 @@ void SequenceVisitor::visit<is_muon_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  // Copy memory from host to device
-  cudaCheck(cudaMemcpyAsync(
-    arguments.offset<dev_muon_foi>(),
-    runtime_options.host_muon_hits_events.data(),
-    host_buffers.host_number_of_selected_events[0] * sizeof(Muon::HitsSoA),
-    cudaMemcpyHostToDevice,
-    cuda_stream
-  ));
-
   // Setup opts for kernel call
   state.set_opts(1, 1, cuda_stream);
 
