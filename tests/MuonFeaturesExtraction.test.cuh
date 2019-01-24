@@ -24,7 +24,7 @@ void dev_allocate_memory() {
     cudaMalloc(&dev_qop, host_qop.size() * sizeof(float));
     cudaMemcpy(dev_qop, host_qop.data(), host_qop.size() * sizeof(float), cudaMemcpyHostToDevice);
 
-    std::vector<int> host_atomics_scifi = {1};
+    std::vector<int> host_atomics_scifi = {1, 0, 1};
     cudaMalloc((void**)&dev_atomics_scifi, host_atomics_scifi.size() * sizeof(int));
     cudaMemcpy(dev_atomics_scifi, host_atomics_scifi.data(), host_atomics_scifi.size() * sizeof(int), cudaMemcpyHostToDevice);
 
