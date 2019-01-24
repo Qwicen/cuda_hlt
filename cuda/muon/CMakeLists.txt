@@ -1,5 +1,6 @@
 file(GLOB muon_features_extraction "preprocessing/src/*cu")
-file(GLOB muon_classification "IsMuon/src/*cu")
+file(GLOB muon_classification "classification/src/*cu")
+file(GLOB muon_filtering "is_muon/src/*cu")
 
 include_directories(preprocessing/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
@@ -13,9 +14,11 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/UT/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/main/include)
 include_directories(common/include)
-include_directories(IsMuon/include)
+include_directories(is_muon/include)
+include_directories(classification/include)
 
 add_library(Muon STATIC
+  ${muon_filtering}
   ${muon_features_extraction}
   ${muon_classification}
 )
