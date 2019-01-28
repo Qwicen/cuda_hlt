@@ -37,8 +37,9 @@ __global__ void ut_search_windows(
   const float* fudge_factors = &(dev_ut_magnet_tool->dxLayTable[0]);
   int* active_tracks = dev_active_tracks + event_number;
 
-  // 128 = blockDim.y
-  __shared__ int shared_active_tracks[2 * 128 - 1];
+  // Store only the valid tracks into shared memory.
+  // Fill the array until with find enough valid tracks = block size
+  __shared__ int shared_active_tracks[2 * UT::Constants::num_threads - 1];
 
   for (int i = 0; i < ((number_of_tracks_event + blockDim.y - 1) / blockDim.y) + 1; i += 1) {
     const auto i_track = i * blockDim.y + threadIdx.y;
@@ -80,7 +81,7 @@ __global__ void ut_search_windows(
         velo_tracks);
 
       // Write the windows in SoA style
-      short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * UT::Constants::n_layers;
+      short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::num_elems * UT::Constants::n_layers;
 
       const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
       const int layer_pos = layer * number_of_tracks_event + shared_active_tracks[threadIdx.y];
@@ -136,7 +137,7 @@ __global__ void ut_search_windows(
       velo_tracks);
 
     // Write the windows in SoA style
-    short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * UT::Constants::n_layers;
+    short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::num_elems * UT::Constants::n_layers;
 
     const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
     const int layer_pos = layer * number_of_tracks_event + shared_active_tracks[threadIdx.y];

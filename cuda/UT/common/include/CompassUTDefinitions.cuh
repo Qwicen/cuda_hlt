@@ -5,7 +5,8 @@
 
 namespace CompassUT {
 
-constexpr uint n_elems = 5 * 2; // num sectors * 2
+constexpr uint num_sectors = 5;
+constexpr uint num_elems = num_sectors * 2; 
 constexpr uint max_considered_before_found = 2;
 
 }
@@ -23,7 +24,7 @@ struct TrackCandidates {
   }
 
   __host__ __device__ short get_size(int layer, int sector) const {
-    return m_base_pointer[(sector + (CompassUT::n_elems/2)) * UT::Constants::n_layers * UT::Constants::num_threads + layer * UT::Constants::num_threads + threadIdx.x];
+    return m_base_pointer[(sector + (CompassUT::num_elems/2)) * UT::Constants::n_layers * UT::Constants::num_threads + layer * UT::Constants::num_threads + threadIdx.x];
   }
 };
 

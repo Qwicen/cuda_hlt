@@ -254,8 +254,8 @@ typedef std::tuple<
     dev_velo_track_hit_number,
     dev_velo_track_hits,
     dev_velo_states,
-    dev_windows_layers,
-    dev_active_tracks,
+    dev_ut_windows_layers,
+    dev_ut_active_tracks,
     dev_accepted_velo_tracks
   >,
   AlgorithmDependencies<compass_ut_t,
@@ -267,8 +267,8 @@ typedef std::tuple<
     dev_velo_states,
     dev_ut_tracks,
     dev_atomics_ut,
-    dev_active_tracks,
-    dev_windows_layers,
+    dev_ut_active_tracks,
+    dev_ut_windows_layers,
     dev_accepted_velo_tracks
   >,
   AlgorithmDependencies<scifi_calculate_cluster_count_t,

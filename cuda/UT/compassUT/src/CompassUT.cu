@@ -34,7 +34,7 @@ __global__ void compass_ut(
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * UT::Constants::n_layers;
+  short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::num_elems * UT::Constants::n_layers;
 
   const UT::HitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
   const UT::Hits ut_hits {dev_ut_hits, total_number_of_hits};
@@ -62,7 +62,7 @@ __global__ void compass_ut(
   __shared__ int shared_active_tracks[2 * UT::Constants::num_threads - 1];
 
   // store windows and num candidates in shared mem
-  __shared__ short win_size_shared[UT::Constants::num_threads * UT::Constants::n_layers * CompassUT::n_elems];
+  __shared__ short win_size_shared[UT::Constants::num_threads * UT::Constants::n_layers * CompassUT::num_elems];
 
   // const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
@@ -223,7 +223,7 @@ __device__ __inline__ void fill_shared_windows(
   const int track_pos_sh = UT::Constants::n_layers * UT::Constants::num_threads;
 
   for (int layer=0; layer<UT::Constants::n_layers; ++layer) {
-    for (int pos=0; pos<CompassUT::n_elems; ++pos) {
+    for (int pos=0; pos<CompassUT::num_elems; ++pos) {
       win_size_shared[pos * track_pos_sh + layer * UT::Constants::num_threads + threadIdx.x] = 
       windows_layers [pos * track_pos    + layer * number_of_tracks_event      + i_track];
     }
@@ -240,7 +240,8 @@ __device__ __inline__ bool found_active_windows(
 {
   const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
 
-  // windows_layers[sector_size * track_pos + layer * ...]
+  // The windows are stored in SOA, with the first 5 arrays being the first hits of the windows,
+  // and the next 5 the sizes of the windows. We check the sizes of all the windows.
   const bool l0_found = windows_layers[5 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
                         windows_layers[6 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
                         windows_layers[7 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
