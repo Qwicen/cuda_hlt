@@ -12,7 +12,7 @@ void Constants::reserve_constants() {
   cudaCheck(cudaMalloc((void**)&dev_scifi_constArrays, sizeof(SciFi::Tracking::Arrays)));
   cudaCheck(cudaMalloc((void**)&dev_ut_region_offsets, (UT::Constants::n_layers * UT::Constants::n_regions_in_layer + 1) * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_inv_clus_res, host_inv_clus_res.size() * sizeof(float)));
-  cudaCheck(cudaMalloc((void**)&dev_muon_foi, sizeof(Muon::Constants::FOI)));
+  cudaCheck(cudaMalloc((void**)&dev_muon_foi, sizeof(Muon::Constants::FieldOfInterest)));
   cudaCheck(cudaMalloc((void**)&dev_muon_momentum_cuts, 3 * sizeof(float)));
 }
 
@@ -63,9 +63,9 @@ void Constants::initialize_constants() {
   cudaCheck(cudaMemcpy(dev_inv_clus_res, &host_inv_clus_res, host_inv_clus_res.size() * sizeof(float), cudaMemcpyHostToDevice));
 
   // Muon constants
-  Muon::Constants::FOI host_muon_foi;
+  Muon::Constants::FieldOfInterest host_muon_foi;
   cudaCheck(cudaMemcpy(dev_muon_momentum_cuts, &Muon::Constants::momentum_cuts, 3 * sizeof(float), cudaMemcpyHostToDevice));
-  cudaCheck(cudaMemcpy(dev_muon_foi, &host_muon_foi, sizeof(Muon::Constants::FOI), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_muon_foi, &host_muon_foi, sizeof(Muon::Constants::FieldOfInterest), cudaMemcpyHostToDevice));
 }
 
 void Constants::initialize_ut_decoding_constants(

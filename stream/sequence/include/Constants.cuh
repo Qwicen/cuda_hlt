@@ -58,7 +58,7 @@ struct Constants {
   PrUTMagnetTool* dev_ut_magnet_tool;
   
   // Muon classification model constatns
-  Muon::Constants::FOI* dev_muon_foi;
+  Muon::Constants::FieldOfInterest* dev_muon_foi;
   float* dev_muon_momentum_cuts;
   int muon_catboost_n_trees;
   int* dev_muon_catboost_tree_depths;

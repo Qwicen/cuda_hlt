@@ -8,7 +8,7 @@ __global__ void is_muon(
     MiniState* dev_scifi_states,
     uint* dev_scifi_track_ut_indices,
     bool* dev_is_muon,
-    const Muon::Constants::FOI* dev_muon_foi,
+    const Muon::Constants::FieldOfInterest* dev_muon_foi,
     const float* dev_muon_momentum_cuts
 ) {
     const uint number_of_events = gridDim.x;
