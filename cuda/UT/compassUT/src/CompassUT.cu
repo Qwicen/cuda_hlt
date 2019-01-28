@@ -1,8 +1,8 @@
 #include "CompassUT.cuh"
 
-#include "CalculateWindows.cuh"
-#include "BinarySearchFirstCandidate.cuh"
 #include "BinarySearch.cuh"
+#include "BinarySearchFirstCandidate.cuh"
+#include "CalculateWindows.cuh"
 
 __global__ void compass_ut(
   uint* dev_ut_hits, // actual hit content
@@ -15,10 +15,11 @@ __global__ void compass_ut(
   const float* dev_ut_dxDy,
   int* dev_active_tracks,
   const uint* dev_unique_x_sector_layer_offsets, // prefixsum to point to the x hit of the sector, per layer
-  const float* dev_unique_sector_xs, // list of xs that define the groups
+  const float* dev_unique_sector_xs,             // list of xs that define the groups
   UT::TrackHits* dev_compassUT_tracks,
   int* dev_atomics_compassUT, // size of number of events
-  int* dev_windows_layers)
+  int* dev_windows_layers,
+  bool* dev_accepted_velo_tracks)
 {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
@@ -50,7 +51,7 @@ __global__ void compass_ut(
   // initialize atomic veloUT tracks counter && active track
   if (threadIdx.x == 0) {
     *n_veloUT_tracks_event = 0;
-    *active_tracks         = 0;
+    *active_tracks = 0;
   }
 
   __syncthreads();
@@ -73,7 +74,9 @@ __global__ void compass_ut(
     if (i_track < number_of_tracks_event) {
       const uint current_track_offset = event_tracks_offset + i_track;
 
-      if ( found_active_windows(dev_windows_layers, current_track_offset) ) {
+      if (!velo_states.backward[current_track_offset] &&
+          dev_accepted_velo_tracks[current_track_offset] &&
+          found_active_windows(dev_windows_layers, current_track_offset)) {
         int current_track = atomicAdd(active_tracks, 1);
         shared_active_tracks[current_track] = i_track;
       }
@@ -160,11 +163,11 @@ __device__ void compass_ut_tracking(
   // select velo track to join with UT hits
   const MiniState velo_state{velo_states, current_track_offset};
 
-  fill_shared_windows( 
-    dev_windows_layers, 
-    current_track_offset, 
+  fill_shared_windows(
+    dev_windows_layers,
+    current_track_offset,
     win_size_shared);
-  
+
   // Find compatible hits in the windows for this VELO track
   const auto best_hits_and_params = find_best_hits(
     win_size_shared,
@@ -197,12 +200,12 @@ __device__ void compass_ut_tracking(
       n_veloUT_tracks_event,
       veloUT_tracks_event,
       event_hit_offset);
-  }  
+  }
 }
 
 //=============================================================================
 // Fill windows and sizes for shared memory
-// we store the initial hit of the window and the size of the window 
+// we store the initial hit of the window and the size of the window
 // (3 windows per layer)
 //=============================================================================
 __device__ __inline__ void fill_shared_windows(
@@ -252,15 +255,15 @@ __device__ __inline__ bool found_active_windows(const int* windows_layers, const
 {
   const int total_offset = 6 * UT::Constants::n_layers * current_track_offset;
 
-  const bool first_win_found = windows_layers[total_offset] != -1 || 
+  const bool first_win_found = windows_layers[total_offset] != -1 ||
                                windows_layers[total_offset + 2] != -1 ||
                                windows_layers[total_offset + 4] != -1;
   const bool second_win_found = windows_layers[total_offset + 12] != -1 ||
                                 windows_layers[total_offset + 12 + 2] != -1 ||
                                 windows_layers[total_offset + 12 + 4] != -1;
-  const bool last_win_found = windows_layers[total_offset + 6] != -1 || 
+  const bool last_win_found = windows_layers[total_offset + 6] != -1 ||
                               windows_layers[total_offset + 6 + 2] != -1 ||
-                              windows_layers[total_offset + 6 + 4] != -1 || 
+                              windows_layers[total_offset + 6 + 4] != -1 ||
                               windows_layers[total_offset + 18] != -1 ||
                               windows_layers[total_offset + 18 + 2] != -1 ||
                               windows_layers[total_offset + 18 + 4] != -1;

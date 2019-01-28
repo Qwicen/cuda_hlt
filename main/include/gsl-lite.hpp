@@ -639,7 +639,11 @@ gsl_api inline gsl_constexpr14 void fail_fast_assert( bool cond, char const * co
 gsl_api inline gsl_constexpr14 void fail_fast_assert( bool cond ) gsl_noexcept
 {
     if ( !cond )
+#  ifdef __CUDACC__
+        assert(false);
+#  else
         std::terminate();
+#  endif
 }
 
 # endif
@@ -1069,7 +1073,7 @@ public:
         , class Dummy = typename std::enable_if<std::is_constructible<T, U>::value>::type
 #endif
     >
-    gsl_api gsl_constexpr14 gsl_not_null_explicit 
+    gsl_api gsl_constexpr14 gsl_not_null_explicit
 #if gsl_HAVE( RVALUE_REFERENCE )
     not_null( U && u )
     : ptr_( std::forward<U>( u ) )
@@ -1081,20 +1085,20 @@ public:
         Expects( ptr_ != gsl_nullptr );
     }
 #undef gsl_not_null_explicit
-    
+
 #if gsl_HAVE( IS_DEFAULT )
-    gsl_api                ~not_null() = default;
-    gsl_api gsl_constexpr   not_null( not_null &&      other ) = default;
-    gsl_api gsl_constexpr   not_null( not_null const & other ) = default;
-    gsl_api                 not_null & operator=( not_null &&      other ) = default;
-    gsl_api                 not_null & operator=( not_null const & other ) = default;
+                           ~not_null() = default;
+            gsl_constexpr   not_null( not_null &&      other ) = default;
+            gsl_constexpr   not_null( not_null const & other ) = default;
+                            not_null & operator=( not_null &&      other ) = default;
+                            not_null & operator=( not_null const & other ) = default;
 #else
-    gsl_api                ~not_null() {};
-    gsl_api gsl_constexpr   not_null( not_null const & other ) : ptr_ ( other.ptr_  ) {}
-    gsl_api                 not_null & operator=( not_null const & other ) { ptr_ = other.ptr_; return *this; }
+                           ~not_null() {};
+            gsl_constexpr   not_null( not_null const & other ) : ptr_ ( other.ptr_  ) {}
+                            not_null & operator=( not_null const & other ) { ptr_ = other.ptr_; return *this; }
 # if gsl_HAVE( RVALUE_REFERENCE )
-    gsl_api gsl_constexpr   not_null( not_null && other ) : ptr_( std::move( other.get() ) ) {}
-    gsl_api                 not_null & operator=( not_null && other ) { ptr_ = std::move( other.get() ); return *this; }
+            gsl_constexpr   not_null( not_null && other ) : ptr_( std::move( other.get() ) ) {}
+                            not_null & operator=( not_null && other ) { ptr_ = std::move( other.get() ); return *this; }
 # endif
 #endif
 
@@ -1657,10 +1661,10 @@ public:
 #endif // deprecate shared_ptr, unique_ptr
 
 #if gsl_HAVE( IS_DEFAULT ) && ! gsl_BETWEEN( gsl_COMPILER_GNUC_VERSION, 430, 600)
-    gsl_api gsl_constexpr span( span && ) gsl_noexcept = default;
-    gsl_api gsl_constexpr span( span const & ) = default;
+            gsl_constexpr span( span && ) gsl_noexcept = default;
+            gsl_constexpr span( span const & ) = default;
 #else
-    gsl_api gsl_constexpr span( span const & other )
+            gsl_constexpr span( span const & other )
         : first_( other.begin() )
         , last_ ( other.end() )
     {}
@@ -1673,10 +1677,10 @@ public:
 #endif
 
 #if gsl_HAVE( IS_DEFAULT )
-    gsl_api gsl_constexpr14 span & operator=( span && ) gsl_noexcept = default;
-    gsl_api gsl_constexpr14 span & operator=( span const & ) gsl_noexcept = default;
+            gsl_constexpr14 span & operator=( span && ) gsl_noexcept = default;
+            gsl_constexpr14 span & operator=( span const & ) gsl_noexcept = default;
 #else
-    gsl_api span & operator=( span other ) gsl_noexcept
+            span & operator=( span other ) gsl_noexcept
     {
         other.swap( *this );
         return *this;
@@ -1704,27 +1708,27 @@ public:
 
     gsl_api gsl_constexpr14 span first( index_type count ) const gsl_noexcept
     {
-        Expects( 0 <= count && count <= this->size() );
+        Expects( count <= this->size() );
         return span( this->data(), count );
     }
 
     gsl_api gsl_constexpr14 span last( index_type count ) const gsl_noexcept
     {
-        Expects( 0 <= count && count <= this->size() );
+        Expects( count <= this->size() );
         return span( this->data() + this->size() - count, count );
     }
 
     gsl_api gsl_constexpr14 span subspan( index_type offset ) const gsl_noexcept
     {
-        Expects( 0 <= offset && offset <= this->size() );
+        Expects( offset <= this->size() );
         return span( this->data() + offset, this->size() - offset );
     }
 
     gsl_api gsl_constexpr14 span subspan( index_type offset, index_type count ) const gsl_noexcept
     {
         Expects(
-            0 <= offset && offset <= this->size() &&
-            0 <= count  && count + offset <= this->size() );
+            offset <= this->size() &&
+            count + offset <= this->size() );
         return span( this->data() + offset, count );
     }
 
@@ -2171,9 +2175,9 @@ public:
     // construction:
 
 #if gsl_HAVE( IS_DEFAULT )
-    gsl_api gsl_constexpr basic_string_span() gsl_noexcept = default;
+            gsl_constexpr basic_string_span() gsl_noexcept = default;
 #else
-    gsl_api gsl_constexpr basic_string_span() gsl_noexcept {}
+            gsl_constexpr basic_string_span() gsl_noexcept {}
 #endif
 
 #if gsl_HAVE( NULLPTR )
@@ -2280,9 +2284,9 @@ public:
 
     gsl_api gsl_constexpr basic_string_span( basic_string_span && rhs ) = default;
 # else
-    gsl_api gsl_constexpr basic_string_span( basic_string_span const & rhs ) gsl_noexcept = default;
+            gsl_constexpr basic_string_span( basic_string_span const & rhs ) gsl_noexcept = default;
 
-    gsl_api gsl_constexpr basic_string_span( basic_string_span && rhs ) gsl_noexcept = default;
+            gsl_constexpr basic_string_span( basic_string_span && rhs ) gsl_noexcept = default;
 # endif
 #endif
 
@@ -2319,11 +2323,11 @@ public:
     // destruction, assignment:
 
 #if gsl_HAVE( IS_DEFAULT )
-    gsl_api ~basic_string_span() gsl_noexcept = default;
+            ~basic_string_span() gsl_noexcept = default;
 
-    gsl_api basic_string_span & operator=( basic_string_span const & rhs ) gsl_noexcept = default;
+            basic_string_span & operator=( basic_string_span const & rhs ) gsl_noexcept = default;
 
-    gsl_api basic_string_span & operator=( basic_string_span && rhs ) gsl_noexcept = default;
+            basic_string_span & operator=( basic_string_span && rhs ) gsl_noexcept = default;
 #endif
 
     // sub span:
