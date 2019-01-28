@@ -9,21 +9,21 @@ __global__ void compass_ut(
   const uint* dev_ut_hit_offsets,
   int* dev_atomics_storage, // semi_prefixsum, offset to tracks
   uint* dev_velo_track_hit_number,
-  uint* dev_velo_track_hits,
-  uint* dev_velo_states,
+  char* dev_velo_track_hits,
+  char* dev_velo_states,
   PrUTMagnetTool* dev_ut_magnet_tool,
   const float* dev_ut_dxDy,
   int* dev_active_tracks,
   const uint* dev_unique_x_sector_layer_offsets, // prefixsum to point to the x hit of the sector, per layer
   const float* dev_unique_sector_xs, // list of xs that define the groups
-  VeloUTTracking::TrackUT* dev_compassUT_tracks,
+  UT::TrackHits* dev_compassUT_tracks,
   int* dev_atomics_compassUT, // size of number of events
   short* dev_windows_layers)
 {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
 
-  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[VeloUTTracking::n_layers];
+  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[UT::Constants::n_layers];
   const uint total_number_of_hits = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
 
   // Velo consolidated types
@@ -33,10 +33,11 @@ __global__ void compass_ut(
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * VeloUTTracking::n_layers;
+  short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * UT::Constants::n_layers;
 
-  UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
-  UTHits ut_hits {dev_ut_hits, total_number_of_hits};
+  const UT::HitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  const UT::Hits ut_hits {dev_ut_hits, total_number_of_hits};
+  const auto event_hit_offset = ut_hit_offsets.event_offset();
 
   // active track pointer
   int* active_tracks = dev_active_tracks + event_number;
@@ -46,13 +47,13 @@ __global__ void compass_ut(
   //   2. # velo tracks in UT acceptance
   // This is to write the final track
   int* n_veloUT_tracks_event = dev_atomics_compassUT + event_number;
-  VeloUTTracking::TrackUT* veloUT_tracks_event = dev_compassUT_tracks + event_number * VeloUTTracking::max_num_tracks;
+  UT::TrackHits* veloUT_tracks_event = dev_compassUT_tracks + event_number * UT::Constants::max_num_tracks;
 
   // store the tracks with valid windows
-  __shared__ int shared_active_tracks[2 * VeloUTTracking::num_threads - 1];
+  __shared__ int shared_active_tracks[2 * UT::Constants::num_threads - 1];
 
   // store windows and num candidates in shared mem
-  __shared__ short win_size_shared[VeloUTTracking::num_threads * VeloUTTracking::n_layers * CompassUT::n_elems];
+  __shared__ short win_size_shared[UT::Constants::num_threads * UT::Constants::n_layers * CompassUT::n_elems];
 
   // const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
@@ -92,7 +93,8 @@ __global__ void compass_ut(
         dev_ut_dxDy,
         win_size_shared,
         n_veloUT_tracks_event,
-        veloUT_tracks_event);
+        veloUT_tracks_event,
+        event_hit_offset);
 
       __syncthreads();
 
@@ -127,25 +129,27 @@ __global__ void compass_ut(
       dev_ut_dxDy,
       win_size_shared,
       n_veloUT_tracks_event,
-      veloUT_tracks_event);
+      veloUT_tracks_event,
+      event_hit_offset);
   }
 }
 
 __device__ void compass_ut_tracking(
   const short* windows_layers,
-  uint* dev_velo_track_hits,
+  char* dev_velo_track_hits,
   const uint number_of_tracks_event,
   const int i_track,
   const uint current_track_offset,
   const Velo::Consolidated::States& velo_states,
   const Velo::Consolidated::Tracks& velo_tracks,
-  const UTHits& ut_hits,
-  const UTHitOffsets& ut_hit_offsets,
+  const UT::Hits& ut_hits,
+  const UT::HitOffsets& ut_hit_offsets,
   const float* bdl_table,
   const float* dev_ut_dxDy,
   short* win_size_shared,
   int* n_veloUT_tracks_event,
-  VeloUTTracking::TrackUT* veloUT_tracks_event)
+  UT::TrackHits* veloUT_tracks_event,
+  const int event_hit_offset)
 {
 
   // select velo track to join with UT hits
@@ -167,7 +171,7 @@ __device__ void compass_ut_tracking(
     velo_state,
     dev_ut_dxDy);
 
-  const int best_hits[VeloUTTracking::n_layers] = {
+  const int best_hits[UT::Constants::n_layers] = {
     std::get<0>(best_hits_and_params),
     std::get<1>(best_hits_and_params),
     std::get<2>(best_hits_and_params),
@@ -189,7 +193,8 @@ __device__ void compass_ut_tracking(
       ut_hits,
       dev_ut_dxDy,
       n_veloUT_tracks_event,
-      veloUT_tracks_event);
+      veloUT_tracks_event,
+      event_hit_offset);
   }  
 }
 
@@ -204,12 +209,12 @@ __device__ __inline__ void fill_shared_windows(
   const int i_track,
   short* win_size_shared)
 {
-  const int track_pos = VeloUTTracking::n_layers * number_of_tracks_event;
-  const int track_pos_sh = VeloUTTracking::n_layers * VeloUTTracking::num_threads;
+  const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
+  const int track_pos_sh = UT::Constants::n_layers * UT::Constants::num_threads;
 
-  for (int layer=0; layer<VeloUTTracking::n_layers; ++layer) {
+  for (int layer=0; layer<UT::Constants::n_layers; ++layer) {
     for (int pos=0; pos<CompassUT::n_elems; ++pos) {
-      win_size_shared[pos * track_pos_sh + layer * VeloUTTracking::num_threads + threadIdx.x] = 
+      win_size_shared[pos * track_pos_sh + layer * UT::Constants::num_threads + threadIdx.x] = 
       windows_layers [pos * track_pos    + layer * number_of_tracks_event      + i_track];
     }
   }
@@ -223,7 +228,7 @@ __device__ __inline__ bool found_active_windows(
   const int number_of_tracks_event,
   const int i_track)
 {
-  const int track_pos = VeloUTTracking::n_layers * number_of_tracks_event;
+  const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
 
   // windows_layers[sector_size * track_pos + layer * ...]
   const bool l0_found = windows_layers[5 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
@@ -271,14 +276,15 @@ __device__ void save_track(
   const float* bdl_table,
   const MiniState& velo_state,
   const BestParams& best_params,
-  uint* dev_velo_track_hits,
+  char* dev_velo_track_hits,
   const Velo::Consolidated::Tracks& velo_tracks,
   const int num_best_hits,
   const int* best_hits,
-  const UTHits& ut_hits,
+  const UT::Hits& ut_hits,
   const float* ut_dxDy,
   int* n_veloUT_tracks, // increment number of tracks
-  VeloUTTracking::TrackUT VeloUT_tracks[VeloUTTracking::max_num_tracks]) // write the track
+  UT::TrackHits* VeloUT_tracks, // write the track
+  const int event_hit_offset)
 {
   //== Handle states. copy Velo one, add UT.
   const float zOrigin = (std::fabs(velo_state.ty) > 0.001f) ? velo_state.z - velo_state.y / velo_state.ty
@@ -322,23 +328,21 @@ __device__ void save_track(
   const float p = 1.3f * std::abs(1 / qop);
   const float pt = p * std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty);
 
-  if (p < VeloUTConst::minMomentum || pt < VeloUTConst::minPT) return;
+  if (p < UT::Constants::minMomentum || pt < UT::Constants::minPT) return;
 
   // the track will be added
   int n_tracks = atomicAdd(n_veloUT_tracks, 1);
 
-  VeloUTTracking::TrackUT track;
+  UT::TrackHits track;
   track.velo_track_index = i_track;
   track.qop = qop;
-  
+  track.hits_num = UT::Constants::n_layers;
+
   // Adding hits to track
-  for (int i = 0; i < VeloUTTracking::n_layers; ++i) {
-    const int hit_index = best_hits[i];
-    if (hit_index >= 0) {
-      track.lhcb_ids[track.number_of_hits++] = ut_hits.LHCbID[hit_index];
-    }
+  for (int i = 0; i < UT::Constants::n_layers; ++i) {
+    track.hits[i] = best_hits[i] == -1 ? -1 : best_hits[i] - event_hit_offset;
   }
 
-  assert(n_tracks < VeloUTTracking::max_num_tracks);
+  assert(n_tracks < UT::Constants::max_num_tracks);
   VeloUT_tracks[n_tracks] = track;
 }

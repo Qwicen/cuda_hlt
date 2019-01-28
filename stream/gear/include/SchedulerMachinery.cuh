@@ -1,9 +1,9 @@
 #pragma once
 
-#include <iostream>
 #include <tuple>
 #include <functional>
 #include <type_traits>
+#include "Logger.h"
 #include "Argument.cuh"
 #include "TupleTools.cuh"
 
@@ -28,7 +28,9 @@ namespace Sch {
 // > output_t;
 
 // A dummy for last element in Out
-struct last_t {};
+struct last_t {
+  constexpr static auto name {"last"};
+};
 
 // Checks whether an argument T is in any of the arguments specified in the Algorithms
 template<typename T, typename Algorithms>
@@ -233,7 +235,7 @@ struct PrintArguments<std::tuple<>> {
 template<typename Argument, typename... Arguments>
 struct PrintArguments<std::tuple<Argument, Arguments...>> {
   static constexpr void print() {
-    std::cout << Argument::name << ", ";
+    info_cout << Argument::name << ", ";
     PrintArguments<std::tuple<Arguments...>>::print();
   }
 };
@@ -250,13 +252,30 @@ struct PrintAlgorithmDependencies<std::tuple<>> {
 template<typename Algorithm, typename... Arguments, typename... Dependencies>
 struct PrintAlgorithmDependencies<std::tuple<ScheduledDependencies<Algorithm, std::tuple<Arguments...>>, Dependencies...>> {
   static constexpr void print() {
-    std::cout << "Algorithm " << Algorithm::name << ":" << std::endl
+    info_cout << "Algorithm " << Algorithm::name << ":" << std::endl
       << std::tuple_size<std::tuple<Arguments...>>::value << " dependencies" << std::endl;
 
-    PrintArguments<Arguments...>::print();
-    std::cout << std::endl << std::endl;
+    PrintArguments<std::tuple<Arguments...>>::print();
+    info_cout << std::endl << std::endl;
 
     PrintAlgorithmDependencies<std::tuple<Dependencies...>>::print();
+  }
+};
+
+// Print the configured sequence
+template<typename Dependencies>
+struct PrintAlgorithmSequence;
+
+template<>
+struct PrintAlgorithmSequence<std::tuple<>> {
+  static constexpr void print() {};
+};
+
+template<typename Algorithm, typename... Algorithms>
+struct PrintAlgorithmSequence<std::tuple<Algorithm, Algorithms...>> {
+  static constexpr void print() {
+    info_cout << " " << Algorithm::name << std::endl;
+    PrintAlgorithmSequence<std::tuple<Algorithms...>>::print();
   }
 };
 
@@ -352,24 +371,24 @@ struct RunSequenceTuple<Scheduler, Functor, Tuple, std::tuple<SetSizeArguments..
  * @brief Runs the PrChecker for all configured algorithms in the sequence.
  */
 template<typename Functor, typename ConfiguredSequence, typename Arguments>
-struct RunPrChecker;
+struct RunChecker;
 
 template<typename Functor, typename... Arguments>
-struct RunPrChecker<Functor, std::tuple<>, std::tuple<Arguments...>> {
+struct RunChecker<Functor, std::tuple<>, std::tuple<Arguments...>> {
   constexpr static void check(
     const Functor& functor,
     Arguments&&... arguments) {}
 };
 
 template<typename Functor, typename Algorithm, typename... Algorithms, typename... Arguments>
-struct RunPrChecker<Functor, std::tuple<Algorithm, Algorithms...>, std::tuple<Arguments...>> {
+struct RunChecker<Functor, std::tuple<Algorithm, Algorithms...>, std::tuple<Arguments...>> {
   constexpr static void check(
     const Functor& functor,
     Arguments&&... arguments) 
   {
     functor.template check<Algorithm>(std::forward<Arguments>(arguments)...);
 
-    RunPrChecker<
+    RunChecker<
       Functor,
       std::tuple<Algorithms...>,
       std::tuple<Arguments...>

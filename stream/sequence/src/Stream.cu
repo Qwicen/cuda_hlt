@@ -4,6 +4,7 @@
 #include "VeloSequenceCheckers_impl.cuh"
 #include "UTSequenceCheckers_impl.cuh"
 #include "SciFiSequenceCheckers_impl.cuh"
+#include "PVSequenceCheckers_impl.cuh"
 
 /**
  * @brief Sets up the chain that will be executed later.
@@ -44,6 +45,9 @@ cudaError_t Stream::initialize(
 
 cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
   for (uint repetition=0; repetition<runtime_options.number_of_repetitions; ++repetition) {
+    // Initialize selected_number_of_events with requested_number_of_events
+    host_buffers.host_number_of_selected_events[0] = runtime_options.number_of_events;
+
     // Reset scheduler
     scheduler.reset();
 
@@ -100,26 +104,30 @@ void Stream::run_monte_carlo_test(
   f->Close();
 #endif
 
-  // Create the PrCheckerInvoker and read Monte Carlo validation information
-  const auto pr_checker_invoker = PrCheckerInvoker(
+  // Create the CheckerInvoker and read Monte Carlo validation information
+  const auto checker_invoker = CheckerInvoker(
     mc_folder,
     start_event_offset,
-    number_of_events_requested);
+    host_buffers.host_event_list,
+    number_of_events_requested,
+    host_buffers.host_number_of_selected_events[0]);
 
-  Sch::RunPrChecker<
+  Sch::RunChecker<
     SequenceVisitor,
     configured_sequence_t,
     std::tuple<
       const uint&,
       const uint&,
       const HostBuffers&,
-      const PrCheckerInvoker&
+      const Constants&,
+      const CheckerInvoker&
     >
   >::check(
     sequence_visitor,
     start_event_offset,
     number_of_events_requested,
     host_buffers,
-    pr_checker_invoker
+    constants,
+    checker_invoker
   );
 }

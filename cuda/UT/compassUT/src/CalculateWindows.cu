@@ -8,15 +8,15 @@
 //=============================================================================
 __device__ bool velo_track_in_UTA_acceptance(const MiniState& state)
 {
-  const float xMidUT = state.x + state.tx * (PrVeloUTConst::zMidUT - state.z);
-  const float yMidUT = state.y + state.ty * (PrVeloUTConst::zMidUT - state.z);
+  const float xMidUT = state.x + state.tx * (UT::Constants::zMidUT - state.z);
+  const float yMidUT = state.y + state.ty * (UT::Constants::zMidUT - state.z);
 
-  if (xMidUT * xMidUT + yMidUT * yMidUT < PrVeloUTConst::centralHoleSize * PrVeloUTConst::centralHoleSize) return false;
-  if ((std::abs(state.tx) > PrVeloUTConst::maxXSlope) || (std::abs(state.ty) > PrVeloUTConst::maxYSlope)) return false;
+  if (xMidUT * xMidUT + yMidUT * yMidUT < UT::Constants::centralHoleSize * UT::Constants::centralHoleSize) return false;
+  if ((std::abs(state.tx) > UT::Constants::maxXSlope) || (std::abs(state.ty) > UT::Constants::maxYSlope)) return false;
 
   if (
-    PrVeloUTConst::passTracks && std::abs(xMidUT) < PrVeloUTConst::passHoleSize &&
-    std::abs(yMidUT) < PrVeloUTConst::passHoleSize) {
+    UT::Constants::passTracks && std::abs(xMidUT) < UT::Constants::passHoleSize &&
+    std::abs(yMidUT) < UT::Constants::passHoleSize) {
     return false;
   }
 
@@ -29,7 +29,7 @@ __device__ bool velo_track_in_UTA_acceptance(const MiniState& state)
 __host__ __device__ void tol_refine (
   int& first_candidate,
   int& last_candidate,
-  const UTHits& ut_hits,
+  const UT::Hits& ut_hits,
   const MiniState& velo_state,
   const float invNormfact,
   const float xTolNormFact,
@@ -47,7 +47,7 @@ __host__ __device__ void tol_refine (
     if (dx >= -xTolNormFact &&
         dx <= xTolNormFact &&
         !ut_hits.isNotYCompatible(i, yApprox,
-                                  PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx * invNormfact)))
+                                  UT::Constants::yTol + UT::Constants::yTolSlope * std::abs(dx * invNormfact)))
     {
       // It is compatible
       if (!first_found) {
@@ -74,8 +74,8 @@ __device__ std::tuple<int, int, int, int, int, int, int, int, int, int> calculat
   const int layer,
   const MiniState& velo_state,
   const float* fudge_factors,
-  const UTHits& ut_hits,
-  const UTHitOffsets& ut_hit_offsets,
+  const UT::Hits& ut_hits,
+  const UT::HitOffsets& ut_hit_offsets,
   const float* ut_dxDy,
   const float* dev_unique_sector_xs,
   const uint* dev_unique_x_sector_layer_offsets,
@@ -92,9 +92,9 @@ __device__ std::tuple<int, int, int, int, int, int, int, int, int, int> calculat
   // -- this 500 seems a little odd...
   // to do: change back!
   const float invTheta = std::min(500.0f, 1.0f / std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty));
-  const float minMom   = std::max(PrVeloUTConst::minPT * invTheta, 1.5f * Gaudi::Units::GeV);
-  const float xTol     = std::abs(1.0f / (PrVeloUTConst::distToMomentum * minMom));
-  // const float yTol     = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * xTol;
+  const float minMom   = std::max(UT::Constants::minPT * invTheta, 1.5f * Gaudi::Units::GeV);
+  const float xTol     = std::abs(1.0f / (UT::Constants::distToMomentum * minMom));
+  // const float yTol     = UT::Constants::yTol + UT::Constants::yTolSlope * xTol;
 
   int layer_offset = ut_hit_offsets.layer_offset(layer);
 
@@ -245,8 +245,8 @@ __device__ std::tuple<int, int, int, int, int, int, int, int, int, int> calculat
 } 
 
 __device__ std::tuple<int, int> find_candidates_in_sector_group(
-  const UTHits& ut_hits,
-  const UTHitOffsets& ut_hit_offsets,
+  const UT::Hits& ut_hits,
+  const UT::HitOffsets& ut_hit_offsets,
   const MiniState& velo_state,
   const float* dev_unique_sector_xs,
   const float x_track,
@@ -263,7 +263,7 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
   const float xx_at_right_sector = x_at_right_sector + y_track * dx_dy;
   const float dx_max = std::max(xx_at_left_sector - x_track, xx_at_right_sector - x_track);
 
-  const float tol = PrVeloUTConst::yTol + PrVeloUTConst::yTolSlope * std::abs(dx_max * invNormFact);
+  const float tol = UT::Constants::yTol + UT::Constants::yTolSlope * std::abs(dx_max * invNormFact);
   const uint sector_group_offset = ut_hit_offsets.sector_group_offset(sector_group);
 
   int first_candidate = -1, last_candidate = -1;

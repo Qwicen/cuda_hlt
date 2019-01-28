@@ -16,7 +16,8 @@ debug*
 .#*
 CMakeFiles
 CMakeCache.txt
+configuration/sequences/ConfiguredSequence.h
 run.sh
 setup.sh
-stream/sequence_setup/include/sequences/ConfiguredSequence.cuh
 *pyc
+*.root

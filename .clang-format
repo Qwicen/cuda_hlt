@@ -1,39 +1,45 @@
-Language:        Cpp
-# BasedOnStyle:  Mozilla
+Language: Cpp
+# Based on Gaudi clang format
 # Refer to documentation https://clang.llvm.org/docs/ClangFormatStyleOptions.html
 AccessModifierOffset: -2
 AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignEscapedNewlines: true
-AlignOperands:   true
-AlignTrailingComments: false
-AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: true
-AllowShortCaseLabelsOnASingleLine: false
-# AllowShortFunctionsOnASingleLine: Inline
+AlignOperands: true
+AlignTrailingComments: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
-AllowShortLoopsOnASingleLine: true
-# AlwaysBreakAfterDefinitionReturnType: TopLevel
-# AlwaysBreakAfterReturnType: TopLevel
-# AlwaysBreakBeforeMultilineStrings: false
+AllowShortLoopsOnASingleLine: false
 AlwaysBreakTemplateDeclarations: true
 BinPackArguments: false
 BinPackParameters: false
-BreakBeforeBraces: Linux
-BreakBeforeTernaryOperators: true
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterStruct: false
+  BeforeElse: true
+  SplitEmptyFunction: false
+BreakBeforeTernaryOperators: false
+BreakConstructorInitializers: AfterColon
 BreakStringLiterals: true
-ColumnLimit:     120
+ColumnLimit: 120
 CompactNamespaces: false
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ConstructorInitializerIndentWidth: 2
 ContinuationIndentWidth: 2
 Cpp11BracedListStyle: true
 DerivePointerAlignment: false
-ExperimentalAutoDetectBinPacking: false
-IndentWidth:     2
+FixNamespaceComments: true
+IndentWidth: 2
 MaxEmptyLinesToKeep: 1
-NamespaceIndentation: None
+NamespaceIndentation: All
 PenaltyBreakAssignment: 2
 PenaltyBreakBeforeFirstCallParameter: 19
 PenaltyBreakComment: 300
@@ -42,18 +48,20 @@ PenaltyBreakString: 1000
 PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 200
 PointerAlignment: Left
-ReflowComments:  true
+ReflowComments: true
 SpaceAfterCStyleCast: true
 SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: true
+SpaceBeforeCtorInitializerColon: true
 SpaceBeforeParens: ControlStatements
 SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 1
-SpacesInAngles:  false
+SpacesInAngles: false
 SpacesInContainerLiterals: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard:        Cpp11
-TabWidth:        2
-UseTab:          Never
+Standard: Cpp11
+TabWidth: 2
+UseTab: Never

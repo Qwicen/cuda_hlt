@@ -1,8 +1,13 @@
+#pragma once
+
 #include <cassert>
 #include "cuda_runtime.h"
+#include "Common.h"
 
 namespace Consolidated {
-
+  
+// base_pointer contains first: an array with the number of tracks in every event
+// second: an array with offsets to the tracks for every event
 struct TracksDescription {
   // Prefix sum of all Velo track sizes
   uint* event_number_of_tracks;
@@ -30,6 +35,7 @@ struct TracksDescription {
   }
 };
 
+  // atomics_base_pointer size needed: 2 * number_of_events  
 struct Tracks : public TracksDescription {
   uint* track_number_of_hits;
   uint total_number_of_hits;
@@ -50,6 +56,8 @@ struct Tracks : public TracksDescription {
   }
 
   __device__ __host__ uint number_of_hits(const uint track_number) const {
+    if ( track_number >= total_number_of_tracks )
+      printf("track number = %u, total number of tracks = %u \n", track_number, total_number_of_tracks);
     assert(track_number < total_number_of_tracks);
     return track_number_of_hits[track_number+1] - track_number_of_hits[track_number];
   }

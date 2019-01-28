@@ -4,7 +4,7 @@
 #include <string>
 #include <stdint.h>
 
-#include "VeloUTDefinitions.cuh"
+#include "UTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "SciFiDefinitions.cuh"
 #include "Logger.h"
@@ -54,3 +54,9 @@ struct StreamWrapper {
     const std::string& mc_folder,
     const uint number_of_events_requested);
 };
+
+/**
+ * @brief Prints the configured sequence.
+ *        Must be compiled by nvcc.
+ */
+void print_configured_sequence();

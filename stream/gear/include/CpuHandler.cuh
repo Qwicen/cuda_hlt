@@ -1,22 +1,23 @@
 #pragma once
 
+#include <functional>
 #include <tuple>
 #include <utility>
-#include <functional>
 
 /**
  * @brief      Macro for defining CPU algorithms defined by a function name.
  *             A struct is created with name EXPOSED_TYPE_NAME that encapsulates
  *             a CpuHandler of type FUNCTION_NAME.
  */
-#define CPU_ALGORITHM(FUNCTION_NAME, EXPOSED_TYPE_NAME) \
-  struct EXPOSED_TYPE_NAME {\
-    constexpr static auto name {#EXPOSED_TYPE_NAME};\
-    decltype(make_cpu_handler(FUNCTION_NAME)) handler {FUNCTION_NAME};\
-    template<typename... T>\
-    auto invoke(T&&... arguments) {\
-      return handler.function(std::forward<T>(arguments)...);\
-    }\
+#define CPU_ALGORITHM(FUNCTION_NAME, EXPOSED_TYPE_NAME)                \
+  struct EXPOSED_TYPE_NAME {                                           \
+    constexpr static auto name {#EXPOSED_TYPE_NAME};                   \
+    decltype(make_cpu_handler(FUNCTION_NAME)) handler {FUNCTION_NAME}; \
+    template<typename... T>                                            \
+    auto invoke(T&&... arguments)                                      \
+    {                                                                  \
+      return handler.function(std::forward<T>(arguments)...);          \
+    }                                                                  \
   };
 
 /**
@@ -35,6 +36,7 @@ struct CpuHandler {
  *             to specify its function type (ie. "make_cpu_handler(function)").
  */
 template<typename R, typename... T>
-static CpuHandler<R, T...> make_cpu_handler(R(f)(T...)) {
-  return CpuHandler<R, T...>{f};
+static CpuHandler<R, T...> make_cpu_handler(R(f)(T...))
+{
+  return CpuHandler<R, T...> {f};
 }

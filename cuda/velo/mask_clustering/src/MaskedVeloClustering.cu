@@ -66,21 +66,25 @@ __global__ void masked_velo_clustering(
   uint* dev_event_candidate_num,
   uint* dev_cluster_candidates,
   uint32_t* dev_velo_cluster_container,
+  const uint* dev_event_list,
+  uint* dev_event_order,
   char* dev_velo_geometry,
   uint8_t* dev_velo_sp_patterns,
   float* dev_velo_sp_fx,
   float* dev_velo_sp_fy
 ) {
   const uint number_of_events = gridDim.x;
-  const uint event_number = blockIdx.x;
-  const char* raw_input = dev_raw_input + dev_raw_input_offsets[event_number];
-  const uint* module_cluster_start = dev_module_cluster_start + event_number * VeloTracking::n_modules;
-  uint* module_cluster_num = dev_module_cluster_num + event_number * VeloTracking::n_modules;
+  const uint event_number = blockIdx.x; 
+  const uint selected_event_number = dev_event_list[event_number];
+
+  const char* raw_input = dev_raw_input + dev_raw_input_offsets[selected_event_number];
+  const uint* module_cluster_start = dev_module_cluster_start + event_number * Velo::Constants::n_modules;
+  uint* module_cluster_num = dev_module_cluster_num + event_number * Velo::Constants::n_modules;
   uint number_of_candidates = dev_event_candidate_num[event_number];
   uint32_t* cluster_candidates = (uint32_t*) &dev_cluster_candidates[event_number * VeloClustering::max_candidates_event];
 
   // Local pointers to dev_velo_cluster_container
-  const uint estimated_number_of_clusters = dev_module_cluster_start[VeloTracking::n_modules * number_of_events];
+  const uint estimated_number_of_clusters = dev_module_cluster_start[Velo::Constants::n_modules * number_of_events];
   float* cluster_xs = (float*) &dev_velo_cluster_container[0];
   float* cluster_ys = (float*) &dev_velo_cluster_container[estimated_number_of_clusters];
   float* cluster_zs = (float*) &dev_velo_cluster_container[2 * estimated_number_of_clusters];
@@ -189,7 +193,7 @@ __global__ void masked_velo_clustering(
       const uint32_t module_number = raw_bank_number >> 2;
       const uint8_t candidate_k = candidate & 0x7;
 
-      assert(raw_bank_number < VeloTracking::n_sensors);
+      assert(raw_bank_number < Velo::Constants::n_sensors);
 
       const auto raw_bank = VeloRawBank(raw_event.payload + raw_event.raw_bank_offset[raw_bank_number]);
       const float* ltg = g.ltg + 16 * raw_bank.sensor_index;

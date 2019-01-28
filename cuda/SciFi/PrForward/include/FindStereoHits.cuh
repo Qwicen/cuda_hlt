@@ -5,11 +5,8 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
-
-#include <thrust/sort.h>
-#include <thrust/execution_policy.h>
-
 #include "SciFiDefinitions.cuh"
+#include "SciFiEventModel.cuh"
 #include "TrackUtils.cuh"
 #include "HitUtils.cuh"
 #include "PrVeloUT.cuh"
@@ -20,34 +17,34 @@
  */
 
 __host__ __device__ void collectStereoHits(
-  const SciFi::SciFiHits& scifi_hits,
-  const SciFi::SciFiHitCount& scifi_hit_count,
+  const SciFi::Hits& scifi_hits,
+  const SciFi::HitCount& scifi_hit_count,
   SciFi::Tracking::Track& track,
-  MiniState velo_state,
+  const MiniState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars,
-  SciFi::Tracking::Arrays* constArrays,
+  const SciFi::Tracking::Arrays* constArrays,
   float stereoCoords[SciFi::Tracking::max_stereo_hits],
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits);
 
 __host__ __device__ bool selectStereoHits(
-  const SciFi::SciFiHits& scifi_hits,
-  const SciFi::SciFiHitCount& scifi_hit_count,
+  const SciFi::Hits& scifi_hits,
+  const SciFi::HitCount& scifi_hit_count,
   SciFi::Tracking::Track& track,
-  SciFi::Tracking::Arrays* constArrays,
+  const SciFi::Tracking::Arrays* constArrays,
   float stereoCoords[SciFi::Tracking::max_stereo_hits],
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits,
-  MiniState velo_state,
+  const MiniState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur);
 
 __host__ __device__ bool addHitsOnEmptyStereoLayers(
-  const SciFi::SciFiHits& scifi_hits,
-  const SciFi::SciFiHitCount& scifi_hit_count,
+  const SciFi::Hits& scifi_hits,
+  const SciFi::HitCount& scifi_hit_count,
   SciFi::Tracking::Track& track,
   int stereoHits[SciFi::Tracking::max_stereo_hits],
   int& n_stereoHits,
-  SciFi::Tracking::Arrays* constArrays,
+  const SciFi::Tracking::Arrays* constArrays,
   PlaneCounter& planeCounter,
-  MiniState velo_state,
+  const MiniState& velo_state,
   SciFi::Tracking::HitSearchCuts& pars_cur);

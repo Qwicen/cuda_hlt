@@ -166,17 +166,66 @@ __global__ void copy_velo_track_hit_number(
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
-  const Velo::TrackHits* event_tracks = dev_tracks + event_number * VeloTracking::max_tracks;
+  const Velo::TrackHits* event_tracks = dev_tracks + event_number * Velo::Constants::max_tracks;
   const int accumulated_tracks = dev_atomics_storage[number_of_events + event_number];
   const int number_of_tracks = dev_atomics_storage[event_number];
-
+  
   // Pointer to velo_track_hit_number of current event
   uint* velo_track_hit_number = dev_velo_track_hit_number + accumulated_tracks;
 
-  for (int i=0; i<(number_of_tracks + blockDim.x - 1) / blockDim.x; ++i) {
-    const auto element = i*blockDim.x + threadIdx.x;
-    if (element < number_of_tracks) {
-      velo_track_hit_number[element] = event_tracks[element].hitsNum;
-    }
+  for ( uint element = threadIdx.x; element < number_of_tracks; ++element ) {
+    velo_track_hit_number[element] = event_tracks[element].hitsNum;
+  }
+
+}
+
+/**
+ * @brief Copies UT track hit numbers on a consecutive container.
+ */
+__global__ void copy_ut_track_hit_number(
+  const UT::TrackHits* dev_veloUT_tracks,
+  int* dev_atomics_veloUT,
+  uint* dev_ut_track_hit_number
+){
+  const uint number_of_events = gridDim.x;
+  const uint event_number = blockIdx.x;
+  const UT::TrackHits* event_tracks =
+    dev_veloUT_tracks + event_number*UT::Constants::max_num_tracks;
+  const int accumulated_tracks =
+    dev_atomics_veloUT[number_of_events + event_number];
+  const int number_of_tracks = dev_atomics_veloUT[event_number];
+
+  // Pointer to ut_track_hit_number of current event.
+  uint* ut_track_hit_number = dev_ut_track_hit_number + accumulated_tracks;
+
+  // Loop over tracks.
+  for ( uint element = threadIdx.x; element < number_of_tracks; ++element ) {
+    ut_track_hit_number[element] = event_tracks[element].hits_num;
+  }
+  
+}
+
+/**
+ * @brief Copies SciFi track hit numbers to a consecutive container.
+ */
+__global__ void copy_scifi_track_hit_number(
+  const SciFi::TrackHits* dev_scifi_tracks,
+  int* dev_n_scifi_tracks,
+  uint* dev_scifi_track_hit_number
+){
+  const uint number_of_events = gridDim.x;
+  const uint event_number = blockIdx.x;
+  const SciFi::TrackHits* event_tracks =
+    dev_scifi_tracks + event_number*SciFi::Constants::max_tracks;
+  const int accumulated_tracks =
+    dev_n_scifi_tracks[number_of_events + event_number];
+  const int number_of_tracks = dev_n_scifi_tracks[event_number];
+
+  // Pointer to scifi_track_hit_number of current event.
+  uint* scifi_track_hit_number = dev_scifi_track_hit_number + accumulated_tracks;
+
+  // Loop over tracks.
+  for ( uint element = threadIdx.x; element < number_of_tracks; ++element ) {
+    scifi_track_hit_number[element] =	event_tracks[element].hitsNum;
   }
 }

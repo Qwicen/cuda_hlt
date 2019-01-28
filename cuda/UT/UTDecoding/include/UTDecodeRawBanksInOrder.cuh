@@ -1,12 +1,13 @@
 #pragma once
 
 #include "UTDefinitions.cuh"
-#include "VeloUTDefinitions.cuh"
 #include "Handler.cuh"
+#include "UTEventModel.cuh"
 
 __global__ void ut_decode_raw_banks_in_order(
-  const uint32_t *dev_ut_raw_input,
+  const char *dev_ut_raw_input,
   const uint32_t *dev_ut_raw_input_offsets,
+  const uint *dev_event_list,
   const char *ut_boards, const char *ut_geometry,
   const uint *dev_ut_region_offsets,
   const uint *dev_unique_x_sector_layer_offsets,

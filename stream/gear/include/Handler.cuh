@@ -8,26 +8,24 @@
  *             A struct is created with name EXPOSED_TYPE_NAME that encapsulates
  *             a Handler of type FUNCTION_NAME.
  */
-#define ALGORITHM(FUNCTION_NAME, EXPOSED_TYPE_NAME) \
-  struct EXPOSED_TYPE_NAME {\
-    constexpr static auto name {#EXPOSED_TYPE_NAME};\
-    decltype(make_handler(FUNCTION_NAME)) handler {FUNCTION_NAME};\
-    void set_opts(\
-      const dim3& param_num_blocks,\
-      const dim3& param_num_threads,\
-      cudaStream_t& param_stream,\
-      const unsigned param_shared_memory_size = 0\
-    ) {\
-      handler.set_opts(param_num_blocks, param_num_threads,\
-        param_stream, param_shared_memory_size);\
-    }\
-    template<typename... T>\
-    void set_arguments(T... param_arguments) {\
-      handler.set_arguments(param_arguments...);\
-    }\
-    void invoke() {\
-      handler.invoke();\
-    }\
+#define ALGORITHM(FUNCTION_NAME, EXPOSED_TYPE_NAME)                                                  \
+  struct EXPOSED_TYPE_NAME {                                                                         \
+    constexpr static auto name {#EXPOSED_TYPE_NAME};                                                 \
+    decltype(make_handler(FUNCTION_NAME)) handler {FUNCTION_NAME};                                   \
+    void set_opts(                                                                                   \
+      const dim3& param_num_blocks,                                                                  \
+      const dim3& param_num_threads,                                                                 \
+      cudaStream_t& param_stream,                                                                    \
+      const unsigned param_shared_memory_size = 0)                                                   \
+    {                                                                                                \
+      handler.set_opts(param_num_blocks, param_num_threads, param_stream, param_shared_memory_size); \
+    }                                                                                                \
+    template<typename... T>                                                                          \
+    void set_arguments(T... param_arguments)                                                         \
+    {                                                                                                \
+      handler.set_arguments(param_arguments...);                                                     \
+    }                                                                                                \
+    void invoke() { handler.invoke(); }                                                              \
   };
 
 /**
@@ -51,8 +49,8 @@ void invoke_impl(
   const unsigned shared_memory_size,
   cudaStream_t* stream,
   const Tuple& arguments,
-  std::index_sequence<I...>
-) {
+  std::index_sequence<I...>)
+{
   function<<<num_blocks, num_threads, shared_memory_size, *stream>>>(std::get<I>(arguments)...);
 }
 
@@ -70,29 +68,33 @@ struct Handler {
 
   // Call arguments and function
   std::tuple<T...> arguments;
-  R(*function)(T...);
+  R (*function)(T...);
 
-  Handler(R(*param_function)(T...)) : function(param_function) {}
+  Handler(R (*param_function)(T...)) : function(param_function) {}
 
-  void set_arguments(T... param_arguments) {
-    arguments = std::tuple<T...>{param_arguments...};
-  }
+  void set_arguments(T... param_arguments) { arguments = std::tuple<T...> {param_arguments...}; }
 
   void set_opts(
     const dim3& param_num_blocks,
     const dim3& param_num_threads,
     cudaStream_t& param_stream,
-    const unsigned param_shared_memory_size = 0
-  ) {
+    const unsigned param_shared_memory_size = 0)
+  {
     num_blocks = param_num_blocks;
     num_threads = param_num_threads;
     stream = &param_stream;
     shared_memory_size = param_shared_memory_size;
   }
-  
-  void invoke() {
-    invoke_impl(function, num_blocks, num_threads,
-      shared_memory_size, stream, arguments,
+
+  void invoke()
+  {
+    invoke_impl(
+      function,
+      num_blocks,
+      num_threads,
+      shared_memory_size,
+      stream,
+      arguments,
       std::make_index_sequence<std::tuple_size<std::tuple<T...>>::value>());
   }
 };
@@ -102,6 +104,7 @@ struct Handler {
  *             to specify its function type (ie. "make_handler(function)").
  */
 template<typename R, typename... T>
-static Handler<R, T...> make_handler(R(f)(T...)) {
-  return Handler<R, T...>{f};
+static Handler<R, T...> make_handler(R(f)(T...))
+{
+  return Handler<R, T...> {f};
 }

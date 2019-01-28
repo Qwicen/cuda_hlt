@@ -2,7 +2,7 @@
 
 #include "PrVeloUT.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
-#include "VeloUTDefinitions.cuh"
+#include "UTDefinitions.cuh"
 #include "CompassUTDefinitions.cuh"
 #include "FindBestHits.cuh"
 #include <tuple>
@@ -11,14 +11,14 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   const short* win_size_shared,
   const uint number_of_tracks_event,
   const int i_track,
-  const UTHits& ut_hits,
-  const UTHitOffsets& ut_hit_offsets,
+  const UT::Hits& ut_hits,
+  const UT::HitOffsets& ut_hit_offsets,
   const MiniState& velo_state,
   const float* ut_dxDy);
 
 __device__ BestParams pkick_fit(
-  const int best_hits[VeloUTTracking::n_layers],
-  const UTHits& ut_hits,
+  const int best_hits[UT::Constants::n_layers],
+  const UT::Hits& ut_hits,
   const MiniState& velo_state,
   const float* ut_dxDy,
   const float yyProto,
@@ -34,18 +34,18 @@ __device__ __inline__ int calc_index(
   const int i, 
   const TrackCandidates& ranges, 
   const int layer,
-  const UTHitOffsets& ut_hit_offsets);
+  const UT::HitOffsets& ut_hit_offsets);
 
 __device__ __inline__ int calc_index(
   const int i, 
   const TrackCandidates& ranges, 
   const int layer0,
   const int layer2,
-  const UTHitOffsets& ut_hit_offsets);
+  const UT::HitOffsets& ut_hit_offsets);
 
 __device__ __inline__ bool check_tol_refine(
   const int hit_index,
-  const UTHits& ut_hits,
+  const UT::Hits& ut_hits,
   const MiniState& velo_state,
   const float normFactNum,
   const float xTol,

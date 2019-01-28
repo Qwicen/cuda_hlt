@@ -1,19 +1,23 @@
 #pragma once
 
+#include "SystemOfUnits.h"
+#include "VeloEventModel.cuh"
+#include "VeloConsolidated.cuh"
+#include "UTRaw.cuh"
+
+#include <ostream>
 #include <stdint.h>
 #include <vector>
-#include <ostream>
-#include "VeloUTDefinitions.cuh"
-#include "PrVeloUTDefinitions.cuh"
 
-namespace UTDecoding {
+namespace UT {
+namespace Decoding {
 
 static constexpr int frac_mask = 0x0003U; // frac
 static constexpr int chan_mask = 0x3FFCU; // channel
 static constexpr int thre_mask = 0x8000U; // threshold
 
-static constexpr int frac_offset = 0;  // frac
-static constexpr int chan_offset = 2;  // channel
+static constexpr int frac_offset = 0; // frac
+static constexpr int chan_offset = 2; // channel
 static constexpr int thre_offset = 15; // threshold
 
 static constexpr uint ut_number_of_sectors_per_board = 6;
@@ -21,61 +25,61 @@ static constexpr uint ut_number_of_geometry_sectors = 1048;
 static constexpr uint ut_decoding_in_order_threads_x = 64;
 static constexpr uint ut_max_hits_shared_sector_group = 256;
 
-}
+} // namespace Decoding
 
-/**
-* @brief Offset and number of hits of each layer.
+static constexpr int num_atomics = 3;
+
+namespace Constants {
+
+static constexpr uint num_threads = 128;
+/* Detector description
+   There are two stations with two layers each
 */
-struct UTHitOffsets {
-  const uint* m_unique_x_sector_layer_offsets;
-  const uint* m_ut_hit_offsets;
-  const uint m_number_of_unique_x_sectors;
+static constexpr uint n_layers = 4;
+static constexpr uint n_regions_in_layer = 3;
 
-  __device__ __host__
-  UTHitOffsets(
-    const uint* base_pointer,
-    const uint event_number,
-    const uint number_of_unique_x_sectors,
-    const uint* unique_x_sector_layer_offsets) 
-  : m_unique_x_sector_layer_offsets(unique_x_sector_layer_offsets),
-    m_ut_hit_offsets(base_pointer + event_number * number_of_unique_x_sectors),
-    m_number_of_unique_x_sectors(number_of_unique_x_sectors) {}
+/* Cut-offs */
+static constexpr uint max_numhits_per_layer = 500;
+static constexpr uint max_numhits_per_event = 6000;
+static constexpr uint max_hit_candidates_per_layer = 100;
+static constexpr uint max_num_tracks = 400; // to do: what is the best / safest value here?
+static constexpr uint max_track_size = 4;
 
-  __device__ __host__
-  uint sector_group_offset(const uint sector_group) const {
-    assert(sector_group <= m_number_of_unique_x_sectors);
-    return m_ut_hit_offsets[sector_group];
-  }
+// zMidUT is a position of normalization plane which should
+// to be close to z middle of UT ( +- 5 cm ).
+// No need to update with small UT movement.
+static constexpr float zMidUT = 2484.6f;
+//  distToMomentum is properly recalculated in PrUTMagnetTool when B field changes
+static constexpr float distToMomentum = 4.0212e-05f;
+static constexpr float sigmaVeloSlope = 0.10f*Gaudi::Units::mrad;
+static constexpr float invSigmaVeloSlope = 1.0f/sigmaVeloSlope;
+static constexpr float zKink = 1780.0f;
 
-  __device__ __host__
-  uint sector_group_number_of_hits(const uint sector_group) const {
-    assert(sector_group < m_number_of_unique_x_sectors);
-    return m_ut_hit_offsets[sector_group+1] - m_ut_hit_offsets[sector_group];
-  }
+static constexpr float minMomentum =       1.5f * Gaudi::Units::GeV;
+static constexpr float minPT =             0.3f * Gaudi::Units::GeV;
+static constexpr float maxPseudoChi2 =     1280.0f;
+static constexpr float yTol =              0.5f * Gaudi::Units::mm;
+static constexpr float yTolSlope =         0.08f;
+static constexpr float hitTol1 =           6.0f * Gaudi::Units::mm;
+static constexpr float hitTol2 =           0.8f * Gaudi::Units::mm;
+static constexpr float deltaTx1 =          0.035f;
+static constexpr float deltaTx2 =          0.018f;
+static constexpr float maxXSlope =         0.350f;
+static constexpr float maxYSlope =         0.300f;
+static constexpr float centralHoleSize =   33.0f * Gaudi::Units::mm;
+static constexpr float intraLayerDist =    15.0f * Gaudi::Units::mm;
+static constexpr float overlapTol =        0.7f* Gaudi::Units::mm;
+static constexpr float passHoleSize =      40.0f * Gaudi::Units::mm;
+static constexpr int   minHighThres =      1;
+static constexpr bool  printVariables =    false;
+static constexpr bool  passTracks =        false;
+static constexpr bool  doTiming =          false;
+// Scale the z-component, to not run into numerical problems with floats
+// first add to sum values from hit at xMidField, zMidField hit
+static constexpr float zDiff =             0.001f * (zKink - zMidUT);
 
-  __device__ __host__
-  uint layer_offset(const uint layer_number) const {
-    assert(layer_number < 4);
-    return m_ut_hit_offsets[m_unique_x_sector_layer_offsets[layer_number]];
-  }
-
-  __device__ __host__
-  uint layer_number_of_hits(const uint layer_number) const {
-    assert(layer_number < 4);
-    return m_ut_hit_offsets[m_unique_x_sector_layer_offsets[layer_number+1]]
-      - m_ut_hit_offsets[m_unique_x_sector_layer_offsets[layer_number]];
-  }
-
-  __device__ __host__
-  uint event_offset() const {
-    return m_ut_hit_offsets[0];
-  }
-
-  __device__ __host__
-  uint event_number_of_hits() const {
-    return m_ut_hit_offsets[m_number_of_unique_x_sectors] - m_ut_hit_offsets[0];
-  }
-};
+} // namespace Constants
+} // namespace UT
 
 struct UTBoards {
   uint32_t number_of_boards;
@@ -88,10 +92,8 @@ struct UTBoards {
   uint32_t* chanIDs;
 
   UTBoards(const std::vector<char>& ut_boards);
-  
-  __device__ __host__ UTBoards (
-    const char* ut_boards
-  );
+
+  __device__ __host__ UTBoards(const char* ut_boards);
 };
 
 struct UTGeometry {
@@ -108,119 +110,6 @@ struct UTGeometry {
   float* cos;
 
   UTGeometry(const std::vector<char>& ut_geometry);
-  
-  __device__ __host__ UTGeometry (
-    const char* ut_geometry
-  );
-};
 
-struct  UTRawBank {
-  uint32_t sourceID;
-  uint32_t number_of_hits;
-  uint16_t* data;
-
-  __device__ __host__ UTRawBank (
-    const char* ut_raw_bank
-  );
-};
-
-struct  UTRawEvent {
-  uint32_t number_of_raw_banks;
-  uint32_t* raw_bank_offsets;
-  char* data;
-
-  __device__ __host__ UTRawEvent (
-    const uint32_t* ut_raw_event
-  );
-
-  __device__ __host__ UTRawBank getUTRawBank(
-    const uint32_t index
-  ) const;
-};
-
-struct UTHit {
-  float yBegin;
-  float yEnd;
-  float zAtYEq0;
-  float xAtYEq0;
-  float weight;
-  uint32_t LHCbID;
-
-  UTHit() = default;
-
-  UTHit(float yBegin,
-        float yEnd,
-        float zAtYEq0,
-        float xAtYEq0,
-        float weight,
-        uint32_t LHCbID
-        );
-
-  #define cmpf(a, b) (fabs((a) - (b)) > 0.000065f)
-
-  bool operator!=(const UTHit & h) const {
-    if (cmpf(yBegin,     h.yBegin))       return true;
-    if (cmpf(yEnd,       h.yEnd))         return true;
-    if (cmpf(zAtYEq0,    h.zAtYEq0))      return true;
-    if (cmpf(xAtYEq0,    h.xAtYEq0))      return true;
-    if (cmpf(weight,     h.weight))       return true;
-    if (LHCbID        != h.LHCbID)        return true;
-    
-    return false;
-  }
-
-  bool operator==(const UTHit& h) const {
-    return !(*this != h);
-  }
-
-  friend std::ostream& operator<<(std::ostream& stream, const UTHit& ut_hit) {
-    stream << "UT hit {"
-      << ut_hit.LHCbID << ", "
-      << ut_hit.yBegin << ", "
-      << ut_hit.yEnd << ", "
-      << ut_hit.zAtYEq0 << ", "
-      << ut_hit.xAtYEq0 << ", "
-      << ut_hit.weight << "}";
-
-    return stream;
-  }
-};
-
-/* 
-   SoA for hit variables
-   The hits for every layer are written behind each other, the offsets 
-   are stored for access;
-   one Hits structure exists per event
-*/
-struct UTHits {
-  constexpr static uint number_of_arrays = 7;
-  float* yBegin;
-  float* yEnd;
-  float* zAtYEq0;
-  float* xAtYEq0;
-  float* weight;
-  uint32_t* LHCbID;
-  uint32_t* raw_bank_index;
-
-  /**
-   * @brief Populates the UTHits object pointers to an array of data
-   *        pointed by base_pointer.
-   */
-  __host__ __device__ 
-  UTHits(uint32_t* base_pointer, uint32_t total_number_of_hits);
-
-  /**
-   * @brief Gets a hit in the UTHit format from the global hit index.
-   */
-  UTHit getHit(uint32_t index) const;
-
-  __host__ __device__ inline bool isYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol <= y && y <= yMax(i_hit) + tol; }
-  __host__ __device__ inline bool isNotYCompatible( const int i_hit, const float y, const float tol ) const { return yMin(i_hit) - tol > y || y > yMax(i_hit) + tol; }
-  __host__ __device__ inline float cosT(const int i_hit, const float dxDy) const { return ( std::fabs( xAtYEq0[i_hit] ) < 1.0E-9 ) ? 1. / std::sqrt( 1 + dxDy * dxDy ) : std::cos(dxDy); }
-  __host__ __device__ inline float sinT(const int i_hit, const float dxDy) const { return tanT(i_hit, dxDy) * cosT(i_hit, dxDy); }
-  __host__ __device__ inline float tanT(const int i_hit, const float dxDy) const { return -1 * dxDy; }
-  __host__ __device__ inline float xAt( const int i_hit, const float globalY, const float dxDy ) const { return xAtYEq0[i_hit] + globalY * dxDy; }
-  __host__ __device__ inline float yMax(const int i_hit) const { return std::max( yBegin[i_hit], yEnd[i_hit] ); }
-  __host__ __device__ inline float yMid(const int i_hit) const { return 0.5 * ( yBegin[i_hit] + yEnd[i_hit] ); }
-  __host__ __device__ inline float yMin(const int i_hit) const { return std::min( yBegin[i_hit], yEnd[i_hit] ); }
+  __device__ __host__ UTGeometry(const char* ut_geometry);
 };

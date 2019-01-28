@@ -8,7 +8,7 @@ __global__ void ut_search_windows(
   const uint* dev_ut_hit_offsets,
   int* dev_atomics_storage, // semi_prefixsum, offset to tracks
   uint* dev_velo_track_hit_number,
-  uint* dev_velo_states,
+  char* dev_velo_states,
   PrUTMagnetTool* dev_ut_magnet_tool,
   const float* dev_ut_dxDy,
   const uint* dev_unique_x_sector_layer_offsets, // prefixsum to point to the x hit of the sector, per layer
@@ -19,7 +19,7 @@ __global__ void ut_search_windows(
   const uint number_of_events           = gridDim.x;
   const uint event_number               = blockIdx.x;
   const uint layer                      = threadIdx.x;
-  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[VeloUTTracking::n_layers];
+  const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[UT::Constants::n_layers];
   const uint total_number_of_hits       = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
 
   // Velo consolidated types
@@ -29,8 +29,8 @@ __global__ void ut_search_windows(
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset    = velo_tracks.tracks_offset(event_number);
 
-  UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
-  UTHits ut_hits {dev_ut_hits, total_number_of_hits};
+  UT::HitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  UT::Hits ut_hits {dev_ut_hits, total_number_of_hits};
 
   const uint layer_offset = ut_hit_offsets.layer_offset(layer);
   const float* fudge_factors = &(dev_ut_magnet_tool->dxLayTable[0]);
@@ -78,9 +78,9 @@ __global__ void ut_search_windows(
         velo_tracks);
 
       // Write the windows in SoA style
-      short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * VeloUTTracking::n_layers;
+      short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * UT::Constants::n_layers;
 
-      const int track_pos = VeloUTTracking::n_layers * number_of_tracks_event;
+      const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
       const int layer_pos = layer * number_of_tracks_event + shared_active_tracks[threadIdx.y];
 
       windows_layers[0 * track_pos + layer_pos] = std::get<0>(candidates) - layer_offset; // first_candidate
@@ -134,9 +134,9 @@ __global__ void ut_search_windows(
       velo_tracks);
 
     // Write the windows in SoA style
-    short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * VeloUTTracking::n_layers;
+    short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::n_elems * UT::Constants::n_layers;
 
-    const int track_pos = VeloUTTracking::n_layers * number_of_tracks_event;
+    const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
     const int layer_pos = layer * number_of_tracks_event + shared_active_tracks[threadIdx.y];
     windows_layers[0 * track_pos + layer_pos] = std::get<0>(candidates) - layer_offset; // first_candidate
     windows_layers[1 * track_pos + layer_pos] = std::get<2>(candidates) - layer_offset; // left_group_first

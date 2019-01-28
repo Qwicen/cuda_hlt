@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VeloUTDefinitions.cuh"
+#include "UTDefinitions.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "CompassUTDefinitions.cuh"
 #include "Handler.cuh"
@@ -10,7 +10,7 @@ __global__ void ut_search_windows(
   const uint* dev_ut_hit_offsets,
   int* dev_atomics_storage,
   uint* dev_velo_track_hit_number,
-  uint* dev_velo_states,
+  char* dev_velo_states,
   PrUTMagnetTool* dev_ut_magnet_tool,
   const float* dev_ut_dxDy,
   const uint* dev_unique_x_sector_layer_offsets,

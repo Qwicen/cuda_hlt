@@ -8,10 +8,11 @@
 
 #include "SciFiDefinitions.cuh"
 #include "TrackUtils.cuh"
+#include "SciFiEventModel.cuh"
 
 __host__ __device__ int fitParabola(
   int* coordToFit,
   const int n_coordToFit,
-  const SciFi::SciFiHits& scifi_hits,
+  const SciFi::Hits& scifi_hits,
   float trackParameters[SciFi::Tracking::nTrackParams],
   const bool xFit);

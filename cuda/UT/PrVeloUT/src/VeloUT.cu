@@ -3,12 +3,12 @@
 __global__ void veloUT(
   uint* dev_ut_hits,
   uint* dev_ut_hit_offsets,
-  int* dev_atomics_storage,
+  int* dev_atomics_velo,
   uint* dev_velo_track_hit_number,
-  uint* dev_velo_track_hits,
-  uint* dev_velo_states,
-  VeloUTTracking::TrackUT* dev_veloUT_tracks,
-  int* dev_atomics_veloUT,
+  char* dev_velo_track_hits,
+  char* dev_velo_states,
+  UT::TrackHits* dev_veloUT_tracks,
+  int* dev_atomics_ut,
   PrUTMagnetTool* dev_ut_magnet_tool,
   float* dev_ut_dxDy,
   const uint* dev_unique_x_sector_layer_offsets,
@@ -22,26 +22,24 @@ __global__ void veloUT(
   const uint total_number_of_hits = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
   
   // Velo consolidated types
-  const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
+  const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_velo, dev_velo_track_hit_number, event_number, number_of_events};
   const Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  UTHitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
-  UTHits ut_hits {dev_ut_hits, total_number_of_hits};
+  UT::HitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  UT::Hits ut_hits {dev_ut_hits, total_number_of_hits};
+  const auto event_hit_offset = ut_hit_offsets.event_offset();
   
-  /* dev_atomics_veloUT contains in an SoA:
+  /* dev_atomics_ut contains in an SoA:
      1. # of veloUT tracks
-     2. # velo tracks in UT acceptance
   */
-  int* n_veloUT_tracks_event = dev_atomics_veloUT + event_number;
-  VeloUTTracking::TrackUT* veloUT_tracks_event = dev_veloUT_tracks + event_number * VeloUTTracking::max_num_tracks;
-  int* n_velo_tracks_in_UT_event = dev_atomics_veloUT + number_of_events + event_number;
+  int* n_veloUT_tracks_event = dev_atomics_ut + event_number;
+  UT::TrackHits* veloUT_tracks_event = dev_veloUT_tracks + event_number * UT::Constants::max_num_tracks;
   
   // initialize atomic veloUT tracks counter
   if ( threadIdx.x == 0 ) {
     *n_veloUT_tracks_event = 0;
-    *n_velo_tracks_in_UT_event = 0;
   }
   __syncthreads();
 
@@ -74,8 +72,8 @@ __global__ void veloUT(
 
   // array to store indices of selected hits in layers
   // -> can then access the hit information in the HitsSoA
-  int hitCandidatesInLayers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
-  int n_hitCandidatesInLayers[VeloUTTracking::n_layers];
+  int hitCandidatesInLayers[UT::Constants::n_layers][UT::Constants::max_hit_candidates_per_layer];
+  int n_hitCandidatesInLayers[UT::Constants::n_layers];
   
   for ( int i = 0; i < (number_of_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
     const int i_track = i * blockDim.x + threadIdx.x;
@@ -89,12 +87,10 @@ __global__ void veloUT(
 
     if(!veloTrackInUTAcceptance(velo_state)) continue;
 
-    atomicAdd(n_velo_tracks_in_UT_event, 1);
+    // for storing calculated x position of hits for this track
+    float x_pos_layers[UT::Constants::n_layers][UT::Constants::max_hit_candidates_per_layer];
 
-     // for storing calculated x position of hits for this track
-    float x_pos_layers[VeloUTTracking::n_layers][VeloUTTracking::max_hit_candidates_per_layer];
-
-    for ( int i_layer = 0; i_layer < VeloUTTracking::n_layers; ++i_layer ) {
+    for ( int i_layer = 0; i_layer < UT::Constants::n_layers; ++i_layer ) {
       n_hitCandidatesInLayers[i_layer] = 0;
     }
 
@@ -112,16 +108,12 @@ __global__ void veloUT(
         ) continue;
 
     TrackHelper helper {velo_state};
-
-    // indices within hitCandidatesInLayers for selected hits belonging to best track 
-    int hitCandidateIndices[VeloUTTracking::n_layers];
     
     // go through UT layers in forward direction
     if(!formClusters(
           hitCandidatesInLayers,
           n_hitCandidatesInLayers,
           x_pos_layers,
-          hitCandidateIndices,
           ut_hits,
           ut_hit_offsets,
           helper,
@@ -134,7 +126,6 @@ __global__ void veloUT(
         hitCandidatesInLayers,
         n_hitCandidatesInLayers,
         x_pos_layers,
-        hitCandidateIndices,
         ut_hits,
         ut_hit_offsets,
         helper,
@@ -157,11 +148,11 @@ __global__ void veloUT(
         ut_hits,
         ut_hit_offsets,
         x_pos_layers,
-        hitCandidateIndices,
         veloUT_tracks_event,
         n_veloUT_tracks_event,
         i_track,
-        bdlTable);
+        bdlTable,
+        event_hit_offset);
     }
   } // velo tracks 
 }

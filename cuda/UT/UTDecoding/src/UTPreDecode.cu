@@ -7,8 +7,9 @@
  * Let's refer to this array as raw_bank_hits.
  */
 __global__ void ut_pre_decode(
-  const uint32_t *dev_ut_raw_input,
+  const char *dev_ut_raw_input,
   const uint32_t *dev_ut_raw_input_offsets,
+  const uint* dev_event_list,
   const char *ut_boards, const char *ut_geometry,
   const uint *dev_ut_region_offsets,
   const uint *dev_unique_x_sector_layer_offsets,
@@ -19,8 +20,9 @@ __global__ void ut_pre_decode(
 {
   const uint32_t number_of_events = gridDim.x;
   const uint32_t event_number = blockIdx.x;
-  const uint32_t event_offset =
-      dev_ut_raw_input_offsets[event_number] / sizeof(uint32_t);
+  const uint selected_event_number = dev_event_list[event_number];
+
+  const uint32_t event_offset = dev_ut_raw_input_offsets[selected_event_number];
 
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
   const uint32_t *hit_offsets =
@@ -28,7 +30,7 @@ __global__ void ut_pre_decode(
   uint32_t *hit_count =
       dev_ut_hit_count + event_number * number_of_unique_x_sectors;
 
-  UTHits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};
+  UT::Hits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};
 
   const UTRawEvent raw_event(dev_ut_raw_input + event_offset);
   const UTBoards boards(ut_boards);
@@ -45,15 +47,15 @@ __global__ void ut_pre_decode(
          i += blockDim.y) {
       // Extract values from raw_data
       const uint16_t value = raw_bank.data[i];
-      const uint32_t fracStrip = (value & UTDecoding::frac_mask) >> UTDecoding::frac_offset;
-      const uint32_t channelID = (value & UTDecoding::chan_mask) >> UTDecoding::chan_offset;
+      const uint32_t fracStrip = (value & UT::Decoding::frac_mask) >> UT::Decoding::frac_offset;
+      const uint32_t channelID = (value & UT::Decoding::chan_mask) >> UT::Decoding::chan_offset;
 
       // Calculate the relative index of the corresponding board
       const uint32_t index = channelID / m_nStripsPerHybrid;
       const uint32_t strip = channelID - (index * m_nStripsPerHybrid) + 1;
 
       const uint32_t fullChanIndex =
-          raw_bank.sourceID * UTDecoding::ut_number_of_sectors_per_board + index;
+          raw_bank.sourceID * UT::Decoding::ut_number_of_sectors_per_board + index;
       const uint32_t station = boards.stations[fullChanIndex] - 1;
       const uint32_t layer = boards.layers[fullChanIndex] - 1;
       const uint32_t detRegion = boards.detRegions[fullChanIndex] - 1;
@@ -61,7 +63,7 @@ __global__ void ut_pre_decode(
 
       // Calculate the index to get the geometry of the board
       const uint32_t idx =
-          station * UTDecoding::ut_number_of_sectors_per_board + layer * 3 + detRegion;
+          station * UT::Decoding::ut_number_of_sectors_per_board + layer * 3 + detRegion;
       const uint32_t idx_offset = dev_ut_region_offsets[idx] + sector;
 
       const uint32_t firstStrip = geometry.firstStrip[idx_offset];

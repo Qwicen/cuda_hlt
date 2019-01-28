@@ -21,7 +21,8 @@
 #include "SchedulerMachinery.cuh"
 #include "Scheduler.cuh"
 #include "AlgorithmDependencies.cuh"
-#include "PrCheckerInvoker.h"
+#include "CheckerInvoker.h"
+
 
 class Timer;
 

@@ -56,8 +56,8 @@ __device__ void track_seeding(
 
   // Process at a time a maximum of max_concurrent_h1 elements
   const auto number_of_hits_h1 = local_number_of_hits[0];
-  const auto last_iteration = (number_of_hits_h1 + VeloTracking::max_concurrent_h1 - 1) / VeloTracking::max_concurrent_h1;
-  const auto num_hits_last_iteration = ((number_of_hits_h1 - 1) % VeloTracking::max_concurrent_h1) + 1;
+  const auto last_iteration = (number_of_hits_h1 + Velo::Tracking::max_concurrent_h1 - 1) / Velo::Tracking::max_concurrent_h1;
+  const auto num_hits_last_iteration = ((number_of_hits_h1 - 1) % Velo::Tracking::max_concurrent_h1) + 1;
   for (int i=0; i<last_iteration; ++i) {
     // The output we are searching for
     unsigned short best_h0 = 0;
@@ -77,7 +77,7 @@ __device__ void track_seeding(
     //     
     const auto is_last_iteration = i==last_iteration-1;
     const auto block_dim_x = is_last_iteration*num_hits_last_iteration + 
-                             !is_last_iteration*VeloTracking::max_concurrent_h1;
+                             !is_last_iteration*Velo::Tracking::max_concurrent_h1;
 
     // Adapted local thread ID of each thread
     const auto thread_id_x = threadIdx.x % block_dim_x;
@@ -99,7 +99,7 @@ __device__ void track_seeding(
     // Ie. if processing 30 h1 hits, with max_concurrent_h1 = 8, #h1 in each iteration to process are:
     // {8, 8, 8, 6}
     // On the fourth iteration, we should start from 3*max_concurrent_h1 (24 + thread_id_x)
-    const auto h1_rel_index = i*VeloTracking::max_concurrent_h1 + thread_id_x;
+    const auto h1_rel_index = i*Velo::Tracking::max_concurrent_h1 + thread_id_x;
     if (h1_rel_index < number_of_hits_h1) {
       // Fetch h1
       // const auto h1_rel_index = h1_indices[h1_rel_index];
@@ -126,14 +126,14 @@ __device__ void track_seeding(
             // Finally, iterate over all h2 indices
             for (auto h2_index=h2_first_candidate; h2_index<h2_last_candidate; ++h2_index) {
               if (!hit_used[h2_index]) {
-                // const auto best_fits_index = thread_id_y*VeloTracking::max_numhits_in_module + h1_rel_index;
+                // const auto best_fits_index = thread_id_y*Velo::Tracking::max_numhits_in_module + h1_rel_index;
 
                 // Our triplet is h0_index, h1_index, h2_index
                 // Fit it and check if it's better than what this thread had
                 // for any triplet with h1
                 const Velo::HitBase h2 {hit_Xs[h2_index], hit_Ys[h2_index], hit_Zs[h2_index]};
 
-                const auto dmax = VeloTracking::max_slope * (h0.z - h1.z);
+                const auto dmax = Velo::Tracking::max_slope * (h0.z - h1.z);
                 const auto scatterDenom2 = 1.f / ((h2.z - h1.z) * (h2.z - h1.z));
                 const auto z2_tz = (h2.z - h0.z) / (h1.z - h0.z);
 
@@ -148,9 +148,9 @@ __device__ void track_seeding(
                 const auto scatter = scatterNum * scatterDenom2;
                 const auto condition = fabs(h1.x - h0.x) < dmax &&
                                        fabs(h1.y - h0.y) < dmax &&
-                                       fabs(dx) < VeloTracking::tolerance &&
-                                       fabs(dy) < VeloTracking::tolerance &&
-                                       scatter < VeloTracking::max_scatter_seeding &&
+                                       fabs(dx) < Velo::Tracking::tolerance &&
+                                       fabs(dy) < Velo::Tracking::tolerance &&
+                                       scatter < Velo::Tracking::max_scatter_seeding &&
                                        scatter < best_fit;
 
                 if (condition) {
@@ -186,13 +186,13 @@ __device__ void track_seeding(
     // If this condition holds, then necessarily best_fit < FLT_MAX
     if (threadIdx.x == winner_thread) {
       // Add the track to the bag of tracks
-      const auto trackP = atomicAdd(tracklets_insertPointer, 1) % VeloTracking::ttf_modulo;
+      const auto trackP = atomicAdd(tracklets_insertPointer, 1) % Velo::Tracking::ttf_modulo;
       tracklets[trackP] = Velo::TrackletHits {best_h0, h1_index, best_h2};
 
       // Add the tracks to the bag of tracks to_follow
       // Note: The first bit flag marks this is a tracklet (hitsNum == 3),
       // and hence it is stored in tracklets
-      const auto ttfP = atomicAdd(ttf_insertPointer, 1) % VeloTracking::ttf_modulo;
+      const auto ttfP = atomicAdd(ttf_insertPointer, 1) % Velo::Tracking::ttf_modulo;
       tracks_to_follow[ttfP] = 0x80000000 | trackP;
     }
 

@@ -7,21 +7,25 @@ __global__ void estimate_input_size(
   uint* dev_module_cluster_num,
   uint* dev_event_candidate_num,
   uint32_t* dev_cluster_candidates,
+  const uint* dev_event_list,
+  uint* dev_event_order,
   uint8_t* dev_velo_candidate_ks
 ) {
   const uint event_number = blockIdx.x;
+  const uint selected_event_number = dev_event_list[event_number];
+  
   const uint raw_bank_starting_chunk = threadIdx.y; // up to 26
-  const uint raw_bank_chunk_size = VeloTracking::n_sensors / blockDim.y; // blockDim.y = 26 -> chunk_size = 8
-  const char* raw_input = dev_raw_input + dev_raw_input_offsets[event_number];
-  uint* estimated_input_size = dev_estimated_input_size + event_number * VeloTracking::n_modules;
-  uint* module_cluster_num = dev_module_cluster_num + event_number * VeloTracking::n_modules;
+  const uint raw_bank_chunk_size = Velo::Constants::n_sensors / blockDim.y; // blockDim.y = 26 -> chunk_size = 8
+  const char* raw_input = dev_raw_input + dev_raw_input_offsets[selected_event_number];
+  uint* estimated_input_size = dev_estimated_input_size + event_number * Velo::Constants::n_modules;
+  uint* module_cluster_num = dev_module_cluster_num + event_number * Velo::Constants::n_modules;
   uint* event_candidate_num = dev_event_candidate_num + event_number;
   uint32_t* cluster_candidates = dev_cluster_candidates + event_number * VeloClustering::max_candidates_event;
 
   // Initialize estimated_input_size, module_cluster_num and dev_module_candidate_num to 0
-  for (int i=0; i<(VeloTracking::n_modules + blockDim.x - 1) / blockDim.x; ++i) {
+  for (int i=0; i<(Velo::Constants::n_modules + blockDim.x - 1) / blockDim.x; ++i) {
     const auto index = i*blockDim.x + threadIdx.x;
-    if (index < VeloTracking::n_modules) {
+    if (index < Velo::Constants::n_modules) {
       estimated_input_size[index] = 0;
       module_cluster_num[index] = 0;
     }
@@ -64,19 +68,19 @@ __global__ void estimate_input_size(
             // 0x04 | 0x40
             // 0x02 | 0x20
             // 0x01 | 0x10
-            const bool pattern_0 = sp&0x88 && !(sp&0x44) && sp&0x33;
+            const bool pattern_0 = (sp&0x88) && !(sp&0x44) && sp&0x33;
 
             // Pattern 1:
             // (x  x
             //  x  x)
             //  o  o
             // (x  x)
-            const bool pattern_1 = sp&0xCC && !(sp&0x22) && sp&0x11;
+            const bool pattern_1 = (sp&0xCC) && !(sp&0x22) && sp&0x11;
             const uint number_of_clusters = 1 + (pattern_0 | pattern_1);
             
             // Add the found clusters
             uint current_estimated_module_size = atomicAdd(estimated_module_size, number_of_clusters);
-            assert( current_estimated_module_size < VeloTracking::max_numhits_in_module);
+            assert( current_estimated_module_size < Velo::Constants::max_numhits_in_module);
           } else {
             // Find candidates that follow this condition:
             // For pixel o, all pixels x should *not* be populated
@@ -110,7 +114,7 @@ __global__ void estimate_input_size(
             // 0x02   0x80   0x2000
             // 0x01   0x40   0x1000
             //        0x20   0x0800
-            uint32_t pixels = sp&0x0F | ((sp&0xF0) << 2);
+            uint32_t pixels = (sp&0x0F) | ((sp&0xF0) << 2);
 
             // Current row and col
             const uint32_t sp_row = sp_addr & 0x3FU;
@@ -162,7 +166,7 @@ __global__ void estimate_input_size(
             // 
             uint found_cluster_candidates = 0;
 
-            assert(raw_bank_number < VeloTracking::n_sensors);
+            assert(raw_bank_number < Velo::Constants::n_sensors);
 
             const uint32_t sp_inside_pixel = pixels & 0x3CF;
             const uint32_t mask = (sp_inside_pixel << 1)
@@ -248,7 +252,7 @@ __global__ void estimate_input_size(
             // Add the found cluster candidates
             if (found_cluster_candidates > 0) {
               uint current_estimated_module_size = atomicAdd(estimated_module_size, found_cluster_candidates);
-              assert(current_estimated_module_size < VeloTracking::max_numhits_in_module);
+              assert(current_estimated_module_size < Velo::Constants::max_numhits_in_module);
             }
           }
         }

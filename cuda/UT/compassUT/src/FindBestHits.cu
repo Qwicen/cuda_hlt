@@ -9,8 +9,8 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
   const short* win_size_shared,
   const uint number_of_tracks_event,
   const int i_track,
-  const UTHits& ut_hits,
-  const UTHitOffsets& ut_hit_offsets,
+  const UT::Hits& ut_hits,
+  const UT::HitOffsets& ut_hit_offsets,
   const MiniState& velo_state,
   const float* ut_dxDy)
 {
@@ -18,14 +18,14 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 
   const TrackCandidates ranges (win_size_shared);
 
-  int best_hits [VeloUTTracking::n_layers] = {-1, -1, -1, -1};
+  int best_hits [UT::Constants::n_layers] = {-1, -1, -1, -1};
 
   bool found = false;
   bool forward = false;
   int considered = 0;
 
   int best_number_of_hits = 3;
-  int best_fit = VeloUTConst::maxPseudoChi2;
+  int best_fit = UT::Constants::maxPseudoChi2;
   BestParams best_params;
 
   // Get total number of hits for forward + backward in first layer (0 for fwd, 3 for bwd)
@@ -63,7 +63,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 
       // if slope is out of delta range, don't look for triplet/quadruplet
       const auto tx = (xhitLayer2 - xhitLayer0) / (zhitLayer2 - zhitLayer0);
-      if (std::abs(tx - velo_state.tx) <= VeloUTConst::deltaTx2) {
+      if (std::abs(tx - velo_state.tx) <= UT::Constants::deltaTx2) {
 
         int temp_best_hits [4] = {i_hit0, -1, i_hit2, -1};
 
@@ -72,7 +72,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
           forward ? 3 : 0
         };
 
-        float hitTol = VeloUTConst::hitTol2;
+        float hitTol = UT::Constants::hitTol2;
 
         // search for a triplet in 3rd layer
         for (int i1=0; i1 < sum_layer_hits(ranges, layers[0]); ++i1) {
@@ -92,7 +92,7 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
         }
 
         // search for triplet/quadruplet in 4th layer
-        hitTol = VeloUTConst::hitTol2;
+        hitTol = UT::Constants::hitTol2;
         for (int i3=0; i3 < sum_layer_hits(ranges, layers[1]); ++i3) {
 
           int i_hit3 = calc_index(i3, ranges, layers[1], ut_hit_offsets);
@@ -143,8 +143,8 @@ __device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
 // Apply the p-kick method to the triplet/quadruplet
 //=========================================================================
 __device__ BestParams pkick_fit(
-  const int best_hits[VeloUTTracking::n_layers],
-  const UTHits& ut_hits,
+  const int best_hits[UT::Constants::n_layers],
+  const UT::Hits& ut_hits,
   const MiniState& velo_state,
   const float* ut_dxDy,
   const float yyProto,
@@ -153,23 +153,23 @@ __device__ BestParams pkick_fit(
   BestParams best_params;
 
   // Helper stuff from velo state
-  const float xMidField = velo_state.x + velo_state.tx * (VeloUTConst::zKink - velo_state.z);
-  const float a = VeloUTConst::sigmaVeloSlope * (VeloUTConst::zKink - velo_state.z);
+  const float xMidField = velo_state.x + velo_state.tx * (UT::Constants::zKink - velo_state.z);
+  const float a = UT::Constants::sigmaVeloSlope * (UT::Constants::zKink - velo_state.z);
   const float wb = 1.0f / (a * a);
 
-  float mat[3] = {wb, wb * VeloUTConst::zDiff, wb * VeloUTConst::zDiff * VeloUTConst::zDiff};
-  float rhs[2] = {wb * xMidField, wb * xMidField * VeloUTConst::zDiff};
+  float mat[3] = {wb, wb * UT::Constants::zDiff, wb * UT::Constants::zDiff * UT::Constants::zDiff};
+  float rhs[2] = {wb * xMidField, wb * xMidField * UT::Constants::zDiff};
 
   // add hits
   #pragma unroll
-  for (int i = 0; i < VeloUTTracking::n_layers; ++i) {
+  for (int i = 0; i < UT::Constants::n_layers; ++i) {
     int hit_index = best_hits[i];
     if (hit_index >= 0) {
       const float wi = ut_hits.weight[hit_index];
-      const int plane_code = forward ? i : VeloUTTracking::n_layers - 1 - i;
+      const int plane_code = forward ? i : UT::Constants::n_layers - 1 - i;
       const float dxDy = ut_dxDy[plane_code];
       const float ci = ut_hits.cosT(hit_index, dxDy);
-      const float dz = 0.001f * (ut_hits.zAtYEq0[hit_index] - VeloUTConst::zMidUT);
+      const float dz = 0.001f * (ut_hits.zAtYEq0[hit_index] - UT::Constants::zMidUT);
       // x_pos_layer
       const float yy = yyProto + (velo_state.ty * ut_hits.zAtYEq0[hit_index]);
       const float ui = ut_hits.xAt(hit_index, yy, dxDy);
@@ -187,23 +187,23 @@ __device__ BestParams pkick_fit(
   const float xUTFit = (mat[2] * rhs[0] - mat[1] * rhs[1]) * denom;
 
   // new VELO slope x
-  const float xb = xUTFit + xSlopeUTFit * (VeloUTConst::zKink - VeloUTConst::zMidUT);
-  const float invKinkVeloDist = 1.f / (VeloUTConst::zKink - velo_state.z);
+  const float xb = xUTFit + xSlopeUTFit * (UT::Constants::zKink - UT::Constants::zMidUT);
+  const float invKinkVeloDist = 1.f / (UT::Constants::zKink - velo_state.z);
   const float xSlopeVeloFit = (xb - velo_state.x) * invKinkVeloDist;
-  const float chi2VeloSlope = (velo_state.tx - xSlopeVeloFit) * VeloUTConst::invSigmaVeloSlope;
+  const float chi2VeloSlope = (velo_state.tx - xSlopeVeloFit) * UT::Constants::invSigmaVeloSlope;
 
   // chi2 takes chi2 from velo fit + chi2 from UT fit
   float chi2UT = chi2VeloSlope * chi2VeloSlope;
   // add chi2
   int total_num_hits = 0;
   #pragma unroll
-  for (int i = 0; i < VeloUTTracking::n_layers; ++i) {
+  for (int i = 0; i < UT::Constants::n_layers; ++i) {
     int hit_index = best_hits[i];
     if (hit_index >= 0) {
       const float zd = ut_hits.zAtYEq0[hit_index];
-      const float xd = xUTFit + xSlopeUTFit * (zd - VeloUTConst::zMidUT);
+      const float xd = xUTFit + xSlopeUTFit * (zd - UT::Constants::zMidUT);
       // x_pos_layer
-      const int plane_code = forward ? i : VeloUTTracking::n_layers - 1 - i;
+      const int plane_code = forward ? i : UT::Constants::n_layers - 1 - i;
       const float dxDy = ut_dxDy[plane_code];
       const float yy = yyProto + (velo_state.ty * ut_hits.zAtYEq0[hit_index]);
       const float x = ut_hits.xAt(hit_index, yy, dxDy);
@@ -219,7 +219,7 @@ __device__ BestParams pkick_fit(
   chi2UT /= (total_num_hits - 1);
 
   // Save the best parameters if chi2 is good
-  if (chi2UT < VeloUTConst::maxPseudoChi2) {
+  if (chi2UT < UT::Constants::maxPseudoChi2) {
     // calculate q/p
     const float sinInX = xSlopeVeloFit * std::sqrt(1.0f + xSlopeVeloFit * xSlopeVeloFit);
     const float sinOutX = xSlopeUTFit * std::sqrt(1.0f + xSlopeUTFit * xSlopeUTFit);
@@ -263,7 +263,7 @@ __device__ __inline__ int calc_index(
   const int i, 
   const TrackCandidates& ranges, 
   const int layer,
-  const UTHitOffsets& ut_hit_offsets)
+  const UT::HitOffsets& ut_hit_offsets)
 {
   int hit = -1;
   const int sum_offset = i + ut_hit_offsets.layer_offset(layer);
@@ -292,7 +292,7 @@ __device__ __inline__ int calc_index(
   const TrackCandidates& ranges, 
   const int layer0,
   const int layer2,
-  const UTHitOffsets& ut_hit_offsets)
+  const UT::HitOffsets& ut_hit_offsets)
 {
   int hit = -1;
   int cand0size = ranges.get_size(layer0, 0) + 
@@ -336,7 +336,7 @@ __device__ __inline__ int calc_index(
 //=========================================================================
 __device__ __inline__ bool check_tol_refine(
   const int hit_index,
-  const UTHits& ut_hits,
+  const UT::Hits& ut_hits,
   const MiniState& velo_state,
   const float normFactNum,
   const float xTol,
@@ -355,7 +355,7 @@ __device__ __inline__ bool check_tol_refine(
 
   // Now refine the tolerance in Y
   if (ut_hits.isNotYCompatible(
-        hit_index, yApprox, VeloUTConst::yTol + VeloUTConst::yTolSlope * std::abs(dx * (1.0f / normFactNum))))
+        hit_index, yApprox, UT::Constants::yTol + UT::Constants::yTolSlope * std::abs(dx * (1.0f / normFactNum))))
     return false;
 
   return true;
