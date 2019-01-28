@@ -38,9 +38,12 @@
 #include "pv_beamline_peak.cuh"
 #include "pv_beamline_multi_fitter.cuh"
 #include "RunForwardCPU.h"
+#include "IPCut.cuh"
+#include "VeloPVIP.cuh"
 #include "RunBeamlinePVOnCPU.h"
 #include "MuonFeaturesExtraction.cuh"
 #include "MuonCatboostEvaluator.cuh"
+#include "ParKalmanFilter.cuh"
 
 #define SEQUENCE_T(...) typedef std::tuple<__VA_ARGS__> configured_sequence_t;
 

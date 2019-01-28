@@ -14,7 +14,8 @@ __global__ void ut_search_windows(
   const uint* dev_unique_x_sector_layer_offsets, // prefixsum to point to the x hit of the sector, per layer
   const float* dev_unique_sector_xs,             // list of xs that define the groups
   short* dev_windows_layers,
-  int* dev_active_tracks)
+  int* dev_active_tracks,
+  bool* dev_accepted_velo_tracks)
 {
   const uint number_of_events           = gridDim.x;
   const uint event_number               = blockIdx.x;
@@ -50,6 +51,7 @@ __global__ void ut_search_windows(
       const auto velo_state = MiniState{velo_states, current_track_offset};
       if (i_track < number_of_tracks_event) {
         if (!velo_states.backward[current_track_offset] && 
+            dev_accepted_velo_tracks[current_track_offset] &&
             velo_track_in_UTA_acceptance(velo_state) ) {
               int current_track = atomicAdd(active_tracks, 1);
               shared_active_tracks[current_track] = i_track;

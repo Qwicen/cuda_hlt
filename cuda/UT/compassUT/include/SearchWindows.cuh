@@ -16,6 +16,7 @@ __global__ void ut_search_windows(
   const uint* dev_unique_x_sector_layer_offsets,
   const float* dev_unique_sector_xs,
   short* dev_windows_layers,
-  int* dev_active_tracks);
+  int* dev_active_tracks,
+  bool* dev_accepted_velo_tracks);
 
 ALGORITHM(ut_search_windows, ut_search_windows_t)

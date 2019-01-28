@@ -1,5 +1,5 @@
-#include "SequenceVisitor.cuh"
 #include "SearchWindows.cuh"
+#include "SequenceVisitor.cuh"
 
 template<>
 void SequenceVisitor::set_arguments_size<ut_search_windows_t>(
@@ -35,7 +35,8 @@ void SequenceVisitor::visit<ut_search_windows_t>(
     constants.dev_unique_x_sector_layer_offsets,
     constants.dev_unique_sector_xs,
     arguments.offset<dev_windows_layers>(),
-    arguments.offset<dev_active_tracks>()
+    arguments.offset<dev_active_tracks>(),
+    arguments.offset<dev_accepted_velo_tracks>()
   );
 
   cudaCheck(cudaMemsetAsync(arguments.offset<dev_active_tracks>(), 0, arguments.size<dev_active_tracks>(), cuda_stream));

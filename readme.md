@@ -30,8 +30,7 @@ cmake version 3.12.1
 You can check your compiler standard compatibility by scrolling to the `C++14 features` chart [here](https://en.cppreference.com/w/cpp/compiler_support).
 
 Optionally you can compile the project with ROOT. Then, trees will be filled with variables to check when running the UT tracking or SciFi tracking algorithms on x86 architecture.
-In addition, histograms of reconstructible and reconstructed tracks are then filled in the track checker, they are saved in the file `output/PrCheckerPlots.root`.
-Plots of efficiencies versus various kinematic variables can be created by running `efficiency_plots.py` in the directory `checker/tracking/python_scripts`.
+In addition, histograms of reconstructible and reconstructed tracks are then filled in the track checker. For more details on how to use them to produce plots of efficiencies, momentum resolution etc. see [this readme](checker/tracking/readme.md). 
 
 You can setup ROOT in CVMFS as follows:
 

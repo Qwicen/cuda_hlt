@@ -152,6 +152,7 @@ include_directories(x86/SciFi/include)
 include_directories(cuda/SciFi/PrForward/include)
 include_directories(cuda/SciFi/consolidate/include)
 include_directories(cuda/UT/UTDecoding/include)
+include_directories(cuda/kalman/ParKalman/include)
 include_directories(mdf/include)
 
 file(GLOB common_sources "main/src/*")
@@ -176,9 +177,16 @@ target_link_libraries(Allen PRIVATE
   Stream
   TrackChecking
   PVChecking
-  CheckClustering)
+  CheckClustering
+)
 
 if (ROOT_FOUND)
   target_compile_definitions(Allen PUBLIC WITH_ROOT)
   target_link_libraries(Allen PRIVATE ${ROOT_LIBRARIES})
 endif()
+
+option(BUILD_TESTS "Build test programs" OFF)
+if(BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif(BUILD_TESTS)

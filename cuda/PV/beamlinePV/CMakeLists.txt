@@ -13,8 +13,7 @@ include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
 include_directories(${CMAKE_SOURCE_DIR}/x86/PV/beamlinePV/include)
 
 add_library(PV_beamline STATIC
-  ${blPV} 
+  ${blPV}
 )
 set_property(TARGET PV_beamline PROPERTY
              CUDA_SEPARABLE_COMPILATION ON)
-
