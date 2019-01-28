@@ -46,7 +46,8 @@ void HostBuffers::reserve(const uint max_number_of_events) {
 
   cudaCheck(cudaMallocHost((void**)&host_reconstructed_multi_pvs, max_number_of_events * PV::max_number_vertices * sizeof(PV::Vertex)));
   cudaCheck(cudaMallocHost((void**)&host_number_of_multivertex, max_number_of_events * sizeof(int)));
-
+  
+  cudaCheck(cudaMallocHost((void**)&host_kf_tracks, max_number_of_events * SciFi::Constants::max_tracks * sizeof(ParKalmanFilter::FittedTrack)));
 }
 
 size_t HostBuffers::velo_track_hit_number_size() const {

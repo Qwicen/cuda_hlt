@@ -12,9 +12,11 @@ void Constants::reserve_constants() {
   cudaCheck(cudaMalloc((void**)&dev_scifi_constArrays, sizeof(SciFi::Tracking::Arrays)));
   cudaCheck(cudaMalloc((void**)&dev_ut_region_offsets, (UT::Constants::n_layers * UT::Constants::n_regions_in_layer + 1) * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_inv_clus_res, host_inv_clus_res.size() * sizeof(float)));
+  cudaCheck(cudaMalloc((void**)&dev_kalman_params, sizeof(ParKalmanFilter::KalmanParametrizations)));
 }
 
 void Constants::initialize_constants() {
+
   // Velo module constants
   const std::array<float, Velo::Constants::n_modules> velo_module_zs = {-287.5, -275, -262.5, -250, -237.5, -225, -212.5, \
     -200, -137.5, -125, -62.5, -50, -37.5, -25, -12.5, 0, 12.5, 25, 37.5, 50, 62.5, 75, 87.5, 100, \
@@ -59,6 +61,16 @@ void Constants::initialize_constants() {
 
   host_inv_clus_res = {1/0.05, 1/0.08, 1/0.11, 1/0.14, 1/0.17, 1/0.20, 1/0.23, 1/0.26, 1/0.29};
   cudaCheck(cudaMemcpy(dev_inv_clus_res, &host_inv_clus_res, host_inv_clus_res.size() * sizeof(float), cudaMemcpyHostToDevice));
+
+  
+  // Kalman filter constants.
+  ParKalmanFilter::KalmanParametrizations host_kalman_params;
+  host_kalman_params.SetParameters(
+    "../cuda/kalman/params/FT6x2",
+    ParKalmanFilter::Polarity::Down
+  );
+  cudaCheck(cudaMemcpy(dev_kalman_params, &host_kalman_params, sizeof(ParKalmanFilter::KalmanParametrizations), cudaMemcpyHostToDevice));
+
 }
 
 void Constants::initialize_ut_decoding_constants(

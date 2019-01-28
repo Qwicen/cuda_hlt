@@ -89,3 +89,5 @@ ARGUMENT(dev_scifi_track_ut_indices, uint)
 ARGUMENT(dev_muon_hits, Muon::HitsSoA)
 ARGUMENT(dev_muon_catboost_features, float)
 ARGUMENT(dev_muon_catboost_output, float)
+
+ARGUMENT(dev_kf_tracks, ParKalmanFilter::FittedTrack);

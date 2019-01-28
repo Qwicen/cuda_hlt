@@ -10,6 +10,7 @@
 #include "UTEventModel.cuh"
 #include "patPV_Definitions.cuh"
 #include "PV_Definitions.cuh"
+#include "ParKalmanDefinitions.cuh"
 
 struct HostBuffers {
   // Pinned host datatypes
@@ -58,10 +59,13 @@ struct HostBuffers {
   MiniState* host_scifi_states;
   uint* host_scifi_track_ut_indices;
 
+  // Kalman
+  ParKalmanFilter::FittedTrack* host_kf_tracks;
+
   // Non pinned datatypes: CPU algorithms
   std::vector<SciFi::TrackHits> scifi_tracks_events;
   //std::vector<uint> n_scifi_tracks;
-
+  
   /**
    * @brief Reserves all host buffers.
    */

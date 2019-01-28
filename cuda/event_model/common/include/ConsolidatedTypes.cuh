@@ -56,8 +56,6 @@ struct Tracks : public TracksDescription {
   }
 
   __device__ __host__ uint number_of_hits(const uint track_number) const {
-    if ( track_number >= total_number_of_tracks )
-      printf("track number = %u, total number of tracks = %u \n", track_number, total_number_of_tracks);
     assert(track_number < total_number_of_tracks);
     return track_number_of_hits[track_number+1] - track_number_of_hits[track_number];
   }

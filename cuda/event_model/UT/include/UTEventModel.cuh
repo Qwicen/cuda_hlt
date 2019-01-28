@@ -14,7 +14,8 @@ struct Hit {
   float xAtYEq0;
   float weight;
   uint32_t LHCbID;
-
+  uint8_t plane_code;
+  
   __device__ Hit() {}
 
   __device__ Hit(
@@ -23,13 +24,15 @@ struct Hit {
     const float _zAtYEq0,
     const float _xAtYEq0,
     const float _weight,
-    const uint32_t _LHCbID) :
+    const uint32_t _LHCbID,
+    const uint8_t _plane_code) :
     yBegin(_yBegin),
     yEnd(_yEnd),
     zAtYEq0(_zAtYEq0),
     xAtYEq0(_xAtYEq0),
     weight(_weight),
-    LHCbID(_LHCbID)
+    LHCbID(_LHCbID),
+    plane_code(_plane_code)
   {}
 
 #define cmpf(a, b) (fabs((a) - (b)) > 0.000065f)
@@ -42,7 +45,7 @@ struct Hit {
     if (cmpf(xAtYEq0, h.xAtYEq0)) return true;
     if (cmpf(weight, h.weight)) return true;
     if (LHCbID != h.LHCbID) return true;
-
+    if (plane_code != h.plane_code) return true;
     return false;
   }
 
@@ -51,7 +54,7 @@ struct Hit {
   friend std::ostream& operator<<(std::ostream& stream, const Hit& ut_hit)
   {
     stream << "UT hit {" << ut_hit.LHCbID << ", " << ut_hit.yBegin << ", " << ut_hit.yEnd << ", " << ut_hit.zAtYEq0
-           << ", " << ut_hit.xAtYEq0 << ", " << ut_hit.weight << "}";
+           << ", " << ut_hit.xAtYEq0 << ", " << ut_hit.weight << ut_hit.plane_code << "}";
 
     return stream;
   }
@@ -151,7 +154,7 @@ struct Hits {
    */
   Hit getHit(uint32_t index) const
   {
-    return {yBegin[index], yEnd[index], zAtYEq0[index], xAtYEq0[index], weight[index], LHCbID[index]};
+    return {yBegin[index], yEnd[index], zAtYEq0[index], xAtYEq0[index], weight[index], LHCbID[index], 0};
   }
 
   __host__ __device__ inline bool isYCompatible(const int i_hit, const float y, const float tol) const
