@@ -14,6 +14,7 @@
 #include "UTDefinitions.cuh"
 #include "Logger.h"
 #include "PrVeloUTMagnetToolDefinitions.h"
+#include "KalmanParametrizations.cuh"
 
 /**
  * @brief Struct intended as a singleton with constants defined on GPU.
@@ -66,6 +67,8 @@ struct Constants {
   float* dev_muon_catboost_leaf_values;
   int* dev_muon_catboost_leaf_offsets;
 
+  // Kalman filter.
+  ParKalmanFilter::KalmanParametrizations* dev_kalman_params;
 
   /**
    * @brief Reserves and initializes constants.

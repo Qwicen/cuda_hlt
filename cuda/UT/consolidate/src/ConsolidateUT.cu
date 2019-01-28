@@ -48,24 +48,24 @@ __global__ void consolidate_ut_tracks(
       }
     };
 
-    auto populateWithPlaneCode = [&track](uint32_t* __restrict__ a, uint32_t* __restrict__ b) {
+    // Populate the plane code.
+    auto populate_plane_code = [](uint8_t* __restrict__ a, const UT::TrackHits& track) {
       int hit_number = 0;
-      for (int i = 0; i < UT::Constants::n_layers; ++i) {
+      for (uint8_t i = 0; i < UT::Constants::n_layers; ++i) {
         const auto hit_index = track.hits[i];
         if (hit_index != -1) {
-          // Save the information of the plane code in the last two bits
-          const auto v = (b[hit_index] & 0xFFFFFFFC) | i;
-          a[hit_number++] = v;
+          a[hit_number++] = i;
         }
       }
     };
-
+    
     // Populate the consolidated hits.
     populate((uint32_t*) consolidated_hits.yBegin, (uint32_t*) ut_hits.yBegin + event_offset);
     populate((uint32_t*) consolidated_hits.yEnd, (uint32_t*) ut_hits.yEnd + event_offset);
     populate((uint32_t*) consolidated_hits.zAtYEq0, (uint32_t*) ut_hits.zAtYEq0 + event_offset);
     populate((uint32_t*) consolidated_hits.xAtYEq0, (uint32_t*) ut_hits.xAtYEq0 + event_offset);
     populate((uint32_t*) consolidated_hits.LHCbID, (uint32_t*) ut_hits.LHCbID + event_offset);
-    populateWithPlaneCode((uint32_t*) consolidated_hits.weight, (uint32_t*) ut_hits.weight + event_offset);
+    populate((uint32_t*) consolidated_hits.weight, (uint32_t*) ut_hits.weight + event_offset);
+    populate_plane_code(consolidated_hits.plane_code, track);
   }
 }

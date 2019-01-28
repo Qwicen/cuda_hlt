@@ -43,6 +43,7 @@
 #include "RunBeamlinePVOnCPU.h"
 #include "MuonFeaturesExtraction.cuh"
 #include "MuonCatboostEvaluator.cuh"
+#include "ParKalmanFilter.cuh"
 
 #define SEQUENCE_T(...) typedef std::tuple<__VA_ARGS__> configured_sequence_t;
 

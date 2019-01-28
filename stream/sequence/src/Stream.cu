@@ -6,6 +6,10 @@
 #include "SciFiSequenceCheckers_impl.cuh"
 #include "PVSequenceCheckers_impl.cuh"
 
+// For checking kalman filter.
+#include "ParKalmanDefinitions.cuh"
+#include "KalmanSequenceCheckers_impl.cuh"
+
 /**
  * @brief Sets up the chain that will be executed later.
  */
@@ -89,7 +93,7 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
 
     // Synchronize CUDA device
     cudaEventRecord(cuda_generic_event, cuda_stream);
-    cudaEventSynchronize(cuda_generic_event);
+    cudaEventSynchronize(cuda_generic_event);    
   }
 
   return cudaSuccess;

@@ -10,6 +10,7 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/UT/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/SciFi/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/kalman/ParKalman/include)
 include_directories(${ROOT_INCLUDE_DIRS})
 
 file(GLOB tracking_checker_sources "src/*cpp")

@@ -22,6 +22,10 @@ namespace trackChecker {
     
   public:
     SomeLHCbIDs  allids;
+    // Kalman information.
+    float z, x, y, tx, ty, qop;
+    float chi2, chi2V, chi2T;
+    uint ndof, ndofV, ndofT;
     std::size_t n_matched_total = 0;
         
     void addId ( LHCbID id ) {
