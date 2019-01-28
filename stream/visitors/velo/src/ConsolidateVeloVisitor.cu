@@ -11,6 +11,7 @@ void SequenceVisitor::set_arguments_size<consolidate_velo_tracks_t>(
 {
   arguments.set_size<dev_velo_track_hits>(host_buffers.host_accumulated_number_of_hits_in_velo_tracks[0] * sizeof(Velo::Hit));
   arguments.set_size<dev_velo_states>(host_buffers.host_number_of_reconstructed_velo_tracks[0] * sizeof(VeloState));
+  arguments.set_size<dev_accepted_velo_tracks>(host_buffers.host_number_of_reconstructed_velo_tracks[0]);
 }
 
 template<>
@@ -37,7 +38,12 @@ void SequenceVisitor::visit<consolidate_velo_tracks_t>(
 
   state.invoke();
 
-  // TODO: Perhaps this shouldn't go here
+  // Set all found tracks to accepted
+  cudaCheck(cudaMemsetAsync(
+    arguments.offset<dev_accepted_velo_tracks>(),
+    1,
+    arguments.size<dev_accepted_velo_tracks>(),
+    cuda_stream));
 
   // Transmission device to host
   // Velo tracks

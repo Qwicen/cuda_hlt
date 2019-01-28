@@ -25,7 +25,8 @@ __global__ void compass_ut(
   const float* dev_unique_sector_xs,
   UT::TrackHits* dev_compassUT_tracks,
   int* dev_atomics_compassUT,
-  int* dev_windows_layers);
+  int* dev_windows_layers,
+  bool* dev_accepted_velo_tracks);
 
 __device__ void compass_ut_tracking(
   const int* dev_windows_layers,

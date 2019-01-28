@@ -1,5 +1,5 @@
-#include "SequenceVisitor.cuh"
 #include "CompassUT.cuh"
+#include "SequenceVisitor.cuh"
 
 template<>
 void SequenceVisitor::set_arguments_size<compass_ut_t>(
@@ -39,7 +39,7 @@ void SequenceVisitor::visit<compass_ut_t>(
     constants.dev_unique_sector_xs,
     arguments.offset<dev_ut_tracks>(),
     arguments.offset<dev_atomics_ut>(),
-    arguments.offset<dev_windows_layers>()    
-  );
+    arguments.offset<dev_windows_layers>(),
+    arguments.offset<dev_accepted_velo_tracks>());
   state.invoke();
 }

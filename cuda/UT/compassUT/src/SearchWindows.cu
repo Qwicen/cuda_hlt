@@ -13,7 +13,8 @@ __global__ void ut_search_windows(
   const float* dev_ut_dxDy,
   const uint* dev_unique_x_sector_layer_offsets, // prefixsum to point to the x hit of the sector, per layer
   const float* dev_unique_sector_xs,             // list of xs that define the groups
-  int* dev_windows_layers)
+  int* dev_windows_layers,
+  bool* dev_accepted_velo_tracks)
 {
   const uint number_of_events           = gridDim.x;
   const uint event_number               = blockIdx.x;
@@ -39,7 +40,7 @@ __global__ void ut_search_windows(
     int left_group_first_candidate = -1, left_group_last_candidate = -1;
     int right_group_first_candidate = -1, right_group_last_candidate = -1;
 
-    if (!velo_states.backward[current_track_offset]) {
+    if (!velo_states.backward[current_track_offset] && dev_accepted_velo_tracks[current_track_offset]) {
       // Using Mini State with only x, y, tx, ty and z
       const auto velo_state = MiniState{velo_states, current_track_offset};
       if (velo_track_in_UTA_acceptance(velo_state)) {
@@ -63,7 +64,6 @@ __global__ void ut_search_windows(
         right_group_last_candidate = std::get<5>(candidates);
       }
     }
-
     // Save first and last candidates in the correct position of dev_windows_layers
     dev_windows_layers[6 * UT::Constants::n_layers * current_track_offset + 6 * layer]     = first_candidate;
     dev_windows_layers[6 * UT::Constants::n_layers * current_track_offset + 6 * layer + 1] = last_candidate;
