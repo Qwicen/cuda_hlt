@@ -7,6 +7,7 @@
 #include <vector>
 #include <cfloat>
 #include <cstdint>
+#include <numeric>
 #include "CudaCommon.h"
 #include "Logger.h"
 #include "ClusteringDefinitions.cuh"
@@ -38,5 +39,28 @@ void read_muon_events_into_arrays(
 void check_muon_events(
   const Muon::HitsSoA *muon_station_hits,
   const int hits_to_out,
+  const int n_events
+);
+
+void read_muon_coords(
+  Muon::MuonCoords *muon_coords, 
+  const char* raw_input
+);
+
+void read_muon_coords_folder(
+  Muon::MuonCoords *muon_coords,
+  const char* events,
+  const uint* event_offsets,
+  const int n_events
+);
+
+void check_muon_coords(
+  Muon::MuonCoords *muon_coords, 
+  const int n_output_hits
+);
+
+void check_muon_coords_folder(
+  Muon::MuonCoords *muon_coords, 
+  const int n_output_hits,
   const int n_events
 );
