@@ -27,6 +27,7 @@ namespace trackChecker {
     float chi2, chi2V, chi2T;
     uint ndof, ndofV, ndofT;
     std::size_t n_matched_total = 0;
+    float p;
         
     void addId ( LHCbID id ) {
       allids.push_back(id);

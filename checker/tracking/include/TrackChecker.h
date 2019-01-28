@@ -26,6 +26,7 @@
 #include "TDirectory.h"
 #include "TFile.h"
 #include "TH1D.h"
+#include "TH2D.h"
 #endif
 
 class TrackChecker {
@@ -110,6 +111,8 @@ protected:
 
     TH1D* h_ghost_nPV;
     TH1D* h_total_nPV;
+    TH2D* h_momentum_resolution;
+    TH1D* h_momentum_matched;
 #endif
     void initHistos(const std::vector<HistoCategory>& histo_categories);
     void fillReconstructibleHistos(const MCParticles &mcps,
@@ -118,6 +121,7 @@ protected:
                                  HistoCategory &category);
     void fillTotalHistos(const MCParticle &mcp);
     void fillGhostHistos(const MCParticle &mcp);
+    void fillMomentumResolutionHisto(const MCParticle &mcp, const float p);
     void deleteHistos(const std::vector<HistoCategory>& histo_categories);
   };
  
@@ -135,7 +139,7 @@ public:
   ~TrackChecker();
   void operator()(const trackChecker::Tracks &tracks,
                   const MCAssociator &mcassoc, const MCParticles &mcps);
-  const std::vector<HistoCategory>& histo_categories() {
+  const std::vector<HistoCategory>& histo_categories() const {
     return m_histo_categories;
   }
   Histos histos;
