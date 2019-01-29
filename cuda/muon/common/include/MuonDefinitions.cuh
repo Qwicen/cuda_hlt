@@ -35,6 +35,42 @@ namespace Muon {
     unsigned int time[Constants::max_numhits_per_event] = {0};
     int delta_time[Constants::max_numhits_per_event] = {0};
     int cluster_size[Constants::max_numhits_per_event] = {0};
+
+    static constexpr float eps = 1e-9;
+    bool operator ==(const HitsSoA& other) {
+      if (memcmp(number_of_hits_per_station, other.number_of_hits_per_station, sizeof(int) * Constants::n_stations) != 0) {
+        return false;
+      }
+      if (memcmp(station_offsets, other.station_offsets, sizeof(int) * Constants::n_stations) != 0) {
+        return false;
+      }
+      if (memcmp(tile, other.tile, sizeof(int) * Constants::max_numhits_per_event) != 0) {
+        return false;
+      }
+      if (memcmp(uncrossed, other.uncrossed, sizeof(int) * Constants::max_numhits_per_event) != 0) {
+        return false;
+      }
+      if (memcmp(time, other.time, sizeof(unsigned int) * Constants::max_numhits_per_event) != 0) {
+        return false;
+      }
+      if (memcmp(delta_time, other.delta_time, sizeof(int) * Constants::max_numhits_per_event) != 0) {
+        return false;
+      }
+      if (memcmp(cluster_size, other.cluster_size, sizeof(int) * Constants::max_numhits_per_event) != 0) {
+        return false;
+      }
+      for (size_t i = 0; i < Constants::max_numhits_per_event; i++) {
+        if (abs(x[i] - other.x[i]) >= eps ||
+            abs(dx[i] - other.dx[i]) >= eps ||
+            abs(y[i] - other.y[i]) >= eps ||
+            abs(dy[i] - other.dy[i]) >= eps ||
+            abs(z[i] - other.z[i]) >= eps ||
+            abs(dz[i] - other.dz[i]) >= eps) {
+          return false;
+        }
+      }
+      return true;
+    }
   };
 
   struct MuonCoords {
