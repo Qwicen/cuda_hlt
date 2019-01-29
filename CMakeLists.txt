@@ -182,3 +182,6 @@ if (ROOT_FOUND)
   target_compile_definitions(Allen PUBLIC WITH_ROOT)
   target_link_libraries(Allen PRIVATE ${ROOT_LIBRARIES})
 endif()
+
+enable_testing()
+add_subdirectory(tests)
