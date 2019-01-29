@@ -4,7 +4,9 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/preprocessing/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/IsMuon/include)
 
 set(UNIT_TEST_LIST
-  MuonFeaturesExtraction)
+  MuonFeaturesExtraction
+  MuonCoordsToMuonCommonHits
+)
  
 foreach(NAME IN LISTS UNIT_TEST_LIST)
 

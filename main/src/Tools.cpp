@@ -143,3 +143,81 @@ void read_muon_events_into_arrays(
   }
   debug_cout << "average # of Muon hits / event = " << (float) total_number_of_hits / n_events<< std::endl;
 }
+
+void read_muon_coords(Muon::MuonCoords *muon_coords, const char *raw_input) {
+  std::copy_n((int *) raw_input, Muon::Constants::n_stations, muon_coords->number_of_hits_per_station);
+  raw_input += sizeof(int) * Muon::Constants::n_stations;
+  std::partial_sum(
+      muon_coords->number_of_hits_per_station,
+      muon_coords->number_of_hits_per_station + Muon::Constants::n_stations - 1,
+      muon_coords->station_offsets + 1
+  );
+  muon_coords->digit_tile_station_offsets[0] = 0;
+  for (uint station = 0; station < Muon::Constants::n_stations; station++) {
+    const int station_offset = muon_coords->station_offsets[station];
+    const int number_of_hits = muon_coords->number_of_hits_per_station[station];
+    const int digit_tile_station_offset = muon_coords->digit_tile_station_offsets[station];
+    std::copy_n((int *) raw_input, number_of_hits, muon_coords->uncrossed + station_offset);
+    raw_input += sizeof(int) * number_of_hits;
+    const int number_of_uncrossed = std::accumulate(
+        muon_coords->uncrossed + station_offset,
+        muon_coords->uncrossed + station_offset + number_of_hits,
+        0
+    );
+    const int number_of_digit_tiles = number_of_hits * 2 - number_of_uncrossed;
+    muon_coords->number_of_digit_tiles_per_station[station] = number_of_digit_tiles;
+    if (station + 1 < Muon::Constants::n_stations) {
+      muon_coords->digit_tile_station_offsets[station + 1] = digit_tile_station_offset + number_of_digit_tiles;
+    }
+    std::copy_n((int *) raw_input, number_of_digit_tiles, muon_coords->digit_tile + digit_tile_station_offset);
+    raw_input += sizeof(int) * number_of_digit_tiles;
+    std::copy_n((uint *) raw_input, number_of_hits, muon_coords->digitTDC1 + station_offset);
+    raw_input += sizeof(uint) * number_of_hits;
+    std::copy_n((uint *) raw_input, number_of_hits, muon_coords->digitTDC2 + station_offset);
+    raw_input += sizeof(uint) * number_of_hits;
+  }
+}
+
+void read_muon_coords_folder(
+    Muon::MuonCoords *muon_coords,
+    const char *events,
+    const uint *event_offsets,
+    const int n_events
+) {
+  for (int event = 0; event < n_events; event++) {
+    const char *raw_input = events + event_offsets[event];
+    read_muon_coords(&muon_coords[event], raw_input);
+  }
+}
+
+void check_muon_coords(Muon::MuonCoords *muon_coords, const int n_output_hits) {
+  for (uint station = 0; station < Muon::Constants::n_stations; ++station) {
+    const int station_offset = muon_coords->station_offsets[station];
+    const int number_of_hits = muon_coords->number_of_hits_per_station[station];
+    const int digit_tile_station_offset = muon_coords->digit_tile_station_offsets[station];
+    const int number_of_digit_tiles = muon_coords->number_of_digit_tiles_per_station[station];
+    debug_cout << "checks on station " << station << ", with " << number_of_hits << " hits" << std::endl;
+    int digit_tile_number = 0;
+    for (int hit = 0; hit < std::min(number_of_hits, n_output_hits); ++hit) {
+      const int uncrossed = muon_coords->uncrossed[station_offset + hit];
+      debug_cout << "\t at hit " << hit << ", " << "uncrossed = " << uncrossed << ", ";
+      if (uncrossed == 0) {
+        debug_cout << "digit_tiles = (" << (muon_coords->digit_tile[digit_tile_station_offset + digit_tile_number])
+                   << ", " << (muon_coords->digit_tile[digit_tile_station_offset + digit_tile_number + 1]) << "), ";
+        digit_tile_number += 2;
+      } else {
+        debug_cout << "digit_tile = " << (muon_coords->digit_tile[digit_tile_station_offset + digit_tile_number])
+                   << ", ";
+        digit_tile_number++;
+      }
+      debug_cout << "digitTDC1 = " << (muon_coords->digitTDC1[station_offset + hit]) << ", "
+                 << "digitTDC2 = " << (muon_coords->digitTDC2[station_offset + hit]) << std::endl;
+    }
+  }
+}
+
+void check_muon_coords_folder(Muon::MuonCoords *muon_coords, const int n_output_hits, const int n_events) {
+  for (int event = 0; event < n_events; event++) {
+    check_muon_coords(&muon_coords[event], n_output_hits);
+  }
+}
