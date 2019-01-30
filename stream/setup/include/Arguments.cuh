@@ -82,7 +82,7 @@ ARGUMENT(dev_scifi_qop, float)
 ARGUMENT(dev_scifi_states, MiniState)
 ARGUMENT(dev_scifi_track_ut_indices, uint)
 
-ARGUMENT(dev_is_muon, bool)
 ARGUMENT(dev_muon_hits, Muon::HitsSoA)
+ARGUMENT(dev_is_muon, bool)
 ARGUMENT(dev_muon_catboost_features, float)
 ARGUMENT(dev_muon_catboost_output, float)
