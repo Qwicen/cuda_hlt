@@ -110,23 +110,26 @@ __global__ void is_muon(
         dev_muon_track_occupancies[track_offset + station_id] += 1;
       }
     }
-    const float momentum = 1 / std::abs(scifi_tracks.qop[track_id]);
-    if (momentum < dev_muon_momentum_cuts[0]) {
-      dev_is_muon[event_offset + track_id] = false;
-    }
-    else if (dev_muon_track_occupancies[track_offset + 0] == 0 || dev_muon_track_occupancies[track_offset + 1] == 0) {
-      dev_is_muon[event_offset + track_id] = false;
-    }
-    else if (momentum < dev_muon_momentum_cuts[1]) {
-      dev_is_muon[event_offset + track_id] = true;
-    }
-    else if (momentum < dev_muon_momentum_cuts[2]) {
-      dev_is_muon[event_offset + track_id] =
-        (dev_muon_track_occupancies[track_offset + 2] != 0 ) || (dev_muon_track_occupancies[track_offset + 3] != 0 );
-    }
-    else {
-      dev_is_muon[event_offset + track_id] = 
-        (dev_muon_track_occupancies[track_offset + 2] != 0 ) && (dev_muon_track_occupancies[track_offset + 3] != 0 );
+    __syncthreads();
+    if (blockIdx.y == 0) {
+      const float momentum = 1 / std::abs(scifi_tracks.qop[track_id]);
+      if (momentum < dev_muon_momentum_cuts[0]) {
+        dev_is_muon[event_offset + track_id] = false;
+      }
+      else if (dev_muon_track_occupancies[track_offset + 0] == 0 || dev_muon_track_occupancies[track_offset + 1] == 0) {
+        dev_is_muon[event_offset + track_id] = false;
+      }
+      else if (momentum < dev_muon_momentum_cuts[1]) {
+        dev_is_muon[event_offset + track_id] = true;
+      }
+      else if (momentum < dev_muon_momentum_cuts[2]) {
+        dev_is_muon[event_offset + track_id] =
+          (dev_muon_track_occupancies[track_offset + 2] != 0 ) || (dev_muon_track_occupancies[track_offset + 3] != 0 );
+      }
+      else {
+        dev_is_muon[event_offset + track_id] = 
+          (dev_muon_track_occupancies[track_offset + 2] != 0 ) && (dev_muon_track_occupancies[track_offset + 3] != 0 );
+      }
     }
   }
 }
