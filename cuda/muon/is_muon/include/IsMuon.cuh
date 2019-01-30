@@ -11,7 +11,7 @@ __global__ void is_muon(
   MiniState* dev_scifi_states,
   uint* dev_scifi_track_ut_indices,
   const Muon::HitsSoA* muon_hits,
-  bool* dev_muon_track_occupancies,
+  int* dev_muon_track_occupancies,
   bool* dev_is_muon,
   const Muon::Constants::FieldOfInterest* dev_muon_foi,
   const float* dev_muon_momentum_cuts
