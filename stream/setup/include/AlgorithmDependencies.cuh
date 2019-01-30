@@ -360,6 +360,7 @@ typedef std::tuple<
     dev_scifi_states,
     dev_scifi_track_ut_indices,
     dev_muon_hits,
+    dev_muon_track_occupancies,
     dev_is_muon
   >,
   AlgorithmDependencies<muon_catboost_features_extraction_t,
