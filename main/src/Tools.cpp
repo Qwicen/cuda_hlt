@@ -106,6 +106,8 @@ void read_muon_events_into_arrays(
       raw_input += sizeof(int) * number_of_hits;
       std::copy_n((int*) raw_input, number_of_hits, &( muon_station_hits[i_event].cluster_size[station_offset]) );
       raw_input += sizeof(int) * number_of_hits;
+      std::copy_n((int*) raw_input, number_of_hits, &( muon_station_hits[i_event].region_id[station_offset]) );
+      raw_input += sizeof(int) * number_of_hits;
     }
   }
 }
@@ -123,19 +125,20 @@ void read_muon_events_into_arrays(
       number_of_hits_per_event += number_of_hits;
       debug_cout << "checks on station " << i_station << ", with " << number_of_hits << " hits" << std::endl;
       for (int i_hit = 0; i_hit < n_output_hits_per_event; ++i_hit) {
-	debug_cout << "\t at hit " << i_hit << ", " <<
-          "tile = "         << muon_station_hits->tile[station_offset + i_hit]         << ", " <<
-          "x = "            << muon_station_hits->x[station_offset + i_hit]            << ", " <<
-          "dx = "           << muon_station_hits->dx[station_offset + i_hit]           << ", " <<
-          "y = "            << muon_station_hits->y[station_offset + i_hit]            << ", " <<
-          "dy = "           << muon_station_hits->dy[station_offset + i_hit]           << ", " <<
-          "z = "            << muon_station_hits->z[station_offset + i_hit]            << ", " <<
-          "dz = "           << muon_station_hits->dz[station_offset + i_hit]           << ", " <<
-          "uncrossed = "    << muon_station_hits->uncrossed[station_offset + i_hit]    << ", " <<
-          "time = "         << muon_station_hits->time[station_offset + i_hit]         << ", " <<
-          "delta_time = "   << muon_station_hits->delta_time[station_offset + i_hit]   << ", " <<
-          "cluster_size = " << muon_station_hits->cluster_size[station_offset + i_hit] << ", " <<
-	  std::endl;
+        debug_cout << "\t at hit " << i_hit << ", " <<
+          "tile = "         << muon_station_hits[i_event].tile[station_offset + i_hit]         << ", " <<
+          "x = "            << muon_station_hits[i_event].x[station_offset + i_hit]            << ", " <<
+          "dx = "           << muon_station_hits[i_event].dx[station_offset + i_hit]           << ", " <<
+          "y = "            << muon_station_hits[i_event].y[station_offset + i_hit]            << ", " <<
+          "dy = "           << muon_station_hits[i_event].dy[station_offset + i_hit]           << ", " <<
+          "z = "            << muon_station_hits[i_event].z[station_offset + i_hit]            << ", " <<
+          "dz = "           << muon_station_hits[i_event].dz[station_offset + i_hit]           << ", " <<
+          "uncrossed = "    << muon_station_hits[i_event].uncrossed[station_offset + i_hit]    << ", " <<
+          "time = "         << muon_station_hits[i_event].time[station_offset + i_hit]         << ", " <<
+          "delta_time = "   << muon_station_hits[i_event].delta_time[station_offset + i_hit]   << ", " <<
+          "cluster_size = " << muon_station_hits[i_event].cluster_size[station_offset + i_hit] << ", " <<
+          "region_id = "    << muon_station_hits[i_event].region_id[station_offset + i_hit]    << ", " <<
+        std::endl;
       }
     }
     total_number_of_hits += number_of_hits_per_event;

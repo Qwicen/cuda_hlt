@@ -20,7 +20,9 @@ namespace Muon {
     /* IsMuon constants */
     static constexpr float momentum_cuts[]      = {3000, 6000, 10000};
     struct FieldOfInterest {
-      /* FOI = a + b * exp(-c * p) in both x and y directions */
+      /* FOI_x = a_x + b_x * exp(-c_x * p) 
+      *  FOI_y = a_y + b_y * exp(-c_y * p)
+      */
       const float factor = 1.2;
       const float param_a_x[Constants::n_stations][Constants::n_regions] = {
         { 5.2, 3.6, 2.4, 2.4 },
@@ -79,5 +81,6 @@ namespace Muon {
     unsigned int time[Constants::max_numhits_per_event] = {0};
     int delta_time[Constants::max_numhits_per_event] = {0};
     int cluster_size[Constants::max_numhits_per_event] = {0};
+    int region_id[Constants::max_numhits_per_event] = {0};
   };
 }
