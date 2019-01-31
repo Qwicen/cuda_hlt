@@ -1,37 +1,30 @@
 #pragma once
 
 #include "UTDefinitions.cuh"
+#include "SystemOfUnits.h"
 
 namespace CompassUT {
 
-constexpr uint max_considered_before_found = 4;
-constexpr uint num_threads = 32;
+constexpr uint num_sectors = 5;
+constexpr uint num_elems = num_sectors * 2; 
+constexpr uint max_considered_before_found = 2;
 
 }
 
 //=========================================================================
 // Point to correct position for windows pointers
 //=========================================================================
-struct LayerCandidates {
-  int from0;
-  int size0;
-  int from1;
-  int size1;
-  int from2;
-  int size2;
-};
-
 struct TrackCandidates {
-  LayerCandidates layer[UT::Constants::n_layers];
-};
+  const short* m_base_pointer;
 
-struct WindowIndicator {
-  const int* m_base_pointer;
-  __host__ __device__ WindowIndicator(const int* base_pointer) : m_base_pointer(base_pointer) {}
+  __host__ __device__ TrackCandidates(const short* base_pointer) : m_base_pointer(base_pointer) {}
 
-  __host__ __device__ const TrackCandidates* get_track_candidates(const int i_track)
-  {
-    return reinterpret_cast<const TrackCandidates*>(m_base_pointer + (6 * UT::Constants::n_layers * i_track));
+  __host__ __device__ short get_from(int layer, int sector) const {
+    return m_base_pointer[sector * UT::Constants::n_layers * UT::Constants::num_thr_compassut + layer * UT::Constants::num_thr_compassut + threadIdx.x];
+  }
+
+  __host__ __device__ short get_size(int layer, int sector) const {
+    return m_base_pointer[(sector + (CompassUT::num_elems/2)) * UT::Constants::n_layers * UT::Constants::num_thr_compassut + layer * UT::Constants::num_thr_compassut + threadIdx.x];
   }
 };
 

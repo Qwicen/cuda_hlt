@@ -18,7 +18,7 @@ __global__ void compass_ut(
   const float* dev_unique_sector_xs,             // list of xs that define the groups
   UT::TrackHits* dev_compassUT_tracks,
   int* dev_atomics_compassUT, // size of number of events
-  int* dev_windows_layers,
+  short* dev_windows_layers,
   bool* dev_accepted_velo_tracks)
 {
   const uint number_of_events = gridDim.x;
@@ -33,6 +33,8 @@ __global__ void compass_ut(
   const Velo::Consolidated::States velo_states{dev_velo_states, velo_tracks.total_number_of_tracks};
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
+
+  short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::num_elems * UT::Constants::n_layers;
 
   const UT::HitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
   const UT::Hits ut_hits {dev_ut_hits, total_number_of_hits};
@@ -57,11 +59,10 @@ __global__ void compass_ut(
   __syncthreads();
 
   // store the tracks with valid windows
-  __shared__ int shared_active_tracks[2 * CompassUT::num_threads - 1];
+  __shared__ int shared_active_tracks[2 * UT::Constants::num_thr_compassut - 1];
 
   // store windows and num candidates in shared mem
-  // 32 * 4 * 3(num_windows) * 2 (from, size) = 768 (3072 bytes)
-  __shared__ int win_size_shared[CompassUT::num_threads * UT::Constants::n_layers * 3 * 2];
+  __shared__ short win_size_shared[UT::Constants::num_thr_compassut * UT::Constants::n_layers * CompassUT::num_elems];
 
   // const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
@@ -73,12 +74,14 @@ __global__ void compass_ut(
 
     if (i_track < number_of_tracks_event) {
       const uint current_track_offset = event_tracks_offset + i_track;
-
-      if (!velo_states.backward[current_track_offset] &&
+      const auto velo_state = MiniState{velo_states, current_track_offset};
+      
+      if (!velo_states.backward[current_track_offset] && 
           dev_accepted_velo_tracks[current_track_offset] &&
-          found_active_windows(dev_windows_layers, current_track_offset)) {
-        int current_track = atomicAdd(active_tracks, 1);
-        shared_active_tracks[current_track] = i_track;
+          velo_track_in_UTA_acceptance(velo_state) &&
+          found_active_windows(windows_layers, number_of_tracks_event, i_track) ) {
+            int current_track = atomicAdd(active_tracks, 1);
+            shared_active_tracks[current_track] = i_track;
       }
     }
 
@@ -87,8 +90,9 @@ __global__ void compass_ut(
     if (*active_tracks >= blockDim.x) {
 
       compass_ut_tracking(
-        dev_windows_layers,
+        windows_layers,
         dev_velo_track_hits,
+        number_of_tracks_event,
         shared_active_tracks[threadIdx.x],
         event_tracks_offset + shared_active_tracks[threadIdx.x],
         velo_states,
@@ -121,15 +125,12 @@ __global__ void compass_ut(
 
   // remaining tracks
   if (threadIdx.x < *active_tracks) {
-
-    const int i_track = shared_active_tracks[threadIdx.x];
-    const uint current_track_offset = event_tracks_offset + i_track;
-
     compass_ut_tracking(
-      dev_windows_layers,
+      windows_layers,
       dev_velo_track_hits,
-      i_track,
-      current_track_offset,
+      number_of_tracks_event,
+      shared_active_tracks[threadIdx.x],
+      event_tracks_offset + shared_active_tracks[threadIdx.x],
       velo_states,
       velo_tracks,
       ut_hits,
@@ -144,8 +145,9 @@ __global__ void compass_ut(
 }
 
 __device__ void compass_ut_tracking(
-  const int* dev_windows_layers,
+  const short* windows_layers,
   char* dev_velo_track_hits,
+  const uint number_of_tracks_event,
   const int i_track,
   const uint current_track_offset,
   const Velo::Consolidated::States& velo_states,
@@ -154,7 +156,7 @@ __device__ void compass_ut_tracking(
   const UT::HitOffsets& ut_hit_offsets,
   const float* bdl_table,
   const float* dev_ut_dxDy,
-  int* win_size_shared,
+  short* win_size_shared,
   int* n_veloUT_tracks_event,
   UT::TrackHits* veloUT_tracks_event,
   const int event_hit_offset)
@@ -164,13 +166,16 @@ __device__ void compass_ut_tracking(
   const MiniState velo_state{velo_states, current_track_offset};
 
   fill_shared_windows(
-    dev_windows_layers,
-    current_track_offset,
+    windows_layers, 
+    number_of_tracks_event,
+    i_track,
     win_size_shared);
 
   // Find compatible hits in the windows for this VELO track
   const auto best_hits_and_params = find_best_hits(
     win_size_shared,
+    number_of_tracks_event,
+    i_track,
     ut_hits,
     ut_hit_offsets,
     velo_state,
@@ -209,70 +214,66 @@ __device__ void compass_ut_tracking(
 // (3 windows per layer)
 //=============================================================================
 __device__ __inline__ void fill_shared_windows(
-  const int* windows_layers,
-  const uint current_track_offset,
-  int* win_size_shared)
+  const short* windows_layers,
+  const int number_of_tracks_event,
+  const int i_track,
+  short* win_size_shared)
 {
-  const int total_offset = 6 * UT::Constants::n_layers * current_track_offset;
-  const int idx = 24 * threadIdx.x;
-  // layer 0
-  win_size_shared[idx]     = windows_layers[total_offset];
-  win_size_shared[idx + 1] = windows_layers[total_offset + 1] - win_size_shared[idx];
-  win_size_shared[idx + 2] = windows_layers[total_offset + 2];
-  win_size_shared[idx + 3] = windows_layers[total_offset + 3] - win_size_shared[idx + 2];
-  win_size_shared[idx + 4] = windows_layers[total_offset + 4];
-  win_size_shared[idx + 5] = windows_layers[total_offset + 5] - win_size_shared[idx + 4];
+  const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
+  const int track_pos_sh = UT::Constants::n_layers * UT::Constants::num_thr_compassut;
 
-  // layer 1
-  win_size_shared[idx + 6]     = windows_layers[total_offset + 6];
-  win_size_shared[idx + 6 + 1] = windows_layers[total_offset + 6 + 1] - win_size_shared[idx + 6];
-  win_size_shared[idx + 6 + 2] = windows_layers[total_offset + 6 + 2];
-  win_size_shared[idx + 6 + 3] = windows_layers[total_offset + 6 + 3] - win_size_shared[idx + 6 + 2];
-  win_size_shared[idx + 6 + 4] = windows_layers[total_offset + 6 + 4];
-  win_size_shared[idx + 6 + 5] = windows_layers[total_offset + 6 + 5] - win_size_shared[idx + 6 + 4];
-
-  // layer 2
-  win_size_shared[idx + 12]     = windows_layers[total_offset + 12];
-  win_size_shared[idx + 12 + 1] = windows_layers[total_offset + 12 + 1] - win_size_shared[idx + 12];
-  win_size_shared[idx + 12 + 2] = windows_layers[total_offset + 12 + 2];
-  win_size_shared[idx + 12 + 3] = windows_layers[total_offset + 12 + 3] - win_size_shared[idx + 12 + 2];
-  win_size_shared[idx + 12 + 4] = windows_layers[total_offset + 12 + 4];
-  win_size_shared[idx + 12 + 5] = windows_layers[total_offset + 12 + 5] - win_size_shared[idx + 12 + 4];
-
-  // layer 3
-  win_size_shared[idx + 18]     = windows_layers[total_offset + 18];
-  win_size_shared[idx + 18 + 1] = windows_layers[total_offset + 18 + 1] - win_size_shared[idx + 18];
-  win_size_shared[idx + 18 + 2] = windows_layers[total_offset + 18 + 2];
-  win_size_shared[idx + 18 + 3] = windows_layers[total_offset + 18 + 3] - win_size_shared[idx + 18 + 2];
-  win_size_shared[idx + 18 + 4] = windows_layers[total_offset + 18 + 4];
-  win_size_shared[idx + 18 + 5] = windows_layers[total_offset + 18 + 5] - win_size_shared[idx + 18 + 4];
+  for (int layer=0; layer<UT::Constants::n_layers; ++layer) {
+    for (int pos=0; pos<CompassUT::num_elems; ++pos) {
+      win_size_shared[pos * track_pos_sh + layer * UT::Constants::num_thr_compassut + threadIdx.x] = 
+      windows_layers [pos * track_pos    + layer * number_of_tracks_event      + i_track];
+    }
+  }
 }
 
 //=========================================================================
-// Determine if there are valid windows for this track
+// Determine if there are valid windows for this track looking at the sizes
 //=========================================================================
-__device__ __inline__ bool found_active_windows(const int* windows_layers, const uint current_track_offset)
+__device__ __inline__ bool found_active_windows(
+  const short* windows_layers,
+  const int number_of_tracks_event,
+  const int i_track)
 {
-  const int total_offset = 6 * UT::Constants::n_layers * current_track_offset;
+  const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
 
-  const bool first_win_found = windows_layers[total_offset] != -1 ||
-                               windows_layers[total_offset + 2] != -1 ||
-                               windows_layers[total_offset + 4] != -1;
-  const bool second_win_found = windows_layers[total_offset + 12] != -1 ||
-                                windows_layers[total_offset + 12 + 2] != -1 ||
-                                windows_layers[total_offset + 12 + 4] != -1;
-  const bool last_win_found = windows_layers[total_offset + 6] != -1 ||
-                              windows_layers[total_offset + 6 + 2] != -1 ||
-                              windows_layers[total_offset + 6 + 4] != -1 ||
-                              windows_layers[total_offset + 18] != -1 ||
-                              windows_layers[total_offset + 18 + 2] != -1 ||
-                              windows_layers[total_offset + 18 + 4] != -1;
+  // The windows are stored in SOA, with the first 5 arrays being the first hits of the windows,
+  // and the next 5 the sizes of the windows. We check the sizes of all the windows.
+  const bool l0_found = windows_layers[5 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[6 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[7 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[8 * track_pos + 0 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[9 * track_pos + 0 * number_of_tracks_event + i_track] != 0;
 
-  return first_win_found && second_win_found && last_win_found;
+  const bool l1_found = windows_layers[5 * track_pos + 1 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[6 * track_pos + 1 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[7 * track_pos + 1 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[8 * track_pos + 1 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[9 * track_pos + 1 * number_of_tracks_event + i_track] != 0;
+
+  const bool l2_found = windows_layers[5 * track_pos + 2 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[6 * track_pos + 2 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[7 * track_pos + 2 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[8 * track_pos + 2 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[9 * track_pos + 2 * number_of_tracks_event + i_track] != 0;
+
+  const bool l3_found = windows_layers[5 * track_pos + 3 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[6 * track_pos + 3 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[7 * track_pos + 3 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[8 * track_pos + 3 * number_of_tracks_event + i_track] != 0 ||
+                        windows_layers[9 * track_pos + 3 * number_of_tracks_event + i_track] != 0;
+
+  return (l0_found && l2_found && (l1_found || l3_found)) ||
+         (l3_found && l1_found && (l2_found || l0_found));
 }
 
+//=========================================================================
 // These things are all hardcopied from the PrTableForFunction and PrUTMagnetTool
 // If the granularity or whatever changes, this will give wrong results
+//=========================================================================
 __host__ __device__ __inline__ int master_index(const int index1, const int index2, const int index3)
 {
   return (index3 * 11 + index2) * 31 + index1;
@@ -293,8 +294,8 @@ __device__ void save_track(
   const UT::Hits& ut_hits,
   const float* ut_dxDy,
   int* n_veloUT_tracks, // increment number of tracks
-  UT::TrackHits* VeloUT_tracks,
-  const int event_hit_offset) // write the track
+  UT::TrackHits* VeloUT_tracks, // write the track
+  const int event_hit_offset)
 {
   //== Handle states. copy Velo one, add UT.
   const float zOrigin = (std::fabs(velo_state.ty) > 0.001f) ? velo_state.z - velo_state.y / velo_state.ty

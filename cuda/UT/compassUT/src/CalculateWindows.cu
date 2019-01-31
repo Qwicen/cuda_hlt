@@ -69,7 +69,7 @@ __host__ __device__ void tol_refine (
 //=============================================================================
 // Get the windows
 //=============================================================================
-__device__ std::tuple<int, int, int, int, int, int> calculate_windows(
+__device__ std::tuple<int, int, int, int, int, int, int, int, int, int> calculate_windows(
   const int i_track,
   const int layer,
   const MiniState& velo_state,
@@ -119,7 +119,9 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
 
   int first_candidate = -1, last_candidate = -1;
   int left_group_first_candidate = -1, left_group_last_candidate = -1;
+  int left2_group_first_candidate = -1, left2_group_last_candidate = -1;
   int right_group_first_candidate = -1, right_group_last_candidate = -1;
+  int right2_group_first_candidate = -1, right2_group_last_candidate = -1;
   if (sector_group != 0) {
     // The sector we are interested on is sector_group - 1
     sector_group -= 1;
@@ -163,6 +165,29 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
       left_group_last_candidate = std::get<1>(left_group_candidates);
     }
 
+    // Left-left group
+    const int left2_group = sector_group - 2;
+    if (left2_group >= first_sector_group_in_layer) {
+      // We found a sector group with potentially compatible hits
+      // Look for them
+      const auto left2_group_candidates = find_candidates_in_sector_group(
+        ut_hits,
+        ut_hit_offsets,
+        velo_state,
+        dev_unique_sector_xs,
+        x_track,
+        y_track,
+        dx_dy,
+        normFact[layer],
+        invNormFact,
+        xTolNormFact,
+        left2_group
+      );
+
+      left2_group_first_candidate = std::get<0>(left2_group_candidates);
+      left2_group_last_candidate = std::get<1>(left2_group_candidates);
+    }
+
     // Right group
     const int right_group = sector_group + 1;
     if (right_group < last_sector_group_in_layer - 1) {
@@ -185,11 +210,37 @@ __device__ std::tuple<int, int, int, int, int, int> calculate_windows(
       right_group_first_candidate = std::get<0>(right_group_candidates);
       right_group_last_candidate = std::get<1>(right_group_candidates);
     }
+
+    // Right-right group
+    const int right2_group = sector_group + 2;
+    if (right2_group < last_sector_group_in_layer) {
+      // We found a sector group with potentially compatible hits
+      // Look for them
+      const auto right2_group_candidates = find_candidates_in_sector_group(
+        ut_hits,
+        ut_hit_offsets,
+        velo_state,
+        dev_unique_sector_xs,
+        x_track,
+        y_track,
+        dx_dy,
+        normFact[layer],
+        invNormFact,
+        xTolNormFact,
+        right2_group
+      );
+
+      right2_group_first_candidate = std::get<0>(right2_group_candidates);
+      right2_group_last_candidate = std::get<1>(right2_group_candidates);
+    }    
   }
 
-  return {first_candidate, last_candidate,
+  return {
+    first_candidate, last_candidate,
     left_group_first_candidate, left_group_last_candidate,
-    right_group_first_candidate, right_group_last_candidate
+    right_group_first_candidate, right_group_last_candidate,
+    left2_group_first_candidate, left2_group_last_candidate,
+    right2_group_first_candidate, right2_group_last_candidate
   };
 } 
 

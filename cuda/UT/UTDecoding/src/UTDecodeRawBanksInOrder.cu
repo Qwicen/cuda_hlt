@@ -69,24 +69,25 @@ __global__ void ut_decode_raw_banks_in_order(
         station * UT::Decoding::ut_number_of_sectors_per_board + layer * 3 + detRegion;
     const uint32_t idx_offset = dev_ut_region_offsets[idx] + sector;
 
-    const uint32_t m_firstStrip = geometry.firstStrip[idx_offset];
-    const float m_pitch = geometry.pitch[idx_offset];
-    const float m_dy = geometry.dy[idx_offset];
-    const float m_dp0diX = geometry.dp0diX[idx_offset];
-    const float m_dp0diY = geometry.dp0diY[idx_offset];
-    const float m_dp0diZ = geometry.dp0diZ[idx_offset];
-    const float m_p0X = geometry.p0X[idx_offset];
-    const float m_p0Y = geometry.p0Y[idx_offset];
-    const float m_p0Z = geometry.p0Z[idx_offset];
+    const uint32_t firstStrip = geometry.firstStrip[idx_offset];
+    const float pitch = geometry.pitch[idx_offset];
+    const float dy = geometry.dy[idx_offset];
+    const float dp0diX = geometry.dp0diX[idx_offset];
+    const float dp0diY = geometry.dp0diY[idx_offset];
+    const float dp0diZ = geometry.dp0diZ[idx_offset];
+    const float p0X = geometry.p0X[idx_offset];
+    const float p0Y = geometry.p0Y[idx_offset];
+    const float p0Z = geometry.p0Z[idx_offset];
 
-    const float numstrips = (fracStrip / 4.f) + strip - m_firstStrip;
+    const float numstrips = (fracStrip / 4.f) + strip - firstStrip;
 
     // Calculate values of the hit
-    const float yBegin = m_p0Y + numstrips * m_dp0diY;
-    const float yEnd = m_dy + yBegin;
-    const float zAtYEq0 = m_p0Z + numstrips * m_dp0diZ;
-    const float xAtYEq0 = m_p0X + numstrips * m_dp0diX;
-    const float weight = 12.f / (m_pitch*m_pitch);
+    const float yBegin = p0Y + numstrips * dp0diY;
+    const float yEnd = dy + yBegin;
+    const float zAtYEq0 = p0Z + numstrips * dp0diZ;
+    const float xAtYEq0 = p0X + numstrips * dp0diX;
+    const float weight = 1.f / (pitch*pitch);
+    // const uint32_t highThreshold = threshold;
     const uint32_t LHCbID = chanID + strip;
     // const uint32_t planeCode = 2 * station + (layer & 1);
 
