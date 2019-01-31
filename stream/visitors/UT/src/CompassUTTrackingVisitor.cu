@@ -23,7 +23,7 @@ void SequenceVisitor::visit<compass_ut_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(UT::Constants::num_threads), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(UT::Constants::num_thr_compassut), cuda_stream);
 
   state.set_arguments(
     arguments.offset<dev_ut_hits>(),

@@ -59,10 +59,10 @@ __global__ void compass_ut(
   __syncthreads();
 
   // store the tracks with valid windows
-  __shared__ int shared_active_tracks[2 * UT::Constants::num_threads - 1];
+  __shared__ int shared_active_tracks[2 * UT::Constants::num_thr_compassut - 1];
 
   // store windows and num candidates in shared mem
-  __shared__ short win_size_shared[UT::Constants::num_threads * UT::Constants::n_layers * CompassUT::num_elems];
+  __shared__ short win_size_shared[UT::Constants::num_thr_compassut * UT::Constants::n_layers * CompassUT::num_elems];
 
   // const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
   const float* bdl_table = &(dev_ut_magnet_tool->bdlTable[0]);
@@ -220,11 +220,11 @@ __device__ __inline__ void fill_shared_windows(
   short* win_size_shared)
 {
   const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
-  const int track_pos_sh = UT::Constants::n_layers * UT::Constants::num_threads;
+  const int track_pos_sh = UT::Constants::n_layers * UT::Constants::num_thr_compassut;
 
   for (int layer=0; layer<UT::Constants::n_layers; ++layer) {
     for (int pos=0; pos<CompassUT::num_elems; ++pos) {
-      win_size_shared[pos * track_pos_sh + layer * UT::Constants::num_threads + threadIdx.x] = 
+      win_size_shared[pos * track_pos_sh + layer * UT::Constants::num_thr_compassut + threadIdx.x] = 
       windows_layers [pos * track_pos    + layer * number_of_tracks_event      + i_track];
     }
   }

@@ -39,7 +39,7 @@ __global__ void ut_search_windows(
 
   // Store only the valid tracks into shared memory.
   // Fill the array until with find enough valid tracks = block size
-  __shared__ int shared_active_tracks[2 * UT::Constants::num_threads - 1];
+  __shared__ int shared_active_tracks[2 * UT::Constants::num_thr_searchwin - 1];
 
   for (int i = 0; i < ((number_of_tracks_event + blockDim.y - 1) / blockDim.y) + 1; i += 1) {
     const auto i_track = i * blockDim.y + threadIdx.y;
