@@ -1,6 +1,6 @@
 #include "MuonFeaturesExtraction.cuh"
 #include "ConsolidateSciFi.cuh"
-#include <stdio.h>
+
 __global__ void muon_catboost_features_extraction(
   int* dev_atomics_scifi,
   uint* dev_scifi_track_hit_number,
@@ -26,7 +26,6 @@ __global__ void muon_catboost_features_extraction(
 
   const uint number_of_tracks_event = scifi_tracks.number_of_tracks(event_id);
   const uint event_offset = scifi_tracks.tracks_offset(event_id);
-  printf("event_id: %d, sid: %d, number_of_tracks_event: %d\n", event_id, station_id, number_of_tracks_event  );
   for (uint track_id = threadIdx.x; track_id < number_of_tracks_event; track_id += blockDim.x) {
     float min_dist = 1e10;
     int index_of_closest_hit;

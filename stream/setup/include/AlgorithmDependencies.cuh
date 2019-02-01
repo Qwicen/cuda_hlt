@@ -399,6 +399,7 @@ typedef std::tuple<
   dev_scifi_qop,
   dev_scifi_states,
   dev_scifi_track_ut_indices,
+  dev_is_muon,
   dev_event_list,
   dev_number_of_selected_events
 > output_arguments_t;

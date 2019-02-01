@@ -8,7 +8,6 @@ void SequenceVisitor::set_arguments_size<muon_catboost_features_extraction_t>(
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 { 
-  arguments.set_size<dev_muon_hits>(host_buffers.host_number_of_selected_events[0]);
   arguments.set_size<dev_muon_catboost_features>(Muon::Constants::n_catboost_features * host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
 }
 

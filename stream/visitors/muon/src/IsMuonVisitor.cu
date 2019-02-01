@@ -8,6 +8,7 @@ void SequenceVisitor::set_arguments_size<is_muon_t>(
   const HostBuffers& host_buffers,
   argument_manager_t& arguments)
 { 
+  arguments.set_size<dev_muon_hits>(host_buffers.host_number_of_selected_events[0]);
   arguments.set_size<dev_muon_track_occupancies>(
     Muon::Constants::n_stations * host_buffers.host_number_of_reconstructed_scifi_tracks[0]
   );
@@ -34,7 +35,6 @@ void SequenceVisitor::visit<is_muon_t>(
   ));
 
   // Setup opts for kernel call
-  debug_cout << "visitor: " << host_buffers.host_number_of_selected_events[0] << std::endl;
   state.set_opts(dim3(host_buffers.host_number_of_selected_events[0], Muon::Constants::n_stations), dim3(32), cuda_stream);
 
   // Setup arguments for kernel call

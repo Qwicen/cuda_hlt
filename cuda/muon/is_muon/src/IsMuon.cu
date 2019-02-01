@@ -1,6 +1,6 @@
 #include "IsMuon.cuh"
 #include "ConsolidateSciFi.cuh"
-#include <stdio.h>
+#include "SystemOfUnits.h"
 
 __device__ float elliptical_foi_window(
   const float a, 
@@ -8,8 +8,7 @@ __device__ float elliptical_foi_window(
   const float c,
   const float momentum
 ) {
-  const int to_gev = 1e-9;
-  return a + b * std::exp(-c * momentum * to_gev);
+  return a + b * std::exp(-c * momentum / Gaudi::Units::GeV);
 }
 
 __device__ std::pair<float,float> field_of_interest(
@@ -83,18 +82,17 @@ __global__ void is_muon(
 
   const uint number_of_tracks_event = scifi_tracks.number_of_tracks(event_id);
   const uint event_offset = scifi_tracks.tracks_offset(event_id);
-  printf("event_id: %d, sid: %d, number_of_tracks_event: %d, n_events: %d\n", event_id, station_id, number_of_tracks_event, number_of_events);
+  const int station_offset = muon_hits[event_id].station_offsets[station_id];
+  const int number_of_hits = muon_hits[event_id].number_of_hits_per_station[station_id];
+  const float station_z = muon_hits[event_id].z[station_offset];
+  
   for (uint track_id = threadIdx.x; track_id < number_of_tracks_event; track_id += blockDim.x) {
-    const int station_offset = muon_hits[event_id].station_offsets[station_id];
-    const int number_of_hits = muon_hits[event_id].number_of_hits_per_station[station_id];
-    const float station_z = muon_hits[event_id].z[station_offset];
-
+    const float momentum = 1 / std::abs(scifi_tracks.qop[track_id]);
     const float extrapolation_x = scifi_tracks.states[track_id].x + scifi_tracks.states[track_id].tx * (station_z - scifi_tracks.states[track_id].z);
     const float extrapolation_y = scifi_tracks.states[track_id].y + scifi_tracks.states[track_id].ty * (station_z - scifi_tracks.states[track_id].z);
-
     const uint track_offset = (event_offset + track_id) * Muon::Constants::n_stations;
+    
     dev_muon_track_occupancies[track_offset + station_id] = 0;
-    printf("track_id: %d\n", track_id);
     for (int i_hit = 0; i_hit < number_of_hits; ++i_hit) {
       const int idx = station_offset + i_hit;
       if (is_in_window(
@@ -105,7 +103,7 @@ __global__ void is_muon(
         dev_muon_foi,
         station_id,
         muon_hits[event_id].region_id[idx],
-        scifi_tracks.qop[track_id],
+        momentum,
         extrapolation_x,
         extrapolation_y
       )) {
@@ -114,8 +112,6 @@ __global__ void is_muon(
     }
     __syncthreads();
     if (blockIdx.y == 0) {
-      const float momentum = 1 / std::abs(scifi_tracks.qop[track_id]);
-      printf("momentum: %f\n", momentum);
       if (momentum < dev_muon_momentum_cuts[0]) {
         dev_is_muon[event_offset + track_id] = false;
       }
