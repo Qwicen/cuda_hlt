@@ -30,6 +30,10 @@ static constexpr uint ut_max_hits_shared_sector_group = 256;
 static constexpr int num_atomics = 3;
 
 namespace Constants {
+
+static constexpr uint num_thr_compassut = 128;
+static constexpr uint num_thr_searchwin = 128;
+
 /* Detector description
    There are two stations with two layers each
 */

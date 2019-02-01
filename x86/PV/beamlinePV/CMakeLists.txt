@@ -19,7 +19,7 @@ set_property(TARGET x86beamlinePV PROPERTY
 
 if ( ROOT_FOUND )
   target_compile_definitions(x86beamlinePV PUBLIC WITH_ROOT)
-  target_include_directories(x86beamlinePV PUBLIC ${ROOT_INCLUDE_DIRS}) 
+  target_include_directories(x86beamlinePV PUBLIC ${ROOT_INCLUDE_DIRS})
   target_link_libraries(x86beamlinePV
     ${ROOT_LIBRARIES}
     )

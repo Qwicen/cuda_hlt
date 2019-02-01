@@ -1,8 +1,9 @@
 #pragma once
 
+#include "PrVeloUT.cuh"
 #include "PrVeloUTMagnetToolDefinitions.h"
-#include "VeloDefinitions.cuh"
 #include "UTDefinitions.cuh"
+#include "VeloDefinitions.cuh"
 #include "CompassUTDefinitions.cuh"
 #include "FindBestHits.cuh"
 #include "Handler.cuh"
@@ -25,11 +26,13 @@ __global__ void compass_ut(
   const float* dev_unique_sector_xs,
   UT::TrackHits* dev_compassUT_tracks,
   int* dev_atomics_compassUT,
-  int* dev_windows_layers);
+  short* dev_windows_layers,
+  bool* dev_accepted_velo_tracks);
 
 __device__ void compass_ut_tracking(
-  const int* dev_windows_layers,
+  const short* dev_windows_layers,
   char* dev_velo_track_hits,
+  const uint number_of_tracks_event,
   const int i_track,
   const uint current_track_offset,
   const Velo::Consolidated::States& velo_states,
@@ -38,7 +41,7 @@ __device__ void compass_ut_tracking(
   const UT::HitOffsets& ut_hit_offsets,
   const float* bdl_table,
   const float* dev_ut_dxDy,
-  int* win_size_shared,
+  short* win_size_shared,
   int* n_veloUT_tracks_event,
   UT::TrackHits* veloUT_tracks_event,
   const int event_hit_offset);
@@ -46,14 +49,16 @@ __device__ void compass_ut_tracking(
 __host__ __device__ __inline__ bool velo_track_in_UT_acceptance(
   const MiniState& state);
 
-__host__ __device__ __inline__ void fill_shared_windows(
-  const int* windows_layers,
-  const uint current_track_offset,
-  int* win_size_shared);
+__device__ __inline__ void fill_shared_windows(
+  const short* windows_layers,
+  const int number_of_tracks_event,
+  const int i_track,
+  short* win_size_shared);
 
 __device__ __inline__ bool found_active_windows(
-  const int* windows_layers,
-  const uint current_track_offset);
+  const short* dev_windows_layers,
+  const int total_tracks_event,
+  const int track);
 
 __device__ void save_track(
   const int i_track,

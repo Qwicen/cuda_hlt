@@ -20,10 +20,11 @@ from ROOT import gROOT
 from ROOT import TStyle
 from ROOT import gPad
 
-from LHCbStyle import *
-from ConfigHistos import *
-from Legend import *
+sys.path.append('../../')
+from plotting.LHCbStyle import *
+from plotting.Legend import *
 
+from ConfigHistos import *
 
 def getEfficiencyHistoNames() :
     return ["eta", "p", "pt", "phi", "nPV"]

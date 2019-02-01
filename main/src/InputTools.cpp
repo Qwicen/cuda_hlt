@@ -161,7 +161,7 @@ std::vector<std::string> list_folder(
       verbose_cout << "Found " << folderContents.size() << " binary files" << std::endl;
     }
   } else {
-    error_cout << "Folder could not be opened" << std::endl;
+    error_cout << "Folder " << foldername << " could not be opened" << std::endl;
     exit(-1);
   }
 

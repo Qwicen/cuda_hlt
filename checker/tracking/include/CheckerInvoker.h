@@ -52,7 +52,7 @@ struct CheckerInvoker {
     if (is_mc_folder_populated) {
       T trackChecker {};
 #ifdef WITH_ROOT
-      trackChecker.histos.initHistos(trackChecker.histo_categories());
+      trackChecker.histos.initHistos(trackChecker.histo_categories() );
 #endif
 
       for (int evnum = 0; evnum < selected_mc_events.size(); ++evnum) {

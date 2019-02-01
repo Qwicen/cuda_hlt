@@ -44,7 +44,7 @@ __global__ void ut_find_permutation(
   __shared__ float s_y_begin [UT::Decoding::ut_max_hits_shared_sector_group];
 
   if (sector_group_number_of_hits > 0) {
-    __syncthreads();
+    __syncthreads();  
     assert(sector_group_number_of_hits < UT::Decoding::ut_max_hits_shared_sector_group);
 
     for (int i=threadIdx.x; i<sector_group_number_of_hits; i+=blockDim.x) {

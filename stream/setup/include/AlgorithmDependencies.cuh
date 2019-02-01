@@ -13,33 +13,34 @@
  */
 typedef std::tuple<
   AlgorithmDependencies<init_event_list_t, // Algorithm
-    dev_velo_raw_input,                    // Argument #0
-    dev_velo_raw_input_offsets,            // Argument #1
+    dev_number_of_selected_events,         // Argument #0
+    dev_velo_raw_input,                    // Argument #1
+    dev_velo_raw_input_offsets,
     dev_ut_raw_input,
     dev_ut_raw_input_offsets,
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,
     dev_number_of_selected_events,
     dev_event_list
-  >,  
-  AlgorithmDependencies<global_event_cut_t, 
+  >,
+  AlgorithmDependencies<global_event_cut_t,
     dev_ut_raw_input,
     dev_ut_raw_input_offsets,
     dev_scifi_raw_input,
     dev_scifi_raw_input_offsets,
     dev_number_of_selected_events,
-    dev_event_list               
-  >, 
-  AlgorithmDependencies<velo_estimate_input_size_t, 
-    dev_velo_raw_input,                             
-    dev_velo_raw_input_offsets,                     
-    dev_estimated_input_size,                       
+    dev_event_list
+  >,
+  AlgorithmDependencies<velo_estimate_input_size_t,
+    dev_velo_raw_input,
+    dev_velo_raw_input_offsets,
+    dev_estimated_input_size,
     dev_module_cluster_num,
     dev_module_candidate_num,
     dev_cluster_candidates,
     dev_event_list,
     dev_event_order
-  >, 
+  >,
   AlgorithmDependencies<prefix_sum_velo_clusters_t,
     dev_estimated_input_size,
     dev_cluster_offset
@@ -110,7 +111,8 @@ typedef std::tuple<
     dev_estimated_input_size,
     dev_module_cluster_num,
     dev_velo_track_hits,
-    dev_velo_states
+    dev_velo_states,
+    dev_accepted_velo_tracks
   >,
   AlgorithmDependencies<velo_kalman_fit_t,
     dev_atomics_velo,
@@ -156,7 +158,7 @@ typedef std::tuple<
     dev_zhisto,
     dev_zpeaks,
     dev_number_of_zpeaks
-  >, 
+  >,
   AlgorithmDependencies<pv_beamline_multi_fitter_t,
     dev_atomics_velo,
     dev_velo_track_hit_number,
@@ -165,6 +167,21 @@ typedef std::tuple<
     dev_number_of_zpeaks,
     dev_multi_fit_vertices,
     dev_number_of_multi_fit_vertices
+  >,
+  AlgorithmDependencies<velo_pv_ip_t,
+    dev_velo_kalman_beamline_states,
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_multi_fit_vertices,
+    dev_number_of_multi_fit_vertices,
+    dev_velo_pv_ip
+  >,
+  AlgorithmDependencies<ip_cut_t,
+    dev_velo_kalman_beamline_states,
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_velo_pv_ip,
+    dev_accepted_velo_tracks
   >,
   AlgorithmDependencies<ut_calculate_number_of_hits_t,
     dev_ut_raw_input,
@@ -210,7 +227,7 @@ typedef std::tuple<
   >,
   AlgorithmDependencies<copy_and_prefix_sum_single_block_ut_t,
     dev_atomics_ut
-  >, 
+  >,
   AlgorithmDependencies<copy_ut_track_hit_number_t,
     dev_ut_tracks,
     dev_atomics_ut,
@@ -237,7 +254,9 @@ typedef std::tuple<
     dev_velo_track_hit_number,
     dev_velo_track_hits,
     dev_velo_states,
-    dev_windows_layers
+    dev_ut_windows_layers,
+    dev_ut_active_tracks,
+    dev_accepted_velo_tracks
   >,
   AlgorithmDependencies<compass_ut_t,
     dev_ut_hits,
@@ -248,8 +267,9 @@ typedef std::tuple<
     dev_velo_states,
     dev_ut_tracks,
     dev_atomics_ut,
-    dev_active_tracks,
-    dev_windows_layers
+    dev_ut_active_tracks,
+    dev_ut_windows_layers,
+    dev_accepted_velo_tracks
   >,
   AlgorithmDependencies<scifi_calculate_cluster_count_t,
     dev_scifi_raw_input,
@@ -375,6 +395,23 @@ typedef std::tuple<
   AlgorithmDependencies<muon_catboost_evaluator_t,
     dev_muon_catboost_features,
     dev_muon_catboost_output
+  >,
+  AlgorithmDependencies<kalman_filter_t,
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_velo_track_hits,
+    dev_atomics_ut,
+    dev_ut_track_hit_number,
+    dev_ut_track_hits,
+    dev_ut_qop,
+    dev_ut_track_velo_indices,
+    dev_atomics_scifi,
+    dev_scifi_track_hit_number,
+    dev_scifi_track_hits,
+    dev_scifi_qop,
+    dev_scifi_states,
+    dev_scifi_track_ut_indices,
+    dev_kf_tracks
   >
 > algorithms_dependencies_t;
 
@@ -401,5 +438,6 @@ typedef std::tuple<
   dev_scifi_track_ut_indices,
   dev_is_muon,
   dev_event_list,
-  dev_number_of_selected_events
+  dev_number_of_selected_events,
+  dev_kf_tracks
 > output_arguments_t;
