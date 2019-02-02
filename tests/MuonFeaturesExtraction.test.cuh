@@ -46,18 +46,18 @@ void dev_free_memory() {
     cudaFree(dev_scifi_track_ut_indices);
 }
 
-void generate_grid(const int n, std::vector<float> &x, std::vector<float> &y) {
+void generate_grid(const int n, std::vector<float> &x, std::vector<float> &y, const int scale) {
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < n; j++) {
             if ((i - n/2) != 0 || (j - n/2) != 0) {
-                y.push_back((i - n/2) * 10);
-                x.push_back((j - n/2) * 10);
+                y.push_back((i - n/2) * scale);
+                x.push_back((j - n/2) * scale);
             }
         }
     }
 }
 
-Muon::HitsSoA construct_mock_muon_hit() {
+Muon::HitsSoA construct_mock_muon_hit(const int scale) {
     // Hits initialization
     const int grid_size = 5;
     // Fill with 0, 1, 2, ...
@@ -66,22 +66,25 @@ Muon::HitsSoA construct_mock_muon_hit() {
     // Grid initialization
     std::vector<float> x, y;
     std::vector<float> muon_hit_x, muon_hit_y, muon_hit_z;
-    generate_grid(grid_size, x, y);
+    generate_grid(grid_size, x, y, scale);
     for (int i_station = 0; i_station < Muon::Constants::n_stations; i_station++) {
         std::vector<float> z(grid_size * grid_size - 1, (i_station + 1) * 100);
         muon_hit_x.insert(muon_hit_x.end(), x.begin(), x.end());
         muon_hit_y.insert(muon_hit_y.end(), y.begin(), y.end());
         muon_hit_z.insert(muon_hit_z.end(), z.begin(), z.end());
     }
-    // Fill with 0, 1, 2, ...
-    std::vector<float> muon_hit_dx(Muon::Constants::n_stations * (grid_size * grid_size - 1));
-    std::iota (std::begin(muon_hit_dx), std::end(muon_hit_dx), 0);
-    // Fill with 0, 0.5, 1, ...
-    std::vector<float> muon_hit_dy(Muon::Constants::n_stations * (grid_size * grid_size - 1));
-    float j = 0;
-    for(std::vector<float>::iterator it = muon_hit_dy.begin() ; it != muon_hit_dy.end(); ++it){
-        *it = j;
-        j += 0.5;
+    std::vector<float> muon_hit_dx(Muon::Constants::n_stations * (grid_size * grid_size - 1), 0.1);
+    std::vector<float> muon_hit_dy(Muon::Constants::n_stations * (grid_size * grid_size - 1), 0.1);
+    if (scale == 10) {
+        //MuonFeaturesExtraction.test
+        // Fill with 0, 1, 2, ...
+        std::iota (std::begin(muon_hit_dx), std::end(muon_hit_dx), 0);
+        // Fill with 0, 0.5, 1, ...
+        float j = 0;
+        for(std::vector<float>::iterator it = muon_hit_dy.begin() ; it != muon_hit_dy.end(); ++it){
+            *it = j;
+            j += 0.5;
+        }
     }
     // Fill with zeros (unused variable)
     std::vector<float> muon_hit_dz(Muon::Constants::n_stations * (grid_size * grid_size - 1));

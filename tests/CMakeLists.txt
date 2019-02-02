@@ -1,10 +1,11 @@
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/preprocessing/include)
-include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/IsMuon/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/is_muon/include)
 
 set(UNIT_TEST_LIST
-  MuonFeaturesExtraction)
+  MuonFeaturesExtraction
+  IsMuon)
  
 foreach(NAME IN LISTS UNIT_TEST_LIST)
 

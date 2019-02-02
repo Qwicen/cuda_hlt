@@ -23,7 +23,7 @@ SCENARIO( "Track is parallel to the axis OZ" ) {
         "Let dx = index, dy = index / 2, dz = 0\n"
     ) {
         std::vector<Muon::HitsSoA> muon_hits_events;
-        Muon::HitsSoA muon_hits = construct_mock_muon_hit();
+        Muon::HitsSoA muon_hits = construct_mock_muon_hit(10);
         // One event
         muon_hits_events.push_back(muon_hits);
         
@@ -304,7 +304,7 @@ SCENARIO( "General case" ) {
         "Let dx = index, dy = index / 2, dz = 0\n"
     ) {
         std::vector<Muon::HitsSoA> muon_hits_events;
-        Muon::HitsSoA muon_hits = construct_mock_muon_hit();
+        Muon::HitsSoA muon_hits = construct_mock_muon_hit(10);
         // One event
         muon_hits_events.push_back(muon_hits);
         
