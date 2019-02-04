@@ -9,11 +9,11 @@ namespace ParKalmanFilter {
   typedef SquareMatrix<false,5> Matrix5x5;
 
     // Set a 5x5 diagonal matrix for later use
-  __constant__ static double F_diag[25] = {1,0,0,0,0,
-                                           0,1,0,0,0,
-                                           0,0,1,0,0,
-                                           0,0,0,1,0,
-                                           0,0,0,0,1};
+  __constant__ static KalmanFloat F_diag[25] = {1,0,0,0,0,
+                                                0,1,0,0,0,
+                                                0,0,1,0,0,
+                                                0,0,0,1,0,
+                                                0,0,0,0,1};
   
   // Max number of measurements.
   const int nMaxMeasurements = 41; // 25 VELO + 4 UT + 12 SciFi
@@ -67,9 +67,9 @@ namespace ParKalmanFilter {
   // Tentative output structure.
   struct FittedTrack {    
     // Chi2 info.
-    double chi2;
-    double chi2V;
-    double chi2T;
+    KalmanFloat chi2;
+    KalmanFloat chi2V;
+    KalmanFloat chi2T;
     
     // Ns DoF
     uint ndof;
@@ -80,7 +80,9 @@ namespace ParKalmanFilter {
     // State info (closest to beamline).
     Vector5 state;
     SymMatrix5x5 cov;    
-    double z;
+    KalmanFloat z;
+    KalmanFloat first_qop;
+    KalmanFloat best_qop;
   };
   
 }

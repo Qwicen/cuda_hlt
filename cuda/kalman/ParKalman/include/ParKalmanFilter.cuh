@@ -29,7 +29,7 @@ namespace ParKalmanFilter {
     int i_hit,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -46,7 +46,7 @@ namespace ParKalmanFilter {
     int i_hit,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -61,7 +61,7 @@ namespace ParKalmanFilter {
     const uint n_scifi_layers,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -76,7 +76,7 @@ namespace ParKalmanFilter {
     const uint n_scifi_layers,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -91,7 +91,7 @@ namespace ParKalmanFilter {
     const uint n_scifi_layers,
     const Vector5 &x,
     const SymMatrix5x5 &C,
-    const double &z,
+    const KalmanFloat &z,
     const trackInfo &tI,
     FittedTrack &track
   );
@@ -105,7 +105,7 @@ namespace ParKalmanFilter {
     const uint n_ut_hits,
     const SciFi::Consolidated::Hits& scifi_hits,
     const uint n_scifi_hits,
-    const double init_qop,
+    const KalmanFloat init_qop,
     const KalmanParametrizations& kalman_params,
     FittedTrack& track
   );

@@ -9,8 +9,8 @@ namespace ParKalmanFilter {
   // Miscellaneous operators
   __host__ __device__ Vector<5> operator*(const Vector<10> &M, const Vector<2> &a) {
     Vector<5> b;
-    for(int i=0; i<b.size; i++)
-      b(i) = M(i)*a(0) + M(i+b.size)*a(1);
+    for(int i=0; i<5; i++)
+      b(i) = M(i)*a(0) + M(i+5)*a(1);
     return b;
   }
 
@@ -66,9 +66,9 @@ namespace ParKalmanFilter {
   __device__ __host__ void multiply_S5x5_S2x2(const SquareMatrix<true,5> &A,
                                               const SquareMatrix<true,2> &B,
                                               Vector<10> &V){
-    const double* a = A.vals;
-    const double* b = B.vals;
-    double* v = V.vals;
+    const KalmanFloat* a = A.vals;
+    const KalmanFloat* b = B.vals;
+    KalmanFloat* v = V.vals;
     v[0]=a[0] *b[0]+a[1] *b[1];
     v[5]=a[0] *b[1]+a[1] *b[2];
     
@@ -89,25 +89,28 @@ namespace ParKalmanFilter {
   // Similarity function from the original ParKalman code.
   __device__ __host__ void similarity_1x2_S5x5_2x1(const Vector<2> &A,
                                                    const SquareMatrix<true,5> &B,
-                                                   double &r){
-    r = A(0)*(A(0)*B(0,0) + A(1)*B(0,1)) + A(1)*(A(0)*B(0,1) + A(1)*B(1,1));
+                                                   KalmanFloat &r){
+    //r = A(0)*(A(0)*B(0,0) + A(1)*B(0,1)) + A(1)*(A(0)*B(0,1) + A(1)*B(1,1));
+    r = A(0)*A(0)*B(0,0) + 2*A(0)*A(1)*B(0,1) + A(1)*A(1)*B(1,1);
   }
 
   __device__ __host__ void similarity_5x2_2x2(const Vector<10> &K,
                                               const SquareMatrix<true,2> &C,
                                               SquareMatrix<true,5> &KCKt){
-    SquareMatrix<false,5> temp;
+    //SquareMatrix<false,5> temp;
     for(int i=0; i<5; i++){
-      for(int j=0; j<5; j++){
+      //for(int j=0; j<5; j++){
+      for(int j=i; j<5; j++){
         KCKt(i,j) = K(j)*(K(i)*C(0,0) + K(i+5)*C(1,0)) + K(j+5)*(K(i)*C(0,1)+K(i+5)*C(1,1));
       }
     }
     
   }
 
-  __device__ __host__ double similarity_2x1_2x2(const Vector<2> &a,
-                                                const SquareMatrix<true,2> &C){
-    return a(0)*(a(0)*C(0,0)+a(1)*C(1,0)) + a(1)*(a(0)*C(0,1)+a(1)*C(1,1));
+  __device__ __host__ KalmanFloat similarity_2x1_2x2(const Vector<2> &a,
+                                                     const SquareMatrix<true,2> &C){
+    //return a(0)*(a(0)*C(0,0)+a(1)*C(1,0)) + a(1)*(a(0)*C(0,1)+a(1)*C(1,1));
+    return a(0)*a(0)*C(0,0) + 2*a(1)*a(0)*C(1,0) + a(1)*a(1)*C(1,1);
   }
 
   
@@ -121,14 +124,14 @@ namespace ParKalmanFilter {
   __device__ __host__ SquareMatrix<true,5>  similarity_5_5(const SquareMatrix<false,5> &F,
                                                            const SquareMatrix<true,5> &C){
     SquareMatrix<true,5> A;
-    double* a = A.vals;
-    const double* f = F.vals;
-    const double* c = C.vals;
-    double _0 = c[ 0]*f[0]+c[ 1]*f[1]+c[ 3]*f[2]+c[ 6]*f[3]+c[10]*f[4];
-    double _1 = c[ 1]*f[0]+c[ 2]*f[1]+c[ 4]*f[2]+c[ 7]*f[3]+c[11]*f[4];
-    double _2 = c[ 3]*f[0]+c[ 4]*f[1]+c[ 5]*f[2]+c[ 8]*f[3]+c[12]*f[4];
-    double _3 = c[ 6]*f[0]+c[ 7]*f[1]+c[ 8]*f[2]+c[ 9]*f[3]+c[13]*f[4];
-    double _4 = c[10]*f[0]+c[11]*f[1]+c[12]*f[2]+c[13]*f[3]+c[14]*f[4];  
+    KalmanFloat* a = A.vals;
+    const KalmanFloat* f = F.vals;
+    const KalmanFloat* c = C.vals;
+    KalmanFloat _0 = c[ 0]*f[0]+c[ 1]*f[1]+c[ 3]*f[2]+c[ 6]*f[3]+c[10]*f[4];
+    KalmanFloat _1 = c[ 1]*f[0]+c[ 2]*f[1]+c[ 4]*f[2]+c[ 7]*f[3]+c[11]*f[4];
+    KalmanFloat _2 = c[ 3]*f[0]+c[ 4]*f[1]+c[ 5]*f[2]+c[ 8]*f[3]+c[12]*f[4];
+    KalmanFloat _3 = c[ 6]*f[0]+c[ 7]*f[1]+c[ 8]*f[2]+c[ 9]*f[3]+c[13]*f[4];
+    KalmanFloat _4 = c[10]*f[0]+c[11]*f[1]+c[12]*f[2]+c[13]*f[3]+c[14]*f[4];  
     a[ 0] = f[ 0]*_0 + f[ 1]*_1 + f[ 2]*_2 + f[ 3]*_3 + f[ 4]*_4;
     a[ 1] = f[ 5]*_0 + f[ 6]*_1 + f[ 7]*_2 + f[ 8]*_3 + f[ 9]*_4;
     a[ 3] = f[10]*_0 + f[11]*_1 + f[12]*_2 + f[13]*_3 + f[14]*_4;

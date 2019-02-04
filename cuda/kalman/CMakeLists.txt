@@ -21,3 +21,7 @@ add_library(Kalman STATIC
 target_link_libraries(Kalman SciFi)
 
 set_property(TARGET Kalman PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+if(USE_SINGLE_PRECISION)
+  target_compile_definitions(Kalman PUBLIC SINGLE_PRECISION)
+endif()
