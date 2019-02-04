@@ -347,11 +347,16 @@ __device__ void save_track(
   UT::TrackHits track;
   track.velo_track_index = i_track;
   track.qop = qop;
-  track.hits_num = UT::Constants::n_layers;
+  track.hits_num = 0;
 
   // Adding hits to track
   for (int i = 0; i < UT::Constants::n_layers; ++i) {
-    track.hits[i] = best_hits[i] == -1 ? -1 : best_hits[i] - event_hit_offset;
+    if (best_hits[i] != -1) {
+      track.hits[i] = best_hits[i] - event_hit_offset;
+      ++track.hits_num;
+    } else {
+      track.hits[i] = -1;
+    }
   }
 
   assert(n_tracks < UT::Constants::max_num_tracks);
