@@ -21,19 +21,14 @@ __device__ __host__ VeloRawBank::VeloRawBank(
 VeloGeometry::VeloGeometry(const std::vector<char>& geometry) {
   const char* p = geometry.data();
 
-  number_of_sensors            = *((uint32_t*)p); p += sizeof(uint32_t);
-  number_of_sensor_columns     = *((uint32_t*)p); p += sizeof(uint32_t);
-  number_of_sensors_per_module = *((uint32_t*)p); p += sizeof(uint32_t);
-  chip_columns     = *((uint32_t*)p); p += sizeof(uint32_t);
-  local_x          = (double*) p; p += sizeof(double) * number_of_sensor_columns;
-  x_pitch          = (double*) p; p += sizeof(double) * number_of_sensor_columns;
-  pixel_size       = *((float*)p); p += sizeof(float);
-  ltg              = (float*) p; p += sizeof(float) * 16 * number_of_sensors;
-  
+  local_x          = (float*) p; p += sizeof(float) * Velo::Constants::number_of_sensor_columns;
+  x_pitch          = (float*) p; p += sizeof(float) * Velo::Constants::number_of_sensor_columns;
+  ltg              = (float*) p; p += sizeof(float) * 16 * Velo::Constants::n_sensors;
+
   size = p - geometry.data();
 
   if (size != geometry.size()) {
-    std::cout << "Size mismatch for geometry" << std::endl;
+    error_cout << "Size mismatch for geometry" << std::endl;
   }
 }
 
@@ -42,14 +37,9 @@ __device__ __host__ VeloGeometry::VeloGeometry(
 ) {
   const char* p = geometry;
 
-  number_of_sensors            = *((uint32_t*)p); p += sizeof(uint32_t);
-  number_of_sensor_columns     = *((uint32_t*)p); p += sizeof(uint32_t);
-  number_of_sensors_per_module = *((uint32_t*)p); p += sizeof(uint32_t);
-  chip_columns     = *((uint32_t*)p); p += sizeof(uint32_t);
-  local_x          = (double*) p; p += sizeof(double) * number_of_sensor_columns;
-  x_pitch          = (double*) p; p += sizeof(double) * number_of_sensor_columns;
-  pixel_size       = *((float*)p); p += sizeof(float);
-  ltg              = (float*) p; p += sizeof(float) * 16 * number_of_sensors;
+  local_x          = (float*) p; p += sizeof(float) * Velo::Constants::number_of_sensor_columns;
+  x_pitch          = (float*) p; p += sizeof(float) * Velo::Constants::number_of_sensor_columns;
+  ltg              = (float*) p; p += sizeof(float) * 16 * Velo::Constants::n_sensors;
   
   size = p - geometry;
 }

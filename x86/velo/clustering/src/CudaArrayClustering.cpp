@@ -39,7 +39,7 @@ std::vector<uint32_t> cuda_array_clustering(
       const auto velo_raw_bank = VeloRawBank(e.payload + e.raw_bank_offset[raw_bank]);
       
       const unsigned int sensor = velo_raw_bank.sensor_index;
-      const unsigned int module = sensor / g.number_of_sensors_per_module;
+      const unsigned int module = sensor / Velo::Constants::n_sensors_per_module;
       const float* ltg = g.ltg + 16 * sensor;
 
       for (unsigned int j=0; j<velo_raw_bank.sp_count; ++j) {

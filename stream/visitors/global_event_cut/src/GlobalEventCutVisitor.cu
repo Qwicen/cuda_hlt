@@ -41,6 +41,7 @@ void SequenceVisitor::visit<global_event_cut_t>(
     cudaMemcpyDeviceToHost, 
     cuda_stream));
 
+  // TODO: This is not needed here
   cudaCheck(cudaMemcpyAsync(
     host_buffers.host_event_list,
     arguments.offset<dev_event_list>(),
@@ -51,9 +52,7 @@ void SequenceVisitor::visit<global_event_cut_t>(
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
   
-  debug_cout << "Selected " << host_buffers.host_number_of_selected_events[0] << " / " << runtime_options.number_of_events << " events with global event cuts" << std::endl;
-  // for ( int i = 0; i < host_buffers.host_number_of_selected_events[0]; ++i ) {
-  //   debug_cout << host_buffers.host_event_list[i] << std::endl;
-  // }
-
+  if (logger::ll.verbosityLevel >= logger::debug) {
+    debug_cout << "Selected " << host_buffers.host_number_of_selected_events[0] << " / " << runtime_options.number_of_events << " events with global event cuts" << std::endl;
+  }
 }

@@ -116,7 +116,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
       const auto velo_raw_bank = VeloRawBank(e.payload + e.raw_bank_offset[raw_bank]);
       
       const unsigned int sensor = velo_raw_bank.sensor_index;
-      const unsigned int module = sensor / g.number_of_sensors_per_module;
+      const unsigned int module = sensor / Velo::Constants::n_sensors_per_module;
       const float* ltg = g.ltg + 16 * sensor;
 
       for (unsigned int j=0; j<velo_raw_bank.sp_count; ++j) {
@@ -172,7 +172,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
             const float fx = sp_fx[sp * 2];
             const float fy = sp_fy[sp * 2];
             const float local_x = g.local_x[cx] + fx * g.x_pitch[cx];
-            const float local_y = (cy + 0.5 + fy) * g.pixel_size;
+            const float local_y = (cy + 0.5 + fy) * Velo::Constants::pixel_size;
 
             const float gx = ltg[0] * local_x + ltg[1] * local_y + ltg[9];
             const float gy = ltg[3] * local_x + ltg[4] * local_y + ltg[10];
@@ -196,7 +196,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
             const float fx = sp_fx[sp * 2 + 1];
             const float fy = sp_fy[sp * 2 + 1];
             const float local_x = g.local_x[cx] + fx * g.x_pitch[cx];
-            const float local_y = (cy + 0.5 + fy) * g.pixel_size;
+            const float local_y = (cy + 0.5 + fy) * Velo::Constants::pixel_size;
 
             const float gx = ltg[0] * local_x + ltg[1] * local_y + ltg[9];
             const float gy = ltg[3] * local_x + ltg[4] * local_y + ltg[10];
@@ -591,7 +591,7 @@ std::vector<std::vector<uint32_t>> cuda_clustering_cpu_optimized(
                   unsigned int cid = get_channel_id(sensor, chip, cx % VP::ChipColumns, cy);
 
                   const float local_x = g.local_x[cx] + fx * g.x_pitch[cx];
-                  const float local_y = (cy + 0.5 + fy) * g.pixel_size;
+                  const float local_y = (cy + 0.5 + fy) * Velo::Constants::pixel_size;
                   const float gx = ltg[0] * local_x + ltg[1] * local_y + ltg[9];
                   const float gy = ltg[3] * local_x + ltg[4] * local_y + ltg[10];
                   const float gz = ltg[6] * local_x + ltg[7] * local_y + ltg[11];

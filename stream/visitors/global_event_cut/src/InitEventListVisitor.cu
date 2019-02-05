@@ -28,10 +28,15 @@ void SequenceVisitor::visit<init_event_list_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
+  assert(runtime_options.number_of_events > 0);
+
   // Setup opts and arguments for kernel call
-  state.set_opts(dim3(1), dim3(runtime_options.number_of_events), cuda_stream);
-  state.set_arguments(
-    arguments.offset<dev_event_list>() );
+  state.set_opts(
+    dim3((runtime_options.number_of_events - 1) / 1024 + 1),
+    dim3(runtime_options.number_of_events % 1024),
+    cuda_stream);
+
+  state.set_arguments(arguments.offset<dev_event_list>());
   
   // Fetch required arguments for the global event cuts algorithm and
   // the various decoding algorithms 
@@ -71,11 +76,11 @@ void SequenceVisitor::visit<init_event_list_t>(
 
   state.invoke();
 
+  // TODO: This is not needed here
   cudaCheck(cudaMemcpyAsync(
     host_buffers.host_event_list,
     arguments.offset<dev_event_list>(),
     runtime_options.number_of_events*sizeof(uint),
     cudaMemcpyDeviceToHost, 
     cuda_stream));
-
 }

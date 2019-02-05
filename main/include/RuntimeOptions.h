@@ -19,7 +19,7 @@ struct RuntimeOptions {
   uint* host_scifi_event_offsets;
   size_t host_scifi_events_size;
   size_t host_scifi_event_offsets_size;
-  std::vector<Muon::HitsSoA> host_muon_hits_events;
+  std::vector<Muon::HitsSoA>& host_muon_hits_events;
   uint number_of_events;
   uint number_of_selected_events;
   uint number_of_repetitions;
@@ -39,7 +39,7 @@ struct RuntimeOptions {
     uint* param_host_scifi_event_offsets,
     size_t param_host_scifi_events_size,
     size_t param_host_scifi_event_offsets_size,
-    std::vector<Muon::HitsSoA> param_host_muon_hits_events,
+    std::vector<Muon::HitsSoA>& param_host_muon_hits_events,
     uint param_number_of_events,
     uint param_number_of_repetitions)
   : host_velopix_events(param_host_velopix_events),
