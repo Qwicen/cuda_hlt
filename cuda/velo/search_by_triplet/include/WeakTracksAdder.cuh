@@ -2,6 +2,7 @@
 
 #include "VeloEventModel.cuh"
 #include "Handler.cuh"
+#include "ArgumentsVelo.cuh"
 #include "States.cuh"
 
 __device__ void weak_tracks_adder_impl(
@@ -24,4 +25,12 @@ __global__ void weak_tracks_adder(
   int* dev_atomics_velo
 );
 
-ALGORITHM(weak_tracks_adder, velo_weak_tracks_adder_t)
+ALGORITHM(weak_tracks_adder, velo_weak_tracks_adder_t,
+  ARGUMENTS(
+    dev_velo_cluster_container,
+    dev_estimated_input_size,
+    dev_tracks,
+    dev_weak_tracks,
+    dev_hit_used,
+    dev_atomics_velo
+))

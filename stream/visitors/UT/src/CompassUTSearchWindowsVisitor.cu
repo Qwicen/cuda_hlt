@@ -3,10 +3,10 @@
 
 template<>
 void SequenceVisitor::set_arguments_size<ut_search_windows_t>(
+  ut_search_windows_t::arguments_t arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  const HostBuffers& host_buffers,
-  argument_manager_t& arguments)
+  const HostBuffers& host_buffers)
 {
   arguments.set_size<dev_ut_windows_layers>(CompassUT::num_elems * UT::Constants::n_layers * host_buffers.host_number_of_reconstructed_velo_tracks[0]);
   arguments.set_size<dev_ut_active_tracks>(runtime_options.number_of_events);
@@ -15,9 +15,9 @@ void SequenceVisitor::set_arguments_size<ut_search_windows_t>(
 template<>
 void SequenceVisitor::visit<ut_search_windows_t>(
   ut_search_windows_t& state,
+  const ut_search_windows_t::arguments_t& arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)

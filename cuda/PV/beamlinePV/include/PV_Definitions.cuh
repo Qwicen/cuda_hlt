@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cuda_runtime.h"
+#include "SystemOfUnits.h"
 
 namespace PV {
 

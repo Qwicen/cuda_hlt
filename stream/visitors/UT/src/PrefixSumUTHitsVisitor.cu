@@ -3,10 +3,10 @@
 
 template<>
 void SequenceVisitor::set_arguments_size<prefix_sum_ut_hits_t>(
+  prefix_sum_ut_hits_t::arguments_t arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  const HostBuffers& host_buffers,
-  argument_manager_t& arguments)
+  const HostBuffers& host_buffers)
 {
   arguments.set_size<dev_prefix_sum_auxiliary_array_3>(
     prefix_sum_ut_hits_t::aux_array_size(host_buffers.host_number_of_selected_events[0] * constants.host_unique_x_sector_layer_offsets[4]));
@@ -15,9 +15,9 @@ void SequenceVisitor::set_arguments_size<prefix_sum_ut_hits_t>(
 template<>
 void SequenceVisitor::visit<prefix_sum_ut_hits_t>(
   prefix_sum_ut_hits_t& state,
+  const prefix_sum_ut_hits_t::arguments_t& arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)

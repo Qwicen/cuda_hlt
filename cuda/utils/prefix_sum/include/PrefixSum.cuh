@@ -6,6 +6,9 @@
 #include "UTDefinitions.cuh"
 #include "SciFiDefinitions.cuh"
 #include "Handler.cuh"
+#include "ArgumentsVelo.cuh"
+#include "ArgumentsUT.cuh"
+#include "ArgumentsSciFi.cuh"
 
 __global__ void prefix_sum_reduce(
   uint* dev_main_array,
@@ -50,11 +53,26 @@ __global__ void copy_scifi_track_hit_number(
   uint* dev_scifi_track_hit_number
 );
 
-ALGORITHM(copy_and_prefix_sum_single_block, copy_and_prefix_sum_single_block_velo_t)
-ALGORITHM(copy_velo_track_hit_number, copy_velo_track_hit_number_t)
+ALGORITHM(copy_and_prefix_sum_single_block, copy_and_prefix_sum_single_block_velo_t,
+  ARGUMENTS(dev_atomics_velo))
 
-ALGORITHM(copy_and_prefix_sum_single_block, copy_and_prefix_sum_single_block_ut_t)
-ALGORITHM(copy_ut_track_hit_number, copy_ut_track_hit_number_t)
+ALGORITHM(copy_velo_track_hit_number, copy_velo_track_hit_number_t,
+  ARGUMENTS(dev_tracks,
+    dev_atomics_velo,
+    dev_velo_track_hit_number))
 
-ALGORITHM(copy_and_prefix_sum_single_block, copy_and_prefix_sum_single_block_scifi_t)
-ALGORITHM(copy_scifi_track_hit_number, copy_scifi_track_hit_number_t)
+ALGORITHM(copy_and_prefix_sum_single_block, copy_and_prefix_sum_single_block_ut_t,
+  ARGUMENTS(dev_atomics_ut))
+
+ALGORITHM(copy_ut_track_hit_number, copy_ut_track_hit_number_t,
+  ARGUMENTS(dev_ut_tracks,
+    dev_atomics_ut,
+    dev_ut_track_hit_number))
+
+ALGORITHM(copy_and_prefix_sum_single_block, copy_and_prefix_sum_single_block_scifi_t,
+  ARGUMENTS(dev_atomics_scifi))
+
+ALGORITHM(copy_scifi_track_hit_number, copy_scifi_track_hit_number_t,
+  ARGUMENTS(dev_scifi_tracks,
+    dev_atomics_scifi,
+    dev_scifi_track_hit_number))

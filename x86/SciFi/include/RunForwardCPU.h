@@ -7,6 +7,10 @@
 #include "VeloEventModel.cuh"
 #include "CpuHandler.cuh"
 #include "PrepareTracks.h"
+#include "ArgumentsCommon.cuh"
+#include "ArgumentsVelo.cuh"
+#include "ArgumentsUT.cuh"
+#include "ArgumentsSciFi.cuh"
 
 int run_forward_on_CPU (
   SciFi::TrackHits* host_scifi_tracks_events,
@@ -24,4 +28,16 @@ int run_forward_on_CPU (
   const uint* host_ut_track_velo_indices,
   const uint number_of_events);
 
-CPU_ALGORITHM(run_forward_on_CPU, cpu_scifi_pr_forward_t) 
+CPU_ALGORITHM(run_forward_on_CPU, cpu_scifi_pr_forward_t,
+  ARGUMENTS(dev_scifi_tracks,
+    dev_atomics_scifi,
+    dev_scifi_hits,
+    dev_scifi_hit_count,
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_velo_states,
+    dev_atomics_ut,
+    dev_ut_track_hits,
+    dev_ut_track_hit_number,
+    dev_ut_qop,
+    dev_ut_track_velo_indices))

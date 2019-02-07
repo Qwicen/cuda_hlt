@@ -7,6 +7,9 @@
 #include "CompassUTDefinitions.cuh"
 #include "FindBestHits.cuh"
 #include "Handler.cuh"
+#include "ArgumentsCommon.cuh"
+#include "ArgumentsVelo.cuh"
+#include "ArgumentsUT.cuh"
 #include "UTEventModel.cuh"
 
 //=========================================================================
@@ -75,4 +78,15 @@ __device__ void save_track(
   UT::TrackHits* VeloUT_tracks,
   const int event_hit_offset);
 
-ALGORITHM(compass_ut, compass_ut_t)
+ALGORITHM(compass_ut, compass_ut_t,
+  ARGUMENTS(dev_ut_hits,
+    dev_ut_hit_offsets,
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_velo_track_hits,
+    dev_velo_states,
+    dev_ut_tracks,
+    dev_atomics_ut,
+    dev_ut_active_tracks,
+    dev_ut_windows_layers,
+    dev_accepted_velo_tracks))

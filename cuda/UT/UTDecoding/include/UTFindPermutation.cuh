@@ -3,6 +3,8 @@
 #include "UTEventModel.cuh"
 #include "UTDefinitions.cuh"
 #include "Handler.cuh"
+#include "ArgumentsCommon.cuh"
+#include "ArgumentsUT.cuh"
 
 __global__ void ut_find_permutation(
   uint32_t* dev_ut_hits,
@@ -13,4 +15,7 @@ __global__ void ut_find_permutation(
   const float* dev_unique_sector_xs
  );
 
-ALGORITHM(ut_find_permutation, ut_find_permutation_t)
+ALGORITHM(ut_find_permutation, ut_find_permutation_t,
+  ARGUMENTS(dev_ut_hits,
+    dev_ut_hit_offsets,
+    dev_ut_hit_permutations))

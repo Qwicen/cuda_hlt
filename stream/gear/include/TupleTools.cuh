@@ -48,6 +48,20 @@ struct TupleAppend<std::tuple<>, E> {
   using t = std::tuple<E>;
 };
 
+// Appends a Tuple with the Element
+template<typename Tuple, typename Element>
+struct TupleAppendFirst;
+
+template<typename E, typename... T>
+struct TupleAppendFirst<E, std::tuple<T...>> {
+  using t = std::tuple<E, T...>;
+};
+
+template<typename E>
+struct TupleAppendFirst<E, std::tuple<>> {
+  using t = std::tuple<E>;
+};
+
 // Reverses a tuple
 template<typename Tuple>
 struct TupleReverse;

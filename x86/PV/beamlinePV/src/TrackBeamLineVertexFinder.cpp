@@ -12,6 +12,7 @@
 #include "TrackBeamLineVertexFinder.cuh"
 #include "BeamlinePVConstants.cuh"
 #include "SeedZWithIteratorPair.h"
+#include "FloatOperations.cuh"
 
 #ifdef WITH_ROOT
 #include "TH1D.h"

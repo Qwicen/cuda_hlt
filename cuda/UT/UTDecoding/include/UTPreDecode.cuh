@@ -2,6 +2,8 @@
 
 #include "UTDefinitions.cuh"
 #include "Handler.cuh"
+#include "ArgumentsCommon.cuh"
+#include "ArgumentsUT.cuh"
 #include "UTEventModel.cuh"
 
 __global__ void ut_pre_decode(
@@ -16,4 +18,11 @@ __global__ void ut_pre_decode(
   uint32_t *dev_ut_hits,
   uint32_t *dev_ut_hit_count);
 
-ALGORITHM(ut_pre_decode, ut_pre_decode_t)
+ALGORITHM(ut_pre_decode, ut_pre_decode_t,
+  ARGUMENTS(
+    dev_ut_raw_input,
+    dev_ut_raw_input_offsets,
+    dev_ut_hits,
+    dev_ut_hit_offsets,
+    dev_ut_hit_count,
+    dev_event_list))

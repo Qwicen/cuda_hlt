@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ArgumentManager.cuh"
 #include <tuple>
 #include <utility>
 
@@ -8,9 +9,11 @@
  *             A struct is created with name EXPOSED_TYPE_NAME that encapsulates
  *             a Handler of type FUNCTION_NAME.
  */
-#define ALGORITHM(FUNCTION_NAME, EXPOSED_TYPE_NAME)                                                  \
+#define ALGORITHM(FUNCTION_NAME, EXPOSED_TYPE_NAME, DEPENDENCIES)                                    \
   struct EXPOSED_TYPE_NAME {                                                                         \
     constexpr static auto name {#EXPOSED_TYPE_NAME};                                                 \
+    using Arguments = DEPENDENCIES;                                                                  \
+    using arguments_t = ArgumentRefManager<Arguments>;                                               \
     decltype(make_handler(FUNCTION_NAME)) handler {FUNCTION_NAME};                                   \
     void set_opts(                                                                                   \
       const dim3& param_num_blocks,                                                                  \
@@ -48,10 +51,10 @@ void invoke_impl(
   const dim3& num_threads,
   const unsigned shared_memory_size,
   cudaStream_t* stream,
-  const Tuple& arguments,
+  const Tuple& invoke_arguments,
   std::index_sequence<I...>)
 {
-  function<<<num_blocks, num_threads, shared_memory_size, *stream>>>(std::get<I>(arguments)...);
+  function<<<num_blocks, num_threads, shared_memory_size, *stream>>>(std::get<I>(invoke_arguments)...);
 }
 
 /**
@@ -67,12 +70,12 @@ struct Handler {
   cudaStream_t* stream;
 
   // Call arguments and function
-  std::tuple<T...> arguments;
+  std::tuple<T...> invoke_arguments;
   R (*function)(T...);
 
   Handler(R (*param_function)(T...)) : function(param_function) {}
 
-  void set_arguments(T... param_arguments) { arguments = std::tuple<T...> {param_arguments...}; }
+  void set_arguments(T... param_arguments) { invoke_arguments = std::tuple<T...> {param_arguments...}; }
 
   void set_opts(
     const dim3& param_num_blocks,
@@ -94,7 +97,7 @@ struct Handler {
       num_threads,
       shared_memory_size,
       stream,
-      arguments,
+      invoke_arguments,
       std::make_index_sequence<std::tuple_size<std::tuple<T...>>::value>());
   }
 };

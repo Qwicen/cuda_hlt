@@ -13,6 +13,10 @@
 #include "SciFiDefinitions.cuh"
 
 #include "Handler.cuh"
+#include "ArgumentsVelo.cuh"
+#include "ArgumentsUT.cuh"
+#include "ArgumentsSciFi.cuh"
+#include "ArgumentsKalmanFilter.cuh"
 
 namespace ParKalmanFilter {
 
@@ -136,4 +140,20 @@ __global__ void KalmanFilter(
   const ParKalmanFilter::KalmanParametrizations* dev_kalman_params
 );
 
-ALGORITHM(KalmanFilter, kalman_filter_t)
+ALGORITHM(KalmanFilter, kalman_filter_t,
+  ARGUMENTS(
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_velo_track_hits,
+    dev_atomics_ut,
+    dev_ut_track_hit_number,
+    dev_ut_track_hits,
+    dev_ut_qop,
+    dev_ut_track_velo_indices,
+    dev_atomics_scifi,
+    dev_scifi_track_hit_number,
+    dev_scifi_track_hits,
+    dev_scifi_qop,
+    dev_scifi_states,
+    dev_scifi_track_ut_indices,
+    dev_kf_tracks))
