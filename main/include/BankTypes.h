@@ -10,16 +10,14 @@ namespace {
    using gsl::span;
 }
 
-namespace {
-   constexpr auto BANKTYPES_START = __LINE__;
-}
+constexpr auto NBankTypes = 4;
 enum class BankTypes {
            VP,
            UT,
            FT,
            MUON
 };
-constexpr auto NBankTypes = __LINE__ - BANKTYPES_START - 4;
+
 const std::unordered_map<BankTypes, float> BankSizes = {{BankTypes::VP, 51.77f},
                                                         {BankTypes::UT, 31.38f},
                                                         {BankTypes::FT, 54.47f},

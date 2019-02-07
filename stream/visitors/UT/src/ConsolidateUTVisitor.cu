@@ -3,10 +3,10 @@
 
 template<>
 void SequenceVisitor::set_arguments_size<consolidate_ut_tracks_t>(
+  consolidate_ut_tracks_t::arguments_t arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  const HostBuffers& host_buffers,
-  argument_manager_t& arguments)
+  const HostBuffers& host_buffers)
 {
   arguments.set_size<dev_ut_track_hits>(host_buffers.host_accumulated_number_of_ut_hits[0]*sizeof(UT::Hit));
   arguments.set_size<dev_ut_qop>(host_buffers.host_number_of_reconstructed_ut_tracks[0]);
@@ -16,9 +16,9 @@ void SequenceVisitor::set_arguments_size<consolidate_ut_tracks_t>(
 template<>
 void SequenceVisitor::visit<consolidate_ut_tracks_t>(
   consolidate_ut_tracks_t& state,
+  const consolidate_ut_tracks_t::arguments_t& arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)

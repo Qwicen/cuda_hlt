@@ -6,6 +6,7 @@ file(GLOB CompassUT_tracking "compassUT/src/*cu")
 
 include_directories(${CMAKE_SOURCE_DIR}/main/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
+include_directories(${CMAKE_SOURCE_DIR}/stream/setup/include)
 include_directories(../velo/common/include)
 include_directories(../event_model/velo/include)
 include_directories(../event_model/UT/include)

@@ -3,10 +3,10 @@
 
 template<>
 void SequenceVisitor::set_arguments_size<muon_catboost_features_extraction_t>(
+  muon_catboost_features_extraction_t::arguments_t arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  const HostBuffers& host_buffers,
-  argument_manager_t& arguments)
+  const HostBuffers& host_buffers)
 { 
   arguments.set_size<dev_muon_hits>(host_buffers.host_number_of_selected_events[0]);
   arguments.set_size<dev_muon_catboost_features>(constants.muon_catboost_n_features * host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
@@ -15,9 +15,9 @@ void SequenceVisitor::set_arguments_size<muon_catboost_features_extraction_t>(
 template<>
 void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
   muon_catboost_features_extraction_t& state,
+  const muon_catboost_features_extraction_t::arguments_t& arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)

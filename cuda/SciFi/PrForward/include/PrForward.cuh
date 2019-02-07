@@ -2,6 +2,10 @@
 
 #include "PrForwardTools.cuh"
 #include "Handler.cuh"
+// #include "ArgumentsCommon.cuh"
+#include "ArgumentsVelo.cuh"
+#include "ArgumentsUT.cuh"
+#include "ArgumentsSciFi.cuh"
 
 /** @class PrForward PrForward.h
    *
@@ -35,4 +39,16 @@ __global__ void scifi_pr_forward(
   const char* dev_scifi_geometry,
   const float* dev_inv_clus_res);
 
-ALGORITHM(scifi_pr_forward, scifi_pr_forward_t)
+ALGORITHM(scifi_pr_forward, scifi_pr_forward_t,
+  ARGUMENTS(dev_scifi_hits,
+    dev_scifi_hit_count,
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_velo_states,
+    dev_atomics_ut,
+    dev_ut_track_hits,
+    dev_ut_track_hit_number,
+    dev_ut_qop,
+    dev_ut_track_velo_indices,
+    dev_scifi_tracks,
+    dev_atomics_scifi))

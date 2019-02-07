@@ -1,7 +1,6 @@
 #pragma once
 
 #include <tuple>
-#include "TupleTools.cuh"
 
 /**
  * @brief Helper class to generate arguments based on
@@ -9,9 +8,8 @@
  */
 template<typename Tuple>
 struct ArgumentManager {
+  Tuple arguments_tuple;
   char* base_pointer;
-  std::array<size_t, std::tuple_size<Tuple>::value> argument_sizes;
-  std::array<uint, std::tuple_size<Tuple>::value> argument_offsets;
 
   ArgumentManager() = default;
 
@@ -21,22 +19,52 @@ struct ArgumentManager {
 
   template<typename T>
   auto offset() const {
-    auto pointer = base_pointer + argument_offsets[TupleContains<T, Tuple>::index];
+    auto pointer = std::get<T>(arguments_tuple).offset;
     return reinterpret_cast<typename T::type*>(pointer);
   }
 
   template<typename T>
   size_t size() const {
-    return argument_sizes[TupleContains<T, Tuple>::index];
+    return std::get<T>(arguments_tuple).size;
   }
 
   template<typename T>
   void set_offset(uint offset) {
-    argument_offsets[TupleContains<T, Tuple>::index] = offset;
+    std::get<T>(arguments_tuple).offset = base_pointer + offset;
   }
 
   template<typename T>
   void set_size(size_t size) {
-    argument_sizes[TupleContains<T, Tuple>::index] = size * sizeof(typename T::type);
+    std::get<T>(arguments_tuple).size = size * sizeof(typename T::type);
+  }
+};
+
+/**
+ * @brief Manager of argument references for every handler.
+ */
+template<typename Arguments>
+struct ArgumentRefManager;
+
+template<typename... Arguments>
+struct ArgumentRefManager<std::tuple<Arguments...>> {
+  using TupleToReferences = std::tuple<Arguments&...>;
+  TupleToReferences m_arguments;
+
+  ArgumentRefManager(TupleToReferences arguments) : m_arguments(arguments) {}
+
+  template<typename T>
+  auto offset() const {
+    auto pointer = std::get<T&>(m_arguments).offset;
+    return reinterpret_cast<typename T::type*>(pointer);
+  }
+
+  template<typename T>
+  size_t size() const {
+    return std::get<T&>(m_arguments).size;
+  }
+
+  template<typename T>
+  void set_size(size_t size) {
+    std::get<T&>(m_arguments).size = size * sizeof(typename T::type);
   }
 };

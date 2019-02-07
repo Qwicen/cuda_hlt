@@ -4,14 +4,16 @@
 #include "SchedulerMachinery.cuh"
 #include "ArgumentManager.cuh"
 #include "Logger.h"
+#include "InitEventList.cuh"
+#include <utility>
 
-template<typename ConfiguredSequence, typename AlgorithmsDependencies, typename OutputArguments>
+template<typename ConfiguredSequence, typename OutputArguments>
 struct Scheduler {
   // Dependencies calculated at compile time
   // Determines what to free (out_deps) and reserve (in_deps)
   // at every iteration.
-  using in_deps_t = typename Sch::InDependencies<ConfiguredSequence, AlgorithmsDependencies>::t;
-  using out_deps_t = typename Sch::OutDependencies<ConfiguredSequence, OutputArguments, AlgorithmsDependencies>::t;
+  using in_deps_t = typename Sch::InDependencies<ConfiguredSequence>::t;
+  using out_deps_t = typename Sch::OutDependencies<ConfiguredSequence, OutputArguments>::t;
   using arguments_tuple_t = typename Sch::ArgumentsTuple<in_deps_t>::t;
   using argument_manager_t = ArgumentManager<arguments_tuple_t>;
 
@@ -21,13 +23,19 @@ struct Scheduler {
   argument_manager_t argument_manager;
   bool do_print = false;
 
+  // Configured sequence
+  ConfiguredSequence sequence_tuple;
+  
   Scheduler() = default;
+  Scheduler(const Scheduler&) = delete;
 
-  Scheduler(
+  void initialize(
     const bool param_do_print,
     const size_t reserved_mb,
     char* base_pointer)
-  : do_print(param_do_print) {
+  {
+    do_print = param_do_print;
+
     // Set max mb to memory_manager
     memory_manager.set_reserved_memory(reserved_mb);
     argument_manager.set_base_pointer(base_pointer);
@@ -39,13 +47,6 @@ struct Scheduler {
       // verbose_cout << "OUT deps" << std::endl;
       // Sch::PrintAlgorithmDependencies<out_deps_t>::print();
     }
-  }
-
-  /**
-   * @brief Returns the argument manager of the scheduler.
-   */
-  argument_manager_t& arguments() {
-    return argument_manager;
   }
 
   /**

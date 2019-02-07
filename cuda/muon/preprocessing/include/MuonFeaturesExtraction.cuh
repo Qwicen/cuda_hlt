@@ -3,6 +3,8 @@
 #include "Handler.cuh"
 #include "MuonDefinitions.cuh"
 #include "MiniState.cuh"
+#include "ArgumentsSciFi.cuh"
+#include "ArgumentsMuon.cuh"
 
 enum offset {
   DTS   = 0,
@@ -22,4 +24,11 @@ __global__ void muon_catboost_features_extraction(
   float* dev_muon_catboost_features
 );
 
-ALGORITHM(muon_catboost_features_extraction, muon_catboost_features_extraction_t)
+ALGORITHM(muon_catboost_features_extraction, muon_catboost_features_extraction_t,
+  ARGUMENTS(dev_atomics_scifi,
+    dev_scifi_track_hit_number,
+    dev_scifi_qop,
+    dev_scifi_states,
+    dev_scifi_track_ut_indices,
+    dev_muon_hits,
+    dev_muon_catboost_features))

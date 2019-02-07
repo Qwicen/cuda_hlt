@@ -4,8 +4,8 @@
 #include <set>
 #include <type_traits>
 #include <iostream>
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 
 #include "SystemOfUnits.h"
 

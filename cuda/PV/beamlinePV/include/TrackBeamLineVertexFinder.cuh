@@ -4,10 +4,7 @@
 #include "Logger.h"
 #include "PV_Definitions.cuh"
 #include "VeloConsolidated.cuh"
-#include "FloatOperations.cuh"
-
-#include <algorithm>
-#include <math.h>
+#include <cmath>
 
 // structure with minimal track info needed for PV search
 struct PVTrack {

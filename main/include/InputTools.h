@@ -1,7 +1,7 @@
 #pragma once
 
 #include <dirent.h>
-#include <stdint.h>
+#include <cstdint>
 #include <cassert>
 #include <iostream>
 #include <iomanip>

@@ -38,11 +38,11 @@ cudaError_t Stream::initialize(
   cudaCheck(cudaMalloc((void**)&dev_base_pointer, reserve_mb * 1024 * 1024));
 
   // Prepare scheduler
-  scheduler = {
+  scheduler.initialize(
     do_print_memory_manager,
     reserve_mb * 1024 * 1024,
     dev_base_pointer
-  };
+  );
 
   return cudaSuccess;
 }
@@ -63,13 +63,11 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
       std::tuple<
         const RuntimeOptions&,
         const Constants&,
-        const HostBuffers&,
-        argument_manager_t&
+        const HostBuffers&
       >,
       std::tuple<
         const RuntimeOptions&,
         const Constants&,
-        argument_manager_t&,
         HostBuffers&,
         cudaStream_t&,
         cudaEvent_t&
@@ -77,16 +75,14 @@ cudaError_t Stream::run_sequence(const RuntimeOptions& runtime_options) {
     >::run(
       scheduler,
       sequence_visitor,
-      sequence_tuple,
+      scheduler.sequence_tuple,
       // Arguments to set_arguments_size
       runtime_options,
       constants,
       host_buffers,
-      scheduler.arguments(),
       // Arguments to visit
       runtime_options,
       constants,
-      scheduler.arguments(),
       host_buffers,
       cuda_stream,
       cuda_generic_event);

@@ -1,6 +1,5 @@
 #include <map>
 #include <string>
-
 #include <BankTypes.h>
 
 namespace {

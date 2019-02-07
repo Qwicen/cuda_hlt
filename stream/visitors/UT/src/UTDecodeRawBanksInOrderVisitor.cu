@@ -6,9 +6,9 @@ DEFINE_EMPTY_SET_ARGUMENTS_SIZE(ut_decode_raw_banks_in_order_t)
 template<>
 void SequenceVisitor::visit<ut_decode_raw_banks_in_order_t>(
   ut_decode_raw_banks_in_order_t& state,
+  const ut_decode_raw_banks_in_order_t::arguments_t& arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)

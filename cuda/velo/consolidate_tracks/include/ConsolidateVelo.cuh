@@ -4,6 +4,8 @@
 #include "VeloConsolidated.cuh"
 #include "Common.h"
 #include "Handler.cuh"
+#include "ArgumentsCommon.cuh"
+#include "ArgumentsVelo.cuh"
 #include <cstdint>
 
 __device__ VeloState means_square_fit(
@@ -26,4 +28,15 @@ __global__ void consolidate_velo_tracks(
   char* dev_velo_states
 );
 
-ALGORITHM(consolidate_velo_tracks, consolidate_velo_tracks_t)
+ALGORITHM(consolidate_velo_tracks, consolidate_velo_tracks_t,
+  ARGUMENTS(
+    dev_atomics_velo,
+    dev_tracks,
+    dev_velo_track_hit_number,
+    dev_velo_cluster_container,
+    dev_estimated_input_size,
+    dev_module_cluster_num,
+    dev_velo_track_hits,
+    dev_velo_states,
+    dev_accepted_velo_tracks
+))
