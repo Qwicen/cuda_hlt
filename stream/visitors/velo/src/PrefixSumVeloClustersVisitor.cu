@@ -47,5 +47,7 @@ void SequenceVisitor::visit<prefix_sum_velo_clusters_t>(
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
 
-  debug_cout << "velo clusters = " << *host_buffers.host_total_number_of_velo_clusters << std::endl;
+  if (logger::ll.verbosityLevel >= logger::debug) {
+    debug_cout << "velo clusters = " << *host_buffers.host_total_number_of_velo_clusters << std::endl;
+  }
 }

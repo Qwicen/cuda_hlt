@@ -3,7 +3,7 @@
 #include "cuda_runtime.h"
 #include <cstdint>
 #include <vector>
-#include <iostream>
+#include "Logger.h"
 #include "VeloDefinitions.cuh"
 
 namespace VeloClustering {
@@ -94,13 +94,8 @@ struct VeloRawBank {
  */
 struct VeloGeometry {
   size_t size;
-  uint32_t number_of_sensors;
-  uint32_t number_of_sensor_columns;
-  uint32_t number_of_sensors_per_module;
-  uint32_t chip_columns;
-  float pixel_size;
-  double* local_x;
-  double* x_pitch;
+  float* local_x;
+  float* x_pitch;
   float* ltg;
 
   /**

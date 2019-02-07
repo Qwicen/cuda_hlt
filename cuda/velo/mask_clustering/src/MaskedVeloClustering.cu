@@ -136,7 +136,7 @@ __global__ void masked_velo_clustering(
             const float fx = dev_velo_sp_fx[sp * 2];
             const float fy = dev_velo_sp_fy[sp * 2];
             const float local_x = g.local_x[cx] + fx * g.x_pitch[cx];
-            const float local_y = (cy + 0.5 + fy) * g.pixel_size;
+            const float local_y = (cy + 0.5 + fy) * Velo::Constants::pixel_size;
 
             const uint cluster_num = atomicAdd(module_cluster_num + module_number, 1);
 
@@ -163,7 +163,7 @@ __global__ void masked_velo_clustering(
             const float fx = dev_velo_sp_fx[sp * 2 + 1];
             const float fy = dev_velo_sp_fy[sp * 2 + 1];
             const float local_x = g.local_x[cx] + fx * g.x_pitch[cx];
-            const float local_y = (cy + 0.5 + fy) * g.pixel_size;
+            const float local_y = (cy + 0.5 + fy) * Velo::Constants::pixel_size;
 
             const uint cluster_num = atomicAdd(module_cluster_num + module_number, 1);
 
@@ -461,7 +461,7 @@ __global__ void masked_velo_clustering(
         uint cid = get_channel_id(raw_bank.sensor_index, chip, cx % VP::ChipColumns, cy);
 
         const float local_x = g.local_x[cx] + fx * g.x_pitch[cx];
-        const float local_y = (cy + 0.5 + fy) * g.pixel_size;
+        const float local_y = (cy + 0.5 + fy) * Velo::Constants::pixel_size;
         
         const uint cluster_num = atomicAdd(module_cluster_num + module_number, 1);
 

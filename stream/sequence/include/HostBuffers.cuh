@@ -24,7 +24,6 @@ struct HostBuffers {
   uint* host_total_number_of_velo_clusters;
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
-  char* host_velo_states;
   char* host_kalmanvelo_states;
   PV::Vertex* host_reconstructed_pvs;
   int* host_number_of_vertex;
@@ -64,7 +63,7 @@ struct HostBuffers {
 
   // Non pinned datatypes: CPU algorithms
   std::vector<SciFi::TrackHits> scifi_tracks_events;
-  //std::vector<uint> n_scifi_tracks;
+  std::vector<char> host_velo_states;
   
   /**
    * @brief Reserves all host buffers.

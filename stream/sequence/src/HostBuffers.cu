@@ -11,7 +11,6 @@ void HostBuffers::reserve(const uint max_number_of_events) {
   cudaCheck(cudaMallocHost((void**)&host_total_number_of_velo_clusters, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_number_of_reconstructed_velo_tracks, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_hits_in_velo_tracks, sizeof(uint)));
-  cudaCheck(cudaMallocHost((void**)&host_velo_states, max_number_of_events * Velo::Constants::max_tracks * sizeof(VeloState)));
   cudaCheck(cudaMallocHost((void**)&host_kalmanvelo_states, max_number_of_events * Velo::Constants::max_tracks * sizeof(VeloState)));
 
   cudaCheck(cudaMallocHost((void**)&host_atomics_ut, UT::num_atomics * max_number_of_events * sizeof(int)));

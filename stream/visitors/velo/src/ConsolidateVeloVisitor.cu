@@ -61,13 +61,7 @@ void SequenceVisitor::visit<consolidate_velo_tracks_t>(
 
   cudaCheck(cudaMemcpyAsync(host_buffers.host_velo_track_hits,
     arguments.offset<dev_velo_track_hits>(),
-                            host_buffers.host_accumulated_number_of_hits_in_velo_tracks[0] * sizeof(Velo::Hit), 
-    cudaMemcpyDeviceToHost,
-    cuda_stream));
-
-  cudaCheck(cudaMemcpyAsync(host_buffers.host_velo_states,
-    arguments.offset<dev_velo_states>(),
-    host_buffers.host_number_of_reconstructed_velo_tracks[0] * sizeof(VeloState),
+    host_buffers.host_accumulated_number_of_hits_in_velo_tracks[0] * sizeof(Velo::Hit), 
     cudaMemcpyDeviceToHost,
     cuda_stream));
 }
