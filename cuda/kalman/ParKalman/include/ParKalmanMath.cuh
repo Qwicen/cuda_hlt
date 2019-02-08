@@ -2,7 +2,7 @@
 
 namespace ParKalmanFilter {
 
-#ifdef SINGLE_PRECISION
+#ifdef KALMAN_SINGLE_PRECISION
   typedef float KalmanFloat;
 #else
   typedef double KalmanFloat;

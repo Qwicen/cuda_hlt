@@ -30,6 +30,6 @@ if(ROOT_FOUND)
   )
 endif()
 
-if(KALMAN_SINGLE_PRECISION)
-  target_compile_definitions(TrackChecking PRIVATE SINGLE_PRECISION)
+if(USE_KALMAN_SINGLE_PRECISION)
+  target_compile_definitions(TrackChecking PRIVATE KALMAN_SINGLE_PRECISION)
 endif()
