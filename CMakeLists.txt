@@ -71,7 +71,7 @@ else(USE_LZ4)
   set(LZ4_FOUND OFF)
 endif(USE_LZ4)
 
-option(USE_SINGLE_PRECISION OFF)
+option(KALMAN_SINGLE_PRECISION OFF)
 
 # find_package(CUDA REQUIRED)
 #set(CUDA_HOST_COMPILER "g++")
