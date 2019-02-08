@@ -224,6 +224,7 @@ int main(int argc, char *argv[])
   const auto ut_geometry = geometry_reader.read_geometry("ut_geometry.bin");
   const auto ut_magnet_tool = ut_magnet_tool_reader.read_UT_magnet_tool();
   const auto scifi_geometry = geometry_reader.read_geometry("scifi_geometry.bin");
+  const auto muon_field_of_interest_params = 1;
   event_reader->read_events(number_of_events_requested, start_event_offset);
 
   std::vector<char> events;
@@ -254,7 +255,9 @@ int main(int argc, char *argv[])
 
   // Initialize detector constants on GPU
   Constants constants;
-  constants.reserve_and_initialize();
+  constants.reserve_and_initialize(
+    muon_field_of_interest_params
+  );
   constants.initialize_ut_decoding_constants(ut_geometry);
   constants.initialize_geometry_constants(
     velo_geometry,

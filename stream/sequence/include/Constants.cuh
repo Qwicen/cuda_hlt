@@ -75,9 +75,11 @@ struct Constants {
   /**
    * @brief Reserves and initializes constants.
    */
-  void reserve_and_initialize() {
+  void reserve_and_initialize(
+    const std::vector<char>& muon_field_of_interest_params
+  ) {
     reserve_constants();
-    initialize_constants();
+    initialize_constants(muon_field_of_interest_params);
   }
 
   /**
@@ -88,7 +90,7 @@ struct Constants {
   /**
    * @brief Initializes constants on the GPU.
    */
-  void initialize_constants();
+  void initialize_constants(const std::vector<char>& muon_field_of_interest_params);
 
   /**
    * @brief Initializes UT decoding constants.

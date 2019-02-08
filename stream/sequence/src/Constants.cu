@@ -13,11 +13,12 @@ void Constants::reserve_constants() {
   cudaCheck(cudaMalloc((void**)&dev_ut_region_offsets, (UT::Constants::n_layers * UT::Constants::n_regions_in_layer + 1) * sizeof(uint)));
   cudaCheck(cudaMalloc((void**)&dev_inv_clus_res, host_inv_clus_res.size() * sizeof(float)));
   cudaCheck(cudaMalloc((void**)&dev_kalman_params, sizeof(ParKalmanFilter::KalmanParametrizations)));
-  cudaCheck(cudaMalloc((void**)&dev_muon_foi, sizeof(Muon::Constants::FieldOfInterest)));
   cudaCheck(cudaMalloc((void**)&dev_muon_momentum_cuts, 3 * sizeof(float)));
 }
 
-void Constants::initialize_constants() {
+void Constants::initialize_constants(
+  const std::vector<char>& muon_field_of_interest_params
+) {
 
   // Velo module constants
   const std::array<float, Velo::Constants::n_modules> velo_module_zs = {-287.5, -275, -262.5, -250, -237.5, -225, -212.5, \
@@ -74,6 +75,20 @@ void Constants::initialize_constants() {
   
   // Muon constants
   Muon::Constants::FieldOfInterest host_muon_foi;
+  const char* foi_iterator = muon_field_of_interest_params.data();
+  std::copy_n((float*) foi_iterator, Muon::Constants::n_stations * Muon::Constants::n_regions, host_muon_foi.param_a_x);
+  foi_iterator += Muon::Constants::n_stations * Muon::Constants::n_regions * sizeof(float);
+  std::copy_n((float*) foi_iterator, Muon::Constants::n_stations * Muon::Constants::n_regions, host_muon_foi.param_a_y);
+  foi_iterator += Muon::Constants::n_stations * Muon::Constants::n_regions * sizeof(float);
+  std::copy_n((float*) foi_iterator, Muon::Constants::n_stations * Muon::Constants::n_regions, host_muon_foi.param_b_x);
+  foi_iterator += Muon::Constants::n_stations * Muon::Constants::n_regions * sizeof(float);
+  std::copy_n((float*) foi_iterator, Muon::Constants::n_stations * Muon::Constants::n_regions, host_muon_foi.param_b_y);
+  foi_iterator += Muon::Constants::n_stations * Muon::Constants::n_regions * sizeof(float);
+  std::copy_n((float*) foi_iterator, Muon::Constants::n_stations * Muon::Constants::n_regions, host_muon_foi.param_c_x);
+  foi_iterator += Muon::Constants::n_stations * Muon::Constants::n_regions * sizeof(float);
+  std::copy_n((float*) foi_iterator, Muon::Constants::n_stations * Muon::Constants::n_regions, host_muon_foi.param_c_y);
+  foi_iterator += Muon::Constants::n_stations * Muon::Constants::n_regions * sizeof(float);
+
   cudaCheck(cudaMemcpy(dev_muon_momentum_cuts, &Muon::Constants::momentum_cuts, 3 * sizeof(float), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_muon_foi, &host_muon_foi, sizeof(Muon::Constants::FieldOfInterest), cudaMemcpyHostToDevice));
 }
