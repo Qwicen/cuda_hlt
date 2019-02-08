@@ -14,6 +14,7 @@ namespace ParKalmanFilter {
   struct trackInfo {
     
     // Pointer to the extrapolator that should be used.
+    //const KalmanParametrizations *m_extr;
     const KalmanParametrizations *m_extr;
         
     // Jacobians.
@@ -26,18 +27,13 @@ namespace ParKalmanFilter {
     Vector5 m_RefStateForwardUT;
     Vector5 m_RefStateForwardT;
 
-    double m_StateZPos[nMaxMeasurements];
-    double m_HitChi2[nMaxMeasurements];
-
-    double m_BestMomEst;
+    KalmanFloat m_BestMomEst;
+    KalmanFloat m_FirstMomEst;
     
     // Chi2s.
-    double m_chi2;
-    double m_chi2T;
-    double m_chi2V;
-
-    // Hit mask (allows for removing hits).
-    int m_HitStatus[nMaxMeasurements];
+    KalmanFloat m_chi2;
+    KalmanFloat m_chi2T;
+    KalmanFloat m_chi2V;
 
     int m_SciFiLayerIdxs[12];
     int m_UTLayerIdxs[4];
@@ -53,8 +49,6 @@ namespace ParKalmanFilter {
     uint m_NHitsV;
     uint m_NHitsUT;
     uint m_NHitsT;
-
-    int m_charge;
 
     // Keep track of the previous UT and T layers.
     uint m_PrevUTLayer;
@@ -78,8 +72,8 @@ using namespace ParKalmanFilter;
 ////////////////////////////////////////////////////////////////////////
 // Functions for doing the extrapolation.
 __device__ void ExtrapolateInV(
-  double zFrom,
-  double zTo,
+  KalmanFloat zFrom,
+  KalmanFloat zTo,
   Vector5 &x,
   Matrix5x5 &F,
   SymMatrix5x5 &Q,
@@ -87,8 +81,8 @@ __device__ void ExtrapolateInV(
 );
 
 __device__ bool ExtrapolateVUT(
-  double zFrom,
-  double zTo,
+  KalmanFloat zFrom,
+  KalmanFloat zTo,
   Vector5 &x,
   Matrix5x5 &F,
   SymMatrix5x5 &Q,
@@ -96,33 +90,33 @@ __device__ bool ExtrapolateVUT(
 );
 
 __device__ void GetNoiseVUTBackw(
-  double zFrom,
-  double zTo,
+  KalmanFloat zFrom,
+  KalmanFloat zTo,
   Vector5 &x,
   SymMatrix5x5 &Q,
   trackInfo &tI
 );
 
 __device__ void ExtrapolateInUT(
-  double zFrom,
+  KalmanFloat zFrom,
   uint nLayer,
-  double zTo,
+  KalmanFloat zTo,
   Vector5 &x,
   Matrix5x5 &F,
   SymMatrix5x5 &Q,
-  trackInfo &tI
+  const trackInfo &tI
 );
 
 __device__ void ExtrapolateUTFUTDef(
-  double &zFrom,
+  KalmanFloat &zFrom,
   Vector5 &x,
   Matrix5x5 &F,
   trackInfo &tI
 );
 
 __device__ void ExtrapolateUTFUT(
-  double zFrom,
-  double zTo,
+  KalmanFloat zFrom,
+  KalmanFloat zTo,
   Vector5 &x,
   Matrix5x5 &F,
   trackInfo &tI
@@ -142,9 +136,9 @@ __device__ void GetNoiseUTTBackw(
 );
 
 __device__ void ExtrapolateInT(
-  double zFrom,
+  KalmanFloat zFrom,
   uint nLayer,
-  double &zTo,
+  KalmanFloat &zTo,
   Vector5 &x,
   Matrix5x5 &F,
   SymMatrix5x5 &Q,
@@ -152,11 +146,11 @@ __device__ void ExtrapolateInT(
 );
 
 __device__ void ExtrapolateInT(
-  double zFrom,
+  KalmanFloat zFrom,
   uint nLayer,
-  double zTo,
-  double DzDy,
-  double DzDty,
+  KalmanFloat zTo,
+  KalmanFloat DzDy,
+  KalmanFloat DzDty,
   Vector5 &x,
   Matrix5x5 &F,
   SymMatrix5x5 &Q,
@@ -164,8 +158,8 @@ __device__ void ExtrapolateInT(
 );
 
 __device__ void ExtrapolateTFT(
-  double zFrom,
-  double &zTo,
+  KalmanFloat zFrom,
+  KalmanFloat &zTo,
   Vector5 &x,
   Matrix5x5 &F,
   SymMatrix5x5 &Q,
@@ -173,8 +167,8 @@ __device__ void ExtrapolateTFT(
 );
 
 __device__ void ExtrapolateTFTDef(
-  double zFrom,
-  double &zTo,
+  KalmanFloat zFrom,
+  KalmanFloat &zTo,
   Vector5 &x,
   Matrix5x5 &F,
   SymMatrix5x5 &Q,
@@ -182,17 +176,17 @@ __device__ void ExtrapolateTFTDef(
 );
 
 __device__ int extrapUTT(
-  double zi,
-  double zf,
+  KalmanFloat zi,
+  KalmanFloat zf,
   int quad_interp,
-  double& x,
-  double& y,
-  double& tx,
-  double& ty,
-  double qop,
-  double* der_tx,
-  double* der_ty,
-  double* der_qop,
+  KalmanFloat& x,
+  KalmanFloat& y,
+  KalmanFloat& tx,
+  KalmanFloat& ty,
+  KalmanFloat qop,
+  KalmanFloat* der_tx,
+  KalmanFloat* der_ty,
+  KalmanFloat* der_qop,
   trackInfo &tI
 );
 
@@ -208,23 +202,9 @@ __device__ int extrapUTT(
     int nHit,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
-
-  /* TODO: Decide how to implement this general update state method.
-  //----------------------------------------------------------------------
-  // Update the state at a hit.
-  __device__ __host__ void UpdateState(
-    const Velo::Consolidated::Hits &hits,
-    int forward,
-    int nHit,
-    Vector5 &x,
-    SymMatrix5x5 &C,
-    double &lastz,
-    trackInfo &tI
-  );
-  */
   
   //----------------------------------------------------------------------
   // Predict in the VELO.
@@ -233,7 +213,7 @@ __device__ int extrapUTT(
     int nHit,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -246,7 +226,7 @@ __device__ int extrapUTT(
     const int nUTHits,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -257,7 +237,7 @@ __device__ int extrapUTT(
     const uint layer,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -269,7 +249,7 @@ __device__ int extrapUTT(
     int forward,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -279,7 +259,7 @@ __device__ int extrapUTT(
     int forward,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -290,7 +270,7 @@ __device__ int extrapUTT(
     const int n_ut_hits,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
   
@@ -301,7 +281,7 @@ __device__ int extrapUTT(
     uint layer,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -312,7 +292,7 @@ __device__ int extrapUTT(
     int forward,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -322,7 +302,7 @@ __device__ int extrapUTT(
     int forward,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -344,7 +324,7 @@ __device__ int extrapUTT(
     uint layer,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
@@ -356,31 +336,13 @@ __device__ int extrapUTT(
     uint layer,
     Vector5 &x,
     SymMatrix5x5 &C,
-    double &lastz,
-    trackInfo &tI
-  );
-
-  //----------------------------------------------------------------------
-  // Smoothe/average.
-  template<typename HitType>
-  __device__ bool AverageState(
-    const HitType &hits,
-    int nHit,
+    KalmanFloat &lastz,
     trackInfo &tI
   );
 
   //----------------------------------------------------------------------
   // Extrapolate to the vertex using straight line extrapolation.
   __device__ void ExtrapolateToVertex(
-    Vector5 &x, SymMatrix5x5 &C, double &lastz
+    Vector5 &x, SymMatrix5x5 &C, KalmanFloat &lastz
   );
-
-  //----------------------------------------------------------------------
-  // Create the track.
-  //
-  // TODO: Figure out what to actually do here.
-  
-  //----------------------------------------------------------------------
-  // Check if outliers should be removed and remove one of them.
-  __device__ bool DoOutlierRemoval(trackInfo &tI);
   
