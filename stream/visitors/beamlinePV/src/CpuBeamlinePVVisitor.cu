@@ -7,9 +7,9 @@ DEFINE_EMPTY_SET_ARGUMENTS_SIZE(cpu_pv_beamline_t)
 template<>
 void SequenceVisitor::visit<cpu_pv_beamline_t>(
   cpu_pv_beamline_t& state,
+  const cpu_pv_beamline_t::arguments_t& arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -25,7 +25,7 @@ void SequenceVisitor::visit<cpu_pv_beamline_t>(
     cudaMemcpyDeviceToHost,
     cuda_stream));
 
-   // Synchronize previous CUDA transmissions
+  // Synchronize previous CUDA transmissions
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
 
@@ -36,9 +36,8 @@ void SequenceVisitor::visit<cpu_pv_beamline_t>(
     host_buffers.host_reconstructed_pvs,
     host_buffers.host_number_of_vertex,
     host_buffers.host_number_of_selected_events[0]);
-  
-  for ( int i_event = 0; i_event < host_buffers.host_number_of_selected_events[0]; i_event++ ) {
+
+  for (int i_event = 0; i_event < host_buffers.host_number_of_selected_events[0]; i_event++) {
     debug_cout << "# of PVs found = " << host_buffers.host_number_of_vertex[i_event] << std::endl;
   }
-
 }

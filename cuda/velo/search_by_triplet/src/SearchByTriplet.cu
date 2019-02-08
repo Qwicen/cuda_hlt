@@ -17,11 +17,11 @@ __global__ void search_by_triplet(
   short* dev_h0_candidates,
   short* dev_h2_candidates,
   unsigned short* dev_rel_indices,
-  const float* dev_velo_module_zs
-) {
+  const float* dev_velo_module_zs)
+{
   /* Data initialization */
   // Each event is treated with two blocks, one for each side.
-  const uint event_number = blockIdx.x; 
+  const uint event_number = blockIdx.x;
   const uint number_of_events = gridDim.x;
   const uint tracks_offset = event_number * Velo::Constants::max_tracks;
 
@@ -31,7 +31,7 @@ __global__ void search_by_triplet(
   const uint* module_hitNums = dev_module_cluster_num + event_number * Velo::Constants::n_modules;
   const uint hit_offset = module_hitStarts[0];
   assert((module_hitStarts[52] - module_hitStarts[0]) < Velo::Constants::max_number_of_hits_per_event);
-  
+
   // Order has changed since SortByPhi
   const float* hit_Ys = (float*) (dev_velo_cluster_container + hit_offset);
   const float* hit_Zs = (float*) (dev_velo_cluster_container + number_of_hits + hit_offset);
@@ -45,8 +45,8 @@ __global__ void search_by_triplet(
 
   // Per side datatypes
   bool* hit_used = dev_hit_used + hit_offset;
-  short* h0_candidates = dev_h0_candidates + 2*hit_offset;
-  short* h2_candidates = dev_h2_candidates + 2*hit_offset;
+  short* h0_candidates = dev_h0_candidates + 2 * hit_offset;
+  short* h2_candidates = dev_h2_candidates + 2 * hit_offset;
 
   uint* tracks_to_follow = dev_tracks_to_follow + event_number * Velo::Tracking::ttf_modulo;
   Velo::TrackletHits* weak_tracks = dev_weak_tracks + event_number * Velo::Tracking::max_weak_tracks;
@@ -62,13 +62,13 @@ __global__ void search_by_triplet(
   uint* local_number_of_hits = (uint*) dev_atomics_velo + ip_shift + 3;
 
   // Shared memory
-  extern __shared__ float shared_best_fits [];
-  __shared__ int module_data [18];
+  extern __shared__ float shared_best_fits[];
+  __shared__ int module_data[18];
 
   // Initialize hit_used
   const auto current_event_number_of_hits = module_hitStarts[Velo::Constants::n_modules] - hit_offset;
-  for (int i=0; i<(current_event_number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
-    const auto index = i*blockDim.x + threadIdx.x;
+  for (int i = 0; i < (current_event_number_of_hits + blockDim.x - 1) / blockDim.x; ++i) {
+    const auto index = i * blockDim.x + threadIdx.x;
     if (index < current_event_number_of_hits) {
       hit_used[index] = false;
     }
@@ -83,7 +83,7 @@ __global__ void search_by_triplet(
   process_modules(
     (Velo::Module*) &module_data[0],
     (float*) &shared_best_fits[0],
-    VP::NModules-1,
+    VP::NModules - 1,
     2,
     hit_used,
     h0_candidates,
@@ -107,6 +107,5 @@ __global__ void search_by_triplet(
     h1_rel_indices,
     local_number_of_hits,
     hit_offset,
-    dev_velo_module_zs
-  );
+    dev_velo_module_zs);
 }

@@ -3,10 +3,10 @@
 
 template<>
 void SequenceVisitor::set_arguments_size<pv_beamline_peak_t>(
+  pv_beamline_peak_t::arguments_t arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  const HostBuffers& host_buffers,
-  argument_manager_t& arguments)
+  const HostBuffers& host_buffers)
 {
   // Set arguments size
   arguments.set_size<dev_zpeaks>(host_buffers.host_number_of_selected_events[0] * PV::max_number_vertices);
@@ -16,15 +16,17 @@ void SequenceVisitor::set_arguments_size<pv_beamline_peak_t>(
 template<>
 void SequenceVisitor::visit<pv_beamline_peak_t>(
   pv_beamline_peak_t& state,
+  const pv_beamline_peak_t::arguments_t& arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
   state.set_opts(
-    dim3((host_buffers.host_number_of_selected_events[0] + PV::num_threads_pv_beamline_peak_t - 1) / PV::num_threads_pv_beamline_peak_t),
+    dim3(
+      (host_buffers.host_number_of_selected_events[0] + PV::num_threads_pv_beamline_peak_t - 1) /
+      PV::num_threads_pv_beamline_peak_t),
     PV::num_threads_pv_beamline_peak_t,
     cuda_stream);
 

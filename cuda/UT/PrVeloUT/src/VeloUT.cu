@@ -13,32 +13,34 @@ __global__ void veloUT(
   float* dev_ut_dxDy,
   const uint* dev_unique_x_sector_layer_offsets,
   const uint* dev_unique_x_sector_offsets,
-  const float* dev_unique_sector_xs
-) {
+  const float* dev_unique_sector_xs)
+{
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
 
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
   const uint total_number_of_hits = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
-  
+
   // Velo consolidated types
-  const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_velo, dev_velo_track_hit_number, event_number, number_of_events};
+  const Velo::Consolidated::Tracks velo_tracks {
+    (uint*) dev_atomics_velo, dev_velo_track_hit_number, event_number, number_of_events};
   const Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  UT::HitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  UT::HitOffsets ut_hit_offsets {
+    dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
   UT::Hits ut_hits {dev_ut_hits, total_number_of_hits};
   const auto event_hit_offset = ut_hit_offsets.event_offset();
-  
+
   /* dev_atomics_ut contains in an SoA:
      1. # of veloUT tracks
   */
   int* n_veloUT_tracks_event = dev_atomics_ut + event_number;
   UT::TrackHits* veloUT_tracks_event = dev_veloUT_tracks + event_number * UT::Constants::max_num_tracks;
-  
+
   // initialize atomic veloUT tracks counter
-  if ( threadIdx.x == 0 ) {
+  if (threadIdx.x == 0) {
     *n_veloUT_tracks_event = 0;
   }
   __syncthreads();
@@ -68,16 +70,16 @@ __global__ void veloUT(
   // }
 
   const float* fudgeFactors = &(dev_ut_magnet_tool->dxLayTable[0]);
-  const float* bdlTable     = &(dev_ut_magnet_tool->bdlTable[0]);
+  const float* bdlTable = &(dev_ut_magnet_tool->bdlTable[0]);
 
   // array to store indices of selected hits in layers
   // -> can then access the hit information in the HitsSoA
   int hitCandidatesInLayers[UT::Constants::n_layers][UT::Constants::max_hit_candidates_per_layer];
   int n_hitCandidatesInLayers[UT::Constants::n_layers];
-  
-  for ( int i = 0; i < (number_of_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
+
+  for (int i = 0; i < (number_of_tracks_event + blockDim.x - 1) / blockDim.x; ++i) {
     const int i_track = i * blockDim.x + threadIdx.x;
-    
+
     const uint velo_states_index = event_tracks_offset + i_track;
     if (i_track >= number_of_tracks_event) continue;
     if (velo_states.backward[velo_states_index]) continue;
@@ -85,16 +87,16 @@ __global__ void veloUT(
     // Mini State with only x, y, tx, ty and z
     MiniState velo_state {velo_states, velo_states_index};
 
-    if(!veloTrackInUTAcceptance(velo_state)) continue;
+    if (!veloTrackInUTAcceptance(velo_state)) continue;
 
     // for storing calculated x position of hits for this track
     float x_pos_layers[UT::Constants::n_layers][UT::Constants::max_hit_candidates_per_layer];
 
-    for ( int i_layer = 0; i_layer < UT::Constants::n_layers; ++i_layer ) {
+    for (int i_layer = 0; i_layer < UT::Constants::n_layers; ++i_layer) {
       n_hitCandidatesInLayers[i_layer] = 0;
     }
 
-    if( !getHits(
+    if (!getHits(
           hitCandidatesInLayers,
           n_hitCandidatesInLayers,
           x_pos_layers,
@@ -104,13 +106,13 @@ __global__ void veloUT(
           velo_state,
           dev_ut_dxDy,
           dev_unique_sector_xs,
-          dev_unique_x_sector_layer_offsets)
-        ) continue;
+          dev_unique_x_sector_layer_offsets))
+      continue;
 
     TrackHelper helper {velo_state};
-    
+
     // go through UT layers in forward direction
-    if(!formClusters(
+    if (!formClusters(
           hitCandidatesInLayers,
           n_hitCandidatesInLayers,
           x_pos_layers,
@@ -120,7 +122,7 @@ __global__ void veloUT(
           velo_state,
           dev_ut_dxDy,
           true)) {
-      
+
       // go through UT layers in backward direction
       formClusters(
         hitCandidatesInLayers,
@@ -133,8 +135,8 @@ __global__ void veloUT(
         dev_ut_dxDy,
         false);
     }
-    
-    if ( helper.n_hits > 0 ) {
+
+    if (helper.n_hits > 0) {
       const uint velo_track_hit_number = velo_tracks.number_of_hits(i_track);
       const Velo::Consolidated::Hits velo_track_hits = velo_tracks.get_hits(dev_velo_track_hits, i_track);
 
@@ -154,5 +156,5 @@ __global__ void veloUT(
         bdlTable,
         event_hit_offset);
     }
-  } // velo tracks 
+  } // velo tracks
 }

@@ -6,10 +6,10 @@
 
 template<>
 void SequenceVisitor::set_arguments_size<pv_beamline_histo_t>(
+  pv_beamline_histo_t::arguments_t arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  const HostBuffers& host_buffers,
-  argument_manager_t& arguments)
+  const HostBuffers& host_buffers)
 {
   // Set arguments size
   arguments.set_size<dev_zhisto>(host_buffers.host_number_of_selected_events[0] * (zmax - zmin) / dz);
@@ -18,9 +18,9 @@ void SequenceVisitor::set_arguments_size<pv_beamline_histo_t>(
 template<>
 void SequenceVisitor::visit<pv_beamline_histo_t>(
   pv_beamline_histo_t& state,
+  const pv_beamline_histo_t::arguments_t& arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)

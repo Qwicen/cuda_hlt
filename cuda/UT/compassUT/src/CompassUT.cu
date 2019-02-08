@@ -28,15 +28,16 @@ __global__ void compass_ut(
   const uint total_number_of_hits = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
 
   // Velo consolidated types
-  const Velo::Consolidated::Tracks velo_tracks{
+  const Velo::Consolidated::Tracks velo_tracks {
     (uint*) dev_atomics_storage, dev_velo_track_hit_number, event_number, number_of_events};
-  const Velo::Consolidated::States velo_states{dev_velo_states, velo_tracks.total_number_of_tracks};
+  const Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
   short* windows_layers = dev_windows_layers + event_tracks_offset * CompassUT::num_elems * UT::Constants::n_layers;
 
-  const UT::HitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  const UT::HitOffsets ut_hit_offsets {
+    dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
   const UT::Hits ut_hits {dev_ut_hits, total_number_of_hits};
   const auto event_hit_offset = ut_hit_offsets.event_offset();
 
@@ -74,14 +75,14 @@ __global__ void compass_ut(
 
     if (i_track < number_of_tracks_event) {
       const uint current_track_offset = event_tracks_offset + i_track;
-      const auto velo_state = MiniState{velo_states, current_track_offset};
-      
-      if (!velo_states.backward[current_track_offset] && 
-          dev_accepted_velo_tracks[current_track_offset] &&
-          velo_track_in_UTA_acceptance(velo_state) &&
-          found_active_windows(windows_layers, number_of_tracks_event, i_track) ) {
-            int current_track = atomicAdd(active_tracks, 1);
-            shared_active_tracks[current_track] = i_track;
+      const auto velo_state = MiniState {velo_states, current_track_offset};
+
+      if (
+        !velo_states.backward[current_track_offset] && dev_accepted_velo_tracks[current_track_offset] &&
+        velo_track_in_UTA_acceptance(velo_state) &&
+        found_active_windows(windows_layers, number_of_tracks_event, i_track)) {
+        int current_track = atomicAdd(active_tracks, 1);
+        shared_active_tracks[current_track] = i_track;
       }
     }
 
@@ -163,30 +164,18 @@ __device__ void compass_ut_tracking(
 {
 
   // select velo track to join with UT hits
-  const MiniState velo_state{velo_states, current_track_offset};
+  const MiniState velo_state {velo_states, current_track_offset};
 
-  fill_shared_windows(
-    windows_layers, 
-    number_of_tracks_event,
-    i_track,
-    win_size_shared);
+  fill_shared_windows(windows_layers, number_of_tracks_event, i_track, win_size_shared);
 
   // Find compatible hits in the windows for this VELO track
-  const auto best_hits_and_params = find_best_hits(
-    win_size_shared,
-    number_of_tracks_event,
-    i_track,
-    ut_hits,
-    ut_hit_offsets,
-    velo_state,
-    dev_ut_dxDy);
+  const auto best_hits_and_params =
+    find_best_hits(win_size_shared, number_of_tracks_event, i_track, ut_hits, ut_hit_offsets, velo_state, dev_ut_dxDy);
 
-  const int best_hits[UT::Constants::n_layers] = {
-    std::get<0>(best_hits_and_params),
-    std::get<1>(best_hits_and_params),
-    std::get<2>(best_hits_and_params),
-    std::get<3>(best_hits_and_params)
-  };
+  const int best_hits[UT::Constants::n_layers] = {std::get<0>(best_hits_and_params),
+                                                  std::get<1>(best_hits_and_params),
+                                                  std::get<2>(best_hits_and_params),
+                                                  std::get<3>(best_hits_and_params)};
   const BestParams best_params = std::get<4>(best_hits_and_params);
 
   // write the final track
@@ -222,10 +211,10 @@ __device__ __inline__ void fill_shared_windows(
   const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
   const int track_pos_sh = UT::Constants::n_layers * UT::Constants::num_thr_compassut;
 
-  for (int layer=0; layer<UT::Constants::n_layers; ++layer) {
-    for (int pos=0; pos<CompassUT::num_elems; ++pos) {
-      win_size_shared[pos * track_pos_sh + layer * UT::Constants::num_thr_compassut + threadIdx.x] = 
-      windows_layers [pos * track_pos    + layer * number_of_tracks_event      + i_track];
+  for (int layer = 0; layer < UT::Constants::n_layers; ++layer) {
+    for (int pos = 0; pos < CompassUT::num_elems; ++pos) {
+      win_size_shared[pos * track_pos_sh + layer * UT::Constants::num_thr_compassut + threadIdx.x] =
+        windows_layers[pos * track_pos + layer * number_of_tracks_event + i_track];
     }
   }
 }
@@ -233,10 +222,8 @@ __device__ __inline__ void fill_shared_windows(
 //=========================================================================
 // Determine if there are valid windows for this track looking at the sizes
 //=========================================================================
-__device__ __inline__ bool found_active_windows(
-  const short* windows_layers,
-  const int number_of_tracks_event,
-  const int i_track)
+__device__ __inline__ bool
+found_active_windows(const short* windows_layers, const int number_of_tracks_event, const int i_track)
 {
   const int track_pos = UT::Constants::n_layers * number_of_tracks_event;
 
@@ -266,8 +253,7 @@ __device__ __inline__ bool found_active_windows(
                         windows_layers[8 * track_pos + 3 * number_of_tracks_event + i_track] != 0 ||
                         windows_layers[9 * track_pos + 3 * number_of_tracks_event + i_track] != 0;
 
-  return (l0_found && l2_found && (l1_found || l3_found)) ||
-         (l3_found && l1_found && (l2_found || l0_found));
+  return (l0_found && l2_found && (l1_found || l3_found)) || (l3_found && l1_found && (l2_found || l0_found));
 }
 
 //=========================================================================
@@ -293,13 +279,13 @@ __device__ void save_track(
   const int* best_hits,
   const UT::Hits& ut_hits,
   const float* ut_dxDy,
-  int* n_veloUT_tracks, // increment number of tracks
+  int* n_veloUT_tracks,         // increment number of tracks
   UT::TrackHits* VeloUT_tracks, // write the track
   const int event_hit_offset)
 {
   //== Handle states. copy Velo one, add UT.
-  const float zOrigin = (std::fabs(velo_state.ty) > 0.001f) ? velo_state.z - velo_state.y / velo_state.ty
-                                                           : velo_state.z - velo_state.x / velo_state.tx;
+  const float zOrigin = (std::fabs(velo_state.ty) > 0.001f) ? velo_state.z - velo_state.y / velo_state.ty :
+                                                              velo_state.z - velo_state.x / velo_state.tx;
 
   // -- These are calculations, copied and simplified from PrTableForFunction
   const float var[3] = {velo_state.ty, zOrigin, velo_state.z};
@@ -347,11 +333,17 @@ __device__ void save_track(
   UT::TrackHits track;
   track.velo_track_index = i_track;
   track.qop = qop;
-  track.hits_num = UT::Constants::n_layers;
+  track.hits_num = 0;
 
   // Adding hits to track
   for (int i = 0; i < UT::Constants::n_layers; ++i) {
-    track.hits[i] = best_hits[i] == -1 ? -1 : best_hits[i] - event_hit_offset;
+    if (best_hits[i] != -1) {
+      track.hits[i] = best_hits[i] - event_hit_offset;
+      ++track.hits_num;
+    }
+    else {
+      track.hits[i] = -1;
+    }
   }
 
   assert(n_tracks < UT::Constants::max_num_tracks);

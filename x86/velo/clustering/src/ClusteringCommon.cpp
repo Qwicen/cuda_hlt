@@ -4,8 +4,8 @@ void cache_sp_patterns(
   std::vector<unsigned char>& sp_patterns,
   std::vector<unsigned char>& sp_sizes,
   std::vector<float>& sp_fx,
-  std::vector<float>& sp_fy
-) {
+  std::vector<float>& sp_fy)
+{
   // create a cache for all super pixel cluster patterns.
   // this is an unoptimized 8-way flood fill on the 8 pixels
   // in the super pixel.
@@ -48,7 +48,7 @@ void cache_sp_patterns(
 
       if (0 == sp_buffer[idx]) {
         continue;
-      }  // pixel is used
+      } // pixel is used
 
       sp_stack_ptr = 0;
       sp_stack[sp_stack_ptr++] = idx;

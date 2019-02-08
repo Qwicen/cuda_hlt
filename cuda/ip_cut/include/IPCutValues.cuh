@@ -5,15 +5,11 @@
    - cut values
 
  */
-
 #include "SystemOfUnits.h"
 #include <cassert>
 
-namespace Cuts{
-
+namespace Cuts {
   namespace IP {
-
     constexpr float baseline = 100.f * Gaudi::Units::um;
-
   }
-}
+} // namespace Cuts

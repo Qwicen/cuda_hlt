@@ -10,6 +10,7 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/UT/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/SciFi/include)
 include_directories(${CMAKE_SOURCE_DIR}/main/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
+include_directories(${CMAKE_SOURCE_DIR}/stream/setup/include)
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
 file(GLOB kalman_ParKalman "ParKalman/src/*cu")
@@ -21,3 +22,7 @@ add_library(Kalman STATIC
 target_link_libraries(Kalman SciFi)
 
 set_property(TARGET Kalman PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+if(USE_KALMAN_SINGLE_PRECISION)
+  target_compile_definitions(Kalman PUBLIC KALMAN_SINGLE_PRECISION)
+endif()

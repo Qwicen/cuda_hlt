@@ -17,4 +17,15 @@ __global__ void is_muon(
   const float* dev_muon_momentum_cuts
 );
 
-ALGORITHM(is_muon, is_muon_t)
+ALGORITHM(  
+  is_muon, 
+  is_muon_t,
+  ARGUMENTS(
+    dev_atomics_scifi,
+    dev_scifi_track_hit_number,
+    dev_scifi_qop,
+    dev_scifi_states,
+    dev_scifi_track_ut_indices,
+    dev_muon_hits,
+    dev_muon_track_occupancies,
+    dev_is_muon))

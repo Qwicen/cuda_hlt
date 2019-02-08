@@ -82,6 +82,7 @@ __global__ void scifi_raw_bank_decoder_v4(
     uint8_t cluster_fraction = fraction(c);
     uint8_t pseudoSize = cSize(c) ? 0 : 4;
 
-    make_cluster_v4(hit_count.offset_zones_without_mat_groups() + i, geom, cluster_chan, cluster_fraction, pseudoSize, hits);
+    make_cluster_v4(
+      hit_count.offset_zones_without_mat_groups() + i, geom, cluster_chan, cluster_fraction, pseudoSize, hits);
   }
 }

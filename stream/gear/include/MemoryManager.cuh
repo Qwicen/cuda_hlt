@@ -31,7 +31,8 @@ struct MemoryManager {
    *        Note: This triggers a free_all to restore the memory_segments
    *        to a valid state. This operation is very disruptive.
    */
-  void set_reserved_memory(size_t reserved_memory) {
+  void set_reserved_memory(size_t reserved_memory)
+  {
     max_available_memory = reserved_memory;
     free_all();
   }
@@ -55,18 +56,17 @@ struct MemoryManager {
     }
 
     // Aligned requested size
-    const size_t aligned_request = requested_size + guarantee_alignment - 1
-      - ((requested_size + guarantee_alignment - 1) % guarantee_alignment);
+    const size_t aligned_request =
+      requested_size + guarantee_alignment - 1 - ((requested_size + guarantee_alignment - 1) % guarantee_alignment);
 
     if (logger::ll.verbosityLevel >= 4) {
-      debug_cout << "MemoryManager: Requested to reserve "
-        << requested_size << " B (" << aligned_request << " B aligned) for argument "
-        << Argument::name << std::endl;
+      debug_cout << "MemoryManager: Requested to reserve " << requested_size << " B (" << aligned_request
+                 << " B aligned) for argument " << Argument::name << std::endl;
     }
 
     // Finds first free segment providing that space
     auto it = memory_segments.begin();
-    for (; it!=memory_segments.end(); ++it) {
+    for (; it != memory_segments.end(); ++it) {
       if (it->tag == "" && it->size >= aligned_request) {
         break;
       }
@@ -75,8 +75,9 @@ struct MemoryManager {
     // Complain if no space was available
     if (it == memory_segments.end()) {
       print();
-      throw StrException("Reserve: Requested size for argument " + std::string(Argument::name)
-        + " could not be met ("+ std::to_string(((float) aligned_request) / (1024*1024)) + " MiB)");
+      throw StrException(
+        "Reserve: Requested size for argument " + std::string(Argument::name) + " could not be met (" +
+        std::to_string(((float) aligned_request) / (1024 * 1024)) + " MiB)");
     }
 
     // Start of allocation
@@ -91,30 +92,29 @@ struct MemoryManager {
     }
 
     // Insert an occupied segment
-    auto segment = MemorySegment{start, aligned_request, tag};
+    auto segment = MemorySegment {start, aligned_request, tag};
     memory_segments.insert(it, segment);
 
     // Update total memory required
     // Note: This can be done accesing the last element in memory_segments
     //       upon every reserve, and keeping the maximum used memory
-    total_memory_required = std::max(total_memory_required,
-      max_available_memory - memory_segments.back().size);
+    total_memory_required = std::max(total_memory_required, max_available_memory - memory_segments.back().size);
   }
 
   /**
    * @brief Recursive free, implementation for Argument.
    */
   template<typename Argument>
-  void free() {
+  void free()
+  {
     const auto tag = std::string(Argument::name);
 
     if (logger::ll.verbosityLevel >= 4) {
       debug_cout << "MemoryManager: Requested to free tag " << tag << std::endl;
     }
 
-    auto it = std::find_if(memory_segments.begin(), memory_segments.end(),
-      [&tag] (const MemorySegment& segment) {
-        return segment.tag == tag;
+    auto it = std::find_if(memory_segments.begin(), memory_segments.end(), [&tag](const MemorySegment& segment) {
+      return segment.tag == tag;
     });
 
     if (it == memory_segments.end()) {
@@ -150,24 +150,23 @@ struct MemoryManager {
    * @brief Frees all memory segments, effectively resetting the
    *        available space.
    */
-  void free_all() {
-    memory_segments = std::list<MemorySegment>{{0, max_available_memory, ""}};
-  }
+  void free_all() { memory_segments = std::list<MemorySegment> {{0, max_available_memory, ""}}; }
 
   /**
    * @brief Prints the current state of the memory segments.
    */
-  void print() {
+  void print()
+  {
     info_cout << "Memory segments (MiB):" << std::endl;
 
     for (auto& segment : memory_segments) {
-      std::string name = segment.tag=="" ? "unused" : segment.tag;
+      std::string name = segment.tag == "" ? "unused" : segment.tag;
       info_cout << name << " (" << ((float) segment.size) / (1024 * 1024) << "), ";
     }
     info_cout << std::endl;
 
-    info_cout << "Max memory required: "
-      << (((float) total_memory_required) / (1024 * 1024)) << " MiB" << std::endl << std::endl;
+    info_cout << "Max memory required: " << (((float) total_memory_required) / (1024 * 1024)) << " MiB" << std::endl
+              << std::endl;
   }
 };
 
@@ -180,16 +179,12 @@ struct MemoryManagerReserve;
 
 template<typename ArgumentManagerType>
 struct MemoryManagerReserve<ArgumentManagerType, std::tuple<>> {
-  constexpr static void reserve(
-    MemoryManager& memory_manager,
-    ArgumentManagerType& argument_manager) {}
+  constexpr static void reserve(MemoryManager& memory_manager, ArgumentManagerType& argument_manager) {}
 };
 
 template<typename ArgumentManagerType, typename Argument, typename... Arguments>
 struct MemoryManagerReserve<ArgumentManagerType, std::tuple<Argument, Arguments...>> {
-  constexpr static void reserve(
-    MemoryManager& memory_manager,
-    ArgumentManagerType& argument_manager)
+  constexpr static void reserve(MemoryManager& memory_manager, ArgumentManagerType& argument_manager)
   {
     memory_manager.reserve<ArgumentManagerType, Argument>(argument_manager);
     MemoryManagerReserve<ArgumentManagerType, std::tuple<Arguments...>>::reserve(memory_manager, argument_manager);

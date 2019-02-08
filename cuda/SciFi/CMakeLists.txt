@@ -20,6 +20,7 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/velo/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/utils/sorting/include)
 include_directories(${CMAKE_SOURCE_DIR}/main/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
+include_directories(${CMAKE_SOURCE_DIR}/stream/setup/include)
 
 add_library(SciFi STATIC
   ${scifi_common}

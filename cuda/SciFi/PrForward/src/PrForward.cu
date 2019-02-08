@@ -160,7 +160,9 @@ __global__ void scifi_pr_forward(
   SciFi::Hits scifi_hits(dev_scifi_hits, total_number_of_hits, &scifi_geometry, dev_inv_clus_res);
 
   // initialize atomic SciFi tracks counter
-  if (threadIdx.x == 0) { *atomics_scifi_event = 0; }
+  if (threadIdx.x == 0) {
+    *atomics_scifi_event = 0;
+  }
   __syncthreads();
 
   // Loop over the veloUT input tracks

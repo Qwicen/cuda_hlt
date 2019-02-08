@@ -7,6 +7,9 @@
 #include "CompassUTDefinitions.cuh"
 #include "FindBestHits.cuh"
 #include "Handler.cuh"
+#include "ArgumentsCommon.cuh"
+#include "ArgumentsVelo.cuh"
+#include "ArgumentsUT.cuh"
 #include "UTEventModel.cuh"
 
 //=========================================================================
@@ -46,8 +49,7 @@ __device__ void compass_ut_tracking(
   UT::TrackHits* veloUT_tracks_event,
   const int event_hit_offset);
 
-__host__ __device__ __inline__ bool velo_track_in_UT_acceptance(
-  const MiniState& state);
+__host__ __device__ __inline__ bool velo_track_in_UT_acceptance(const MiniState& state);
 
 __device__ __inline__ void fill_shared_windows(
   const short* windows_layers,
@@ -55,10 +57,8 @@ __device__ __inline__ void fill_shared_windows(
   const int i_track,
   short* win_size_shared);
 
-__device__ __inline__ bool found_active_windows(
-  const short* dev_windows_layers,
-  const int total_tracks_event,
-  const int track);
+__device__ __inline__ bool
+found_active_windows(const short* dev_windows_layers, const int total_tracks_event, const int track);
 
 __device__ void save_track(
   const int i_track,
@@ -75,4 +75,18 @@ __device__ void save_track(
   UT::TrackHits* VeloUT_tracks,
   const int event_hit_offset);
 
-ALGORITHM(compass_ut, compass_ut_t)
+ALGORITHM(
+  compass_ut,
+  compass_ut_t,
+  ARGUMENTS(
+    dev_ut_hits,
+    dev_ut_hit_offsets,
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_velo_track_hits,
+    dev_velo_states,
+    dev_ut_tracks,
+    dev_atomics_ut,
+    dev_ut_active_tracks,
+    dev_ut_windows_layers,
+    dev_accepted_velo_tracks))

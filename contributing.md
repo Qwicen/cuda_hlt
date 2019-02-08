@@ -74,14 +74,19 @@ add_library(Test STATIC
 )
 ```
 
-Our CUDA algorithm `Saxpy.cuh` and `Saxpy.cu` will be as follows:
+Our CUDA algorithm `Saxpy.cuh` and `Saxpy.cu` will be as follows. Note we need to specify the required arguments in the `ALGORITHM`, let's give the arguments names that won't collide, like `dev_x` and `dev_y`:
 
 ```clike=
 #include "Handler.cuh"
+#include "ArgumentsCommon.cuh"
 
 __global__ void saxpy(float *x, float *y, int n, float a);
 
-ALGORITHM(saxpy, saxpy_t)
+ALGORITHM(saxpy, saxpy_t,
+  ARGUMENTS(
+    dev_x,
+    dev_y
+))
 ```
 
 ```clike=
@@ -146,33 +151,12 @@ Next, we need to define the arguments to be passed to our function. We need to d
 
 We will distinguish arguments just passed by value from pointers to device memory. We don't need to schedule those simply passed by value like `n` and `a`. We care however about `x` and `y`, since they require some reserving and freeing in memory.
 
-Let's give these arguments a name that won't collide, like `dev_x` and `dev_y`. Now, we need to add them to `stream/setup/include/Arguments.cuh`:
+In the algorithm definition we used the arguments `dev_x` and `dev_y`. We need to define the arguments, to make them available to our algorithm. Let's add these types to the common arguments, in `stream/setup/include/ArgumentsCommon.cuh`:
 
 ```clike
-/**
- * @brief Definition of arguments. All arguments should be defined here,
- *        with their associated type.
- */
+...
 ARGUMENT(dev_x, float)
 ARGUMENT(dev_y, float)
-```
-
-Finally, we need to populate the _dependency tree_, ie. where are these arguments needed. For that, edit `stream/setup/include/AlgorithmDependencies.cuh`:
-
-```clike
-/**
- * @brief Definition of the dependencies of each algorithm.
- * @details All the dependencies for all defined algorithms
- *          should be defined here, using the type
- *          AlgorithmDependencies<Algorithm, Arguments...>.
- */
-typedef std::tuple<
-...
-  AlgorithmDependencies<saxpy_t,
-    dev_x,
-    dev_y
-  >,
-...
 ```
 
 Optionally, some types are required to live throughout the whole sequence since its creation. An argument can be specified to be persistent in memory by adding it to the `output_arguments_t` tuple, in `AlgorithmDependencies.cuh`:
@@ -211,7 +195,6 @@ First go to `stream/sequence/include/HostBuffers.cuh` and add the saxpy host mem
   uint* host_total_number_of_velo_clusters;
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
-  uint* host_velo_states;
   uint* host_accumulated_number_of_ut_hits;
 
   // Saxpy
@@ -232,7 +215,6 @@ Reserve that host memory in `stream/sequence/src/HostBuffers.cu`:
   cudaCheck(cudaMallocHost((void**)&host_total_number_of_velo_clusters, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_number_of_reconstructed_velo_tracks, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_hits_in_velo_tracks, sizeof(uint)));
-  cudaCheck(cudaMallocHost((void**)&host_velo_states, max_number_of_events * VeloTracking::max_tracks * sizeof(Velo::State)));
   cudaCheck(cudaMallocHost((void**)&host_veloUT_tracks, max_number_of_events * VeloUTTracking::max_num_tracks * sizeof(VeloUTTracking::TrackUT)));
   cudaCheck(cudaMallocHost((void**)&host_atomics_veloUT, VeloUTTracking::num_atomics * max_number_of_events * sizeof(int)));
   cudaCheck(cudaMallocHost((void**)&host_accumulated_number_of_ut_hits, sizeof(uint)));

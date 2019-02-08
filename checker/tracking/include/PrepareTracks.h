@@ -14,7 +14,7 @@
 std::vector<trackChecker::Tracks> prepareVeloTracks(
   const uint* track_atomics,
   const uint* track_hit_number,
-  const char* track_hits,  
+  const char* track_hits,
   const uint number_of_events);
 
 /**

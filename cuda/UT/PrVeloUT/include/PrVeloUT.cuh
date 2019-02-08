@@ -246,7 +246,7 @@ __host__ __device__ void simpleFit(
     for (int i_hit = 0; i_hit < N; ++i_hit) {
       helper.bestHitIndices[i_hit] = hitIndices[i_hit];
     }
-    
+
     helper.n_hits = N;
   }
 }

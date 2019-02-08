@@ -20,18 +20,20 @@
 #include "SequenceVisitor.cuh"
 #include "SchedulerMachinery.cuh"
 #include "Scheduler.cuh"
-#include "AlgorithmDependencies.cuh"
+#include "OutputArguments.cuh"
 #include "CheckerInvoker.h"
-
+#include "ConfiguredSequence.cuh"
 
 class Timer;
 
 struct Stream {
-  using scheduler_t = Scheduler<configured_sequence_t, algorithms_dependencies_t, output_arguments_t>;
+  using scheduler_t = Scheduler<configured_sequence_t, output_arguments_t>;
   using argument_manager_t = ArgumentManager<scheduler_t::arguments_tuple_t>;
 
-  // Sequence and arguments
-  configured_sequence_t sequence_tuple;
+  Stream() = default;
+
+  // Dynamic scheduler
+  scheduler_t scheduler;
 
   // Stream datatypes
   cudaStream_t cuda_stream;
@@ -40,9 +42,6 @@ struct Stream {
 
   // Launch options
   bool do_print_memory_manager;
-
-  // Dynamic scheduler
-  scheduler_t scheduler;
 
   // Host buffers
   HostBuffers host_buffers;
@@ -65,15 +64,9 @@ struct Stream {
     const uint param_start_event_offset,
     const size_t param_reserve_mb,
     const uint param_stream_number,
-    const Constants& param_constants
-  );
+    const Constants& param_constants);
 
-  void run_monte_carlo_test(
-    const std::string& mc_folder,
-    const uint number_of_events_requested
-  );
+  void run_monte_carlo_test(const std::string& mc_folder, const uint number_of_events_requested);
 
-  cudaError_t run_sequence(
-    const RuntimeOptions& runtime_options
-  );
+  cudaError_t run_sequence(const RuntimeOptions& runtime_options);
 };

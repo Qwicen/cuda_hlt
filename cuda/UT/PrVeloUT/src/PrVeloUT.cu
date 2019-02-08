@@ -397,7 +397,7 @@ __host__ __device__ void findHits(
   const float xTolNormFact,
   const float invNormFact,
   int hitCandidatesInLayer[UT::Constants::max_hit_candidates_per_layer],
-  int &n_hitCandidatesInLayer,
+  int& n_hitCandidatesInLayer,
   float x_pos_layers[UT::Constants::n_layers][UT::Constants::max_hit_candidates_per_layer])
 {
   const uint posBeg = ut_hit_offsets.sector_group_offset(lowerBoundSectorGroup) - layer_offset;

@@ -10,9 +10,9 @@ namespace Muon {
     static constexpr uint n_regions             = 4;
     /* Cut-offs */
     static constexpr uint max_numhits_per_event = 200 * n_stations;
-    static constexpr float SQRT3                = 1.7320508075688772;
-    static constexpr float INVSQRT3             = 0.5773502691896258;
-    static constexpr float MSFACTOR             = 5.552176750308537;
+    static constexpr float SQRT3 = 1.7320508075688772;
+    static constexpr float INVSQRT3 = 0.5773502691896258;
+    static constexpr float MSFACTOR = 5.552176750308537;
 
     /*Muon Catboost model uses 5 features for each station: Delta time, Time, Crossed, X residual, Y residual*/
     static constexpr uint n_catboost_features   = 5 * n_stations;
@@ -53,4 +53,4 @@ namespace Muon {
     int cluster_size[Constants::max_numhits_per_event] = {0};
     int region_id[Constants::max_numhits_per_event] = {0};
   };
-}
+} // namespace Muon

@@ -1,10 +1,7 @@
 #pragma once
 
 template<typename T>
-__device__ int binary_search_leftmost(
-  const T* array,
-  const uint array_size,
-  const T& value) 
+__device__ int binary_search_leftmost(const T* array, const uint array_size, const T& value)
 {
   int l = 0;
   int r = array_size - 1;
@@ -13,7 +10,8 @@ __device__ int binary_search_leftmost(
     const auto array_element = array[m];
     if (value > array_element) {
       l = m + 1;
-    } else {
+    }
+    else {
       r = m;
     }
   }

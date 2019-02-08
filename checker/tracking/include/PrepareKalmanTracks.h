@@ -32,5 +32,4 @@ std::vector<trackChecker::Tracks> prepareKalmanTracks(
   const char* scifi_geometry,
   const std::array<float, 9>& inv_clus_res,
   const ParKalmanFilter::FittedTrack* kf_tracks,
-  const uint number_of_events
-);
+  const uint number_of_events);

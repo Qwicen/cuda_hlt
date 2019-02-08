@@ -20,6 +20,7 @@ include_directories(../utils/sorting/include)
 include_directories(../utils/prefix_sum/include)
 include_directories(${CMAKE_SOURCE_DIR}/main/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
+include_directories(${CMAKE_SOURCE_DIR}/stream/setup/include)
 
 add_library(Velo STATIC
   ${velo_common}

@@ -5,12 +5,9 @@
  * @brief Calculates the parameters according to a root means square fit
  *        and returns the chi2.
  */
- __device__ float means_square_fit_chi2(
-  const float* hit_Xs,
-  const float* hit_Ys,
-  const float* hit_Zs,
-  const Velo::TrackletHits& track
-) {
+__device__ float
+means_square_fit_chi2(const float* hit_Xs, const float* hit_Ys, const float* hit_Zs, const Velo::TrackletHits& track)
+{
   VeloState state;
 
   // Fit parameters
@@ -18,14 +15,14 @@
   float u0, uy, uz, uyz, uz2;
   s0 = sx = sz = sxz = sz2 = 0.0f;
   u0 = uy = uz = uyz = uz2 = 0.0f;
-  
+
   // Iterate over hits
-  for (unsigned short h=0; h<3; ++h) {
+  for (unsigned short h = 0; h < 3; ++h) {
     const auto hitno = track.hits[h];
     const auto x = hit_Xs[hitno];
     const auto y = hit_Ys[hitno];
     const auto z = hit_Zs[hitno];
-    
+
     const auto wx = Velo::Tracking::param_w;
     const auto wx_t_x = wx * x;
     const auto wx_t_z = wx * z;
@@ -62,7 +59,7 @@
     //=========================================================================
     float ch = 0.0f;
     int nDoF = -4;
-    for (uint h=0; h<3; ++h) {
+    for (uint h = 0; h < 3; ++h) {
       const auto hitno = track.hits[h];
 
       const auto z = hit_Zs[hitno];
@@ -71,7 +68,7 @@
 
       const auto dx = x - hit_Xs[hitno];
       const auto dy = y - hit_Ys[hitno];
-      
+
       ch += dx * dx * Velo::Tracking::param_w + dy * dy * Velo::Tracking::param_w;
 
       // Nice :)
@@ -82,7 +79,7 @@
 
       nDoF += 2;
     }
-    state.chi2 = ch / nDoF; 
+    state.chi2 = ch / nDoF;
   }
 
   return state.chi2;
@@ -96,27 +93,22 @@ __device__ void weak_tracks_adder_impl(
   bool* hit_used,
   const float* hit_Xs,
   const float* hit_Ys,
-  const float* hit_Zs
-) {
+  const float* hit_Zs)
+{
   // Compute the weak tracks
   const auto weaktracks_total = weaktracks_insert_pointer[0];
-  for (int i=0; i<(weaktracks_total + blockDim.x - 1) / blockDim.x; ++i) {
+  for (int i = 0; i < (weaktracks_total + blockDim.x - 1) / blockDim.x; ++i) {
     const auto weaktrack_no = blockDim.x * i + threadIdx.x;
     if (weaktrack_no < weaktracks_total) {
       const Velo::TrackletHits& t = weak_tracks[weaktrack_no];
       const bool any_used = hit_used[t.hits[0]] || hit_used[t.hits[1]] || hit_used[t.hits[2]];
-      const float chi2 = means_square_fit_chi2(
-        hit_Xs,
-        hit_Ys,
-        hit_Zs,
-        t
-      );
+      const float chi2 = means_square_fit_chi2(hit_Xs, hit_Ys, hit_Zs, t);
 
       // Store them in the tracks bag
       if (!any_used && chi2 < Velo::Tracking::max_chi2) {
         const uint trackno = atomicAdd(tracks_insert_pointer, 1);
         assert(trackno < Velo::Constants::max_tracks);
-        tracks[trackno] = Velo::TrackHits{t};
+        tracks[trackno] = Velo::TrackHits {t};
       }
     }
   }
@@ -128,8 +120,8 @@ __global__ void weak_tracks_adder(
   Velo::TrackHits* dev_tracks,
   Velo::TrackletHits* dev_weak_tracks,
   bool* dev_hit_used,
-  int* dev_atomics_velo
-) {
+  int* dev_atomics_velo)
+{
   /* Data initialization */
   // Each event is treated with two blocks, one for each side.
   const uint event_number = blockIdx.x;
@@ -141,7 +133,7 @@ __global__ void weak_tracks_adder(
   const uint* module_hitStarts = dev_module_cluster_start + event_number * Velo::Constants::n_modules;
   const uint hit_offset = module_hitStarts[0];
   assert((module_hitStarts[52] - module_hitStarts[0]) < Velo::Constants::max_number_of_hits_per_event);
-  
+
   // Order has changed since SortByPhi
   const float* hit_Ys = (float*) (dev_velo_cluster_container + hit_offset);
   const float* hit_Zs = (float*) (dev_velo_cluster_container + number_of_hits + hit_offset);
@@ -161,13 +153,5 @@ __global__ void weak_tracks_adder(
   uint* weaktracks_insert_pointer = (uint*) dev_atomics_velo + ip_shift;
 
   weak_tracks_adder_impl(
-    weaktracks_insert_pointer,
-    tracks_insert_pointer,
-    weak_tracks,
-    tracks,
-    hit_used,
-    hit_Xs,
-    hit_Ys,
-    hit_Zs
-  );
+    weaktracks_insert_pointer, tracks_insert_pointer, weak_tracks, tracks, hit_used, hit_Xs, hit_Ys, hit_Zs);
 }

@@ -24,7 +24,6 @@ struct HostBuffers {
   uint* host_total_number_of_velo_clusters;
   uint* host_number_of_reconstructed_velo_tracks;
   uint* host_accumulated_number_of_hits_in_velo_tracks;
-  char* host_velo_states;
   char* host_kalmanvelo_states;
   PV::Vertex* host_reconstructed_pvs;
   int* host_number_of_vertex;
@@ -36,18 +35,18 @@ struct HostBuffers {
   PV::Vertex* host_reconstructed_multi_pvs;
   int* host_number_of_multivertex;
 
-  // UT 
+  // UT
   int* host_atomics_ut;
-  UT::TrackHits* host_ut_tracks; 
-  uint* host_number_of_reconstructed_ut_tracks; 
+  UT::TrackHits* host_ut_tracks;
+  uint* host_number_of_reconstructed_ut_tracks;
   uint* host_accumulated_number_of_ut_hits;
   uint* host_accumulated_number_of_hits_in_ut_tracks;
   uint* host_ut_track_hit_number;
   char* host_ut_track_hits;
   float* host_ut_qop;
-  uint*  host_ut_track_velo_indices;
-  
-  // SciFi 
+  uint* host_ut_track_velo_indices;
+
+  // SciFi
   uint* host_accumulated_number_of_scifi_hits;
   uint* host_number_of_reconstructed_scifi_tracks;
   SciFi::TrackHits* host_scifi_tracks;
@@ -64,8 +63,8 @@ struct HostBuffers {
 
   // Non pinned datatypes: CPU algorithms
   std::vector<SciFi::TrackHits> scifi_tracks_events;
-  //std::vector<uint> n_scifi_tracks;
-  
+  std::vector<char> host_velo_states;
+
   /**
    * @brief Reserves all host buffers.
    */
@@ -79,12 +78,12 @@ struct HostBuffers {
   /**
    * @brief Returns total number of UT track hits.
    */
-  size_t ut_track_hit_number_size() const; 
-  
+  size_t ut_track_hit_number_size() const;
+
   /**
    * @brief Returns total number of SciFi track hits.
    */
-  size_t scifi_track_hit_number_size() const; 
+  size_t scifi_track_hit_number_size() const;
 
   /**
    * @brief Retrieve total number of hit uints.

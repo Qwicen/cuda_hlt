@@ -5,6 +5,8 @@
 #include "PrVeloUTMagnetToolDefinitions.h"
 #include "PrVeloUT.cuh"
 #include "Handler.cuh"
+#include "ArgumentsVelo.cuh"
+#include "ArgumentsUT.cuh"
 #include "UTEventModel.cuh"
 
 __global__ void veloUT(
@@ -20,7 +22,17 @@ __global__ void veloUT(
   float* dev_ut_dxDy,
   const uint* dev_unique_x_sector_layer_offsets,
   const uint* dev_unique_x_sector_offsets,
-  const float* dev_unique_sector_xs
-);
+  const float* dev_unique_sector_xs);
 
-ALGORITHM(veloUT, veloUT_t)
+ALGORITHM(
+  veloUT,
+  veloUT_t,
+  ARGUMENTS(
+    dev_ut_hits,
+    dev_ut_hit_offsets,
+    dev_atomics_velo,
+    dev_velo_track_hit_number,
+    dev_velo_track_hits,
+    dev_velo_states,
+    dev_ut_tracks,
+    dev_atomics_ut))

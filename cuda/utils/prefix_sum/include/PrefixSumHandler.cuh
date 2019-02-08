@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ArgumentManager.cuh"
 #include "PrefixSum.cuh"
 
 // TODO: Allow to configure the size of the Prefix Sum sweep at compile time
@@ -11,17 +12,22 @@
  *          handlers to provide a prefix sum over the desired datatype.
  *          An auxiliary array must be provided.
  */
-#define PREFIX_SUM_ALGORITHM(EXPOSED_TYPE_NAME)                                                      \
+#define PREFIX_SUM_ALGORITHM(EXPOSED_TYPE_NAME, DEPENDENCIES)                                        \
   struct EXPOSED_TYPE_NAME {                                                                         \
     constexpr static auto name {#EXPOSED_TYPE_NAME};                                                 \
-    constexpr static size_t aux_array_size(size_t array_size) { auto s = (array_size + 511) / 512;   \
-                                                                return s > 0 ? s : 1; }              \
+    constexpr static size_t aux_array_size(size_t array_size)                                        \
+    {                                                                                                \
+      auto s = (array_size + 511) / 512;                                                             \
+      return s > 0 ? s : 1;                                                                          \
+    }                                                                                                \
     size_t array_size;                                                                               \
     size_t auxiliary_array_size;                                                                     \
     size_t number_of_scan_blocks;                                                                    \
     decltype(make_handler(prefix_sum_reduce)) handler_reduce {prefix_sum_reduce};                    \
     decltype(make_handler(prefix_sum_single_block)) handler_single_block {prefix_sum_single_block};  \
     decltype(make_handler(prefix_sum_scan)) handler_scan {prefix_sum_scan};                          \
+    using Arguments = DEPENDENCIES;                                                                  \
+    using arguments_t = ArgumentRefManager<Arguments>;                                               \
     void set_size(size_t param_array_size)                                                           \
     {                                                                                                \
       array_size = param_array_size;                                                                 \
@@ -49,9 +55,20 @@
     }                                                                                                \
   };
 
-PREFIX_SUM_ALGORITHM(prefix_sum_velo_clusters_t)
-PREFIX_SUM_ALGORITHM(prefix_sum_velo_track_hit_number_t)
-PREFIX_SUM_ALGORITHM(prefix_sum_ut_track_hit_number_t)
-PREFIX_SUM_ALGORITHM(prefix_sum_ut_hits_t)
-PREFIX_SUM_ALGORITHM(prefix_sum_scifi_track_hit_number_t)
-PREFIX_SUM_ALGORITHM(prefix_sum_scifi_hits_t)
+PREFIX_SUM_ALGORITHM(prefix_sum_velo_clusters_t, ARGUMENTS(dev_estimated_input_size, dev_cluster_offset))
+
+PREFIX_SUM_ALGORITHM(
+  prefix_sum_velo_track_hit_number_t,
+  ARGUMENTS(dev_velo_track_hit_number, dev_prefix_sum_auxiliary_array_2))
+
+PREFIX_SUM_ALGORITHM(
+  prefix_sum_ut_track_hit_number_t,
+  ARGUMENTS(dev_ut_track_hit_number, dev_prefix_sum_auxiliary_array_5))
+
+PREFIX_SUM_ALGORITHM(prefix_sum_ut_hits_t, ARGUMENTS(dev_ut_hit_offsets, dev_prefix_sum_auxiliary_array_3))
+
+PREFIX_SUM_ALGORITHM(
+  prefix_sum_scifi_track_hit_number_t,
+  ARGUMENTS(dev_scifi_track_hit_number, dev_prefix_sum_auxiliary_array_6))
+
+PREFIX_SUM_ALGORITHM(prefix_sum_scifi_hits_t, ARGUMENTS(dev_scifi_hit_count, dev_prefix_sum_auxiliary_array_4))

@@ -7,6 +7,7 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/PV/beamlinePV/include)
 include_directories(${CMAKE_SOURCE_DIR}/main/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
+include_directories(${CMAKE_SOURCE_DIR}/stream/setup/include)
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
 file(GLOB x86beamlinePV "src/*cpp")

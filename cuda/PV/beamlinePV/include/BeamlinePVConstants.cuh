@@ -15,11 +15,11 @@ static constexpr float maxVertexRho2 = 0.09f;
 static constexpr unsigned int maxFitIter = 2; // "Maximum number of iterations for vertex fit"
 static constexpr float maxDeltaChi2 = 9.f;    //"Maximum chi2 contribution of track to vertex fit"
 static constexpr float minWeight = 0.3f;      //"minimum value of adaptive weight of track in multi fit"
-static constexpr int order_polynomial = 2;    //order of the polynomial used to approximate Gaussian
+static constexpr int order_polynomial = 2;    // order of the polynomial used to approximate Gaussian
 
 // Get the beamline. this only accounts for position, not
 // rotation. that's something to improve!
 
 // set this to (0,0) for now
-//TODO: use real beamline position. (0,0) is only correct for MC
+// TODO: use real beamline position. (0,0) is only correct for MC
 static constexpr float2 beamline {0.f, 0.f};

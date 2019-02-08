@@ -3,10 +3,10 @@
 
 template<>
 void SequenceVisitor::set_arguments_size<veloUT_t>(
+  veloUT_t::arguments_t arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  const HostBuffers& host_buffers,
-  argument_manager_t& arguments)
+  const HostBuffers& host_buffers)
 {
   arguments.set_size<dev_ut_tracks>(host_buffers.host_number_of_selected_events[0] * UT::Constants::max_num_tracks);
   arguments.set_size<dev_atomics_ut>(host_buffers.host_number_of_selected_events[0] * UT::num_atomics + 1);
@@ -15,9 +15,9 @@ void SequenceVisitor::set_arguments_size<veloUT_t>(
 template<>
 void SequenceVisitor::visit<veloUT_t>(
   veloUT_t& state,
+  const veloUT_t::arguments_t& arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -36,8 +36,7 @@ void SequenceVisitor::visit<veloUT_t>(
     constants.dev_ut_dxDy,
     constants.dev_unique_x_sector_layer_offsets,
     constants.dev_unique_x_sector_offsets,
-    constants.dev_unique_sector_xs
-  );
+    constants.dev_unique_sector_xs);
 
   state.invoke();
 }

@@ -29,3 +29,7 @@ if(ROOT_FOUND)
     ${ROOT_LIBRARIES}
   )
 endif()
+
+if(USE_KALMAN_SINGLE_PRECISION)
+  target_compile_definitions(TrackChecking PRIVATE KALMAN_SINGLE_PRECISION)
+endif()

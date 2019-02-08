@@ -5,15 +5,11 @@
    - cut values
 
  */
-
 #include "SystemOfUnits.h"
 #include <cassert>
 
 namespace Associate {
-
   namespace VeloPVIP {
-
     constexpr float baseline = 50.f * Gaudi::Units::um;
-
   }
-}
+} // namespace Associate

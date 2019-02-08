@@ -1,10 +1,7 @@
 #include "pv_beamline_peak.cuh"
 
-__global__ void pv_beamline_peak(
-  float* dev_zhisto,
-  float* dev_zpeaks,
-  uint* dev_number_of_zpeaks,
-  uint number_of_events)
+__global__ void
+pv_beamline_peak(float* dev_zhisto, float* dev_zpeaks, uint* dev_number_of_zpeaks, uint number_of_events)
 {
   // At least parallelize over events, even if it's
   // one event on each thread

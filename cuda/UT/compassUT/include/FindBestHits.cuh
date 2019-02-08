@@ -7,7 +7,7 @@
 #include "FindBestHits.cuh"
 #include <tuple>
 
-__device__ std::tuple<int,int,int,int,BestParams> find_best_hits(
+__device__ std::tuple<int, int, int, int, BestParams> find_best_hits(
   const short* win_size_shared,
   const uint number_of_tracks_event,
   const int i_track,
@@ -24,21 +24,16 @@ __device__ BestParams pkick_fit(
   const float yyProto,
   const bool forward);
 
-__device__ __inline__ int sum_layer_hits(
-  const TrackCandidates& ranges, const int layer0, const int layer2);
+__device__ __inline__ int sum_layer_hits(const TrackCandidates& ranges, const int layer0, const int layer2);
 
-__device__ __inline__ int sum_layer_hits(
-  const TrackCandidates& ranges, const int layer);
+__device__ __inline__ int sum_layer_hits(const TrackCandidates& ranges, const int layer);
 
-__device__ __inline__ int calc_index(
-  const int i, 
-  const TrackCandidates& ranges, 
-  const int layer,
-  const UT::HitOffsets& ut_hit_offsets);
+__device__ __inline__ int
+calc_index(const int i, const TrackCandidates& ranges, const int layer, const UT::HitOffsets& ut_hit_offsets);
 
 __device__ __inline__ int calc_index(
-  const int i, 
-  const TrackCandidates& ranges, 
+  const int i,
+  const TrackCandidates& ranges,
   const int layer0,
   const int layer2,
   const UT::HitOffsets& ut_hit_offsets);

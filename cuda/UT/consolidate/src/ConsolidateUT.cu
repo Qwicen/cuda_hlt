@@ -16,9 +16,10 @@ __global__ void consolidate_ut_tracks(
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[4];
   const uint total_number_of_hits = dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors];
   const UT::TrackHits* event_veloUT_tracks = dev_veloUT_tracks + event_number * UT::Constants::max_num_tracks;
-  
+
   const UT::Hits ut_hits {dev_ut_hits, total_number_of_hits};
-  const UT::HitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  const UT::HitOffsets ut_hit_offsets {
+    dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
   const auto event_offset = ut_hit_offsets.event_offset();
 
   // Create consolidated SoAs.
@@ -58,7 +59,7 @@ __global__ void consolidate_ut_tracks(
         }
       }
     };
-    
+
     // Populate the consolidated hits.
     populate((uint32_t*) consolidated_hits.yBegin, (uint32_t*) ut_hits.yBegin + event_offset);
     populate((uint32_t*) consolidated_hits.yEnd, (uint32_t*) ut_hits.yEnd + event_offset);

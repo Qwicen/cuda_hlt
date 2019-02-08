@@ -6,9 +6,9 @@ DEFINE_EMPTY_SET_ARGUMENTS_SIZE(velo_weak_tracks_adder_t)
 template<>
 void SequenceVisitor::visit<velo_weak_tracks_adder_t>(
   velo_weak_tracks_adder_t& state,
+  const velo_weak_tracks_adder_t::arguments_t& arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
@@ -21,8 +21,7 @@ void SequenceVisitor::visit<velo_weak_tracks_adder_t>(
     arguments.offset<dev_tracks>(),
     arguments.offset<dev_weak_tracks>(),
     arguments.offset<dev_hit_used>(),
-    arguments.offset<dev_atomics_velo>()
-  );
+    arguments.offset<dev_atomics_velo>());
 
   state.invoke();
 }

@@ -45,5 +45,4 @@ SEQUENCE_T(
   kalman_filter_t,
   is_muon_t,
   muon_catboost_features_extraction_t,
-  muon_catboost_evaluator_t
-)
+  muon_catboost_evaluator_t)
