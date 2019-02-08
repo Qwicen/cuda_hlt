@@ -25,14 +25,11 @@ struct Scheduler {
 
   // Configured sequence
   ConfiguredSequence sequence_tuple;
-  
+
   Scheduler() = default;
   Scheduler(const Scheduler&) = delete;
 
-  void initialize(
-    const bool param_do_print,
-    const size_t reserved_mb,
-    char* base_pointer)
+  void initialize(const bool param_do_print, const size_t reserved_mb, char* base_pointer)
   {
     do_print = param_do_print;
 
@@ -52,25 +49,24 @@ struct Scheduler {
   /**
    * @brief Resets the memory manager.
    */
-  void reset() {
-    memory_manager.free_all();
-  }
+  void reset() { memory_manager.free_all(); }
 
   /**
    * @brief Runs a step of the scheduler and determines
    *        the offset for each argument.
-   *        
+   *
    *        The sequence is asserted at compile time to run the
    *        expected iteration and reserve the expected types.
-   *        
+   *
    *        This function should always be invoked, even when it is
    *        known there are no tags to reserve or free on this step.
    */
   template<unsigned long I, typename T>
-  void setup() {
+  void setup()
+  {
     // in dependencies: Dependencies to be reserved
     // out dependencies: Dependencies to be free'd
-    // 
+    //
     // in_deps and out_deps should be in order
     // and index I should contain algorithm type T
     using in_deps_I_t = typename std::tuple_element<I, in_deps_t>::type;
@@ -83,7 +79,7 @@ struct Scheduler {
     static_assert(std::is_same<T, in_algorithm>::value, "Scheduler index mismatch (in_algorithm)");
     static_assert(std::is_same<T, out_algorithm>::value, "Scheduler index mismatch (out_algorithm)");
 
-    // Free all arguments in OutDependencies    
+    // Free all arguments in OutDependencies
     MemoryManagerFree<out_arguments>::free(memory_manager);
 
     // Reserve all arguments in InDependencies

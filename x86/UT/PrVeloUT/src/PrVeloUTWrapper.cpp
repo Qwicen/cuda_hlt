@@ -38,7 +38,7 @@
 //   int n_hitCandidatesInLayers[VeloUTTracking::n_layers];
 //   for ( int i_track = 0; i_track < number_of_tracks_event; ++i_track ) {
 //     if ( velo_states_event[i_track].backward ) continue;
-    
+
 //     if( !veloTrackInUTAcceptance( velo_states_event[i_track] ) ) continue;
 //     n_velo_tracks_in_UT++;
 
@@ -58,12 +58,12 @@
 //           fudgeFactors,
 //           velo_states_event[i_track],
 //           ut_dxDy ) ) continue;
-    
+
 //     TrackHelper helper(velo_states_event[i_track]);
 
-//     // indices within hitCandidatesInLayers for selected hits belonging to best track 
+//     // indices within hitCandidatesInLayers for selected hits belonging to best track
 //     int hitCandidateIndices[VeloUTTracking::n_layers];
-    
+
 //     // go through UT layers in forward direction
 //     if( !formClusters(
 //           hitCandidatesInLayers,
@@ -75,7 +75,7 @@
 //           helper,
 //           ut_dxDy,
 //           true) ){
-      
+
 //       // go through UT layers in backward direction
 //       formClusters(
 //         hitCandidatesInLayers,
@@ -88,7 +88,7 @@
 //         ut_dxDy,
 //         false);
 //     }
-    
+
 //     if ( helper.n_hits > 0 ) {
 //       prepareOutputTrack(
 //         velo_track_hit_number,

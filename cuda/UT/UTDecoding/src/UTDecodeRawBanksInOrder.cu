@@ -1,16 +1,17 @@
 #include "UTDecodeRawBanksInOrder.cuh"
 
 __global__ void ut_decode_raw_banks_in_order(
-  const char *dev_ut_raw_input,
-  const uint32_t *dev_ut_raw_input_offsets,
-  const uint *dev_event_list,
-  const char *ut_boards, const char *ut_geometry,
-  const uint *dev_ut_region_offsets,
-  const uint *dev_unique_x_sector_layer_offsets,
-  const uint *dev_unique_x_sector_offsets,
-  const uint32_t *dev_ut_hit_offsets,
-  uint32_t *dev_ut_hits,
-  uint32_t *dev_ut_hit_count,
+  const char* dev_ut_raw_input,
+  const uint32_t* dev_ut_raw_input_offsets,
+  const uint* dev_event_list,
+  const char* ut_boards,
+  const char* ut_geometry,
+  const uint* dev_ut_region_offsets,
+  const uint* dev_unique_x_sector_layer_offsets,
+  const uint* dev_unique_x_sector_offsets,
+  const uint32_t* dev_ut_hit_offsets,
+  uint32_t* dev_ut_hits,
+  uint32_t* dev_ut_hit_count,
   uint* dev_hit_permutations)
 {
   const uint32_t number_of_events = gridDim.x;
@@ -22,7 +23,8 @@ __global__ void ut_decode_raw_banks_in_order(
 
   const uint number_of_unique_x_sectors = dev_unique_x_sector_layer_offsets[UT::Constants::n_layers];
 
-  const UT::HitOffsets ut_hit_offsets {dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
+  const UT::HitOffsets ut_hit_offsets {
+    dev_ut_hit_offsets, event_number, number_of_unique_x_sectors, dev_unique_x_sector_layer_offsets};
   UT::Hits ut_hits {dev_ut_hits, dev_ut_hit_offsets[number_of_events * number_of_unique_x_sectors]};
 
   const UTRawEvent raw_event(dev_ut_raw_input + event_offset);
@@ -36,7 +38,7 @@ __global__ void ut_decode_raw_banks_in_order(
   const uint layer_offset = ut_hit_offsets.layer_offset(layer_number);
   const uint layer_number_of_hits = ut_hit_offsets.layer_number_of_hits(layer_number);
 
-  for (int i=threadIdx.x; i<layer_number_of_hits; i+=blockDim.x) {
+  for (int i = threadIdx.x; i < layer_number_of_hits; i += blockDim.x) {
     const uint hit_index = layer_offset + i;
     const uint32_t raw_bank_hit_index = ut_hits.raw_bank_index[dev_hit_permutations[hit_index]];
     const uint raw_bank_index = raw_bank_hit_index >> 24;
@@ -44,8 +46,7 @@ __global__ void ut_decode_raw_banks_in_order(
 
     const UTRawBank raw_bank = raw_event.getUTRawBank(raw_bank_index);
     const uint16_t value = raw_bank.data[hit_index_inside_raw_bank];
-    const uint32_t nStripsPerHybrid =
-        boards.stripsPerHybrids[raw_bank.sourceID];
+    const uint32_t nStripsPerHybrid = boards.stripsPerHybrids[raw_bank.sourceID];
 
     // Extract values from raw_data
     const uint32_t fracStrip = (value & UT::Decoding::frac_mask) >> UT::Decoding::frac_offset;
@@ -56,8 +57,7 @@ __global__ void ut_decode_raw_banks_in_order(
     const uint32_t index = channelID / nStripsPerHybrid;
     const uint32_t strip = channelID - (index * nStripsPerHybrid) + 1;
 
-    const uint32_t fullChanIndex =
-        raw_bank.sourceID * UT::Decoding::ut_number_of_sectors_per_board + index;
+    const uint32_t fullChanIndex = raw_bank.sourceID * UT::Decoding::ut_number_of_sectors_per_board + index;
     const uint32_t station = boards.stations[fullChanIndex] - 1;
     const uint32_t layer = boards.layers[fullChanIndex] - 1;
     const uint32_t detRegion = boards.detRegions[fullChanIndex] - 1;
@@ -65,8 +65,7 @@ __global__ void ut_decode_raw_banks_in_order(
     const uint32_t chanID = boards.chanIDs[fullChanIndex];
 
     // Calculate the index to get the geometry of the board
-    const uint32_t idx =
-        station * UT::Decoding::ut_number_of_sectors_per_board + layer * 3 + detRegion;
+    const uint32_t idx = station * UT::Decoding::ut_number_of_sectors_per_board + layer * 3 + detRegion;
     const uint32_t idx_offset = dev_ut_region_offsets[idx] + sector;
 
     const uint32_t firstStrip = geometry.firstStrip[idx_offset];
@@ -86,7 +85,7 @@ __global__ void ut_decode_raw_banks_in_order(
     const float yEnd = dy + yBegin;
     const float zAtYEq0 = p0Z + numstrips * dp0diZ;
     const float xAtYEq0 = p0X + numstrips * dp0diX;
-    const float weight = 1.f / (pitch*pitch);
+    const float weight = 1.f / (pitch * pitch);
     // const uint32_t highThreshold = threshold;
     const uint32_t LHCbID = chanID + strip;
     // const uint32_t planeCode = 2 * station + (layer & 1);

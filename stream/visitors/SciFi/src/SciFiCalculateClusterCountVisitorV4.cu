@@ -10,7 +10,8 @@ void SequenceVisitor::set_arguments_size<scifi_calculate_cluster_count_v4_t>(
 {
   arguments.set_size<dev_scifi_raw_input>(runtime_options.host_scifi_events_size);
   arguments.set_size<dev_scifi_raw_input_offsets>(runtime_options.host_scifi_event_offsets_size);
-  arguments.set_size<dev_scifi_hit_count>(host_buffers.host_number_of_selected_events[0] * SciFi::Constants::n_mat_groups_and_mats + 1);
+  arguments.set_size<dev_scifi_hit_count>(
+    host_buffers.host_number_of_selected_events[0] * SciFi::Constants::n_mat_groups_and_mats + 1);
 }
 
 template<>
@@ -23,22 +24,22 @@ void SequenceVisitor::visit<scifi_calculate_cluster_count_v4_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  cudaCheck(cudaMemcpyAsync(arguments.offset<dev_scifi_raw_input>(),
+  cudaCheck(cudaMemcpyAsync(
+    arguments.offset<dev_scifi_raw_input>(),
     runtime_options.host_scifi_events,
     runtime_options.host_scifi_events_size,
     cudaMemcpyHostToDevice,
     cuda_stream));
 
-  cudaCheck(cudaMemcpyAsync(arguments.offset<dev_scifi_raw_input_offsets>(),
+  cudaCheck(cudaMemcpyAsync(
+    arguments.offset<dev_scifi_raw_input_offsets>(),
     runtime_options.host_scifi_event_offsets,
     runtime_options.host_scifi_event_offsets_size * sizeof(uint),
     cudaMemcpyHostToDevice,
     cuda_stream));
 
-  cudaCheck(cudaMemsetAsync(arguments.offset<dev_scifi_hit_count>(),
-    0,
-    arguments.size<dev_scifi_hit_count>(),
-    cuda_stream));
+  cudaCheck(
+    cudaMemsetAsync(arguments.offset<dev_scifi_hit_count>(), 0, arguments.size<dev_scifi_hit_count>(), cuda_stream));
 
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
@@ -49,8 +50,7 @@ void SequenceVisitor::visit<scifi_calculate_cluster_count_v4_t>(
     arguments.offset<dev_scifi_raw_input_offsets>(),
     arguments.offset<dev_scifi_hit_count>(),
     arguments.offset<dev_event_list>(),
-    constants.dev_scifi_geometry
-  );
+    constants.dev_scifi_geometry);
 
   state.invoke();
 }

@@ -24,10 +24,11 @@ __global__ void search_by_triplet(
   short* dev_h0_candidates,
   short* dev_h2_candidates,
   unsigned short* dev_rel_indices,
-  const float* dev_velo_module_zs
-);
+  const float* dev_velo_module_zs);
 
-ALGORITHM(search_by_triplet, velo_search_by_triplet_t,
+ALGORITHM(
+  search_by_triplet,
+  velo_search_by_triplet_t,
   ARGUMENTS(
     dev_velo_cluster_container,
     dev_estimated_input_size,
@@ -40,5 +41,4 @@ ALGORITHM(search_by_triplet, velo_search_by_triplet_t,
     dev_atomics_velo,
     dev_h0_candidates,
     dev_h2_candidates,
-    dev_rel_indices
-))
+    dev_rel_indices))

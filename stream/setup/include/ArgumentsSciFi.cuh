@@ -8,7 +8,7 @@
  * @brief Definition of arguments. All arguments should be defined here,
  *        with their associated type.
  */
-ARGUMENT(dev_scifi_hit_count, uint)  
+ARGUMENT(dev_scifi_hit_count, uint)
 ARGUMENT(dev_prefix_sum_auxiliary_array_4, uint)
 ARGUMENT(dev_scifi_hit_permutations, uint)
 ARGUMENT(dev_scifi_hits, uint)

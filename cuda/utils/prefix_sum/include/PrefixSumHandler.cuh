@@ -15,8 +15,11 @@
 #define PREFIX_SUM_ALGORITHM(EXPOSED_TYPE_NAME, DEPENDENCIES)                                        \
   struct EXPOSED_TYPE_NAME {                                                                         \
     constexpr static auto name {#EXPOSED_TYPE_NAME};                                                 \
-    constexpr static size_t aux_array_size(size_t array_size) { auto s = (array_size + 511) / 512;   \
-                                                                return s > 0 ? s : 1; }              \
+    constexpr static size_t aux_array_size(size_t array_size)                                        \
+    {                                                                                                \
+      auto s = (array_size + 511) / 512;                                                             \
+      return s > 0 ? s : 1;                                                                          \
+    }                                                                                                \
     size_t array_size;                                                                               \
     size_t auxiliary_array_size;                                                                     \
     size_t number_of_scan_blocks;                                                                    \

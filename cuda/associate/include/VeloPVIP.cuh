@@ -19,12 +19,13 @@ __global__ void velo_pv_ip(
   uint* dev_number_of_multi_fit_vertices,
   char* dev_velo_pv_ip);
 
-ALGORITHM(velo_pv_ip, velo_pv_ip_t,
+ALGORITHM(
+  velo_pv_ip,
+  velo_pv_ip_t,
   ARGUMENTS(
     dev_velo_kalman_beamline_states,
     dev_atomics_velo,
     dev_velo_track_hit_number,
     dev_multi_fit_vertices,
     dev_number_of_multi_fit_vertices,
-    dev_velo_pv_ip
-))
+    dev_velo_pv_ip))

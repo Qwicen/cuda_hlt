@@ -7,9 +7,10 @@ void SequenceVisitor::set_arguments_size<muon_catboost_features_extraction_t>(
   const RuntimeOptions& runtime_options,
   const Constants& constants,
   const HostBuffers& host_buffers)
-{ 
+{
   arguments.set_size<dev_muon_hits>(host_buffers.host_number_of_selected_events[0]);
-  arguments.set_size<dev_muon_catboost_features>(constants.muon_catboost_n_features * host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
+  arguments.set_size<dev_muon_catboost_features>(
+    constants.muon_catboost_n_features * host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
 }
 
 template<>
@@ -28,11 +29,11 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
     runtime_options.host_muon_hits_events.data(),
     host_buffers.host_number_of_selected_events[0] * sizeof(Muon::HitsSoA),
     cudaMemcpyHostToDevice,
-    cuda_stream
-  ));
+    cuda_stream));
 
   // Setup opts for kernel call
-  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0], Muon::Constants::n_stations), dim3(32), cuda_stream);
+  state.set_opts(
+    dim3(host_buffers.host_number_of_selected_events[0], Muon::Constants::n_stations), dim3(32), cuda_stream);
 
   // Setup arguments for kernel call
   state.set_arguments(
@@ -42,8 +43,7 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
     arguments.offset<dev_scifi_states>(),
     arguments.offset<dev_scifi_track_ut_indices>(),
     arguments.offset<dev_muon_hits>(),
-    arguments.offset<dev_muon_catboost_features>()
-  );
+    arguments.offset<dev_muon_catboost_features>());
 
   // Kernel call
   state.invoke();

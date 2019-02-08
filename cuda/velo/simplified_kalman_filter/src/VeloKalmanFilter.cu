@@ -12,8 +12,8 @@ __device__ float velo_kalman_filter_step(
   float& tx,
   float& covXX,
   float& covXTx,
-  float& covTxTx
-) {
+  float& covTxTx)
+{
   // compute the prediction
   const float dz = zhit - z;
   const float predx = x + dz * tx;
@@ -45,24 +45,25 @@ __global__ void velo_kalman_fit(
   uint* dev_velo_track_hit_number,
   char* dev_velo_track_hits,
   char* dev_velo_states,
-  char* dev_velo_kalman_beamline_states
-) {
+  char* dev_velo_kalman_beamline_states)
+{
   const uint number_of_events = gridDim.x;
   const uint event_number = blockIdx.x;
 
   // Consolidated datatypes
-  const Velo::Consolidated::Tracks velo_tracks {(uint*) dev_atomics_velo, dev_velo_track_hit_number, event_number, number_of_events};
+  const Velo::Consolidated::Tracks velo_tracks {
+    (uint*) dev_atomics_velo, dev_velo_track_hit_number, event_number, number_of_events};
   Velo::Consolidated::States velo_states {dev_velo_states, velo_tracks.total_number_of_tracks};
   Velo::Consolidated::States kalmanvelo_states {dev_velo_kalman_beamline_states, velo_tracks.total_number_of_tracks};
 
   const uint number_of_tracks_event = velo_tracks.number_of_tracks(event_number);
   const uint event_tracks_offset = velo_tracks.tracks_offset(event_number);
 
-  for (uint i=threadIdx.x; i<number_of_tracks_event; i+=blockDim.x) {
-    
+  for (uint i = threadIdx.x; i < number_of_tracks_event; i += blockDim.x) {
+
     Velo::Consolidated::Hits consolidated_hits = velo_tracks.get_hits(dev_velo_track_hits, i);
     const uint n_hits = velo_tracks.number_of_hits(i);
-    
+
     VeloState stateAtBeamline = velo_states.get(event_tracks_offset + i);
 
     VeloState kalmanbeam_state = simplified_fit<true>(consolidated_hits, stateAtBeamline, n_hits);

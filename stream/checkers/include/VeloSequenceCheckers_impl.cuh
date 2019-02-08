@@ -20,7 +20,5 @@ void SequenceVisitor::check<consolidate_velo_tracks_t>(
     host_buffers.host_velo_track_hits,
     host_buffers.host_number_of_selected_events[0]);
 
-  checker_invoker.check<TrackCheckerVelo>(
-    start_event_offset,
-    tracks);
+  checker_invoker.check<TrackCheckerVelo>(start_event_offset, tracks);
 }

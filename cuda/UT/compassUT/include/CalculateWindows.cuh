@@ -34,7 +34,7 @@ __device__ std::tuple<int, int> find_candidates_in_sector_group(
   const float xTol,
   const int sector_group);
 
-__host__ __device__ void tol_refine (
+__host__ __device__ void tol_refine(
   int& first_candidate,
   int& last_candidate,
   const UT::Hits& ut_hits,

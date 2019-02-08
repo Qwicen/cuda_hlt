@@ -26,8 +26,7 @@ void SequenceVisitor::visit<velo_calculate_phi_and_sort_t>(
     arguments.offset<dev_estimated_input_size>(),
     arguments.offset<dev_module_cluster_num>(),
     arguments.offset<dev_velo_cluster_container>(),
-    arguments.offset<dev_hit_permutation>()
-  );
+    arguments.offset<dev_hit_permutation>());
 
   state.invoke();
 }

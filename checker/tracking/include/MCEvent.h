@@ -31,9 +31,8 @@ struct MCEvent {
   uint32_t size;
 
   // Constructor
-  MCEvent(){};
-  MCEvent(const std::vector<char> &_event,
-          const bool checkFile = true);
+  MCEvent() {};
+  MCEvent(const std::vector<char>& _event, const bool checkFile = true);
 
   /**
    * @brief Print a specific set of MC particles.
@@ -47,7 +46,8 @@ struct MCEvent {
    * @brief Print the set of MC particles of type T.
    */
   template<typename T>
-  void print() const {
+  void print() const
+  {
     print(mc_particles<T>());
   }
 };

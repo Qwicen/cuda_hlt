@@ -58,12 +58,12 @@ namespace ParKalmanFilter {
       uint8_t layer = ut_hits.plane_code[i_ut];
       tI.m_UTLayerIdxs[layer] = i_ut;
     }
-    
+
     // Get SciFi hit indices.
     uint n_scifi_layers = n_scifi_hits;
     for (uint i_scifi = 0; i_scifi < n_scifi_hits; i_scifi++) {
       uint32_t layer = scifi_hits.planeCode(i_scifi);
-      if (tI.m_SciFiLayerIdxs[layer / 2] >= 0){
+      if (tI.m_SciFiLayerIdxs[layer / 2] >= 0) {
         n_scifi_layers--;
       }
       else
@@ -136,7 +136,7 @@ namespace ParKalmanFilter {
       PredictStateT(scifi_hits, tI.m_PrevSciFiLayer, x, C, lastz, tI);
     }
     __syncthreads();
-    
+
     // SciFi loop.
     UpdateStateT(scifi_hits, 1, tI.m_PrevSciFiLayer, x, C, lastz, tI);
     for (int i_hit = 1; i_hit < n_scifi_layers; i_hit++) {
@@ -196,7 +196,7 @@ namespace ParKalmanFilter {
       PredictStateUT(ut_hits, tI.m_PrevUTLayer, x, C, lastz, tI);
     }
     __syncthreads();
-    
+
     // UT loop.
     UpdateStateUT(ut_hits, tI.m_PrevUTLayer, x, C, lastz, tI);
     for (int i_hit = n_ut_layers - 2; i_hit >= 0; i_hit--) {
@@ -209,7 +209,7 @@ namespace ParKalmanFilter {
       UpdateStateUT(ut_hits, tI.m_PrevUTLayer, x, C, lastz, tI);
     }
     __syncthreads();
-    
+
     // UT -> Velo.
     PredictStateVUT(velo_hits, ut_hits, n_velo_hits, n_ut_layers, x, C, lastz, tI);
     UpdateStateV(velo_hits, -1, 0, x, C, tI);
@@ -221,14 +221,14 @@ namespace ParKalmanFilter {
     }
     __syncthreads();
     //------------------------------ End backward fit.
-    
+
     xBest = x;
     CBest = C;
     zBest = lastz;
 
     // Straight line extrapolation to the closest point to the beamline.
     // NOTE: Don't do this for now. It should be done automatically when calculating IP info.
-    //ExtrapolateToVertex(xBest, C, lastz);
+    // ExtrapolateToVertex(xBest, C, lastz);
 
     MakeTrack(velo_hits, n_velo_hits, ut_hits, n_ut_layers, scifi_hits, n_scifi_layers, xBest, CBest, zBest, tI, track);
   }
@@ -261,26 +261,26 @@ __global__ void KalmanFilter(
   const uint event_number = blockIdx.x;
 
   // Create velo tracks.
-  const Velo::Consolidated::Tracks velo_tracks{
+  const Velo::Consolidated::Tracks velo_tracks {
     (uint*) dev_atomics_storage, (uint*) dev_velo_track_hit_number, event_number, number_of_events};
 
   // Create UT tracks.
-  const UT::Consolidated::Tracks ut_tracks{(uint*) dev_atomics_veloUT,
-                                           (uint*) dev_ut_track_hit_number,
-                                           (float*) dev_ut_qop,
-                                           (uint*) dev_velo_indices,
-                                           event_number,
-                                           number_of_events};
+  const UT::Consolidated::Tracks ut_tracks {(uint*) dev_atomics_veloUT,
+                                            (uint*) dev_ut_track_hit_number,
+                                            (float*) dev_ut_qop,
+                                            (uint*) dev_velo_indices,
+                                            event_number,
+                                            number_of_events};
 
   // Create SciFi tracks.
-  const SciFi::Consolidated::Tracks scifi_tracks{(uint*) dev_n_scifi_tracks,
-                                                 (uint*) dev_scifi_track_hit_number,
-                                                 (float*) dev_scifi_qop,
-                                                 (MiniState*) dev_scifi_states,
-                                                 (uint*) dev_ut_indices,
-                                                 event_number,
-                                                 number_of_events};
-  const SciFi::SciFiGeometry scifi_geometry{dev_scifi_geometry};
+  const SciFi::Consolidated::Tracks scifi_tracks {(uint*) dev_n_scifi_tracks,
+                                                  (uint*) dev_scifi_track_hit_number,
+                                                  (float*) dev_scifi_qop,
+                                                  (MiniState*) dev_scifi_states,
+                                                  (uint*) dev_ut_indices,
+                                                  event_number,
+                                                  number_of_events};
+  const SciFi::SciFiGeometry scifi_geometry {dev_scifi_geometry};
 
   // Loop over SciFi tracks and get associated UT and VELO tracks.
   const uint n_scifi_tracks = scifi_tracks.number_of_tracks(event_number);
@@ -307,5 +307,4 @@ __global__ void KalmanFilter(
       dev_kalman_params,
       dev_kf_tracks[scifi_tracks.tracks_offset(event_number) + i_scifi_track]);
   }
-  
 }

@@ -29,5 +29,5 @@ typedef std::tuple<
   dev_scifi_states,
   dev_scifi_track_ut_indices,
   dev_event_list,
-  dev_number_of_selected_events
-> output_arguments_t;
+  dev_number_of_selected_events>
+  output_arguments_t;

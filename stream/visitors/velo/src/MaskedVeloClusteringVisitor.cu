@@ -20,7 +20,7 @@ void SequenceVisitor::visit<velo_masked_clustering_t>(
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
-{ 
+{
   state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(256), cuda_stream);
   state.set_arguments(
     arguments.offset<dev_velo_raw_input>(),
@@ -35,8 +35,7 @@ void SequenceVisitor::visit<velo_masked_clustering_t>(
     constants.dev_velo_geometry,
     constants.dev_velo_sp_patterns,
     constants.dev_velo_sp_fx,
-    constants.dev_velo_sp_fy
-  );
-  
+    constants.dev_velo_sp_fy);
+
   state.invoke();
 }

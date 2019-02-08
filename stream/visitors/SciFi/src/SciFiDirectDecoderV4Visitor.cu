@@ -64,7 +64,8 @@ void SequenceVisitor::visit<scifi_direct_decoder_v4_t>(
   //     for (size_t hit = 0; hit < host_scifi_hit_count_struct.zone_number_of_hits(zone); hit++) {
   //       uint h = host_scifi_hit_count_struct.zone_offset(zone) + hit;
   //       outfile << std::setprecision(8) << std::fixed << hi.planeCode(h) << " " << zone % 2 << " " << hi.LHCbID(h)
-  //               << " " << hi.x0[h] << " " << hi.z0[h] << " " << hi.w(h) << " " << hi.dxdy(h) << " " << hi.dzdy(h) << " "
+  //               << " " << hi.x0[h] << " " << hi.z0[h] << " " << hi.w(h) << " " << hi.dxdy(h) << " " << hi.dzdy(h) <<
+  //               " "
   //               << hi.yMin(h) << " " << hi.yMax(h) << std::endl;
   //     }
   //   }

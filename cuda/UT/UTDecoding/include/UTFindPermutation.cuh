@@ -12,10 +12,9 @@ __global__ void ut_find_permutation(
   uint* dev_hit_permutations,
   const uint* dev_unique_x_sector_layer_offsets,
   const uint* dev_unique_x_sector_offsets,
-  const float* dev_unique_sector_xs
- );
+  const float* dev_unique_sector_xs);
 
-ALGORITHM(ut_find_permutation, ut_find_permutation_t,
-  ARGUMENTS(dev_ut_hits,
-    dev_ut_hit_offsets,
-    dev_ut_hit_permutations))
+ALGORITHM(
+  ut_find_permutation,
+  ut_find_permutation_t,
+  ARGUMENTS(dev_ut_hits, dev_ut_hit_offsets, dev_ut_hit_permutations))

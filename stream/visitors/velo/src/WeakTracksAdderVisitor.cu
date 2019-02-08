@@ -21,8 +21,7 @@ void SequenceVisitor::visit<velo_weak_tracks_adder_t>(
     arguments.offset<dev_tracks>(),
     arguments.offset<dev_weak_tracks>(),
     arguments.offset<dev_hit_used>(),
-    arguments.offset<dev_atomics_velo>()
-  );
+    arguments.offset<dev_atomics_velo>());
 
   state.invoke();
 }

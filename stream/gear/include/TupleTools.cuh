@@ -9,27 +9,27 @@
  *        index will be the length of the tuple if the type was not found.
  *
  *        Some examples of its usage:
- *        
+ *
  *        if (TupleContains<int, decltype(t)>::value) {
  *          std::cout << "t contains int" << std::endl;
  *        }
- *        
+ *
  *        std::cout << "int in index " << TupleContains<int, decltype(t)>::index << std::endl;
  */
-template <typename T, typename Tuple>
+template<typename T, typename Tuple>
 struct TupleContains;
 
-template <typename T>
+template<typename T>
 struct TupleContains<T, std::tuple<>> : std::false_type {
   static constexpr int index = 0;
 };
 
-template <typename T, typename... Ts>
+template<typename T, typename... Ts>
 struct TupleContains<T, std::tuple<T, Ts...>> : std::true_type {
   static constexpr int index = 0;
 };
 
-template <typename T, typename U, typename... Ts>
+template<typename T, typename U, typename... Ts>
 struct TupleContains<T, std::tuple<U, Ts...>> : TupleContains<T, std::tuple<Ts...>> {
   static constexpr int index = 1 + TupleContains<T, std::tuple<Ts...>>::index;
 };
@@ -94,7 +94,6 @@ struct TupleElementsNotIn<Tuple, std::tuple<>> {
 template<typename T, typename... Elements, typename OtherTuple>
 struct TupleElementsNotIn<std::tuple<T, Elements...>, OtherTuple> {
   using previous_t = typename TupleElementsNotIn<std::tuple<Elements...>, OtherTuple>::t;
-  using t = typename std::conditional_t<TupleContains<T, OtherTuple>::value,
-    previous_t,
-    typename TupleAppend<previous_t, T>::t>;
+  using t = typename std::
+    conditional_t<TupleContains<T, OtherTuple>::value, previous_t, typename TupleAppend<previous_t, T>::t>;
 };

@@ -43,7 +43,7 @@ void SequenceVisitor::visit<scifi_pr_forward_t>(
     constants.dev_inv_clus_res);
 
   state.invoke();
-  
+
   // cudaCheck(cudaMemcpyAsync(host_buffers.host_atomics_scifi,
   //   arguments.offset<dev_atomics_scifi>(),
   //   arguments.size<dev_atomics_scifi>(),

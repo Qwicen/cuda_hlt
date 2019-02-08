@@ -22,11 +22,13 @@ __global__ void veloUT(
   float* dev_ut_dxDy,
   const uint* dev_unique_x_sector_layer_offsets,
   const uint* dev_unique_x_sector_offsets,
-  const float* dev_unique_sector_xs
-);
+  const float* dev_unique_sector_xs);
 
-ALGORITHM(veloUT, veloUT_t,
-  ARGUMENTS(dev_ut_hits,
+ALGORITHM(
+  veloUT,
+  veloUT_t,
+  ARGUMENTS(
+    dev_ut_hits,
     dev_ut_hit_offsets,
     dev_atomics_velo,
     dev_velo_track_hit_number,

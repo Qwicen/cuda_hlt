@@ -49,8 +49,7 @@ __device__ void compass_ut_tracking(
   UT::TrackHits* veloUT_tracks_event,
   const int event_hit_offset);
 
-__host__ __device__ __inline__ bool velo_track_in_UT_acceptance(
-  const MiniState& state);
+__host__ __device__ __inline__ bool velo_track_in_UT_acceptance(const MiniState& state);
 
 __device__ __inline__ void fill_shared_windows(
   const short* windows_layers,
@@ -58,10 +57,8 @@ __device__ __inline__ void fill_shared_windows(
   const int i_track,
   short* win_size_shared);
 
-__device__ __inline__ bool found_active_windows(
-  const short* dev_windows_layers,
-  const int total_tracks_event,
-  const int track);
+__device__ __inline__ bool
+found_active_windows(const short* dev_windows_layers, const int total_tracks_event, const int track);
 
 __device__ void save_track(
   const int i_track,
@@ -78,8 +75,11 @@ __device__ void save_track(
   UT::TrackHits* VeloUT_tracks,
   const int event_hit_offset);
 
-ALGORITHM(compass_ut, compass_ut_t,
-  ARGUMENTS(dev_ut_hits,
+ALGORITHM(
+  compass_ut,
+  compass_ut_t,
+  ARGUMENTS(
+    dev_ut_hits,
     dev_ut_hit_offsets,
     dev_atomics_velo,
     dev_velo_track_hit_number,

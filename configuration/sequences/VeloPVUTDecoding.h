@@ -25,5 +25,4 @@ SEQUENCE_T(
   prefix_sum_ut_hits_t,
   ut_pre_decode_t,
   ut_find_permutation_t,
-  ut_decode_raw_banks_in_order_t
-)
+  ut_decode_raw_banks_in_order_t)

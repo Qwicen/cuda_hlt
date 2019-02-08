@@ -4,7 +4,7 @@ __device__ int binary_search_first_candidate(
   const uint array_size,
   const T& value,
   const float margin,
-  const R& comparator) 
+  const R& comparator)
 {
   bool found = false;
   int l = 0;
@@ -18,7 +18,8 @@ __device__ int binary_search_first_candidate(
 
     if (value - margin > array_element) {
       l = m + 1;
-    } else {
+    }
+    else {
       r = m;
     }
   }

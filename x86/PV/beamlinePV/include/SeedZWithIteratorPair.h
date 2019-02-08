@@ -5,8 +5,7 @@ struct SeedZWithIteratorPair {
   float z;
   iterator begin;
   iterator end;
-  SeedZWithIteratorPair(float _z, iterator _begin, iterator _end) :
-    z {_z}, begin {_begin}, end {_end} {};
+  SeedZWithIteratorPair(float _z, iterator _begin, iterator _end) : z {_z}, begin {_begin}, end {_end} {};
   SeedZWithIteratorPair() {};
 
   PVTrack* get_array() const

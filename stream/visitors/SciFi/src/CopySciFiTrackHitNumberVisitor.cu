@@ -25,8 +25,7 @@ void SequenceVisitor::visit<copy_scifi_track_hit_number_t>(
   state.set_arguments(
     arguments.offset<dev_scifi_tracks>(),
     arguments.offset<dev_atomics_scifi>(),
-    arguments.offset<dev_scifi_track_hit_number>()
-  );
+    arguments.offset<dev_scifi_track_hit_number>());
 
   state.invoke();
 }

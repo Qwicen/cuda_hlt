@@ -6,7 +6,7 @@ using namespace SciFi;
 /**
  * @brief Direct decoder for the first two stations.
  * @detail The first two stations (first 160 raw banks) encode 4 modules per quarter.
- *         
+ *
  *         The raw data is sorted such that every four consecutive modules are either
  *         monotonically increasing or monotonically decreasing, following a particular pattern.
  *         Thus, it is possible to decode the first 160 raw banks in v4 in parallel since the
@@ -15,10 +15,10 @@ using namespace SciFi;
  *         This kind of decoding is what we call "direct decoding".
  */
 __global__ void scifi_direct_decoder_v4(
-  char *scifi_events,
-  uint *scifi_event_offsets,
-  uint *scifi_hit_count,
-  uint *scifi_hits,
+  char* scifi_events,
+  uint* scifi_event_offsets,
+  uint* scifi_hit_count,
+  uint* scifi_hits,
   const uint* event_list,
   char* scifi_geometry,
   const float* dev_inv_clus_res)
@@ -30,7 +30,8 @@ __global__ void scifi_direct_decoder_v4(
   const SciFiGeometry geom(scifi_geometry);
   const auto event = SciFiRawEvent(scifi_events + scifi_event_offsets[selected_event_number]);
 
-  SciFi::Hits hits {scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mat_groups_and_mats], &geom, dev_inv_clus_res};
+  SciFi::Hits hits {
+    scifi_hits, scifi_hit_count[number_of_events * SciFi::Constants::n_mat_groups_and_mats], &geom, dev_inv_clus_res};
   const SciFi::HitCount hit_count {scifi_hit_count, event_number};
 
   for (uint i = threadIdx.x; i < SciFi::Constants::n_consecutive_raw_banks; i += blockDim.x) {
@@ -39,9 +40,7 @@ __global__ void scifi_direct_decoder_v4(
 
     const uint k = i % 10;
     const bool reverse_raw_bank_order = k < 5;
-    const uint current_raw_bank = reverse_raw_bank_order ?
-      5 * (i / 5) + (4 - i % 5) :
-      i;
+    const uint current_raw_bank = reverse_raw_bank_order ? 5 * (i / 5) + (4 - i % 5) : i;
 
     const uint raw_bank_offset = hit_count.mat_group_offset(i);
     const auto rawbank = event.getSciFiRawBank(current_raw_bank);

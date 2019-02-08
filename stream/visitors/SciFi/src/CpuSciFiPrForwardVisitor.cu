@@ -2,7 +2,7 @@
 #include "RunForwardCPU.h"
 #include "Tools.h"
 
-template<> 
+template<>
 void SequenceVisitor::set_arguments_size<cpu_scifi_pr_forward_t>(
   cpu_scifi_pr_forward_t::arguments_t arguments,
   const RuntimeOptions& runtime_options,
@@ -28,10 +28,11 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
   cudaEventSynchronize(cuda_generic_event);
 
   // Run Forward on x86 architecture
-  std::vector<uint> host_scifi_hits (host_buffers.scifi_hits_uints());
-  // ATTENTION: when using SciFi raw bank version 5, 
+  std::vector<uint> host_scifi_hits(host_buffers.scifi_hits_uints());
+  // ATTENTION: when using SciFi raw bank version 5,
   // need: 2*host_buffers.host_number_of_selected_events[0]*...
-  std::vector<uint> host_scifi_hit_count (host_buffers.host_number_of_selected_events[0] * SciFi::Constants::n_mat_groups_and_mats + 1);
+  std::vector<uint> host_scifi_hit_count(
+    host_buffers.host_number_of_selected_events[0] * SciFi::Constants::n_mat_groups_and_mats + 1);
   host_buffers.host_velo_states.resize(arguments.size<dev_velo_states>());
 
   cudaCheck(cudaMemcpy(
@@ -59,7 +60,7 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
     host_scifi_hits.data(),
     host_scifi_hit_count.data(),
     constants.host_scifi_geometry,
-    constants.host_inv_clus_res, 
+    constants.host_inv_clus_res,
     host_buffers.host_atomics_velo,
     host_buffers.host_velo_track_hit_number,
     host_buffers.host_velo_states.data(),
@@ -68,13 +69,13 @@ void SequenceVisitor::visit<cpu_scifi_pr_forward_t>(
     host_buffers.host_ut_qop,
     host_buffers.host_ut_track_velo_indices,
     host_buffers.host_number_of_selected_events[0]);
- 
-  for ( int i = 0; i < host_buffers.host_number_of_selected_events[0]; ++i ) 
+
+  for (int i = 0; i < host_buffers.host_number_of_selected_events[0]; ++i)
     debug_cout << "Visitor: found " << host_buffers.host_atomics_scifi[i] << " tracks in event " << i << std::endl;
 
   // copy SciFi track to device for consolidation
   cudaCheck(cudaMemcpy(
-    arguments.offset<dev_atomics_scifi>(), 
+    arguments.offset<dev_atomics_scifi>(),
     host_buffers.host_atomics_scifi,
     arguments.size<dev_atomics_scifi>(),
     cudaMemcpyHostToDevice));

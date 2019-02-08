@@ -17,5 +17,4 @@ SEQUENCE_T(
   prefix_sum_velo_track_hit_number_t,
   consolidate_velo_tracks_t,
   velo_kalman_fit_t,
-  cpu_pv_beamline_t
-)
+  cpu_pv_beamline_t)

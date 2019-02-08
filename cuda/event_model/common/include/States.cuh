@@ -2,9 +2,9 @@
 
 /**
  * @brief A simplified state for the Velo
- *        
+ *
  *        {x, y, tx, ty, 0}
- *        
+ *
  *        associated with a simplified covariance
  *        since we do two fits (one in X, one in Y)
  *

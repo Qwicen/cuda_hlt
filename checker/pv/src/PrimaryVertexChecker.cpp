@@ -15,7 +15,8 @@ void checkPVs(
 
   if (requestedFiles > folderContents.size()) {
     warning_cout << "Requested " << requestedFiles << " files, but only " << folderContents.size()
-               << " files are present" << std::endl << std::endl;
+                 << " files are present" << std::endl
+                 << std::endl;
   }
   else {
     verbose_cout << "Requested " << requestedFiles << " files" << std::endl;
@@ -48,7 +49,7 @@ void checkPVs(
     std::vector<double> vec_err_z;
 
     // loop over files/events
-    std::vector< std::vector<MCVertex> > MC_vertices_events;
+    std::vector<std::vector<MCVertex>> MC_vertices_events;
     for (uint i_event = 0; i_event < requestedFiles; ++i_event) {
       // Read event #i in the list and add it to the inputs
       // if more files are requested than present in folder, read them again
@@ -84,8 +85,8 @@ void checkPVs(
       MC_vertices_events.push_back(MC_vertices);
     }
     // events selected by global event cuts
-    std::vector< std::vector<MCVertex> > MC_vertices_selected_events;
-    for ( int i = 0; i < number_of_selected_events; i++ ) {
+    std::vector<std::vector<MCVertex>> MC_vertices_selected_events;
+    for (int i = 0; i < number_of_selected_events; i++) {
       const uint event = event_list[i];
       std::vector<MCVertex> MC_vertices = MC_vertices_events[event];
       MC_vertices_selected_events.push_back(MC_vertices);
@@ -154,7 +155,9 @@ void checkPVs(
       // vector with MCPVinfo
       std::vector<MCPVInfo> mcpvvec;
 
-      for (std::vector<MCVertex>::iterator itMCV = MC_vertices_selected_events[i_event].begin(); MC_vertices_selected_events[i_event].end() != itMCV; itMCV++) {
+      for (std::vector<MCVertex>::iterator itMCV = MC_vertices_selected_events[i_event].begin();
+           MC_vertices_selected_events[i_event].end() != itMCV;
+           itMCV++) {
 
         MCPVInfo mcprimvert;
         mcprimvert.pMCPV = &(*itMCV);
@@ -244,61 +247,61 @@ void checkPVs(
 
       // Fill distance to closest recble MC PV and its multiplicity
       std::vector<MCPVInfo>::iterator itmcl;
-      for(itmcl = rblemcpv.begin(); rblemcpv.end() != itmcl; itmcl++) {
-        std::vector<MCPVInfo>::iterator cmc = closestMCPV(rblemcpv,itmcl);
+      for (itmcl = rblemcpv.begin(); rblemcpv.end() != itmcl; itmcl++) {
+        std::vector<MCPVInfo>::iterator cmc = closestMCPV(rblemcpv, itmcl);
         double dist = 999999.;
         int mult = 0;
-        if(cmc != rblemcpv.end()) {
+        if (cmc != rblemcpv.end()) {
           double diff_x = cmc->pMCPV->x - itmcl->pMCPV->x;
           double diff_y = cmc->pMCPV->y - itmcl->pMCPV->y;
           double diff_z = cmc->pMCPV->z - itmcl->pMCPV->z;
-          double dist = sqrt(diff_x*diff_x + diff_y*diff_y + diff_z*diff_z);
+          double dist = sqrt(diff_x * diff_x + diff_y * diff_y + diff_z * diff_z);
           mult = cmc->nRecTracks;
           itmcl->distToClosestMCPV = dist;
           itmcl->multClosestMCPV = mult;
         }
       }
 
-      //count non.reconstructible close and isolated PVs
+      // count non.reconstructible close and isolated PVs
       int nmrc_isol = 0;
       int nmrc_close = 0;
 
       // Counters
-      int nMCPV                 = rblemcpv.size()-nmrc;
-      int nRecMCPV              = 0;
-      int nMCPV_isol            = 0;
-      int nRecMCPV_isol         = 0;
-      int nMCPV_close           = 0;
-      int nRecMCPV_close        = 0;
+      int nMCPV = rblemcpv.size() - nmrc;
+      int nRecMCPV = 0;
+      int nMCPV_isol = 0;
+      int nRecMCPV_isol = 0;
+      int nMCPV_close = 0;
+      int nRecMCPV_close = 0;
 
-      for(itmc = rblemcpv.begin(); rblemcpv.end() != itmc; itmc++) {
-        if(itmc->distToClosestMCPV > dzIsolated) nMCPV_isol++;
-        if(itmc->distToClosestMCPV > dzIsolated && itmc->nRecTracks < nTracksToBeRecble) nmrc_isol++;
-        if(itmc->distToClosestMCPV < dzIsolated) nMCPV_close++;
-        if(itmc->distToClosestMCPV < dzIsolated && itmc->nRecTracks < nTracksToBeRecble) nmrc_close++;
-        if(itmc->indexRecPVInfo > -1) {
+      for (itmc = rblemcpv.begin(); rblemcpv.end() != itmc; itmc++) {
+        if (itmc->distToClosestMCPV > dzIsolated) nMCPV_isol++;
+        if (itmc->distToClosestMCPV > dzIsolated && itmc->nRecTracks < nTracksToBeRecble) nmrc_isol++;
+        if (itmc->distToClosestMCPV < dzIsolated) nMCPV_close++;
+        if (itmc->distToClosestMCPV < dzIsolated && itmc->nRecTracks < nTracksToBeRecble) nmrc_close++;
+        if (itmc->indexRecPVInfo > -1) {
           nRecMCPV++;
-          if(itmc->distToClosestMCPV > dzIsolated) nRecMCPV_isol++;
-          if(itmc->distToClosestMCPV < dzIsolated) nRecMCPV_close++;
+          if (itmc->distToClosestMCPV > dzIsolated) nRecMCPV_isol++;
+          if (itmc->distToClosestMCPV < dzIsolated) nRecMCPV_close++;
         }
       }
 
-      nMCPV_isol = nMCPV_isol -nmrc_isol;
-      nMCPV_close = nMCPV_close -nmrc_close;
+      nMCPV_isol = nMCPV_isol - nmrc_isol;
+      nMCPV_close = nMCPV_close - nmrc_close;
 
-      sum_nMCPV                 +=  nMCPV;
-      sum_nRecMCPV              +=  nRecMCPV;
-      sum_nMCPV_isol            +=  nMCPV_isol;
-      sum_nRecMCPV_isol         +=  nRecMCPV_isol;
-      sum_nMCPV_close           +=  nMCPV_close;
-      sum_nRecMCPV_close        +=  nRecMCPV_close;
-      sum_nFalsePV              +=  nFalsePV;
-      sum_nFalsePV_real         +=  nFalsePV_real;
+      sum_nMCPV += nMCPV;
+      sum_nRecMCPV += nRecMCPV;
+      sum_nMCPV_isol += nMCPV_isol;
+      sum_nRecMCPV_isol += nRecMCPV_isol;
+      sum_nMCPV_close += nMCPV_close;
+      sum_nRecMCPV_close += nRecMCPV_close;
+      sum_nFalsePV += nFalsePV;
+      sum_nFalsePV_real += nFalsePV_real;
 
-      //loop over matched MC PVs and get pull and errors
-      for(auto mc_vertex_info : rblemcpv) {
+      // loop over matched MC PVs and get pull and errors
+      for (auto mc_vertex_info : rblemcpv) {
         int rec_index = mc_vertex_info.indexRecPVInfo;
-        if(rec_index < 0) continue;
+        if (rec_index < 0) continue;
         MCVertex* mc_vertex = mc_vertex_info.pMCPV;
         double diff_x = recpvvec[rec_index].x - mc_vertex->x;
         double diff_y = recpvvec[rec_index].y - mc_vertex->y;
@@ -314,7 +317,6 @@ void checkPVs(
         vec_err_x.push_back(err_x);
         vec_err_y.push_back(err_y);
         vec_err_z.push_back(err_z);
-        
       }
     } // end loop over files/events
 
@@ -342,8 +344,8 @@ void checkPVs(
     info_cout << "new found: " << sum_nRecMCPV << " / " << sum_nMCPV << std::endl;
     info_cout << "new fakes: " << sum_nFalsePV << std::endl << std::endl;
 
-    // save information about matched reconstructed PVs for pulls distributions
-    #ifdef WITH_ROOT
+// save information about matched reconstructed PVs for pulls distributions
+#ifdef WITH_ROOT
     TFile* out_fille = new TFile(("../output/" + mode + "_PVChecker.root").data(), "RECREATE");
     TTree* tree = new TTree("PV_tree", "PV_tree");
     // double x_true, y_true, z_true;
@@ -375,6 +377,6 @@ void checkPVs(
     }
     tree->Write();
     out_fille->Close();
-    #endif
+#endif
   }
 }

@@ -56,34 +56,31 @@ __host__ __device__ void selectFullCandidates(
   const SciFi::Tracking::Arrays* constArrays,
   const bool secondLoop);
 
-__host__ __device__ SciFi::TrackHits makeTrack( SciFi::Tracking::Track track ); 
+__host__ __device__ SciFi::TrackHits makeTrack(SciFi::Tracking::Track track);
 
 template<class T>
-__host__ __device__ void sort_tracks( 
-  SciFi::Tracking::Track* tracks,
-  const int n,
-  const T& sort_function
-) {
+__host__ __device__ void sort_tracks(SciFi::Tracking::Track* tracks, const int n, const T& sort_function)
+{
   // find permutations based on sort_function
   uint permutations[SciFi::Tracking::max_selected_tracks];
-  for ( int i = 0; i < n; ++i ) {
+  for (int i = 0; i < n; ++i) {
     uint position = 0;
-    for ( int j = 0; j < n; ++j ) {
-      const int sort_result = sort_function( tracks[i], tracks[j] );
-      position += sort_result>0 || (sort_result==0 && i>j);
+    for (int j = 0; j < n; ++j) {
+      const int sort_result = sort_function(tracks[i], tracks[j]);
+      position += sort_result > 0 || (sort_result == 0 && i > j);
     }
     permutations[position] = i;
   }
 
   // apply permutations, store tracks in temporary container
   SciFi::Tracking::Track tracks_tmp[SciFi::Tracking::max_selected_tracks];
-  for ( int i = 0; i < n; ++i ) {
+  for (int i = 0; i < n; ++i) {
     const int index = permutations[i];
     tracks_tmp[i] = tracks[index];
   }
-  
+
   // copy tracks back to original container
-  for ( int i = 0; i < n; ++i ) {
+  for (int i = 0; i < n; ++i) {
     tracks[i] = tracks_tmp[i];
   }
 }
