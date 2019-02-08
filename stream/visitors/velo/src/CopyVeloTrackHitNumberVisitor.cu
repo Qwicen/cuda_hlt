@@ -25,8 +25,7 @@ void SequenceVisitor::visit<copy_velo_track_hit_number_t>(
   state.set_arguments(
     arguments.offset<dev_tracks>(),
     arguments.offset<dev_atomics_velo>(),
-    arguments.offset<dev_velo_track_hit_number>()
-  );
+    arguments.offset<dev_velo_track_hit_number>());
 
   state.invoke();
 }

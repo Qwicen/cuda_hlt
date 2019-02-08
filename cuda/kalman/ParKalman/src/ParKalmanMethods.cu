@@ -1328,7 +1328,6 @@ __device__ int extrapUTT(
     c = c + cn0 * (!rx) * sygxy;
     c = c - c0p * ry * sxgxy;
     c = c + c0n * (!ry) * sxgxy;
-
   }
   else {
     KalmanFloat ex, fx, ey, fy;

@@ -31,11 +31,10 @@ namespace ParKalmanFilter {
     const uint n_scifi_layers,
     int forward,
     int i_hit,
-    Vector5 &x,
-    SymMatrix5x5 &C,
-    KalmanFloat &lastz,
-    trackInfo &tI
-  );
+    Vector5& x,
+    SymMatrix5x5& C,
+    KalmanFloat& lastz,
+    trackInfo& tI);
 
   //----------------------------------------------------------------------
   // General method for predicting states.
@@ -48,11 +47,10 @@ namespace ParKalmanFilter {
     const uint n_scifi_layers,
     int forward,
     int i_hit,
-    Vector5 &x,
-    SymMatrix5x5 &C,
-    KalmanFloat &lastz,
-    trackInfo &tI
-  );
+    Vector5& x,
+    SymMatrix5x5& C,
+    KalmanFloat& lastz,
+    trackInfo& tI);
 
   //----------------------------------------------------------------------
   // Forward fit iteration.
@@ -63,11 +61,10 @@ namespace ParKalmanFilter {
     const uint n_ut_layers,
     const SciFi::Consolidated::Hits& scifi_hits,
     const uint n_scifi_layers,
-    Vector5 &x,
-    SymMatrix5x5 &C,
-    KalmanFloat &lastz,
-    trackInfo &tI
-  );
+    Vector5& x,
+    SymMatrix5x5& C,
+    KalmanFloat& lastz,
+    trackInfo& tI);
 
   //----------------------------------------------------------------------
   // Backward fit iteration.
@@ -78,11 +75,10 @@ namespace ParKalmanFilter {
     const uint n_ut_layers,
     const SciFi::Consolidated::Hits& scifi_hits,
     const uint n_scifi_layers,
-    Vector5 &x,
-    SymMatrix5x5 &C,
-    KalmanFloat &lastz,
-    trackInfo &tI
-  );
+    Vector5& x,
+    SymMatrix5x5& C,
+    KalmanFloat& lastz,
+    trackInfo& tI);
 
   //----------------------------------------------------------------------
   // Create the output track.
@@ -93,12 +89,11 @@ namespace ParKalmanFilter {
     const uint n_ut_layers,
     const SciFi::Consolidated::Hits& scifi_hits,
     const uint n_scifi_layers,
-    const Vector5 &x,
-    const SymMatrix5x5 &C,
-    const KalmanFloat &z,
-    const trackInfo &tI,
-    FittedTrack &track
-  );
+    const Vector5& x,
+    const SymMatrix5x5& C,
+    const KalmanFloat& z,
+    const trackInfo& tI,
+    FittedTrack& track);
 
   //----------------------------------------------------------------------
   // Run the Kalman filter on a track.
@@ -111,11 +106,9 @@ namespace ParKalmanFilter {
     const uint n_scifi_hits,
     const KalmanFloat init_qop,
     const KalmanParametrizations& kalman_params,
-    FittedTrack& track
-  );
+    FittedTrack& track);
 
-}
-
+} // namespace ParKalmanFilter
 
 //----------------------------------------------------------------------
 // Main execution of the parametrized Kalman Filter.
@@ -137,10 +130,11 @@ __global__ void KalmanFilter(
   ParKalmanFilter::FittedTrack* dev_kf_tracks,
   const char* dev_scifi_geometry,
   const float* dev_inv_clus_res,
-  const ParKalmanFilter::KalmanParametrizations* dev_kalman_params
-);
+  const ParKalmanFilter::KalmanParametrizations* dev_kalman_params);
 
-ALGORITHM(KalmanFilter, kalman_filter_t,
+ALGORITHM(
+  KalmanFilter,
+  kalman_filter_t,
   ARGUMENTS(
     dev_atomics_velo,
     dev_velo_track_hit_number,

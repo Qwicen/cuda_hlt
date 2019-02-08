@@ -24,7 +24,9 @@ void SequenceVisitor::visit<pv_beamline_peak_t>(
   cudaEvent_t& cuda_generic_event)
 {
   state.set_opts(
-    dim3((host_buffers.host_number_of_selected_events[0] + PV::num_threads_pv_beamline_peak_t - 1) / PV::num_threads_pv_beamline_peak_t),
+    dim3(
+      (host_buffers.host_number_of_selected_events[0] + PV::num_threads_pv_beamline_peak_t - 1) /
+      PV::num_threads_pv_beamline_peak_t),
     PV::num_threads_pv_beamline_peak_t,
     cuda_stream);
 

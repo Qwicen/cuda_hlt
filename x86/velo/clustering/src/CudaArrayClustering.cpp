@@ -3,13 +3,13 @@
 std::vector<uint32_t> cuda_array_clustering(
   const std::vector<char>& geometry,
   const std::vector<char>& events,
-  const std::vector<unsigned int>& event_offsets
-) {
+  const std::vector<unsigned int>& event_offsets)
+{
   std::cout << std::endl << "cuda array clustering:" << std::endl;
-  std::vector<unsigned char> sp_patterns (256, 0);
-  std::vector<unsigned char> sp_sizes (256, 0);
-  std::vector<float> sp_fx (512, 0);
-  std::vector<float> sp_fy (512, 0);
+  std::vector<unsigned char> sp_patterns(256, 0);
+  std::vector<unsigned char> sp_sizes(256, 0);
+  std::vector<float> sp_fx(512, 0);
+  std::vector<float> sp_fy(512, 0);
   std::vector<uint32_t> cluster_candidates_to_return;
 
   size_t max_stack_size = 0;
@@ -21,28 +21,28 @@ std::vector<uint32_t> cuda_array_clustering(
   Timer t;
 
   // Typecast files and print them
-  VeloGeometry g (geometry);
-  for (size_t i=1; i<event_offsets.size(); ++i) {
+  VeloGeometry g(geometry);
+  for (size_t i = 1; i < event_offsets.size(); ++i) {
 
     unsigned int total_number_of_clusters = 0;
     unsigned int total_sp_count = 0;
     unsigned int no_sp_count = 0;
     unsigned int approximation_number_of_clusters = 0;
 
-    VeloRawEvent e (events.data() + event_offsets[i-1]);
+    VeloRawEvent e(events.data() + event_offsets[i - 1]);
 
-    for (unsigned int raw_bank=0; raw_bank<e.number_of_raw_banks; ++raw_bank) {
+    for (unsigned int raw_bank = 0; raw_bank < e.number_of_raw_banks; ++raw_bank) {
       std::vector<uint32_t> cluster_candidates;
-      std::vector<uint8_t> buffer (770 * 258, 0);
+      std::vector<uint8_t> buffer(770 * 258, 0);
       std::vector<uint32_t> pixel_idx;
 
       const auto velo_raw_bank = VeloRawBank(e.payload + e.raw_bank_offset[raw_bank]);
-      
+
       const unsigned int sensor = velo_raw_bank.sensor_index;
       const unsigned int module = sensor / Velo::Constants::n_sensors_per_module;
       const float* ltg = g.ltg + 16 * sensor;
 
-      for (unsigned int j=0; j<velo_raw_bank.sp_count; ++j) {
+      for (unsigned int j = 0; j < velo_raw_bank.sp_count; ++j) {
         const uint32_t sp_word = velo_raw_bank.sp_word[j];
         const uint32_t sp_addr = (sp_word & 0x007FFF00U) >> 8;
         const uint32_t sp_row = sp_addr & 0x3FU;
@@ -65,7 +65,7 @@ std::vector<uint32_t> cuda_array_clustering(
             approximation_number_of_clusters += 1;
           }
 
-          continue;  // move on to next super pixel
+          continue; // move on to next super pixel
         }
 
         // record all pixels.
@@ -93,7 +93,7 @@ std::vector<uint32_t> cuda_array_clustering(
         // x x
         // o x
         //   x
-        const bool non_isolated = buffer[idx+770] | buffer[idx+771] | buffer[idx+1] | buffer[idx-769];
+        const bool non_isolated = buffer[idx + 770] | buffer[idx + 771] | buffer[idx + 1] | buffer[idx - 769];
         if (!non_isolated) {
           cluster_candidates.push_back(idx);
         }
@@ -128,11 +128,11 @@ std::vector<uint32_t> cuda_array_clustering(
           const uint32_t col = (idx - 771) % 770;
           const uint32_t sp_row = row / 4;
           const uint32_t sp_col = col / 2;
-          
-          const int32_t row_lower_limit = sp_row*4 - rows_to_check_bottom;
-          const int32_t row_upper_limit = (sp_row+1)*4 + rows_to_check_top;
-          const int32_t col_lower_limit = sp_col*2 - cols_to_check_left;
-          const int32_t col_upper_limit = (sp_col+1)*2 + cols_to_check_right;
+
+          const int32_t row_lower_limit = sp_row * 4 - rows_to_check_bottom;
+          const int32_t row_upper_limit = (sp_row + 1) * 4 + rows_to_check_top;
+          const int32_t col_lower_limit = sp_col * 2 - cols_to_check_left;
+          const int32_t col_upper_limit = (sp_col + 1) * 2 + cols_to_check_right;
 
           // if (printed++ < print_times) {
           //   // Print buffer we will look at
@@ -168,9 +168,9 @@ std::vector<uint32_t> cuda_array_clustering(
 
             const int32_t row = (working_id - 771) / 770;
             const int32_t col = (working_id - 771) % 770;
-            
+
             // top
-            if (row < row_upper_limit-1) {
+            if (row < row_upper_limit - 1) {
               const uint32_t p_row = row + 1;
               const uint32_t p_col = col;
               const uint32_t p_idx = p_row * 770 + p_col + 771;
@@ -180,9 +180,7 @@ std::vector<uint32_t> cuda_array_clustering(
             }
 
             // top right
-            if (row < row_upper_limit-1
-              && col < col_upper_limit-1
-              ) {
+            if (row < row_upper_limit - 1 && col < col_upper_limit - 1) {
               const uint32_t p_row = row + 1;
               const uint32_t p_col = col + 1;
               const uint32_t p_idx = p_row * 770 + p_col + 771;
@@ -192,7 +190,7 @@ std::vector<uint32_t> cuda_array_clustering(
             }
 
             // right
-            if (col < col_upper_limit-1) {
+            if (col < col_upper_limit - 1) {
               const uint32_t p_row = row;
               const uint32_t p_col = col + 1;
               const uint32_t p_idx = p_row * 770 + p_col + 771;
@@ -202,9 +200,7 @@ std::vector<uint32_t> cuda_array_clustering(
             }
 
             // bottom right
-            if (row > row_lower_limit
-              && col < col_upper_limit-1
-              ) {
+            if (row > row_lower_limit && col < col_upper_limit - 1) {
               const uint32_t p_row = row - 1;
               const uint32_t p_col = col + 1;
               const uint32_t p_idx = p_row * 770 + p_col + 771;
@@ -224,9 +220,7 @@ std::vector<uint32_t> cuda_array_clustering(
             }
 
             // bottom left
-            if (col > col_lower_limit
-              && row > row_lower_limit
-              ) {
+            if (col > col_lower_limit && row > row_lower_limit) {
               const uint32_t p_row = row - 1;
               const uint32_t p_col = col - 1;
               const uint32_t p_idx = p_row * 770 + p_col + 771;
@@ -246,9 +240,7 @@ std::vector<uint32_t> cuda_array_clustering(
             }
 
             // top left
-            if (row < row_upper_limit-1
-              && col > col_lower_limit
-              ) {
+            if (row < row_upper_limit - 1 && col > col_lower_limit) {
               const uint32_t p_row = row + 1;
               const uint32_t p_col = col - 1;
               const uint32_t p_idx = p_row * 770 + p_col + 771;

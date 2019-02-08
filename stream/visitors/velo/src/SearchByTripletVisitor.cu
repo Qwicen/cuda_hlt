@@ -14,7 +14,8 @@ void SequenceVisitor::set_arguments_size<velo_search_by_triplet_t>(
   arguments.set_size<dev_weak_tracks>(host_buffers.host_number_of_selected_events[0] * Velo::Tracking::max_weak_tracks);
   arguments.set_size<dev_hit_used>(host_buffers.host_total_number_of_velo_clusters[0]);
   arguments.set_size<dev_atomics_velo>(host_buffers.host_number_of_selected_events[0] * Velo::num_atomics);
-  arguments.set_size<dev_rel_indices>(host_buffers.host_number_of_selected_events[0] * 2 * Velo::Constants::max_numhits_in_module);
+  arguments.set_size<dev_rel_indices>(
+    host_buffers.host_number_of_selected_events[0] * 2 * Velo::Constants::max_numhits_in_module);
 }
 
 template<>
@@ -42,8 +43,7 @@ void SequenceVisitor::visit<velo_search_by_triplet_t>(
     arguments.offset<dev_h0_candidates>(),
     arguments.offset<dev_h2_candidates>(),
     arguments.offset<dev_rel_indices>(),
-    constants.dev_velo_module_zs
-  );
+    constants.dev_velo_module_zs);
 
   state.invoke();
 }

@@ -26,8 +26,7 @@ void SequenceVisitor::visit<ut_decode_raw_banks_in_order_t>(
     arguments.offset<dev_ut_hit_offsets>(),
     arguments.offset<dev_ut_hits>(),
     arguments.offset<dev_ut_hit_count>(),
-    arguments.offset<dev_ut_hit_permutations>()
-  );
+    arguments.offset<dev_ut_hit_permutations>());
 
   state.invoke();
 }

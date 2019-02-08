@@ -31,12 +31,12 @@ __global__ void pv_beamline_multi_fitter(
   PV::Vertex* vertices = dev_multi_fit_vertices + event_number * PV::max_number_vertices;
 
   PV::Vertex vertex;
-  
+
   // make sure that we have one thread per seed
-  for ( uint i_thisseed = threadIdx.x; i_thisseed < number_of_seeds; i_thisseed += blockDim.x) {
+  for (uint i_thisseed = threadIdx.x; i_thisseed < number_of_seeds; i_thisseed += blockDim.x) {
     bool converged = false;
     float vtxcov[6] = {0.f, 0.f, 0.f, 0.f, 0.f, 0.f};
-    //initial vertex posisiton, use x,y of the beamline and z of the seed
+    // initial vertex posisiton, use x,y of the beamline and z of the seed
     float2 vtxpos_xy {beamline.x, beamline.y};
     auto vtxpos_z = zseeds[i_thisseed];
     const auto maxDeltaZConverged {0.001f};
@@ -67,7 +67,7 @@ __global__ void pv_beamline_multi_fitter(
         // compute the weight.
         trk.weight = 0.f;
         if (chi2 < maxDeltaChi2) { // to branch or not, that is the question!
-                              // if (true) {
+                                   // if (true) {
           ++nselectedtracks;
           // for more information on the weighted fitting, see e.g.
           // Adaptive Multi-vertex fitting, R. Frühwirth, W. Waltenberger
@@ -84,10 +84,12 @@ __global__ void pv_beamline_multi_fitter(
             float2 res_otherseed {0.f, 0.f};
             const auto dz = zseeds[i_otherseed] - trk.z;
 
-            //we calculate the residual w.r.t to the other seed positions. Since we don't update them during the fit we use the beamline (x,y)
+            // we calculate the residual w.r.t to the other seed positions. Since we don't update them during the fit we
+            // use the beamline (x,y)
             res_otherseed = res_otherseed - (trk.x + trk.tx * dz);
             // at the moment this term reuses W matrix at z of point of closest approach -> use seed positions instead?
-            const auto chi2_otherseed = res_otherseed.x * res_otherseed.x * trk.W_00 + res_otherseed.y * res_otherseed.y * trk.W_11;
+            const auto chi2_otherseed =
+              res_otherseed.x * res_otherseed.x * trk.W_00 + res_otherseed.y * res_otherseed.y * trk.W_11;
             denom += exp(-chi2_otherseed * 0.5f);
           }
           trk.weight = trk.weight / denom;
@@ -118,7 +120,7 @@ __global__ void pv_beamline_multi_fitter(
         }
       }
       __syncthreads();
-      
+
       if (nselectedtracks >= 2) {
         // compute the new vertex covariance using analytical inversion
         const auto a00 = halfD2Chi2DX2_00;
@@ -127,30 +129,29 @@ __global__ void pv_beamline_multi_fitter(
         const auto a21 = halfD2Chi2DX2_21;
         const auto a22 = halfD2Chi2DX2_22;
 
-        const auto det = a00 * (a22 * a11 - a21 * a21) + a20 * ( - a11 * a20);
+        const auto det = a00 * (a22 * a11 - a21 * a21) + a20 * (-a11 * a20);
         const auto inv_det = 1.f / det;
         // maybe we should catch the case when det = 0
         // if (det == 0) return false;
 
         vtxcov[0] = (a22 * a11 - a21 * a21) * inv_det;
-        vtxcov[1] = -( - a20 * a21) * inv_det;
+        vtxcov[1] = -(-a20 * a21) * inv_det;
         vtxcov[2] = (a22 * a00 - a20 * a20) * inv_det;
-        vtxcov[3] = (- a20 * a11) * inv_det;
-        vtxcov[4] = -(a21 * a00 ) * inv_det;
-        vtxcov[5] = (a11 * a00 ) * inv_det;
+        vtxcov[3] = (-a20 * a11) * inv_det;
+        vtxcov[4] = -(a21 * a00) * inv_det;
+        vtxcov[5] = (a11 * a00) * inv_det;
 
         // compute the delta w.r.t. the reference
         const float2 delta_xy {
           -1.f * (vtxcov[0] * halfDChi2DX.x + vtxcov[1] * halfDChi2DX.y + vtxcov[3] * halfDChi2DX.z),
-          -1.f * (vtxcov[1] * halfDChi2DX.x + vtxcov[2] * halfDChi2DX.y + vtxcov[4] * halfDChi2DX.z)
-        };
+          -1.f * (vtxcov[1] * halfDChi2DX.x + vtxcov[2] * halfDChi2DX.y + vtxcov[4] * halfDChi2DX.z)};
 
         const auto delta_z = -1.f * (vtxcov[3] * halfDChi2DX.x + vtxcov[4] * halfDChi2DX.y + vtxcov[5] * halfDChi2DX.z);
         chi2tot += delta_xy.x * halfDChi2DX.x + delta_xy.y * halfDChi2DX.y + delta_z * halfDChi2DX.z;
 
         // update the position
         vtxpos_xy = vtxpos_xy + delta_xy;
-        vtxpos_z  = vtxpos_z + delta_z;
+        vtxpos_z = vtxpos_z + delta_z;
         converged = std::abs(delta_z) < maxDeltaZConverged;
       }
       else {
@@ -168,7 +169,7 @@ __global__ void pv_beamline_multi_fitter(
       PVTrackInVertex trk = tracks[i];
       if (trk.weight > 0.f) vertex.n_tracks++;
     }
-    
+
     // TODO integrate beamline position
     const float2 beamline {0.f, 0.f};
     const auto beamlinedx = vertex.position.x - beamline.x;

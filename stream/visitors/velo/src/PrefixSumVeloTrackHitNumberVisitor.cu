@@ -30,9 +30,7 @@ void SequenceVisitor::visit<prefix_sum_velo_track_hit_number_t>(
 
   // Set arguments: Array to prefix sum and auxiliary array
   state.set_arguments(
-    arguments.offset<dev_velo_track_hit_number>(),
-    arguments.offset<dev_prefix_sum_auxiliary_array_2>()
-  );
+    arguments.offset<dev_velo_track_hit_number>(), arguments.offset<dev_prefix_sum_auxiliary_array_2>());
 
   // Invoke all steps of prefix sum
   state.invoke();
@@ -47,8 +45,9 @@ void SequenceVisitor::visit<prefix_sum_velo_track_hit_number_t>(
 
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
-  
+
   if (logger::ll.verbosityLevel >= logger::debug) {
-    debug_cout << "Total number of hits on all tracks = " << host_buffers.host_accumulated_number_of_hits_in_velo_tracks[0] << std::endl;
+    debug_cout << "Total number of hits on all tracks = "
+               << host_buffers.host_accumulated_number_of_hits_in_velo_tracks[0] << std::endl;
   }
 }

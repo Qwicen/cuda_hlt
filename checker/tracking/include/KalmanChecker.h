@@ -16,7 +16,5 @@
 
 void checkKalmanTracks(
   const uint start_event_offset,
-  const std::vector<trackChecker::Tracks> &tracks,
-  const MCEvents selected_mc_events
-);
-
+  const std::vector<trackChecker::Tracks>& tracks,
+  const MCEvents selected_mc_events);

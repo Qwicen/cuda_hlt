@@ -15,5 +15,4 @@ SEQUENCE_T(
   copy_and_prefix_sum_single_block_velo_t,
   copy_velo_track_hit_number_t,
   prefix_sum_velo_track_hit_number_t,
-  consolidate_velo_tracks_t
-)
+  consolidate_velo_tracks_t)

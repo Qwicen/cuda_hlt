@@ -9,7 +9,7 @@
 ARGUMENT(dev_velo_raw_input, char)
 ARGUMENT(dev_velo_raw_input_offsets, uint)
 ARGUMENT(dev_ut_raw_input, char)
-ARGUMENT(dev_ut_raw_input_offsets, uint) 
+ARGUMENT(dev_ut_raw_input_offsets, uint)
 ARGUMENT(dev_scifi_raw_input, char)
 ARGUMENT(dev_scifi_raw_input_offsets, uint)
 ARGUMENT(dev_event_list, uint)

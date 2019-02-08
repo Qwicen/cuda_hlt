@@ -21,7 +21,6 @@
 //   const int &number_of_events
 // );
 
-
 // template<class T>
 // void applyXPermutation(
 //   const uint* permutation,
@@ -33,7 +32,7 @@
 //   for ( int i_hit = 0; i_hit < number_of_hits; ++i_hit ) {
 //     interim_container[i_hit] = container[hit_start + i_hit];
 //   }
-  
+
 //   // Apply permutation across all hits in the layer
 //   for (uint permutation_index = 0; permutation_index < number_of_hits; ++permutation_index) {
 //     const auto hit_index = permutation[permutation_index];

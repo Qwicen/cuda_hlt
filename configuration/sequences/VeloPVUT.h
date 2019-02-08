@@ -31,5 +31,4 @@ SEQUENCE_T(
   copy_and_prefix_sum_single_block_ut_t,
   copy_ut_track_hit_number_t,
   prefix_sum_ut_track_hit_number_t,
-  consolidate_ut_tracks_t
-)
+  consolidate_ut_tracks_t)

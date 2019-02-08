@@ -44,7 +44,7 @@ __host__ __device__ void improveXCluster(
   const SciFi::Tracking::HitSearchCuts& pars,
   PlaneCounter& planeCounter,
   const int allXHits[SciFi::Tracking::max_x_hits],
-  const SciFi::Hits& scifi_hits );
+  const SciFi::Hits& scifi_hits);
 
 __host__ __device__ void selectXCandidates(
   const SciFi::Hits& scifi_hits,

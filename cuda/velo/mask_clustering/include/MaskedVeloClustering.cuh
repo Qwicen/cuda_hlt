@@ -20,10 +20,11 @@ __global__ void masked_velo_clustering(
   char* dev_velo_geometry,
   uint8_t* dev_velo_sp_patterns,
   float* dev_velo_sp_fx,
-  float* dev_velo_sp_fy
-);
+  float* dev_velo_sp_fy);
 
-ALGORITHM(masked_velo_clustering, velo_masked_clustering_t,
+ALGORITHM(
+  masked_velo_clustering,
+  velo_masked_clustering_t,
   ARGUMENTS(
     dev_velo_raw_input,
     dev_velo_raw_input_offsets,
@@ -33,5 +34,4 @@ ALGORITHM(masked_velo_clustering, velo_masked_clustering_t,
     dev_cluster_candidates,
     dev_velo_cluster_container,
     dev_event_list,
-    dev_event_order
-))
+    dev_event_order))

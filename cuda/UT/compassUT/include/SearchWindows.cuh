@@ -22,7 +22,9 @@ __global__ void ut_search_windows(
   int* dev_active_tracks,
   bool* dev_accepted_velo_tracks);
 
-ALGORITHM(ut_search_windows, ut_search_windows_t,
+ALGORITHM(
+  ut_search_windows,
+  ut_search_windows_t,
   ARGUMENTS(
     dev_ut_hits,
     dev_ut_hit_offsets,

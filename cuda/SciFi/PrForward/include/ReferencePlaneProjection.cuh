@@ -23,5 +23,6 @@ __host__ __device__ void xAtRef_SamePlaneHits(
   const float xParams_seed[4],
   const SciFi::Tracking::Arrays* constArrays,
   MiniState velo_state,
-  const float zMag, 
-  int itH, int itEnd);
+  const float zMag,
+  int itH,
+  int itEnd);

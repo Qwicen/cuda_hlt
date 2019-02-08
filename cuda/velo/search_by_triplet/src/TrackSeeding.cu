@@ -15,19 +15,19 @@ __device__ void track_seeding(
   bool* hit_used,
   uint* tracklets_insertPointer,
   uint* ttf_insertPointer,
-  Velo:: TrackletHits* tracklets,
+  Velo::TrackletHits* tracklets,
   uint* tracks_to_follow,
   unsigned short* h1_indices,
-  uint* local_number_of_hits
-) {
+  uint* local_number_of_hits)
+{
   // Add to an array all non-used h1 hits with candidates
-  for (int i=0; i<(module_data[2].hitNums + blockDim.x - 1) / blockDim.x; ++i) {
-    const unsigned short h1_rel_index = i*blockDim.x + threadIdx.x;
+  for (int i = 0; i < (module_data[2].hitNums + blockDim.x - 1) / blockDim.x; ++i) {
+    const unsigned short h1_rel_index = i * blockDim.x + threadIdx.x;
     if (h1_rel_index < module_data[2].hitNums) {
       const auto h1_index = module_data[2].hitStart + h1_rel_index;
-      const auto h0_first_candidate = h0_candidates[2*h1_index];
-      const auto h2_first_candidate = h2_candidates[2*h1_index];
-      if (!hit_used[h1_index] && h0_first_candidate!=-1 && h2_first_candidate!=-1) {
+      const auto h0_first_candidate = h0_candidates[2 * h1_index];
+      const auto h2_first_candidate = h2_candidates[2 * h1_index];
+      if (!hit_used[h1_index] && h0_first_candidate != -1 && h2_first_candidate != -1) {
         const auto current_hit = atomicAdd(local_number_of_hits, 1);
         h1_indices[current_hit] = h1_index;
       }
@@ -35,13 +35,13 @@ __device__ void track_seeding(
   }
 
   // Also add other side
-  for (int i=0; i<(module_data[3].hitNums + blockDim.x - 1) / blockDim.x; ++i) {
-    const unsigned short h1_rel_index = i*blockDim.x + threadIdx.x;
+  for (int i = 0; i < (module_data[3].hitNums + blockDim.x - 1) / blockDim.x; ++i) {
+    const unsigned short h1_rel_index = i * blockDim.x + threadIdx.x;
     if (h1_rel_index < module_data[3].hitNums) {
       const auto h1_index = module_data[3].hitStart + h1_rel_index;
-      const auto h0_first_candidate = h0_candidates[2*h1_index];
-      const auto h2_first_candidate = h2_candidates[2*h1_index];
-      if (!hit_used[h1_index] && h0_first_candidate!=-1 && h2_first_candidate!=-1) {
+      const auto h0_first_candidate = h0_candidates[2 * h1_index];
+      const auto h2_first_candidate = h2_candidates[2 * h1_index];
+      if (!hit_used[h1_index] && h0_first_candidate != -1 && h2_first_candidate != -1) {
         const auto current_hit = atomicAdd(local_number_of_hits, 1);
         h1_indices[current_hit] = h1_index;
       }
@@ -56,9 +56,10 @@ __device__ void track_seeding(
 
   // Process at a time a maximum of max_concurrent_h1 elements
   const auto number_of_hits_h1 = local_number_of_hits[0];
-  const auto last_iteration = (number_of_hits_h1 + Velo::Tracking::max_concurrent_h1 - 1) / Velo::Tracking::max_concurrent_h1;
+  const auto last_iteration =
+    (number_of_hits_h1 + Velo::Tracking::max_concurrent_h1 - 1) / Velo::Tracking::max_concurrent_h1;
   const auto num_hits_last_iteration = ((number_of_hits_h1 - 1) % Velo::Tracking::max_concurrent_h1) + 1;
-  for (int i=0; i<last_iteration; ++i) {
+  for (int i = 0; i < last_iteration; ++i) {
     // The output we are searching for
     unsigned short best_h0 = 0;
     unsigned short best_h2 = 0;
@@ -67,17 +68,17 @@ __device__ void track_seeding(
 
     // Assign an adaptive x and y id for the current thread depending on the load.
     // This is not trivial because:
-    // 
+    //
     // - We want a max_concurrent_h1:
     //     It turns out the load is more evenly balanced if we distribute systematically
     //     the processing of one h1 across several threads (ie. h0_candidates x h2_candidates)
-    //     
+    //
     // - The last iteration is quite different from the others:
     //     We have a variable number of hits in the last iteration
-    //     
-    const auto is_last_iteration = i==last_iteration-1;
-    const auto block_dim_x = is_last_iteration*num_hits_last_iteration + 
-                             !is_last_iteration*Velo::Tracking::max_concurrent_h1;
+    //
+    const auto is_last_iteration = i == last_iteration - 1;
+    const auto block_dim_x =
+      is_last_iteration * num_hits_last_iteration + !is_last_iteration * Velo::Tracking::max_concurrent_h1;
 
     // Adapted local thread ID of each thread
     const auto thread_id_x = threadIdx.x % block_dim_x;
@@ -89,17 +90,17 @@ __device__ void track_seeding(
     // Therefore, threads {4,X}, {5,X}, {6,X}, {7,X}, {8,X}, {9,X} all have block_dim_y=6
     // whereas threads {0,X}, {1,X}, {2,X}, {3,X} have block_dim_y=7
     // We will call the last one the "numerous" block ({0,X}, {1,X}, {2,X}, {3,X})
-    const auto is_in_numerous_block = thread_id_x < ((blockDim.x-1) % block_dim_x) + 1;
-    const auto block_dim_y = is_in_numerous_block*((blockDim.x + block_dim_x - 1) / block_dim_x) +
-                            !is_in_numerous_block*((blockDim.x-1) / block_dim_x);
+    const auto is_in_numerous_block = thread_id_x < ((blockDim.x - 1) % block_dim_x) + 1;
+    const auto block_dim_y = is_in_numerous_block * ((blockDim.x + block_dim_x - 1) / block_dim_x) +
+                             !is_in_numerous_block * ((blockDim.x - 1) / block_dim_x);
 
     // Work with thread_id_x, thread_id_y and block_dim_y from now on
     // Each h1 is associated with a thread_id_x
-    // 
+    //
     // Ie. if processing 30 h1 hits, with max_concurrent_h1 = 8, #h1 in each iteration to process are:
     // {8, 8, 8, 6}
     // On the fourth iteration, we should start from 3*max_concurrent_h1 (24 + thread_id_x)
-    const auto h1_rel_index = i*Velo::Tracking::max_concurrent_h1 + thread_id_x;
+    const auto h1_rel_index = i * Velo::Tracking::max_concurrent_h1 + thread_id_x;
     if (h1_rel_index < number_of_hits_h1) {
       // Fetch h1
       // const auto h1_rel_index = h1_indices[h1_rel_index];
@@ -108,15 +109,15 @@ __device__ void track_seeding(
 
       // Iterate over all h0, h2 combinations
       // Ignore used hits
-      const auto h0_first_candidate = h0_candidates[2*h1_index];
-      const auto h0_last_candidate = h0_candidates[2*h1_index + 1];
-      const auto h2_first_candidate = h2_candidates[2*h1_index];
-      const auto h2_last_candidate = h2_candidates[2*h1_index + 1];
+      const auto h0_first_candidate = h0_candidates[2 * h1_index];
+      const auto h0_last_candidate = h0_candidates[2 * h1_index + 1];
+      const auto h2_first_candidate = h2_candidates[2 * h1_index];
+      const auto h2_last_candidate = h2_candidates[2 * h1_index + 1];
 
       // Iterate over h0 with thread_id_y
       const auto h0_num_candidates = h0_last_candidate - h0_first_candidate;
-      for (int j=0; j<(h0_num_candidates + block_dim_y - 1) / block_dim_y; ++j) {
-        const auto h0_rel_candidate = j*block_dim_y + thread_id_y;
+      for (int j = 0; j < (h0_num_candidates + block_dim_y - 1) / block_dim_y; ++j) {
+        const auto h0_rel_candidate = j * block_dim_y + thread_id_y;
         if (h0_rel_candidate < h0_num_candidates) {
           const auto h0_index = h0_first_candidate + h0_rel_candidate;
           if (!hit_used[h0_index]) {
@@ -124,7 +125,7 @@ __device__ void track_seeding(
             const Velo::HitBase h0 {hit_Xs[h0_index], hit_Ys[h0_index], hit_Zs[h0_index]};
 
             // Finally, iterate over all h2 indices
-            for (auto h2_index=h2_first_candidate; h2_index<h2_last_candidate; ++h2_index) {
+            for (auto h2_index = h2_first_candidate; h2_index < h2_last_candidate; ++h2_index) {
               if (!hit_used[h2_index]) {
                 // const auto best_fits_index = thread_id_y*Velo::Tracking::max_numhits_in_module + h1_rel_index;
 
@@ -146,12 +147,9 @@ __device__ void track_seeding(
                 // Calculate fit
                 const auto scatterNum = (dx * dx) + (dy * dy);
                 const auto scatter = scatterNum * scatterDenom2;
-                const auto condition = fabs(h1.x - h0.x) < dmax &&
-                                       fabs(h1.y - h0.y) < dmax &&
-                                       fabs(dx) < Velo::Tracking::tolerance &&
-                                       fabs(dy) < Velo::Tracking::tolerance &&
-                                       scatter < Velo::Tracking::max_scatter_seeding &&
-                                       scatter < best_fit;
+                const auto condition = fabs(h1.x - h0.x) < dmax && fabs(h1.y - h0.y) < dmax &&
+                                       fabs(dx) < Velo::Tracking::tolerance && fabs(dy) < Velo::Tracking::tolerance &&
+                                       scatter < Velo::Tracking::max_scatter_seeding && scatter < best_fit;
 
                 if (condition) {
                   // Populate fit, h0 and h2 in case we have found a better one
@@ -176,11 +174,11 @@ __device__ void track_seeding(
     // and if so, create and add a track
     int winner_thread = -1;
     best_fit = FLT_MAX;
-    for (int id_y=0; id_y<block_dim_y; ++id_y) {
+    for (int id_y = 0; id_y < block_dim_y; ++id_y) {
       const int shared_address = id_y * block_dim_x + thread_id_x;
       const auto better_fit = shared_best_fits[shared_address] < best_fit;
-      winner_thread = better_fit*shared_address + !better_fit*winner_thread;
-      best_fit = better_fit*shared_best_fits[shared_address] + !better_fit*best_fit;
+      winner_thread = better_fit * shared_address + !better_fit * winner_thread;
+      best_fit = better_fit * shared_best_fits[shared_address] + !better_fit * best_fit;
     }
 
     // If this condition holds, then necessarily best_fit < FLT_MAX

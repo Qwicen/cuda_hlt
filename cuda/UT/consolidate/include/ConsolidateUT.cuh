@@ -15,11 +15,13 @@ __global__ void consolidate_ut_tracks(
   float* dev_ut_qop,
   uint* dev_ut_track_velo_indices,
   const UT::TrackHits* dev_veloUT_tracks,
-  const uint* dev_unique_x_sector_layer_offsets
-);
+  const uint* dev_unique_x_sector_layer_offsets);
 
-ALGORITHM(consolidate_ut_tracks, consolidate_ut_tracks_t,
-  ARGUMENTS(dev_ut_hits,
+ALGORITHM(
+  consolidate_ut_tracks,
+  consolidate_ut_tracks_t,
+  ARGUMENTS(
+    dev_ut_hits,
     dev_ut_hit_offsets,
     dev_ut_track_hits,
     dev_atomics_ut,

@@ -46,7 +46,7 @@ void SequenceVisitor::visit<ut_calculate_number_of_hits_t>(
   // info_cout << "variable: " << host_ut_hit_offsets.data() << ", " << host_ut_hit_offsets.size() << std::endl
   //   << "offset: " << arguments.offset<dev_ut_hit_offsets>() << ", "
   //   << "size: " << arguments.size<dev_ut_hit_offsets>() << std::endl;
-  
+
   // cudaCheck(cudaMemcpy(
   //   host_ut_hit_offsets.data(),
   //   arguments.offset<dev_ut_hit_offsets>(),

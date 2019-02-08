@@ -13,7 +13,7 @@ void SequenceVisitor::check<kalman_filter_t>(
 // Note: Nothing happens if not compiled with ROOT
 #ifdef WITH_ROOT
   info_cout << "Producing Kalman plots" << std::endl << std::endl;
-  
+
   const auto tracks = prepareKalmanTracks(
     host_buffers.host_atomics_velo,
     host_buffers.host_velo_track_hit_number,
@@ -32,14 +32,8 @@ void SequenceVisitor::check<kalman_filter_t>(
     constants.host_scifi_geometry,
     constants.host_inv_clus_res,
     host_buffers.host_kf_tracks,
-    host_buffers.host_number_of_selected_events[0]
-  );
-  
-  checkKalmanTracks(
-    start_event_offset,
-    tracks,
-    checker_invoker.selected_mc_events
-  );
+    host_buffers.host_number_of_selected_events[0]);
+
+  checkKalmanTracks(start_event_offset, tracks, checker_invoker.selected_mc_events);
 #endif
 }
-                                             

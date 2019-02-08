@@ -4,13 +4,13 @@ std::vector<std::vector<uint32_t>> clustering(
   const std::vector<char>& geometry,
   const std::vector<char>& events,
   const std::vector<unsigned int>& event_offsets,
-  const bool assume_never_no_sp
-) {
+  const bool assume_never_no_sp)
+{
   std::vector<std::vector<uint32_t>> cluster_candidates;
-  std::vector<unsigned char> sp_patterns (256, 0);
-  std::vector<unsigned char> sp_sizes (256, 0);
-  std::vector<float> sp_fx (512, 0);
-  std::vector<float> sp_fy (512, 0);
+  std::vector<unsigned char> sp_patterns(256, 0);
+  std::vector<unsigned char> sp_sizes(256, 0);
+  std::vector<float> sp_fx(512, 0);
+  std::vector<float> sp_fy(512, 0);
 
   cache_sp_patterns(sp_patterns, sp_sizes, sp_fx, sp_fy);
 
@@ -19,28 +19,28 @@ std::vector<std::vector<uint32_t>> clustering(
   std::array<unsigned char, VP::NPixelsPerSensor> buffer {};
 
   // Typecast files and print them
-  VeloGeometry g (geometry);
-  for (size_t i=1; i<event_offsets.size(); ++i) {
+  VeloGeometry g(geometry);
+  for (size_t i = 1; i < event_offsets.size(); ++i) {
     std::vector<unsigned int> lhcb_ids;
 
-    VeloRawEvent e (events.data() + event_offsets[i-1]);
+    VeloRawEvent e(events.data() + event_offsets[i - 1]);
 
     auto total_sp_count = 0;
 
     unsigned int prev_size;
     unsigned int module_sp_count;
 
-    for (unsigned int raw_bank=0; raw_bank<e.number_of_raw_banks; ++raw_bank) {
+    for (unsigned int raw_bank = 0; raw_bank < e.number_of_raw_banks; ++raw_bank) {
       std::vector<uint32_t> pixel_idx;
 
       const auto velo_raw_bank = VeloRawBank(e.payload + e.raw_bank_offset[raw_bank]);
-      
+
       const unsigned int sensor = velo_raw_bank.sensor_index;
       const unsigned int module = sensor / Velo::Constants::n_sensors_per_module;
       const float* ltg = g.ltg + 16 * sensor;
 
       total_sp_count += velo_raw_bank.sp_count;
-      
+
       prev_size = lhcb_ids.size();
       if ((raw_bank % 4) == 0) {
         module_sp_count = 0;
@@ -48,13 +48,15 @@ std::vector<std::vector<uint32_t>> clustering(
 
       module_sp_count += velo_raw_bank.sp_count;
 
-      for (unsigned int j=0; j<velo_raw_bank.sp_count; ++j) {
+      for (unsigned int j = 0; j < velo_raw_bank.sp_count; ++j) {
         const uint32_t sp_word = *(velo_raw_bank.sp_word + j);
 
         uint8_t sp = sp_word & 0xFFU;
-        
+
         // protect against zero super pixels.
-        if (0 == sp) { continue; };
+        if (0 == sp) {
+          continue;
+        };
 
         const uint32_t sp_addr = (sp_word & 0x007FFF00U) >> 8;
         const uint32_t sp_row = sp_addr & 0x3FU;
@@ -116,7 +118,7 @@ std::vector<std::vector<uint32_t>> clustering(
             lhcb_ids.emplace_back(get_lhcb_id(cid));
           }
 
-          continue;  // move on to next super pixel
+          continue; // move on to next super pixel
         }
 
         // this one is not isolated or we are targeting clusters; record all
@@ -143,7 +145,7 @@ std::vector<std::vector<uint32_t>> clustering(
         const uint32_t idx = pixel_idx[irc];
         const uint8_t pixel = buffer[idx];
 
-        if (0 == pixel) continue;  // pixel is used in another cluster
+        if (0 == pixel) continue; // pixel is used in another cluster
 
         // 8-way row scan optimized seeded flood fill from here.
         std::vector<uint32_t> stack;
@@ -207,7 +209,8 @@ std::vector<std::vector<uint32_t>> clustering(
               x += c;
               y += row;
               ++n;
-            } else {
+            }
+            else {
               break;
             }
           }
@@ -232,11 +235,12 @@ std::vector<std::vector<uint32_t>> clustering(
               x += c;
               y += row;
               ++n;
-            } else {
+            }
+            else {
               break;
             }
           }
-        }  // while the stack is not empty
+        } // while the stack is not empty
 
         // we are done with this cluster, calculate
         // centroid pixel coordinate and fractions.

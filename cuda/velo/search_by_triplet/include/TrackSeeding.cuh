@@ -16,5 +16,4 @@ __device__ void track_seeding(
   Velo::TrackletHits* tracklets,
   uint* tracks_to_follow,
   unsigned short* h1_rel_indices,
-  uint* local_number_of_hits
-);
+  uint* local_number_of_hits);

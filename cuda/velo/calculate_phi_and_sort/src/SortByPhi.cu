@@ -13,8 +13,8 @@ __device__ void sort_by_phi(
   float* hit_Zs,
   uint* hit_IDs,
   int32_t* hit_temp,
-  uint* hit_permutations
-) {
+  uint* hit_permutations)
+{
   // Let's work with new pointers
   // Note: It is important we populate later on in strictly
   //       the same order, to not lose data
@@ -22,7 +22,7 @@ __device__ void sort_by_phi(
   float* new_hit_Ys = hit_Xs;
   float* new_hit_Zs = hit_Ys;
   uint* new_hit_IDs = (uint*) hit_Zs;
-  
+
   // Apply permutation across all arrays
   apply_permutation(hit_permutations, event_hit_start, event_number_of_hits, hit_Xs, new_hit_Xs);
   __syncthreads();

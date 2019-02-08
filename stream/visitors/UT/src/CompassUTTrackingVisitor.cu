@@ -23,7 +23,8 @@ void SequenceVisitor::visit<compass_ut_t>(
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)
 {
-  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(UT::Constants::num_thr_compassut), cuda_stream);
+  state.set_opts(
+    dim3(host_buffers.host_number_of_selected_events[0]), dim3(UT::Constants::num_thr_compassut), cuda_stream);
 
   state.set_arguments(
     arguments.offset<dev_ut_hits>(),
@@ -40,10 +41,10 @@ void SequenceVisitor::visit<compass_ut_t>(
     arguments.offset<dev_ut_tracks>(),
     arguments.offset<dev_atomics_ut>(),
     arguments.offset<dev_ut_windows_layers>(),
-    arguments.offset<dev_accepted_velo_tracks>()
-  );
+    arguments.offset<dev_accepted_velo_tracks>());
 
-  cudaCheck(cudaMemsetAsync(arguments.offset<dev_ut_active_tracks>(), 0, arguments.size<dev_ut_active_tracks>(), cuda_stream));
+  cudaCheck(
+    cudaMemsetAsync(arguments.offset<dev_ut_active_tracks>(), 0, arguments.size<dev_ut_active_tracks>(), cuda_stream));
   cudaCheck(cudaMemsetAsync(arguments.offset<dev_atomics_ut>(), 0, arguments.size<dev_atomics_ut>(), cuda_stream));
 
   state.invoke();

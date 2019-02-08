@@ -32,8 +32,8 @@ __device__ void process_modules(
   unsigned short* h1_rel_indices,
   uint* local_number_of_hits,
   const uint hit_offset,
-  const float* dev_velo_module_zs
-) {
+  const float* dev_velo_module_zs)
+{
   auto first_module = starting_module;
 
   // Prepare the first seeding iteration
@@ -63,8 +63,7 @@ __device__ void process_modules(
     tracklets,
     tracks_to_follow,
     h1_rel_indices,
-    local_number_of_hits
-  );
+    local_number_of_hits);
 
   // Prepare forwarding - seeding loop
   uint last_ttf = 0;
@@ -74,7 +73,7 @@ __device__ void process_modules(
 
     // Due to WAR between trackSeedingFirst and the code below
     __syncthreads();
-    
+
     // Iterate in modules
     // Load in shared
     if (threadIdx.x < 6) {
@@ -111,8 +110,7 @@ __device__ void process_modules(
       prev_ttf,
       tracklets,
       tracks,
-      number_of_hits
-    );
+      number_of_hits);
 
     // Due to ttf_insert_pointer
     __syncthreads();
@@ -132,8 +130,7 @@ __device__ void process_modules(
       tracklets,
       tracks_to_follow,
       h1_rel_indices,
-      local_number_of_hits
-    );
+      local_number_of_hits);
 
     first_module -= stride;
   }
@@ -146,7 +143,7 @@ __device__ void process_modules(
   const auto diff_ttf = last_ttf - prev_ttf;
 
   // Process the last bunch of track_to_follows
-  for (int i=0; i<(diff_ttf + blockDim.x - 1) / blockDim.x; ++i) {
+  for (int i = 0; i < (diff_ttf + blockDim.x - 1) / blockDim.x; ++i) {
     const auto ttf_element = blockDim.x * i + threadIdx.x;
 
     if (ttf_element < diff_ttf) {

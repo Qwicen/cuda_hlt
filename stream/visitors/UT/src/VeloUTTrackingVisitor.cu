@@ -36,8 +36,7 @@ void SequenceVisitor::visit<veloUT_t>(
     constants.dev_ut_dxDy,
     constants.dev_unique_x_sector_layer_offsets,
     constants.dev_unique_x_sector_offsets,
-    constants.dev_unique_sector_xs
-  );
+    constants.dev_unique_sector_xs);
 
   state.invoke();
 }

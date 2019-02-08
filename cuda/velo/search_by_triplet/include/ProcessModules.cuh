@@ -4,7 +4,7 @@
 #include <cassert>
 
 __device__ void process_modules(
-  Velo:: Module* module_data,
+  Velo::Module* module_data,
   float* shared_best_fits,
   const uint starting_module,
   const uint stride,
@@ -30,5 +30,4 @@ __device__ void process_modules(
   unsigned short* h1_rel_indices,
   uint* local_number_of_hits,
   const uint hit_offset,
-  const float* dev_velo_module_zs
-);
+  const float* dev_velo_module_zs);

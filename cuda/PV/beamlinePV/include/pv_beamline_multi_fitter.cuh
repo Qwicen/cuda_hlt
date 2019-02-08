@@ -21,7 +21,9 @@ __global__ void pv_beamline_multi_fitter(
   PV::Vertex* dev_multi_fit_vertices,
   uint* dev_number_of_multi_fit_vertices);
 
-ALGORITHM(pv_beamline_multi_fitter, pv_beamline_multi_fitter_t,
+ALGORITHM(
+  pv_beamline_multi_fitter,
+  pv_beamline_multi_fitter_t,
   ARGUMENTS(
     dev_atomics_velo,
     dev_velo_track_hit_number,

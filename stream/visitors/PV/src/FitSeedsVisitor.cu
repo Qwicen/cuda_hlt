@@ -9,11 +9,9 @@ void SequenceVisitor::set_arguments_size<pv_fit_seeds_t>(
   const HostBuffers& host_buffers)
 {
   // Set arguments size
-  arguments.set_size<dev_vertex>(PatPV::max_number_vertices * host_buffers.host_number_of_selected_events[0] );
-  arguments.set_size<dev_number_vertex>(host_buffers.host_number_of_selected_events[0] );
+  arguments.set_size<dev_vertex>(PatPV::max_number_vertices * host_buffers.host_number_of_selected_events[0]);
+  arguments.set_size<dev_number_vertex>(host_buffers.host_number_of_selected_events[0]);
 }
-
-
 
 template<>
 void SequenceVisitor::visit<pv_fit_seeds_t>(
@@ -26,7 +24,6 @@ void SequenceVisitor::visit<pv_fit_seeds_t>(
   cudaEvent_t& cuda_generic_event)
 {
 
-
   state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), 1, cuda_stream);
   state.set_arguments(
     arguments.offset<dev_vertex>(),
@@ -35,35 +32,22 @@ void SequenceVisitor::visit<pv_fit_seeds_t>(
     arguments.offset<dev_number_seeds>(),
     arguments.offset<dev_velo_kalman_beamline_states>(),
     arguments.offset<dev_atomics_velo>(),
-    arguments.offset<dev_velo_track_hit_number>()
-  );
-
+    arguments.offset<dev_velo_track_hit_number>());
 
   state.invoke();
 
-    // Retrieve result
+  // Retrieve result
   cudaCheck(cudaMemcpyAsync(
     host_buffers.host_reconstructed_pvs,
     arguments.offset<dev_vertex>(),
     arguments.size<dev_vertex>(),
     cudaMemcpyDeviceToHost,
-    cuda_stream
-  ));
+    cuda_stream));
 
-    cudaCheck(cudaMemcpyAsync(
+  cudaCheck(cudaMemcpyAsync(
     host_buffers.host_number_of_vertex,
     arguments.offset<dev_number_vertex>(),
     arguments.size<dev_number_vertex>(),
     cudaMemcpyDeviceToHost,
-    cuda_stream
-  ));
-
-
-
-
-
-
-    
+    cuda_stream));
 }
-
-

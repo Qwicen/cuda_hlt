@@ -42,60 +42,58 @@
 #ifndef GAUDI_SYSTEM_OF_UNITS_H
 #define GAUDI_SYSTEM_OF_UNITS_H
 
-namespace Gaudi
-{
-  namespace Units
-  {
+namespace Gaudi {
+  namespace Units {
 
     //
     // Length [L]
     //
-    constexpr float millimeter  = 1.;
+    constexpr float millimeter = 1.;
     constexpr float millimeter2 = millimeter * millimeter;
     constexpr float millimeter3 = millimeter * millimeter * millimeter;
 
-    constexpr float centimeter  = 10. * millimeter;
+    constexpr float centimeter = 10. * millimeter;
     constexpr float centimeter2 = centimeter * centimeter;
     constexpr float centimeter3 = centimeter * centimeter * centimeter;
 
-    constexpr float meter  = 1000. * millimeter;
+    constexpr float meter = 1000. * millimeter;
     constexpr float meter2 = meter * meter;
     constexpr float meter3 = meter * meter * meter;
 
-    constexpr float kilometer  = 1000. * meter;
+    constexpr float kilometer = 1000. * meter;
     constexpr float kilometer2 = kilometer * kilometer;
     constexpr float kilometer3 = kilometer * kilometer * kilometer;
 
     constexpr float parsec = 3.0856775807e+16 * meter;
 
     constexpr float micrometer = 1.e-6 * meter;
-    constexpr float nanometer  = 1.e-9 * meter;
-    constexpr float angstrom   = 1.e-10 * meter;
-    constexpr float fermi      = 1.e-15 * meter;
+    constexpr float nanometer = 1.e-9 * meter;
+    constexpr float angstrom = 1.e-10 * meter;
+    constexpr float fermi = 1.e-15 * meter;
 
-    constexpr float barn      = 1.e-28 * meter2;
+    constexpr float barn = 1.e-28 * meter2;
     constexpr float millibarn = 1.e-3 * barn;
     constexpr float microbarn = 1.e-6 * barn;
-    constexpr float nanobarn  = 1.e-9 * barn;
-    constexpr float picobarn  = 1.e-12 * barn;
+    constexpr float nanobarn = 1.e-9 * barn;
+    constexpr float picobarn = 1.e-12 * barn;
 
     // symbols
     constexpr float nm = nanometer;
     constexpr float um = micrometer;
 
-    constexpr float mm  = millimeter;
+    constexpr float mm = millimeter;
     constexpr float mm2 = millimeter2;
     constexpr float mm3 = millimeter3;
 
-    constexpr float cm  = centimeter;
+    constexpr float cm = centimeter;
     constexpr float cm2 = centimeter2;
     constexpr float cm3 = centimeter3;
 
-    constexpr float m  = meter;
+    constexpr float m = meter;
     constexpr float m2 = meter2;
     constexpr float m3 = meter3;
 
-    constexpr float km  = kilometer;
+    constexpr float km = kilometer;
     constexpr float km2 = kilometer2;
     constexpr float km3 = kilometer3;
 
@@ -104,49 +102,49 @@ namespace Gaudi
     //
     // Angle
     //
-    constexpr float radian      = 1.;
+    constexpr float radian = 1.;
     constexpr float milliradian = 1.e-3 * radian;
-    constexpr float degree      = ( 3.14159265358979323846f / 180.0f ) * radian;
+    constexpr float degree = (3.14159265358979323846f / 180.0f) * radian;
 
     constexpr float steradian = 1.;
 
     // symbols
-    constexpr float rad  = radian;
+    constexpr float rad = radian;
     constexpr float mrad = milliradian;
-    constexpr float sr   = steradian;
-    constexpr float deg  = degree;
+    constexpr float sr = steradian;
+    constexpr float deg = degree;
 
     //
     // Time [T]
     //
-    constexpr float nanosecond  = 1.;
-    constexpr float second      = 1.e+9 * nanosecond;
+    constexpr float nanosecond = 1.;
+    constexpr float second = 1.e+9 * nanosecond;
     constexpr float millisecond = 1.e-3 * second;
     constexpr float microsecond = 1.e-6 * second;
-    constexpr float picosecond  = 1.e-12 * second;
+    constexpr float picosecond = 1.e-12 * second;
     constexpr float femtosecond = 1.e-15 * second;
 
-    constexpr float hertz     = 1. / second;
+    constexpr float hertz = 1. / second;
     constexpr float kilohertz = 1.e+3 * hertz;
     constexpr float megahertz = 1.e+6 * hertz;
 
     // symbols
     constexpr float ns = nanosecond;
-    constexpr float s  = second;
+    constexpr float s = second;
     constexpr float ms = millisecond;
 
     //
     // Electric charge [Q]
     //
-    constexpr float eplus   = 1.;             // positron charge
-    constexpr float e_SI    = 1.60217733e-19; // positron charge in coulomb
-    constexpr float coulomb = eplus / e_SI;   // coulomb = 6.24150 e+18 * eplus
+    constexpr float eplus = 1.;             // positron charge
+    constexpr float e_SI = 1.60217733e-19;  // positron charge in coulomb
+    constexpr float coulomb = eplus / e_SI; // coulomb = 6.24150 e+18 * eplus
 
     //
     // Energy [E]
     //
     constexpr float megaelectronvolt = 1.;
-    constexpr float electronvolt     = 1.e-6 * megaelectronvolt;
+    constexpr float electronvolt = 1.e-6 * megaelectronvolt;
     constexpr float kiloelectronvolt = 1.e-3 * megaelectronvolt;
     constexpr float gigaelectronvolt = 1.e+3 * megaelectronvolt;
     constexpr float teraelectronvolt = 1.e+6 * megaelectronvolt;
@@ -156,7 +154,7 @@ namespace Gaudi
 
     // symbols
     constexpr float MeV = megaelectronvolt;
-    constexpr float eV  = electronvolt;
+    constexpr float eV = electronvolt;
     constexpr float keV = kiloelectronvolt;
     constexpr float GeV = gigaelectronvolt;
     constexpr float TeV = teraelectronvolt;
@@ -165,13 +163,13 @@ namespace Gaudi
     //
     // Mass [E][T^2][L^-2]
     //
-    constexpr float kilogram  = joule * second * second / ( meter * meter );
-    constexpr float gram      = 1.e-3 * kilogram;
+    constexpr float kilogram = joule * second * second / (meter * meter);
+    constexpr float gram = 1.e-3 * kilogram;
     constexpr float milligram = 1.e-3 * gram;
 
     // symbols
     constexpr float kg = kilogram;
-    constexpr float g  = gram;
+    constexpr float g = gram;
     constexpr float mg = milligram;
 
     //
@@ -187,24 +185,24 @@ namespace Gaudi
     //
     // Pressure [E][L^-3]
     //
-    constexpr float Pa         = newton / m2; // pascal = 6.24150 e+3 * MeV/mm3
-    constexpr float bar        = 100000 * Pa; // bar    = 6.24150 e+8 * MeV/mm3
+    constexpr float Pa = newton / m2;         // pascal = 6.24150 e+3 * MeV/mm3
+    constexpr float bar = 100000 * Pa;        // bar    = 6.24150 e+8 * MeV/mm3
     constexpr float atmosphere = 101325 * Pa; // atm    = 6.32420 e+8 * MeV/mm3
 
     //
     // Electric current [Q][T^-1]
     //
-    constexpr float ampere      = coulomb / second; // ampere = 6.24150 e+9 * eplus/ns
+    constexpr float ampere = coulomb / second; // ampere = 6.24150 e+9 * eplus/ns
     constexpr float milliampere = 1.e-3 * ampere;
     constexpr float microampere = 1.e-6 * ampere;
-    constexpr float nanoampere  = 1.e-9 * ampere;
+    constexpr float nanoampere = 1.e-9 * ampere;
 
     //
     // Electric potential [E][Q^-1]
     //
     constexpr float megavolt = megaelectronvolt / eplus;
     constexpr float kilovolt = 1.e-3 * megavolt;
-    constexpr float volt     = 1.e-6 * megavolt;
+    constexpr float volt = 1.e-6 * megavolt;
 
     //
     // Electric resistance [E][T][Q^-2]
@@ -214,11 +212,11 @@ namespace Gaudi
     //
     // Electric capacitance [Q^2][E^-1]
     //
-    constexpr float farad      = coulomb / volt; // farad = 6.24150e+24 * eplus/Megavolt
+    constexpr float farad = coulomb / volt; // farad = 6.24150e+24 * eplus/Megavolt
     constexpr float millifarad = 1.e-3 * farad;
     constexpr float microfarad = 1.e-6 * farad;
-    constexpr float nanofarad  = 1.e-9 * farad;
-    constexpr float picofarad  = 1.e-12 * farad;
+    constexpr float nanofarad = 1.e-9 * farad;
+    constexpr float picofarad = 1.e-12 * farad;
 
     //
     // Magnetic Flux [T][E][Q^-1]
@@ -230,7 +228,7 @@ namespace Gaudi
     //
     constexpr float tesla = volt * second / meter2; // tesla =0.001*megavolt*ns/mm2
 
-    constexpr float gauss     = 1.e-4 * tesla;
+    constexpr float gauss = 1.e-4 * tesla;
     constexpr float kilogauss = 1.e-1 * tesla;
 
     //
@@ -252,7 +250,7 @@ namespace Gaudi
     // Activity [T^-1]
     //
     constexpr float becquerel = 1. / second;
-    constexpr float curie     = 3.7e+10 * becquerel;
+    constexpr float curie = 3.7e+10 * becquerel;
 
     //
     // Absorbed dose [L^2][T^-2]
@@ -277,9 +275,9 @@ namespace Gaudi
     //
     // Miscellaneous
     //
-    constexpr float perCent     = 0.01;
+    constexpr float perCent = 0.01;
     constexpr float perThousand = 0.001;
-    constexpr float perMillion  = 0.000001;
+    constexpr float perMillion = 0.000001;
 
   } // namespace Units
 } // namespace Gaudi

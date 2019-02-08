@@ -10,8 +10,8 @@
 struct PVTrack {
   __host__ __device__ PVTrack() {}
   __host__ __device__ PVTrack(const VeloState& state, float dz) :
-    z {float(state.z + dz)}, x {float(state.x + dz * state.tx), float(state.y + dz * state.ty)},
-    tx {float(state.tx), float(state.ty)}
+    z {float(state.z + dz)}, x {float(state.x + dz * state.tx), float(state.y + dz * state.ty)}, tx {float(state.tx),
+                                                                                                     float(state.ty)}
   {
 
     float state_tmp_c00 = state.c00;
@@ -51,7 +51,6 @@ struct Cluster {
   __host__ __device__ Cluster() {};
 };
 
-
 // Need a small extension to the track when fitting the
 // vertex. Caching this information doesn't seem to help much
 // though.
@@ -86,7 +85,8 @@ struct PVTrackInVertex : PVTrack {
   float HW_11;
   float HW_20;
   float HW_21;
-  // HWH: ROOT::Math::Similarity(H,W), doing a similarity transformation of W, meaning the product of H_transposed * W * H
+  // HWH: ROOT::Math::Similarity(H,W), doing a similarity transformation of W, meaning the product of H_transposed * W *
+  // H
   float HWH_00;
   float HWH_20;
   float HWH_11;

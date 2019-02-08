@@ -16,7 +16,7 @@ struct CheckerInvoker {
   MCEvents mc_events;
   MCEvents selected_mc_events;
 
-  CheckerInvoker (
+  CheckerInvoker(
     const std::string& param_mc_folder,
     const uint param_start_event_offset,
     const uint* event_list,
@@ -24,10 +24,8 @@ struct CheckerInvoker {
     const uint param_number_of_selected_events,
     const bool param_check_events = false) :
     mc_folder(param_mc_folder),
-    start_event_offset(param_start_event_offset),
-    number_of_requested_events(param_number_of_requested_events),
-    number_of_selected_events(param_number_of_selected_events),
-      check_events(param_check_events)
+    start_event_offset(param_start_event_offset), number_of_requested_events(param_number_of_requested_events),
+    number_of_selected_events(param_number_of_selected_events), check_events(param_check_events)
   {
     const auto folder_contents = read_mc_folder();
 
@@ -35,7 +33,7 @@ struct CheckerInvoker {
     mc_events = std::get<1>(folder_contents);
 
     // events selected by global event cuts
-    for ( int i = 0; i < number_of_selected_events; i++ ) {
+    for (int i = 0; i < number_of_selected_events; i++) {
       const uint event = event_list[i];
       MCEvent mc_event = mc_events[event];
       selected_mc_events.push_back(mc_event);
@@ -45,14 +43,12 @@ struct CheckerInvoker {
   std::tuple<bool, MCEvents> read_mc_folder() const;
 
   template<typename T>
-  void check(
-    const uint start_event_offset,
-    const std::vector<trackChecker::Tracks>& tracks) const
+  void check(const uint start_event_offset, const std::vector<trackChecker::Tracks>& tracks) const
   {
     if (is_mc_folder_populated) {
       T trackChecker {};
 #ifdef WITH_ROOT
-      trackChecker.histos.initHistos(trackChecker.histo_categories() );
+      trackChecker.histos.initHistos(trackChecker.histo_categories());
 #endif
 
       for (int evnum = 0; evnum < selected_mc_events.size(); ++evnum) {
@@ -73,13 +69,12 @@ struct CheckerInvoker {
           bool containsDuplicates = (std::unique(std::begin(ids), std::end(ids))) != std::end(ids);
 
           if (containsDuplicates) {
-            warning_cout << "WARNING: Track #" << i_track << " contains duplicate LHCb IDs"
-              << std::endl << std::hex;
+            warning_cout << "WARNING: Track #" << i_track << " contains duplicate LHCb IDs" << std::endl << std::hex;
             for (auto id : ids) {
               warning_cout << "0x" << id << ", ";
             }
             warning_cout << std::endl << std::endl << std::dec;
-          } 
+          }
         }
       }
     }

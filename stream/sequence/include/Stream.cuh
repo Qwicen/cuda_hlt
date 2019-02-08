@@ -64,15 +64,9 @@ struct Stream {
     const uint param_start_event_offset,
     const size_t param_reserve_mb,
     const uint param_stream_number,
-    const Constants& param_constants
-  );
+    const Constants& param_constants);
 
-  void run_monte_carlo_test(
-    const std::string& mc_folder,
-    const uint number_of_events_requested
-  );
+  void run_monte_carlo_test(const std::string& mc_folder, const uint number_of_events_requested);
 
-  cudaError_t run_sequence(
-    const RuntimeOptions& runtime_options
-  );
+  cudaError_t run_sequence(const RuntimeOptions& runtime_options);
 };

@@ -19,8 +19,7 @@ __device__ void track_forwarding(
   const uint prev_ttf,
   Velo::TrackletHits* tracklets,
   Velo::TrackHits* tracks,
-  const uint number_of_hits
-);
+  const uint number_of_hits);
 
 /**
  * @brief Finds candidates in the specified module.
@@ -32,8 +31,8 @@ __device__ std::tuple<int, int> find_forward_candidates(
   const float ty,
   const float* hit_Phis,
   const Velo::HitBase& h0,
-  const T calculate_hit_phi
-) {
+  const T calculate_hit_phi)
+{
   const auto dz = module.z - h0.z;
   const auto predx = tx * dz;
   const auto predy = ty * dz;
@@ -43,11 +42,7 @@ __device__ std::tuple<int, int> find_forward_candidates(
 
   int first_candidate = -1, last_candidate = -1;
   first_candidate = binary_search_first_candidate(
-    hit_Phis + module.hitStart,
-    module.hitNums,
-    track_extrapolation_phi,
-    Velo::Tracking::forward_phi_tolerance
-  );
+    hit_Phis + module.hitStart, module.hitNums, track_extrapolation_phi, Velo::Tracking::forward_phi_tolerance);
 
   if (first_candidate != -1) {
     // Find last candidate
@@ -55,10 +50,9 @@ __device__ std::tuple<int, int> find_forward_candidates(
       hit_Phis + module.hitStart + first_candidate,
       module.hitNums - first_candidate,
       track_extrapolation_phi,
-      Velo::Tracking::forward_phi_tolerance
-    );
+      Velo::Tracking::forward_phi_tolerance);
     first_candidate += module.hitStart;
-    last_candidate = last_candidate==0 ? first_candidate+1 : first_candidate+last_candidate;
+    last_candidate = last_candidate == 0 ? first_candidate + 1 : first_candidate + last_candidate;
   }
 
   return {first_candidate, last_candidate};

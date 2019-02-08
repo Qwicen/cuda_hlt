@@ -29,7 +29,6 @@ void SequenceVisitor::visit<velo_fill_candidates_t>(
     arguments.offset<dev_estimated_input_size>(),
     arguments.offset<dev_module_cluster_num>(),
     arguments.offset<dev_h0_candidates>(),
-    arguments.offset<dev_h2_candidates>()
-  );
+    arguments.offset<dev_h2_candidates>());
   state.invoke();
 }

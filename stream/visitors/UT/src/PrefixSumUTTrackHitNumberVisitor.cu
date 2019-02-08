@@ -30,9 +30,7 @@ void SequenceVisitor::visit<prefix_sum_ut_track_hit_number_t>(
 
   // Set arguments: Array to prefix sum and auxiliary array
   state.set_arguments(
-    arguments.offset<dev_ut_track_hit_number>(),
-    arguments.offset<dev_prefix_sum_auxiliary_array_5>()
-  );
+    arguments.offset<dev_ut_track_hit_number>(), arguments.offset<dev_prefix_sum_auxiliary_array_5>());
 
   // Invoke all steps of prefix sum
   state.invoke();

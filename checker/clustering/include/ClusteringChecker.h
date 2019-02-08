@@ -16,5 +16,4 @@ void checkClustering(
   float& clone_fraction,
   float& ghost_fraction,
   const bool just_check_ids = true,
-  const float allowed_distance_error = 1.f
-);
+  const float allowed_distance_error = 1.f);

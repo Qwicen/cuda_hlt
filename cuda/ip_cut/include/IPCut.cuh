@@ -15,11 +15,12 @@ __global__ void ip_cut(
   char* dev_velo_pv_ip,
   bool* dev_accepted_velo_tracks);
 
-ALGORITHM(ip_cut, ip_cut_t,
+ALGORITHM(
+  ip_cut,
+  ip_cut_t,
   ARGUMENTS(
     dev_velo_kalman_beamline_states,
     dev_atomics_velo,
     dev_velo_track_hit_number,
     dev_velo_pv_ip,
-    dev_accepted_velo_tracks
-))
+    dev_accepted_velo_tracks))
