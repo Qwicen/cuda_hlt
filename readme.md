@@ -12,6 +12,7 @@ If you are working from a node with CVMFS and CentOS 7, we suggest the following
 ```shell
 source /cvmfs/lhcb.cern.ch/lib/lcg/releases/gcc/7.3.0/x86_64-centos7/setup.sh
 export PATH=/cvmfs/lhcb.cern.ch/lib/contrib/CMake/3.12.1/Linux-x86_64/bin/:$PATH
+export PATH=/usr/local/cuda/bin:$PATH
 ```
 
 Regardless of the OS you are running on, you can check your compiler versions as follows:
