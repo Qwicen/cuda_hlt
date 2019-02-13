@@ -24,12 +24,12 @@ namespace Muon {
       *  FOI_y = a_y + b_y * exp(-c_y * p)
       */
       const float factor = 1.2;
-      const float param_a_x[Constants::n_stations][Constants::n_regions];
-      const float param_a_y[Constants::n_stations][Constants::n_regions];
-      const float param_b_x[Constants::n_stations][Constants::n_regions];
-      const float param_b_y[Constants::n_stations][Constants::n_regions];
-      const float param_c_x[Constants::n_stations][Constants::n_regions];
-      const float param_c_y[Constants::n_stations][Constants::n_regions];
+      float param_a_x[Constants::n_stations][Constants::n_regions];
+      float param_a_y[Constants::n_stations][Constants::n_regions];
+      float param_b_x[Constants::n_stations][Constants::n_regions];
+      float param_b_y[Constants::n_stations][Constants::n_regions];
+      float param_c_x[Constants::n_stations][Constants::n_regions];
+      float param_c_y[Constants::n_stations][Constants::n_regions];
     };
   }
   /* SoA for hit variables

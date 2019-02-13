@@ -9,7 +9,7 @@ void SequenceVisitor::set_arguments_size<muon_catboost_features_extraction_t>(
   const HostBuffers& host_buffers)
 {
   arguments.set_size<dev_muon_catboost_features>(
-    constants.muon_catboost_n_features * host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
+    Muon::Constants::n_catboost_features * host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
 }
 
 template<>

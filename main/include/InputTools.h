@@ -39,3 +39,5 @@ void read_folder(
 void read_geometry(const std::string& foldername, std::vector<char>& geometry);
 
 void read_UT_magnet_tool(const std::string& folder_name, std::vector<char>& ut_magnet_tool);
+
+void read_muon_field_of_interest(std::vector<float>& foi_params, const std::string& filename);

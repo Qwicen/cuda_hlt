@@ -18,4 +18,4 @@ __global__ void muon_catboost_evaluator(
 ALGORITHM(
   muon_catboost_evaluator,
   muon_catboost_evaluator_t,
-  ARGUMENTS(dev_muon_catboost_features, dev_muon_catboost_output))
+  ARGUMENTS(dev_muon_catboost_features, dev_muon_catboost_output, dev_is_muon))

@@ -3,6 +3,8 @@
 #include "Handler.cuh"
 #include "MuonDefinitions.cuh"
 #include "MiniState.cuh"
+#include "ArgumentsSciFi.cuh"
+#include "ArgumentsMuon.cuh"
 
 __global__ void is_muon(
   int* dev_atomics_scifi,
