@@ -1,8 +1,8 @@
 #pragma once
 
-#include <stdio.h>
-#include <fstream>
 #include "Common.h"
+#include <fstream>
+#include <stdio.h>
 
 namespace ParKalmanFilter {
 

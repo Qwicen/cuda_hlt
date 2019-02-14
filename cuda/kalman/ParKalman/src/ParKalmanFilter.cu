@@ -80,6 +80,9 @@ namespace ParKalmanFilter {
     tI.m_ndofUT = n_ut_layers;
     tI.m_ndofV = 2 * n_velo_hits;
 
+    // Initialize the reference propogation matrix.
+    // tI.m_RefPropForwardTotal.SetElements(F_diag);
+
     // Run the fit.
     KalmanFloat lastz = -1.;
     Vector5 x;
@@ -92,6 +95,8 @@ namespace ParKalmanFilter {
 
     // Do a forward iteration.
     CreateVeloSeedState(velo_hits, n_velo_hits, 0, x, C, lastz, tI);
+    tI.m_chi2 = 0;
+    tI.m_chi2V = 0;
 
     //------------------------------ Start forward fit.
     // Velo loop.
@@ -101,6 +106,7 @@ namespace ParKalmanFilter {
       UpdateStateV(velo_hits, 1, n_velo_hits - 1 - i_hit, x, C, tI);
     }
     __syncthreads();
+    KalmanFloat endVeloZ = lastz;
 
     // Velo -> UT.
     PredictStateVUT(velo_hits, ut_hits, n_velo_hits, n_ut_layers, x, C, lastz, tI);
@@ -151,70 +157,16 @@ namespace ParKalmanFilter {
     __syncthreads();
     //------------------------------ End forward fit.
 
+    // Set state and covariance for VELO-only backward fit
     tI.m_BestMomEst = x[4];
-
-    // Reset covariance to reflect no information.
-    C(0, 0) = (KalmanFloat) 400;
-    C(0, 1) = 0;
-    C(0, 2) = 0;
-    C(0, 3) = 0;
-    C(0, 4) = 0;
-    C(1, 1) = (KalmanFloat) 400;
-    C(1, 2) = 0;
-    C(1, 3) = 0;
-    C(1, 4) = 0;
-    C(2, 2) = (KalmanFloat) 0.01;
-    C(2, 3) = 0;
-    C(2, 4) = 0;
-    C(3, 3) = (KalmanFloat) 0.01;
-    C(3, 4) = 0;
-    C(4, 4) = 25 * C(4, 4); // TODO: Check this (according to Simon's code).
-
-    tI.m_chi2 = 0;
-    tI.m_chi2T = 0;
+    tI.m_RefStateForwardV[4] = x[4];
+    x = tI.m_RefStateForwardV;
+    C = similarity_5_5(inverse(tI.m_RefPropForwardTotal), C);
+    lastz = endVeloZ;
 
     //------------------------------ Start backward fit.
-    // SciFi loop.
-    UpdateStateT(scifi_hits, -1, tI.m_PrevSciFiLayer, x, C, lastz, tI);
-    tI.m_PrevSciFiLayer = 11;
-    for (int i_hit = n_scifi_layers - 2; i_hit >= 0; i_hit--) {
-      tI.m_PrevSciFiLayer--;
-      PredictStateT(scifi_hits, tI.m_PrevSciFiLayer, x, C, lastz, tI);
-      while (tI.m_PrevSciFiLayer > 0 && tI.m_SciFiLayerIdxs[tI.m_PrevSciFiLayer] < 0) {
-        tI.m_PrevSciFiLayer--;
-        PredictStateT(scifi_hits, tI.m_PrevSciFiLayer, x, C, lastz, tI);
-      }
-      UpdateStateT(scifi_hits, -1, tI.m_PrevSciFiLayer, x, C, lastz, tI);
-    }
-    __syncthreads();
-
-    // SciFi -> UT.
-    PredictStateUTT(ut_hits, n_ut_layers, x, C, lastz, tI);
-    tI.m_PrevUTLayer = 3;
-    while (tI.m_PrevUTLayer > 0 && tI.m_UTLayerIdxs[tI.m_PrevUTLayer] < 0) {
-      tI.m_PrevUTLayer--;
-      PredictStateUT(ut_hits, tI.m_PrevUTLayer, x, C, lastz, tI);
-    }
-    __syncthreads();
-
-    // UT loop.
-    UpdateStateUT(ut_hits, tI.m_PrevUTLayer, x, C, lastz, tI);
-    for (int i_hit = n_ut_layers - 2; i_hit >= 0; i_hit--) {
-      tI.m_PrevUTLayer--;
-      PredictStateUT(ut_hits, tI.m_PrevUTLayer, x, C, lastz, tI);
-      while (tI.m_PrevUTLayer > 0 && tI.m_UTLayerIdxs[tI.m_PrevUTLayer] < 0) {
-        tI.m_PrevUTLayer--;
-        PredictStateUT(ut_hits, tI.m_PrevUTLayer, x, C, lastz, tI);
-      }
-      UpdateStateUT(ut_hits, tI.m_PrevUTLayer, x, C, lastz, tI);
-    }
-    __syncthreads();
-
-    // UT -> Velo.
-    PredictStateVUT(velo_hits, ut_hits, n_velo_hits, n_ut_layers, x, C, lastz, tI);
-    UpdateStateV(velo_hits, -1, 0, x, C, tI);
-
     // Velo loop.
+    UpdateStateV(velo_hits, -1, 0, x, C, tI);
     for (int i_hit = n_velo_hits - 2; i_hit >= 0; i_hit--) {
       PredictStateV(velo_hits, n_velo_hits - 1 - i_hit, x, C, lastz, tI);
       UpdateStateV(velo_hits, -1, n_velo_hits - 1 - i_hit, x, C, tI);
@@ -227,7 +179,8 @@ namespace ParKalmanFilter {
     zBest = lastz;
 
     // Straight line extrapolation to the closest point to the beamline.
-    // NOTE: Don't do this for now. It should be done automatically when calculating IP info.
+    // NOTE: Don't do this for now. The track is extrapolated again
+    // when calculating IP info anyway.
     // ExtrapolateToVertex(xBest, C, lastz);
 
     MakeTrack(velo_hits, n_velo_hits, ut_hits, n_ut_layers, scifi_hits, n_scifi_layers, xBest, CBest, zBest, tI, track);
