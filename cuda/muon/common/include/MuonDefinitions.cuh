@@ -1,3 +1,4 @@
+#include "SystemOfUnits.h"
 #pragma once
 
 namespace Muon {
@@ -19,7 +20,7 @@ namespace Muon {
     static constexpr uint n_catboost_features   = 5 * n_stations;
 
     /* IsMuon constants */
-    static constexpr float momentum_cuts[]      = {3000, 6000, 10000};
+    static constexpr float momentum_cuts[]      = {3 * Gaudi::Units::GeV, 6 * Gaudi::Units::GeV, 10 * Gaudi::Units::GeV};
     struct FieldOfInterest {
       /* FOI_x = a_x + b_x * exp(-c_x * p) 
       *  FOI_y = a_y + b_y * exp(-c_y * p)

@@ -17,23 +17,25 @@ __device__ std::pair<float,float> field_of_interest(
   const int region,
   const float momentum
 ) {
-  const float momentum_threshold = 1e6; 
-  if (momentum < momentum_threshold) {
-    
+  if (momentum < 1000 * Gaudi::Units::GeV) {
     return {
       elliptical_foi_window(
         dev_muon_foi->param_a_x[station][region], 
         dev_muon_foi->param_b_x[station][region], 
         dev_muon_foi->param_c_x[station][region],
         momentum),
-        elliptical_foi_window(
+      elliptical_foi_window(
         dev_muon_foi->param_a_y[station][region], 
         dev_muon_foi->param_b_y[station][region], 
         dev_muon_foi->param_c_y[station][region],
         momentum)
-      };
+    };
+  } else {
+    return {
+      dev_muon_foi->param_a_x[station][region],
+      dev_muon_foi->param_a_y[station][region]
+    };
   }
-  return { dev_muon_foi->param_a_x[station][region], dev_muon_foi->param_a_y[station][region] };
 }
 
 __device__ bool is_in_window(
