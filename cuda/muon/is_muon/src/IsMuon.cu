@@ -70,7 +70,7 @@ __global__ void is_muon(
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_id = blockIdx.x;
-  const uint station_id = blockIdx.y;
+  const uint station_id = threadIdx.y;
 
   SciFi::Consolidated::Tracks scifi_tracks {
       (uint*)dev_atomics_scifi,
@@ -113,7 +113,7 @@ __global__ void is_muon(
       }
     }
     __syncthreads();
-    if (blockIdx.y == 0) {
+    if (threadIdx.y == 0) {
       if (momentum < dev_muon_momentum_cuts[0]) {
         dev_is_muon[event_offset + track_id] = false;
       }
