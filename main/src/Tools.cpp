@@ -1,4 +1,5 @@
 #include "Tools.h"
+#include "Common.h"
 
 /**
  * @brief Obtains results statistics.
@@ -84,33 +85,39 @@ void read_muon_events_into_arrays(
         muon_station_hits[i_event].station_offsets[i_station - 1] +
         muon_station_hits[i_event].number_of_hits_per_station[i_station - 1];
     }
+    int n_hits_per_event = 0;
     for (int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station) {
       const int station_offset = muon_station_hits[i_event].station_offsets[i_station];
-      const int number_of_hits = muon_station_hits[i_event].number_of_hits_per_station[i_station];
-      std::copy_n((int*) raw_input, number_of_hits, &(muon_station_hits[i_event].tile[station_offset]));
-      raw_input += sizeof(int) * number_of_hits;
-      std::copy_n((float*) raw_input, number_of_hits, &(muon_station_hits[i_event].x[station_offset]));
-      raw_input += sizeof(float) * number_of_hits;
-      std::copy_n((float*) raw_input, number_of_hits, &(muon_station_hits[i_event].dx[station_offset]));
-      raw_input += sizeof(float) * number_of_hits;
-      std::copy_n((float*) raw_input, number_of_hits, &(muon_station_hits[i_event].y[station_offset]));
-      raw_input += sizeof(float) * number_of_hits;
-      std::copy_n((float*) raw_input, number_of_hits, &(muon_station_hits[i_event].dy[station_offset]));
-      raw_input += sizeof(float) * number_of_hits;
-      std::copy_n((float*) raw_input, number_of_hits, &(muon_station_hits[i_event].z[station_offset]));
-      raw_input += sizeof(float) * number_of_hits;
-      std::copy_n((float*) raw_input, number_of_hits, &(muon_station_hits[i_event].dz[station_offset]));
-      raw_input += sizeof(float) * number_of_hits;
-      std::copy_n((int*) raw_input, number_of_hits, &(muon_station_hits[i_event].uncrossed[station_offset]));
-      raw_input += sizeof(int) * number_of_hits;
-      std::copy_n((unsigned int*) raw_input, number_of_hits, &(muon_station_hits[i_event].time[station_offset]));
-      raw_input += sizeof(unsigned int) * number_of_hits;
-      std::copy_n((int*) raw_input, number_of_hits, &(muon_station_hits[i_event].delta_time[station_offset]));
-      raw_input += sizeof(int) * number_of_hits;
-      std::copy_n((int*) raw_input, number_of_hits, &(muon_station_hits[i_event].cluster_size[station_offset]));
-      raw_input += sizeof(int) * number_of_hits;
-      std::copy_n((int*) raw_input, number_of_hits, &( muon_station_hits[i_event].region_id[station_offset]) );
-      raw_input += sizeof(int) * number_of_hits;
+      const int n_hits_per_station = muon_station_hits[i_event].number_of_hits_per_station[i_station];
+      n_hits_per_event += n_hits_per_station;
+      if(n_hits_per_event > Muon::Constants::max_numhits_per_event) {
+        throw StrException("Read Muon Events: Number of hits exceeds maximum number of hits per event (" + 
+          std::to_string(Muon::Constants::max_numhits_per_event) + ")");
+      }
+      std::copy_n((int*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].tile[station_offset]));
+      raw_input += sizeof(int) * n_hits_per_station;
+      std::copy_n((float*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].x[station_offset]));
+      raw_input += sizeof(float) * n_hits_per_station;
+      std::copy_n((float*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].dx[station_offset]));
+      raw_input += sizeof(float) * n_hits_per_station;
+      std::copy_n((float*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].y[station_offset]));
+      raw_input += sizeof(float) * n_hits_per_station;
+      std::copy_n((float*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].dy[station_offset]));
+      raw_input += sizeof(float) * n_hits_per_station;
+      std::copy_n((float*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].z[station_offset]));
+      raw_input += sizeof(float) * n_hits_per_station;
+      std::copy_n((float*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].dz[station_offset]));
+      raw_input += sizeof(float) * n_hits_per_station;
+      std::copy_n((int*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].uncrossed[station_offset]));
+      raw_input += sizeof(int) * n_hits_per_station;
+      std::copy_n((unsigned int*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].time[station_offset]));
+      raw_input += sizeof(unsigned int) * n_hits_per_station;
+      std::copy_n((int*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].delta_time[station_offset]));
+      raw_input += sizeof(int) * n_hits_per_station;
+      std::copy_n((int*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].cluster_size[station_offset]));
+      raw_input += sizeof(int) * n_hits_per_station;
+      std::copy_n((int*) raw_input, n_hits_per_station, &( muon_station_hits[i_event].region_id[station_offset]) );
+      raw_input += sizeof(int) * n_hits_per_station;
     }
   }
 }
@@ -118,12 +125,12 @@ void check_muon_events(const Muon::HitsSoA* muon_station_hits, const int n_outpu
 {
   int total_number_of_hits = 0;
   for (int i_event = 0; i_event < n_events; ++i_event) {
-    float number_of_hits_per_event = 0;
+    float n_hits_per_event = 0;
     for (int i_station = 0; i_station < Muon::Constants::n_stations; ++i_station) {
       const int station_offset = muon_station_hits[i_event].station_offsets[i_station];
-      const int number_of_hits = muon_station_hits[i_event].number_of_hits_per_station[i_station];
-      number_of_hits_per_event += number_of_hits;
-      debug_cout << "checks on station " << i_station << ", with " << number_of_hits << " hits" << std::endl;
+      const int n_hits_per_station = muon_station_hits[i_event].number_of_hits_per_station[i_station];
+      n_hits_per_event += n_hits_per_station;
+      debug_cout << "checks on station " << i_station << ", with " << n_hits_per_station << " hits" << std::endl;
       for (int i_hit = 0; i_hit < n_output_hits_per_event; ++i_hit) {
         if (logger::ll.verbosityLevel >= logger::debug) {
           debug_cout << "\t at hit " << i_hit << ", " <<
@@ -143,8 +150,8 @@ void check_muon_events(const Muon::HitsSoA* muon_station_hits, const int n_outpu
         }
       }
     }
-    total_number_of_hits += number_of_hits_per_event;
-    debug_cout << "# of Muon hits = " << number_of_hits_per_event << std::endl;
+    total_number_of_hits += n_hits_per_event;
+    debug_cout << "# of Muon hits = " << n_hits_per_event << std::endl;
   }
   debug_cout << "average # of Muon hits / event = " << (float) total_number_of_hits / n_events << std::endl;
 }
