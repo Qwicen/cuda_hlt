@@ -35,7 +35,7 @@ void SequenceVisitor::visit<is_muon_t>(
   ));
 
   // Setup opts for kernel call
-  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0], Muon::Constants::n_stations), dim3(32), cuda_stream);
+  state.set_opts(dim3(host_buffers.host_number_of_selected_events[0]), dim3(32, Muon::Constants::n_stations), cuda_stream);
 
   // Setup arguments for kernel call
   state.set_arguments(

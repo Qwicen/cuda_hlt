@@ -17,23 +17,25 @@ __device__ std::pair<float,float> field_of_interest(
   const int region,
   const float momentum
 ) {
-  const float momentum_threshold = 1e6; 
-  if (momentum < momentum_threshold) {
-    
+  if (momentum < 1000 * Gaudi::Units::GeV) {
     return {
       elliptical_foi_window(
         dev_muon_foi->param_a_x[station][region], 
         dev_muon_foi->param_b_x[station][region], 
         dev_muon_foi->param_c_x[station][region],
         momentum),
-        elliptical_foi_window(
+      elliptical_foi_window(
         dev_muon_foi->param_a_y[station][region], 
         dev_muon_foi->param_b_y[station][region], 
         dev_muon_foi->param_c_y[station][region],
         momentum)
-      };
+    };
+  } else {
+    return {
+      dev_muon_foi->param_a_x[station][region],
+      dev_muon_foi->param_a_y[station][region]
+    };
   }
-  return { dev_muon_foi->param_a_x[station][region], dev_muon_foi->param_a_y[station][region] };
 }
 
 __device__ bool is_in_window(
@@ -68,7 +70,7 @@ __global__ void is_muon(
 ) {
   const uint number_of_events = gridDim.x;
   const uint event_id = blockIdx.x;
-  const uint station_id = blockIdx.y;
+  const uint station_id = threadIdx.y;
 
   SciFi::Consolidated::Tracks scifi_tracks {
       (uint*)dev_atomics_scifi,
@@ -111,7 +113,7 @@ __global__ void is_muon(
       }
     }
     __syncthreads();
-    if (blockIdx.y == 0) {
+    if (threadIdx.y == 0) {
       if (momentum < dev_muon_momentum_cuts[0]) {
         dev_is_muon[event_offset + track_id] = false;
       }
