@@ -60,6 +60,8 @@ struct HostBuffers {
 
   // Kalman
   ParKalmanFilter::FittedTrack* host_kf_tracks;
+  // Muon
+  float* host_muon_catboost_output;
 
   // Non pinned datatypes: CPU algorithms
   std::vector<SciFi::TrackHits> scifi_tracks_events;

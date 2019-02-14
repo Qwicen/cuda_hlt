@@ -27,6 +27,7 @@ namespace trackChecker {
     uint ndof, ndofV, ndofT;
     std::size_t n_matched_total = 0;
     float p;
+    float muon_catboost_output;
 
     void addId(LHCbID id) { allids.push_back(id); }
 

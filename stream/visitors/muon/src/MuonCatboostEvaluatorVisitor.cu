@@ -44,7 +44,7 @@ void SequenceVisitor::visit<muon_catboost_evaluator_t>(
     cuda_stream
   ));
   cudaCheck(cudaMemcpyAsync(
-    output.data(),
+    host_buffers.host_muon_catboost_output,
     arguments.offset<dev_muon_catboost_output>(),
     arguments.size<dev_muon_catboost_output>(),
     cudaMemcpyDeviceToHost,

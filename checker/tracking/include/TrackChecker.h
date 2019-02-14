@@ -113,12 +113,17 @@ protected:
     TH1D* h_total_nPV;
     TH2D* h_momentum_resolution;
     TH1D* h_momentum_matched;
+    TH1D* h_muon_catboost_output;
+    TH1D* h_muon_catboost_output_matched_muon;
+    TH1D* h_muon_catboost_output_matched_notMuon;
 #endif
     void initHistos(const std::vector<HistoCategory>& histo_categories);
     void fillReconstructibleHistos(const MCParticles& mcps, const HistoCategory& category);
     void fillReconstructedHistos(const MCParticle& mcp, HistoCategory& category);
     void fillTotalHistos(const MCParticle& mcp);
     void fillGhostHistos(const MCParticle& mcp);
+    void fillMuonIDHistos(const trackChecker::Track &track);
+    void fillMuonIDMatchedHistos(const trackChecker::Track &track, const MCParticle &mcp);
     void fillMomentumResolutionHisto(const MCParticle& mcp, const float p);
     void deleteHistos(const std::vector<HistoCategory>& histo_categories);
   };

@@ -144,7 +144,8 @@ __host__ __device__ bool selectStereoHits(
 
     //== Calculate  dy chi2 /ndf
     float meanDy = 0.;
-    assert(n_trackStereoHits < n_stereoHits);
+    //assert(n_trackStereoHits < n_stereoHits);
+    assert(n_trackStereoHits < SciFi::Tracking::max_stereo_hits);
     for (int i_hit = 0; i_hit < n_trackStereoHits; ++i_hit) {
       const int hit = trackStereoHits[i_hit];
       const float d = trackToHitDistance(track.trackParams, scifi_hits, hit) / scifi_hits.dxdy(hit);
@@ -172,7 +173,8 @@ __host__ __device__ bool selectStereoHits(
     track.trackParams[4] = bestYParams[0];
     track.trackParams[5] = bestYParams[1];
     track.trackParams[6] = bestYParams[2];
-    assert(n_bestStereoHits < n_stereoHits);
+    //assert(n_bestStereoHits < n_stereoHits);
+    assert(n_bestStereoHits < SciFi::Tracking::max_stereo_hits);
 
     for (int i_hit = 0; i_hit < n_bestStereoHits; ++i_hit) {
       int hit = bestStereoHits[i_hit];
