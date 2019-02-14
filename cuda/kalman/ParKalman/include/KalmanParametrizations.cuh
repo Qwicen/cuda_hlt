@@ -1,14 +1,11 @@
 #pragma once
 
-#include "ParKalmanMath.cuh"
-#include "ParKalmanDefinitions.cuh"
-#include "KalmanParametrizationsCoef.cuh"
 #include "Common.h"
+#include "KalmanParametrizationsCoef.cuh"
+#include "ParKalmanDefinitions.cuh"
+#include "ParKalmanMath.cuh"
 
-// Fingers crossed this works on host code.
-#include <stdio.h>
 #include <fstream>
-#include <string>
 #include <sstream>
 
 namespace ParKalmanFilter {

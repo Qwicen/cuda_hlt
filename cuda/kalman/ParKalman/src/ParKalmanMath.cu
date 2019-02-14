@@ -1,7 +1,7 @@
-#include <iostream>
-#include <fstream>
-#include <stdio.h>
 #include "ParKalmanMath.cuh"
+#include <fstream>
+#include <iostream>
+#include <stdio.h>
 
 namespace ParKalmanFilter {
 

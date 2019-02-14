@@ -1,7 +1,7 @@
-#include <iostream>
-#include <fstream>
-#include <string.h>
 #include "KalmanParametrizations.cuh"
+#include <fstream>
+#include <iostream>
+#include <string.h>
 
 namespace ParKalmanFilter {
 
