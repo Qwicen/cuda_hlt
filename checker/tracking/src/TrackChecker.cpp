@@ -178,7 +178,7 @@ void TrackChecker::Histos::initHistos(const std::vector<HistoCategory>& histo_ca
   h_total_nPV = new TH1D("nPV_Total", "nPV_Total", 21, -0.5, 20.5);
 
   // histo for momentum resolution
-  h_momentum_resolution = new TH2D("dp_vs_p", "dp vs. p", 10, 0, 100000., 1000, -5., 5.);
+  h_momentum_resolution = new TH2D("dp_vs_p", "dp vs. p", 100, 0, 100000., 1000, -10000., 10000.);
   h_momentum_matched = new TH1D("p_matched", "p, matched", 100, 0, 100000.);
 #endif
 }
@@ -273,7 +273,7 @@ void TrackChecker::Histos::fillGhostHistos(const MCParticle& mcp)
 void TrackChecker::Histos::fillMomentumResolutionHisto(const MCParticle& mcp, const float p)
 {
 #ifdef WITH_ROOT
-  h_momentum_resolution->Fill(mcp.p, (mcp.p - p) / mcp.p);
+  h_momentum_resolution->Fill(mcp.p, (mcp.p - p));
   h_momentum_matched->Fill(mcp.p);
 #endif
 }
