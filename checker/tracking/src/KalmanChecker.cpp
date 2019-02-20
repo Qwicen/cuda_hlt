@@ -87,8 +87,7 @@ void checkKalmanTracks(
       trk_ndof = (float) track.ndof;
       trk_ndofV = (float) track.ndofV;
       trk_ndofT = (float) track.ndofT;
-      float sint = std::sqrt((trk_tx * trk_tx + trk_ty * trk_ty) /
-                             (1. + trk_tx * trk_tx + trk_ty * trk_ty));
+      float sint = std::sqrt((trk_tx * trk_tx + trk_ty * trk_ty) / (1. + trk_tx * trk_tx + trk_ty * trk_ty));
       trk_best_pt = sint / std::abs(track.best_qop);
 #ifdef WITH_ROOT
       tree->Fill();
