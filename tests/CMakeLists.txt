@@ -1,4 +1,4 @@
-#add_subdirectory(muon_catboost)
+add_subdirectory(muon_catboost)
 add_subdirectory(muon_features_extraction)
 
 #include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})

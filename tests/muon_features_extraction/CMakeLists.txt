@@ -1,4 +1,8 @@
+include_directories(${CMAKE_SOURCE_DIR}/tests)
+include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
+include_directories(${CMAKE_SOURCE_DIR}/stream/setup/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/common/include)
+include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/preprocessing/include)
 
 set(NAME MuonFeaturesExtraction)
 set(TARGET_NAME ${NAME}.test)
