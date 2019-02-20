@@ -182,7 +182,7 @@ void TrackChecker::Histos::initHistos(const std::vector<HistoCategory>& histo_ca
 
   // histo for momentum resolution
   h_momentum_resolution = new TH2D("momentum_resolution", "momentum resolution", 10, 0, 100000., 1000, -5., 5.);
-  h_qop_resolution = new TH2D("qop_resolution", "qop resolution", 100, -0.2e-3, 0.2e-3, 1000, -5., 5.);
+  h_qop_resolution = new TH2D("qop_resolution", "qop resolution", 10, -0.2e-3, 0.2e-3, 1000, -5., 5.);
   h_dqop_versus_qop = new TH2D("dqop_vs_qop", "dqop vs. qop", 100, -0.2e-3, 0.2e-3, 100, -0.05e-3, 0.05e-3);
   h_dp_versus_p = new TH2D("dp_vs_p", "dp vs. p", 100, 0, 100000., 1000, -10000., 10000.);
   h_momentum_matched = new TH1D("p_matched", "p, matched", 100, 0, 100000.);
