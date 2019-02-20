@@ -11,7 +11,7 @@ SCENARIO("Compare output of vanila catboost evaluator and GPU evaluator")
 {
     GIVEN("Models & Batch of real data")
     {
-        NCatboostStandalone::TOwningEvaluator evaluator("../input/model.bin");
+        NCatboostStandalone::TOwningEvaluator evaluator("../input/muon/muon_catboost_model.bin");
         auto modelFloatFeatureCount = (size_t)evaluator.GetFloatFeatureCount();
 
         std::unique_ptr<CatboostModelReader> muon_catboost_model_reader;
