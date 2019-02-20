@@ -39,7 +39,10 @@ TrackChecker::~TrackChecker()
   if (m_trackerName == "VeloUT") dirName = "Upstream";
   TDirectory* trackerDir = f->mkdir(dirName.c_str());
   trackerDir->cd();
+  histos.h_dp_versus_p->Write();
   histos.h_momentum_resolution->Write();
+  histos.h_qop_resolution->Write();
+  histos.h_dqop_versus_qop->Write();
   histos.h_momentum_matched->Write();
   for (auto histo : histos.h_reconstructible_eta)
     histo.second->Write();
@@ -178,7 +181,10 @@ void TrackChecker::Histos::initHistos(const std::vector<HistoCategory>& histo_ca
   h_total_nPV = new TH1D("nPV_Total", "nPV_Total", 21, -0.5, 20.5);
 
   // histo for momentum resolution
-  h_momentum_resolution = new TH2D("dp_vs_p", "dp vs. p", 100, 0, 100000., 1000, -10000., 10000.);
+  h_momentum_resolution = new TH2D("momentum_resolution", "momentum resolution", 10, 0, 100000., 1000, -5., 5.);
+  h_qop_resolution = new TH2D("qop_resolution", "qop resolution", 100, -0.2e-3, 0.2e-3, 1000, -5., 5.);
+  h_dqop_versus_qop = new TH2D("dqop_vs_qop", "dqop vs. qop", 100, -0.2e-3, 0.2e-3, 100, -0.05e-3, 0.05e-3);
+  h_dp_versus_p = new TH2D("dp_vs_p", "dp vs. p", 100, 0, 100000., 1000, -10000., 10000.);
   h_momentum_matched = new TH1D("p_matched", "p, matched", 100, 0, 100000.);
 #endif
 }
@@ -211,7 +217,10 @@ void TrackChecker::Histos::deleteHistos(const std::vector<HistoCategory>& histo_
   }
   delete h_ghost_nPV;
   delete h_total_nPV;
+  delete h_dp_versus_p;
   delete h_momentum_resolution;
+  delete h_qop_resolution;
+  delete h_dqop_versus_qop;
   delete h_momentum_matched;
 #endif
 }
@@ -270,10 +279,21 @@ void TrackChecker::Histos::fillGhostHistos(const MCParticle& mcp)
 #endif
 }
 
-void TrackChecker::Histos::fillMomentumResolutionHisto(const MCParticle& mcp, const float p)
+void TrackChecker::Histos::fillMomentumResolutionHisto(const MCParticle& mcp, const float p, const float qop)
 {
 #ifdef WITH_ROOT
-  h_momentum_resolution->Fill(mcp.p, (mcp.p - p));
+  // get charge from PID: negatively charge leptons have positive PID,   
+  // negatively charged pi, p, K, B have negative PID   
+  float charge;
+  if (std::abs(mcp.pid) == 13 || std::abs(mcp.pid) == 11 || std::abs(mcp.pid) == 15)     
+    charge = -1. * std::copysign(1., mcp.pid);   
+  else     
+    charge = std::copysign(1., mcp.pid);
+  float mc_qop = charge / mcp.p;
+  h_dp_versus_p->Fill(mcp.p, (mcp.p - p));
+  h_momentum_resolution->Fill(mcp.p, (mcp.p - p) / mcp.p);
+  h_qop_resolution->Fill(mc_qop, (mc_qop - qop) / mc_qop);
+  h_dqop_versus_qop->Fill(mc_qop, mc_qop - qop);
   h_momentum_matched->Fill(mcp.p);
 #endif
 }
@@ -319,7 +339,7 @@ void TrackChecker::operator()(const trackChecker::Tracks& tracks, const MCAssoci
       histos.fillReconstructedHistos(mcp, histo_cat);
     }
     // fill histogram of momentum resolution
-    histos.fillMomentumResolutionHisto(mcp, track.p);
+    histos.fillMomentumResolutionHisto(mcp, track.p, track.qop);
   }
   // almost done, notify of end of event...
   ++m_nevents;
