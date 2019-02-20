@@ -25,6 +25,8 @@ include_directories(${CMAKE_SOURCE_DIR}/cuda/event_model/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/checker/tracking/include)
 include_directories(${CMAKE_SOURCE_DIR}/checker/pv/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/sequence/include)
+include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
+include_directories(${CMAKE_SOURCE_DIR}/stream/setup/include)
 include_directories(${CMAKE_SOURCE_DIR}/x86/SciFi/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/PrForward/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/SciFi/consolidate/include)
@@ -62,7 +64,8 @@ foreach(NAME IN LISTS UNIT_TEST_LIST)
   add_executable(${TARGET_NAME}
     main.cu
     ${NAME}.test.cpp
-    ${CB_SRC})
+    ${CB_SRC}
+    MuonCatboostKernel.cu)
 
   set_property(TARGET ${TARGET_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
   
@@ -73,6 +76,7 @@ foreach(NAME IN LISTS UNIT_TEST_LIST)
     TrackChecking
     PVChecking
     CheckClustering
+    x86Clustering
     )
   
   add_test(

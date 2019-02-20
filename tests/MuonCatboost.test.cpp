@@ -2,7 +2,8 @@
 #include "evaluator.h"
 #include "MuonDefinitions.cuh"
 #include "InputReader.h"
-//#include "Constants.cuh"
+#include "Constants.cuh"
+#include "MuonCatboostKernel.cuh"
 #include <iostream>
 #include <vector>
 
@@ -15,7 +16,16 @@ SCENARIO("Compare output of vanila catboost evaluator and GPU evaluator")
 
         std::unique_ptr<CatboostModelReader> muon_catboost_model_reader;
         muon_catboost_model_reader = std::make_unique<CatboostModelReader>("../input/muon/muon_catboost_model.json");
-        //Constants constants;
+        Constants constants;
+        constants.initialize_muon_catboost_model_constants(
+            muon_catboost_model_reader->n_features(),
+            muon_catboost_model_reader->n_trees(),
+            muon_catboost_model_reader->tree_depths(),
+            muon_catboost_model_reader->tree_offsets(),
+            muon_catboost_model_reader->leaf_values(),
+            muon_catboost_model_reader->leaf_offsets(),
+            muon_catboost_model_reader->split_border(),
+            muon_catboost_model_reader->split_feature());
 
         std::vector<std::vector<float>> features = {
             {2, 2, 1, 1, 5 , 3, 7 , 3,  1,  0, 7 , 3 , -1.0408108, -0.7461224, -0.75673074,	-0.8203014, -1.0784016,  -0.8081739,  -0.5914081, -0.4181551 },
@@ -25,39 +35,28 @@ SCENARIO("Compare output of vanila catboost evaluator and GPU evaluator")
             {2, 2, 1, 1, 8 , 7, 4 , 10, 4, -6, 4 , 10, -2.242363,  -2.5331066,  -2.6107218,	-2.6248055, -1.4353153,  -0.9037572,  -1.2505248, -0.9549604 }
         };
 
+        const int n_tracks = features.size();
+
         WHEN("Both models are evaluated")
         {
-            std::vector<float> output(features.size());
-            for (size_t i = 0; i < features.size(); ++i) {
-                output[i] = evaluator.Apply(features[i], NCatboostStandalone::EPredictionType::RawValue);
-                std::cout << output[i] << std::endl;
+            std::vector<float> output_vanila_cb(n_tracks);
+            std::vector<float> output_gpu_cb;
+
+            for (size_t i = 0; i < n_tracks; ++i) {
+                output_vanila_cb[i] = evaluator.Apply(features[i], NCatboostStandalone::EPredictionType::RawValue);
             }
 
+            output_gpu_cb = run_kernel(features, constants);
 
-            /*muon_catboost_evaluator<<<dim3(1), dim3(1)>>>(
-                dev_muon_catboost_features,
-                dev_muon_catboost_output,
-                dev_muon_catboost_leaf_values,
-                dev_muon_catboost_leaf_offsets,
-                dev_muon_catboost_split_borders,
-                dev_muon_catboost_split_features,
-                dev_muon_catboost_tree_sizes,
-                dev_muon_catboost_tree_offsets,
-                n_trees);
-
-            std::vector<float> output(host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
-            
-            cudaCheck(cudaMemcpyAsync(
-              output.data(),
-              arguments.offset<dev_muon_catboost_output>(),
-              arguments.size<dev_muon_catboost_output>(),
-              cudaMemcpyDeviceToHost,
-              cuda_stream));*/
-
-            THEN("Their output is close")
+            THEN("Their output is close (within 1e-5)")
             {
-                //output == ...
-                CHECK(5 == 5);
+                const float eps = 1e-5;
+                for (int i = 0; i < n_tracks; i++) {
+                    CHECK_THAT(
+                        output_vanila_cb[i],
+                        Catch::Matchers::WithinAbs(output_gpu_cb[i], eps)
+                    );
+                }
             }
         }
     }
