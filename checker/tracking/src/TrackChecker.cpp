@@ -282,12 +282,12 @@ void TrackChecker::Histos::fillGhostHistos(const MCParticle& mcp)
 void TrackChecker::Histos::fillMomentumResolutionHisto(const MCParticle& mcp, const float p, const float qop)
 {
 #ifdef WITH_ROOT
-  // get charge from PID: negatively charge leptons have positive PID,   
-  // negatively charged pi, p, K, B have negative PID   
+  // get charge from PID: negatively charge leptons have positive PID,
+  // negatively charged pi, p, K, B have negative PID
   float charge;
-  if (std::abs(mcp.pid) == 13 || std::abs(mcp.pid) == 11 || std::abs(mcp.pid) == 15)     
-    charge = -1. * std::copysign(1., mcp.pid);   
-  else     
+  if (std::abs(mcp.pid) == 13 || std::abs(mcp.pid) == 11 || std::abs(mcp.pid) == 15)
+    charge = -1. * std::copysign(1., mcp.pid);
+  else
     charge = std::copysign(1., mcp.pid);
   float mc_qop = charge / mcp.p;
   h_dp_versus_p->Fill(mcp.p, (mcp.p - p));
