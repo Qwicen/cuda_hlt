@@ -3,18 +3,19 @@ include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
 include_directories(${CMAKE_SOURCE_DIR}/stream/setup/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/IsMuon/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/standalone_evaluator)
 
 set(NAME MuonCatboost)
 set(TARGET_NAME ${NAME}.test)
 set(CB_SRC
-  ./standalone_evaluator/features_generated.h
-  ./standalone_evaluator/ctr_data_generated.h
-  ./standalone_evaluator/model_generated.h
-  ./standalone_evaluator/evaluator.cpp)
+  ${CMAKE_CURRENT_SOURCE_DIR}/standalone_evaluator/features_generated.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/standalone_evaluator/ctr_data_generated.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/standalone_evaluator/model_generated.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/standalone_evaluator/evaluator.cpp)
 
 add_executable(${TARGET_NAME}
     ../catch.cpp
-    ${NAME}.test.cu
+    ${NAME}.test.cpp
     ${CB_SRC}
     MuonCatboostKernel.cu)
 
