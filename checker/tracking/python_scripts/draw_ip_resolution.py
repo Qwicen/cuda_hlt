@@ -44,14 +44,12 @@ def makeGraph(tree, var, resFunc):
 
 
 if __name__ == '__main__':
-    plotInfo = [
-        ('ipx', 'kalman_ipx', 'velo_ipx', ipResFit, 'IP_{#it{x}}'),
-        ('ipy', 'kalman_ipy', 'velo_ipy', ipResFit, 'IP_{#it{y}}'),
-        ('ip3d', 'kalman_ip', 'velo_ip', ipRes3D, 'IP_{3D}')
-    ]
+    plotInfo = [('ipx', 'kalman_ipx', 'velo_ipx', ipResFit, 'IP_{#it{x}}'),
+                ('ipy', 'kalman_ipy', 'velo_ipy', ipResFit, 'IP_{#it{y}}'),
+                ('ip3d', 'kalman_ip', 'velo_ip', ipRes3D, 'IP_{3D}')]
     inFile = ROOT.TFile('../../../output/KalmanIPCheckerOutput.root')
     inTree = inFile.Get('kalman_ip_tree')
-    c1 = ROOT.TCanvas('c1','c1')
+    c1 = ROOT.TCanvas('c1', 'c1')
     latex = ROOT.TLatex()
     latex.SetNDC(True)
     latex.SetTextSize(0.05)
@@ -62,9 +60,9 @@ if __name__ == '__main__':
         fVelo = ROOT.TF1('fVelo', 'pol1', 0, 2)
         gKalman.Fit(fKalman, 'R')
         gVelo.Fit(fVelo, 'R')
-        gKalman.SetLineColor(ROOT.kCyan+1)
-        gKalman.SetMarkerColor(ROOT.kCyan+1)
-        fKalman.SetLineColor(ROOT.kCyan+1)
+        gKalman.SetLineColor(ROOT.kCyan + 1)
+        gKalman.SetMarkerColor(ROOT.kCyan + 1)
+        fKalman.SetLineColor(ROOT.kCyan + 1)
         gVelo.SetLineColor(ROOT.kBlack)
         gVelo.SetMarkerColor(ROOT.kBlack)
         fVelo.SetLineColor(ROOT.kBlack)
@@ -75,7 +73,7 @@ if __name__ == '__main__':
         mg.GetHistogram().GetXaxis().SetTitle('1/#it{p}_{T} [#it{c}/GeV]')
         mg.GetHistogram().GetYaxis().SetTitle(info[4] + ' resolution [#mum]')
         mg.GetHistogram().GetXaxis().SetRangeUser(edges[0], edges[-1])
-        mg.GetHistogram().GetYaxis().SetRangeUser(0,50)
+        mg.GetHistogram().GetYaxis().SetRangeUser(0, 50)
         fVelo.Draw('same')
         fKalman.Draw('same')
         legend = ROOT.TLegend(0.2, 0.92, 0.4, 0.77)
@@ -83,8 +81,16 @@ if __name__ == '__main__':
         legend.AddEntry(gKalman, 'Kalman')
         legend.SetFillStyle(0)
         legend.Draw('same')
-        txtVelo = '#sigma_{VELO} = ' + '({:2.1f}#pm{:2.1f}) + '.format(fVelo.GetParameter(0), fVelo.GetParError(0)) + '({:2.1f}#pm{:2.1f})'.format(fVelo.GetParameter(1), fVelo.GetParError(1)) + '/#it{p}_{T} #mum'
-        txtKalman = '#sigma_{Kalman} = ' + '({:2.1f}#pm{:2.1f}) + '.format(fKalman.GetParameter(0), fKalman.GetParError(0)) + '({:2.1f}#pm{:2.1f})'.format(fVelo.GetParameter(1), fVelo.GetParError(1)) + '/#it{p}_{T} #mum'
+        txtVelo = '#sigma_{VELO} = ' + '({:2.1f}#pm{:2.1f}) + '.format(
+            fVelo.GetParameter(0),
+            fVelo.GetParError(0)) + '({:2.1f}#pm{:2.1f})'.format(
+                fVelo.GetParameter(1),
+                fVelo.GetParError(1)) + '/#it{p}_{T} #mum'
+        txtKalman = '#sigma_{Kalman} = ' + '({:2.1f}#pm{:2.1f}) + '.format(
+            fKalman.GetParameter(0),
+            fKalman.GetParError(0)) + '({:2.1f}#pm{:2.1f})'.format(
+                fVelo.GetParameter(1),
+                fVelo.GetParError(1)) + '/#it{p}_{T} #mum'
         latex.DrawLatex(0.2, 0.28, txtVelo)
         latex.DrawLatex(0.2, 0.22, txtKalman)
         c1.SaveAs(info[0] + '_resolution.pdf')
