@@ -78,7 +78,7 @@ __global__ void ut_decode_raw_banks_in_order(
     const float p0Y = geometry.p0Y[idx_offset];
     const float p0Z = geometry.p0Z[idx_offset];
 
-    const float numstrips = (fracStrip / 4.f) + strip - firstStrip;
+    const float numstrips = 0.25f * fracStrip + strip - firstStrip;
 
     // Calculate values of the hit
     const float yBegin = p0Y + numstrips * dp0diY;
