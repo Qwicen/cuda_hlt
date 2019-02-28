@@ -15,6 +15,7 @@ void checkKalmanTracks(
   float trk_chi2, trk_chi2V, trk_chi2T;
   float trk_ndof, trk_ndofV, trk_ndofT;
   float trk_ghost;
+  float mcp_p;
 #ifdef WITH_ROOT
   TFile* outfile = new TFile("../output/KalmanIPCheckerOutput.root", "recreate");
   TTree* tree = new TTree("kalman_ip_tree", "kalman_ip_tree");
@@ -42,6 +43,7 @@ void checkKalmanTracks(
   tree->Branch("ndofV", &trk_ndofV);
   tree->Branch("ndofT", &trk_ndofT);
   tree->Branch("ghost", &trk_ghost);
+  tree->Branch("mcp_p", &mcp_p);
 #endif
 
   // Loop over events.
@@ -60,10 +62,14 @@ void checkKalmanTracks(
         trk_ghost = 1.;
       else {
         const auto weight = assoc.front().second;
-        if (weight < 0.7)
+        if (weight < 0.7) {
           trk_ghost = 1.;
-        else
+        }
+        else {
           trk_ghost = 0.;
+          const auto mcp = assoc.front().first;
+          mcp_p = mcp.p;
+        }
       }
       trk_z = track.z;
       trk_x = track.x;
