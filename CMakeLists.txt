@@ -71,7 +71,10 @@ else(USE_LZ4)
   set(LZ4_FOUND OFF)
 endif(USE_LZ4)
 
-option(USE_KALMAN_SINGLE_PRECISION OFF)
+# Set Kalman single precision.
+option(USE_KALMAN_SINGLE_PRECISION
+  "Use single precision in ParKalman"
+  ON)
 
 # find_package(CUDA REQUIRED)
 #set(CUDA_HOST_COMPILER "g++")

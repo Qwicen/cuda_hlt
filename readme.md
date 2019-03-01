@@ -12,6 +12,7 @@ If you are working from a node with CVMFS and CentOS 7, we suggest the following
 ```shell
 source /cvmfs/lhcb.cern.ch/lib/lcg/releases/gcc/7.3.0/x86_64-centos7/setup.sh
 export PATH=/cvmfs/lhcb.cern.ch/lib/contrib/CMake/3.12.1/Linux-x86_64/bin/:$PATH
+export PATH=/usr/local/cuda/bin:$PATH
 ```
 
 Regardless of the OS you are running on, you can check your compiler versions as follows:
@@ -60,7 +61,7 @@ The build process doesn't differ from standard cmake projects:
 
 There are some cmake options to configure the build process:
 
-* The sequence can be configured by specifying `-DSEQUENCE=<name_of_sequence>`. For a complete list of sequences available, check `configuration/sequences/`. Sequence names should be specified without the `.h`, ie. `-DSEQUENCE=VeloUT`.
+* The sequence can be configured by specifying `-DSEQUENCE=<name_of_sequence>`. For a complete list of sequences available, check `configuration/sequences/`. Sequence names should be specified without the `.h`, ie. `-DSEQUENCE=VeloPVUTSciFiDecoding`.
 * The build type can be specified to `RelWithDebInfo`, `Release` or `Debug`, e.g. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
 * If ROOT is available, it can be enabled to generate graphs by `-DUSE_ROOT=ON`
 * If more verbose build output from the CUDA toolchain is desired, specify `-DCUDA_VERBOSE_BUILD=ON`

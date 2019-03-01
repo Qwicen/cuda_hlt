@@ -210,7 +210,7 @@ __device__ std::tuple<int, int, int, int, int, int, int, int, int, int> calculat
 
     // Right-right group
     const int right2_group = sector_group + 2;
-    if (right2_group < last_sector_group_in_layer) {
+    if (right2_group < last_sector_group_in_layer - 2) {
       // We found a sector group with potentially compatible hits
       // Look for them
       const auto right2_group_candidates = find_candidates_in_sector_group(

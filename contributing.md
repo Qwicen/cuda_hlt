@@ -230,15 +230,15 @@ Reserve that host memory in `stream/sequence/src/HostBuffers.cu`:
 Finally, create a visitor for your newly created algorithm. Create a containing folder structure for it in `stream/visitors/test/src/`, and a new file inside named `SaxpyVisitor.cu`. Insert the following code inside:
 
 ```clike
-#include "StreamVisitor.cuh"
+#include "SequenceVisitor.cuh"
 #include "Saxpy.cuh"
 
 template<>
 void SequenceVisitor::set_arguments_size<saxpy_t>(
+  saxpy_t::arguments_t arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  const HostBuffers& host_buffers,
-  argument_manager_t& arguments)
+  const HostBuffers& host_buffers)
 {
   // Set arguments size
   int saxpy_N = 1<<20;
@@ -249,9 +249,9 @@ void SequenceVisitor::set_arguments_size<saxpy_t>(
 template<>
 void SequenceVisitor::visit<saxpy_t>(
   saxpy_t& state,
+  const saxpy_t::arguments_t& arguments,
   const RuntimeOptions& runtime_options,
   const Constants& constants,
-  argument_manager_t& arguments,
   HostBuffers& host_buffers,
   cudaStream_t& cuda_stream,
   cudaEvent_t& cuda_generic_event)

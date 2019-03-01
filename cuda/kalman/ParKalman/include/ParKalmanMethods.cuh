@@ -1,11 +1,11 @@
 #pragma once
 
-#include "ParKalmanMath.cuh"
-#include "ParKalmanDefinitions.cuh"
 #include "KalmanParametrizations.cuh"
-#include "VeloConsolidated.cuh"
-#include "UTConsolidated.cuh"
+#include "ParKalmanDefinitions.cuh"
+#include "ParKalmanMath.cuh"
 #include "SciFiConsolidated.cuh"
+#include "UTConsolidated.cuh"
+#include "VeloConsolidated.cuh"
 
 namespace ParKalmanFilter {
 
@@ -18,14 +18,10 @@ namespace ParKalmanFilter {
     const KalmanParametrizations* m_extr;
 
     // Jacobians.
-    Matrix5x5 m_RefPropForwardVUT;
-    Matrix5x5 m_RefPropForwardUTT;
+    Matrix5x5 m_RefPropForwardTotal;
 
     // Reference states.
     Vector5 m_RefStateForwardV;
-    Vector5 m_RefStateForwardFUT;
-    Vector5 m_RefStateForwardUT;
-    Vector5 m_RefStateForwardT;
 
     KalmanFloat m_BestMomEst;
     KalmanFloat m_FirstMomEst;
@@ -53,9 +49,6 @@ namespace ParKalmanFilter {
     // Keep track of the previous UT and T layers.
     uint m_PrevUTLayer;
     uint m_PrevSciFiLayer;
-
-    // Options.
-    bool m_do_smoother;
 
     __device__ __host__ trackInfo()
     {
@@ -86,7 +79,7 @@ __device__ void ExtrapolateInUT(
   Vector5& x,
   Matrix5x5& F,
   SymMatrix5x5& Q,
-  const trackInfo& tI);
+  trackInfo& tI);
 
 __device__ void ExtrapolateUTFUTDef(KalmanFloat& zFrom, Vector5& x, Matrix5x5& F, trackInfo& tI);
 

@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include "KalmanParametrizationsCoef.cuh"
+#include <stdio.h>
 
 namespace ParKalmanFilter {
 

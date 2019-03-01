@@ -1,13 +1,13 @@
 #pragma once
 
+#include "KalmanParametrizations.cuh"
+#include "ParKalmanDefinitions.cuh"
 #include "ParKalmanMath.cuh"
 #include "ParKalmanMethods.cuh"
-#include "ParKalmanDefinitions.cuh"
-#include "KalmanParametrizations.cuh"
 
-#include "VeloConsolidated.cuh"
-#include "UTConsolidated.cuh"
 #include "SciFiConsolidated.cuh"
+#include "UTConsolidated.cuh"
+#include "VeloConsolidated.cuh"
 
 #include "MiniState.cuh"
 #include "SciFiDefinitions.cuh"

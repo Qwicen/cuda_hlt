@@ -78,14 +78,14 @@ __global__ void ut_decode_raw_banks_in_order(
     const float p0Y = geometry.p0Y[idx_offset];
     const float p0Z = geometry.p0Z[idx_offset];
 
-    const float numstrips = (fracStrip / 4.f) + strip - firstStrip;
+    const float numstrips = 0.25f * fracStrip + strip - firstStrip;
 
     // Calculate values of the hit
     const float yBegin = p0Y + numstrips * dp0diY;
     const float yEnd = dy + yBegin;
     const float zAtYEq0 = p0Z + numstrips * dp0diZ;
     const float xAtYEq0 = p0X + numstrips * dp0diX;
-    const float weight = 1.f / (pitch * pitch);
+    const float weight = 12.f / (pitch * pitch);
     // const uint32_t highThreshold = threshold;
     const uint32_t LHCbID = chanID + strip;
     // const uint32_t planeCode = 2 * station + (layer & 1);

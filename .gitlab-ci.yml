@@ -1,0 +1,20 @@
+variables:
+  TARGET_BRANCH: master
+
+check-formatting:
+  image: debian:testing
+  script:
+    - apt update && apt install -y clang-format-7 python-pip git curl
+    - pip install yapf==0.24.0 whichcraft
+    - if [ ! -e .clang-format ] ; then
+    -   curl -o .clang-format "https://gitlab.cern.ch/lhcb-core/LbDevTools/raw/master/LbDevTools/data/default.clang-format?inline=false"
+    -   echo '.clang-format' >> .gitignore
+    -   git add .gitignore
+    - fi
+    - curl -o lb-format "https://gitlab.cern.ch/lhcb-core/LbDevTools/raw/master/LbDevTools/SourceTools.py?inline=false"
+    - python lb-format --format-patch apply-formatting.patch origin/${TARGET_BRANCH}
+  artifacts:
+    paths:
+      - apply-formatting.patch
+    when: on_failure
+    expire_in: 1 week

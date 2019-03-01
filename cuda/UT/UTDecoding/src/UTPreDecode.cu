@@ -65,7 +65,7 @@ __global__ void ut_pre_decode(
       const float dp0diY = geometry.dp0diY[idx_offset];
       const float p0Y = geometry.p0Y[idx_offset];
 
-      const float numstrips = (fracStrip / 4.f) + strip - firstStrip;
+      const float numstrips = 0.25f * fracStrip + strip - firstStrip;
 
       // Make a composed value made out of:
       // (first 16 bits of yBegin) | (first 16 bits of xAtYEq0_local)
