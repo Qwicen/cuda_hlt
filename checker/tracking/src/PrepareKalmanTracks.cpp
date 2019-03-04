@@ -105,7 +105,7 @@ float ipChi2Velo(const Velo::Consolidated::States& velo_kalman_states, const uin
   float cov11 = vertex.cov11 + velo_kalman_states.c11[state_index];
 
   // add the contribution from the extrapolation
-  cov00 += dz * dz * velo_kalman_states.c22[state_index] + 2 * dz * velo_kalman_states.c20[state_index];
+  cov00 += dz * dz * velo_kalman_states.c22[state_index] + 2 * std::abs(dz * velo_kalman_states.c20[state_index]);
   // cov10 is unchanged: state c32, c30 and c21 are  0.f
   cov11 += dz * dz * velo_kalman_states.c33[state_index] + 2 * dz * velo_kalman_states.c31[state_index];
 
