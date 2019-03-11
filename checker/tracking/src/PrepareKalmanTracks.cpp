@@ -61,6 +61,16 @@ float ipChi2Kalman(const ParKalmanFilter::FittedTrack& track, const PV::Vertex& 
   return dx * dx * invcov00 + 2 * dx * dy * invcov10 + dy * dy * invcov11;
 }
 
+float kalmanDOCAz(const ParKalmanFilter::FittedTrack& track, const PV::Vertex& vertex)
+{
+  float dx = track.state[0] - vertex.position.x;
+  float dy = track.state[1] - vertex.position.y;
+  float dz = track.z;
+  float tx = track.state[2];
+  float ty = track.state[3];
+  return std::abs(ty * dx - tx * dy) / std::sqrt(tx * tx + ty * ty);
+}
+
 float ipVelo(const Velo::Consolidated::States& velo_kalman_states, const uint state_index, const PV::Vertex& vertex)
 {
   // ORIGIN: Rec/Tr/TrackKernel/src/TrackVertexUtils.cpp
@@ -121,6 +131,16 @@ float ipChi2Velo(const Velo::Consolidated::States& velo_kalman_states, const uin
   float invcov11 = cov00 / D;
 
   return dx * dx * invcov00 + 2 * dx * dy * invcov10 + dy * dy * invcov11;
+}
+
+float veloDOCAz(const Velo::Consolidated::States& velo_kalman_states, const uint state_index, const PV::Vertex& vertex)
+{
+  float dx = velo_kalman_states.x[state_index] - vertex.position.x;
+  float dy = velo_kalman_states.y[state_index] - vertex.position.y;
+  float dz = velo_kalman_states.z[state_index];
+  float tx = velo_kalman_states.tx[state_index];
+  float ty = velo_kalman_states.ty[state_index];
+  return std::abs(ty * dx - tx * dy) / std::sqrt(tx * tx + ty * ty);
 }
 
 std::vector<trackChecker::Tracks> prepareKalmanTracks(
@@ -223,6 +243,7 @@ std::vector<trackChecker::Tracks> prepareKalmanTracks(
           t.kalman_ip_chi2 = locIPChi2;
           t.kalman_ipx = ipxKalman(track, *vertex);
           t.kalman_ipy = ipyKalman(track, *vertex);
+          t.kalman_docaz = kalmanDOCAz(track, *vertex);
         }
         locIPChi2 = ipChi2Velo(velo_states, event_velo_tracks_offset + velo_track_index, *vertex);
         if (locIPChi2 < t.velo_ip_chi2) {
@@ -230,6 +251,7 @@ std::vector<trackChecker::Tracks> prepareKalmanTracks(
           t.velo_ip_chi2 = locIPChi2;
           t.velo_ipx = ipxVelo(velo_states, event_velo_tracks_offset + velo_track_index, *vertex);
           t.velo_ipy = ipyVelo(velo_states, event_velo_tracks_offset + velo_track_index, *vertex);
+          t.velo_docaz = veloDOCAz(velo_states, event_velo_tracks_offset + velo_track_index, *vertex);
         }
       }
 

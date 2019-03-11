@@ -11,7 +11,9 @@ void checkKalmanTracks(
   float trk_z, trk_x, trk_y, trk_tx, trk_ty, trk_qop;
   float trk_first_qop, trk_best_qop, trk_best_pt;
   float trk_kalman_ip, trk_kalman_ipx, trk_kalman_ipy, trk_kalman_ip_chi2;
+  float trk_kalman_docaz;
   float trk_velo_ip, trk_velo_ipx, trk_velo_ipy, trk_velo_ip_chi2;
+  float trk_velo_docaz;
   float trk_chi2, trk_chi2V, trk_chi2T;
   float trk_ndof, trk_ndofV, trk_ndofT;
   float trk_ghost;
@@ -32,10 +34,12 @@ void checkKalmanTracks(
   tree->Branch("kalman_ipx", &trk_kalman_ipx);
   tree->Branch("kalman_ipy", &trk_kalman_ipy);
   tree->Branch("kalman_ip_chi2", &trk_kalman_ip_chi2);
+  tree->Branch("kalman_docaz", &trk_kalman_docaz);
   tree->Branch("velo_ip", &trk_velo_ip);
   tree->Branch("velo_ipx", &trk_velo_ipx);
   tree->Branch("velo_ipy", &trk_velo_ipy);
   tree->Branch("velo_ip_chi2", &trk_velo_ip_chi2);
+  tree->Branch("velo_docaz", &trk_velo_docaz);
   tree->Branch("chi2", &trk_chi2);
   tree->Branch("chi2V", &trk_chi2V);
   tree->Branch("chi2T", &trk_chi2T);
@@ -83,10 +87,12 @@ void checkKalmanTracks(
       trk_kalman_ipx = track.kalman_ipx;
       trk_kalman_ipy = track.kalman_ipy;
       trk_kalman_ip_chi2 = track.kalman_ip_chi2;
+      trk_kalman_docaz = track.kalman_docaz;
       trk_velo_ip = track.velo_ip;
       trk_velo_ipx = track.velo_ipx;
       trk_velo_ipy = track.velo_ipy;
       trk_velo_ip_chi2 = track.velo_ip_chi2;
+      trk_velo_docaz = track.velo_docaz;
       trk_chi2 = track.chi2;
       trk_chi2V = track.chi2V;
       trk_chi2T = track.chi2T;
