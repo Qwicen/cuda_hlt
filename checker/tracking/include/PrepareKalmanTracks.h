@@ -13,6 +13,26 @@
 #include "UTConsolidated.cuh"
 #include "SciFiConsolidated.cuh"
 #include "ParKalmanDefinitions.cuh"
+#include "ParKalmanMath.cuh"
+#include "PV_Definitions.cuh"
+#include "patPV_Definitions.cuh"
+
+// Kalman tracks.
+float ipKalman(const ParKalmanFilter::FittedTrack& track, const PV::Vertex& vertex);
+float ipxKalman(const ParKalmanFilter::FittedTrack& track, const PV::Vertex& vertex);
+float ipyKalman(const ParKalmanFilter::FittedTrack& track, const PV::Vertex& vertex);
+float ipChi2Kalman(const ParKalmanFilter::FittedTrack& track, const PV::Vertex& vertex);
+float kalmanDOCAz(const ParKalmanFilter::FittedTrack& track, const PV::Vertex& vertex);
+
+// Velo tracks.
+float ipVelo(const Velo::Consolidated::States& velo_kalman_states, const uint state_index, const PV::Vertex& vertex);
+float ipxVelo(const Velo::Consolidated::States& velo_kalman_states, const uint state_index, const PV::Vertex& vertex);
+float ipyVelo(const Velo::Consolidated::States& velo_kalman_states, const uint state_index, const PV::Vertex& vertex);
+float ipChi2Velo(
+  const Velo::Consolidated::States& velo_kalman_states,
+  const uint state_index,
+  const PV::Vertex& vertex);
+float veloDOCAz(const Velo::Consolidated::States& velo_kalman_states, const uint state_index, const PV::Vertex& vertex);
 
 std::vector<trackChecker::Tracks> prepareKalmanTracks(
   const uint* velo_track_atomics,
@@ -32,4 +52,7 @@ std::vector<trackChecker::Tracks> prepareKalmanTracks(
   const char* scifi_geometry,
   const std::array<float, 9>& inv_clus_res,
   const ParKalmanFilter::FittedTrack* kf_tracks,
+  char* velo_states_base,
+  PV::Vertex* rec_vertex,
+  const int* number_of_vertex,
   const uint number_of_events);
