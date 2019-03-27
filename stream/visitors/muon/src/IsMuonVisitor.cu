@@ -51,6 +51,8 @@ void SequenceVisitor::visit<is_muon_t>(
     constants.dev_muon_momentum_cuts
   );
 
+  debug_cout << "Calling is_muon kernel" << std::endl;
+
   // Kernel call
   state.invoke();
 }

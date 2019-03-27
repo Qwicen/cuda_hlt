@@ -93,6 +93,7 @@ __global__ void is_muon(
     const float extrapolation_x = scifi_tracks.states[track_id].x + scifi_tracks.states[track_id].tx * (station_z - scifi_tracks.states[track_id].z);
     const float extrapolation_y = scifi_tracks.states[track_id].y + scifi_tracks.states[track_id].ty * (station_z - scifi_tracks.states[track_id].z);
     const uint track_offset = (event_offset + track_id) * Muon::Constants::n_stations;
+    //printf("Track %u, station %u, p = %f, extrap x = %f, extrap y = %f \n", track_id, station_id, momentum, extrapolation_x, extrapolation_y);
     
     dev_muon_track_occupancies[track_offset + station_id] = 0;
     for (int i_hit = 0; i_hit < number_of_hits; ++i_hit) {
@@ -116,12 +117,15 @@ __global__ void is_muon(
     if (threadIdx.y == 0) {
       if (momentum < dev_muon_momentum_cuts[0]) {
         dev_is_muon[event_offset + track_id] = false;
+        printf("not muon: P = %f < %f \n", momentum, dev_muon_momentum_cuts[0]);
       }
       else if (dev_muon_track_occupancies[track_offset + 0] == 0 || dev_muon_track_occupancies[track_offset + 1] == 0) {
         dev_is_muon[event_offset + track_id] = false;
+        printf("not muon: no matched hits in stations 0 and 1 \n");
       }
       else if (momentum < dev_muon_momentum_cuts[1]) {
         dev_is_muon[event_offset + track_id] = true;
+        printf("isMuon is true \n");
       }
       else if (momentum < dev_muon_momentum_cuts[2]) {
         dev_is_muon[event_offset + track_id] =
