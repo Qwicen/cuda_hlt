@@ -317,12 +317,12 @@ __device__ void save_track(
   }
   bdl += addBdlVal;
 
-  const float qpxz2p = -1 * std::sqrt(1.0f + velo_state.ty * velo_state.ty) / bdl * 3.3356f / Gaudi::Units::GeV;
+  const float qpxz2p = -1.f * std::sqrt(1.0f + velo_state.ty * velo_state.ty) / bdl * 3.3356f / Gaudi::Units::GeV;
   const float qop = (std::abs(bdl) < 1.e-8f) ? 0.0f : best_params.qp * qpxz2p;
 
   // -- Don't make tracks that have grossly too low momentum
   // -- Beware of the momentum resolution!
-  const float p = 1.3f * std::abs(1 / qop);
+  const float p = 1.3f * std::abs(1.f / qop);
   const float pt = p * std::sqrt(velo_state.tx * velo_state.tx + velo_state.ty * velo_state.ty);
 
   if (p < UT::Constants::minMomentum || pt < UT::Constants::minPT) return;

@@ -111,7 +111,10 @@ protected:
 
     TH1D* h_ghost_nPV;
     TH1D* h_total_nPV;
+    TH2D* h_dp_versus_p;
     TH2D* h_momentum_resolution;
+    TH2D* h_qop_resolution;
+    TH2D* h_dqop_versus_qop;
     TH1D* h_momentum_matched;
 #endif
     void initHistos(const std::vector<HistoCategory>& histo_categories);
@@ -119,7 +122,7 @@ protected:
     void fillReconstructedHistos(const MCParticle& mcp, HistoCategory& category);
     void fillTotalHistos(const MCParticle& mcp);
     void fillGhostHistos(const MCParticle& mcp);
-    void fillMomentumResolutionHisto(const MCParticle& mcp, const float p);
+    void fillMomentumResolutionHisto(const MCParticle& mcp, const float p, const float qop);
     void deleteHistos(const std::vector<HistoCategory>& histo_categories);
   };
 
