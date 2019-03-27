@@ -1,4 +1,5 @@
 include_directories(${CMAKE_SOURCE_DIR}/stream/gear/include)
+include_directories(${CMAKE_SOURCE_DIR}/stream/setup/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/common/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/preprocessing/include)
 include_directories(${CMAKE_SOURCE_DIR}/cuda/muon/IsMuon/include)
