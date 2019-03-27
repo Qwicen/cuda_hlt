@@ -9,18 +9,37 @@ void checkKalmanTracks(
 
   // Setup the TTree.
   float trk_z, trk_x, trk_y, trk_tx, trk_ty, trk_qop;
+  float trk_first_qop, trk_best_qop, trk_best_pt;
+  float trk_kalman_ip, trk_kalman_ipx, trk_kalman_ipy, trk_kalman_ip_chi2;
+  float trk_kalman_docaz;
+  float trk_velo_ip, trk_velo_ipx, trk_velo_ipy, trk_velo_ip_chi2;
+  float trk_velo_docaz;
   float trk_chi2, trk_chi2V, trk_chi2T;
   float trk_ndof, trk_ndofV, trk_ndofT;
   float trk_ghost;
+  float mcp_p;
 #ifdef WITH_ROOT
-  TFile* outfile = new TFile("../output/KalmanChecker.root", "recreate");
-  TTree* tree = new TTree("kf_tree", "kf_tree");
+  TFile* outfile = new TFile("../output/KalmanIPCheckerOutput.root", "recreate");
+  TTree* tree = new TTree("kalman_ip_tree", "kalman_ip_tree");
   tree->Branch("z", &trk_z);
   tree->Branch("x", &trk_x);
   tree->Branch("y", &trk_y);
   tree->Branch("tx", &trk_tx);
   tree->Branch("ty", &trk_ty);
   tree->Branch("qop", &trk_qop);
+  tree->Branch("first_qop", &trk_first_qop);
+  tree->Branch("best_qop", &trk_best_qop);
+  tree->Branch("best_pt", &trk_best_pt);
+  tree->Branch("kalman_ip", &trk_kalman_ip);
+  tree->Branch("kalman_ipx", &trk_kalman_ipx);
+  tree->Branch("kalman_ipy", &trk_kalman_ipy);
+  tree->Branch("kalman_ip_chi2", &trk_kalman_ip_chi2);
+  tree->Branch("kalman_docaz", &trk_kalman_docaz);
+  tree->Branch("velo_ip", &trk_velo_ip);
+  tree->Branch("velo_ipx", &trk_velo_ipx);
+  tree->Branch("velo_ipy", &trk_velo_ipy);
+  tree->Branch("velo_ip_chi2", &trk_velo_ip_chi2);
+  tree->Branch("velo_docaz", &trk_velo_docaz);
   tree->Branch("chi2", &trk_chi2);
   tree->Branch("chi2V", &trk_chi2V);
   tree->Branch("chi2T", &trk_chi2T);
@@ -28,6 +47,7 @@ void checkKalmanTracks(
   tree->Branch("ndofV", &trk_ndofV);
   tree->Branch("ndofT", &trk_ndofT);
   tree->Branch("ghost", &trk_ghost);
+  tree->Branch("mcp_p", &mcp_p);
 #endif
 
   // Loop over events.
@@ -46,10 +66,14 @@ void checkKalmanTracks(
         trk_ghost = 1.;
       else {
         const auto weight = assoc.front().second;
-        if (weight < 0.7)
+        if (weight < 0.7) {
           trk_ghost = 1.;
-        else
+        }
+        else {
           trk_ghost = 0.;
+          const auto mcp = assoc.front().first;
+          mcp_p = mcp.p;
+        }
       }
       trk_z = track.z;
       trk_x = track.x;
@@ -57,12 +81,26 @@ void checkKalmanTracks(
       trk_tx = track.tx;
       trk_ty = track.ty;
       trk_qop = track.qop;
+      trk_first_qop = track.first_qop;
+      trk_best_qop = track.best_qop;
+      trk_kalman_ip = track.kalman_ip;
+      trk_kalman_ipx = track.kalman_ipx;
+      trk_kalman_ipy = track.kalman_ipy;
+      trk_kalman_ip_chi2 = track.kalman_ip_chi2;
+      trk_kalman_docaz = track.kalman_docaz;
+      trk_velo_ip = track.velo_ip;
+      trk_velo_ipx = track.velo_ipx;
+      trk_velo_ipy = track.velo_ipy;
+      trk_velo_ip_chi2 = track.velo_ip_chi2;
+      trk_velo_docaz = track.velo_docaz;
       trk_chi2 = track.chi2;
       trk_chi2V = track.chi2V;
       trk_chi2T = track.chi2T;
       trk_ndof = (float) track.ndof;
       trk_ndofV = (float) track.ndofV;
       trk_ndofT = (float) track.ndofT;
+      float sint = std::sqrt((trk_tx * trk_tx + trk_ty * trk_ty) / (1. + trk_tx * trk_tx + trk_ty * trk_ty));
+      trk_best_pt = sint / std::abs(track.best_qop);
 #ifdef WITH_ROOT
       tree->Fill();
 #endif
