@@ -1,7 +1,7 @@
 #ifndef ALLEN_MUONTILEID_H
 #define ALLEN_MUONTILEID_H
 
-#include <c++/string>
+#include <string>
 #include "MuonBase.h"
 
 class MuonLayout {

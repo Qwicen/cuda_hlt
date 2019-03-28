@@ -1,3 +1,6 @@
+/*
+ * https://gitlab.cern.ch/lhcb/LHCb/blob/master/Kernel/LHCbKernel/Kernel/MuonBase.h#
+ */
 #ifndef ALLEN_MUONBASE_H
 #define ALLEN_MUONBASE_H
 
@@ -52,5 +55,4 @@ namespace MuonBase {
   static const int LEFT   = -1;
 
 }
-
 #endif //ALLEN_MUONBASE_H

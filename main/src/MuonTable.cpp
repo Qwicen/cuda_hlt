@@ -1,20 +1,7 @@
 #include "MuonTable.h"
-#include "MuonTileID.h"
 
-struct MuonTable {
-    int gridX[16]{}, gridY[16]{};
-    unsigned int offset[16]{};
-    float sizeX[16]{}, sizeY[16]{};
-    vector<array<float, 3>> points[4];
-};
-
-class MuonTableReader {
-public:
-  void read(const char* raw_input) {
-    MuonTable pad = MuonTable();
-    MuonTable stripX = MuonTable();
-    MuonTable stripY = MuonTable();
-    MuonTable *muonTables[3] = {&pad, &stripX, &stripY};
+void MuonTableReader::read(const char* raw_input, MuonTable* pad, MuonTable* stripX, MuonTable* stripY) {
+    MuonTable* muonTables[3] = {pad, stripX, stripY};
     for (MuonTable* muonTable : muonTables) {
       size_t gridXSize;
       std::copy_n((size_t*) raw_input, 1, &gridXSize);
@@ -54,14 +41,12 @@ public:
       size_t tableSize;
       std::copy_n((size_t*) raw_input, 1, &tableSize);
       raw_input += sizeof(size_t);
-      cout << tableSize << "\n";
       assert(tableSize == 4);
       for (int i = 0; i < tableSize; i++) {
         size_t stationTableSize;
         std::copy_n((size_t*) raw_input, 1, &stationTableSize);
         raw_input += sizeof(size_t);
         (muonTable -> points)[i].resize(stationTableSize);
-        cout << stationTableSize << "\n";
         for (int j = 0; j < stationTableSize; j++) {
           float point[3];
           std::copy_n((float *) raw_input, 3, point);
@@ -73,25 +58,23 @@ public:
       }
     }
   }
-};
-
 
 constexpr unsigned int padGridX[4]{48, 48, 12, 12};
 constexpr unsigned int padGridY[4]{8, 8, 8, 8};
-constexpr array<unsigned int, 16> stripXGridX{48, 48, 48, 48, 48, 48, 48, 48, 12, 12, 12, 12, 12, 12, 12, 12};
-constexpr array<unsigned int, 16> stripXGridY{1, 2, 2, 2, 1, 2, 2, 2, 8, 2, 2, 2, 8, 2, 2, 2};
-constexpr array<unsigned int, 16> stripYGridX{8, 4, 2, 2, 8, 4, 2, 2, 12, 4, 2, 2, 12, 4, 2, 2};
-constexpr array<unsigned int, 16> stripYGridY{8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
+constexpr std::array<unsigned int, 16> stripXGridX{48, 48, 48, 48, 48, 48, 48, 48, 12, 12, 12, 12, 12, 12, 12, 12};
+constexpr std::array<unsigned int, 16> stripXGridY{1, 2, 2, 2, 1, 2, 2, 2, 8, 2, 2, 2, 8, 2, 2, 2};
+constexpr std::array<unsigned int, 16> stripYGridX{8, 4, 2, 2, 8, 4, 2, 2, 12, 4, 2, 2, 12, 4, 2, 2};
+constexpr std::array<unsigned int, 16> stripYGridY{8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
 
-void calcTilePos(MuonTable* pad, const MuonTileID& tile, double& x,
-    double& deltax, double& y, double& deltay, double& z) {
+void calcTilePos(MuonTable* pad, const MuonTileID& tile, double& x, double& deltax, double& y, double& deltay,
+    double& z) {
   int          station    = tile.station();
   int          region     = tile.region();
   int          quarter    = tile.quarter();
   int          perQuarter = 3 * padGridX[station] * padGridY[station];
   unsigned int xpad       = tile.nX();
   unsigned int ypad       = tile.nY();
-  auto index      = static_cast<unsigned int>((region * 4 + quarter ) * perQuarter);
+  auto index              = static_cast<unsigned int>((region * 4 + quarter ) * perQuarter);
 
   if ( ypad < padGridY[station] ) {
     index = index + padGridX[station] * ypad + xpad - padGridX[station];
@@ -108,11 +91,8 @@ void calcTilePos(MuonTable* pad, const MuonTileID& tile, double& x,
   deltay                   = (pad -> sizeY)[station * 4 + region];
 }
 
-
-
-void calcStripXPos(MuonTable* stripX, MuonTileID& tile, double& x, double& deltax, double& y,
-                                           double& deltay, double& z) {
-
+void calcStripXPos(MuonTable* stripX, MuonTileID& tile, double& x, double& deltax, double& y, double& deltay,
+    double& z) {
   int station        = tile.station();
   int region         = tile.region();
   int quarter        = tile.quarter();
@@ -138,9 +118,8 @@ void calcStripXPos(MuonTable* stripX, MuonTileID& tile, double& x, double& delta
   deltay                   = (stripX -> sizeY)[station * 4 + region];
 }
 
-void calcStripYPos(MuonTable* stripY, MuonTileID& tile, double& x, double& deltax, double& y,
-                                           double& deltay, double& z) {
-
+void calcStripYPos(MuonTable* stripY, MuonTileID& tile, double& x, double& deltax, double& y, double& deltay,
+    double& z) {
   int station        = tile.station();
   int region         = tile.region();
   int quarter        = tile.quarter();
@@ -178,7 +157,6 @@ void transform_for_uncrossed_hits(MuonTileID& tile, MuonTable* pad, MuonTable* s
     double& x, double& dx, double& y, double& dy, double& z) {
   unsigned int x1 = getLayoutX(tile.station(), tile.region());
   unsigned int y1 = getLayoutY(tile.station(), tile.region());
-
   if (tile.station() > 1 && tile.region() == 0) {
     calcTilePos(pad, tile, x, dx, y, dy, z);
   } else {
@@ -190,17 +168,22 @@ void transform_for_uncrossed_hits(MuonTileID& tile, MuonTable* pad, MuonTable* s
   }
 }
 
+/*
 char raw_input[1200000];
 int main() {
 
   ifstream input("muon_table.bin", ios::binary);
   //ifstream input("a.txt");
   input.read(raw_input, 1200000);
-  /*for (int i = 0; i < 3000; i++) {
+  for (int i = 0; i < 3000; i++) {
     std::cout << raw_input[i] << " ";
-  }*/
+  }
   std::cout << "\n";
   input.close();
   auto muonTableReader = MuonTableReader();
-	muonTableReader.read(raw_input);
+  MuonTable pad = MuonTable();
+  MuonTable stripX = MuonTable();
+  MuonTable stripY = MuonTable();
+	muonTableReader.read(raw_input, &pad, &stripX, &stripY);
 }
+*/
