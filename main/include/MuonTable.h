@@ -14,7 +14,6 @@
 #include <fstream>
 #include <ios>
 #include <cassert>
-#include <Tools.h>
 using namespace std;
 
 #endif //ALLEN_MUONTABLEREADER_H
