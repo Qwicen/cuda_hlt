@@ -90,8 +90,9 @@ void read_muon_events_into_arrays(
       const int station_offset = muon_station_hits[i_event].station_offsets[i_station];
       const int n_hits_per_station = muon_station_hits[i_event].number_of_hits_per_station[i_station];
       n_hits_per_event += n_hits_per_station;
-      if(n_hits_per_event > Muon::Constants::max_numhits_per_event) {
-        throw StrException("Read Muon Events: Number of hits exceeds maximum number of hits per event (" + 
+      if (n_hits_per_event > Muon::Constants::max_numhits_per_event) {
+        throw StrException(
+          "Read Muon Events: Number of hits exceeds maximum number of hits per event (" +
           std::to_string(Muon::Constants::max_numhits_per_event) + ")");
       }
       std::copy_n((int*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].tile[station_offset]));
@@ -116,7 +117,7 @@ void read_muon_events_into_arrays(
       raw_input += sizeof(int) * n_hits_per_station;
       std::copy_n((int*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].cluster_size[station_offset]));
       raw_input += sizeof(int) * n_hits_per_station;
-      std::copy_n((int*) raw_input, n_hits_per_station, &( muon_station_hits[i_event].region_id[station_offset]) );
+      std::copy_n((int*) raw_input, n_hits_per_station, &(muon_station_hits[i_event].region_id[station_offset]));
       raw_input += sizeof(int) * n_hits_per_station;
     }
   }
@@ -133,20 +134,20 @@ void check_muon_events(const Muon::HitsSoA* muon_station_hits, const int n_outpu
       debug_cout << "checks on station " << i_station << ", with " << n_hits_per_station << " hits" << std::endl;
       for (int i_hit = 0; i_hit < n_output_hits_per_event; ++i_hit) {
         if (logger::ll.verbosityLevel >= logger::debug) {
-          debug_cout << "\t at hit " << i_hit << ", " <<
-            "tile = "         << muon_station_hits[i_event].tile[station_offset + i_hit]         << ", " <<
-            "x = "            << muon_station_hits[i_event].x[station_offset + i_hit]            << ", " <<
-            "dx = "           << muon_station_hits[i_event].dx[station_offset + i_hit]           << ", " <<
-            "y = "            << muon_station_hits[i_event].y[station_offset + i_hit]            << ", " <<
-            "dy = "           << muon_station_hits[i_event].dy[station_offset + i_hit]           << ", " <<
-            "z = "            << muon_station_hits[i_event].z[station_offset + i_hit]            << ", " <<
-            "dz = "           << muon_station_hits[i_event].dz[station_offset + i_hit]           << ", " <<
-            "uncrossed = "    << muon_station_hits[i_event].uncrossed[station_offset + i_hit]    << ", " <<
-            "time = "         << muon_station_hits[i_event].time[station_offset + i_hit]         << ", " <<
-            "delta_time = "   << muon_station_hits[i_event].delta_time[station_offset + i_hit]   << ", " <<
-            "cluster_size = " << muon_station_hits[i_event].cluster_size[station_offset + i_hit] << ", " <<
-            "region_id = "    << muon_station_hits[i_event].region_id[station_offset + i_hit]    << ", " <<
-          std::endl;
+          debug_cout << "\t at hit " << i_hit << ", "
+                     << "tile = " << muon_station_hits[i_event].tile[station_offset + i_hit] << ", "
+                     << "x = " << muon_station_hits[i_event].x[station_offset + i_hit] << ", "
+                     << "dx = " << muon_station_hits[i_event].dx[station_offset + i_hit] << ", "
+                     << "y = " << muon_station_hits[i_event].y[station_offset + i_hit] << ", "
+                     << "dy = " << muon_station_hits[i_event].dy[station_offset + i_hit] << ", "
+                     << "z = " << muon_station_hits[i_event].z[station_offset + i_hit] << ", "
+                     << "dz = " << muon_station_hits[i_event].dz[station_offset + i_hit] << ", "
+                     << "uncrossed = " << muon_station_hits[i_event].uncrossed[station_offset + i_hit] << ", "
+                     << "time = " << muon_station_hits[i_event].time[station_offset + i_hit] << ", "
+                     << "delta_time = " << muon_station_hits[i_event].delta_time[station_offset + i_hit] << ", "
+                     << "cluster_size = " << muon_station_hits[i_event].cluster_size[station_offset + i_hit] << ", "
+                     << "region_id = " << muon_station_hits[i_event].region_id[station_offset + i_hit] << ", "
+                     << std::endl;
         }
       }
     }

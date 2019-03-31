@@ -213,9 +213,7 @@ int main(int argc, char* argv[])
 
   // Initialize detector constants on GPU
   Constants constants;
-  constants.reserve_and_initialize(
-    muon_field_of_interest_params
-  );
+  constants.reserve_and_initialize(muon_field_of_interest_params);
   constants.initialize_ut_decoding_constants(ut_geometry);
   constants.initialize_geometry_constants(velo_geometry, ut_boards, ut_geometry, ut_magnet_tool, scifi_geometry);
   constants.initialize_muon_catboost_model_constants(

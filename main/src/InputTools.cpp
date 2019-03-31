@@ -263,14 +263,12 @@ void read_UT_magnet_tool(const std::string& folder_name, std::vector<char>& ut_m
   }
 }
 
-void read_muon_field_of_interest(
-  std::vector<float>& foi_params,
-  const std::string& filename
-) {
+void read_muon_field_of_interest(std::vector<float>& foi_params, const std::string& filename)
+{
   if (!exists_test(filename)) {
     throw StrException("Muon field of interest : " + filename);
   }
-  
+
   std::ifstream stream(filename, std::ios::binary);
   float f;
   while (stream.read(reinterpret_cast<char*>(&f), sizeof(float))) {
