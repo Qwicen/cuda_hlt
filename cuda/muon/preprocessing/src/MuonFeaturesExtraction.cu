@@ -8,11 +8,13 @@ __global__ void muon_catboost_features_extraction(
   MiniState* dev_scifi_states,
   uint* dev_scifi_track_ut_indices,
   const Muon::HitsSoA* muon_hits,
-  float* dev_muon_catboost_features)
+  float* dev_muon_catboost_features,
+  const uint* event_list)
 {
   const uint number_of_events = gridDim.x;
   const uint event_id = blockIdx.x;
   const uint station_id = blockIdx.y;
+  const uint selected_event_number = event_list[event_id];
 
   SciFi::Consolidated::Tracks scifi_tracks {(uint*) dev_atomics_scifi,
                                             dev_scifi_track_hit_number,
@@ -28,10 +30,10 @@ __global__ void muon_catboost_features_extraction(
     float min_dist = 1e10;
     int index_of_closest_hit;
 
-    const int station_offset = muon_hits[event_id].station_offsets[station_id];
-    const int number_of_hits = muon_hits[event_id].number_of_hits_per_station[station_id];
-    const float station_z = muon_hits[event_id].z[station_offset];
-    const float station_z0 = muon_hits[event_id].z[muon_hits[event_id].station_offsets[0]];
+    const int station_offset = muon_hits[selected_event_number].station_offsets[station_id];
+    const int number_of_hits = muon_hits[selected_event_number].number_of_hits_per_station[station_id];
+    const float station_z = muon_hits[selected_event_number].z[station_offset];
+    const float station_z0 = muon_hits[selected_event_number].z[muon_hits[selected_event_number].station_offsets[0]];
 
     const float extrapolation_x = scifi_tracks.states[track_id].x +
                                   scifi_tracks.states[track_id].tx * (station_z - scifi_tracks.states[track_id].z);
@@ -46,8 +48,8 @@ __global__ void muon_catboost_features_extraction(
       const int idx = station_offset + i_hit;
 
       const float hit_track_distance =
-        (muon_hits[event_id].x[idx] - extrapolation_x) * (muon_hits[event_id].x[idx] - extrapolation_x) +
-        (muon_hits[event_id].y[idx] - extrapolation_y) * (muon_hits[event_id].y[idx] - extrapolation_y);
+        (muon_hits[selected_event_number].x[idx] - extrapolation_x) * (muon_hits[selected_event_number].x[idx] - extrapolation_x) +
+        (muon_hits[selected_event_number].y[idx] - extrapolation_y) * (muon_hits[selected_event_number].y[idx] - extrapolation_y);
 
       if (hit_track_distance < min_dist) {
         // todo: possible mutex lock
@@ -61,10 +63,10 @@ __global__ void muon_catboost_features_extraction(
 
     const int idx = station_offset + index_of_closest_hit;
 
-    dev_muon_catboost_features[tracks_features_offset + offset::TIMES + station_id] = muon_hits[event_id].time[idx];
-    dev_muon_catboost_features[tracks_features_offset + offset::DTS + station_id] = muon_hits[event_id].delta_time[idx];
+    dev_muon_catboost_features[tracks_features_offset + offset::TIMES + station_id] = muon_hits[selected_event_number].time[idx];
+    dev_muon_catboost_features[tracks_features_offset + offset::DTS + station_id] = muon_hits[selected_event_number].delta_time[idx];
     dev_muon_catboost_features[tracks_features_offset + offset::CROSS + station_id] =
-      (muon_hits[event_id].uncrossed[idx] == 0) ? 2. : muon_hits[event_id].uncrossed[idx];
+      (muon_hits[selected_event_number].uncrossed[idx] == 0) ? 2. : muon_hits[selected_event_number].uncrossed[idx];
 
     const float trav_dist = sqrt(
       (station_z - station_z0) * (station_z - station_z0) +
@@ -72,17 +74,17 @@ __global__ void muon_catboost_features_extraction(
       (extrapolation_y - extrapolation_y0) * (extrapolation_y - extrapolation_y0));
     const float errMS = common_factor * trav_dist * sqrt(trav_dist) * 0.23850119787527452;
 
-    /*if (std::abs(extrapolation_x - muon_hits[event_id].x[idx]) != 2000)*/
+    /*if (std::abs(extrapolation_x - muon_hits[selected_event_number].x[idx]) != 2000)*/
     dev_muon_catboost_features[tracks_features_offset + offset::RES_X + station_id] =
-      (extrapolation_x - muon_hits[event_id].x[idx]) / sqrt(
-                                                         (muon_hits[event_id].dx[idx] * Muon::Constants::INVSQRT3) *
-                                                           (muon_hits[event_id].dx[idx] * Muon::Constants::INVSQRT3) +
+      (extrapolation_x - muon_hits[selected_event_number].x[idx]) / sqrt(
+                                                         (muon_hits[selected_event_number].dx[idx] * Muon::Constants::INVSQRT3) *
+                                                           (muon_hits[selected_event_number].dx[idx] * Muon::Constants::INVSQRT3) +
                                                          errMS * errMS);
-    /*if (std::abs(extrapolation_y - muon_hits[event_id].y[idx]) != 2000)*/
+    /*if (std::abs(extrapolation_y - muon_hits[selected_event_number].y[idx]) != 2000)*/
     dev_muon_catboost_features[tracks_features_offset + offset::RES_Y + station_id] =
-      (extrapolation_y - muon_hits[event_id].y[idx]) / sqrt(
-                                                         (muon_hits[event_id].dy[idx] * Muon::Constants::INVSQRT3) *
-                                                           (muon_hits[event_id].dy[idx] * Muon::Constants::INVSQRT3) +
+      (extrapolation_y - muon_hits[selected_event_number].y[idx]) / sqrt(
+                                                         (muon_hits[selected_event_number].dy[idx] * Muon::Constants::INVSQRT3) *
+                                                           (muon_hits[selected_event_number].dy[idx] * Muon::Constants::INVSQRT3) +
                                                          errMS * errMS);
   }
 }

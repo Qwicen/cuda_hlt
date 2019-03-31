@@ -34,7 +34,8 @@ void SequenceVisitor::visit<muon_catboost_features_extraction_t>(
     arguments.offset<dev_scifi_states>(),
     arguments.offset<dev_scifi_track_ut_indices>(),
     arguments.offset<dev_muon_hits>(),
-    arguments.offset<dev_muon_catboost_features>());
+    arguments.offset<dev_muon_catboost_features>(),
+    arguments.offset<dev_event_list>());
 
   // Kernel call
   state.invoke();

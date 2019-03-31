@@ -4,6 +4,7 @@
 
 void HostBuffers::reserve(const uint max_number_of_events)
 {
+  host_max_number_of_events = max_number_of_events;
   cudaCheck(cudaMallocHost((void**) &host_number_of_selected_events, sizeof(uint)));
   cudaCheck(cudaMallocHost((void**) &host_event_list, max_number_of_events * sizeof(uint)));
   cudaCheck(cudaMallocHost((void**) &host_atomics_velo, (2 * max_number_of_events + 1) * sizeof(int)));

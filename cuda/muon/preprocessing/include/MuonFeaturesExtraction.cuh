@@ -21,7 +21,8 @@ __global__ void muon_catboost_features_extraction(
   MiniState* dev_scifi_states,
   uint* dev_scifi_track_ut_indices,
   const Muon::HitsSoA* muon_hits,
-  float* dev_muon_catboost_features);
+  float* dev_muon_catboost_features,
+  const uint* event_list);
 
 ALGORITHM(
   muon_catboost_features_extraction,
@@ -33,4 +34,5 @@ ALGORITHM(
     dev_scifi_states,
     dev_scifi_track_ut_indices,
     dev_muon_hits,
-    dev_muon_catboost_features))
+    dev_muon_catboost_features,
+    dev_event_list))

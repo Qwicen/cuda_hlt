@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Argument.cuh"
+#include "ArgumentsCommon.cuh"
 #include "MuonDefinitions.cuh"
 
 /**

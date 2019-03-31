@@ -15,6 +15,7 @@
 struct HostBuffers {
   // Pinned host datatypes
   uint* host_number_of_selected_events;
+  uint* host_max_number_of_events;
   uint* host_event_list;
 
   // Velo
