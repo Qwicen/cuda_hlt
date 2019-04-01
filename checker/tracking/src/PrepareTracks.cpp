@@ -141,7 +141,7 @@ std::vector<trackChecker::Tracks> prepareSciFiTracks(
                                               number_of_events};
     const uint number_of_tracks_event = scifi_tracks.number_of_tracks(i_event);
     const uint event_offset = scifi_tracks.tracks_offset(i_event);
-    
+
     for (uint i_track = 0; i_track < number_of_tracks_event; i_track++) {
       trackChecker::Track t;
 
@@ -172,7 +172,7 @@ std::vector<trackChecker::Tracks> prepareSciFiTracks(
       for (int i_hit = 0; i_hit < velo_track_number_of_hits; ++i_hit) {
         t.addId(track_hits_velo.LHCbID[i_hit]);
       }
-      
+
       // add muon information
       t.muon_catboost_output = muon_catboost_output[event_offset + i_track];
       t.is_muon = is_muon[event_offset + i_track];

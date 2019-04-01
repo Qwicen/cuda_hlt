@@ -188,10 +188,18 @@ void TrackChecker::Histos::initHistos(const std::vector<HistoCategory>& histo_ca
   h_momentum_matched = new TH1D("p_matched", "p, matched", 100, 0, 100000.);
 
   // histo for muon ID
-  h_muon_catboost_output_matched_muon = new TH1D("muon_catboost_output_matched_muon", "muon_catboost_output_matched_muon", 200, -5., 5.);
-  h_muon_catboost_output_matched_notMuon = new TH1D("muon_catboost_output_matched_notMuon", "muon_catboost_output_matched_notMuon", 200, -5., 5.);
-  h_muon_catboost_output_matched_muon_ismuon_true = new TH1D("muon_catboost_output_matched_muon_ismuon_true", "muon_catboost_output_matched_muon_ismuon_true", 200, -5., 5.);
-  h_muon_catboost_output_matched_notMuon_ismuon_true = new TH1D("muon_catboost_output_matched_notMuon_ismuon_true", "muon_catboost_output_matched_notMuon_ismuon_true", 200, -5., 5.);
+  h_muon_catboost_output_matched_muon =
+    new TH1D("muon_catboost_output_matched_muon", "muon_catboost_output_matched_muon", 200, -5., 5.);
+  h_muon_catboost_output_matched_notMuon =
+    new TH1D("muon_catboost_output_matched_notMuon", "muon_catboost_output_matched_notMuon", 200, -5., 5.);
+  h_muon_catboost_output_matched_muon_ismuon_true = new TH1D(
+    "muon_catboost_output_matched_muon_ismuon_true", "muon_catboost_output_matched_muon_ismuon_true", 200, -5., 5.);
+  h_muon_catboost_output_matched_notMuon_ismuon_true = new TH1D(
+    "muon_catboost_output_matched_notMuon_ismuon_true",
+    "muon_catboost_output_matched_notMuon_ismuon_true",
+    200,
+    -5.,
+    5.);
   h_is_muon_matched_muon = new TH1D("is_muon_matched_muon", "is_muon_matched_muon", 2, -0.5, 1.5);
   h_is_muon_matched_notMuon = new TH1D("is_muon_matched_notMuon", "is_muon_catboost_matched_notMuon", 2, -0.5, 1.5);
 #endif
@@ -298,18 +306,20 @@ void TrackChecker::Histos::fillMomentumResolutionHisto(const MCParticle& mcp, co
 #endif
 }
 
-void TrackChecker::Histos::fillMuonIDMatchedHistos(const trackChecker::Track &track, const MCParticle &mcp) {
+void TrackChecker::Histos::fillMuonIDMatchedHistos(const trackChecker::Track& track, const MCParticle& mcp)
+{
 #ifdef WITH_ROOT
-  if ( std::abs(mcp.pid) == 13 ){
+  if (std::abs(mcp.pid) == 13) {
     h_muon_catboost_output_matched_muon->Fill(track.muon_catboost_output);
     h_is_muon_matched_muon->Fill(track.is_muon);
-    if ( track.is_muon == true ){
+    if (track.is_muon == true) {
       h_muon_catboost_output_matched_muon_ismuon_true->Fill(track.muon_catboost_output);
     }
-  } else {
+  }
+  else {
     h_muon_catboost_output_matched_notMuon->Fill(track.muon_catboost_output);
     h_is_muon_matched_notMuon->Fill(track.is_muon);
-    if ( track.is_muon == true ){
+    if (track.is_muon == true) {
       h_muon_catboost_output_matched_notMuon_ismuon_true->Fill(track.muon_catboost_output);
     }
   }

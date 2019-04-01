@@ -126,8 +126,8 @@ protected:
     void fillTotalHistos(const MCParticle& mcp);
     void fillGhostHistos(const MCParticle& mcp);
     void fillMomentumResolutionHisto(const MCParticle& mcp, const float p);
-    void fillMuonIDHistos(const trackChecker::Track &track);
-    void fillMuonIDMatchedHistos(const trackChecker::Track &track, const MCParticle &mcp);
+    void fillMuonIDHistos(const trackChecker::Track& track);
+    void fillMuonIDMatchedHistos(const trackChecker::Track& track, const MCParticle& mcp);
     void deleteHistos(const std::vector<HistoCategory>& histo_categories);
   };
 
