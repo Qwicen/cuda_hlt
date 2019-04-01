@@ -72,7 +72,7 @@ __global__ void muon_catboost_features_extraction(
       (station_z - station_z0) * (station_z - station_z0) +
       (extrapolation_x - extrapolation_x0) * (extrapolation_x - extrapolation_x0) +
       (extrapolation_y - extrapolation_y0) * (extrapolation_y - extrapolation_y0));
-    const float errMS = common_factor * trav_dist * sqrt(trav_dist) * 0.23850119787527452;
+    const float errMS = common_factor * trav_dist * sqrt(trav_dist);
 
     /*if (std::abs(extrapolation_x - muon_hits[selected_event_number].x[idx]) != 2000)*/
     dev_muon_catboost_features[tracks_features_offset + offset::RES_X + station_id] =
