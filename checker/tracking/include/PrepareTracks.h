@@ -51,4 +51,6 @@ std::vector<trackChecker::Tracks> prepareSciFiTracks(
   const MiniState* scifi_states,
   const char* host_scifi_geometry,
   const std::array<float, 9>& host_inv_clus_res,
+  const float* muon_catboost_output,
+  const bool* is_muon,
   const uint number_of_events);

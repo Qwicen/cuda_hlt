@@ -54,4 +54,12 @@ void SequenceVisitor::visit<is_muon_t>(
 
   // Kernel call
   state.invoke();
+
+  cudaCheck(cudaMemcpyAsync(
+    host_buffers.host_is_muon,
+    arguments.offset<dev_is_muon>(),
+    arguments.size<dev_is_muon>(),
+    cudaMemcpyDeviceToHost,
+    cuda_stream
+  ));
 }

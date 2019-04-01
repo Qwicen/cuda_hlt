@@ -34,17 +34,9 @@ void SequenceVisitor::visit<muon_catboost_evaluator_t>(
     constants.dev_muon_catboost_tree_offsets,
     constants.muon_catboost_n_trees);
   state.invoke();
-  std::vector<float> output(host_buffers.host_number_of_reconstructed_scifi_tracks[0]);
-  bool *host_is_muon = (bool*)malloc(host_buffers.host_number_of_reconstructed_scifi_tracks[0] * sizeof(bool));
-  cudaCheck(cudaMemcpyAsync(
-    host_is_muon,
-    arguments.offset<dev_is_muon>(),
-    arguments.size<dev_is_muon>(),
-    cudaMemcpyDeviceToHost,
-    cuda_stream
-  ));
-  cudaCheck(cudaMemcpyAsync(
-    output.data(),
+  
+    cudaCheck(cudaMemcpyAsync(
+    host_buffers.host_muon_catboost_output,       
     arguments.offset<dev_muon_catboost_output>(),
     arguments.size<dev_muon_catboost_output>(),
     cudaMemcpyDeviceToHost,
@@ -53,7 +45,7 @@ void SequenceVisitor::visit<muon_catboost_evaluator_t>(
   cudaEventRecord(cuda_generic_event, cuda_stream);
   cudaEventSynchronize(cuda_generic_event);
   debug_cout << "MuonClassification" << std::endl;
-  for(int i = 0; i < output.size(); ++i) {
-    //debug_cout << output[i] << ";\t is_muon: " << host_is_muon[i] << std::endl;
+  for(int i = 0; i < host_buffers.host_number_of_reconstructed_scifi_tracks[0]; ++i) {
+    debug_cout << "catboost output = " << host_buffers.host_muon_catboost_output[i] << ";\t is_muon: " << host_buffers.host_is_muon[i] << std::endl;
   }
 }
