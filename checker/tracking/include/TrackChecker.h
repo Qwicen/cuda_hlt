@@ -115,6 +115,8 @@ protected:
     TH1D* h_momentum_matched;
     TH1D* h_muon_catboost_output_matched_muon;
     TH1D* h_muon_catboost_output_matched_notMuon;
+    TH1D* h_muon_catboost_output_matched_muon_ismuon_true;
+    TH1D* h_muon_catboost_output_matched_notMuon_ismuon_true;
     TH1D* h_is_muon_matched_muon;
     TH1D* h_is_muon_matched_notMuon;
 #endif
