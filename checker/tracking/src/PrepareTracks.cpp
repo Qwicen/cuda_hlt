@@ -75,6 +75,7 @@ std::vector<trackChecker::Tracks> prepareUTTracks(
       // momentum
       const float qop = ut_tracks.qop[i_track];
       t.p = 1.f / std::abs(qop);
+      t.qop = qop;
       // hits in UT
       const uint ut_track_number_of_hits = ut_tracks.number_of_hits(i_track);
       const UT::Consolidated::Hits track_hits_ut = ut_tracks.get_hits((char*) ut_track_hits, i_track);
@@ -148,6 +149,7 @@ std::vector<trackChecker::Tracks> prepareSciFiTracks(
       // momentum
       const float qop = scifi_tracks.qop[i_track];
       t.p = 1.f / std::abs(qop);
+      t.qop = qop;
 
       // add SciFi hits
       const uint scifi_track_number_of_hits = scifi_tracks.number_of_hits(i_track);

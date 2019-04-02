@@ -32,6 +32,9 @@ void SequenceVisitor::check<kalman_filter_t>(
     constants.host_scifi_geometry,
     constants.host_inv_clus_res,
     host_buffers.host_kf_tracks,
+    host_buffers.host_kalmanvelo_states,
+    host_buffers.host_reconstructed_multi_pvs,
+    host_buffers.host_number_of_multivertex,
     host_buffers.host_number_of_selected_events[0]);
 
   checkKalmanTracks(start_event_offset, tracks, checker_invoker.selected_mc_events);
